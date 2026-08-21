@@ -45,6 +45,14 @@ local ACK_FILE   = BRIDGE_DIR .. "/itb_ack.txt"
 local ACK_TMP    = BRIDGE_DIR .. "/itb_ack.tmp"
 local LOG_FILE   = BRIDGE_DIR .. "/itb_bridge.log"
 local HEARTBEAT_FILE = BRIDGE_DIR .. "/itb_bridge_heartbeat"
+local CALLBACK_MANIFEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_callback_manifest.json"
+local CALLBACK_MANIFEST_TMP =
+    BRIDGE_DIR .. "/itb_observatory_callback_manifest.json.tmp"
+local CALLBACK_MANIFEST_REQUEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_callback_manifest.request"
+local CALLBACK_MANIFEST_REQUEST_TOKEN =
+    "observatory-callback-manifest-request/1"
 
 if is_windows() then
     os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
@@ -3020,6 +3028,81 @@ local function direct_repair_pawn(target, target_uid, heal, save_data, effect_re
     return new_hp
 end
 
+local function observatory_callback_module_path()
+    local debug_table = rawget(_G, "debug")
+    if type(debug_table) ~= "table"
+        or type(rawget(debug_table, "getinfo")) ~= "function" then
+        return nil, "debug.getinfo is unavailable"
+    end
+    local ok, info = pcall(
+        rawget(debug_table, "getinfo"),
+        observatory_callback_module_path,
+        "S"
+    )
+    if not ok or type(info) ~= "table"
+        or type(info.source) ~= "string"
+        or string.sub(info.source, 1, 1) ~= "@" then
+        return nil, "modloader source path is unavailable"
+    end
+    local source = normalize_path(string.sub(info.source, 2))
+    local directory = string.match(source, "^(.*)/[^/]+$")
+    if type(directory) ~= "string" or directory == "" then
+        return nil, "modloader source directory is unavailable"
+    end
+    return directory .. "/observatory_callback_manifest.lua"
+end
+
+local function load_observatory_callback_module()
+    local path, path_error = observatory_callback_module_path()
+    if not path then return nil, path_error end
+    local chunk, load_error = loadfile(path)
+    if type(chunk) ~= "function" then
+        return nil, "cannot load sibling callback module: "
+            .. tostring(load_error)
+    end
+    local ok, module = pcall(chunk)
+    if not ok or type(module) ~= "table" then
+        return nil, "callback module failed to load: " .. tostring(module)
+    end
+    if rawget(module, "VERSION") ~= "observatory-callback-manifest/1"
+        or type(rawget(module, "discover_enemy_skill_roots")) ~= "function"
+        or type(rawget(module, "enumerate")) ~= "function" then
+        return nil, "callback module contract mismatch"
+    end
+    return module
+end
+
+local function write_observatory_callback_manifest(content)
+    if type(content) ~= "string" or string.len(content) > 4 * 1024 * 1024 then
+        return false, "callback manifest exceeds its output cap"
+    end
+    local file, open_error = io.open(CALLBACK_MANIFEST_TMP, "w")
+    if not file then return false, tostring(open_error) end
+    local write_ok, write_error = pcall(function()
+        file:write(content)
+        file:flush()
+    end)
+    file:close()
+    if not write_ok then
+        os.remove(CALLBACK_MANIFEST_TMP)
+        return false, tostring(write_error)
+    end
+    local renamed, rename_error = os.rename(
+        CALLBACK_MANIFEST_TMP, CALLBACK_MANIFEST_FILE
+    )
+    if not renamed and is_windows() then
+        os.remove(CALLBACK_MANIFEST_FILE)
+        renamed, rename_error = os.rename(
+            CALLBACK_MANIFEST_TMP, CALLBACK_MANIFEST_FILE
+        )
+    end
+    if not renamed then
+        os.remove(CALLBACK_MANIFEST_TMP)
+        return false, tostring(rename_error)
+    end
+    return true
+end
+
 local function execute_command(cmd_str)
     local parts = {}
     for word in cmd_str:gmatch("%S+") do
@@ -3346,6 +3429,69 @@ local function execute_command(cmd_str)
         else
             write_ack("ERROR: UI_PROBE failed: " .. tostring(result))
         end
+        return
+
+    elseif cmd == "OBS_CALLBACK_MANIFEST" then
+        -- Explicit, read-only Observatory operation. The sibling module is
+        -- loaded only for this command; it resolves exact enemy Skill roots
+        -- with raw table access and never invokes a candidate callback.
+        if #parts ~= 1 then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST accepts no arguments")
+            return
+        end
+        local module, module_error = load_observatory_callback_module()
+        if not module then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST " .. module_error)
+            return
+        end
+        local roots_ok, roots, roots_error = pcall(
+            rawget(module, "discover_enemy_skill_roots"), _G
+        )
+        if not roots_ok then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST root discovery failed: "
+                .. tostring(roots))
+            return
+        end
+        if type(roots) ~= "table" then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST root discovery failed: "
+                .. tostring(roots_error))
+            return
+        end
+        local manifest_ok, manifest, manifest_error = pcall(
+            rawget(module, "enumerate"),
+            roots,
+            {
+                max_roots = 256,
+                max_depth = 16,
+                max_functions = 1024,
+                max_text_bytes = 512,
+            }
+        )
+        if not manifest_ok then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST enumeration failed: "
+                .. tostring(manifest))
+            return
+        end
+        if type(manifest) ~= "table" then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST enumeration failed: "
+                .. tostring(manifest_error))
+            return
+        end
+        local wrote, write_error = write_observatory_callback_manifest(
+            json_encode(manifest)
+        )
+        if not wrote then
+            write_ack("ERROR: OBS_CALLBACK_MANIFEST output failed: "
+                .. tostring(write_error))
+            return
+        end
+        local summary = rawget(manifest, "summary") or {}
+        write_ack(
+            "OK OBS_CALLBACK_MANIFEST roots="
+            .. tostring(rawget(summary, "root_count") or -1)
+            .. " functions="
+            .. tostring(rawget(summary, "function_count") or -1)
+        )
         return
 
     elseif cmd == "LUA" then
@@ -3676,6 +3822,32 @@ end
 --------------------------------------------------------------------
 -- Startup
 --------------------------------------------------------------------
+-- A fixed-token, one-shot request can capture the inert callback manifest at
+-- script-load time, before a Mission exists.  scripts.lua loads modloader.lua
+-- after the shipped pawn/skill registries, so discovery needs no Board.  This
+-- path never dispatches file contents as a command: it accepts only the exact
+-- versioned token, removes the request before execution, and invokes the same
+-- no-argument read-only command with a literal string.
+local function consume_observatory_callback_manifest_startup_request()
+    local file = io.open(CALLBACK_MANIFEST_REQUEST_FILE, "r")
+    if not file then return false end
+    local content = file:read(128)
+    local extra = file:read(1)
+    file:close()
+    pcall(function() os.remove(CALLBACK_MANIFEST_REQUEST_FILE) end)
+    if extra ~= nil
+        or (content ~= CALLBACK_MANIFEST_REQUEST_TOKEN
+            and content ~= CALLBACK_MANIFEST_REQUEST_TOKEN .. "\n"
+            and content ~= CALLBACK_MANIFEST_REQUEST_TOKEN .. "\r\n") then
+        write_ack("ERROR: invalid Observatory callback startup request")
+        log_bridge("OBS CALLBACK MANIFEST startup request rejected")
+        return true
+    end
+    log_bridge("OBS CALLBACK MANIFEST startup request accepted")
+    execute_command("OBS_CALLBACK_MANIFEST")
+    return true
+end
+
 -- Clean up stale files from previous session
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
@@ -3689,4 +3861,12 @@ _ITB_BRIDGE_LOAD_COUNT = _reload_count
 log_bridge("=== ITB Bot Bridge started (load #" .. _reload_count .. ") ===")
 if ConsolePrint then
     ConsolePrint("ITB Bot Bridge loaded! IPC via " .. BRIDGE_DIR)
+end
+
+local _startup_request_ok, _startup_request_error = pcall(
+    consume_observatory_callback_manifest_startup_request
+)
+if not _startup_request_ok then
+    log_bridge("OBS CALLBACK MANIFEST startup request failed: "
+        .. tostring(_startup_request_error))
 end

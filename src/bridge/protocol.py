@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -23,6 +24,15 @@ CMD_TMP = BRIDGE_DIR / "itb_cmd.txt.tmp"
 ACK_FILE = BRIDGE_DIR / "itb_ack.txt"
 LOG_FILE = BRIDGE_DIR / "itb_bridge.log"
 HEARTBEAT_FILE = BRIDGE_DIR / "itb_bridge_heartbeat"
+CALLBACK_MANIFEST_FILE = BRIDGE_DIR / "itb_observatory_callback_manifest.json"
+CALLBACK_MANIFEST_TMP = BRIDGE_DIR / "itb_observatory_callback_manifest.json.tmp"
+CALLBACK_MANIFEST_REQUEST_FILE = (
+    BRIDGE_DIR / "itb_observatory_callback_manifest.request"
+)
+CALLBACK_MANIFEST_REQUEST_TOKEN = "observatory-callback-manifest-request/1"
+CALLBACK_MANIFEST_REQUEST_BYTES = (
+    CALLBACK_MANIFEST_REQUEST_TOKEN + "\n"
+).encode("ascii")
 
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
@@ -161,6 +171,111 @@ def refresh_bridge_state_fresh(timeout: float = 2.0) -> bool:
                 return True
         time.sleep(0.02)
     return False
+
+
+def _file_generation(path: Path) -> tuple[int, int] | None:
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return stat.st_mtime_ns, stat.st_size
+
+
+def _cancel_pending_command(expected: str) -> bool:
+    """Remove only the still-pending command generation we wrote."""
+    try:
+        if CMD_FILE.read_text(encoding="utf-8") != expected:
+            return False
+        CMD_FILE.unlink()
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return False
+    return True
+
+
+def request_observatory_callback_manifest(
+    timeout: float = 10.0,
+) -> tuple[str, dict]:
+    """Request one fresh, read-only runtime callback manifest.
+
+    The Lua bridge publishes the potentially large JSON document atomically to
+    a dedicated result file before sending a short ACK.  Requiring a changed
+    file generation prevents a successful ACK from ever reusing stale output.
+    """
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "callback manifest requires an unpaused active mission heartbeat"
+        )
+    before = _file_generation(CALLBACK_MANIFEST_FILE)
+    write_command("OBS_CALLBACK_MANIFEST")
+    pending_command = f"#{_seq_counter} OBS_CALLBACK_MANIFEST"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_CALLBACK_MANIFEST roots=(\d+) functions=(\d+)", ack
+    )
+    if match is None:
+        raise BridgeError(f"unexpected callback manifest ACK: {ack}")
+    expected_roots = int(match.group(1))
+    expected_functions = int(match.group(2))
+
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(CALLBACK_MANIFEST_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            payload = json.loads(
+                CALLBACK_MANIFEST_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"callback manifest result is not valid JSON: {exc}"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise BridgeError("callback manifest result must be a JSON object")
+        summary = payload.get("summary")
+        if not isinstance(summary, dict) or (
+            summary.get("root_count") != expected_roots
+            or summary.get("function_count") != expected_functions
+        ):
+            raise BridgeError(
+                "callback manifest result does not match its ACK summary"
+            )
+        return ack, payload
+    raise TimeoutError(
+        f"Fresh callback manifest result timeout after {timeout:.0f}s"
+    )
+
+
+def arm_observatory_callback_manifest_startup() -> Path:
+    """Create the exact one-shot request consumed on the next game load.
+
+    Publication is create-only so an existing or user-created request is never
+    replaced.  The Lua loader accepts only these fixed ASCII bytes (with a
+    terminal newline) and removes the request before executing the literal
+    no-argument Observatory command.
+    """
+    BRIDGE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(CALLBACK_MANIFEST_REQUEST_FILE, "xb") as file:
+            file.write(CALLBACK_MANIFEST_REQUEST_BYTES)
+            file.flush()
+            os.fsync(file.fileno())
+    except FileExistsError as exc:
+        raise BridgeError(
+            "callback manifest startup request already exists"
+        ) from exc
+    except OSError as exc:
+        raise BridgeError(
+            f"cannot arm callback manifest startup request: {exc}"
+        ) from exc
+    return CALLBACK_MANIFEST_REQUEST_FILE
 
 
 def read_state() -> dict | None:

@@ -49,6 +49,14 @@ local HARD_LIMITS = {
     max_text_bytes = 1024,
 }
 
+local DISCOVERY_LIMITS = {
+    max_pawns = 512,
+    max_skill_slots = 16,
+    max_skills = 255,
+    max_depth = 16,
+    max_symbol_bytes = 96,
+}
+
 local ROOT_FIELDS = {
     root_id = true,
     object = true,
@@ -106,7 +114,14 @@ local function valid_root_id(value)
     return type(value) == "string"
         and string.len(value) >= 1
         and string.len(value) <= 128
-        and string.match(value, "^[a-z0-9][a-z0-9._:-]*$") ~= nil
+        and string.match(value, "^[A-Za-z0-9][A-Za-z0-9._:-]*$") ~= nil
+end
+
+local function valid_symbol(value)
+    return type(value) == "string"
+        and string.len(value) >= 1
+        and string.len(value) <= DISCOVERY_LIMITS.max_symbol_bytes
+        and string.match(value, "^[A-Za-z][A-Za-z0-9_]*$") ~= nil
 end
 
 local function validate_limits(options)
@@ -234,7 +249,7 @@ local function inspect_function(callback, limit)
     }
 end
 
-local function resolve_raw(object, method, max_depth)
+local function resolve_raw_value(object, field, max_depth)
     local current = object
     local seen = {}
     local depth = 0
@@ -243,12 +258,9 @@ local function resolve_raw(object, method, max_depth)
             return nil, "index_cycle", depth
         end
         seen[current] = true
-        local value = rawget(current, method)
+        local value = rawget(current, field)
         if value ~= nil then
-            if type(value) == "function" then
-                return value, "function", depth
-            end
-            return nil, "non_function", depth
+            return value, "value", depth
         end
         local metatable = getmetatable(current)
         if metatable == nil then return nil, "missing", depth end
@@ -272,6 +284,131 @@ local function resolve_raw(object, method, max_depth)
         current = index
         depth = depth + 1
     end
+end
+
+
+local function resolve_raw(object, method, max_depth)
+    local value, resolution, depth = resolve_raw_value(
+        object, method, max_depth
+    )
+    if resolution ~= "value" then return nil, resolution, depth end
+    if type(value) == "function" then return value, "function", depth end
+    return nil, "non_function", depth
+end
+
+
+local function discovery_value(object, field, label)
+    local value, status = resolve_raw_value(
+        object, field, DISCOVERY_LIMITS.max_depth
+    )
+    if status ~= "value" then
+        return nil, label .. " " .. field .. " is " .. status
+    end
+    return value
+end
+
+
+function M.discover_enemy_skill_roots(globals)
+    if type(globals) ~= "table" then
+        return nil, "invalid globals"
+    end
+    local team_enemy = rawget(globals, "TEAM_ENEMY")
+    local pawn_list = rawget(globals, "PawnList")
+    local score_positioning = rawget(globals, "ScorePositioning")
+    if not nonnegative_integer(team_enemy) then
+        return nil, "TEAM_ENEMY is unavailable"
+    end
+    if type(pawn_list) ~= "table" then
+        return nil, "PawnList is unavailable"
+    end
+    if type(score_positioning) ~= "function" then
+        return nil, "ScorePositioning is unavailable"
+    end
+
+    local pawn_count = #pawn_list
+    if pawn_count < 1
+        or pawn_count > DISCOVERY_LIMITS.max_pawns
+        or not array_shape(pawn_list, pawn_count) then
+        return nil, "PawnList violates its cap or shape"
+    end
+
+    local skills = {}
+    for pawn_index = 1, pawn_count do
+        local pawn_name = rawget(pawn_list, pawn_index)
+        if not valid_symbol(pawn_name) then
+            return nil, "invalid PawnList symbol"
+        end
+        local pawn = rawget(globals, pawn_name)
+        if type(pawn) ~= "table" then
+            return nil, "pawn global is not a table: " .. pawn_name
+        end
+        local default_team, team_error = discovery_value(
+            pawn, "DefaultTeam", "pawn " .. pawn_name
+        )
+        if team_error then return nil, team_error end
+        if not nonnegative_integer(default_team) then
+            return nil, "pawn DefaultTeam is invalid: " .. pawn_name
+        end
+        if default_team == team_enemy then
+            local skill_list, skills_error = discovery_value(
+                pawn, "SkillList", "pawn " .. pawn_name
+            )
+            if skills_error then return nil, skills_error end
+            if type(skill_list) ~= "table" then
+                return nil, "pawn SkillList is not a table: " .. pawn_name
+            end
+            local skill_count = #skill_list
+            if skill_count > DISCOVERY_LIMITS.max_skill_slots
+                or not array_shape(skill_list, skill_count) then
+                return nil, "pawn SkillList violates its cap or shape: "
+                    .. pawn_name
+            end
+            for skill_index = 1, skill_count do
+                local skill_id = rawget(skill_list, skill_index)
+                if not valid_symbol(skill_id) then
+                    return nil, "invalid enemy skill symbol"
+                end
+                local skill = rawget(globals, skill_id)
+                if skill == nil then
+                    -- PawnList contains at least one shipped enemy whose
+                    -- SkillList names a commented-out/missing global
+                    -- (Garden_Atk in build 13725832). Preserve that exact
+                    -- symbolic root as an empty callback surface so every
+                    -- method is reported `missing`; never silently omit it or
+                    -- invent/call a replacement.
+                    skill = {}
+                elseif type(skill) ~= "table" then
+                    return nil, "enemy skill global is not a table: "
+                        .. skill_id
+                end
+                skills[skill_id] = skill
+            end
+        end
+    end
+
+    local skill_ids = {}
+    for skill_id, _ in pairs(skills) do
+        skill_ids[#skill_ids + 1] = skill_id
+    end
+    table.sort(skill_ids)
+    if #skill_ids > DISCOVERY_LIMITS.max_skills then
+        return nil, "enemy skill roots exceed their cap"
+    end
+
+    local roots = {}
+    for index, skill_id in ipairs(skill_ids) do
+        roots[index] = {
+            root_id = "enemy.skill." .. skill_id,
+            object = skills[skill_id],
+            expected = {},
+        }
+    end
+    roots[#roots + 1] = {
+        root_id = "global.ScorePositioning",
+        object = {ScorePositioning = score_positioning},
+        expected = {},
+    }
+    return roots
 end
 
 local function new_catalog(limits)

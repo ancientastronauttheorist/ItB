@@ -54,23 +54,26 @@ For the modified local Windows inventory at scripts revision
 |---|---:|---:|---:|
 | Spawn selection | 3 | 3 | 0 |
 | Enemy scoring | 1 | 1 | 0 |
-| Enemy weapons | 2 | 2 | 0 |
+| Enemy weapons | 14 | 6 | 8 |
 | Player weapons | 14 | 14 | 0 |
 | Missions | 75 | 75 | 0 |
 | Environments | 15 | 15 | 0 |
-| Unique total | 96 | 96 | 0 |
+| Unique total | 108 | 100 | 8 |
 
 Mission-specific environment files belong to both the mission and environment
 categories, so category totals overlap while the summary counts unique paths.
 
-The exact callback audit finds 742 active top-level callback definition
-instances, representing 741 unique `path + symbol` pairs. Current provenance
-names 404 definitions literally and leaves 338 unindexed. Category totals
-overlap for mission-environment files. Most importantly, the two broad enemy
-weapon files contain 40 callback definitions; the Starfish, Bouncer, Moth,
-Tumblebug, Centipede, Digger, Shaman/Totem, Crab/Scarab, and Hornet family
-records name seventeen literally and leave 23 unindexed. That is a precise
-indexing backlog, not evidence that all 23 behaviors are absent from Rust.
+The exact callback audit finds 757 active top-level callback definition
+instances, representing 756 unique `path + symbol` pairs. Current provenance
+names 410 definitions literally and leaves 347 unindexed. Category totals
+overlap for mission-environment files. The enemy-weapon category now includes
+the 12 Advanced Edition boss files in addition to the two broad weapon files:
+55 definitions total, 23 provenance-indexed and 32 explicitly unindexed. This
+scope expansion was driven by the first runtime callback manifest, whose 13
+initially unmatched functions all came from those boss files. With the expanded
+lexical index, all 65 observed runtime functions join exactly. The remaining
+unindexed definitions are a precise provenance backlog, not evidence that their
+behaviors are absent from Rust.
 
 The base Battle/Survive/Volatile slice adds three exact shipped mission paths
 in three bounded `partial` records. `mission_battle.lua` is exactly two CRLF
@@ -614,9 +617,9 @@ the positive ScoreList gate, and threat auditing have focused tests. The record
 remains `partial`: mobile movement and direction selection are heuristic,
 `Board:GetDeployLocScore` and native tie-breaking are untraced, current-turn
 execution consumes bridge-selected boulders, and exhaustive
-terrain/status/scheduler behavior remains open. The exact Leader source is
-outside the audit's selected 96-file high-value candidate set, so this family
-does not change the source-index totals.
+terrain/status/scheduler behavior remains open. The exact Leader source is now
+inside the expanded 108-file high-value set and indexed by this record; it adds
+no active top-level callback definition of its own.
 
 The fifth family-level enemy-weapon slice, `enemy-weapon-centipede`, pins the
 normal, Alpha, and Leader pawn/weapon IDs, damage values, unlimited projectile
@@ -627,9 +630,9 @@ known types, and static pawn metadata have focused tests. The record remains
 `partial`: current-turn resolution consumes the bridge-selected target, mobile
 projection is generic, and native movement, candidate enumeration,
 `GetProjectileEnd`, `ScoreList`, effect scheduling, selection, and tie-breaking
-remain untraced. The pawn and Leader files are outside the audit's selected
-96-file high-value source set, so the family indexes two callbacks without
-changing source-index totals.
+remain untraced. The pawn file remains outside the callback audit's selected
+source set, while the Leader file is now inside the expanded Advanced boss
+enemy-weapon scope and its runtime callbacks join by exact source line.
 
 The sixth family-level enemy-weapon slice, `enemy-weapon-digger`, pins the
 self-only target, exact cardinal `PATH_PROJECTILE`/Water/Time-Pod wall
@@ -839,8 +842,11 @@ tests are conservative live-state and policy anchors, not reproduction of
 native RNG, effects, collisions, scheduling, phase handoff, or mission-end
 settlement.
 
-The final Volcano-environment slice, `environment-final-volcano-cycle`, closes
-the mechanical source index at 96/96 without upgrading behavioral coverage.
+The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
+the then-selected mechanical source index at 96/96 without upgrading behavioral
+coverage. The later runtime-driven Advanced boss expansion raised the current
+scope to 108 files, of which 100 are provenance-indexed; the eight newly visible
+unindexed boss files remain explicit backlog.
 Its selector toggles before choosing, yielding exactly Lava, Rocks, Lava,
 Rocks over phases one through four. Lava consumes one of two starting points
 and extends up to three right/down non-Lava, non-Mountain, non-Building steps;

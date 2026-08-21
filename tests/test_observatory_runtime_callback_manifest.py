@@ -225,6 +225,15 @@ def test_validate_manifest_is_strict_reconciled_and_detached():
     assert validated["roots"][0]["root_id"] == "enemy.1.skill.1"
 
 
+def test_validate_manifest_preserves_exact_lua_symbol_case_in_root_ids():
+    manifest = _manifest()
+    manifest["roots"][0]["root_id"] = "enemy.skill.ScorpionAtk1_A"
+    validated = validate_runtime_callback_manifest(manifest)
+    assert validated["roots"][0]["root_id"] == (
+        "enemy.skill.ScorpionAtk1_A"
+    )
+
+
 @pytest.mark.parametrize(
     ("mutation", "message"),
     [

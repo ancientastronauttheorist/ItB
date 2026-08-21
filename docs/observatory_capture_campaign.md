@@ -2,46 +2,42 @@
 
 ## Current boundary
 
-The repository-side capture groundwork is ready, but no native hook has been
-installed and no live capture has begun. All achievements are complete, and
-the user has explicitly authorized launching ITB for this research. The owner
-installation and profile still remain protected from unproven native detours.
-Runtime evidence should come from a separately inventoried test installation;
-a copied install is not acceptable as proof of a clean stock baseline.
+The first live, non-invasive callback-identity capture is complete on the
+reversible owner track. No native hook was installed, no candidate callback was
+called or wrapped, and the owner install was restored exactly afterward. All
+achievements are complete, and the user explicitly authorized runtime research
+in the current owner installation. Evidence from that installation is accepted
+for practical, build-keyed Observatory work when the reversible-owner gate
+below passes. It is labelled `owner_local_modified`; it does not prove that an
+uninstrumented pristine Steam depot is neutral.
 
-The non-VM route is:
+There are now two accepted capture tracks:
 
-1. Create a dedicated standard local Windows user for Observatory experiments.
-2. Prefer a separate Steam account that owns Into the Breach or legitimately
-   has access through Steam Families. Steam documents that achievements are
-   tied to individual Steam accounts and that family members have personal
-   saves and achievements in its
-   [Steam Families FAQ](https://help.steampowered.com/en/faqs/view/054C-3167-DD7F49D4).
-   Because this account already has every achievement, using the same Steam
-   identity is acceptable only with the separate Windows profile, Cloud
-   disabled, an owner-profile backup, and explicit experiment receipts.
-3. Install Steam under the test Windows user's profile and perform a fresh Steam
-   download into a new library that is not `B:` and is neither a junction nor a
-   copy of the owner installation.
-4. Disable Steam Cloud for Into the Breach on the test account as defense in
-   depth. Steam's
-   [Cloud support page](https://help.steampowered.com/en/faqs/view/68D2-35AB-09A9-7678)
-   documents the per-game control. This does not replace the separate Steam
-   identity.
-5. Keep the test profile, bridge directory, raw checkpoints, and finalized
-   evidence under the test Windows user. Do not grant them a path into the
-   owner's ITB profile.
+1. **Reversible owner track (current).** Inventory the exact owner build, make
+   and verify an exact profile/settings/installed-module backup, hash every
+   experimental module, capture matched tracing-disabled and tracing-enabled
+   trials from the same state, and restore plus re-inventory afterward. This
+   track is sufficient for build-keyed callback identities, conformance tests,
+   and solver corrections when the evidence is deterministic and the receipt
+   states the local modifications.
+2. **Pristine-reference track (optional follow-up).** Use a separately
+   inventoried fresh Steam download, preferably under a dedicated Windows user
+   and Steam identity, when the desired claim specifically concerns pristine
+   stock-depot neutrality. A copied install is not acceptable for that claim.
+   Steam documents separate family-member saves and achievements in its
+   [Steam Families FAQ](https://help.steampowered.com/en/faqs/view/054C-3167-DD7F49D4),
+   and its [Cloud support page](https://help.steampowered.com/en/faqs/view/68D2-35AB-09A9-7678)
+   documents the per-game Cloud control.
 
 Windows Sandbox is not a fallback on this machine. It is a disposable virtual
 machine, requires hardware virtualization and the Windows optional feature,
 and its installation may require an administrator. See Microsoft's
 [Windows Sandbox prerequisites](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-install).
 
-The user must create or authorize creation of the Windows test user and log in
-to the chosen Steam account. After that, Codex can inventory, validate, install
-only into the test tree, run experiments, and clean up without touching the
-owner profile. Read-only launches of the existing game are allowed, but do not
-establish native-hook neutrality.
+A separate Windows user is no longer a hard requirement for the current
+campaign. It remains the preferred way to obtain a pristine-reference claim;
+the current owner track instead relies on exact before/after evidence and must
+not be relabelled as clean stock.
 
 ## Repository readiness
 
@@ -49,9 +45,9 @@ establish native-hook neutrality.
 |---|---|---|
 | Exact PE boundaries | Verified for Windows build `13725832` and executable SHA-256 `31fe3526...4493fe9` | No hook installed |
 | RNG caller identity | Stable IDs for all 118 raw calls to the shared core; 11 reviewed and 107 explicitly unclassified | No caller observed |
-| Hook-neutrality trials | Strict control/exact-hook suite, receipt, and comparator contracts | Awaiting isolated installation |
+| Hook-neutrality trials | Strict control/exact-hook suite, receipt, and comparator contracts | Owner track accepted; matched trials not started |
 | Native checkpoint | Strict bounded diagnostic schema with overflow, unknown-caller, torn-record, and restore gates | No native helper loaded |
-| Callback identities | Inert runtime enumeration and exact lexical-inventory join | Awaiting isolated runtime enumeration |
+| Callback identities | Inert runtime enumeration, bounded pre-combat enemy-root discovery, fresh side-band transport, strict validation, and exact lexical-inventory join | Complete: two byte-identical fresh-process manifests; all 65 unique Lua functions joined exactly |
 | Spawn RNG | Span-based attribution analyzer with nesting, reseed, shortcut, and ambiguity handling | Awaiting `Spawner:NextPawn` markers |
 | Selected action | `aiDest`/`aiTarget` to Pawn queue correlation analyzer | Awaiting selected-record and queue checkpoints |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
@@ -60,27 +56,127 @@ The diagnostic checkpoint is deliberately separate from authoritative
 schema-v2 traces. Even a complete checkpoint proves only build-specific facts.
 Promotion requires a reviewed semantic mapping and matched neutrality evidence.
 
-## Isolation acceptance gate
+## Dormant callback-manifest command
 
-Before the first test launch, record and verify all of the following:
+`python game_loop.py observatory_callback_manifest` is an explicit diagnostic
+command and is never called by normal play. It loads the sibling
+`observatory_callback_manifest.lua` only when requested, then walks the exact
+`PawnList` registry with bounded raw/table-only inheritance resolution. It
+selects `TEAM_ENEMY` pawn prototypes, resolves their exact `SkillList` globals,
+adds the distinct global `ScorePositioning` function, and records function
+identity metadata without calling or wrapping any candidate callback. It never
+scans `_G`, requires no combat Board for discovery, and fails closed on
+malformed registries, dynamic `__index` functions, cycles, or cap exhaustion.
+If an exact enemy `SkillList` symbol has no runtime global, discovery preserves
+the symbol as an empty callback surface whose four methods are all `missing`.
+This covers the shipped, commented-out `Garden_Atk` global without silently
+dropping the pawn identity or inventing a callback.
+The ordinary file bridge polls commands only from `Mission.BaseUpdate`, so the
+live CLI transport requires an unpaused deployment or active mission with a
+fresh heartbeat. For a registry-only capture before a Mission exists, a second
+explicit path uses the fixed token
+`observatory-callback-manifest-request/1` in
+`itb_observatory_callback_manifest.request`. At script-load time the bridge
+reads at most 129 bytes, removes that one-shot request before execution, accepts
+only the exact token (with an optional terminal newline), and invokes the same
+literal no-argument command. It never evaluates request content as Lua or as a
+general bridge command. Because `scripts.lua` loads `modloader.lua` after the
+shipped pawn and skill registries, this path can enumerate them from the title
+screen without a Board.
 
-- the test Windows user differs from the owner user;
-- the Steam identity is recorded; if it matches the owner identity, Cloud is
-  disabled and the owner profile has a verified recoverable backup;
-- the test install, profile, bridge, and evidence roots are disjoint from all
-  owner roots after resolving links;
-- the game was freshly downloaded by Steam into the test library;
-- the stock test install has a deterministic Observatory inventory;
+The game publishes the bounded JSON document atomically as
+`itb_observatory_callback_manifest.json` in the platform bridge directory and
+then emits only a short count ACK. Python requires a changed file generation,
+valid JSON, ACK-count agreement, and the strict runtime manifest schema before
+reporting success. Exact Lua symbol case is retained in root IDs such as
+`enemy.skill.ScorpionAtk1`; the separate global root is
+`global.ScorePositioning`.
+
+Deploy this command only inside an accepted capture track. Copy both
+`src/bridge/modloader.lua` and
+`src/bridge/observatory_callback_manifest.lua` as sibling scripts, record their
+hashes in the experiment receipt, and either arm the exact startup request
+before restarting ITB or invoke the live command during deployment before any
+action. The bridge result file is scratch output, not authoritative evidence;
+archive it only through the build-keyed, create-only campaign workflow.
+
+## First owner-track callback capture
+
+On 2026-08-21, a read-only comparison of the owner installation against
+`windows_build_13725832_31fe35265598_local_modified.json` found all 689
+inventoried files identical, with no changed or missing files. Its installed
+`modloader.lua` was the exact Git blob from commit `a1c9e79d`, SHA-256
+`8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10`.
+Before instrumentation, the 30-file `profile_Alpha` tree plus `settings.lua`,
+`log.txt`, `steam_autocloud.vdf`, and the installed bridge were copied to
+`codex_backups/20260821_1505_observatory_owner_before` and verified byte for
+byte. The final capture versions of the diagnostic `modloader.lua` and sibling
+callback module had SHA-256 values
+`46f89fc9da7a1dee07c8922a20e541058e91342b30f523134e142ede70d910a6` and
+`c6e6b3db8e97cfcc746f6550b48ef998e2fbab063389ddf2eccba926bdd1fef2`;
+the exact 40-byte startup request had SHA-256
+`a978e9d687f118110359877f8328ef03e978758fc7a4c9c38daaa839fd037798`.
+
+The first request failed closed before publishing a partial manifest because
+`PawnList` references `Garden_Atk`, whose runtime global is absent because its
+shipped definition is commented out. The revised collector preserves that
+exact symbol with four `missing` methods. Two later fresh-process title-screen
+captures were byte-identical: 79,121 bytes, SHA-256
+`bbd44cbcf979e6b6c0f9717ffe7fbcae6a60e03b0316d1738168fea89de08d82`.
+Each records 81 roots, 324 method slots, 238 resolved methods, 86 missing
+methods, and 65 unique Lua function objects. The 86 missing slots are fully
+structural: `ScorePositioning` on the 79 implemented skill roots, the three
+skill methods on the global root, and all four methods on `Garden_Atk`.
+
+The runtime inventory exposed 13 Advanced Edition boss definitions outside the
+original lexical scope, so the build-keyed source index was widened to all 108
+relevant files. It now contains 757 definition instances, 756 unique
+path/symbol pairs, 410 provenance-indexed callbacks, and 347 explicitly
+unindexed callbacks. All 65 runtime function objects join to one exact
+hash-verified source path and definition line, with no ambiguous, unmatched,
+C, debug-unavailable, truncated, or unresolved entries. The committed join has
+SHA-256
+`4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb`.
+
+Cleanup restored and verified all 34 backed-up files (2,600,194 bytes), removed
+the experimental module and side-band files, and found no extra profile files.
+A full post-restore inventory matched all 689 starting install files exactly:
+zero changed, missing, or platform-specific entries. The sealed receipt is
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_callback_receipt.json`.
+This proves deterministic build-keyed callback identity and exact cleanup. It
+does not prove callback behavior, native ABI/hook safety, candidate ordering or
+scores, RNG call order, selected actions, Rust equivalence, or pristine-depot
+neutrality.
+
+## Capture-track acceptance gate
+
+Before the first experimental launch, record and verify all common items:
+
+- the Windows user and Steam identity are recorded;
+- the exact starting install has a deterministic Observatory inventory and an
+  explicit provenance label (`owner_local_modified` or `pristine_reference`);
 - the executable, Lua DLL, scripts, maps, app manifest, depot manifest, and
   native libraries match the boundary artifacts or are classified as a new
   build requiring a new static pass;
-- Steam Cloud is disabled for the test account and no owner save/profile was
-  copied in;
-- the owner install and profile hashes are captured as a read-only before-state;
+- the profile, settings, bridge, and evidence roots are recorded after link
+  resolution;
+- the active profile/settings and installed integration have a verified,
+  recoverable byte-exact backup;
 - every helper, controller, hook plan, and scenario has an exact SHA-256;
-- the test scenario is synthetic and carries no achievement objective.
+- the scenario and starting state are recorded, and no normal play action is
+  mixed into a capture pair;
+- every result and receipt carries the capture-track label.
 
-Any failed item blocks launch or hook installation. A new executable hash
+The pristine-reference track additionally requires a fresh Steam download in a
+disjoint library, no copied owner save/profile, and a deterministic stock
+inventory. The reversible-owner track additionally requires explicit user
+authorization, a create-only durable evidence copy, matched trials from the
+same reset state, and an exact post-trial restore comparison. Steam Cloud should
+be disabled or Steam kept offline during owner-track mutation as defense in
+depth; the verified local backup remains the recovery authority.
+
+Any failed common or track-specific item blocks launch or hook installation. A
+new executable hash
 invalidates every recorded RVA and the committed RNG caller-ID catalog.
 The native checkpoint's `rng_return_map_sha256` is the SHA-256 of the catalog's
 deterministic encoded bytes, including its final newline; attribution rejects a
@@ -91,7 +187,7 @@ the observed post-restore hashes exactly equal that trusted manifest.
 
 ## Native helper contract
 
-Implement the native helper only after the isolation gate passes. The first
+Implement the native helper only after one capture-track gate passes. The first
 helper should be a build-keyed x86 DLL with no general-purpose injection or
 remote-control surface. Its hot hook must:
 
@@ -152,11 +248,18 @@ series without promotion.
 ## Cleanup and promotion
 
 After every series, disarm, restore exact hook bytes, stop the helper, remove
-the experimental Mod Loader integration, and compare the test install with its
-stock inventory. At campaign end, remove the test profile and experimental
-evidence staging area only after durable evidence has been copied to the
-repository archive. Re-hash the owner install/profile and confirm the read-only
-before-state did not change.
+the experimental Mod Loader integration, and compare the active install with
+its accepted starting inventory. This includes restoring the exact prior
+`modloader.lua`,
+removing the installed sibling `observatory_callback_manifest.lua`, and
+removing `itb_observatory_callback_manifest.json` plus any `.tmp` file from the
+active bridge directory after its durable copy is verified. Also remove any
+remaining `itb_observatory_callback_manifest.request`. On the
+pristine-reference track, remove the test profile and experimental evidence
+staging area only after durable evidence has been copied to the repository
+archive. On the owner track, restore the byte-exact backup and report every
+before/after difference; do not claim cleanup if any unexplained difference
+remains.
 
 Only repeated, neutral, build-keyed results may become Rust conformance tests
 or simulator changes. Each simulator semantic change still follows the normal

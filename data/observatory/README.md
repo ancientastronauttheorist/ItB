@@ -91,6 +91,27 @@ Mission-environment files can belong to both categories, so category callback
 totals intentionally overlap. The report distinguishes callback definition
 instances from unique `path + symbol` pairs.
 
+The build-keyed output currently used for runtime identity joins is committed
+at
+`callbacks/windows_build_13725832_31fe35265598_callback_index.json`. It contains
+757 definitions across 108 selected source files (410 indexed by provenance and
+347 explicitly unindexed) and has SHA-256
+`1f207101f8826c1c131f432ca0670e45dcec8ef74b04a4f3395b55b16a2757fd`.
+It contains only normalized symbols, source locations/hashes, categories, and
+indexing status—not Lua source text—and must be regenerated for any changed
+inventory identity.
+
+The first reversible-owner runtime capture is sealed at
+`captures/windows_build_13725832_owner_local_modified_20260821_callback_receipt.json`.
+The receipt binds the exact build and instrumentation identities, the failed-
+closed `Garden_Atk` discovery attempt, two byte-identical fresh-process runtime
+manifests, the 65/65 exact lexical join, and both targeted and whole-install
+cleanup verification. Its SHA-256 is
+`652876a007d8a5def0fde84d228e191303a48148666814a472c35a7059f5eb5b`.
+The capture is explicitly `owner_local_modified`: it proves deterministic
+callback identities for that inventoried build, not callback behavior, native
+hook safety, solver equivalence, or pristine-depot neutrality.
+
 Build a lexical player-weapon Lua-to-Rust ID index from the exact inventoried
 files:
 

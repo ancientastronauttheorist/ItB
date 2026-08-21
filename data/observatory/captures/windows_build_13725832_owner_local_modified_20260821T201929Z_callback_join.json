@@ -1,0 +1,5881 @@
+{
+  "analysis_kind": "runtime_callback_identity_join",
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "function_joins": [
+    {
+      "function_id": "fn-0001",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-scoring"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-target-scoring",
+            "enemy-weapon-hornet",
+            "mission-terraformer-sweep"
+          ],
+          "line": 331,
+          "source_path": "scripts/global.lua",
+          "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "status": "indexed",
+          "symbol": "Skill:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/global.lua",
+      "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "function_id": "fn-0002",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-scoring"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-target-scoring",
+            "enemy-weapon-starfish"
+          ],
+          "line": 378,
+          "source_path": "scripts/global.lua",
+          "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "status": "indexed",
+          "symbol": "Skill:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/global.lua",
+      "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "function_id": "fn-0003",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 490,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "BeetleAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0004",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 224,
+          "source_path": "scripts/weapons_base.lua",
+          "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "status": "unindexed",
+          "symbol": "SelfTarget:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_base.lua",
+      "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38"
+    },
+    {
+      "function_id": "fn-0005",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 732,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "BlobAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0006",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 713,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "BlobAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0007",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 103,
+          "source_path": "scripts/advanced/bosses/blobber.lua",
+          "source_sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c",
+          "status": "unindexed",
+          "symbol": "BlobAtkB:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/blobber.lua",
+      "source_sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c"
+    },
+    {
+      "function_id": "fn-0008",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 84,
+          "source_path": "scripts/advanced/bosses/blobber.lua",
+          "source_sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c",
+          "status": "unindexed",
+          "symbol": "BlobAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/blobber.lua",
+      "source_sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c"
+    },
+    {
+      "function_id": "fn-0009",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-blob-boss-goo-chain"
+          ],
+          "line": 158,
+          "source_path": "scripts/missions/bosses/goo.lua",
+          "source_sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b",
+          "status": "indexed",
+          "symbol": "BlobBossAtk:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/goo.lua",
+      "source_sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b"
+    },
+    {
+      "function_id": "fn-0010",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-blob-boss-goo-chain"
+          ],
+          "line": 172,
+          "source_path": "scripts/missions/bosses/goo.lua",
+          "source_sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b",
+          "status": "indexed",
+          "symbol": "BlobBossAtk:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/goo.lua",
+      "source_sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b"
+    },
+    {
+      "function_id": "fn-0011",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-crab-scarab-artillery",
+            "enemy-weapon-moth",
+            "player-weapon-cluster-artillery",
+            "player-weapon-firestorm-generator",
+            "player-weapon-rocket-artillery",
+            "snow-bot-family-and-defense"
+          ],
+          "line": 310,
+          "source_path": "scripts/weapons_base.lua",
+          "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "status": "indexed",
+          "symbol": "LineArtillery:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_base.lua",
+      "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38"
+    },
+    {
+      "function_id": "fn-0012",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 648,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "BlobberAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0013",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 665,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "BlobberAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0014",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 230,
+          "source_path": "scripts/weapons_base.lua",
+          "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "status": "unindexed",
+          "symbol": "SelfTarget:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_base.lua",
+      "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38"
+    },
+    {
+      "function_id": "fn-0015",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 32,
+          "source_path": "scripts/missions/bosses/bot.lua",
+          "source_sha256": "b95bbdd7727c56ec1550cc5fa994b815578591cd4724a593f544e79b363b2c7d",
+          "status": "indexed",
+          "symbol": "BossHeal:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/bot.lua",
+      "source_sha256": "b95bbdd7727c56ec1550cc5fa994b815578591cd4724a593f544e79b363b2c7d"
+    },
+    {
+      "function_id": "fn-0016",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-bouncer"
+          ],
+          "line": 343,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "BouncerAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0017",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-bouncer"
+          ],
+          "line": 46,
+          "source_path": "scripts/advanced/bosses/bouncer.lua",
+          "source_sha256": "39b41d020af444251d3565b3cf606ac7e6a56547f26ca88efdd7d24182a38704",
+          "status": "indexed",
+          "symbol": "BouncerAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/bouncer.lua",
+      "source_sha256": "39b41d020af444251d3565b3cf606ac7e6a56547f26ca88efdd7d24182a38704"
+    },
+    {
+      "function_id": "fn-0018",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 261,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "unindexed",
+          "symbol": "BurnbugAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0019",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 115,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "Burrower_Atk:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0020",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-centipede"
+          ],
+          "line": 312,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "CentipedeAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0021",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-centipede"
+          ],
+          "line": 325,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "CentipedeAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0022",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-centipede"
+          ],
+          "line": 46,
+          "source_path": "scripts/advanced/bosses/centipede.lua",
+          "source_sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0",
+          "status": "indexed",
+          "symbol": "CentipedeAtkB:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/centipede.lua",
+      "source_sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0"
+    },
+    {
+      "function_id": "fn-0023",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-centipede"
+          ],
+          "line": 59,
+          "source_path": "scripts/advanced/bosses/centipede.lua",
+          "source_sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0",
+          "status": "indexed",
+          "symbol": "CentipedeAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/centipede.lua",
+      "source_sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0"
+    },
+    {
+      "function_id": "fn-0024",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-crab-scarab-artillery"
+          ],
+          "line": 218,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "CrabAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0025",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 46,
+          "source_path": "scripts/advanced/bosses/crab.lua",
+          "source_sha256": "672d88890ae4a0d042593b12721c39108b5305b9e960337f6696503d674af22a",
+          "status": "unindexed",
+          "symbol": "CrabAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/crab.lua",
+      "source_sha256": "672d88890ae4a0d042593b12721c39108b5305b9e960337f6696503d674af22a"
+    },
+    {
+      "function_id": "fn-0026",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-digger"
+          ],
+          "line": 580,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "DiggerAtk1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0027",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-digger"
+          ],
+          "line": 586,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "DiggerAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0028",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-tumblebug"
+          ],
+          "line": 449,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "DungAtk1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0029",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-tumblebug"
+          ],
+          "line": 462,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "DungAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0030",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-tumblebug"
+          ],
+          "line": 503,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "DungAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0031",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 785,
+          "source_path": "scripts/weapons_base.lua",
+          "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "status": "unindexed",
+          "symbol": "EggHatch:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_base.lua",
+      "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38"
+    },
+    {
+      "function_id": "fn-0032",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 423,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "FireflyAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0033",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-boss-core-beetle-firefly-scorpion"
+          ],
+          "line": 48,
+          "source_path": "scripts/missions/bosses/firefly.lua",
+          "source_sha256": "f1c016ba9031553067a38f1de3d884d176dd1af22cd74d3bf02de32649642250",
+          "status": "indexed",
+          "symbol": "FireflyAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/firefly.lua",
+      "source_sha256": "f1c016ba9031553067a38f1de3d884d176dd1af22cd74d3bf02de32649642250"
+    },
+    {
+      "function_id": "fn-0034",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-hornet"
+          ],
+          "line": 158,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "indexed",
+          "symbol": "HornetAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0035",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-hornet"
+          ],
+          "line": 43,
+          "source_path": "scripts/missions/bosses/hornet.lua",
+          "source_sha256": "e41ca873c3e600e4b422291eca2a8c733f3193267d351d58c9fd25ffc213185f",
+          "status": "indexed",
+          "symbol": "HornetAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/hornet.lua",
+      "source_sha256": "e41ca873c3e600e4b422291eca2a8c733f3193267d351d58c9fd25ffc213185f"
+    },
+    {
+      "function_id": "fn-0036",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 54,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "ScorpionAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0037",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 56,
+          "source_path": "scripts/advanced/bosses/leaper.lua",
+          "source_sha256": "176166d4cb3cc9dae9594d32827bbb682214723ef1f099c5366e166da0cfe29a",
+          "status": "unindexed",
+          "symbol": "LeaperAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/leaper.lua",
+      "source_sha256": "176166d4cb3cc9dae9594d32827bbb682214723ef1f099c5366e166da0cfe29a"
+    },
+    {
+      "function_id": "fn-0038",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 72,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "unindexed",
+          "symbol": "MosquitoAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0039",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 38,
+          "source_path": "scripts/advanced/bosses/mosquito.lua",
+          "source_sha256": "4c67917a6d7ce4c8f11a3ca7b1f45e6c692d8fd35b6636d38d176f1dfabbfd16",
+          "status": "unindexed",
+          "symbol": "MosquitoAtkB:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/mosquito.lua",
+      "source_sha256": "4c67917a6d7ce4c8f11a3ca7b1f45e6c692d8fd35b6636d38d176f1dfabbfd16"
+    },
+    {
+      "function_id": "fn-0040",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-moth"
+          ],
+          "line": 385,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "MothAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0041",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 46,
+          "source_path": "scripts/advanced/bosses/scarab.lua",
+          "source_sha256": "0600e298add07db560176c7b6efdfe8b4fca5dfde93c86457dd7ffd3961b6e29",
+          "status": "unindexed",
+          "symbol": "ScarabAtkB:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/scarab.lua",
+      "source_sha256": "0600e298add07db560176c7b6efdfe8b4fca5dfde93c86457dd7ffd3961b6e29"
+    },
+    {
+      "function_id": "fn-0042",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 52,
+          "source_path": "scripts/advanced/bosses/scarab.lua",
+          "source_sha256": "0600e298add07db560176c7b6efdfe8b4fca5dfde93c86457dd7ffd3961b6e29",
+          "status": "unindexed",
+          "symbol": "ScarabAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/scarab.lua",
+      "source_sha256": "0600e298add07db560176c7b6efdfe8b4fca5dfde93c86457dd7ffd3961b6e29"
+    },
+    {
+      "function_id": "fn-0043",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-boss-core-beetle-firefly-scorpion"
+          ],
+          "line": 43,
+          "source_path": "scripts/missions/bosses/scorpion.lua",
+          "source_sha256": "acf7325aba556595e45c24e6773bb5dc63feffe734217bba04bf9d1662b1bb63",
+          "status": "indexed",
+          "symbol": "ScorpionAtkB:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/scorpion.lua",
+      "source_sha256": "acf7325aba556595e45c24e6773bb5dc63feffe734217bba04bf9d1662b1bb63"
+    },
+    {
+      "function_id": "fn-0044",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-boss-core-beetle-firefly-scorpion"
+          ],
+          "line": 49,
+          "source_path": "scripts/missions/bosses/scorpion.lua",
+          "source_sha256": "acf7325aba556595e45c24e6773bb5dc63feffe734217bba04bf9d1662b1bb63",
+          "status": "indexed",
+          "symbol": "ScorpionAtkB:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/scorpion.lua",
+      "source_sha256": "acf7325aba556595e45c24e6773bb5dc63feffe734217bba04bf9d1662b1bb63"
+    },
+    {
+      "function_id": "fn-0045",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-shaman-totem"
+          ],
+          "line": 127,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "ShamanAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0046",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-shaman-totem"
+          ],
+          "line": 143,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "ShamanAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0047",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 120,
+          "source_path": "scripts/weapons_snow.lua",
+          "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "status": "indexed",
+          "symbol": "SnowartAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_snow.lua",
+      "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989"
+    },
+    {
+      "function_id": "fn-0048",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 55,
+          "source_path": "scripts/weapons_snow.lua",
+          "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "status": "indexed",
+          "symbol": "SnowlaserAtk1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_snow.lua",
+      "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989"
+    },
+    {
+      "function_id": "fn-0049",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 67,
+          "source_path": "scripts/weapons_snow.lua",
+          "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "status": "indexed",
+          "symbol": "SnowlaserAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_snow.lua",
+      "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989"
+    },
+    {
+      "function_id": "fn-0050",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 165,
+          "source_path": "scripts/weapons_snow.lua",
+          "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "status": "indexed",
+          "symbol": "SnowmineAtk1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_snow.lua",
+      "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989"
+    },
+    {
+      "function_id": "fn-0051",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "player-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "snow-bot-family-and-defense"
+          ],
+          "line": 169,
+          "source_path": "scripts/weapons_snow.lua",
+          "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989",
+          "status": "indexed",
+          "symbol": "SnowmineAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_snow.lua",
+      "source_sha256": "9bcee52bc72e500b9c25955b34e31097d92e0060c9e0d0512f91236818ddb989"
+    },
+    {
+      "function_id": "fn-0052",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 776,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "SpiderAtk1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0053",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 800,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "SpiderAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0054",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 13,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "SpiderlingAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0055",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-spider-boss-eggs-and-hatch"
+          ],
+          "line": 114,
+          "source_path": "scripts/missions/bosses/spider.lua",
+          "source_sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455",
+          "status": "indexed",
+          "symbol": "SpiderlingHatch1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/spider.lua",
+      "source_sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455"
+    },
+    {
+      "function_id": "fn-0056",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "missions"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "mission-spider-boss-eggs-and-hatch"
+          ],
+          "line": 118,
+          "source_path": "scripts/missions/bosses/spider.lua",
+          "source_sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455",
+          "status": "indexed",
+          "symbol": "SpiderlingHatch1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/missions/bosses/spider.lua",
+      "source_sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455"
+    },
+    {
+      "function_id": "fn-0057",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-starfish"
+          ],
+          "line": 19,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "StarfishAtk1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0058",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-starfish"
+          ],
+          "line": 25,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "StarfishAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0059",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-starfish"
+          ],
+          "line": 44,
+          "source_path": "scripts/advanced/bosses/starfish.lua",
+          "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94",
+          "status": "indexed",
+          "symbol": "StarfishAtkB1:GetTargetArea",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/starfish.lua",
+      "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94"
+    },
+    {
+      "function_id": "fn-0060",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-starfish"
+          ],
+          "line": 50,
+          "source_path": "scripts/advanced/bosses/starfish.lua",
+          "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94",
+          "status": "indexed",
+          "symbol": "StarfishAtkB1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/starfish.lua",
+      "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94"
+    },
+    {
+      "function_id": "fn-0061",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-starfish"
+          ],
+          "line": 61,
+          "source_path": "scripts/advanced/bosses/starfish.lua",
+          "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94",
+          "status": "indexed",
+          "symbol": "StarfishAtkB1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/bosses/starfish.lua",
+      "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94"
+    },
+    {
+      "function_id": "fn-0062",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-weapon-shaman-totem"
+          ],
+          "line": 201,
+          "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+          "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+          "status": "indexed",
+          "symbol": "TotemAtk1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13"
+    },
+    {
+      "function_id": "fn-0063",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 840,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "WebeggHatch1:GetTargetScore",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0064",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-weapons"
+          ],
+          "column": 10,
+          "indexed_by": [],
+          "line": 844,
+          "source_path": "scripts/weapons_enemy.lua",
+          "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+          "status": "unindexed",
+          "symbol": "WebeggHatch1:GetSkillEffect",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b"
+    },
+    {
+      "function_id": "fn-0065",
+      "join_status": "matched",
+      "matches": [
+        {
+          "categories": [
+            "enemy-scoring"
+          ],
+          "column": 10,
+          "indexed_by": [
+            "enemy-target-scoring"
+          ],
+          "line": 446,
+          "source_path": "scripts/global.lua",
+          "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "status": "indexed",
+          "symbol": "ScorePositioning",
+          "syntax": "declaration"
+        }
+      ],
+      "source_path": "scripts/global.lua",
+      "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    }
+  ],
+  "runtime_manifest": {
+    "functions": [
+      {
+        "debug_status": "available",
+        "function_id": "fn-0001",
+        "lastlinedefined": 333,
+        "linedefined": 331,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/global.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/global.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0002",
+        "lastlinedefined": 393,
+        "linedefined": 378,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/global.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/global.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0003",
+        "lastlinedefined": 533,
+        "linedefined": 490,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0004",
+        "lastlinedefined": 228,
+        "linedefined": 224,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_base.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_base.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0005",
+        "lastlinedefined": 734,
+        "linedefined": 732,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0006",
+        "lastlinedefined": 730,
+        "linedefined": 713,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0007",
+        "lastlinedefined": 105,
+        "linedefined": 103,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/blobber.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/blobber.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0008",
+        "lastlinedefined": 101,
+        "linedefined": 84,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/blobber.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/blobber.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0009",
+        "lastlinedefined": 170,
+        "linedefined": 158,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/goo.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/goo.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0010",
+        "lastlinedefined": 187,
+        "linedefined": 172,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/goo.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/goo.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0011",
+        "lastlinedefined": 328,
+        "linedefined": 310,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_base.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_base.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0012",
+        "lastlinedefined": 663,
+        "linedefined": 648,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0013",
+        "lastlinedefined": 678,
+        "linedefined": 665,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0014",
+        "lastlinedefined": 232,
+        "linedefined": 230,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_base.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_base.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0015",
+        "lastlinedefined": 41,
+        "linedefined": 32,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/bot.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/bot.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0016",
+        "lastlinedefined": 358,
+        "linedefined": 343,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0017",
+        "lastlinedefined": 59,
+        "linedefined": 46,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/bouncer.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/bouncer.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0018",
+        "lastlinedefined": 309,
+        "linedefined": 261,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0019",
+        "lastlinedefined": 128,
+        "linedefined": 115,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0020",
+        "lastlinedefined": 323,
+        "linedefined": 312,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0021",
+        "lastlinedefined": 346,
+        "linedefined": 325,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0022",
+        "lastlinedefined": 57,
+        "linedefined": 46,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/centipede.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/centipede.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0023",
+        "lastlinedefined": 91,
+        "linedefined": 59,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/centipede.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/centipede.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0024",
+        "lastlinedefined": 228,
+        "linedefined": 218,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0025",
+        "lastlinedefined": 65,
+        "linedefined": 46,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/crab.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/crab.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0026",
+        "lastlinedefined": 584,
+        "linedefined": 580,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0027",
+        "lastlinedefined": 606,
+        "linedefined": 586,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0028",
+        "lastlinedefined": 460,
+        "linedefined": 449,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0029",
+        "lastlinedefined": 497,
+        "linedefined": 462,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0030",
+        "lastlinedefined": 531,
+        "linedefined": 503,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0031",
+        "lastlinedefined": 791,
+        "linedefined": 785,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_base.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_base.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0032",
+        "lastlinedefined": 445,
+        "linedefined": 423,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0033",
+        "lastlinedefined": 68,
+        "linedefined": 48,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/firefly.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/firefly.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0034",
+        "lastlinedefined": 173,
+        "linedefined": 158,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0035",
+        "lastlinedefined": 62,
+        "linedefined": 43,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/hornet.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/hornet.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0036",
+        "lastlinedefined": 74,
+        "linedefined": 54,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0037",
+        "lastlinedefined": 85,
+        "linedefined": 56,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/leaper.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/leaper.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0038",
+        "lastlinedefined": 92,
+        "linedefined": 72,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0039",
+        "lastlinedefined": 44,
+        "linedefined": 38,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/mosquito.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/mosquito.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0040",
+        "lastlinedefined": 400,
+        "linedefined": 385,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0041",
+        "lastlinedefined": 50,
+        "linedefined": 46,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/scarab.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/scarab.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0042",
+        "lastlinedefined": 65,
+        "linedefined": 52,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/scarab.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/scarab.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0043",
+        "lastlinedefined": 47,
+        "linedefined": 43,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/scorpion.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/scorpion.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0044",
+        "lastlinedefined": 65,
+        "linedefined": 49,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/scorpion.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/scorpion.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0045",
+        "lastlinedefined": 141,
+        "linedefined": 127,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0046",
+        "lastlinedefined": 159,
+        "linedefined": 143,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0047",
+        "lastlinedefined": 135,
+        "linedefined": 120,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_snow.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_snow.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0048",
+        "lastlinedefined": 65,
+        "linedefined": 55,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_snow.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_snow.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0049",
+        "lastlinedefined": 79,
+        "linedefined": 67,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_snow.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_snow.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0050",
+        "lastlinedefined": 167,
+        "linedefined": 165,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_snow.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_snow.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0051",
+        "lastlinedefined": 184,
+        "linedefined": 169,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_snow.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_snow.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0052",
+        "lastlinedefined": 798,
+        "linedefined": 776,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0053",
+        "lastlinedefined": 811,
+        "linedefined": 800,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0054",
+        "lastlinedefined": 18,
+        "linedefined": 13,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0055",
+        "lastlinedefined": 116,
+        "linedefined": 114,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/spider.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/spider.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0056",
+        "lastlinedefined": 127,
+        "linedefined": 118,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/missions/bosses/spider.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/missions/bosses/spider.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0057",
+        "lastlinedefined": 23,
+        "linedefined": 19,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0058",
+        "lastlinedefined": 38,
+        "linedefined": 25,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0059",
+        "lastlinedefined": 48,
+        "linedefined": 44,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/starfish.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/starfish.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0060",
+        "lastlinedefined": 59,
+        "linedefined": 50,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/starfish.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/starfish.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0061",
+        "lastlinedefined": 75,
+        "linedefined": 61,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/bosses/starfish.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/bosses/starfish.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0062",
+        "lastlinedefined": 213,
+        "linedefined": 201,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/advanced/ae_weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/advanced/ae_weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0063",
+        "lastlinedefined": 842,
+        "linedefined": 840,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0064",
+        "lastlinedefined": 860,
+        "linedefined": 844,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/weapons_enemy.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/weapons_enemy.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      },
+      {
+        "debug_status": "available",
+        "function_id": "fn-0065",
+        "lastlinedefined": 505,
+        "linedefined": 446,
+        "name": "",
+        "name_truncated": false,
+        "namewhat": "",
+        "namewhat_truncated": false,
+        "short_src": "scripts/global.lua",
+        "short_src_truncated": false,
+        "source": "@scripts/global.lua",
+        "source_truncated": false,
+        "what": "Lua",
+        "what_truncated": false
+      }
+    ],
+    "limits": {
+      "max_depth": 16,
+      "max_functions": 1024,
+      "max_roots": 256,
+      "max_text_bytes": 512
+    },
+    "method_order": [
+      "GetTargetArea",
+      "GetTargetScore",
+      "GetSkillEffect",
+      "ScorePositioning"
+    ],
+    "roots": [
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0003",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BeetleAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0003",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BeetleAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0003",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BeetleAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0005",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0006",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0005",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0006",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0007",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0008",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0009",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0010",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobBossAtk"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0009",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0010",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobBossAtkMed"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0009",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0010",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobBossAtkSmall"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0012",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0013",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobberAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0012",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0013",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobberAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0012",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0013",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BlobberAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0014",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0015",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BossHeal"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0016",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BouncerAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0016",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BouncerAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0017",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BouncerAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0018",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BurnbugAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0018",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.BurnbugAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0019",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.Burrower_Atk"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0019",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.Burrower_Atk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0020",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0021",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CentipedeAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0020",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0021",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CentipedeAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0022",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0023",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CentipedeAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0024",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CrabAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0024",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CrabAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0025",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.CrabAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0026",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0027",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DiggerAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0026",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0027",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DiggerAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0026",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0027",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DiggerAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0028",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0029",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0030",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DungAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0028",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0029",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0030",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DungAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0028",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0029",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0030",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.DungAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0014",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0031",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.EggHatch"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0032",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.FireflyAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0032",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.FireflyAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0033",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.FireflyAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0032",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.FireflyAtk_Acid"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.Garden_Atk"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0034",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.HornetAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0034",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.HornetAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0035",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.HornetAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0034",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.HornetAtk_Acid"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0036",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.LeaperAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0036",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.LeaperAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0037",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.LeaperAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0038",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.MosquitoAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0038",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.MosquitoAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0039",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0038",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.MosquitoAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0040",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.MothAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0040",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.MothAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0024",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScarabAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0024",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScarabAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0041",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0042",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScarabAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0036",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScorpionAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0036",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScorpionAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0043",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0044",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScorpionAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0036",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ScorpionAtk_Acid"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0045",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0046",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ShamanAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0045",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0046",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ShamanAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0045",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0046",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.ShamanAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0047",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowBossAtk"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0047",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowartAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0047",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowartAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0048",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0049",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowlaserAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0048",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0049",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowlaserAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0050",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0051",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowmineAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0032",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowtankAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0032",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SnowtankAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0052",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0053",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SpiderAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0011",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0052",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0053",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 3,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SpiderAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0054",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SpiderlingAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0054",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SpiderlingAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0055",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0056",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.SpiderlingHatch1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0057",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0058",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.StarfishAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0057",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0058",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.StarfishAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0059",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0060",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0061",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.StarfishAtkB1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0062",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.TotemAtk1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0062",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.TotemAtk2"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0001",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0002",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0062",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.TotemAtkB"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0004",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 1,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0063",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0064",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 2,
+            "status": "missing"
+          }
+        ],
+        "root_id": "enemy.skill.WebeggHatch1"
+      },
+      {
+        "methods": [
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetTargetArea",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetTargetScore",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "",
+            "method": "GetSkillEffect",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "missing"
+          },
+          {
+            "expected_function_id": "",
+            "expected_truncated": false,
+            "function_id": "fn-0065",
+            "method": "ScorePositioning",
+            "replaced": false,
+            "resolution_depth": 0,
+            "status": "resolved"
+          }
+        ],
+        "root_id": "global.ScorePositioning"
+      }
+    ],
+    "runtime_version": "observatory-callback-manifest/1",
+    "schema_version": 1,
+    "summary": {
+      "function_count": 65,
+      "method_count": 324,
+      "replaced_count": 0,
+      "root_count": 81,
+      "status_counts": {
+        "c_function": 0,
+        "debug_unavailable": 0,
+        "depth_exceeded": 0,
+        "function_cap": 0,
+        "function_index": 0,
+        "index_cycle": 0,
+        "invalid_index": 0,
+        "missing": 86,
+        "non_function": 0,
+        "protected_metatable": 0,
+        "resolved": 238
+      }
+    }
+  },
+  "schema_version": 1,
+  "summary": {
+    "function_count": 65,
+    "join_status_counts": {
+      "ambiguous": 0,
+      "c_function": 0,
+      "debug_unavailable": 0,
+      "matched": 65,
+      "truncated_source": 0,
+      "unmatched": 0,
+      "unresolved_line": 0,
+      "unresolved_source": 0
+    }
+  }
+}

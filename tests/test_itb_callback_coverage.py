@@ -76,6 +76,11 @@ def _fixture(tmp_path: Path) -> tuple[dict, dict, Path, Path]:
         "function Env_Tides:Plan()\n"
         "end\n",
     )
+    boss_metadata = _write(
+        content_root / "scripts/advanced/bosses/starfish.lua",
+        "function StarfishAtkB1:GetTargetScore(p1, p2)\n"
+        "end\n",
+    )
     inventory = {
         "platform": "windows",
         "executable": {"architecture": "x86", "sha256": HASH_A},
@@ -98,6 +103,10 @@ def _fixture(tmp_path: Path) -> tuple[dict, dict, Path, Path]:
                     {
                         "path": "scripts/missions/grass/mission_tides.lua",
                         **tides_metadata,
+                    },
+                    {
+                        "path": "scripts/advanced/bosses/starfish.lua",
+                        **boss_metadata,
                     },
                 ],
             },
@@ -203,6 +212,10 @@ def test_callback_coverage_is_exact_scoped_and_deterministic(tmp_path: Path):
         ("scripts/weapons_enemy.lua", "FireflyAtk1:GetSkillEffect"),
         ("scripts/weapons_enemy.lua", "ScorePositioning"),
         ("scripts/missions/grass/mission_tides.lua", "Env_Tides:Plan"),
+        (
+            "scripts/advanced/bosses/starfish.lua",
+            "StarfishAtkB1:GetTargetScore",
+        ),
     }
     assert callbacks[
         ("scripts/global.lua", "ScorePositioning")
@@ -220,11 +233,11 @@ def test_callback_coverage_is_exact_scoped_and_deterministic(tmp_path: Path):
         ("scripts/weapons_enemy.lua", "ScorePositioning")
     ]["status"] == "unindexed"
     assert first["summary"] == {
-        "source_files": 3,
-        "callback_definitions": 8,
-        "unique_path_symbols": 8,
+        "source_files": 4,
+        "callback_definitions": 9,
+        "unique_path_symbols": 9,
         "indexed_callbacks": 2,
-        "unindexed_callbacks": 6,
+        "unindexed_callbacks": 7,
         "provenance_records_used": 1,
     }
     assert first["categories"] == [
@@ -236,9 +249,9 @@ def test_callback_coverage_is_exact_scoped_and_deterministic(tmp_path: Path):
         },
         {
             "category": "enemy-weapons",
-            "callbacks": 2,
+            "callbacks": 3,
             "indexed_callbacks": 0,
-            "unindexed_callbacks": 2,
+            "unindexed_callbacks": 3,
         },
         {
             "category": "environments",
@@ -288,7 +301,7 @@ def test_callback_coverage_cli_emits_json(tmp_path: Path, capsys):
     )
     output = json.loads(capsys.readouterr().out)
     assert output["analysis_kind"] == "lua_callback_provenance_index"
-    assert output["summary"]["callback_definitions"] == 8
+    assert output["summary"]["callback_definitions"] == 9
 
 
 @pytest.mark.parametrize(

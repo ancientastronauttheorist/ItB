@@ -1,6 +1,5 @@
 import json
 import time
-from pathlib import Path
 
 from src.bridge import protocol
 
@@ -30,8 +29,12 @@ def test_is_bridge_active_ignores_candidate_disappearing_after_sort(monkeypatch)
                 return type("Stat", (), {"st_mtime": time.time()})()
             raise FileNotFoundError("tmp disappeared")
 
+    class StablePath:
+        def stat(self):
+            return type("Stat", (), {"st_mtime": time.time()})()
+
     disappearing = DisappearingPath()
-    stable = Path(__file__)
+    stable = StablePath()
 
     monkeypatch.setattr(protocol, "LOG_FILE", ExistingLog())
     monkeypatch.setattr(protocol, "_state_candidates", lambda: [disappearing, stable])

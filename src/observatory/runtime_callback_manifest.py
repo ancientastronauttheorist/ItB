@@ -135,7 +135,7 @@ BUILD_IDENTITY_FIELDS = frozenset(
     }
 )
 
-_ROOT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,127}$")
+_ROOT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 

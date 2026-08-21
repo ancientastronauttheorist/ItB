@@ -52,7 +52,7 @@ SOURCE_AUDIT_CATEGORIES = (
     ),
     (
         "enemy-weapons",
-        "Base and Advanced Edition enemy weapon Lua.",
+        "Base, Advanced Edition, and Advanced boss enemy weapon Lua.",
     ),
     (
         "player-weapons",
@@ -454,10 +454,16 @@ def _source_audit_category(path: str, category: str) -> bool:
     if category == "enemy-scoring":
         return path == "scripts/global.lua"
     if category == "enemy-weapons":
-        return path in {
-            "scripts/weapons_enemy.lua",
-            "scripts/advanced/ae_weapons_enemy.lua",
-        }
+        return (
+            path in {
+                "scripts/weapons_enemy.lua",
+                "scripts/advanced/ae_weapons_enemy.lua",
+            }
+            or (
+                path.startswith("scripts/advanced/bosses/")
+                and path.endswith(".lua")
+            )
+        )
     if category == "player-weapons":
         return is_player_weapon_source(path)
     if category == "missions":

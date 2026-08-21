@@ -67,7 +67,9 @@ from src.capture.detect_grid import find_game_window, grid_from_window
 from src.bridge.protocol import (
     is_bridge_active, is_bridge_alive, refresh_bridge_state,
     refresh_bridge_state_fresh, read_state,
-    BridgeError, ACK_FILE, CMD_FILE, STATE_FILE, STATE_TMP,
+    BridgeError, ACK_FILE, CALLBACK_MANIFEST_FILE,
+    CALLBACK_MANIFEST_REQUEST_BYTES, CMD_FILE, STATE_FILE, STATE_TMP,
+    arm_observatory_callback_manifest_startup,
 )
 from src.bridge.reader import (
     WEB_SOURCE_WEAPONS,
@@ -78,8 +80,13 @@ from src.bridge.reader import (
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
+    bridge_observatory_callback_manifest,
     move_mech, attack_mech, attack_mech_two, skip_mech, repair_mech,
     reactivate_player_pawns,
+)
+from src.observatory.runtime_callback_manifest import (
+    RuntimeCallbackManifestError,
+    validate_runtime_callback_manifest,
 )
 from src.loop.session import RunSession, SolverAction, resolve_session_file
 from src.itb_paths import get_artifact_path
@@ -20626,6 +20633,82 @@ def cmd_bridge_ui_probe() -> dict:
         ]
         if callable_bits:
             print(f"  callable methods:  {'; '.join(callable_bits)}")
+    _print_result(result)
+    return result
+
+
+def cmd_observatory_callback_manifest() -> dict:
+    """Capture and strictly validate one inert callback-identity manifest."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        result = {
+            "status": "NO_BRIDGE",
+            "reason": "bridge_heartbeat_stale_or_missing",
+            "next_step": (
+                "Use an accepted, inventoried Observatory capture track with "
+                "the callback module installed. Either arm the fixed startup "
+                "request and restart ITB, or enter an unpaused deployment or "
+                "active mission so Mission.BaseUpdate can poll."
+            ),
+        }
+        _print_result(result)
+        return result
+    try:
+        ack, raw_manifest = bridge_observatory_callback_manifest(timeout=15.0)
+        manifest = validate_runtime_callback_manifest(raw_manifest)
+        raw_sha256 = hashlib.sha256(
+            CALLBACK_MANIFEST_FILE.read_bytes()
+        ).hexdigest()
+    except (
+        TimeoutError,
+        BridgeError,
+        RuntimeCallbackManifestError,
+        OSError,
+    ) as exc:
+        result = {"status": "ERROR", "error": str(exc)}
+        _print_result(result)
+        return result
+
+    summary = manifest["summary"]
+    function_cap = summary["status_counts"].get("function_cap", 0)
+    result = {
+        "status": "INCOMPLETE" if function_cap else "OK",
+        "ack": ack,
+        "manifest_file": str(CALLBACK_MANIFEST_FILE),
+        "manifest_sha256": raw_sha256,
+        "summary": summary,
+        "root_ids": [root["root_id"] for root in manifest["roots"]],
+    }
+    if function_cap:
+        result["reason"] = "runtime function catalog reached its hard cap"
+    print("\n=== OBSERVATORY CALLBACK MANIFEST ===")
+    print(f"  status:      {result['status']}")
+    print(f"  roots:       {summary['root_count']}")
+    print(f"  functions:   {summary['function_count']}")
+    print(f"  replacements:{summary['replaced_count']}")
+    print(f"  sha256:      {raw_sha256}")
+    _print_result(result)
+    return result
+
+
+def cmd_observatory_callback_manifest_arm_startup() -> dict:
+    """Create the fixed one-shot request for a title-screen capture."""
+    try:
+        request_file = arm_observatory_callback_manifest_startup()
+    except BridgeError as exc:
+        result = {"status": "ERROR", "error": str(exc)}
+        _print_result(result)
+        return result
+    result = {
+        "status": "ARMED",
+        "request_file": str(request_file),
+        "request_sha256": hashlib.sha256(
+            CALLBACK_MANIFEST_REQUEST_BYTES
+        ).hexdigest(),
+        "next_step": (
+            "Restart ITB. The request is consumed once after shipped scripts "
+            "load, and the result is written to the callback manifest file."
+        ),
+    }
     _print_result(result)
     return result
 

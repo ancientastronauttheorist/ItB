@@ -213,3 +213,147 @@ def test_invalid_inputs_fail_closed(lua):
         assert(spec_index_calls == 0)
         """
     )
+
+
+def test_enemy_skill_discovery_is_bounded_exact_and_callback_inert(lua):
+    lua.execute(
+        r"""
+        local calls = 0
+        local globals = {
+            TEAM_ENEMY = 6,
+            ScorePositioning = function()
+                calls = calls + 1
+                return 0
+            end,
+        }
+        local pawn_base = {DefaultTeam = 0, SkillList = {}}
+        local enemy_base = {DefaultTeam = 6}
+        setmetatable(enemy_base, {__index = pawn_base})
+        local skill_base = {
+            GetTargetArea = function() calls = calls + 1 end,
+            GetTargetScore = function() calls = calls + 1 end,
+        }
+        local scorpion = {
+            GetSkillEffect = function() calls = calls + 1 end,
+        }
+        setmetatable(scorpion, {__index = skill_base})
+        local firefly = {
+            GetSkillEffect = function() calls = calls + 1 end,
+        }
+        setmetatable(firefly, {__index = skill_base})
+
+        globals.PawnList = {"PlayerPawn", "Scorpion1", "Scorpion2"}
+        globals.PlayerPawn = {DefaultTeam = 1, SkillList = {"PlayerSkill"}}
+        globals.Scorpion1 = {SkillList = {"ScorpionAtk1"}}
+        globals.Scorpion2 = {SkillList = {"FireflyAtk1", "ScorpionAtk1"}}
+        setmetatable(globals.Scorpion1, {__index = enemy_base})
+        setmetatable(globals.Scorpion2, {__index = enemy_base})
+        globals.PlayerSkill = {}
+        globals.ScorpionAtk1 = scorpion
+        globals.FireflyAtk1 = firefly
+
+        local roots = assert(
+            CALLBACK_MANIFEST.discover_enemy_skill_roots(globals)
+        )
+        assert(#roots == 3)
+        assert(roots[1].root_id == "enemy.skill.FireflyAtk1")
+        assert(roots[2].root_id == "enemy.skill.ScorpionAtk1")
+        assert(roots[3].root_id == "global.ScorePositioning")
+        assert(roots[1].object == firefly)
+        assert(roots[2].object == scorpion)
+        assert(calls == 0)
+
+        local manifest = assert(CALLBACK_MANIFEST.enumerate(roots, {
+            max_roots = 3,
+            max_depth = 4,
+            max_functions = 8,
+            max_text_bytes = 128,
+        }))
+        assert(manifest.summary.root_count == 3)
+        assert(manifest.roots[1].methods[1].status == "resolved")
+        assert(manifest.roots[2].methods[3].status == "resolved")
+        assert(manifest.roots[3].methods[4].status == "resolved")
+        assert(calls == 0)
+        """
+    )
+
+
+def test_enemy_skill_discovery_never_invokes_dynamic_inheritance(lua):
+    lua.execute(
+        r"""
+        local index_calls = 0
+        local dynamic = {}
+        setmetatable(dynamic, {
+            __index = function()
+                index_calls = index_calls + 1
+                error("must not run")
+            end,
+        })
+        local globals = {
+            TEAM_ENEMY = 6,
+            PawnList = {"DynamicPawn"},
+            DynamicPawn = dynamic,
+            ScorePositioning = function() return 0 end,
+        }
+        local roots, err =
+            CALLBACK_MANIFEST.discover_enemy_skill_roots(globals)
+        assert(roots == nil)
+        assert(string.find(err, "DefaultTeam is function_index", 1, true))
+        assert(index_calls == 0)
+        """
+    )
+
+
+def test_enemy_skill_discovery_preserves_missing_global_as_missing_surface(lua):
+    lua.execute(
+        r"""
+        local globals = {
+            TEAM_ENEMY = 6,
+            PawnList = {"Garden1"},
+            Garden1 = {
+                DefaultTeam = 6,
+                SkillList = {"Garden_Atk"},
+            },
+            ScorePositioning = function() return 0 end,
+        }
+        assert(rawget(globals, "Garden_Atk") == nil)
+        local roots = assert(
+            CALLBACK_MANIFEST.discover_enemy_skill_roots(globals)
+        )
+        assert(#roots == 2)
+        assert(roots[1].root_id == "enemy.skill.Garden_Atk")
+        assert(type(roots[1].object) == "table")
+        assert(next(roots[1].object) == nil)
+
+        local manifest = assert(CALLBACK_MANIFEST.enumerate(roots, {
+            max_roots = 2,
+            max_depth = 4,
+            max_functions = 4,
+            max_text_bytes = 128,
+        }))
+        for index = 1, 4 do
+            assert(manifest.roots[1].methods[index].status == "missing")
+            assert(manifest.roots[1].methods[index].function_id == "")
+        end
+        assert(manifest.summary.status_counts.missing == 7)
+        assert(manifest.summary.function_count == 1)
+        """
+    )
+
+
+def test_enemy_skill_discovery_rejects_registry_overflow(lua):
+    lua.execute(
+        r"""
+        local pawn_list = {}
+        for index = 1, 513 do
+            pawn_list[index] = "Pawn" .. tostring(index)
+        end
+        local roots, err = CALLBACK_MANIFEST.discover_enemy_skill_roots({
+            TEAM_ENEMY = 6,
+            PawnList = pawn_list,
+            ScorePositioning = function() return 0 end,
+        })
+        assert(roots == nil)
+        assert(err == "PawnList violates its cap or shape")
+        """
+    )

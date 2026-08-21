@@ -11,7 +11,12 @@ import os
 from src.solver.solver import MechAction
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
-from src.bridge.protocol import BridgeError, write_command, wait_for_ack
+from src.bridge.protocol import (
+    BridgeError,
+    request_observatory_callback_manifest,
+    write_command,
+    wait_for_ack,
+)
 
 
 def _action_timeout() -> float:
@@ -278,3 +283,10 @@ def bridge_ui_probe() -> str:
     """Run the read-only Lua UI/menu probe."""
     write_command("UI_PROBE")
     return wait_for_ack(timeout=5.0)
+
+
+def bridge_observatory_callback_manifest(
+    *, timeout: float = 10.0
+) -> tuple[str, dict]:
+    """Capture one fresh inert enemy callback-identity manifest."""
+    return request_observatory_callback_manifest(timeout=timeout)

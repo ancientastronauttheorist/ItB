@@ -1,0 +1,168 @@
+{
+  "attempts": [
+    {
+      "ack": "ERROR: OBS_CALLBACK_MANIFEST root discovery failed: enemy skill global is not a table: Garden_Atk",
+      "callback_module_sha256": "a4e244d3f2268d6be0bc424c42d4b2682f258c46493adf4e7f23822cea2dc6f1",
+      "captured_at_utc": "2026-08-21T20:17:02Z",
+      "finding": "PawnList references the commented-out/missing Garden_Atk global; no partial manifest was published.",
+      "phase": "script_load_title_screen",
+      "status": "failed_closed"
+    },
+    {
+      "ack": "OK OBS_CALLBACK_MANIFEST roots=81 functions=65",
+      "artifact": {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821T201929Z_callback_manifest.json",
+        "sha256": "bbd44cbcf979e6b6c0f9717ffe7fbcae6a60e03b0316d1738168fea89de08d82",
+        "size": 79121
+      },
+      "captured_at_utc": "2026-08-21T20:19:29Z",
+      "phase": "script_load_title_screen",
+      "process_id": 5040,
+      "status": "complete"
+    },
+    {
+      "ack": "OK OBS_CALLBACK_MANIFEST roots=81 functions=65",
+      "artifact": {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821T203108Z_callback_manifest_repeat.json",
+        "sha256": "bbd44cbcf979e6b6c0f9717ffe7fbcae6a60e03b0316d1738168fea89de08d82",
+        "size": 79121
+      },
+      "captured_at_utc": "2026-08-21T20:31:08Z",
+      "phase": "script_load_title_screen",
+      "process_id": 21412,
+      "status": "complete_repeat"
+    }
+  ],
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "pristine Steam depot neutrality",
+      "native callback invocation boundaries or ABI safety",
+      "enemy candidate ordering, scores, tie-breaking, or selected actions",
+      "random_int/random_bool caller order",
+      "behavioral equivalence of Rust and the observed Lua callbacks"
+    ],
+    "proven": [
+      "The exact build exposes 80 enemy SkillList symbols plus global.ScorePositioning at script-load time.",
+      "Garden_Atk is referenced by PawnList but has no runtime table; its callback surface is preserved as missing.",
+      "The other 79 enemy skill roots resolve GetTargetArea, GetTargetScore, and GetSkillEffect, and the global root resolves ScorePositioning.",
+      "All 65 unique runtime Lua functions join to one exact inventoried source path and definition line.",
+      "The two fresh-process manifests are byte-identical.",
+      "The owner profile/settings/integration and all 689 inventoried install files were restored exactly."
+    ]
+  },
+  "determinism": {
+    "byte_identical": true,
+    "fresh_process_count": 2,
+    "manifest_sha256": "bbd44cbcf979e6b6c0f9717ffe7fbcae6a60e03b0316d1738168fea89de08d82"
+  },
+  "instrumentation": {
+    "callback_module_sha256": "c6e6b3db8e97cfcc746f6550b48ef998e2fbab063389ddf2eccba926bdd1fef2",
+    "candidate_callback_invoked_or_wrapped": false,
+    "modloader_sha256": "46f89fc9da7a1dee07c8922a20e541058e91342b30f523134e142ede70d910a6",
+    "native_hook_installed": false,
+    "prior_installed_modloader_sha256": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+    "startup_request_bytes": 40,
+    "startup_request_sha256": "a978e9d687f118110359877f8328ef03e978758fc7a4c9c38daaa839fd037798"
+  },
+  "inventory": {
+    "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+    "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f",
+    "size": 125477
+  },
+  "kind": "observatory_callback_manifest_capture_receipt",
+  "lexical_index": {
+    "artifact": {
+      "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_callback_index.json",
+      "sha256": "1f207101f8826c1c131f432ca0670e45dcec8ef74b04a4f3395b55b16a2757fd",
+      "size": 535024
+    },
+    "repeat_generation_sha256": "1f207101f8826c1c131f432ca0670e45dcec8ef74b04a4f3395b55b16a2757fd",
+    "summary": {
+      "callback_definitions": 757,
+      "indexed_callbacks": 410,
+      "provenance_records_used": 79,
+      "source_files": 108,
+      "unindexed_callbacks": 347,
+      "unique_path_symbols": 756
+    }
+  },
+  "repository_base_commit": "f01667a320765c427d398c7484971df96d1d1c61",
+  "restore": {
+    "artifact": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_restore_manifest.json",
+      "sha256": "298431f92276cce9ca0fa8f728d70d835513faa9d0af41c42f32ebf6c694feea",
+      "size": 11637
+    },
+    "extra_profile_file_count": 0,
+    "installed_modloader_sha256_after_restore": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+    "mismatch_count": 0,
+    "remaining_experimental_file_count": 0,
+    "verified_byte_count": 2600194,
+    "verified_file_count": 34
+  },
+  "runtime_join": {
+    "artifact": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb",
+      "size": 179219
+    },
+    "recomputed_exactly": true,
+    "summary": {
+      "function_count": 65,
+      "join_status_counts": {
+        "ambiguous": 0,
+        "c_function": 0,
+        "debug_unavailable": 0,
+        "matched": 65,
+        "truncated_source": 0,
+        "unmatched": 0,
+        "unresolved_line": 0,
+        "unresolved_source": 0
+      }
+    }
+  },
+  "runtime_summary": {
+    "function_count": 65,
+    "method_count": 324,
+    "replaced_count": 0,
+    "root_count": 81,
+    "status_counts": {
+      "c_function": 0,
+      "debug_unavailable": 0,
+      "depth_exceeded": 0,
+      "function_cap": 0,
+      "function_index": 0,
+      "index_cycle": 0,
+      "invalid_index": 0,
+      "missing": 86,
+      "non_function": 0,
+      "protected_metatable": 0,
+      "resolved": 238
+    }
+  },
+  "schema_version": 1,
+  "sealed_at_utc": "2026-08-21T20:44:50.5447072Z",
+  "whole_install_after_restore": {
+    "artifact": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_owner_local_modified_post_callback_restore_20260821.json",
+      "sha256": "1143da29b3d91537c7c0e1ca9f771813b77c0090362eae7f6e1a0ed28b8be468",
+      "size": 125472
+    },
+    "comparison_summary": {
+      "changed": 0,
+      "identical": 689,
+      "missing": 0,
+      "platform_specific": 0
+    }
+  }
+}
