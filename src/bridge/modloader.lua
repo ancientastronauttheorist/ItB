@@ -69,10 +69,30 @@ local CALLBACK_TRIAL_REQUEST_FILE =
     BRIDGE_DIR .. "/itb_observatory_callback_trial.request"
 local CALLBACK_TRIAL_REQUEST_TOKEN =
     "observatory-callback-trial-request/1"
+local NATIVE_CONTINUE_REQUEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_native_continue.request"
+local NATIVE_CONTINUE_REQUEST_TOKEN =
+    "observatory-native-continue-request/1"
 local NATIVE_RNG_SNAPSHOT_FILE =
     BRIDGE_DIR .. "/itb_observatory_native_rng_snapshot.json"
 local NATIVE_RNG_SNAPSHOT_TMP =
     BRIDGE_DIR .. "/itb_observatory_native_rng_snapshot.json.tmp"
+local SPAWN_SPAN_LEDGER_FILE =
+    BRIDGE_DIR .. "/itb_observatory_spawn_span_ledger.json"
+local SPAWN_SPAN_LEDGER_TMP =
+    BRIDGE_DIR .. "/itb_observatory_spawn_span_ledger.json.tmp"
+local SPAWN_SPAN_CONTROLLER_SHA256 =
+    "4923ee3b08c802824f17963dc625015d2c91e6e467149b72bba218c49830935d"
+local SELECTED_QUEUE_SNAPSHOT_FILE =
+    BRIDGE_DIR .. "/itb_observatory_selected_queue_snapshot.json"
+local SELECTED_QUEUE_SNAPSHOT_TMP =
+    BRIDGE_DIR .. "/itb_observatory_selected_queue_snapshot.json.tmp"
+local SELECTED_QUEUE_OBSERVER_SHA256 =
+    "2cf202cc2e58c33651864ed8939b8491cc082048c300d82b63ff3cfbd76a5676"
+local SELECTED_QUEUE_OBSERVER_EXPORT =
+    "luaopen_itb_observatory_selected_queue_hw_observer"
+local SELECTED_QUEUE_HW_PLAN_SHA256 =
+    "f99e1ba7b130799f27f6cc4e7a12aa4198bccb624ce994ae6a3fc063c30511b6"
 local NATIVE_RNG_OBSERVER_SHA256 =
     "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c"
 local NATIVE_RNG_OBSERVER_EXPORT =
@@ -94,9 +114,14 @@ local NATIVE_RNG_SEED_HELPER_SHA256 =
     "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787"
 local NATIVE_RNG_SEED_REGION_SHA256 =
     "67b19fe39627674ef04d07bd86e989a39ce744be2e93f9265c16e2aeb928cf9d"
+local NATIVE_GAMEFLOW_HELPER_SHA256 =
+    "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a"
 
 local _observatory_native_rng_module = nil
 local _observatory_native_rng_capture_id = nil
+local _observatory_spawn_span_controller = nil
+local _observatory_native_gameflow = nil
+local _observatory_selected_queue_module = nil
 
 if is_windows() then
     os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
@@ -3362,6 +3387,59 @@ local function load_observatory_callback_gameflow_helper(
     return helper
 end
 
+local function load_observatory_native_gameflow_helper(directory)
+    return load_observatory_callback_gameflow_helper(
+        directory, NATIVE_GAMEFLOW_HELPER_SHA256
+    )
+end
+
+local function load_observatory_selected_queue_module(directory)
+    if not is_windows() then
+        return nil, "selected/queue observer requires Windows"
+    end
+    if type(directory) ~= "string" then
+        return nil, "selected/queue observer directory is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_selected_queue_hw_observer_"
+        .. SELECTED_QUEUE_OBSERVER_SHA256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        SELECTED_QUEUE_OBSERVER_EXPORT
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load selected/queue observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "selected/queue observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-selected-queue-hw-observer/1"
+        or rawget(observer, "BUILD_ID") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "SELECTED_RVA") ~= "0x000f6854"
+        or rawget(observer, "QUEUE_RVA") ~= "0x00227d20"
+        or rawget(observer, "HARDWARE_BREAKPOINT_PLAN_SHA256")
+            ~= SELECTED_QUEUE_HW_PLAN_SHA256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "selected/queue observer contract mismatch"
+    end
+    return observer
+end
+
 local function observatory_path_exists(path)
     local file = io.open(path, "r")
     if not file then return false end
@@ -3464,6 +3542,56 @@ local function load_observatory_native_rng_module()
     return observer
 end
 
+local function load_observatory_spawn_span_controller(observer, capture_id)
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local filename = "itb_observatory_spawn_span_controller_"
+        .. SPAWN_SPAN_CONTROLLER_SHA256 .. ".lua"
+    local module, module_error = load_observatory_trial_artifact(
+        directory, filename, "spawn span controller"
+    )
+    if not module then return nil, module_error end
+    if rawget(module, "VERSION")
+            ~= "observatory-spawn-span-controller/1"
+        or rawget(module, "SPAWNER_SOURCE_SUFFIX")
+            ~= "scripts/spawner_backend.lua"
+        or rawget(module, "SPAWNER_SOURCE_LINE") ~= 174
+        or rawget(module, "SPAWNER_SOURCE_SHA256")
+            ~= "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
+        or rawget(module, "MAX_SPANS") ~= 64
+        or rawget(module, "MAX_NATIVE_RECORDS") ~= 4096
+        or type(rawget(module, "new")) ~= "function" then
+        return nil, "spawn span controller contract mismatch"
+    end
+    local spawner = rawget(_G, "Spawner")
+    local debug_table = rawget(_G, "debug")
+    local getinfo = type(debug_table) == "table"
+        and rawget(debug_table, "getinfo") or nil
+    if type(spawner) ~= "table" or type(rawget(spawner, "NextPawn")) ~= "function"
+        or type(getinfo) ~= "function" then
+        return nil, "Spawner.NextPawn runtime boundary is unavailable"
+    end
+    local opened, controller, controller_error = pcall(
+        rawget(module, "new"),
+        {
+            capture_id = capture_id,
+            spawner = spawner,
+            observer = observer,
+            getinfo = getinfo,
+        }
+    )
+    if not opened or type(controller) ~= "table" then
+        return nil, "spawn span controller construction failed: "
+            .. tostring(controller_error or controller)
+    end
+    if type(rawget(controller, "activate")) ~= "function"
+        or type(rawget(controller, "checkpoint")) ~= "function"
+        or type(rawget(controller, "abort")) ~= "function" then
+        return nil, "spawn span controller instance contract mismatch"
+    end
+    return controller
+end
+
 local function validate_observatory_native_rng_snapshot(snapshot, capture_id)
     if type(snapshot) ~= "table"
         or rawget(snapshot, "schema_version") ~= 1
@@ -3499,6 +3627,493 @@ local function validate_observatory_native_rng_snapshot(snapshot, capture_id)
         return nil, "native RNG snapshot is incomplete or inconsistent"
     end
     return true
+end
+
+local function validate_observatory_spawn_span_ledger(
+    ledger, capture_id, raw_record_count
+)
+    if type(ledger) ~= "table"
+        or rawget(ledger, "schema_version") ~= 1
+        or rawget(ledger, "kind") ~= "spawn_rng_span_ledger"
+        or rawget(ledger, "controller_version")
+            ~= "observatory-spawn-span-controller/1"
+        or rawget(ledger, "controller_sha256")
+            ~= SPAWN_SPAN_CONTROLLER_SHA256
+        or rawget(ledger, "capture_id") ~= capture_id
+        or rawget(ledger, "write_mode") ~= "create_only"
+        or rawget(ledger, "raw_record_count") ~= raw_record_count
+        or type(rawget(ledger, "source_identity")) ~= "table"
+        or type(rawget(ledger, "integrity")) ~= "table"
+        or type(rawget(ledger, "spans")) ~= "table"
+        or type(rawget(ledger, "summary")) ~= "table" then
+        return nil, "spawn span ledger contract mismatch"
+    end
+    local source = rawget(ledger, "source_identity")
+    local integrity = rawget(ledger, "integrity")
+    local summary = rawget(ledger, "summary")
+    if rawget(source, "expected_sha256")
+            ~= "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
+        or rawget(source, "expected_source_suffix")
+            ~= "scripts/spawner_backend.lua"
+        or rawget(source, "expected_linedefined") ~= 174
+        or rawget(source, "runtime_linedefined") ~= 174
+        or rawget(source, "source_location_verified") ~= true
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "wrapper_restored") ~= true
+        or rawget(integrity, "restore_conflict") ~= false
+        or rawget(integrity, "nested_call_count") ~= 0
+        or rawget(integrity, "observer_status_error_count") ~= 0
+        or rawget(integrity, "span_overflow_count") ~= 0
+        or rawget(integrity, "count_regression_count") ~= 0
+        or rawget(integrity, "active_depth") ~= 0
+        or rawget(summary, "span_count") ~= #ledger.spans
+        or rawget(summary, "complete") ~= true then
+        return nil, "spawn span ledger is incomplete"
+    end
+    local previous_exit = 0
+    for index, span in ipairs(ledger.spans) do
+        if type(span) ~= "table"
+            or rawget(span, "span_id") ~= index
+            or rawget(span, "name") ~= "spawner_next_pawn"
+            or rawget(span, "detail") ~= "normal"
+            or type(rawget(span, "entry_count")) ~= "number"
+            or span.entry_count ~= math.floor(span.entry_count)
+            or type(rawget(span, "exit_count")) ~= "number"
+            or span.exit_count ~= math.floor(span.exit_count)
+            or span.entry_count < previous_exit
+            or span.entry_count < 0
+            or span.entry_count > span.exit_count
+            or span.exit_count > raw_record_count
+            or type(rawget(span, "selected_pawn")) ~= "string"
+            or string.len(span.selected_pawn) < 1
+            or string.len(span.selected_pawn) > 96 then
+            return nil, "spawn span ledger contains an invalid span"
+        end
+        previous_exit = span.exit_count
+    end
+    return true
+end
+
+local function start_observatory_native_rng_with_spawn_span(capture_id)
+    local command_name = "OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if active_ok and active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if _observatory_native_rng_module ~= nil
+        or _observatory_spawn_span_controller ~= nil then
+        return nil, "native RNG spawn-span observer is already consumed"
+    end
+    if observatory_path_exists(NATIVE_RNG_SNAPSHOT_FILE)
+        or observatory_path_exists(NATIVE_RNG_SNAPSHOT_TMP)
+        or observatory_path_exists(SPAWN_SPAN_LEDGER_FILE)
+        or observatory_path_exists(SPAWN_SPAN_LEDGER_TMP) then
+        return nil, "native RNG spawn-span output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    local observer, observer_error = load_observatory_native_rng_module()
+    if not observer then return nil, tostring(observer_error) end
+    local controller, controller_error =
+        load_observatory_spawn_span_controller(observer, capture_id)
+    if not controller then return nil, tostring(controller_error) end
+
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "seed failed: " .. tostring(seeded)
+    end
+    _observatory_native_rng_module = observer
+    _observatory_native_rng_capture_id = capture_id
+    local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+    if not arm_ok or armed ~= true then
+        pcall(rawget(observer, "finish"))
+        return nil, "native observer arm failed: " .. tostring(armed)
+    end
+    local activate_ok, activated = pcall(
+        rawget(controller, "activate"), controller
+    )
+    if not activate_ok or activated ~= true then
+        pcall(rawget(controller, "abort"), controller)
+        pcall(rawget(observer, "finish"))
+        return nil, "spawn span activation failed: " .. tostring(activated)
+    end
+    local status_ok, status = pcall(rawget(observer, "status"))
+    if not status_ok or type(status) ~= "table"
+        or rawget(status, "state") ~= "capturing"
+        or rawget(status, "patch_installed") ~= true then
+        pcall(rawget(controller, "abort"), controller)
+        pcall(rawget(observer, "finish"))
+        return nil, "post-activation observer status mismatch"
+    end
+    _observatory_spawn_span_controller = controller
+    _observatory_native_gameflow = gameflow
+    return command_name .. " capture=" .. capture_id
+        .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
+end
+
+local function validate_observatory_selected_queue_snapshot(snapshot, capture_id)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_selected_queue_hw_observer_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-selected-queue-hw-observer/1"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "records")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "selected/queue snapshot contract mismatch"
+    end
+    local identity = rawget(snapshot, "identity")
+    local integrity = rawget(snapshot, "integrity")
+    local summary = rawget(snapshot, "summary")
+    if rawget(identity, "platform") ~= "windows"
+        or rawget(identity, "architecture") ~= "x86"
+        or rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "boundary_map_sha256")
+            ~= "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2"
+        or rawget(identity, "hardware_breakpoint_plan_sha256")
+            ~= SELECTED_QUEUE_HW_PLAN_SHA256
+        or rawget(identity, "selected_prebytes_sha256")
+            ~= "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b"
+        or rawget(identity, "queue_prebytes_sha256")
+            ~= "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3"
+        or type(rawget(summary, "record_count")) ~= "number"
+        or rawget(summary, "record_count") ~= #snapshot.records
+        or type(rawget(summary, "selected_count")) ~= "number"
+        or type(rawget(summary, "queue_count")) ~= "number"
+        or type(rawget(summary, "pair_count")) ~= "number"
+        or type(rawget(integrity, "complete")) ~= "boolean" then
+        return nil, "selected/queue snapshot identity or counts mismatch"
+    end
+    for index, record in ipairs(snapshot.records) do
+        if type(record) ~= "table"
+            or rawget(record, "seq") ~= index - 1
+            or (rawget(record, "kind") ~= "selected_record"
+                and rawget(record, "kind") ~= "queued_action")
+            or type(rawget(record, "pair_index")) ~= "number"
+            or type(rawget(record, "pawn_id")) ~= "number"
+            or type(rawget(record, "current_weapon_raw")) ~= "number"
+            or type(rawget(record, "base_current_weapon_raw")) ~= "number" then
+            return nil, "selected/queue snapshot contains an invalid record"
+        end
+    end
+    return true
+end
+
+local function observatory_selected_queue_snapshot_complete(snapshot)
+    local integrity = rawget(snapshot, "integrity") or {}
+    local summary = rawget(snapshot, "summary") or {}
+    if rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "stopped_reason") ~= nil
+        or rawget(integrity, "overflow_count") ~= 0
+        or rawget(integrity, "ordering_error_count") ~= 0
+        or rawget(integrity, "pointer_fault_count") ~= 0
+        or rawget(integrity, "transition_mismatch_count") ~= 0
+        or rawget(integrity, "wrong_thread_count") ~= 0
+        or rawget(integrity, "unexpected_breakpoint_count") ~= 0
+        or rawget(integrity, "torn_record_count") ~= 0
+        or rawget(integrity, "debug_registers_armed") ~= false
+        or rawget(integrity, "debug_registers_cleared") ~= true
+        or rawget(integrity, "veh_installed") ~= false
+        or rawget(integrity, "veh_removed") ~= true
+        or rawget(integrity, "executable_file_released") ~= true
+        or rawget(integrity, "executable_bytes_modified") ~= false
+        or rawget(integrity, "seam_bytes_unchanged") ~= true
+        or rawget(summary, "record_count") ~= 2
+        or rawget(summary, "selected_count") ~= 1
+        or rawget(summary, "queue_count") ~= 1
+        or rawget(summary, "pair_count") ~= 1
+        or rawget(summary, "thread_count") ~= 1
+        or rawget(summary, "pending_selection") ~= false then
+        return nil, "selected/queue snapshot is incomplete"
+    end
+    return true
+end
+
+local function observatory_selected_queue_scenario()
+    local mission = _ITB_CURRENT_MISSION
+    if not mission and GetCurrentMission then
+        local mission_ok, current = pcall(GetCurrentMission)
+        if mission_ok then mission = current end
+    end
+    if mission_bridge_id(mission) ~= "Mission_Power" then
+        return nil, "selected/queue scenario requires Mission_Power"
+    end
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local point = Point(x, y)
+            local danger_ok, danger = pcall(function()
+                return Board:IsEnvironmentDanger(point)
+            end)
+            if danger_ok and danger then
+                return nil, "selected/queue scenario requires no environment danger"
+            end
+        end
+    end
+    rawset(mission, "InfiniteSpawn", false)
+    local spawning_before = 0
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local spawn_ok, spawning = pcall(function()
+                return Board:IsSpawning(Point(x, y))
+            end)
+            if spawn_ok and spawning then spawning_before = spawning_before + 1 end
+        end
+    end
+    if spawning_before > 0 then
+        local spawn_ok, spawn_error = pcall(function() Board:SpawnQueued() end)
+        if not spawn_ok then
+            return nil, "cannot consume queued spawns: " .. tostring(spawn_error)
+        end
+    end
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local spawn_ok, spawning = pcall(function()
+                return Board:IsSpawning(Point(x, y))
+            end)
+            if spawn_ok and spawning then
+                return nil, "queued spawn marker remained after scenario reset"
+            end
+        end
+    end
+    local enemy_ids = extract_table(Board:GetPawns(TEAM_ENEMY))
+    table.sort(enemy_ids)
+    for _, enemy_id in ipairs(enemy_ids) do
+        local pawn = Board:GetPawn(enemy_id)
+        if pawn then
+            local removed, remove_error = pcall(function()
+                Board:RemovePawn(pawn)
+            end)
+            if not removed then
+                return nil, "cannot remove scenario enemy: "
+                    .. tostring(remove_error)
+            end
+        end
+    end
+    if #extract_table(Board:GetPawns(TEAM_ENEMY)) ~= 0 then
+        return nil, "scenario enemy reset was incomplete"
+    end
+    local candidates = {
+        Point(4, 4), Point(4, 5), Point(5, 4), Point(3, 4),
+        Point(4, 3), Point(5, 3), Point(3, 5), Point(5, 5),
+    }
+    local selected = nil
+    for _, point in ipairs(candidates) do
+        local safe_ok, safe = pcall(function()
+            return Board:IsValid(point)
+                and Board:GetTerrain(point) == TERRAIN_ROAD
+                and not Board:IsPawnSpace(point)
+                and not Board:IsItem(point)
+                and not Board:IsPod(point)
+                and not Board:IsFire(point)
+                and not Board:IsAcid(point)
+                and not Board:IsSmoke(point)
+                and not Board:IsSpawning(point)
+                and not Board:IsEnvironmentDanger(point)
+        end)
+        if safe_ok and safe then selected = point break end
+    end
+    if selected == nil then
+        return nil, "no safe deterministic Firefly scenario tile is available"
+    end
+    local added_ok, added_error = pcall(function()
+        Board:AddPawn("Firefly1", selected)
+    end)
+    if not added_ok then
+        return nil, "cannot add deterministic Firefly: " .. tostring(added_error)
+    end
+    local pawn = Board:GetPawn(selected)
+    if not pawn or pawn:GetTeam() ~= TEAM_ENEMY
+        or pawn:GetType() ~= "Firefly1" then
+        return nil, "deterministic Firefly identity mismatch"
+    end
+    local clear_ok, clear_error = pcall(function() pawn:ClearQueued() end)
+    if not clear_ok then
+        return nil, "cannot clear deterministic Firefly queue: "
+            .. tostring(clear_error)
+    end
+    local final_ids = extract_table(Board:GetPawns(TEAM_ENEMY))
+    if #final_ids ~= 1 or final_ids[1] ~= pawn:GetId() then
+        return nil, "selected/queue scenario is not one-enemy exact"
+    end
+    return {
+        pawn_id = pawn:GetId(),
+        pawn_type = pawn:GetType(),
+        x = selected.x,
+        y = selected.y,
+        consumed_spawn_count = spawning_before,
+    }
+end
+
+local function run_observatory_selected_queue_trial(condition, capture_id)
+    local command_name = "OBS_SELECTED_QUEUE_TRIAL"
+    if condition ~= "control" and condition ~= "dormant"
+        and condition ~= "armed" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " capture ID is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    if _observatory_selected_queue_module ~= nil then
+        return nil, "selected/queue observer is already consumed"
+    end
+    if observatory_path_exists(SELECTED_QUEUE_SNAPSHOT_FILE)
+        or observatory_path_exists(SELECTED_QUEUE_SNAPSHOT_TMP) then
+        return nil, "selected/queue snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    local observer = nil
+    if condition ~= "control" then
+        local observer_error = nil
+        observer, observer_error =
+            load_observatory_selected_queue_module(directory)
+        if not observer then return nil, tostring(observer_error) end
+    end
+    local scenario, scenario_error = observatory_selected_queue_scenario()
+    if not scenario then return nil, tostring(scenario_error) end
+    local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, mech_id in ipairs(mech_ids) do
+        local mech = Board:GetPawn(mech_id)
+        if mech and not mech:IsDead() then mech:SetActive(false) end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "selected/queue seed failed: " .. tostring(seeded)
+    end
+    if condition == "armed" then
+        _observatory_selected_queue_module = observer
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "selected/queue arm failed: " .. tostring(armed)
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "debug_registers_armed") ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "selected/queue arm status mismatch"
+        end
+    end
+    local start_count = -1
+    pcall(function() start_count = Game:GetTurnCount() end)
+    local end_ok, invoked = pcall(rawget(gameflow, "end_player_turn"))
+    if not end_ok or invoked ~= true then
+        if condition == "armed" then pcall(rawget(observer, "finish")) end
+        return nil, "selected/queue native End Turn failed: "
+            .. tostring(invoked)
+    end
+    local advanced = wait_until_coro(function()
+        if Board:IsBusy() then return false end
+        local current_count = -1
+        local current_team = -1
+        pcall(function() current_count = Game:GetTurnCount() end)
+        pcall(function() current_team = Game:GetTeamTurn() end)
+        return current_count > start_count and current_team == TEAM_PLAYER
+    end, 60)
+    if not advanced then
+        if condition == "armed" then pcall(rawget(observer, "finish")) end
+        return nil, "selected/queue turn transition timed out"
+    end
+    local record_count = 0
+    if condition == "armed" then
+        local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+        if not finish_ok or type(snapshot) ~= "table" then
+            return nil, "selected/queue finish failed: " .. tostring(snapshot)
+        end
+        local valid, validation_error =
+            validate_observatory_selected_queue_snapshot(snapshot, capture_id)
+        if not valid then return nil, tostring(validation_error) end
+        local wrote, write_error = write_observatory_create_only_json(
+            SELECTED_QUEUE_SNAPSHOT_FILE,
+            SELECTED_QUEUE_SNAPSHOT_TMP,
+            snapshot,
+            256 * 1024
+        )
+        if not wrote then
+            return nil, "selected/queue snapshot output failed: "
+                .. tostring(write_error)
+        end
+        record_count = rawget(snapshot.summary, "record_count") or 0
+        local complete, complete_error =
+            observatory_selected_queue_snapshot_complete(snapshot)
+        if not complete then return nil, tostring(complete_error) end
+    end
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " pawn=" .. tostring(scenario.pawn_id)
+        .. " type=" .. tostring(scenario.pawn_type)
+        .. " at=" .. tostring(scenario.x) .. "," .. tostring(scenario.y)
+        .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
+        .. " records=" .. tostring(record_count)
+        .. " complete=true"
 end
 
 local function observatory_trial_live_state(capsule, cached_save)
@@ -4253,7 +4868,13 @@ local function execute_command(cmd_str)
                 _G, "_ITB_OBSERVATORY_CALLBACK_GAMEFLOW"
             )
             local trial = rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL")
-            if type(trial) == "table"
+            local native_diagnostic = false
+            if type(trial) ~= "table"
+                and type(_observatory_native_gameflow) == "table" then
+                gameflow = _observatory_native_gameflow
+                native_diagnostic = true
+            end
+            if (type(trial) == "table" or native_diagnostic)
                 and type(gameflow) == "table"
                 and rawget(gameflow, "VERSION")
                     == "observatory-callback-gameflow-helper/6"
@@ -4262,6 +4883,9 @@ local function execute_command(cmd_str)
                 local native_ok, invoked = pcall(
                     rawget(gameflow, "end_player_turn")
                 )
+                if native_diagnostic then
+                    _observatory_native_gameflow = nil
+                end
                 if not native_ok or invoked ~= true then
                     write_ack(
                         "ERROR: Observatory native End Turn failed: "
@@ -4273,7 +4897,11 @@ local function execute_command(cmd_str)
                     return
                 end
                 method = "observatory_native"
-                log_bridge("OBS CALLBACK TRIAL native End Turn invoked")
+                if native_diagnostic then
+                    log_bridge("OBS NATIVE DIAGNOSTIC End Turn invoked")
+                else
+                    log_bridge("OBS CALLBACK TRIAL native End Turn invoked")
+                end
             else
                 write_ack("NEEDS_MCP_CLICK END_TURN method=SetActive")
                 return
@@ -4449,6 +5077,23 @@ local function execute_command(cmd_str)
         )
         return
 
+    elseif cmd == "OBS_SELECTED_QUEUE_TRIAL" then
+        if #parts ~= 3 then
+            write_ack(
+                "ERROR: OBS_SELECTED_QUEUE_TRIAL requires condition and capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            run_observatory_selected_queue_trial(parts[2], parts[3])
+        if not completed then
+            write_ack("ERROR: OBS_SELECTED_QUEUE_TRIAL "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
     elseif cmd == "OBS_NATIVE_RNG_SEED" then
         -- Fixed build-keyed seed control for matched native-observer trials.
         -- The command accepts no seed input and is permitted only after all
@@ -4500,6 +5145,13 @@ local function execute_command(cmd_str)
                 .. tostring(helper_error))
             return
         end
+        local gameflow, gameflow_error =
+            load_observatory_native_gameflow_helper(directory)
+        if not gameflow then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED "
+                .. tostring(gameflow_error))
+            return
+        end
         local seed_ok, seeded = pcall(
             rawget(helper, "seed"), NATIVE_RNG_FIXED_SEED
         )
@@ -4508,8 +5160,26 @@ local function execute_command(cmd_str)
                 .. tostring(seeded))
             return
         end
+        _observatory_native_gameflow = gameflow
         write_ack("OK OBS_NATIVE_RNG_SEED seed="
             .. tostring(NATIVE_RNG_FIXED_SEED))
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN requires one capture ID"
+            )
+            return
+        end
+        local started, start_error =
+            start_observatory_native_rng_with_spawn_span(parts[2])
+        if not started then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN "
+                .. tostring(start_error))
+            return
+        end
+        write_ack("OK " .. started)
         return
 
     elseif cmd == "OBS_NATIVE_RNG_SEED_AND_ARM" then
@@ -4591,6 +5261,13 @@ local function execute_command(cmd_str)
                 .. tostring(seed_helper_error))
             return
         end
+        local gameflow, gameflow_error =
+            load_observatory_native_gameflow_helper(directory)
+        if not gameflow then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM "
+                .. tostring(gameflow_error))
+            return
+        end
         -- Loading validates the observer contract but installs no patch;
         -- observer.arm below is the sole mutation point.
         local observer, observer_error =
@@ -4625,6 +5302,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM status mismatch")
             return
         end
+        _observatory_native_gameflow = gameflow
         write_ack(
             "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=" .. capture_id
             .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
@@ -4700,6 +5378,26 @@ local function execute_command(cmd_str)
             write_ack("ERROR: native RNG observer is not loaded")
             return
         end
+        local span_ledger = nil
+        if _observatory_spawn_span_controller ~= nil then
+            local checkpoint_ok, checkpoint_value = pcall(
+                rawget(_observatory_spawn_span_controller, "checkpoint"),
+                _observatory_spawn_span_controller
+            )
+            if checkpoint_ok and type(checkpoint_value) == "table" then
+                span_ledger = checkpoint_value
+                rawset(
+                    span_ledger,
+                    "controller_sha256",
+                    SPAWN_SPAN_CONTROLLER_SHA256
+                )
+            else
+                pcall(
+                    rawget(_observatory_spawn_span_controller, "abort"),
+                    _observatory_spawn_span_controller
+                )
+            end
+        end
         local finish_ok, snapshot = pcall(
             rawget(_observatory_native_rng_module, "finish")
         )
@@ -4717,6 +5415,19 @@ local function execute_command(cmd_str)
                 .. tostring(validation_error))
             return
         end
+        if _observatory_spawn_span_controller ~= nil then
+            local ledger_valid, ledger_error =
+                validate_observatory_spawn_span_ledger(
+                    span_ledger,
+                    _observatory_native_rng_capture_id,
+                    rawget(snapshot.summary, "record_count")
+                )
+            if not ledger_valid then
+                write_ack("ERROR: OBS_NATIVE_RNG_FINISH "
+                    .. tostring(ledger_error))
+                return
+            end
+        end
         local wrote, write_error = write_observatory_create_only_json(
             NATIVE_RNG_SNAPSHOT_FILE,
             NATIVE_RNG_SNAPSHOT_TMP,
@@ -4727,6 +5438,20 @@ local function execute_command(cmd_str)
             write_ack("ERROR: OBS_NATIVE_RNG_FINISH output failed: "
                 .. tostring(write_error))
             return
+        end
+        if span_ledger ~= nil then
+            local ledger_wrote, ledger_write_error =
+                write_observatory_create_only_json(
+                    SPAWN_SPAN_LEDGER_FILE,
+                    SPAWN_SPAN_LEDGER_TMP,
+                    span_ledger,
+                    256 * 1024
+                )
+            if not ledger_wrote then
+                write_ack("ERROR: OBS_NATIVE_RNG_FINISH span ledger output failed: "
+                    .. tostring(ledger_write_error))
+                return
+            end
         end
         write_ack(
             "OK OBS_NATIVE_RNG_FINISH capture="
@@ -5244,6 +5969,48 @@ local function consume_observatory_callback_bindings_startup_request()
     return true
 end
 
+local function consume_observatory_native_continue_startup_request()
+    local file = io.open(NATIVE_CONTINUE_REQUEST_FILE, "r")
+    if not file then return false end
+    local content = file:read(128)
+    local extra = file:read(1)
+    file:close()
+    pcall(function() os.remove(NATIVE_CONTINUE_REQUEST_FILE) end)
+    if extra ~= nil
+        or (content ~= NATIVE_CONTINUE_REQUEST_TOKEN
+            and content ~= NATIVE_CONTINUE_REQUEST_TOKEN .. "\n"
+            and content ~= NATIVE_CONTINUE_REQUEST_TOKEN .. "\r\n") then
+        write_ack("ERROR: invalid Observatory native Continue request")
+        log_bridge("OBS NATIVE CONTINUE startup request rejected")
+        return true
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then
+        write_ack("ERROR: Observatory native Continue "
+            .. tostring(directory_error))
+        return true
+    end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then
+        write_ack("ERROR: Observatory native Continue "
+            .. tostring(gameflow_error))
+        return true
+    end
+    local continue_ok, invoked = pcall(
+        rawget(gameflow, "continue_saved_timeline")
+    )
+    if not continue_ok or invoked ~= true then
+        write_ack("ERROR: Observatory native Continue failed: "
+            .. tostring(invoked))
+        return true
+    end
+    _observatory_native_gameflow = gameflow
+    write_ack("OK OBS_NATIVE_CONTINUE_REQUEST invoked=true")
+    log_bridge("OBS NATIVE CONTINUE startup request invoked")
+    return true
+end
+
 -- Clean up stale files from previous session
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
@@ -5271,11 +6038,15 @@ local _rng_trial_startup_requested = observatory_path_exists(
 local _callback_trial_startup_requested = observatory_path_exists(
     CALLBACK_TRIAL_REQUEST_FILE
 )
+local _native_continue_startup_requested = observatory_path_exists(
+    NATIVE_CONTINUE_REQUEST_FILE
+)
 local _observatory_startup_request_count =
     (_callback_startup_requested and 1 or 0)
     + (_callback_bindings_startup_requested and 1 or 0)
     + (_rng_trial_startup_requested and 1 or 0)
     + (_callback_trial_startup_requested and 1 or 0)
+    + (_native_continue_startup_requested and 1 or 0)
 if _observatory_startup_request_count > 1 then
     write_ack("ERROR: multiple Observatory startup requests are armed")
     log_bridge("OBS startup rejected: multiple requests are armed")
@@ -5293,6 +6064,15 @@ elseif _callback_bindings_startup_requested then
     )
     if not _startup_request_ok then
         log_bridge("OBS CALLBACK BINDINGS startup request failed: "
+            .. tostring(_startup_request_error))
+    end
+elseif _native_continue_startup_requested then
+    local _startup_request_ok, _startup_request_error = pcall(
+        consume_observatory_native_continue_startup_request
+    )
+    if not _startup_request_ok then
+        write_ack("ERROR: Observatory native Continue startup failed")
+        log_bridge("OBS NATIVE CONTINUE startup failed: "
             .. tostring(_startup_request_error))
     end
 elseif _rng_trial_startup_requested then

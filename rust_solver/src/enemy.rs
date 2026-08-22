@@ -3391,6 +3391,46 @@ mod tests {
     }
 
     #[test]
+    fn test_observatory_selected_record_drives_firefly_queue_direction() {
+        // Windows build 13725832 selected/queue campaign, all three armed
+        // captures: Firefly1 commits aiDest=(5,4), aiTarget=(4,4), then the
+        // queue stores origin=(5,4), target/queuedShot=(4,4), skill=1.
+        let mut board = Board::default();
+        board.grid_power = 4;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        let firefly = add_enemy_with_type(
+            &mut board,
+            1303,
+            5,
+            4,
+            3,
+            "Firefly1",
+            4,
+            4,
+        );
+        board.units[firefly].weapon_damage = 1;
+        board.units[firefly].queued_origin_x = 5;
+        board.units[firefly].queued_origin_y = 4;
+        board.units[firefly].queued_target_raw_x = 4;
+        board.units[firefly].queued_target_raw_y = 4;
+        board.units[firefly].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.grid_power, 3);
+        assert_eq!(result.grid_damage, 1);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+    }
+
+    #[test]
     fn test_acid_storm_enemy_phase_refreshes_fresh_enemy_spawns_and_keeps_prior_acid_after_death() {
         let mut board = Board::default();
         board.mission_id = "Mission_AcidStorm".to_string();

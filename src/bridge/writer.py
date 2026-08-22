@@ -16,8 +16,11 @@ from src.bridge.protocol import (
     request_observatory_callback_bindings,
     arm_observatory_native_rng,
     finish_observatory_native_rng,
+    finish_observatory_native_rng_spawn_span,
     request_observatory_callback_manifest,
+    run_observatory_selected_queue_trial,
     seed_and_arm_observatory_native_rng,
+    seed_and_arm_observatory_native_rng_spawn_span,
     seed_observatory_native_rng,
     status_observatory_native_rng,
     write_command,
@@ -330,6 +333,17 @@ def bridge_observatory_native_rng_seed_and_arm(
     return seed_and_arm_observatory_native_rng(capture_id, timeout=timeout)
 
 
+def bridge_observatory_native_rng_seed_and_arm_spawn_span(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically seed, arm native RNG, and wrap exact NextPawn."""
+    return seed_and_arm_observatory_native_rng_spawn_span(
+        capture_id, timeout=timeout
+    )
+
+
 def bridge_observatory_native_rng_status(
     *, timeout: float = 10.0
 ) -> tuple[str, dict]:
@@ -344,3 +358,24 @@ def bridge_observatory_native_rng_finish(
 ) -> tuple[str, dict]:
     """Restore the native hook and retrieve a fresh complete snapshot."""
     return finish_observatory_native_rng(capture_id, timeout=timeout)
+
+
+def bridge_observatory_native_rng_finish_spawn_span(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict, dict]:
+    """Restore native RNG and NextPawn, retrieving both fresh outputs."""
+    return finish_observatory_native_rng_spawn_span(capture_id, timeout=timeout)
+
+
+def bridge_observatory_selected_queue_trial(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict | None]:
+    """Run one fixed one-enemy selected-record/queue diagnostic."""
+    return run_observatory_selected_queue_trial(
+        condition, capture_id, timeout=timeout
+    )

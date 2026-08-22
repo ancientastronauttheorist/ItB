@@ -15,8 +15,10 @@ from typing import Any
 
 from src.bridge.writer import (
     bridge_observatory_native_rng_finish,
+    bridge_observatory_native_rng_finish_spawn_span,
     bridge_observatory_native_rng_seed,
     bridge_observatory_native_rng_seed_and_arm,
+    bridge_observatory_native_rng_seed_and_arm_spawn_span,
 )
 
 
@@ -42,9 +44,9 @@ class NativeRngTurnBoundary:
     """Arm/seed/restore one control or exact native RNG turn trial."""
 
     def __init__(self, *, condition: str, capture_id: str) -> None:
-        if condition not in {"control", "exact_hook"}:
+        if condition not in {"control", "exact_hook", "spawn_span"}:
             raise NativeRngTurnBoundaryError(
-                "native RNG condition must be control or exact_hook"
+                "native RNG condition must be control, exact_hook, or spawn_span"
             )
         if type(capture_id) is not str or _CAPTURE_ID.fullmatch(capture_id) is None:
             raise NativeRngTurnBoundaryError("native RNG capture ID is invalid")
@@ -56,6 +58,7 @@ class NativeRngTurnBoundary:
         self.seed_and_arm_ack: str | None = None
         self.finish_ack: str | None = None
         self.snapshot: dict[str, Any] | None = None
+        self.spawn_span_ledger: dict[str, Any] | None = None
 
     @property
     def armed(self) -> bool:
@@ -67,15 +70,22 @@ class NativeRngTurnBoundary:
                 f"native RNG boundary cannot start from state {self.state}"
             )
         try:
-            if self.condition == "exact_hook":
+            if self.condition in {"exact_hook", "spawn_span"}:
                 # One bridge command loads both pinned modules while the RNG
                 # bytes are pristine, seeds, and arms without yielding a game
                 # tick.  Mark the arm as pending before delivery because a
                 # lost ACK is ambiguous and must trigger a restore attempt.
                 self.state = "arm_pending"
-                self.seed_and_arm_ack = (
-                    bridge_observatory_native_rng_seed_and_arm(self.capture_id)
-                )
+                if self.condition == "spawn_span":
+                    self.seed_and_arm_ack = (
+                        bridge_observatory_native_rng_seed_and_arm_spawn_span(
+                            self.capture_id
+                        )
+                    )
+                else:
+                    self.seed_and_arm_ack = (
+                        bridge_observatory_native_rng_seed_and_arm(self.capture_id)
+                    )
                 self.state = "armed"
             else:
                 self.seed_ack = bridge_observatory_native_rng_seed()
@@ -89,7 +99,9 @@ class NativeRngTurnBoundary:
         return self.summary()
 
     def after_end_turn(self, end_turn_result: object) -> dict[str, Any]:
-        expected_state = "armed" if self.condition == "exact_hook" else "seeded"
+        expected_state = (
+            "armed" if self.condition in {"exact_hook", "spawn_span"} else "seeded"
+        )
         if self.state != expected_state:
             raise NativeRngTurnBoundaryError(
                 f"native RNG boundary cannot finish from state {self.state}"
@@ -99,11 +111,20 @@ class NativeRngTurnBoundary:
             if isinstance(end_turn_result, Mapping)
             else None
         )
-        if self.condition == "exact_hook":
+        if self.condition in {"exact_hook", "spawn_span"}:
             try:
-                self.finish_ack, self.snapshot = (
-                    bridge_observatory_native_rng_finish(self.capture_id)
-                )
+                if self.condition == "spawn_span":
+                    (
+                        self.finish_ack,
+                        self.snapshot,
+                        self.spawn_span_ledger,
+                    ) = bridge_observatory_native_rng_finish_spawn_span(
+                        self.capture_id
+                    )
+                else:
+                    self.finish_ack, self.snapshot = (
+                        bridge_observatory_native_rng_finish(self.capture_id)
+                    )
             except Exception as exc:
                 self.state = "restore_failed"
                 raise NativeRngTurnBoundaryError(
@@ -123,15 +144,24 @@ class NativeRngTurnBoundary:
         return self.summary()
 
     def _restore_if_armed(self) -> Exception | None:
-        if self.condition != "exact_hook" or self.state not in {
+        if self.condition not in {"exact_hook", "spawn_span"} or self.state not in {
             "arm_pending",
             "armed",
         }:
             return None
         try:
-            self.finish_ack, self.snapshot = (
-                bridge_observatory_native_rng_finish(self.capture_id)
-            )
+            if self.condition == "spawn_span":
+                (
+                    self.finish_ack,
+                    self.snapshot,
+                    self.spawn_span_ledger,
+                ) = bridge_observatory_native_rng_finish_spawn_span(
+                    self.capture_id
+                )
+            else:
+                self.finish_ack, self.snapshot = (
+                    bridge_observatory_native_rng_finish(self.capture_id)
+                )
             self.state = "rejected"
             return None
         except Exception as exc:  # pragma: no cover - process-stop fallback
@@ -164,6 +194,26 @@ class NativeRngTurnBoundary:
                     "hook_bytes_restored": (
                         integrity.get("hook_bytes_restored")
                         if isinstance(integrity, Mapping)
+                        else None
+                    ),
+                }
+            )
+        if self.spawn_span_ledger is not None:
+            ledger_summary = self.spawn_span_ledger.get("summary")
+            ledger_integrity = self.spawn_span_ledger.get("integrity")
+            result.update(
+                {
+                    "spawn_span_ledger_sha256": _canonical_sha256(
+                        self.spawn_span_ledger
+                    ),
+                    "spawn_span_count": (
+                        ledger_summary.get("span_count")
+                        if isinstance(ledger_summary, Mapping)
+                        else None
+                    ),
+                    "spawn_wrapper_restored": (
+                        ledger_integrity.get("wrapper_restored")
+                        if isinstance(ledger_integrity, Mapping)
                         else None
                     ),
                 }

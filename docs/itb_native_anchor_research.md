@@ -19,11 +19,14 @@ string candidates into reviewed function boundaries for:
 boundaries is finished. It does not mean the native engine is reconstructed.
 The RNG-core transaction has since been exercised twice with build guards,
 bounded records, and exact byte restoration, and all four Lua-exposed callback
-families have natural runtime evidence. Whole-game observer neutrality, the
-exact downstream Pawn action-queue commit, spawn-call ordering, and native
-selected-record correlation remain unresolved. A disposable installation is
-optional for those owner-build questions and required only for a pristine
-stock-depot claim.
+families have natural runtime evidence. Three later `Spawner:NextPawn` spans
+resolve the normal weak/pawn/upgrade draw order, and three counterbalanced
+hardware-observer triplets correlate the final selected record to the immediate
+Pawn action queue for a bounded Firefly scenario. Whole-game native-RNG
+observer neutrality, spawn replay inputs and coordinate scheduling, broader
+selected-action paths, and the complete native candidate tournament remain
+unresolved. A disposable installation is optional for those owner-build
+questions and required only for a pristine stock-depot claim.
 
 The durable artifacts are:
 
@@ -167,10 +170,17 @@ offsets `+0x50..+0x67`. The archive-side names identify:
 - `+0x58/+0x5c` as `aiTarget`.
 
 This is the narrowest proven final selected-record boundary and is suitable for
-correlation in a disposable trace. Static evidence does **not** establish that
-this copy is the later Pawn action or animation queue commit. The capture must
-correlate it with queued Pawn getters before it is labeled
-`enemy_action_selected` authoritatively.
+correlation in a disposable trace. Static evidence alone does **not** establish
+that this copy is the later Pawn action or animation queue commit. The later
+build-keyed hardware-observer campaign supplies that missing dynamic link for
+one bounded `Firefly1` scenario: in all three armed runs, one selected record is
+followed immediately on the same thread by one queue commit for the same pawn;
+`aiDest` equals queue origin, `aiTarget` equals queue target and shot, and
+current weapon equals queued skill. The three counterbalanced
+control/dormant/armed outcomes are semantically identical, every debug register
+and observer resource is restored, and no executable bytes are modified. This
+supports `enemy_action_selected` for that shape, not a universal claim about
+cancellation, retargeting, multi-weapon enemies, or every Pawn queue path.
 
 ## Reproducible analysis workflow
 
@@ -228,28 +238,32 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Both start with seeded result `24356`. The observer is not promoted as
    whole-game neutral because control/exact outcomes differ at the next spawn
    coordinate.
-2. Correlate `Spawner:NextPawn` enter/exit spans with native RNG records and the
-   downstream Pawn queue. The exact captures observe reviewed spawn-adjacent
-   caller families, but contain no span marker, so native spawn selection and
-   complete call order remain unresolved.
+2. **Completed for the normal `Spawner:NextPawn` path:** three source-verified,
+   cleanly restored spans each enclose exactly three caller-21 native draws.
+   Their source order is weak-class choice, available-pawn choice, then upgrade
+   choice. The optional boss `random_bool` branch did not execute. Solver replay
+   still lacks the pre-span CRT state and exact runtime available-array order;
+   coordinate selection occurs outside this span.
 3. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
    bounded events with no adapter or restoration error. Only the three
    non-`GetSkillEffect` pairs match whole-game outcomes; two counterbalanced
    `GetSkillEffect` pairs repeat a spawn-coordinate-only mismatch.
-4. Correlate the proven selected-record copy directly with the downstream Pawn
-   action queue. All seven new paired bridge outcomes have identical queued
-   enemy actions, but that outcome-level fact does not identify the native copy
-   boundary or cancellation/retarget path.
+4. **Completed for a bounded `Firefly1` queue path:** three counterbalanced
+   triplets correlate one final selected record directly to one immediate queue
+   commit on the same thread, with exact destination, target/shot, and
+   weapon/skill agreement. Wider pawn types, multi-weapon selection,
+   cancellation, and retarget paths remain untested.
 5. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
-6. **Completed for this series:** the later callback/native cleanup receipt
-   closes both immutable campaign receipts' pending save/install fields. The
-   accepted and post-cleanup inventories match 689/689, the 33-file save tree
-   is byte-exact, the baseline Mod Loader hash is restored, and no active
-   Observatory file remains. Repeat this gate after every future live series.
+6. **Completed for both live series:** the callback/native and later native-
+   boundaries cleanup receipts close all four immutable campaign receipts'
+   pending save/install fields. Each accepted/post-cleanup comparison matches
+   689/689, the 33-file save tree is byte-exact, the baseline Mod Loader hash
+   is restored, and no active Observatory file remains. Repeat this gate after
+   every future live series.
 
 The exact isolation gate, helper constraints, counterbalanced experiment order,
 abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
@@ -267,3 +281,9 @@ and
 `windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json`.
 Their restoration is closed by
 `windows_build_13725832_owner_local_modified_20260822_callback_native_campaign_cleanup_receipt.json`.
+The later spawn and selected-action evidence is sealed in
+`windows_build_13725832_owner_local_modified_20260822_spawn_span_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json`;
+their restoration is closed by
+`windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json`.

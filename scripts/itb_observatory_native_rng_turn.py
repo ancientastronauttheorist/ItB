@@ -16,6 +16,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.loop.commands import cmd_auto_turn  # noqa: E402
+from src.bridge.protocol import (  # noqa: E402
+    BridgeError,
+    read_state,
+    refresh_bridge_state_fresh,
+)
 from src.observatory.native_checkpoint import (  # noqa: E402
     NativeCheckpointError,
     build_rng_core_checkpoint,
@@ -25,6 +30,8 @@ from src.observatory.native_rng_turn import (  # noqa: E402
     NativeRngTurnBoundary,
     NativeRngTurnBoundaryError,
 )
+from src.observatory.spawn_rng_attribution import analyze_spawn_rng  # noqa: E402
+from src.observatory.spawn_span_ledger import merge_spawn_span_ledger  # noqa: E402
 from src.observatory.trace_store import (  # noqa: E402
     TraceStoreError,
     load_json_object,
@@ -35,9 +42,14 @@ from src.observatory.trace_store import (  # noqa: E402
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pair-id", required=True)
-    parser.add_argument("--condition", choices=["control", "exact_hook"], required=True)
+    parser.add_argument(
+        "--condition",
+        choices=["control", "exact_hook", "spawn_span"],
+        required=True,
+    )
     parser.add_argument("--capture-id", required=True)
     parser.add_argument("--trial-output", type=Path, required=True)
+    parser.add_argument("--outcome-output", type=Path)
     parser.add_argument("--profile", default="Alpha")
     parser.add_argument("--time-limit", type=float, default=10.0)
     parser.add_argument("--max-wait", type=float, default=45.0)
@@ -60,6 +72,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--rng-return-map", type=Path)
     parser.add_argument("--restore-hashes", type=Path)
     parser.add_argument("--checkpoint-output", type=Path)
+    parser.add_argument("--spawn-controller", type=Path)
+    parser.add_argument("--spawn-analysis-output", type=Path)
     return parser
 
 
@@ -126,7 +140,9 @@ def _write_create_only(path: Path, value: object) -> None:
         os.fsync(handle.fileno())
 
 
-def _exact_inputs(args: argparse.Namespace) -> tuple[dict, dict, dict, str, Path]:
+def _exact_inputs(
+    args: argparse.Namespace,
+) -> tuple[dict, dict, dict, str, Path, str | None, Path | None]:
     named = {
         "build receipt": args.build_receipt,
         "observer module": args.module,
@@ -135,9 +151,17 @@ def _exact_inputs(args: argparse.Namespace) -> tuple[dict, dict, dict, str, Path
         "checkpoint output": args.checkpoint_output,
     }
     missing = [label for label, value in named.items() if value is None]
+    if args.condition == "spawn_span":
+        for label, value in (
+            ("outcome output", args.outcome_output),
+            ("spawn span controller", args.spawn_controller),
+            ("spawn analysis output", args.spawn_analysis_output),
+        ):
+            if value is None:
+                missing.append(label)
     if missing:
         raise ValueError(
-            "exact_hook requires " + ", ".join(missing)
+            f"{args.condition} requires " + ", ".join(missing)
         )
     checkpoint_output = _absolute_output(
         args.checkpoint_output, "checkpoint output"
@@ -146,7 +170,25 @@ def _exact_inputs(args: argparse.Namespace) -> tuple[dict, dict, dict, str, Path
     return_map = load_json_object(args.rng_return_map, "RNG return map")
     restore_hashes = load_json_object(args.restore_hashes, "restore hashes")
     module_sha256 = stable_file_sha256(args.module)
-    return receipt, return_map, restore_hashes, module_sha256, checkpoint_output
+    controller_sha256 = (
+        stable_file_sha256(args.spawn_controller)
+        if args.condition == "spawn_span"
+        else None
+    )
+    analysis_output = (
+        _absolute_output(args.spawn_analysis_output, "spawn analysis output")
+        if args.condition == "spawn_span"
+        else None
+    )
+    return (
+        receipt,
+        return_map,
+        restore_hashes,
+        module_sha256,
+        checkpoint_output,
+        controller_sha256,
+        analysis_output,
+    )
 
 
 def _auto_turn_summary(result: object) -> dict:
@@ -176,14 +218,21 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
     artifact_root = _runtime_artifact_root()
     session_file = _runtime_session_file(artifact_root)
     trial_output = _absolute_output(args.trial_output, "trial output")
-    exact_inputs = _exact_inputs(args) if args.condition == "exact_hook" else None
+    outcome_output = (
+        _absolute_output(args.outcome_output, "outcome output")
+        if args.outcome_output is not None
+        else None
+    )
+    exact_inputs = _exact_inputs(args) if args.condition != "control" else None
     boundary = NativeRngTurnBoundary(
         condition=args.condition,
         capture_id=args.capture_id,
     )
     result: dict | None = None
+    outcome: dict | None = None
     runner_error = ""
     abort_error = ""
+    outcome_error = ""
     try:
         result = cmd_auto_turn(
             profile=args.profile,
@@ -207,20 +256,52 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         except Exception as exc:
             abort_error = str(exc)
 
+    if not runner_error and not abort_error and outcome_output is not None:
+        try:
+            if not refresh_bridge_state_fresh(timeout=5.0):
+                raise BridgeError("post-trial bridge state did not refresh")
+            outcome = read_state()
+            if not isinstance(outcome, dict):
+                raise BridgeError("post-trial bridge state is unavailable")
+            _write_create_only(outcome_output, outcome)
+        except Exception as exc:
+            outcome_error = str(exc)
+
     checkpoint = None
     checkpoint_summary = None
     checkpoint_error = ""
-    if args.condition == "exact_hook" and boundary.snapshot is not None:
+    spawn_analysis_summary = None
+    if args.condition != "control" and boundary.snapshot is not None:
         assert exact_inputs is not None
-        receipt, return_map, restore_hashes, module_sha256, checkpoint_output = (
-            exact_inputs
-        )
+        (
+            receipt,
+            return_map,
+            restore_hashes,
+            module_sha256,
+            checkpoint_output,
+            controller_sha256,
+            analysis_output,
+        ) = exact_inputs
         try:
-            checkpoint = build_rng_core_checkpoint(
+            raw_checkpoint = build_rng_core_checkpoint(
                 boundary.snapshot,
                 build_receipt=receipt,
                 observed_module_sha256=module_sha256,
             )
+            checkpoint = raw_checkpoint
+            if args.condition == "spawn_span":
+                if boundary.spawn_span_ledger is None:
+                    raise NativeCheckpointError("spawn span ledger was not captured")
+                assert controller_sha256 is not None
+                assert analysis_output is not None
+                checkpoint = merge_spawn_span_ledger(
+                    raw_checkpoint,
+                    boundary.spawn_span_ledger,
+                    expected_controller_sha256=controller_sha256,
+                    expected_identity=raw_checkpoint["identity"],
+                    return_map=return_map,
+                    expected_restore_hashes=restore_hashes,
+                )
             verification = validate_native_checkpoint(
                 checkpoint,
                 expected_identity=checkpoint["identity"],
@@ -231,6 +312,28 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
                 raise NativeCheckpointError(
                     "native RNG checkpoint is not diagnostically complete"
                 )
+            if args.condition == "spawn_span":
+                analysis = analyze_spawn_rng(
+                    checkpoint,
+                    span_ledger=boundary.spawn_span_ledger,
+                    expected_controller_sha256=controller_sha256,
+                    expected_identity=checkpoint["identity"],
+                    return_map=return_map,
+                    expected_restore_hashes=restore_hashes,
+                )
+                if analysis["summary"]["unresolved"] != 0:
+                    raise NativeCheckpointError(
+                        "spawn RNG attribution contains unresolved spans"
+                    )
+                _write_create_only(analysis_output, analysis)
+                spawn_analysis_summary = {
+                    "path": str(analysis_output),
+                    "sha256": stable_file_sha256(analysis_output),
+                    "span_count": analysis["summary"]["span_count"],
+                    "resolved_with_draws": analysis["summary"][
+                        "resolved_with_draws"
+                    ],
+                }
             _write_create_only(checkpoint_output, checkpoint)
             checkpoint_summary = {
                 "path": str(checkpoint_output),
@@ -248,6 +351,7 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
     valid = bool(
         not runner_error
         and not abort_error
+        and not outcome_error
         and not checkpoint_error
         and auto_summary.get("status") == "ok"
         and auto_summary.get("post_phase") == "combat_player"
@@ -274,13 +378,24 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         "valid_trial": valid,
         "boundary": boundary.summary(),
         "auto_turn": auto_summary,
+        "outcome": (
+            {
+                "path": str(outcome_output),
+                "sha256": stable_file_sha256(outcome_output),
+            }
+            if outcome is not None
+            else None
+        ),
         "checkpoint": checkpoint_summary,
         "errors": {
             "runner": runner_error,
             "abort": abort_error,
+            "outcome": outcome_error,
             "checkpoint": checkpoint_error,
         },
     }
+    if args.condition == "spawn_span":
+        trial["spawn_analysis"] = spawn_analysis_summary
     _write_create_only(trial_output, trial)
     trial["trial_output"] = {
         "path": str(trial_output),
@@ -306,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
     except (
         NativeCheckpointError,
         NativeRngTurnBoundaryError,
+        BridgeError,
         TraceStoreError,
         OSError,
         TypeError,

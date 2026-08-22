@@ -17,9 +17,12 @@ selection, and seed advance with clean byte restoration. Five natural callback
 pairs cover all loaded `ScorePositioning`, `GetTargetArea`, `GetTargetScore`,
 and `GetSkillEffect` slots. The owner save and all 689 accepted install entries
 have since been restored exactly, with no active Observatory file remaining.
-The remaining unknowns are narrower and more
-valuable: native path and movement enumeration, spawn-span attribution and
-scheduling, direct selected-record-to-queue correlation, effect execution, and
+Three source-verified `Spawner:NextPawn` spans now resolve the normal
+weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
+triplets also correlate the final selected record to the immediate Pawn queue
+commit for a bounded Firefly scenario. The remaining unknowns are narrower and
+more valuable: native path and movement enumeration, spawn replay state and
+coordinate scheduling, broader selected-action paths, effect execution, and
 hidden engine state.
 
 The strategic ordering should therefore be:
@@ -141,9 +144,12 @@ parameters.
 
 The spawn algorithm is therefore not fundamentally unknown. For the exact
 inventoried Windows executable, the shared RNG algorithm and state transition
-are now mapped. The unresolved pieces are spawn-specific caller attribution,
-the complete call order leading into these Lua decisions, the state needed for
-replay, and equivalence on other platform builds.
+are now mapped. Three cleanly restored `Spawner:NextPawn` spans each contain
+exactly three reviewed `random_int(max)` leaf draws, resolving the ordinary
+source order as weak class, available pawn, then upgrade. The unresolved pieces
+are the pre-span CRT cursor and exact runtime `available` ordering needed for
+replay, spawn-coordinate scheduling outside `NextPawn`, optional branch
+coverage, and equivalence on other platform builds.
 
 ### Enemy targeting
 
@@ -163,7 +169,9 @@ This means the visible target-scoring formula is already available. On the
 pinned Windows build, the target-vector loop, score calls, equal-best retention,
 and native random tie-break are now mapped. Movement/path enumeration details,
 native position helpers, runtime subclass coverage, higher-level record
-selection, and the downstream queue handoff remain to be validated.
+selection, and broader queue paths remain to be validated. One bounded
+`Firefly1` campaign now proves the final selected record's immediate queue
+handoff with exact destination, target/shot, and weapon/skill agreement.
 
 ### Weapons, missions, and environments
 
@@ -205,8 +213,9 @@ candidate streams found no obvious alignment with the new-unit diffs. No spawn
 pool mapping or formal call-order fit was performed, so the experiment did not
 establish whether `master_seed` and `ai_seed` are sufficient. Those recordings
 also lack build identity, so the now-mapped Windows MSVC-style RNG cannot be
-applied to them retroactively. Complete caller attribution and hidden call order
-remain the central blockers; runtime RNG tracing attacks them directly.
+applied to them retroactively. The later span campaign resolves the normal
+three-draw `NextPawn` order, but not the pre-span CRT state, exact runtime pawn
+array, or separate coordinate scheduler needed for replay.
 
 Related local research:
 
@@ -420,13 +429,15 @@ verifier facts.
 
 The remaining native priorities are now narrower:
 
-1. Correlate the selected AI record with the downstream Pawn action queue.
-2. Add `Spawner:NextPawn` spans so the now-observed shared-RNG stream can be
-   attributed to spawn selection rather than treated as one undivided process
-   stream.
-3. Resolve native pathfinding and reachability details needed by mismatches.
-4. Resolve turn-phase ordering, queued effect execution, and hidden state.
-5. Validate every behavior used by Rust with controlled matched captures.
+1. Export or otherwise prove the pre-span RNG state and exact spawn candidate
+   ordering needed for replay, and isolate the later coordinate scheduler.
+2. Resolve native pathfinding and reachability details needed by mismatches.
+3. Resolve turn-phase ordering, queued effect execution, and hidden state.
+4. Extend selected-action evidence to other pawn/weapon and retarget paths only
+   when a concrete mismatch requires it.
+5. Add native candidate records only when Lua callbacks plus final queues cannot
+   explain a solver mismatch.
+6. Validate every behavior used by Rust with controlled matched captures.
 
 Full executable reconstruction would spend enormous effort on systems irrelevant
 to tactical solving. Targeted analysis keeps the work aligned with solver IQ.
@@ -549,13 +560,16 @@ native-RNG pairs capture the fixed seed's first result and reviewed candidate,
 selector, seed, and Lua-leaf callers in complete restored checkpoints. The
 native exact outcomes repeat, but unobserved controls from the same sealed save
 and fixed seed do not, so spawn selection remains non-replayable from those
-inputs. Rust has an explicit conformance safeguard that projections never
-fabricate an unresolved future spawn pawn or coordinate. Direct
-`Spawner:NextPawn` span attribution and selected-record correlation remain
-optional targeted follow-ups rather than blockers to the conservative solver.
-The final closure receipt proves the baseline 33-file save tree, Mod Loader,
-and 689-entry installation were restored and the active bridge/install contain
-no Observatory diagnostic file.
+inputs. Three later `Spawner:NextPawn` spans resolve the normal three-draw
+weak/pawn/upgrade order, while confirming that ordinary solver inputs still do
+not expose the replay cursor or exact candidate array. Three later selected-
+queue triplets correlate the reviewed final selected record to the immediate
+Firefly queue commit with exact destination, target/shot, and weapon/skill
+agreement. Rust retains its non-fabrication spawn safeguard and adds a focused
+Firefly queue-direction conformance regression. The final closure receipts
+prove the baseline 33-file save tree, Mod Loader, and 689-entry installation
+were restored and the active bridge/install contain no Observatory diagnostic
+file.
 
 ### Milestone 1: Provenance inventory
 
@@ -568,6 +582,9 @@ no Observatory diagnostic file.
 
 - **Partially complete:** opt-in natural traces now capture `ScorePositioning`,
   `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` one family at a time.
+- **Completed for one final-action shape:** three counterbalanced triplets bind
+  the selected 24-byte record directly to the same pawn's immediate Firefly
+  queue commit without modifying executable bytes.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
@@ -581,8 +598,10 @@ no Observatory diagnostic file.
   beginning with the first seeded draw.
 - The evidence proves the Lua wrappers do not expose every determinant of the
   following spawn coordinate.
-- `Spawner:NextPawn` span markers remain necessary before assigning individual
-  native draws to spawn semantics.
+- **Complete for the ordinary `NextPawn` branch:** three spans assign the three
+  enclosed native draws to weak class, available pawn, and upgrade in source
+  order. Replay still requires the missing pre-span cursor and exact available
+  array, and coordinates are scheduled outside this span.
 
 ### Milestone 4: Hidden-state survey
 
@@ -629,13 +648,14 @@ Useful metrics include:
 
 The targeted offline map is now deep enough; do not broaden into full
 decompilation. The reversible owner campaign has completed the planned Lua RNG,
-natural callback, and bounded native RNG observations without yielding a safe
-spawn-selection model. Keep the current Rust non-fabrication rule. If a future
-solver mismatch justifies more runtime work, add only the missing narrow
-boundary—`Spawner:NextPawn` spans, selected-record correlation, or one native
-candidate record—under the same matched and reversible protocol. Use a
-disposable installation only when the desired conclusion specifically requires
-pristine-depot neutrality.
+natural callback, bounded native RNG, `Spawner:NextPawn` span, and selected-
+queue observations without yielding a safe spawn-replay model. Keep the current
+Rust non-fabrication rule. If a future solver mismatch justifies more runtime
+work, add only the missing narrow input—pre-span RNG state, exact spawn
+candidate ordering, coordinate scheduling, a broader selected-action path, or
+one native candidate record—under the same matched and reversible protocol.
+Use a disposable installation only when the desired conclusion specifically
+requires pristine-depot neutrality.
 
 Once those traces improve the Rust world model, parallel VMs become a powerful
 force multiplier instead of a way to scale uncertainty.

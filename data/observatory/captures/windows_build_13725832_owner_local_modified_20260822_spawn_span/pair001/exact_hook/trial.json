@@ -1,0 +1,64 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\spawn_span\\pair001\\exact_hook_accepted",
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "arm_ack": null,
+      "capture_id": "spawn-p001-exact",
+      "condition": "exact_hook",
+      "end_turn_status": "OK",
+      "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=spawn-p001-exact records=1498 complete=true",
+      "hook_bytes_restored": true,
+      "record_count": 1498,
+      "seed_ack": null,
+      "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=spawn-p001-exact seed=324508639",
+      "snapshot_sha256": "60c0f65e85dcfab5aaebf41284ae844c64ade9b179749142df9c6c5b1093b36f",
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -99757.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "arm_ack": null,
+    "capture_id": "spawn-p001-exact",
+    "condition": "exact_hook",
+    "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=spawn-p001-exact records=1498 complete=true",
+    "hook_bytes_restored": true,
+    "record_count": 1498,
+    "seed_ack": null,
+    "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=spawn-p001-exact seed=324508639",
+    "snapshot_sha256": "60c0f65e85dcfab5aaebf41284ae844c64ade9b179749142df9c6c5b1093b36f",
+    "state": "complete"
+  },
+  "capture_id": "spawn-p001-exact",
+  "checkpoint": {
+    "diagnostic_complete": true,
+    "hook_bytes_restored": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\spawn_span\\pair001\\exact_hook_accepted\\checkpoint.json",
+    "record_count": 1498,
+    "sha256": "53163155373c14131a6306349e417463339c20578bc435708cf9a8c1c9c3339b"
+  },
+  "condition": "exact_hook",
+  "created_at": "2026-08-22T13:43:11.981135+00:00",
+  "errors": {
+    "abort": "",
+    "checkpoint": "",
+    "outcome": "",
+    "runner": ""
+  },
+  "kind": "observatory_native_rng_turn_trial",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\spawn_span\\pair001\\exact_hook_accepted\\outcome.json",
+    "sha256": "17a05e367920e5d02d60c0257acf8a4438a72ea998b4b50e447f7454f65c0577"
+  },
+  "pair_id": "spawn-pair-001",
+  "schema_version": 1,
+  "session_file": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\spawn_span\\pair001\\exact_hook_accepted\\runtime\\session.json",
+  "status": "complete",
+  "valid_trial": true
+}

@@ -88,6 +88,45 @@ def test_native_rng_exact_boundary_restores_after_success(monkeypatch):
     assert summary["hook_bytes_restored"] is True
 
 
+def test_native_rng_spawn_span_boundary_restores_both_layers(monkeypatch):
+    calls = []
+    snapshot = {
+        "summary": {"record_count": 9},
+        "integrity": {"hook_bytes_restored": True},
+    }
+    ledger = {
+        "summary": {"span_count": 2},
+        "integrity": {"wrapper_restored": True},
+    }
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_seed_and_arm_spawn_span",
+        lambda capture_id: calls.append(("arm_span", capture_id)) or "ARM",
+    )
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_finish_spawn_span",
+        lambda capture_id: (
+            calls.append(("finish_span", capture_id))
+            or ("FINISH", snapshot, ledger)
+        ),
+    )
+    boundary = mod.NativeRngTurnBoundary(
+        condition="spawn_span", capture_id="native-rng-spawn-001"
+    )
+
+    boundary.before_end_turn()
+    summary = boundary.after_end_turn({"status": "OK"})
+
+    assert calls == [
+        ("arm_span", "native-rng-spawn-001"),
+        ("finish_span", "native-rng-spawn-001"),
+    ]
+    assert summary["state"] == "complete"
+    assert summary["spawn_span_count"] == 2
+    assert summary["spawn_wrapper_restored"] is True
+
+
 def test_native_rng_control_boundary_never_arms_or_finishes(monkeypatch):
     calls = []
     monkeypatch.setattr(

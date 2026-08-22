@@ -67,6 +67,24 @@ def test_exact_turn_requires_all_build_keyed_inputs(tmp_path):
     assert not (tmp_path / "exact.json").exists()
 
 
+def test_spawn_span_requires_outcome_and_span_outputs(tmp_path):
+    code = cli.main(
+        [
+            "--pair-id",
+            "pair-001",
+            "--condition",
+            "spawn_span",
+            "--capture-id",
+            "native-rng-pair-001-span",
+            "--trial-output",
+            str(tmp_path / "span.json"),
+        ]
+    )
+
+    assert code == 2
+    assert not (tmp_path / "span.json").exists()
+
+
 def test_trial_output_is_never_overwritten(tmp_path, monkeypatch):
     # Validation stops before any session touching work.
     runtime = tmp_path / "runtime"

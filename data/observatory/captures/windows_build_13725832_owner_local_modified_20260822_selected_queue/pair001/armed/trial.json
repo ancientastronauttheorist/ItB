@@ -1,0 +1,43 @@
+{
+  "analysis": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\selected_queue\\pair001\\armed\\analysis.json",
+    "sha256": "9e0b88e822e2e9f3783569db9c9c5114cdc7147ecd5088ee8e2a31917e07a61f",
+    "status": "correlated"
+  },
+  "build_receipt_sha256": "9e67f4f461c19611643ed7e17161705736bb9c93e978447042e24b00d458d805",
+  "capture_id": "selected-pair-001-armed-r2",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_SELECTED_QUEUE_TRIAL condition=armed capture=selected-pair-001-armed-r2 pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 records=2 complete=true",
+  "condition": "armed",
+  "created_at": "2026-08-22T14:11:03.924862+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_selected_queue_turn_trial",
+  "module_sha256": "2cf202cc2e58c33651864ed8939b8491cc082048c300d82b63ff3cfbd76a5676",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\selected_queue\\pair001\\armed\\outcome.json",
+    "sha256": "f4d2f59de2dc072bf6c615390a1cce84bb727e333cc742ea6143c06322ef68fe"
+  },
+  "pair_id": "selected-pair-001",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": {
+    "complete": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_native_boundaries_v2\\selected_queue\\pair001\\armed\\snapshot.json",
+    "record_count": 2,
+    "sha256": "6206306c36c630b4af32dbcd0ce17064f36b52ce8189cc062ce7a0bcee3775a5"
+  },
+  "status": "complete",
+  "valid_trial": true
+}

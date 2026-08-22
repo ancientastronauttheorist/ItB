@@ -1403,14 +1403,14 @@ mod tests {
             &WEAPONS,
         );
 
-        // The Lua-wrapper campaign and the later atomic native-RNG campaign
-        // both leave spawn selection unresolved. The atomic campaign captured
-        // the fixed seed's first native result and reviewed candidate/selector
-        // callers with clean byte restoration, yet counterbalanced controls
-        // from the same sealed save still selected different coordinates and
-        // no Spawner:NextPawn span marker was installed. Projection may
+        // Three source-verified Spawner:NextPawn spans resolved the ordinary
+        // three-draw order (weak class, available pawn, upgrade) with clean
+        // restoration. The sealed campaign still lacks the pre-span CRT state
+        // and exact runtime available-array order needed for solver replay, and
+        // spawn-coordinate selection occurs outside NextPawn. Projection may
         // consume observed emergence markers but must not invent either a pawn
-        // identity or a replacement coordinate.
+        // identity or a replacement coordinate. See the 20260822 spawn-span
+        // campaign receipt.
         assert_eq!(projected.unit_count, before_unit_count);
         assert!(projected.unit_at(2, 2).is_none());
         assert!(projected.unit_at(5, 5).is_none());

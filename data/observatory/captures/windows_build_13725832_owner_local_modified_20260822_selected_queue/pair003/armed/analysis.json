@@ -1,0 +1,70 @@
+{
+  "bridge": {
+    "enemy_count": 1,
+    "matched_uid": true,
+    "queue_corroboration": "targeted_tiles_ray",
+    "queued_origin": null,
+    "queued_target": null,
+    "targeted_tiles": [
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "capture_id": "selected-pair-003-armed",
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "f99e1ba7b130799f27f6cc4e7a12aa4198bccb624ce994ae6a3fc063c30511b6",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "queue_prebytes_sha256": "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+    "selected_prebytes_sha256": "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b"
+  },
+  "kind": "selected_queue_hw_correlation",
+  "module_sha256": "2cf202cc2e58c33651864ed8939b8491cc082048c300d82b63ff3cfbd76a5676",
+  "native": {
+    "ai_destination": [
+      5,
+      4
+    ],
+    "ai_target": [
+      4,
+      4
+    ],
+    "base_current_weapon_raw": -1,
+    "current_weapon_raw": 1,
+    "pawn_id": 1303,
+    "queue_origin": [
+      5,
+      4
+    ],
+    "queue_target": [
+      4,
+      4
+    ],
+    "queued_shot": [
+      4,
+      4
+    ],
+    "queued_skill_raw": 1,
+    "selected_rank_fields_raw": [
+      5,
+      5
+    ]
+  },
+  "reasons": [],
+  "schema_version": 1,
+  "snapshot_sha256": "ea33dea72952f9a9ec0acb873afb7ba4c27917a4f77032d342f64df181defd85",
+  "status": "correlated",
+  "summary": {
+    "bridge_queue_matches": true,
+    "correlated": true,
+    "internal_field_matches": true,
+    "native_pair_count": 1
+  }
+}

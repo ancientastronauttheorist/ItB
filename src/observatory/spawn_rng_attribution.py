@@ -9,6 +9,7 @@ from src.observatory.native_checkpoint import (
     validate_native_checkpoint,
     validate_return_map_binding,
 )
+from src.observatory.spawn_span_ledger import validate_spawn_span_ledger
 
 
 SCHEMA_VERSION = 1
@@ -51,6 +52,8 @@ def _caller_origin(caller_id: int, origins: Mapping[int, str] | None) -> str:
 def analyze_spawn_rng(
     checkpoint: Mapping[str, Any],
     *,
+    span_ledger: Mapping[str, Any] | None = None,
+    expected_controller_sha256: str | None = None,
     return_map: Mapping[str, Any] | None = None,
     expected_identity: Mapping[str, Any] | None = None,
     expected_restore_hashes: Mapping[str, Any] | None = None,
@@ -70,6 +73,23 @@ def analyze_spawn_rng(
         expected_restore_hashes=expected_restore_hashes,
     )
     records = checkpoint["records"]
+    selected_pawns: dict[int, str] = {}
+    if span_ledger is not None:
+        if expected_controller_sha256 is None:
+            raise ValueError(
+                "expected controller SHA-256 is required with a spawn ledger"
+            )
+        normalized_spans = validate_spawn_span_ledger(
+            span_ledger,
+            capture_id=checkpoint["capture_id"],
+            raw_record_count=sum(
+                record["kind"] == "rng_core" for record in records
+            ),
+            expected_controller_sha256=expected_controller_sha256,
+        )
+        selected_pawns = {
+            span["span_id"]: span["selected_pawn"] for span in normalized_spans
+        }
     marker_groups: dict[int, list[Mapping[str, Any]]] = {}
     for record in records:
         if record["kind"] == "span_marker" and record["name"] == "spawner_next_pawn":
@@ -172,6 +192,7 @@ def analyze_spawn_rng(
                 "enter_sequence": start,
                 "exit_sequence": end,
                 "detail": detail,
+                "selected_pawn": selected_pawns.get(span_id),
                 "status": status,
                 "reason": reason,
                 "draw_sequences": [item["seq"] for item in draws],
@@ -185,6 +206,7 @@ def analyze_spawn_rng(
         "analysis_kind": ANALYSIS_KIND,
         "capture_id": checkpoint["capture_id"],
         "diagnostic_complete": verification["diagnostic_complete"],
+        "span_ledger_bound": span_ledger is not None,
         "spans": results,
         "summary": {
             "span_count": len(results),

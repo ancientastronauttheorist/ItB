@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_native_boundaries_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-22T14:31:59Z",
+  "repository_base_commit": "38ab2a101d7325dec0ab3d2f2d8f163fcf2d7262",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "spawn_span": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_span_receipt.json",
+      "size": 11384,
+      "sha256": "4b6fab6cf771eff7ce9f85747696645fc13587360c541e6d28ac137d88563a67"
+    },
+    "selected_queue": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json",
+      "size": 12514,
+      "sha256": "55e8fb50e0f12ae005853849752bf9129ff620d4b6b4cbcb57a8ab9140cf06f1"
+    }
+  },
+  "supersedes_pending_states": [
+    {
+      "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_span_receipt.json",
+      "fields": [
+        "restore.install_restoration_pending",
+        "restore.save_restoration_pending"
+      ],
+      "prior_value": true,
+      "resolved": true
+    },
+    {
+      "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json",
+      "fields": [
+        "restore.install_restoration_pending",
+        "restore.save_restoration_pending"
+      ],
+      "prior_value": true,
+      "resolved": true
+    }
+  ],
+  "install_restore": {
+    "accepted_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "size": 125477,
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f"
+    },
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_native_boundaries_restore_20260822.json",
+      "size": 125456,
+      "sha256": "4be0c9382ab38ec264dd4673180eedc0c20f826569f790219002c1a35dae9355"
+    },
+    "comparison_summary": {
+      "identical": 689,
+      "changed": 0,
+      "missing": 0,
+      "platform_specific": 0
+    },
+    "cleanup_operation": {
+      "tool": "scripts/itb_observatory_cleanup.py",
+      "dry_run_completed": true,
+      "explicit_allow_cleanup_required": true,
+      "install_removed_file_count": 6,
+      "install_removed_byte_count": 210779,
+      "bridge_removed_file_count": 0,
+      "bridge_removed_byte_count": 0
+    },
+    "installed_modloader_sha256": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+    "remaining_experimental_file_count": 0
+  },
+  "save_restore": {
+    "baseline_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_start_state_manifest.json",
+      "size": 6821,
+      "sha256": "cca55087ce7b19e37e43d0a36057685627fffe6b8d93db47a1e5d705dfd1658c"
+    },
+    "verified_file_count": 33,
+    "verified_byte_count": 2456758,
+    "tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5",
+    "file_set_and_bytes_match": true
+  },
+  "bridge_cleanup": {
+    "remaining_observatory_file_count": 0,
+    "recoverable_owner_staging_preserved": true
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "rng_core_observer_installed": false,
+    "rng_seed_helper_installed": false,
+    "spawn_span_controller_installed": false,
+    "selected_queue_observer_installed": false,
+    "gameflow_helper_installed": false
+  },
+  "claims": {
+    "proven": [
+      "The active installation matches all 689 entries in the accepted owner-local inventory.",
+      "The active owner save file set and bytes match the sealed 33-file baseline.",
+      "No Observatory diagnostic file remains in the active bridge or game installation.",
+      "The prior installed Mod Loader file was restored byte-exactly.",
+      "The spawn-span and selected-queue campaign receipts' pending save and install restoration fields are closed by this later receipt."
+    ],
+    "not_proven": [
+      "Pristine Steam depot neutrality.",
+      "Whole-game neutrality of spawn instrumentation or replay of future spawn identity and coordinates from ordinary solver inputs.",
+      "Universal selected-record behavior across every pawn, weapon, cancellation, and retarget path.",
+      "A complete native candidate-score tournament or native pathfinding model."
+    ]
+  }
+}

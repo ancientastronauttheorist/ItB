@@ -1,0 +1,40 @@
+{
+  "analysis_kind": "spawn_rng_attribution",
+  "capture_id": "spawn-p002-span",
+  "diagnostic_complete": true,
+  "schema_version": 1,
+  "span_ledger_bound": true,
+  "spans": [
+    {
+      "caller_ids": [
+        21,
+        21,
+        21
+      ],
+      "caller_origins": [
+        "lua_random_leaf",
+        "lua_random_leaf",
+        "lua_random_leaf"
+      ],
+      "detail": "normal",
+      "draw_sequences": [
+        1520,
+        1521,
+        1522
+      ],
+      "enter_sequence": 1519,
+      "exit_sequence": 1523,
+      "reason": null,
+      "selected_pawn": "Scarab2",
+      "span_id": 1,
+      "status": "resolved_with_draws",
+      "thread_slot": 0
+    }
+  ],
+  "summary": {
+    "resolved_no_draw": 0,
+    "resolved_with_draws": 1,
+    "span_count": 1,
+    "unresolved": 0
+  }
+}

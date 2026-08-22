@@ -4,18 +4,25 @@
 
 The reversible owner track now contains deterministic callback identities,
 exact callback-slot bindings, six build-keyed seeded Lua-RNG pairs, five
-natural callback pairs, and two counterbalanced atomic native-RNG captures.
-Both native checkpoints include the fixed seed's first core result, bind every
-caller to the exact executable catalog, and report clean byte restoration. All
-achievements are complete, and the user explicitly authorized runtime research
-in the current owner installation. Evidence from that installation is accepted
-for practical, build-keyed Observatory work when the reversible-owner gate
-below passes. It is labelled `owner_local_modified`; it does not prove that an
-uninstrumented pristine Steam depot is neutral.
+natural callback pairs, two counterbalanced atomic native-RNG captures, three
+source-verified `Spawner:NextPawn` spans, and three counterbalanced
+control/dormant/armed selected-record triplets. Both native checkpoints include
+the fixed seed's first core result, bind every caller to the exact executable
+catalog, and report clean byte restoration. The later spans resolve the normal
+three-draw `NextPawn` call order, and the hardware observer correlates the
+reviewed final selected record to the immediate Pawn queue commit in all three
+armed trials. All achievements are complete, and the user explicitly
+authorized runtime research in the current owner installation. Evidence from
+that installation is accepted for practical, build-keyed Observatory work when
+the reversible-owner gate below passes. It is labelled `owner_local_modified`;
+it does not prove that an uninstrumented pristine Steam depot is neutral.
 
 The 2026-08-22 callback/native series is closed: a later receipt binds the
 restored 33-file save tree, a 689/689 accepted-install comparison, the exact
 baseline Mod Loader, zero active Observatory files, and a stopped game process.
+The later spawn-span/selected-queue series is independently closed by
+`windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json`
+with the same exact save, install, loader, bridge, and process checks.
 
 There are now two accepted capture tracks:
 
@@ -56,8 +63,8 @@ not be relabelled as clean stock.
 | Callback identities and slots | Inert runtime enumeration, bounded enemy-root discovery, exact lexical join, and raw defining-table resolution | Complete: 81 roots, 324 method records, 65 exact slots; two updated fresh-process slot captures are byte-identical |
 | Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Five natural pairs completed: 622 attempts, 620 bounded events, every slot restored, no serialization/restore errors; three whole outcomes matched and both repeated `GetSkillEffect` pairs differed only at the spawn marker |
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
-| Spawn RNG | Span attribution plus a Rust non-fabrication safeguard | Atomic capture begins at the seeded first draw, but controls still select different spawn coordinates and no `Spawner:NextPawn` span exists; selection remains unresolved |
-| Selected action | `aiDest`/`aiTarget` to Pawn queue correlation analyzer | Full bridge outcomes prove the queued enemy-action state matched within all seven new callback/native pairs; direct selected-record-to-queue correlation is still absent |
+| Spawn RNG | Source-verified `Spawner:NextPawn` span ledger plus a Rust non-fabrication safeguard | Three restored spans contain exactly three reviewed `random_int(max)` leaf draws in source order: weak class, available pawn, upgrade. Pre-span CRT state, exact available-array order, and later coordinate selection remain unavailable to solver replay |
+| Selected action | Build-keyed x86 hardware observer plus strict selected-to-queue correlator | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
 The diagnostic checkpoint is deliberately separate from authoritative
@@ -250,8 +257,10 @@ The build-keyed artifacts and deterministic validator are under
 `data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic/`.
 The campaign receipt is
 `windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json`.
-It explicitly leaves `Spawner:NextPawn` draw attribution, observer neutrality,
-and native selected-record semantics unproven.
+At sealing time it explicitly left `Spawner:NextPawn` draw attribution,
+observer neutrality, and native selected-record semantics unproven. The later
+bounded campaigns below close the first and third gaps without retroactively
+promoting the native RNG observer as whole-game neutral.
 
 ## Exact callback slots and natural-call trials
 
@@ -297,9 +306,10 @@ control and exact outcomes, but the paired conditions differ at only the next
 spawn coordinate (`[6, 5]` versus `[5, 3]`). Therefore the campaign proves
 natural invocation and safe restoration for all four families, not general
 whole-game neutrality. Because every other bridge field matches, the final
-queued enemy actions also match within all five pairs. Direct native
-selected-record correlation and native candidate-enumeration records remain
-separate gaps.
+queued enemy actions also match within all five pairs. At this stage direct
+native selected-record correlation and native candidate-enumeration records
+remained separate gaps; the later selected-queue campaign closes the former
+for its bounded Firefly scenario.
 
 The archived pairs and strict receipt are under
 `data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/`
@@ -313,6 +323,47 @@ keyboard, message, remote-process, file, network, or general memory surface.
 Two independent deterministic builds produced the same 78,848-byte DLL and
 the same normalized receipt. The DLL is not committed; the source, builder,
 build receipt, and two-build reproducibility receipt are committed.
+
+## Spawn-span and selected-queue campaigns
+
+Three fresh-state spawn pairs counterbalanced an exact native-RNG checkpoint
+against the same checkpoint plus a source-verified `Spawner:NextPawn` span.
+Every complete span encloses exactly three consecutive native draws, all from
+reviewed caller ID 21 (`random_int(max)`). Joined to the exact shipped
+`spawner_backend.lua` bytes, their order is:
+
+1. `random_int(curr_weakRatio[2])` for weak versus non-weak class;
+2. `random_element(available)` for pawn identity; and
+3. `random_int(curr_upgradeRatio[2])` for upgrade class.
+
+The optional boss `random_bool(chance)` branch did not execute. The selected
+pawns were `Firefly2`, `Scarab2`, and `Scarab2`; all native bytes and Lua
+wrappers restored cleanly. One paired whole-game outcome matched, while two
+differed only at the later spawn-coordinate marker. This resolves the ordinary
+`NextPawn` call order, not replay: ordinary solver state still lacks the
+pre-span CRT cursor and exact runtime `available` array order, and coordinate
+selection occurs outside `NextPawn`. The immutable receipt is
+`windows_build_13725832_owner_local_modified_20260822_spawn_span_receipt.json`.
+
+The selected-action campaign used a build-keyed x86 hardware-breakpoint
+observer that modifies no executable bytes. Each of three fresh-state triplets
+ran `control`, dormant-loaded, and armed conditions in a different order. All
+nine semantic outcomes match. Every armed capture contains exactly one final
+24-byte selected record followed immediately on the same thread by one queue
+commit for pawn 1303 (`Firefly1`): `aiDest [5,4]` equals queue origin,
+`aiTarget [4,4]` equals queue target and shot, and current weapon 1 equals
+queued skill 1. The bridge independently corroborates the target ray. Every
+debug register was cleared, the vectored exception handler was removed, seam
+bytes were unchanged, and no executable file bytes changed. This is a bounded
+one-pawn proof, not a universal claim about cancellation, retargeting, or every
+enemy type. The immutable receipt is
+`windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json`.
+
+The later
+`windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json`
+closes both receipts' pending restore fields. It binds a 689/689 install match,
+the exact 33-file save tree, the baseline Mod Loader hash, zero active
+Observatory files, and a stopped game process.
 
 ## Capture-track acceptance gate
 
@@ -389,9 +440,10 @@ exactly. Timing is reported separately; it never excuses output drift.
    These are partial boundaries and must not be labeled as the full RNG stream.
 3. **Shared RNG core.** Enable only the fixed-record native core observer. Prove
    caller-ID completeness and behavior neutrality.
-4. **Spawn spans.** Add `Spawner:NextPawn` enter/exit markers without wrapping
-   RNG. Join enclosed native draws, and preserve no-draw shortcuts, reseeds,
-   nesting, and ambiguity explicitly.
+4. **Spawn spans (completed for the normal three-draw path).** Add
+   `Spawner:NextPawn` enter/exit markers without wrapping RNG. Join enclosed
+   native draws, and preserve no-draw shortcuts, reseeds, nesting, and
+   ambiguity explicitly.
 5. **Runtime callback inventory.** Complete for this build: enumerate exact
    loaded method identities and defining slots without wrapping or calling
    them. Re-run this gate for any changed executable or script inventory.
@@ -399,10 +451,11 @@ exactly. Timing is reported separately; it never excuses output drift.
    `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, or `GetSkillEffect`,
    one family per matched series. Coverage is the runtime manifest, not the
    base class name.
-7. **Selected record.** Observe the proven 24-byte selected-record write, then
-   take a bridge-visible queue snapshot. Correlate `aiDest`, `aiTarget`, and
-   skill only when there is one selected record, one immediate queued enemy,
-   and no cancellation or retarget.
+7. **Selected record (completed for the bounded Firefly scenario).** Observe
+   the proven 24-byte selected-record write, then take a bridge-visible queue
+   snapshot. Correlate `aiDest`, `aiTarget`, and skill only when there is one
+   selected record, one immediate queued enemy, and no cancellation or
+   retarget.
 8. **Candidate tournament.** Only after the narrower boundaries pass, add
    candidate order and score evidence while preserving vector order and native
    equal-best tie breaks.

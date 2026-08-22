@@ -1,0 +1,63 @@
+{
+  "breakpoints": [
+    {
+      "expected_prebytes_hex": "8b0152ff5028",
+      "expected_prebytes_sha256": "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "EBX=AI; Pawn=[EBX+4]",
+      "rva": "0x000f6854",
+      "semantic_boundary": "selected_record_after_copy",
+      "slot": "DR0"
+    },
+    {
+      "expected_prebytes_hex": "83ec188bcc",
+      "expected_prebytes_sha256": "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "ESI=Pawn",
+      "rva": "0x00227d20",
+      "semantic_boundary": "queued_action_stable_read",
+      "slot": "DR1"
+    }
+  ],
+  "debug_register_contract": {
+    "arm_rejects_any_nonzero_dr0_dr1_dr2_dr3_or_dr7": true,
+    "dr7_exact": "0x00000005",
+    "finish_clears_dr0_dr1_dr2_dr3_dr6_dr7": true,
+    "finish_requires_exact_owned_state_before_clear": true,
+    "transition": "private_RaiseException_handled_by_VEH"
+  },
+  "hot_contract": {
+    "addresses_or_pointers_published": false,
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false,
+    "windows_api_calls": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "source_sha256": "c57293d35e4bba11edfc1b66233368fb32a3ce51c04c01aea681a9024c3b2be6"
+  },
+  "kind": "observatory_selected_queue_hardware_breakpoint_plan",
+  "limits": {
+    "record_capacity": 256,
+    "selected_queue_order": "strict_alternating_same_pawn",
+    "thread_capacity": 1
+  },
+  "mutation_contract": {
+    "detour_installed": false,
+    "executable_bytes_modified": false,
+    "gateway_allocated": false,
+    "page_protection_changed": false
+  },
+  "observer_version": "observatory-selected-queue-hw-observer/1",
+  "schema_version": 1
+}

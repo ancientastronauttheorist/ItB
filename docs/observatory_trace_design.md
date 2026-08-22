@@ -20,16 +20,20 @@ appropriate trusted content inventory, capture identity, exact artifact
 hashes, and external evidence digests; structural validation alone is not
 treated as authoritative.
 
-No trace hook is connected to Mod Loader or installed into the game by this
-work. `src/bridge/modloader.lua`, the installed game, the game process, and the
-active achievement session remain untouched. Deployment requires a separately
-reviewed safe window.
+No authoritative schema-v2 trace hook is connected to Mod Loader or installed
+in the game. The separate owner-track diagnostic campaigns temporarily
+installed build-keyed callback/native companions under the reviewed reversible
+protocol; their later cleanup receipts prove the exact Mod Loader, 689-entry
+installation, and 33-file save baseline were restored with zero active
+Observatory files. Future deployment still requires a separately reviewed safe
+window.
 
 The controlled native-capture sequence and non-VM isolation gate are now
 specified in `docs/observatory_capture_campaign.md`. Repo-only matched-trial,
 native-checkpoint, runtime-callback, spawn-attribution, selected-record
 correlation, and RNG return-ID tooling are diagnostic companions to this
-contract. None automatically promote evidence into schema v2.
+contract. Bounded spawn-order and selected-queue claims now have immutable live
+receipts, but none automatically promote evidence into schema v2.
 
 Controller v1 permits exactly one installed hook, either `_G.random_int` or
 `_G.random_bool`; all seven other event families must be explicitly disabled.
@@ -315,23 +319,31 @@ Enemy methods need extra care. Base `Skill` wrappers do not automatically
 observe every subclass override, and rebinding every table method can change
 identity or lookup behavior. Enumerate the exact loaded functions, wrap only
 known function values, and record which definitions were covered. Final action
-selection may require a narrower native/Lua orchestration anchor; a post-turn
-board snapshot is not proof of the candidate tournament that selected it.
+selection requires a narrower native/Lua orchestration anchor; the completed
+hardware-observer campaign proves one selected-record-to-queue shape, while a
+post-turn board snapshot alone is still not proof of the candidate tournament
+that selected it.
 
 ## Open questions
 
-- Can an ABI-safe observer at the shared RNG core capture the complete stream
-  using the committed 118-entry bounded return-address catalog and pass matched
-  control/exact-hook trials?
+- The ABI-safe shared-RNG observer captured two complete bounded streams using
+  the 118-entry return-address catalog and restored exactly. Can a future
+  boundary control every whole-game input well enough to establish behavioral
+  neutrality? The present control/exact spawn-coordinate mismatch says no.
 - Can the mapped candidate loop be observed without perturbing vector order,
   dynamic callback lookup, or native pathfinding state?
-- Which subclass `GetTargetScore` overrides bypass a base wrapper?
+- Runtime defining-slot enumeration answers which subclass `GetTargetScore`
+  overrides bypass a base wrapper for this build. Which mismatch, if any,
+  requires a native candidate-tournament record beyond those Lua slots?
 - What primitive `SkillEffect` summary is sufficient for Rust conformance
   without walking engine userdata recursively?
-- Does the mapped 24-byte selected-record copy correspond one-to-one with the
-  downstream Pawn action queue, and where is the final queue commit?
-- Which shared-RNG callers feed spawn selection, and what is their exact order
-  relative to enemy planning and Lua spawner decisions?
+- The mapped 24-byte selected record maps one-to-one to the immediate queue
+  commit in three bounded `Firefly1` captures. Do cancellation, retarget,
+  multi-weapon, or other pawn paths use additional commit shapes?
+- Three `Spawner:NextPawn` spans resolve the normal weak/pawn/upgrade draw order.
+  How can the pre-span CRT state, exact runtime available-array ordering, and
+  later spawn-coordinate scheduler be exported for replay?
 
-These are explicitly unresolved. The codec makes future answers comparable; it
-does not claim the hooks are already safe or complete.
+These remaining questions are explicitly unresolved. The codec makes future
+answers comparable; it does not promote the diagnostic observers as generally
+safe or complete schema-v2 hooks.

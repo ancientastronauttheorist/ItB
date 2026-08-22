@@ -42,11 +42,30 @@ CALLBACK_BINDINGS_REQUEST_TOKEN = "observatory-callback-bindings-request/1"
 CALLBACK_BINDINGS_REQUEST_BYTES = (
     CALLBACK_BINDINGS_REQUEST_TOKEN + "\n"
 ).encode("ascii")
+NATIVE_CONTINUE_REQUEST_FILE = (
+    BRIDGE_DIR / "itb_observatory_native_continue.request"
+)
+NATIVE_CONTINUE_REQUEST_TOKEN = "observatory-native-continue-request/1"
+NATIVE_CONTINUE_REQUEST_BYTES = (
+    NATIVE_CONTINUE_REQUEST_TOKEN + "\n"
+).encode("ascii")
 NATIVE_RNG_SNAPSHOT_FILE = (
     BRIDGE_DIR / "itb_observatory_native_rng_snapshot.json"
 )
 NATIVE_RNG_SNAPSHOT_TMP = (
     BRIDGE_DIR / "itb_observatory_native_rng_snapshot.json.tmp"
+)
+SPAWN_SPAN_LEDGER_FILE = (
+    BRIDGE_DIR / "itb_observatory_spawn_span_ledger.json"
+)
+SPAWN_SPAN_LEDGER_TMP = (
+    BRIDGE_DIR / "itb_observatory_spawn_span_ledger.json.tmp"
+)
+SELECTED_QUEUE_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json"
+)
+SELECTED_QUEUE_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json.tmp"
 )
 _OBSERVATORY_CAPTURE_ID_RE = re.compile(
     r"[a-z][a-z0-9_.-]{0,95}\Z"
@@ -408,6 +427,46 @@ def seed_and_arm_observatory_native_rng(
     return ack
 
 
+def seed_and_arm_observatory_native_rng_spawn_span(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically seed, arm RNG observation, and wrap exact NextPawn."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("native RNG spawn-span capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "native RNG spawn-span observer requires an unpaused mission heartbeat"
+        )
+    outputs = (
+        NATIVE_RNG_SNAPSHOT_FILE,
+        NATIVE_RNG_SNAPSHOT_TMP,
+        SPAWN_SPAN_LEDGER_FILE,
+        SPAWN_SPAN_LEDGER_TMP,
+    )
+    if any(path.exists() for path in outputs):
+        raise BridgeError("native RNG spawn-span output already exists")
+    command = f"OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = (
+        f"OK OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN capture={capture_id} "
+        f"seed={OBSERVATORY_NATIVE_RNG_SEED}"
+    )
+    if ack != expected:
+        raise BridgeError(f"unexpected native RNG spawn-span arm ACK: {ack}")
+    return ack
+
+
 def status_observatory_native_rng(*, timeout: float = 10.0) -> tuple[str, dict]:
     """Read the fixed native observer's bounded status table."""
     write_command("OBS_NATIVE_RNG_STATUS")
@@ -493,6 +552,113 @@ def finish_observatory_native_rng(
     )
 
 
+def finish_observatory_native_rng_spawn_span(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict, dict]:
+    """Restore both observers and require their two fresh create-only outputs."""
+    before = _file_generation(SPAWN_SPAN_LEDGER_FILE)
+    ack, snapshot = finish_observatory_native_rng(capture_id, timeout=timeout)
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SPAWN_SPAN_LEDGER_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            ledger = json.loads(SPAWN_SPAN_LEDGER_FILE.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(f"spawn span ledger is not valid JSON: {exc}") from exc
+        if (
+            not isinstance(ledger, dict)
+            or ledger.get("schema_version") != 1
+            or ledger.get("kind") != "spawn_rng_span_ledger"
+            or ledger.get("capture_id") != capture_id
+            or ledger.get("write_mode") != "create_only"
+            or ledger.get("raw_record_count")
+                != snapshot.get("summary", {}).get("record_count")
+            or ledger.get("integrity", {}).get("complete") is not True
+        ):
+            raise BridgeError("spawn span ledger does not match its native snapshot")
+        return ack, snapshot, ledger
+    raise TimeoutError(f"Fresh spawn span ledger timeout after {timeout:.0f}s")
+
+
+def run_observatory_selected_queue_trial(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict | None]:
+    """Run one fixed synthetic selected-record/queue trial to completion."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("selected/queue condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("selected/queue capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "selected/queue trial requires an unpaused active mission heartbeat"
+        )
+    if SELECTED_QUEUE_SNAPSHOT_FILE.exists() or SELECTED_QUEUE_SNAPSHOT_TMP.exists():
+        raise BridgeError("selected/queue snapshot output already exists")
+    before = _file_generation(SELECTED_QUEUE_SNAPSHOT_FILE)
+    command = f"OBS_SELECTED_QUEUE_TRIAL {condition} {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SELECTED_QUEUE_TRIAL condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) pawn=(\d+) type=Firefly1 "
+        r"at=([0-7]),([0-7]) consumed_spawns=(\d+) records=(\d+) "
+        r"complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != condition or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected selected/queue trial ACK: {ack}")
+    expected_records = int(match.group(7))
+    if condition != "armed":
+        if expected_records != 0 or _file_generation(SELECTED_QUEUE_SNAPSHOT_FILE) != before:
+            raise BridgeError("unarmed selected/queue trial published observer output")
+        return ack, None
+    if expected_records != 2:
+        raise BridgeError("armed selected/queue trial did not report one exact pair")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SELECTED_QUEUE_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                SELECTED_QUEUE_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"selected/queue snapshot is not valid JSON: {exc}"
+            ) from exc
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind")
+                != "native_selected_queue_hw_observer_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or snapshot.get("summary", {}).get("record_count")
+                != expected_records
+        ):
+            raise BridgeError("selected/queue snapshot does not match its ACK")
+        return ack, snapshot
+    raise TimeoutError(f"Fresh selected/queue snapshot timeout after {timeout:.0f}s")
+
+
 def arm_observatory_callback_manifest_startup() -> Path:
     """Create the exact one-shot request consumed on the next game load.
 
@@ -533,6 +699,23 @@ def arm_observatory_callback_bindings_startup() -> Path:
             f"cannot arm callback bindings startup request: {exc}"
         ) from exc
     return CALLBACK_BINDINGS_REQUEST_FILE
+
+
+def arm_observatory_native_continue_startup() -> Path:
+    """Create the fixed request for one build-keyed title Continue action."""
+    BRIDGE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(NATIVE_CONTINUE_REQUEST_FILE, "xb") as file:
+            file.write(NATIVE_CONTINUE_REQUEST_BYTES)
+            file.flush()
+            os.fsync(file.fileno())
+    except FileExistsError as exc:
+        raise BridgeError("native Continue startup request already exists") from exc
+    except OSError as exc:
+        raise BridgeError(
+            f"cannot arm native Continue startup request: {exc}"
+        ) from exc
+    return NATIVE_CONTINUE_REQUEST_FILE
 
 
 def read_state() -> dict | None:
