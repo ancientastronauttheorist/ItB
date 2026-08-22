@@ -1805,6 +1805,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v401: Native Windows path-boundary analysis proves Pilot_Hotshot selects
+# PATH_ROADRUNNER profile 4: search expansion may cross live occupied pawn
+# tiles, destination filtering may not stop there, and the profile is not
+# flight. Ordinary movement and fixed-budget Control Shot movement now retain
+# that distinction, including projected-board round trips. Pre-v401 corpus is
+# archived as
+# recordings/failure_db_snapshot_sim_v400.jsonl.
 # v400: Player-phase displacement keeps an enemy's queued target in the
 # attacker's current coordinate frame while retaining the original native
 # queue origin and raw piQueuedShot. This matches the live post-player board
@@ -1868,7 +1875,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 400
+SIMULATOR_VERSION = 401
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

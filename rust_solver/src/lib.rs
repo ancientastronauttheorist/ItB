@@ -2414,6 +2414,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v401 - Native Windows path-boundary analysis proves Pilot_Hotshot selects
+// PATH_ROADRUNNER profile 4: search expansion may cross live occupied pawn
+// tiles, destination filtering may not stop there, and the profile is not
+// flight. Ordinary movement and fixed-budget Control Shot movement now retain
+// that distinction, including projected-board round trips. Pre-v401 corpus
+// archived as
+// recordings/failure_db_snapshot_sim_v400.jsonl.
 // v400 - Player-phase displacement keeps an enemy's queued target in the
 // attacker's current coordinate frame while retaining the original native
 // queue origin and raw piQueuedShot. This aligns live post-player checkpoints
@@ -2481,7 +2488,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 400;
+pub const SIMULATOR_VERSION: u32 = 401;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

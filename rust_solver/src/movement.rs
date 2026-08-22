@@ -6,7 +6,8 @@ use crate::board::*;
 /// Get all tiles a unit can reach via BFS with move_speed steps.
 ///
 /// Returns Vec of (x, y) positions. Includes current position.
-/// Units block stopping (can walk through their tile but not stop).
+/// Live units hard-block ordinary ground movement. Henry Kwan's native
+/// PATH_ROADRUNNER profile may route through them but still cannot stop there.
 /// Dead wrecks hard-block (can't pass at all).
 pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let unit = &board.units[unit_idx];
@@ -29,6 +30,7 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
 
     let uid = unit.uid;
     let flying = unit.flying();
+    let can_transit_live_units = unit.pilot_hotshot();
 
     let mut result = Vec::with_capacity(20);
     result.push((ux, uy)); // always include current position
@@ -114,13 +116,14 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 continue;
             }
 
-            // Other live units hard-block ground movement. Flying movement uses
-            // direct range enumeration above; same-uid multi-tile bodies do not
-            // block themselves.
-            if let Some(blocker_idx) = board.unit_at(nx, ny) {
-                if board.units[blocker_idx].uid != uid {
-                    continue;
-                }
+            // Native PATH_ROADRUNNER (profile 4) ignores occupancy while
+            // expanding the path, but Board:IsBlocked still rejects an
+            // occupied destination. Same-uid multi-tile bodies do not block
+            // themselves. See the build-keyed Observatory path artifact.
+            let occupied_by_other = board.unit_at(nx, ny)
+                .is_some_and(|blocker_idx| board.units[blocker_idx].uid != uid);
+            if occupied_by_other && !can_transit_live_units {
+                continue;
             }
 
             // Dead unit wrecks hard-block
@@ -129,7 +132,9 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
             }
 
             visited[idx] = new_cost;
-            result.push((nx, ny));
+            if !occupied_by_other {
+                result.push((nx, ny));
+            }
             queue[tail] = (nx, ny, new_cost);
             tail += 1;
         }
@@ -187,6 +192,7 @@ pub fn controlled_reachable_tiles_with_cost(
     let uid = unit.uid;
     let flying = unit.flying();
     let massive = unit.massive();
+    let can_transit_live_units = unit.pilot_hotshot();
 
     let mut result = Vec::with_capacity(20);
     result.push(((ux, uy), 0));
@@ -262,10 +268,10 @@ pub fn controlled_reachable_tiles_with_cost(
                 continue;
             }
 
-            if let Some(blocker_idx) = board.unit_at(nx, ny) {
-                if board.units[blocker_idx].uid != uid {
-                    continue;
-                }
+            let occupied_by_other = board.unit_at(nx, ny)
+                .is_some_and(|blocker_idx| board.units[blocker_idx].uid != uid);
+            if occupied_by_other && !can_transit_live_units {
+                continue;
             }
 
             if board.wreck_at(nx, ny) {
@@ -273,7 +279,9 @@ pub fn controlled_reachable_tiles_with_cost(
             }
 
             visited[idx] = new_cost;
-            result.push(((nx, ny), new_cost));
+            if !occupied_by_other {
+                result.push(((nx, ny), new_cost));
+            }
             queue[tail] = (nx, ny, new_cost);
             tail += 1;
         }
@@ -616,6 +624,50 @@ mod tests {
         // Enemy is a hard block — can't stop on or path through
         assert!(!tiles.contains(&(1, 0)));
         assert!(!tiles.contains(&(2, 0)));
+    }
+
+    #[test]
+    fn test_roadrunner_transits_live_unit_but_cannot_stop() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
+        board.units[idx].pilot_flags = PilotFlags::HOTSHOT;
+
+        let blocker = Unit {
+            uid: 2,
+            x: 1,
+            y: 0,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            ..Default::default()
+        };
+        board.add_unit(blocker);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(1, 0)), "an occupied tile is not a legal stop");
+        assert!(tiles.contains(&(2, 0)), "Road Runner crosses the occupied tile");
+        assert!(tiles.contains(&(3, 0)), "the crossed tile consumes one move");
+    }
+
+    #[test]
+    fn test_control_shot_roadrunner_preserves_transit_stop_distinction() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
+        board.units[idx].pilot_flags = PilotFlags::HOTSHOT;
+
+        let blocker = Unit {
+            uid: 2,
+            x: 1,
+            y: 0,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            ..Default::default()
+        };
+        board.add_unit(blocker);
+
+        let reachable = controlled_reachable_tiles_with_cost(&board, idx, 3);
+        assert!(!reachable.iter().any(|(pos, _cost)| *pos == (1, 0)));
+        assert!(reachable.contains(&((2, 0), 2)));
+        assert!(reachable.contains(&((3, 0), 3)));
     }
 
     #[test]

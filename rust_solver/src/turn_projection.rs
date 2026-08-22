@@ -1194,6 +1194,8 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             Some("Pilot_Chemical")
         } else if u.pilot_flags.contains(crate::board::PilotFlags::ARROGANT) {
             Some("Pilot_Arrogant")
+        } else if u.pilot_flags.contains(crate::board::PilotFlags::HOTSHOT) {
+            Some("Pilot_Hotshot")
         } else {
             None
         };
@@ -2981,6 +2983,20 @@ mod tests {
         assert!(retained.guarding());
         assert!(retained.burrower());
         assert!(retained.jumper());
+    }
+
+    #[test]
+    fn test_board_to_json_roundtrip_preserves_hotshot_path_profile() {
+        let (mut board, spawn_points) = simple_board();
+        board.units[0].pilot_flags = crate::board::PilotFlags::HOTSHOT;
+
+        let json_str = board_to_json(&board, &spawn_points);
+        let serialized: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(serialized["units"][0]["pilot_id"], "Pilot_Hotshot");
+
+        let (roundtrip, ..) = board_from_json(&json_str)
+            .expect("Hotshot path profile must survive projected checkpoints");
+        assert!(roundtrip.units[0].pilot_hotshot());
     }
 
     #[test]

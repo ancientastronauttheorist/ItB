@@ -335,7 +335,7 @@ pub struct JsonUnit {
     pub pilot_value: Option<f64>,
     /// Lua bridge `pilot.id` (e.g. "Pilot_Soldier"). Maps to `PilotFlags`
     /// via `pilot_flags_from_id` for the combat-affecting passives the
-    /// solver actually models (Camila / Ariadne / Harold today).
+    /// solver models directly rather than inheriting from live pawn fields.
     pub pilot_id: Option<String>,
 }
 
@@ -351,6 +351,7 @@ fn pilot_flags_from_id(pilot_id: &str) -> crate::board::PilotFlags {
         "Pilot_Repairman" => PilotFlags::REPAIRMAN,  // Harold Schmidt — Frenzied Repair
         "Pilot_Chemical"  => PilotFlags::CHEMICAL,   // Morgan Lejeune — Finisher
         "Pilot_Arrogant"  => PilotFlags::ARROGANT,   // Kai Miller — Opener
+        "Pilot_Hotshot"   => PilotFlags::HOTSHOT,    // Henry Kwan — Maneuverable
         _ => PilotFlags::empty(),
     }
 }
@@ -1445,6 +1446,15 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
 mod tests {
     use super::*;
     use crate::types::Terrain;
+
+    #[test]
+    fn test_hotshot_pilot_id_maps_to_roadrunner_flag() {
+        assert_eq!(
+            pilot_flags_from_id("Pilot_Hotshot"),
+            PilotFlags::HOTSHOT,
+        );
+        assert_eq!(pilot_flags_from_id("Pilot_Unknown"), PilotFlags::empty());
+    }
 
     #[test]
     fn test_bridge_terrain_id_5_overrides_stale_lava_name_to_ice() {

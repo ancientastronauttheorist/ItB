@@ -53,6 +53,13 @@ selected Lua global, not the native tie-breaks or other direct core callers.
 Addresses and conclusions are valid only for the exact executable identity in
 `docs/itb_native_anchor_research.md` and its reviewed boundary artifact.
 
+A later read-only path-boundary artifact separately pins the native
+reachability API, path constants, Board search vtable, and Henry Kwan's
+`PATH_ROADRUNNER=4` transit/stop split. Simulator v401 consumes that proven
+rule. It required no trace hook and does not broaden controller v1; future path
+tracing is reserved for concrete weighted-ordering, corpse, or uncommon-profile
+mismatches.
+
 For these v1 RNG records, the on-wire `context.call_site` field is the exact
 configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
 caller or a reconstructed call-stack location. The field name is retained for
@@ -333,7 +340,9 @@ that selected it.
   enough: particle, pilot-portrait, and unit-status presentation code consumes
   the same stream at variable counts before gameplay selection.
 - Can the mapped candidate loop be observed without perturbing vector order,
-  dynamic callback lookup, or native pathfinding state?
+  dynamic callback lookup, or the remaining weighted native path state? The
+  ordinary path API and Road Runner occupancy boundary are already closed
+  offline.
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
   overrides bypass a base wrapper for this build. Which mismatch, if any,
   requires a native candidate-tournament record beyond those Lua slots?

@@ -37,6 +37,14 @@ The coordinate-only and combined coordinate/RNG series are closed by
 with another 689/689 match, the same sealed save tree, the exact baseline Mod
 Loader, no active Observatory file, and a stopped game process.
 
+Offline analysis now also closes the exact-build Road Runner boundary without
+installing another diagnostic: `Pilot_Hotshot` uses path profile 4, occupied
+live pawn tiles are legal transit nodes, and the separate stop filter rejects
+them as destinations. Simulator v401 incorporates the rule. Any future live
+path campaign should therefore target a concrete mismatch in weighted costs,
+route ordering, corpse traversal, or an uncommon profile rather than repeat
+this boundary.
+
 There are now two accepted capture tracks:
 
 1. **Reversible owner track (current).** Inventory the exact owner build, make
@@ -78,6 +86,7 @@ not be relabelled as clean stock.
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
 | Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer plus strict selected-to-queue correlator | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill |
+| Native path boundary | Exact-build API/profile/vtable map with region hashes, control windows, and direct-call verification | Offline proof closes Henry Kwan's profile-4 transit/occupied-stop distinction; simulator v401 has focused ordinary and Control Shot regressions. Weighted ordering and uncommon edges remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
 The diagnostic checkpoint is deliberately separate from authoritative

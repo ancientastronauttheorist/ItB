@@ -18,7 +18,7 @@ Comprehensive inventory of all pilots and their passive abilities for Into the B
 | Pilot_Medic | Isaac Jones | Gain 1 extra "Reset Turn" per battle (2 instead of 1) | passive | on_reset_trigger | HIGH | yes (id only) | unmodeled | Undo availability directly impacts plan depth |
 | Pilot_Leader | Chen Rong | After attacking, gain 1 free tile movement | passive | on_attack_end | MED | yes (id only) | unmodeled | Repositioning after attack enables follow-up tactics |
 | Pilot_Soldier | Camila Vera | Mech unaffected by Webbing and Smoke | passive | on_web_attempt + on_smoke_tile | HIGH | yes (id only) | unmodeled | Negates status effects that disable movement/attack |
-| Pilot_Hotshot | Henry Kwan | Mech can move through enemy units | passive | on_move | MED | yes (id only) | unmodeled | Enables melee positioning from unexpected angles |
+| Pilot_Hotshot | Henry Kwan | Mech can move through enemy units | passive | on_move | MED | yes (id only) | modeled_v401 | Exact Windows profile-4 proof: live pawn tiles are legal transit nodes but illegal stops; profile-4 terrain and directional-wall rules still apply |
 | Pilot_Warrior | Gana | Deploy anywhere on map, damaging adjacent enemies (costs 1 reactor power) | active | on_deployment | MED | yes (id only) | unmodeled | Map control on turn 1; 0-3 damage AoE |
 | Pilot_Aquatic | Archimedes | Move again after shooting (costs 1 reactor power) | active | on_attack_end_conditional | MED | yes (id only) | unmodeled | Hit-and-run repositioning; costs reactor |
 | Pilot_Mantis | Kazaaakpleth | 2 damage melee attack replaces Repair | passive | on_repair_attempt | MED | yes (id only) | unmodeled | Cannot heal; must damage instead; high risk/reward |

@@ -190,6 +190,31 @@ function extents, hashes, calls, and references for explicitly supplied labeled
 addresses. Treat that output as review input and publish only normalized JSON
 whose identity, bytes, and declared-boundary-relative calls pass the verifier.
 
+## Native path and reachability boundaries
+
+`native/windows_build_13725832_31fe35265598_path_boundaries.json` is the
+separate exact-build movement map. It pins the Lua bindings for
+`Board:GetSimpleReachable`, `Board:GetReachable`, `Board:GetPath`,
+`Board:IsBlocked`, and `Pawn:GetPathProf`; all seven relevant `PATH_*`
+constants; the Board grid-search vtable; 12 reviewed native regions; and the
+control windows needed to separate transit from destination blocking.
+
+For this build, `Pilot_Hotshot` selects `PATH_ROADRUNNER=4`. Profile 4 expands
+through live occupied pawn tiles, but the later `Board:IsBlocked` filter keeps
+those tiles out of the returned destinations. It remains subject to
+directional walls and is not flight. Simulator v401 applies that exact
+transit/stop distinction to ordinary and fixed-budget movement. Weighted path
+costs, native tie ordering, dead-corpse traversal, and uncommon profile/team
+edges remain mismatch-driven follow-up rather than inferred behavior.
+
+Verify the immutable map against the pinned executable with:
+
+```powershell
+python scripts/itb_observatory_path_boundaries.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --path-map data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json
+```
+
 ## Native RNG return-address IDs
 
 Build or verify the complete raw-call catalog only against the exact executable,

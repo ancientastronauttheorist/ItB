@@ -13,7 +13,9 @@ string candidates into reviewed function boundaries for:
 - enemy target enumeration, `ScorePositioning`, `GetTargetScore`, and native
   equal-best tie-breaking;
 - `GetTargetArea` / `GetSecondTargetArea` and `GetSkillEffect` dispatch;
-- the final selected 24-byte AI decision-record copy.
+- the final selected 24-byte AI decision-record copy; and
+- the native path/reachability API, path profiles, Board search vtable, and
+  Road Runner transit/destination boundary.
 
 “Complete” here means the focused static map needed to choose experiment
 boundaries is finished. It does not mean the native engine is reconstructed.
@@ -38,6 +40,9 @@ offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
 ordinary selector call. A disposable installation is optional for those
 owner-build questions and required only for a pristine stock-depot claim.
+The separate exact-build path map closes Henry Kwan's Road Runner occupancy
+rule; weighted path ordering, corpse traversal, and uncommon profiles remain
+mismatch-driven questions.
 
 The durable artifacts are:
 
@@ -59,6 +64,10 @@ The durable artifacts are:
   for the exact scheduler/fallback/ordinary control-flow map. It binds callers
   59, 60, and 66, both function hashes, all seven direct callsites, three log
   or class strings, and six branch/vector/modulo windows.
+- `data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json`
+  for the exact path API bindings and constants, Board search vtable, 12
+  reviewed region hashes, four direct call edges, and the Road Runner
+  transit-versus-stop proof.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -202,6 +211,31 @@ and observer resource is restored, and no executable bytes are modified. This
 supports `enemy_action_selected` for that shape, not a universal claim about
 cancellation, retargeting, multi-weapon enemies, or every Pawn queue path.
 
+## Native path and Road Runner boundary
+
+The exact-build path map binds `Board:GetSimpleReachable`,
+`Board:GetReachable`, `Board:GetPath`, `Board:IsBlocked`, and
+`Pawn:GetPathProf` to their reviewed native entries. It also pins
+`PATH_GROUND=0`, `PATH_FLYER=1`, `PATH_MASSIVE=2`, `PATH_PROJECTILE=3`,
+`PATH_ROADRUNNER=4`, `PATH_BURROWER=7`, and `PATH_PHASING=9` through their Lua
+global registrations.
+
+`Pilot_Hotshot` takes the `PATH_ROADRUNNER` branch. That branch checks terrain
+without calling the ordinary occupancy helper, so occupied live pawn tiles can
+be search nodes. `GetReachable` nevertheless invokes the Board vtable's
+`IsBlocked` slot before returning a destination, and that concrete predicate
+rejects occupied pawn spaces. Profile 4 also remains blocked by directional
+walls and is distinct from `PATH_FLYER`. This closes Henry Kwan's solver gap;
+simulator v401 now traverses but never returns those occupied tiles. Weighted
+path costs, equal-cost route ordering, corpse traversal, and uncommon profile
+edges are not promoted by this bounded proof.
+
+Reverify the artifact with
+`scripts/itb_observatory_path_boundaries.py verify` against the exact
+executable. Its verifier checks the embedded identity, region/control-window
+bytes, API/global bindings, vtable slots, and direct calls; reviewed function
+starts and semantic interpretations remain analyst evidence.
+
 ## Reproducible analysis workflow
 
 The reviewed pass used Capstone 5.0.7 plus Ghidra 12.1.3 with JDK 21. The Ghidra
@@ -290,10 +324,15 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    commit on the same thread, with exact destination, target/shot, and
    weapon/skill agreement. Wider pawn types, multi-weapon selection,
    cancellation, and retarget paths remain untested.
-6. Add native candidate records only if a solver mismatch needs more than the
+6. **Completed offline for Road Runner:** the exact API/profile/vtable map
+   proves profile-4 traversal through live occupants plus separate occupied-stop
+   rejection. Simulator v401 and focused conformance tests implement the
+   distinction. Weighted costs, route tie ordering, corpse traversal, and
+   uncommon profiles remain mismatch-driven.
+7. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
-7. **Completed for all live series:** the callback/native, native-boundaries,
+8. **Completed for all live series:** the callback/native, native-boundaries,
    spawn-replay, and spawn-coordinate cleanup receipts close all seven
    immutable campaign receipts' pending save/install fields. Each
    accepted/post-cleanup comparison matches 689/689, the 33-file save tree is

@@ -1,0 +1,502 @@
+{
+  "analysis_kind": "native_path_boundary_map",
+  "api_bindings": [
+    {
+      "binding_kind": "virtual_thunk",
+      "evidence_class": "fact",
+      "member_store_hex": "c745e8df396e00",
+      "member_store_rva": "0x00279ac1",
+      "name": "IsBlocked",
+      "name_reference_hex": "6830858300",
+      "name_reference_rva": "0x00279ad7",
+      "native_entry_rva": "0x002e39df",
+      "resolved_target_rva": "0x0015ff40",
+      "string_rva": "0x00438530",
+      "thunk_hex": "8b01ff600c",
+      "vtable_slot": "0x0c"
+    },
+    {
+      "binding_kind": "direct_member",
+      "evidence_class": "fact",
+      "member_store_hex": "c745e860405700",
+      "member_store_rva": "0x00279ddf",
+      "name": "GetSimpleReachable",
+      "name_reference_hex": "c7420828868300",
+      "name_reference_rva": "0x0028783f",
+      "native_entry_rva": "0x00174060",
+      "string_rva": "0x00438628"
+    },
+    {
+      "binding_kind": "direct_member",
+      "evidence_class": "fact",
+      "member_store_hex": "c745e880415700",
+      "member_store_rva": "0x00279e21",
+      "name": "GetReachable",
+      "name_reference_hex": "c7420844868300",
+      "name_reference_rva": "0x0028797f",
+      "native_entry_rva": "0x00174180",
+      "string_rva": "0x00438644"
+    },
+    {
+      "binding_kind": "direct_member",
+      "evidence_class": "fact",
+      "member_store_hex": "c745e8d0425700",
+      "member_store_rva": "0x00279ea6",
+      "name": "GetPath",
+      "name_reference_hex": "c7420878868300",
+      "name_reference_rva": "0x00287b6f",
+      "native_entry_rva": "0x001742d0",
+      "string_rva": "0x00438678"
+    },
+    {
+      "binding_kind": "direct_member",
+      "evidence_class": "fact",
+      "member_store_hex": "c745e8902f6300",
+      "member_store_rva": "0x0027c1e6",
+      "name": "GetPathProf",
+      "name_reference_hex": "6868908300",
+      "name_reference_rva": "0x0027c1fc",
+      "native_entry_rva": "0x00232f90",
+      "string_rva": "0x00439068"
+    }
+  ],
+  "board_gridsearch_vtable": {
+    "complete_object_locator_rva": "0x0044e4dc",
+    "end_rva_exclusive": "0x0042e31c",
+    "evidence_class": "fact",
+    "region_start_rva": "0x0042e2f8",
+    "sha256": "67bc861002deb04f06f11458ad2e90c7606ebe067667437aff0686f9129c7c42",
+    "slots": [
+      {
+        "offset": "0x00",
+        "role": "lifecycle",
+        "target_rva": "0x0015f860"
+      },
+      {
+        "offset": "0x04",
+        "role": "grid_extent",
+        "target_rva": "0x0015eb20"
+      },
+      {
+        "offset": "0x08",
+        "role": "is_valid",
+        "target_rva": "0x00162280"
+      },
+      {
+        "offset": "0x0c",
+        "role": "is_blocked",
+        "target_rva": "0x0015ff40"
+      },
+      {
+        "offset": "0x10",
+        "role": "directional_wall_blocking",
+        "target_rva": "0x00174440"
+      },
+      {
+        "offset": "0x14",
+        "role": "can_traverse",
+        "target_rva": "0x00162210"
+      },
+      {
+        "offset": "0x18",
+        "role": "destination_cost",
+        "target_rva": "0x001621b0"
+      },
+      {
+        "offset": "0x1c",
+        "role": "source_cost",
+        "target_rva": "0x00162190"
+      }
+    ],
+    "vtable_rva": "0x0042e2fc"
+  },
+  "conclusions": [
+    {
+      "claim": "The shipped Board GetSimpleReachable, GetReachable, and GetPath names bind to the three reviewed wrappers, while Pawn GetPathProf binds to the reviewed profile function.",
+      "evidence_class": "inference",
+      "id": "path_api_entries_are_exact"
+    },
+    {
+      "claim": "Pawn GetPathProf stores the pawn identifier in the high bits and a base path mode in the low nibble; Road_Runner selects base mode 4.",
+      "evidence_class": "inference",
+      "id": "path_profiles_embed_pawn_identity"
+    },
+    {
+      "claim": "Profile 4 takes a terrain-only traversal branch without ordinary occupancy-helper calls, but GetReachable still applies Board IsBlocked before returning a destination, and that stop predicate rejects occupied pawn spaces.",
+      "evidence_class": "inference",
+      "id": "roadrunner_transits_occupied_tiles_but_cannot_stop_there"
+    },
+    {
+      "claim": "Profile 4 remains blocked by directional walls and rejects Building, Mountain, and Hole transit; it is distinct from PATH_FLYER=1.",
+      "evidence_class": "inference",
+      "id": "roadrunner_is_not_flight"
+    },
+    {
+      "claim": "The bridge already reports Pilot_Hotshot, but the reviewed Rust baseline mapped no Hotshot flag and hard-blocked every occupied BFS tile, so it omitted native-legal through-unit routes.",
+      "evidence_class": "inference",
+      "id": "solver_had_a_roadrunner_input_gap"
+    }
+  ],
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "roadrunner_path_profile",
+      "instruction_hex": "83ec188bcc6818658300e88d4dddff8b078bcf8b4004ffd084c074178b87b0000000be04000000c1e0040bc65f5e5b8be55dc3",
+      "meaning": "A successful Road_Runner property query returns (pawn identifier << 4) OR 4.",
+      "region_id": "pawn_get_path_prof",
+      "size": 51,
+      "start_rva": "0x00233074"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "massive_or_ground_profile_fallback",
+      "instruction_hex": "8bcfe8e21d000084c0b9020000008b87b00000000f45f1c1e0045f0bc65e5b8be55dc3",
+      "meaning": "The final fallback chooses low profile 2 when the Massive predicate is true, otherwise 0, and prefixes the pawn identifier.",
+      "region_id": "pawn_get_path_prof",
+      "size": 35,
+      "start_rva": "0x002330a7"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "roadrunner_terrain_only_transit",
+      "instruction_hex": "83f80475238b86e02a000083f801740e83f804740983f8090f85d50000005f33c05e8be55dc20400",
+      "meaning": "Low profile 4 has a dedicated branch: Building, Mountain, and Hole reject transit; every other terrain returns true without an occupancy-helper call.",
+      "region_id": "grid_tile_can_traverse",
+      "size": 40,
+      "start_rva": "0x001a0188"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_profile_and_projectile_filter_gate",
+      "instruction_hex": "c745fc0000000083e00fc745ec0100000089451483fb037478",
+      "meaning": "The wrapper retains both the full path profile and its low nibble; exact profile 3 skips its final destination-filter loop.",
+      "region_id": "board_get_reachable",
+      "size": 25,
+      "start_rva": "0x0017421a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_destination_stop_filter",
+      "instruction_hex": "8b068d1cfd000000008b4df0ff740304ff3403e8e7a8feff83b8e02a0000037506837d1406741a8b068b4df0ff7518ff7418048b11ff34188b420cffd084c0741c",
+      "meaning": "Each non-projectile candidate is terrain-checked and then passed to the Board vtable +0x0c stop-blocking predicate; blocked candidates are removed.",
+      "region_id": "board_get_reachable",
+      "size": 65,
+      "start_rva": "0x00174241"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_budget_and_stop_filter",
+      "instruction_hex": "3bc6744083c0108d4ddc50e8e02c0000395de87f22ff75108b078bcfff75e0ff75dc8b400cffd084c0750c8d45dc508d4dd0e85967feff",
+      "meaning": "Only nodes within the requested movement budget whose vtable +0x0c predicate is false are copied into reachable output.",
+      "region_id": "reachable_core",
+      "size": 55,
+      "start_rva": "0x000ce8f0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "roadrunner_obeys_directional_walls",
+      "instruction_hex": "8b451483e00f83f801741b83f803741683f806741183f805740cb8010000005e8be55dc21000",
+      "meaning": "Only low profiles 1, 3, 6, and 5 bypass a present directional wall; profile 4 remains wall-blocked.",
+      "region_id": "directional_wall_blocking",
+      "size": 38,
+      "start_rva": "0x001744a4"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_stop_blocking_includes_occupancy",
+      "instruction_hex": "ff75108bcae870f4040084c075368b460c8d4e0cff750cff75088b4050ffd084c07418837d1009751bff750c8bceff7508e89498000083f806740932c05e8be55dc20c00",
+      "meaning": "After tile blocking passes, Board stop-blocking consults its pawn-space manager and reports an occupied destination blocked except for its separate profile-9 special case.",
+      "region_id": "board_is_blocked",
+      "size": 68,
+      "start_rva": "0x0015ff86"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_path_same_point_is_empty",
+      "instruction_hex": "8b750c8b45188b5510c745f0000000003b7514752d3bd075298b4508c70000000000c7400400000000c74008000000008b4df464890d00000000595e8be55dc21800",
+      "meaning": "GetPath returns an empty point vector immediately when start and end are equal.",
+      "region_id": "board_get_path",
+      "size": 66,
+      "start_rva": "0x001742f6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_cardinal_neighbor_order",
+      "instruction_hex": "8b04f5b4578d00ff75088b0cf5b8578d0003c78b55b803ca8945bc8b035652894dc08bcb8b401057c745c400007a44ffd084c00f85c5010000",
+      "meaning": "Reachability expands four neighbors from the two shipped direction tables and checks the directional-wall slot before traversal.",
+      "region_id": "reachable_search",
+      "size": 57,
+      "start_rva": "0x000cef80"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001740a0",
+      "id": "simple_wrapper_to_core",
+      "instruction_hex": "e89bb9f5ff",
+      "source_region": "board_get_simple_reachable",
+      "target_id": "simple_reachable_core",
+      "target_rva": "0x000cfa40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001741ce",
+      "id": "reachable_wrapper_to_core",
+      "instruction_hex": "e80da6f5ff",
+      "source_region": "board_get_reachable",
+      "target_id": "reachable_core",
+      "target_rva": "0x000ce7e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000ce879",
+      "id": "reachable_core_to_search",
+      "instruction_hex": "e8c2030000",
+      "source_region": "reachable_core",
+      "target_id": "reachable_search",
+      "target_rva": "0x000cec40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00174345",
+      "id": "path_wrapper_to_core",
+      "instruction_hex": "e8c6b0f5ff",
+      "source_region": "board_get_path",
+      "target_id": "path_core",
+      "target_rva": "0x000cf410"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "platform": "windows"
+  },
+  "method": {
+    "binding_review": "Shipped Lua registration names, absolute member pointers, the IsBlocked virtual thunk, the Board RTTI-linked vtable, and path-constant registrations are pinned independently.",
+    "boundary_review": "Contiguous native wrappers, cores, predicates, and the Pawn path-profile function were reviewed with focused x86 disassembly and independently hashed.",
+    "limitations": [
+      "Semantic role names are conservative analyst inferences over exact machine-code facts.",
+      "The artifact does not claim complete path-cost, tie-breaking, team-specific occupancy, or every path-profile mode.",
+      "Static control flow does not replace matched live traces for runtime ordering or edge-case reachability.",
+      "Solver safety policies for ACID and hazardous terrain remain separate from native legality.",
+      "The artifact applies only to the exact owner-observed Windows executable."
+    ]
+  },
+  "path_constants": [
+    {
+      "evidence_class": "fact",
+      "name": "PATH_PROJECTILE",
+      "string_reference_hex": "68fc968300",
+      "string_reference_rva": "0x0027e1ae",
+      "string_rva": "0x004396fc",
+      "value": 3,
+      "value_push_hex": "6a03",
+      "value_push_rva": "0x0027e1e2"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_FLYER",
+      "string_reference_hex": "68f0968300",
+      "string_reference_rva": "0x0027e243",
+      "string_rva": "0x004396f0",
+      "value": 1,
+      "value_push_hex": "6a01",
+      "value_push_rva": "0x0027e277"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_GROUND",
+      "string_reference_hex": "681c978300",
+      "string_reference_rva": "0x0027e2d8",
+      "string_rva": "0x0043971c",
+      "value": 0,
+      "value_push_hex": "6a00",
+      "value_push_rva": "0x0027e30c"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_MASSIVE",
+      "string_reference_hex": "680c978300",
+      "string_reference_rva": "0x0027e36d",
+      "string_rva": "0x0043970c",
+      "value": 2,
+      "value_push_hex": "6a02",
+      "value_push_rva": "0x0027e3a1"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_PHASING",
+      "string_reference_hex": "6838978300",
+      "string_reference_rva": "0x0027e402",
+      "string_rva": "0x00439738",
+      "value": 9,
+      "value_push_hex": "6a09",
+      "value_push_rva": "0x0027e436"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_BURROWER",
+      "string_reference_hex": "6828978300",
+      "string_reference_rva": "0x0027e497",
+      "string_rva": "0x00439728",
+      "value": 7,
+      "value_push_hex": "6a07",
+      "value_push_rva": "0x0027e4cb"
+    },
+    {
+      "evidence_class": "fact",
+      "name": "PATH_ROADRUNNER",
+      "string_reference_hex": "6854978300",
+      "string_reference_rva": "0x0027e52c",
+      "string_rva": "0x00439754",
+      "value": 4,
+      "value_push_hex": "6a04",
+      "value_push_rva": "0x0027e560"
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Reviewed wrapper extent through RET 0x14; the next byte is INT3 padding.",
+      "end_rva_exclusive": "0x001740e9",
+      "evidence_class": "fact",
+      "id": "board_get_simple_reachable",
+      "section": ".text",
+      "sha256": "59259634c2a99a3bb9b3219c3d824488130abbf2d5a4ff7126ad8c7c26e8282a",
+      "size": 137,
+      "start_rva": "0x00174060"
+    },
+    {
+      "boundary_basis": "Reviewed wrapper extent through RET 0x14; the next byte is INT3 padding.",
+      "end_rva_exclusive": "0x001742c1",
+      "evidence_class": "fact",
+      "id": "board_get_reachable",
+      "section": ".text",
+      "sha256": "e283c5dd59fcf995221823cc3b5af3de9db2889b026e10c1623be492374a416b",
+      "size": 321,
+      "start_rva": "0x00174180"
+    },
+    {
+      "boundary_basis": "Reviewed wrapper extent through RET 0x18; the next byte is INT3 padding.",
+      "end_rva_exclusive": "0x0017438e",
+      "evidence_class": "fact",
+      "id": "board_get_path",
+      "section": ".text",
+      "sha256": "a018d8395fcc60e14794c778029607fff585a4d4fb40524b26abafe53972fb31",
+      "size": 190,
+      "start_rva": "0x001742d0"
+    },
+    {
+      "boundary_basis": "Reviewed function extent through its final RET; the next byte is INT3.",
+      "end_rva_exclusive": "0x002330ca",
+      "evidence_class": "fact",
+      "id": "pawn_get_path_prof",
+      "section": ".text",
+      "sha256": "3cc91e8ef2be9950114b088f141a4087057bf7eee702aade83be716e1bccfa40",
+      "size": 314,
+      "start_rva": "0x00232f90"
+    },
+    {
+      "boundary_basis": "Reviewed function extent through RET 0x14; the next function begins immediately.",
+      "end_rva_exclusive": "0x000ce9a0",
+      "evidence_class": "fact",
+      "id": "reachable_core",
+      "section": ".text",
+      "sha256": "f7b3287d2854115b30ad2d6126d9d573c37d5fabfdd471f1776c5f911990926f",
+      "size": 448,
+      "start_rva": "0x000ce7e0"
+    },
+    {
+      "boundary_basis": "Reviewed graph-search function extent through RET 0x14.",
+      "end_rva_exclusive": "0x000cf2f0",
+      "evidence_class": "fact",
+      "id": "reachable_search",
+      "section": ".text",
+      "sha256": "05bebc52863ead8a3ea9a0272301253f726dd03f94a56e1491f7ab7202963645",
+      "size": 1712,
+      "start_rva": "0x000cec40"
+    },
+    {
+      "boundary_basis": "Reviewed path-search function extent through RET 0x18; INT3 follows.",
+      "end_rva_exclusive": "0x000cf9df",
+      "evidence_class": "fact",
+      "id": "path_core",
+      "section": ".text",
+      "sha256": "3477ed0edb02f50d6e5f92b5c09596c6d6bcc30398a3f5636e3091c3db1f75b4",
+      "size": 1487,
+      "start_rva": "0x000cf410"
+    },
+    {
+      "boundary_basis": "Reviewed simple-reachability function extent through RET 0x18.",
+      "end_rva_exclusive": "0x000cfe88",
+      "evidence_class": "fact",
+      "id": "simple_reachable_core",
+      "section": ".text",
+      "sha256": "fd5ad50aba168c7cd33a28aad5972dd61f5b422345675c818b4cfd5ec2e9e9fd",
+      "size": 1096,
+      "start_rva": "0x000cfa40"
+    },
+    {
+      "boundary_basis": "Reviewed Board GridSearchable stop-blocking slot through RET 0x0c.",
+      "end_rva_exclusive": "0x0015ffd3",
+      "evidence_class": "fact",
+      "id": "board_is_blocked",
+      "section": ".text",
+      "sha256": "17436eb425b49baa211547ca79073ef7a473c124ca30f87fe099acdfd3f9752d",
+      "size": 147,
+      "start_rva": "0x0015ff40"
+    },
+    {
+      "boundary_basis": "Reviewed per-tile traversal predicate through RET 0x04.",
+      "end_rva_exclusive": "0x001a0288",
+      "evidence_class": "fact",
+      "id": "grid_tile_can_traverse",
+      "section": ".text",
+      "sha256": "548085ece564eb40e21535d5cbd8eb55b6f3fe2c60c35400ecd9028537f081ee",
+      "size": 312,
+      "start_rva": "0x001a0150"
+    },
+    {
+      "boundary_basis": "Reviewed stop-blocking predicate plus its contiguous nine-entry terrain jump table.",
+      "end_rva_exclusive": "0x001af4c0",
+      "evidence_class": "fact",
+      "id": "grid_tile_stop_blocking",
+      "section": ".text",
+      "sha256": "3e50987e1ad95543c637180b6480cf80c6caa6bbb3a0d3e6974eaa791060fe8e",
+      "size": 192,
+      "start_rva": "0x001af400"
+    },
+    {
+      "boundary_basis": "Reviewed directional-wall GridSearchable slot through RET 0x10.",
+      "end_rva_exclusive": "0x001744d3",
+      "evidence_class": "fact",
+      "id": "directional_wall_blocking",
+      "section": ".text",
+      "sha256": "bb7833d592bf38ba0b17f4c41a4f9675094e91fd9e43c9115c601eda7ae80f25",
+      "size": 147,
+      "start_rva": "0x00174440"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7"
+  },
+  "summary": {
+    "api_binding_count": 5,
+    "control_window_count": 10,
+    "direct_edge_count": 4,
+    "get_path_same_point_empty": true,
+    "path_constant_count": 7,
+    "region_count": 12,
+    "remaining_runtime_proof": [
+      "weighted path-cost and tie-breaking details",
+      "team-specific ordinary occupancy edge cases",
+      "matched native path/reachable result ordering"
+    ],
+    "roadrunner_can_stop_occupied": false,
+    "roadrunner_can_transit_occupied": true,
+    "roadrunner_profile": 4
+  }
+}

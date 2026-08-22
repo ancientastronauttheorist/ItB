@@ -35,8 +35,11 @@ fallback, while caller 66 randomizes a without-replacement predicate-check
 order before a separate call to the ordinary selector. The remaining unknowns
 are therefore narrower and more valuable: prospective selector-state delivery
 or upstream draw control, runtime inputs for those special paths only when a
-real mismatch needs them, path and movement enumeration, broader
-selected-action paths, effect execution, and hidden engine state.
+real mismatch needs them, weighted path cost/tie ordering and uncommon
+movement profiles, broader selected-action paths, effect execution, and hidden
+engine state. The ordinary reachability API boundary and Henry Kwan's exact
+Road Runner transit/stop rule are now closed for this build and implemented in
+simulator v401.
 
 The strategic ordering should therefore be:
 
@@ -193,8 +196,10 @@ override `GetTargetScore` where they require custom behavior.
 
 This means the visible target-scoring formula is already available. On the
 pinned Windows build, the target-vector loop, score calls, equal-best retention,
-and native random tie-break are now mapped. Movement/path enumeration details,
-native position helpers, runtime subclass coverage, higher-level record
+and native random tie-break are now mapped. The exact reachability/path API
+bindings, path constants, Board search vtable, and Road Runner profile-4
+transit/stop boundary are also pinned. Weighted path costs and tie ordering,
+uncommon profile/team edges, runtime subclass coverage, higher-level record
 selection, and broader queue paths remain to be validated. One bounded
 `Firefly1` campaign now proves the final selected record's immediate queue
 handoff with exact destination, target/shot, and weapon/skill agreement.
@@ -445,8 +450,11 @@ Ghidra review plus the PE byte/call verifier now map and pin:
 - `aiSeed` load, seeding, advance, store, and archive paths;
 - the enemy target-vector tournament, `ScorePositioning`, `GetTargetScore`, and
   direct equal-best RNG call;
-- dynamic `GetTargetArea` and `GetSkillEffect` callback paths; and
-- the final 24-byte selected AI record copied into `aiDest` / `aiTarget` state.
+- dynamic `GetTargetArea` and `GetSkillEffect` callback paths;
+- the final 24-byte selected AI record copied into `aiDest` / `aiTarget` state;
+  and
+- the native reachability/path API bindings, path-profile constants, Board
+  search vtable, and Road Runner profile-4 transit/destination split.
 
 The durable artifact contains reviewed region hashes and call edges decoded at
 instruction boundaries relative to the declared starts, rather than executable
@@ -464,7 +472,9 @@ The remaining native priorities are now narrower:
    scheduler and selector-fallback control flow is now statically resolved;
    capture its opaque predicate inputs and runtime reachability only if a
    concrete solver need arises.
-2. Resolve native pathfinding and reachability details needed by mismatches.
+2. Resolve weighted path costs, tie ordering, and uncommon movement-profile or
+   team-specific edges only when a mismatch needs them; the ordinary API and
+   Road Runner boundary are complete.
 3. Resolve turn-phase ordering, queued effect execution, and hidden state.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
@@ -609,6 +619,11 @@ emergency-placement modulo selector and caller 66 as without-replacement
 scheduler predicate ordering; the scheduler calls caller 60 separately for any
 final coordinate. Neither result supplies selector-time state to ordinary
 solver input.
+The exact-build path-boundary map separately proves that `Pilot_Hotshot`
+selects `PATH_ROADRUNNER=4`: native search may expand through occupied live
+pawn tiles, while destination filtering still forbids stopping there. Rust
+simulator v401 now preserves that distinction in ordinary and Control Shot
+movement; dead-wreck traversal and weighted native ordering remain fail-closed.
 The correct solver rule remains fail-closed unless selector-time native state
 or complete upstream replay is available. Three selected-queue triplets
 correlate the reviewed final selected record to the
@@ -665,8 +680,11 @@ Observatory diagnostic file.
 - **Offline Windows tranche complete:** named RNG bindings, the shared RNG,
   enemy candidate/score callbacks, tie-breaking, and the selected record are
   build-keyed and independently verifiable.
-- Keep pathfinding and serialization analysis mismatch-driven rather than
-  attempting broad reconstruction.
+- **Road Runner boundary complete:** the path API bindings, profile constants,
+  Board search vtable, and profile-4 transit/stop split are build-keyed and
+  independently verifiable; simulator v401 carries the proven rule.
+- Keep weighted path ordering, uncommon profiles, and serialization analysis
+  mismatch-driven rather than attempting broad reconstruction.
 - Validate the mapped interpretations and hook neutrality dynamically before
   promoting trace-derived behavior into Rust.
 

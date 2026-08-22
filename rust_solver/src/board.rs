@@ -116,6 +116,10 @@ bitflags! {
         /// Kai Miller (Pilot_Arrogant) — Opener: this mech is Boosted while
         /// at full HP, and loses 1 Move while damaged.
         const ARROGANT  = 0b0001_0000;
+        /// Henry Kwan (Pilot_Hotshot) — Maneuverable / Road Runner: the mech
+        /// may route through live occupied pawn tiles, but may not stop on
+        /// one. This is native PATH_ROADRUNNER profile 4, not flight.
+        const HOTSHOT   = 0b0010_0000;
     }
 }
 
@@ -336,6 +340,7 @@ impl Unit {
     pub fn pilot_repairman(&self) -> bool { self.pilot_flags.contains(PilotFlags::REPAIRMAN) }
     pub fn pilot_chemical(&self) -> bool { self.pilot_flags.contains(PilotFlags::CHEMICAL) }
     pub fn pilot_arrogant(&self) -> bool { self.pilot_flags.contains(PilotFlags::ARROGANT) }
+    pub fn pilot_hotshot(&self) -> bool { self.pilot_flags.contains(PilotFlags::HOTSHOT) }
 
     /// Can this unit catch fire? False for Ariadne (Pilot_Rock) and the
     /// source-defined fireproof Supply Train and Renfield Bomb bodies. Squad-wide Flame
