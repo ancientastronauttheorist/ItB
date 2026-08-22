@@ -15,7 +15,9 @@ string candidates into reviewed function boundaries for:
 - `GetTargetArea` / `GetSecondTargetArea` and `GetSkillEffect` dispatch;
 - the final selected 24-byte AI decision-record copy; and
 - the native path/reachability API, path profiles, Board search vtable, and
-  Road Runner transit/destination boundary.
+  Road Runner transit/destination boundary, followed by exact path costs,
+  direction/priority ordering, reconstruction, ordinary occupancy, and
+  Massive-Water handling.
 
 “Complete” here means the focused static map needed to choose experiment
 boundaries is finished. It does not mean the native engine is reconstructed.
@@ -40,9 +42,10 @@ offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
 ordinary selector call. A disposable installation is optional for those
 owner-build questions and required only for a pristine stock-depot claim.
-The separate exact-build path map closes Henry Kwan's Road Runner occupancy
-rule; weighted path ordering, corpse traversal, and uncommon profiles remain
-mismatch-driven questions.
+The two exact-build path maps close Henry Kwan's Road Runner occupancy rule,
+weighted cost/priority ordering, ordinary team-agnostic pawn blocking, and
+Massive Water traversal. Corpse classification, matched runtime point vectors,
+and `AddMove` step/scheduler effects remain mismatch-driven questions.
 
 The durable artifacts are:
 
@@ -68,6 +71,10 @@ The durable artifacts are:
   for the exact path API bindings and constants, Board search vtable, 12
   reviewed region hashes, four direct call edges, and the Road Runner
   transit-versus-stop proof.
+- `data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json`
+  for 26 reviewed code/table regions, 14 control windows, the exact direction
+  and priority comparators, reachable output order, GetPath reconstruction,
+  ordinary identity-based occupancy, and Massive-Water proof.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -211,7 +218,7 @@ and observer resource is restored, and no executable bytes are modified. This
 supports `enemy_action_selected` for that shape, not a universal claim about
 cancellation, retargeting, multi-weapon enemies, or every Pawn queue path.
 
-## Native path and Road Runner boundary
+## Native path, cost, and ordering boundary
 
 The exact-build path map binds `Board:GetSimpleReachable`,
 `Board:GetReachable`, `Board:GetPath`, `Board:IsBlocked`, and
@@ -226,15 +233,37 @@ be search nodes. `GetReachable` nevertheless invokes the Board vtable's
 `IsBlocked` slot before returning a destination, and that concrete predicate
 rejects occupied pawn spaces. Profile 4 also remains blocked by directional
 walls and is distinct from `PATH_FLYER`. This closes Henry Kwan's solver gap;
-simulator v401 now traverses but never returns those occupied tiles. Weighted
-path costs, equal-cost route ordering, corpse traversal, and uncommon profile
-edges are not promoted by this bounded proof.
+simulator v401 now traverses but never returns those occupied tiles.
+
+The follow-up cost/order map traces the same build's source/destination-cost
+slots, reachability trees, GetPath heap and predecessor map, direction-table
+initializer, ordinary occupancy branch, and result reconstruction. Native
+`GetReachable` uses only unit-cost admitted edges, expands from direction pairs
+`(0,-1),(1,0),(0,1),(-1,0)`, retains an existing predecessor on equal cost,
+and returns accepted points in lexicographic `(x,y)` order. `GetPath` uses a
+min-heap ordered by `g + 1.01 * Manhattan`, then `x,y`; it accepts a blocked
+requested endpoint, retains only strict-g predecessor improvements, and
+returns both endpoints for distinct points.
+
+The ordinary low-profile branch compares pawn identifier rather than team, so
+any differently identified counted pawn blocks profiles 0/2 while the mover's
+own identifier is exempt. `PATH_MASSIVE=2` passes both Water traversal and stop
+checks. Simulator v402 fixes the v401 ordinary-movement omission of Massive
+and Road Runner Water routes while preserving solver-side Chasm/Lava and ACID
+safety policy. Corpse classification, live output-vector matching, and
+`AddMove` per-step/scheduler behavior remain unpromoted.
 
 Reverify the artifact with
 `scripts/itb_observatory_path_boundaries.py verify` against the exact
 executable. Its verifier checks the embedded identity, region/control-window
 bytes, API/global bindings, vtable slots, and direct calls; reviewed function
 starts and semantic interpretations remain analyst evidence.
+
+Reverify the cost/order continuation with
+`scripts/itb_observatory_path_cost_ordering.py verify`; it independently
+checks every region hash, instruction-start control window, initialized
+direction pair, cost/stop jump table, property string, and the exact 1.01
+float constant.
 
 ## Reproducible analysis workflow
 
@@ -324,11 +353,14 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    commit on the same thread, with exact destination, target/shot, and
    weapon/skill agreement. Wider pawn types, multi-weapon selection,
    cancellation, and retarget paths remain untested.
-6. **Completed offline for Road Runner:** the exact API/profile/vtable map
-   proves profile-4 traversal through live occupants plus separate occupied-stop
-   rejection. Simulator v401 and focused conformance tests implement the
-   distinction. Weighted costs, route tie ordering, corpse traversal, and
-   uncommon profiles remain mismatch-driven.
+6. **Completed offline for native path costs and ordering:** the exact
+   API/profile/vtable map proves profile-4 traversal through live occupants plus
+   separate occupied-stop rejection. The follow-up map resolves unit
+   reachability costs, `(x,y)` result order, weighted GetPath priority and
+   endpoint reconstruction, identity-not-team occupancy, and Massive Water.
+   Simulator v401 implements Road Runner occupancy; v402 implements the proven
+   Water correction. Corpse classification and `AddMove` execution remain
+   mismatch-driven.
 7. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

@@ -2558,7 +2558,7 @@
       ],
       "known_gaps": [
         "Lua has no explicit extra-tile predicate: Rust's alive/non-extra representation protects duplicate multi-tile entries, but native Board:IsPawnSpace behavior on every ExtraSpace coordinate has not been established.",
-        "Native Board:IsPawnSpace, Board:GetReachable, Board:GetPath, Pawn:GetPathProf, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow semantics remain incompletely traced across terrain, status, collision, and effect scheduling.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath costs, direction and tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, and Massive Water. Board:IsPawnSpace, corpse classification, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow remain incomplete across status, collision, per-step effects, and scheduling.",
         "Lua does not textually reject choosing the origin as the second click. Whether Board:GetReachable publishes that no-op destination remains a native uncertainty; Rust deliberately omits zero-distance moves.",
         "The bridge now prefers live predicate calls, but legacy payload defaults and static known Burrower/Jumper fallbacks can differ from native state. The updated modloader has not been installed or controlled-captured during the protected achievement session.",
         "Rust's independent fixed-budget BFS and direct coordinate mutation remain an approximation of native path profiles and AddMove/AddLeap/AddBurrow sequencing, including landing effects.",
@@ -5182,7 +5182,7 @@
         }
       ],
       "known_gaps": [
-        "Native Board:GetReachable, Board:GetPath, Pawn:GetPathProf, AvoidingMines, and path/collision/terrain handling remain untraced; the Lua source establishes the Mine-Bot action contract but not every native legal-destination edge case.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath unit costs, directions, tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, and Massive Water. AvoidingMines, corpse classification, matched Mine-Bot path vectors, and every path/collision/terrain edge remain incomplete.",
         "The source construction order establishes Freeze_Mine before AddMove, but native scheduler, animation, movement interruption, item replacement, status, terrain, and simultaneous-effect ordering remain incomplete without a controlled capture.",
         "Rust consumes live queued targets for current enemy actions and does not reproduce native enemy movement, score-list candidate selection, AI target choice, random state, or tie-breaking for Snow bot families.",
         "Mission_BotDefense setup placement, Board:AddPawn placement/UID allocation, objective UI/reward scheduling, and Boss mission robot selection remain live-engine dependencies; no fresh controlled bridge capture was taken during the protected live achievement session."

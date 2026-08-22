@@ -30,6 +30,7 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
 
     let uid = unit.uid;
     let flying = unit.flying();
+    let massive = unit.massive();
     let can_transit_live_units = unit.pilot_hotshot();
 
     let mut result = Vec::with_capacity(20);
@@ -104,8 +105,15 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 continue;
             }
 
-            // Ground units can't cross deadly terrain
-            if !flying && tile.terrain.is_deadly_ground() {
+            // Native PATH_MASSIVE=2 and PATH_ROADRUNNER=4 can traverse and
+            // stop on Water. Keep the solver's narrower voluntary-movement
+            // exclusions for Chasm and Lava.
+            let deadly_blocks = match tile.terrain {
+                Terrain::Water => !(massive || can_transit_live_units),
+                Terrain::Chasm | Terrain::Lava => true,
+                _ => false,
+            };
+            if !flying && deadly_blocks {
                 continue;
             }
 
@@ -258,7 +266,8 @@ pub fn controlled_reachable_tiles_with_cost(
             }
             let deadly_blocks = match tile.terrain {
                 Terrain::Chasm => true,
-                Terrain::Water | Terrain::Lava => !massive,
+                Terrain::Water => !(massive || can_transit_live_units),
+                Terrain::Lava => !massive,
                 _ => false,
             };
             if deadly_blocks {
@@ -329,7 +338,12 @@ pub fn illegal_move_reason(board: &Board, unit_idx: usize, move_to: (u8, u8)) ->
     if tile.terrain == Terrain::Mountain {
         return Some("blocked_mountain");
     }
-    if !unit.flying() && tile.terrain.is_deadly_ground() {
+    let deadly_blocks = match tile.terrain {
+        Terrain::Water => !(unit.massive() || unit.pilot_hotshot()),
+        Terrain::Chasm | Terrain::Lava => true,
+        _ => false,
+    };
+    if !unit.flying() && deadly_blocks {
         return Some("deadly_ground");
     }
     if unit.is_player() && tile.acid() {
@@ -561,6 +575,37 @@ mod tests {
         board.tile_mut(0, 1).terrain = Terrain::Water;
         let tiles = reachable_tiles(&board, idx);
         assert!(tiles.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn test_massive_crosses_and_stops_on_water() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        board.units[idx].flags |= UnitFlags::MASSIVE;
+        board.tile_mut(0, 1).terrain = Terrain::Water;
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(tiles.contains(&(0, 1)), "PATH_MASSIVE may stop on Water");
+        assert!(
+            tiles.contains(&(0, 2)),
+            "PATH_MASSIVE may cross Water within its movement budget"
+        );
+        let controlled = controlled_reachable_tiles_with_cost(&board, idx, 2);
+        assert!(controlled.contains(&((0, 1), 1)));
+        assert!(controlled.contains(&((0, 2), 2)));
+    }
+
+    #[test]
+    fn test_roadrunner_profile_crosses_water_without_flight() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        board.units[idx].pilot_flags = PilotFlags::HOTSHOT;
+        board.tile_mut(0, 1).terrain = Terrain::Water;
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(tiles.contains(&(0, 1)), "PATH_ROADRUNNER may stop on Water");
+        assert!(tiles.contains(&(0, 2)), "PATH_ROADRUNNER may cross Water");
+        let controlled = controlled_reachable_tiles_with_cost(&board, idx, 2);
+        assert!(controlled.contains(&((0, 1), 1)));
+        assert!(controlled.contains(&((0, 2), 2)));
     }
 
     #[test]

@@ -56,9 +56,13 @@ Addresses and conclusions are valid only for the exact executable identity in
 A later read-only path-boundary artifact separately pins the native
 reachability API, path constants, Board search vtable, and Henry Kwan's
 `PATH_ROADRUNNER=4` transit/stop split. Simulator v401 consumes that proven
-rule. It required no trace hook and does not broaden controller v1; future path
-tracing is reserved for concrete weighted-ordering, corpse, or uncommon-profile
-mismatches.
+rule. A second read-only artifact resolves the static cost/order continuation:
+unit-cost reachability, native direction and priority comparators, `(x,y)`
+output, weighted GetPath reconstruction, ordinary identity-based occupancy,
+and Massive Water. Simulator v402 consumes the Water correction. Neither map
+required a trace hook or broadens controller v1; future path tracing is reserved
+for matched point vectors, corpse classification, or `AddMove` execution when
+a concrete mismatch needs them.
 
 For these v1 RNG records, the on-wire `context.call_site` field is the exact
 configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
@@ -339,10 +343,10 @@ that selected it.
   neutrality? The coordinate/RNG campaign now explains why a fixed seed is not
   enough: particle, pilot-portrait, and unit-status presentation code consumes
   the same stream at variable counts before gameplay selection.
-- Can the mapped candidate loop be observed without perturbing vector order,
-  dynamic callback lookup, or the remaining weighted native path state? The
-  ordinary path API and Road Runner occupancy boundary are already closed
-  offline.
+- Can the mapped candidate loop be observed without perturbing vector order or
+  dynamic callback lookup? Native path costs, comparators, output/reconstruction
+  order, Road Runner occupancy, and Massive Water are already closed offline;
+  corpse classification and `AddMove` execution remain separate questions.
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
   overrides bypass a base wrapper for this build. Which mismatch, if any,
   requires a native candidate-tournament record beyond those Lua slots?

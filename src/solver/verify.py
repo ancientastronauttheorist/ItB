@@ -1805,6 +1805,11 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v402: Exact Windows path-cost/order analysis proves PATH_MASSIVE=2 and
+# PATH_ROADRUNNER=4 both traverse and stop on Water. Ordinary movement now
+# retains Massive and Road Runner Water routes while preserving the existing
+# voluntary Chasm/Lava exclusions. Pre-v402 corpus is archived as
+# recordings/failure_db_snapshot_sim_v401.jsonl.
 # v401: Native Windows path-boundary analysis proves Pilot_Hotshot selects
 # PATH_ROADRUNNER profile 4: search expansion may cross live occupied pawn
 # tiles, destination filtering may not stop there, and the profile is not
@@ -1875,7 +1880,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 401
+SIMULATOR_VERSION = 402
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

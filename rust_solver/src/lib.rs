@@ -2414,6 +2414,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v402 - Exact Windows path-cost/order analysis proves PATH_MASSIVE=2 and
+// PATH_ROADRUNNER=4 both traverse and stop on Water. Ordinary movement now
+// retains Massive and Road Runner Water routes while preserving the existing
+// voluntary Chasm/Lava exclusions. Pre-v402 corpus archived as
+// recordings/failure_db_snapshot_sim_v401.jsonl.
 // v401 - Native Windows path-boundary analysis proves Pilot_Hotshot selects
 // PATH_ROADRUNNER profile 4: search expansion may cross live occupied pawn
 // tiles, destination filtering may not stop there, and the profile is not
@@ -2488,7 +2493,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 401;
+pub const SIMULATOR_VERSION: u32 = 402;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

@@ -1,0 +1,654 @@
+{
+  "analysis_kind": "native_path_cost_ordering_map",
+  "conclusions": [
+    {
+      "claim": "GetReachable admits only traversal-approved neighbors. Every such edge has cost 1: the source-cost slot returns 0, the destination-cost slot returns 1 for every admitted tile, and the exact-profile-3 terrain-1 cost of 1000 is unreachable because that traversal branch rejects terrain 1.",
+      "evidence_class": "inference",
+      "id": "reachable_search_is_unit_cost"
+    },
+    {
+      "claim": "GetReachable walks the copied coordinate-keyed tree in order and appends accepted points directly, so its returned Point vector is lexicographic by x and then y, independent of expansion discovery order.",
+      "evidence_class": "inference",
+      "id": "reachable_output_is_coordinate_sorted"
+    },
+    {
+      "claim": "For distinct valid points, GetPath uses a min-heap ordered by (g + 1.01 * Manhattan, x, y), keeps only strict g improvements, reconstructs from destination predecessors, appends the start, and reverses the vector; both endpoints are present.",
+      "evidence_class": "inference",
+      "id": "path_uses_weighted_astar_and_strict_predecessors"
+    },
+    {
+      "claim": "GetPath may admit the requested endpoint after can_traverse rejects it. An exact literal path argument 3 therefore pays destination cost 1000 for a terrain-1 endpoint; other destination costs remain 1.",
+      "evidence_class": "inference",
+      "id": "path_endpoint_has_a_traversal_exception"
+    },
+    {
+      "claim": "PATH_GROUND=0 and PATH_MASSIVE=2 reject a counted occupant whose pawn identifier differs from the mover and allow the same identifier; the reviewed branch contains no team comparison.",
+      "evidence_class": "inference",
+      "id": "ordinary_occupancy_is_pawn_id_not_team_based"
+    },
+    {
+      "claim": "Terrain 3 is Water for the shipped Lua constants. PATH_MASSIVE=2 passes both the traversal predicate and the destination stop predicate, while PATH_GROUND=0 fails both.",
+      "evidence_class": "inference",
+      "id": "path_massive_allows_water"
+    },
+    {
+      "claim": "The reviewed Rust v401 ordinary movement branch rejected Water for every non-flying unit even when the bridge supplied Massive=true; simulator v402 narrows that rejection so Massive units can use native-legal Water routes.",
+      "evidence_class": "inference",
+      "id": "solver_had_a_massive_water_gap"
+    }
+  ],
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "reachable_output_coordinate_tree",
+      "instruction_hex": "8d462050e8462f00008d4dc0c645fc018d46285150e8a52e00008b46308945c88b46348945ccc645fc028b75c0c745dcffffffffc745e0ffffffffc745e400007a448b06c745e80000000089450c903bc6744083c0108d4ddc50e8e02c0000395de87f22ff75108b078bcfff75e0ff75dc8b400cffd084c0750c8d45dc508d4dd0e85967feff8d4d0ce801f6f9ff8b450cebbc",
+      "meaning": "GetReachable copies the coordinate-keyed result tree, walks it in-order, filters cost and stop blocking, and appends points without reordering.",
+      "region_id": "reachable_core",
+      "size": 147,
+      "start_rva": "0x000ce8a1"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_budget_guard",
+      "instruction_hex": "50e8de3100008b8558ffffff8b4d0c3948180f8d21020000",
+      "meaning": "A node whose stored cost is greater than or equal to the movement budget is not expanded further.",
+      "region_id": "reachable_search",
+      "size": 24,
+      "start_rva": "0x000cef5c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_neighbor_order_and_traversal",
+      "instruction_hex": "8b04f5b4578d00ff75088b0cf5b8578d0003c78b55b803ca8945bc8b035652894dc08bcb8b401057c745c400007a44ffd084c00f85c5010000ff75088b038bcbff75c0ff75bc8b4014ffd084c00f84ab010000",
+      "meaning": "Each of four initialized direction pairs is checked first for a directional wall and then for traversal eligibility.",
+      "region_id": "reachable_search",
+      "size": 83,
+      "start_rva": "0x000cef80"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "reachable_strict_cost_update",
+      "instruction_hex": "8d4588508d8550ffffff508d4de0e8163100008b8550ffffff8d4de08b401803c78945e88d45bc508d8548ffffff50e8f53000008b8548ffffff8b4de83b48180f8d1e010000",
+      "meaning": "The candidate edge cost is added to the current cost; a candidate greater than or equal to the stored cost is discarded.",
+      "region_id": "reachable_search",
+      "size": 70,
+      "start_rva": "0x000cf017"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_start_priority_zero",
+      "instruction_hex": "c645fc048d4dd88b4510898570ffffff8b4514898574ffffff8d8570ffffff50c78578ffffff00000000e81f2500008d4dc0c74008000000008d8570ffffff50e8592700008d8d58ffffffc64008018d8570ffffff50e853090000",
+      "meaning": "GetPath inserts the start coordinate with g=0 and heap priority 0.",
+      "region_id": "path_core",
+      "size": 91,
+      "start_rva": "0x000cf4e2"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_endpoint_traversal_exception",
+      "instruction_hex": "ff750c8b3ccdb8578d008b558803fa8b34cdb4578d008b03037584518b4d848b401052518bcb89b570ffffff89bd74ffffffc78578ffffff00007a44ffd084c00f8581010000ff750c8b038bcb57568b4014ffd084c075123b75180f85660100003b7d1c0f855d010000",
+      "meaning": "GetPath admits a traversal-rejected neighbor only when that neighbor is the requested endpoint.",
+      "region_id": "path_core",
+      "size": 106,
+      "start_rva": "0x000cf600"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_strict_cost_update",
+      "instruction_hex": "8d4584508d4dd8e83f230000518d4dc08b40080145808d8570ffffff50ffb54cffffff8d856cffffff50e83c2d000083bd6cffffff00741b8d8570ffffff508d4dd8e8042300008b4d803b48080f8d8f000000",
+      "meaning": "GetPath records a predecessor only for a strictly lower g cost; equal-cost alternatives do not replace it.",
+      "region_id": "path_core",
+      "size": 83,
+      "start_rva": "0x000cf6e5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_weighted_manhattan_priority",
+      "instruction_hex": "8b4d848948088b4d8889480c8b451c2bc7998bc88b451833ca2bc68b75802bca9933c22bc203c8660f6ec60f5bc08d8570ffffff50660f6ec98d8d58ffffff0f5bc9f30f590d78cb8300f30f58c8f30f118d78ffffffe8ee060000",
+      "meaning": "The heap priority is g plus Manhattan distance multiplied by the pinned float at RVA 0x0043cb78.",
+      "region_id": "path_core",
+      "size": 91,
+      "start_rva": "0x000cf747"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_reconstruct_and_reverse",
+      "instruction_hex": "33db33f633c0895d8489758889458cc645fc058b4d188b7d1c898d7cffffff898d68ffffff89bd6cffffff3b4d1075093b7d140f849a0000008d9568ffffff3bd673313bda772d8bfa2bfbc1ff033bf075106a018d4d84e89a60feff8b75888b5d8485f674318b04fb89068b44fb04894604eb233bf075166a018d4d84e87460feff8b75888b5d848b8d7cffffff85f67405890e897e048d8568ffffff83c608508d4da8897588e83a2200008b48088b780c898d7cffffff898d68ffffff89bd6cffffff85c9780b8b458c85ff0f8958ffffff8d8568ffffff508d4d84e84457feff8b7d888b75845756e8971d0000",
+      "meaning": "Reconstruction appends endpoint-to-start predecessors, appends the start, then reverses the eight-byte Point vector.",
+      "region_id": "path_core",
+      "size": 239,
+      "start_rva": "0x000cf85a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_occupancy_gate",
+      "instruction_hex": "83f802530f94450be84afdffff3bc78bce6a010f94c7e86cfdffff84c074168bcee881f100008bc8e85adf090084c07404b301eb0232db6a018bcee847fdffff84c0740484ff74488b8ee02a000083f901743d84db7539389eac230000740983becc2300000f7c1083f9030f94c084c07406807d0b00741883f904741383f909740e5b5fb8010000005e8be55dc204005b5f33c05e8be55d",
+      "meaning": "Low profiles 0/2 compare the counted pawn identifier with the moving identifier and block a different occupant without consulting team.",
+      "region_id": "grid_tile_can_traverse",
+      "size": 152,
+      "start_rva": "0x001a01b9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "massive_water_branch",
+      "instruction_hex": "8b8ee02a000083f901743d84db7539389eac230000740983becc2300000f7c1083f9030f94c084c07406807d0b00741883f904741383f909740e",
+      "meaning": "For terrain 3, the traversal rejection is conditional on the low profile not being PATH_MASSIVE=2.",
+      "region_id": "grid_tile_can_traverse",
+      "size": 58,
+      "start_rva": "0x001a0201"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "water_stop_handler",
+      "instruction_hex": "85f6740583fe0775e35fb8010000005e5d",
+      "meaning": "The terrain-3 stop handler blocks PATH_GROUND=0 and PATH_BURROWER=7, but not PATH_MASSIVE=2.",
+      "region_id": "grid_tile_stop_blocking",
+      "size": 17,
+      "start_rva": "0x001af473"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_heap_parent_comparator",
+      "instruction_hex": "f30f1047088d145bf30f104c96080f2ec89ff6c4447b080f2fc80f97c0eb168b04968b0f3bc175078b4496043b47048b4dfc0f9fc084c07428",
+      "meaning": "Heap sift-up compares float priority first, then x, then y.",
+      "region_id": "path_heap_sift_up",
+      "size": 57,
+      "start_rva": "0x000d2830"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "path_heap_child_comparator",
+      "instruction_hex": "f30f104c8e08f30f10448efc0f2ec89ff6c4447b080f2fc80f97c0eb198b048e8b548ef43bc275088b448e043b448ef88b55fc0f9fc084c08d7aff8d0c5b0f44fa",
+      "meaning": "Heap pop selects the lesser child by float priority, then x, then y.",
+      "region_id": "path_heap_pop_adjust",
+      "size": 65,
+      "start_rva": "0x000d28ed"
+    }
+  ],
+  "cost_tables": {
+    "destination_cost": {
+      "all_other_arguments": {
+        "all_terrain": 1
+      },
+      "evidence_class": "fact",
+      "exact_argument_3": {
+        "all_other_terrain": 1,
+        "terrain_1": 1000
+      },
+      "other_profile_selectors_for_terrain_0_through_7": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "other_profile_target_rvas": [
+        "0x001a02ce",
+        "0x001a02ce"
+      ],
+      "profile_3_selectors_for_terrain_0_through_7": [
+        0,
+        1,
+        0,
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "profile_3_target_rvas": [
+        "0x001a02ce",
+        "0x001a02b2",
+        "0x001a02ce"
+      ]
+    },
+    "source_cost": {
+      "evidence_class": "fact",
+      "value": 0
+    }
+  },
+  "direction_order": [
+    {
+      "evidence_class": "fact",
+      "index": 0,
+      "runtime_destination_rva": "0x004d57b4",
+      "source_rva": "0x0041a640",
+      "x_delta": 0,
+      "y_delta": -1
+    },
+    {
+      "evidence_class": "fact",
+      "index": 1,
+      "runtime_destination_rva": "0x004d57bc",
+      "source_rva": "0x0041a638",
+      "x_delta": 1,
+      "y_delta": 0
+    },
+    {
+      "evidence_class": "fact",
+      "index": 2,
+      "runtime_destination_rva": "0x004d57c4",
+      "source_rva": "0x0041a630",
+      "x_delta": 0,
+      "y_delta": 1
+    },
+    {
+      "evidence_class": "fact",
+      "index": 3,
+      "runtime_destination_rva": "0x004d57cc",
+      "source_rva": "0x0041a628",
+      "x_delta": -1,
+      "y_delta": 0
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows"
+  },
+  "method": {
+    "boundary_review": "Focused x86 disassembly traced the Board grid-search slots, reachability tree, path heap, predecessor reconstruction, tile costs, direction initializer, and ordinary occupancy branch; every published region and control window is byte-bound to the exact executable.",
+    "limitations": [
+      "Semantic role names are bounded analyst inferences over exact machine-code facts.",
+      "Static ordering is not a matched runtime GetReachable/GetPath capture.",
+      "The counted-occupancy helper's dead/corpse classification remains unresolved.",
+      "AddMove interruption, per-step item effects, and scheduler timing remain outside this artifact.",
+      "Solver safety exclusions for ACID, Lava, and other hazardous voluntary moves remain distinct from native path legality.",
+      "The artifact applies only to the exact owner-observed Windows executable."
+    ]
+  },
+  "ordering": {
+    "evidence_class": "inference",
+    "path_distinct_points_include_destination": true,
+    "path_distinct_points_include_start": true,
+    "path_endpoint_may_bypass_traversal_rejection": true,
+    "path_equal_g_replaces_predecessor": false,
+    "path_heap_priority": [
+      "g_plus_weighted_manhattan",
+      "x",
+      "y"
+    ],
+    "path_heuristic": {
+      "hex": "ae47813f",
+      "rva": "0x0043cb78",
+      "weight": 1.0099999904632568
+    },
+    "reachable_equal_cost_replaces_predecessor": false,
+    "reachable_open_priority": [
+      "integer_cost_as_float",
+      "x",
+      "y"
+    ],
+    "reachable_output_order": [
+      "x",
+      "y"
+    ]
+  },
+  "ordinary_occupancy": {
+    "dead_or_corpse_classification": "unresolved",
+    "different_counted_pawn_id_blocks_transit": true,
+    "evidence_class": "inference",
+    "non_grid_property_string_rva": "0x00436c04",
+    "profiles": [
+      0,
+      2
+    ],
+    "same_pawn_id_may_transit": true,
+    "team_comparison_present": false
+  },
+  "regions": [
+    {
+      "boundary_basis": "Complete initializer through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x00003081",
+      "evidence_class": "fact",
+      "id": "direction_initializer",
+      "section": ".text",
+      "sha256": "4d2d793080eed2c8234ef3e4eaf3d64219e33a475b44fa51ca9faa182ca0479d",
+      "size": 81,
+      "start_rva": "0x00003030"
+    },
+    {
+      "boundary_basis": "Complete in-order tree-successor helper through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0006df7f",
+      "evidence_class": "fact",
+      "id": "coordinate_tree_successor",
+      "section": ".text",
+      "sha256": "539e52ffef66379c5aa4c31b81f540f6b75b9b347b09e1af9d146a42ee7d8991",
+      "size": 79,
+      "start_rva": "0x0006df30"
+    },
+    {
+      "boundary_basis": "Complete eight-byte Point vector append helper through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000b50f2",
+      "evidence_class": "fact",
+      "id": "point_vector_append",
+      "section": ".text",
+      "sha256": "5fa5ce9bd76705a63de61684acbfb6b6147c4be3da1e4f86cb9bc991d3f748eb",
+      "size": 114,
+      "start_rva": "0x000b5080"
+    },
+    {
+      "boundary_basis": "Complete GetReachable core through RET 0x14.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000ce9a0",
+      "evidence_class": "fact",
+      "id": "reachable_core",
+      "section": ".text",
+      "sha256": "f7b3287d2854115b30ad2d6126d9d573c37d5fabfdd471f1776c5f911990926f",
+      "size": 448,
+      "start_rva": "0x000ce7e0"
+    },
+    {
+      "boundary_basis": "Complete cached reachability search through RET 0x14.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000cf2f0",
+      "evidence_class": "fact",
+      "id": "reachable_search",
+      "section": ".text",
+      "sha256": "05bebc52863ead8a3ea9a0272301253f726dd03f94a56e1491f7ab7202963645",
+      "size": 1712,
+      "start_rva": "0x000cec40"
+    },
+    {
+      "boundary_basis": "Complete GetPath core through RET 0x18.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000cf9df",
+      "evidence_class": "fact",
+      "id": "path_core",
+      "section": ".text",
+      "sha256": "3477ed0edb02f50d6e5f92b5c09596c6d6bcc30398a3f5636e3091c3db1f75b4",
+      "size": 1487,
+      "start_rva": "0x000cf410"
+    },
+    {
+      "boundary_basis": "Complete coordinate/cost payload-copy helper through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d1620",
+      "evidence_class": "fact",
+      "id": "tree_payload_copy",
+      "section": ".text",
+      "sha256": "507e5edbb29fd8dfc326ea15c3c15843ee737badfaefa476d8f0d9a566abad7f",
+      "size": 64,
+      "start_rva": "0x000d15e0"
+    },
+    {
+      "boundary_basis": "Complete eight-byte element reversal helper through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d1716",
+      "evidence_class": "fact",
+      "id": "point_vector_reverse",
+      "section": ".text",
+      "sha256": "b713ab8e36aaf7d763c78d8ca6304ccc9c390ceb6c28924d7fddba9d108d5fb7",
+      "size": 54,
+      "start_rva": "0x000d16e0"
+    },
+    {
+      "boundary_basis": "Complete coordinate-keyed tree copy helper through RET 0x08.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d17d2",
+      "evidence_class": "fact",
+      "id": "coordinate_tree_copy",
+      "section": ".text",
+      "sha256": "6dbe226efddcf3a06e9ebc076e6b70512bddbfe74f5e1a8a4a852367c7d7716b",
+      "size": 114,
+      "start_rva": "0x000d1760"
+    },
+    {
+      "boundary_basis": "Complete float-priority tree copy helper through RET 0x08.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d1862",
+      "evidence_class": "fact",
+      "id": "priority_tree_copy",
+      "section": ".text",
+      "sha256": "a405f7f1ada696034bfea2395aa830dad24c97802ca4f3f3c202eb0dd7eadc0e",
+      "size": 114,
+      "start_rva": "0x000d17f0"
+    },
+    {
+      "boundary_basis": "Complete comparator-guided lookup through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d18e3",
+      "evidence_class": "fact",
+      "id": "priority_tree_lookup",
+      "section": ".text",
+      "sha256": "4e6e0510ba2e54696ea9c692818f0eed29b02aba384b530db8086c6e14a27e6f",
+      "size": 99,
+      "start_rva": "0x000d1880"
+    },
+    {
+      "boundary_basis": "Complete coordinate-keyed lookup through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d1930",
+      "evidence_class": "fact",
+      "id": "coordinate_tree_lookup",
+      "section": ".text",
+      "sha256": "84992b1545c29b84bc8f0ca6dadc94d53e208e3fcbb8cc9736325b84fa939a68",
+      "size": 64,
+      "start_rva": "0x000d18f0"
+    },
+    {
+      "boundary_basis": "Complete float-priority tree insertion through RET 0x10.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d20b6",
+      "evidence_class": "fact",
+      "id": "priority_tree_insert",
+      "section": ".text",
+      "sha256": "f62dd9b1b9d9cdb8a0d68616ee7191af0740b289a572630fff0323af4cea1395",
+      "size": 294,
+      "start_rva": "0x000d1f90"
+    },
+    {
+      "boundary_basis": "Complete path-heap sift-up helper through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d28ab",
+      "evidence_class": "fact",
+      "id": "path_heap_sift_up",
+      "section": ".text",
+      "sha256": "5019bdf06f0b291c1d6397f95182ef0e48fd11b43d8337253d21abea29d00d0e",
+      "size": 155,
+      "start_rva": "0x000d2810"
+    },
+    {
+      "boundary_basis": "Complete path-heap pop adjustment through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x000d298c",
+      "evidence_class": "fact",
+      "id": "path_heap_pop_adjust",
+      "section": ".text",
+      "sha256": "38db964bac25c57e8d124ad6106a62491f03c15a7ea920ed025147ea0165a051",
+      "size": 220,
+      "start_rva": "0x000d28b0"
+    },
+    {
+      "boundary_basis": "Complete Board GridSearch source-cost slot through RET 0x0c.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001621a9",
+      "evidence_class": "fact",
+      "id": "source_cost",
+      "section": ".text",
+      "sha256": "48f2c07051a81213375e8c72e3306f9267f137f802e2919ec844229a55854e4a",
+      "size": 25,
+      "start_rva": "0x00162190"
+    },
+    {
+      "boundary_basis": "Complete Board GridSearch destination-cost slot through RET 0x0c.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x00162207",
+      "evidence_class": "fact",
+      "id": "destination_cost",
+      "section": ".text",
+      "sha256": "f9e54dda1470ed6304c725ee7247dacdf3f18ccb9f6ccca11807711f5436cbf1",
+      "size": 87,
+      "start_rva": "0x001621b0"
+    },
+    {
+      "boundary_basis": "Complete counted-pawn identifier helper through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0019ff35",
+      "evidence_class": "fact",
+      "id": "pawn_id_or_sentinel",
+      "section": ".text",
+      "sha256": "269813c828af7ecbbb0558efdc4d4954cf5c56ef3b96f47c7ef92b68f1b445fe",
+      "size": 37,
+      "start_rva": "0x0019ff10"
+    },
+    {
+      "boundary_basis": "Complete tile counted-occupancy predicate through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0019ffd3",
+      "evidence_class": "fact",
+      "id": "counted_occupancy",
+      "section": ".text",
+      "sha256": "1e3282851e31b74bfaba10d692ac4c31517d7416d47201c7e2eb5fdf36e4b1f1",
+      "size": 147,
+      "start_rva": "0x0019ff40"
+    },
+    {
+      "boundary_basis": "Complete per-tile traversal predicate through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001a0288",
+      "evidence_class": "fact",
+      "id": "grid_tile_can_traverse",
+      "section": ".text",
+      "sha256": "548085ece564eb40e21535d5cbd8eb55b6f3fe2c60c35400ecd9028537f081ee",
+      "size": 312,
+      "start_rva": "0x001a0150"
+    },
+    {
+      "boundary_basis": "Complete per-tile destination-cost function through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001a02d7",
+      "evidence_class": "fact",
+      "id": "tile_destination_cost",
+      "section": ".text",
+      "sha256": "0e20d6c1229b605a5ce92653c1bbd1588a31e5f697ea02ead6f000039119cbba",
+      "size": 71,
+      "start_rva": "0x001a0290"
+    },
+    {
+      "boundary_basis": "Contiguous jump-target and selector tables after the cost function.",
+      "decoded_as_code": false,
+      "end_rva_exclusive": "0x001a02fc",
+      "evidence_class": "fact",
+      "id": "tile_destination_cost_tables",
+      "section": ".text",
+      "sha256": "558cda5596f0931907dac9cbe5b3535140a15c7f5e88c40f9e6ce1fe44262b34",
+      "size": 36,
+      "start_rva": "0x001a02d8"
+    },
+    {
+      "boundary_basis": "Complete first-counted-pawn helper through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001af37c",
+      "evidence_class": "fact",
+      "id": "tile_first_counted_pawn",
+      "section": ".text",
+      "sha256": "761941ae627ce459aad2abf2a04e78931393efb363984d0c4bebfad71555bc0c",
+      "size": 28,
+      "start_rva": "0x001af360"
+    },
+    {
+      "boundary_basis": "Complete profile/terrain stop-blocking predicate through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001af49b",
+      "evidence_class": "fact",
+      "id": "grid_tile_stop_blocking",
+      "section": ".text",
+      "sha256": "5be95f7c4ca4a25d9f6b0da4c1cf0c26d2579524bf702763bca85afdf554581d",
+      "size": 155,
+      "start_rva": "0x001af400"
+    },
+    {
+      "boundary_basis": "Contiguous nine-entry terrain jump table.",
+      "decoded_as_code": false,
+      "end_rva_exclusive": "0x001af4c0",
+      "evidence_class": "fact",
+      "id": "grid_tile_stop_table",
+      "section": ".text",
+      "sha256": "a4c100e024ff5c7255c3eb72f939d16f681eba3983196ebfbb14f70590983693",
+      "size": 36,
+      "start_rva": "0x001af49c"
+    },
+    {
+      "boundary_basis": "Complete Pawn NonGrid property query through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0023e179",
+      "evidence_class": "fact",
+      "id": "pawn_non_grid_property",
+      "section": ".text",
+      "sha256": "23bfeb409937ae8e493d68bbda323ffc601c461b71f619bf5306cf441ec9c33b",
+      "size": 57,
+      "start_rva": "0x0023e140"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "upstream_path_boundary_artifact": {
+      "canonical_sha256": "99c8c30fa2e213039e6ba07f5f5062d6487aaa6286eee9cc9cb0cf6aaed23afc",
+      "file_sha256": "098cbbc5a9dc4c99a07b5f85eac7aaa19812bf093249d1d3f6e6c5ec49277486",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json"
+    }
+  },
+  "summary": {
+    "control_window_count": 14,
+    "direction_order": [
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        0
+      ]
+    ],
+    "massive_water_stop": true,
+    "massive_water_transit": true,
+    "ordinary_occupancy_team_agnostic": true,
+    "path_heuristic_weight": 1.0099999904632568,
+    "path_includes_both_endpoints": true,
+    "path_priority_order": [
+      "f",
+      "x",
+      "y"
+    ],
+    "reachable_edge_cost": 1,
+    "reachable_output_order": [
+      "x",
+      "y"
+    ],
+    "region_count": 26,
+    "remaining_runtime_proof": [
+      "matched native GetReachable and GetPath output vectors",
+      "dead pawn and corpse occupancy classification",
+      "AddMove step effects, interruption, and scheduler timing",
+      "non-Windows build equivalence"
+    ],
+    "simulator_version": 402
+  },
+  "terrain_3_water": {
+    "evidence_class": "inference",
+    "path_ground_0_can_stop": false,
+    "path_ground_0_can_transit": false,
+    "path_massive_2_can_stop": true,
+    "path_massive_2_can_transit": true,
+    "stop_jump_target_rva": "0x001af473"
+  }
+}

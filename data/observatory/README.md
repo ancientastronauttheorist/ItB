@@ -203,9 +203,7 @@ For this build, `Pilot_Hotshot` selects `PATH_ROADRUNNER=4`. Profile 4 expands
 through live occupied pawn tiles, but the later `Board:IsBlocked` filter keeps
 those tiles out of the returned destinations. It remains subject to
 directional walls and is not flight. Simulator v401 applies that exact
-transit/stop distinction to ordinary and fixed-budget movement. Weighted path
-costs, native tie ordering, dead-corpse traversal, and uncommon profile/team
-edges remain mismatch-driven follow-up rather than inferred behavior.
+transit/stop distinction to ordinary and fixed-budget movement.
 
 Verify the immutable map against the pinned executable with:
 
@@ -213,6 +211,32 @@ Verify the immutable map against the pinned executable with:
 python scripts/itb_observatory_path_boundaries.py verify `
   --executable "<Into the Breach>\Breach.exe" `
   --path-map data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json
+```
+
+The follow-up
+`native/windows_build_13725832_31fe35265598_path_cost_ordering.json` closes the
+remaining offline cost/order branch for this build. It pins 26 reviewed code
+or table regions and 14 control windows, including the native direction order
+`(0,-1), (1,0), (0,1), (-1,0)`, unit-cost `GetReachable`, strict-improvement
+predecessors, lexicographic `(x,y)` reachable output, and `GetPath`'s
+`g + 1.01 * Manhattan` min-heap with `(x,y)` tie-breaking. Distinct-point
+paths include both endpoints; a requested endpoint alone may bypass the normal
+traversal rejection.
+
+The same proof closes ordinary team handling and one solver-relevant uncommon
+profile edge: low profiles 0/2 compare pawn identity without a team branch,
+and `PATH_MASSIVE=2` can both cross and stop on Water. Simulator v402 corrects
+ordinary Massive/Hotshot Water movement and archives the pre-v402 corpus as
+`recordings/failure_db_snapshot_sim_v401.jsonl`. Corpse classification,
+matched runtime output vectors, and `AddMove` step/scheduler effects remain
+open.
+
+Verify the immutable follow-up map with:
+
+```powershell
+python scripts/itb_observatory_path_cost_ordering.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --path-cost-map data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json
 ```
 
 ## Native RNG return-address IDs

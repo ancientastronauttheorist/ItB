@@ -35,11 +35,12 @@ fallback, while caller 66 randomizes a without-replacement predicate-check
 order before a separate call to the ordinary selector. The remaining unknowns
 are therefore narrower and more valuable: prospective selector-state delivery
 or upstream draw control, runtime inputs for those special paths only when a
-real mismatch needs them, weighted path cost/tie ordering and uncommon
-movement profiles, broader selected-action paths, effect execution, and hidden
-engine state. The ordinary reachability API boundary and Henry Kwan's exact
-Road Runner transit/stop rule are now closed for this build and implemented in
-simulator v401.
+real mismatch needs them, matched runtime path vectors and `AddMove` execution,
+broader selected-action paths, effect execution, and hidden engine state. The
+ordinary reachability API, Henry Kwan transit/stop rule, path cost/order core,
+ordinary pawn-identity blocking, and Massive-Water behavior are now closed for
+this build. Simulator v401 implements Road Runner occupancy and v402 fixes
+ordinary Massive/Hotshot Water routes.
 
 The strategic ordering should therefore be:
 
@@ -198,9 +199,11 @@ This means the visible target-scoring formula is already available. On the
 pinned Windows build, the target-vector loop, score calls, equal-best retention,
 and native random tie-break are now mapped. The exact reachability/path API
 bindings, path constants, Board search vtable, and Road Runner profile-4
-transit/stop boundary are also pinned. Weighted path costs and tie ordering,
-uncommon profile/team edges, runtime subclass coverage, higher-level record
-selection, and broader queue paths remain to be validated. One bounded
+transit/stop boundary are also pinned. A follow-up exact-build map now pins
+unit reachability costs, direction and priority comparators, `(x,y)` output,
+weighted GetPath reconstruction, identity-based ordinary occupancy, and
+Massive Water. Corpse classification, runtime subclass coverage, higher-level
+record selection, and broader queue paths remain to be validated. One bounded
 `Firefly1` campaign now proves the final selected record's immediate queue
 handoff with exact destination, target/shot, and weapon/skill agreement.
 
@@ -454,7 +457,9 @@ Ghidra review plus the PE byte/call verifier now map and pin:
 - the final 24-byte selected AI record copied into `aiDest` / `aiTarget` state;
   and
 - the native reachability/path API bindings, path-profile constants, Board
-  search vtable, and Road Runner profile-4 transit/destination split.
+  search vtable, Road Runner profile-4 transit/destination split, unit costs,
+  direction/priority comparators, result/reconstruction order, ordinary pawn
+  occupancy, and Massive-Water path edge.
 
 The durable artifact contains reviewed region hashes and call edges decoded at
 instruction boundaries relative to the declared starts, rather than executable
@@ -472,9 +477,10 @@ The remaining native priorities are now narrower:
    scheduler and selector-fallback control flow is now statically resolved;
    capture its opaque predicate inputs and runtime reachability only if a
    concrete solver need arises.
-2. Resolve weighted path costs, tie ordering, and uncommon movement-profile or
-   team-specific edges only when a mismatch needs them; the ordinary API and
-   Road Runner boundary are complete.
+2. Capture native `GetReachable`/`GetPath` point vectors only when a mismatch
+   needs a runtime match. Static unit costs, tie ordering, endpoint shape,
+   ordinary team handling, Road Runner, and Massive Water are complete; corpse
+   classification and `AddMove` step/scheduler effects remain open.
 3. Resolve turn-phase ordering, queued effect execution, and hidden state.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
@@ -623,7 +629,11 @@ The exact-build path-boundary map separately proves that `Pilot_Hotshot`
 selects `PATH_ROADRUNNER=4`: native search may expand through occupied live
 pawn tiles, while destination filtering still forbids stopping there. Rust
 simulator v401 now preserves that distinction in ordinary and Control Shot
-movement; dead-wreck traversal and weighted native ordering remain fail-closed.
+movement. The follow-up cost/order map proves unit-cost reachability,
+lexicographic output, weighted GetPath predecessor ordering, team-agnostic
+ordinary pawn blocking, and Massive/Hotshot Water legality; simulator v402
+applies the Water correction. Dead-wreck classification and `AddMove`
+per-step/scheduler effects remain fail-closed.
 The correct solver rule remains fail-closed unless selector-time native state
 or complete upstream replay is available. Three selected-queue triplets
 correlate the reviewed final selected record to the
@@ -683,8 +693,13 @@ Observatory diagnostic file.
 - **Road Runner boundary complete:** the path API bindings, profile constants,
   Board search vtable, and profile-4 transit/stop split are build-keyed and
   independently verifiable; simulator v401 carries the proven rule.
-- Keep weighted path ordering, uncommon profiles, and serialization analysis
-  mismatch-driven rather than attempting broad reconstruction.
+- **Path cost/order continuation complete:** 26 reviewed code/table regions
+  pin unit reachability costs, native directions and comparators, `(x,y)`
+  reachable output, weighted GetPath reconstruction, ordinary identity-based
+  occupancy, and Massive Water. Simulator v402 carries the proven Water rule.
+- Keep corpse classification, matched point vectors, `AddMove` execution, and
+  serialization analysis mismatch-driven rather than attempting broad
+  reconstruction.
 - Validate the mapped interpretations and hook neutrality dynamically before
   promoting trace-derived behavior into Rust.
 

@@ -440,11 +440,13 @@ Frozen, then Snowmine1/VIP_Truck or current move-or-explicit-grappled plus
 base move. It deliberately has no team or projectile-blocker condition, and
 uses the separate fixed 2/3/3/4 controlled-movement budgets. The bridge now
 captures the native predicate values and validates both native target lists
-before `GetFinalEffect`. It remains `partial`: Rust represents pawn space as
-alive/non-extra, uses independent BFS and coordinate mutation rather than
-native path/effect sequencing, and needs a controlled installed-build capture
-for extra tiles, no-op destinations, path/profile, visible UI, and achievement
-credit behavior.
+before `GetFinalEffect`. Exact Windows static evidence now pins native unit
+costs, direction and tie comparators, output/reconstruction order, ordinary
+identity-based occupancy, Road Runner, and Massive Water. It remains `partial`:
+Rust represents pawn space as alive/non-extra and uses coordinate mutation
+rather than native effect sequencing; extra tiles, corpse classification,
+no-op destinations, `AddMove` scheduling, visible UI, and achievement credit
+still need controlled evidence.
 
 The sixth slice, `player-weapon-needle-shot`, adds the previously unindexed
 `weapons_technovek.lua` source plus inherited Spear targeting. It pins all four
@@ -533,9 +535,11 @@ player team and scores only those stored IDs, and that the Bot Leader inherits
 Snowart's footprint while selecting queued self-repair when damaged. The v378
 implementation links Mine-Bot actor/target/simulation handling, static
 Snow-family definitions, and queued-artillery side-hit threat coverage. The
-record remains `partial`: native `GetReachable`/`GetPath`/path-profile behavior,
-`AvoidingMines`, movement/item scheduling, setup placement, and enemy AI/RNG
-are all explicitly outside the proven contract.
+record remains `partial`: exact Windows static evidence now pins basic native
+path costs, directions, tie comparators, result/reconstruction order, ordinary
+identity-based occupancy, Road Runner, and Massive Water, but `AvoidingMines`,
+corpse classification, matched Mine-Bot path vectors, movement/item scheduling,
+setup placement, and enemy AI/RNG remain outside the proven contract.
 
 The tenth player-weapon slice, `player-weapon-passive-board-effects`, adds the
 previously unindexed `weapons_passive.lua`, `advanced/ae_weapons_base.lua`, and
