@@ -173,3 +173,19 @@ def test_capsule_and_request_are_create_only(tmp_path):
             activation_nonce=packet["manifest"]["arm_nonce"],
             capsule_sha256=callback_trial_capsule_sha256(rendered),
         )
+
+
+def test_request_can_bind_the_one_purpose_continue_helper():
+    payload = render_callback_trial_request(
+        condition="control",
+        activation_nonce="a" * 32,
+        capsule_sha256="b" * 64,
+        continue_helper_sha256="c" * 64,
+    )
+    assert payload == (
+        b"observatory-callback-trial-request/2\n"
+        b"condition=control\n"
+        b"activation_nonce=" + b"a" * 32 + b"\n"
+        b"capsule_sha256=" + b"b" * 64 + b"\n"
+        b"continue_helper_sha256=" + b"c" * 64 + b"\n"
+    )

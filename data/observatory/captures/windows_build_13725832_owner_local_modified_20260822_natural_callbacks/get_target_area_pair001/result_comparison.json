@@ -1,0 +1,17 @@
+{
+  "arm_packet_sha256": "d4331182267ad516b97e70cab2a7bc14c8be0edc48d1f664ed3588611e51e190",
+  "binding_manifest_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3",
+  "both_restored": true,
+  "callback_family": "get_target_area",
+  "callback_join_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+  "capsule_sha256": "14ba303212e93a465cab9387ec2ece0da79a7eb37df87f8ccc886022854d0836",
+  "capture_id": "owner-callback-get-target-area-pair-001",
+  "checkpoint_seq": 0,
+  "exact_hook_attempted_calls": 47,
+  "exact_hook_event_count": 47,
+  "kind": "observatory_callback_trial_result_comparison",
+  "schema_version": 1,
+  "serialization_errors": 0,
+  "slot_count": 65,
+  "status": "matched"
+}

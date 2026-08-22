@@ -1,0 +1,29 @@
+{
+  "capture_id": "owner-callback-get-skill-effect-pair-002",
+  "control_semantic_sha256": "f7f613a1f803c77fe45a3fac964bc437e3ca05d5feb8f053612c4eaebbabb89a",
+  "control_state_sha256": "68072f7d8cd6f741bb04a68a0e4482aea8b0349fda5d233d2b8ecc81edcbd2ca",
+  "difference_count": 2,
+  "differences": [
+    {
+      "control": 6,
+      "exact_hook": 5,
+      "kind": "value",
+      "path": "/spawning_tiles/0/0"
+    },
+    {
+      "control": 5,
+      "exact_hook": 3,
+      "kind": "value",
+      "path": "/spawning_tiles/0/1"
+    }
+  ],
+  "differences_truncated": false,
+  "exact_hook_semantic_sha256": "af074645aa0f295a38490066eec434412ec584031890bead37cf37296b3ff4a9",
+  "exact_hook_state_sha256": "ff89d8a2d761cbbdfb7f0233c51149678892e42fd2e631a54d8829e99f13f0d3",
+  "ignored_top_level_fields": [
+    "timestamp"
+  ],
+  "kind": "observatory_rng_trial_outcome_comparison",
+  "schema_version": 1,
+  "status": "mismatched"
+}

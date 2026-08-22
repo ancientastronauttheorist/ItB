@@ -3,12 +3,14 @@
 -- Loading this module is inert. Construction only enumerates callback table
 -- identities; it performs no file I/O, calls no candidate, and installs no
 -- wrapper. The Mod Loader explicitly advances the host at the enemy NextTurn
--- boundary and after the following BaseUpdate, restoring every slot before it
--- publishes the small result document.
+-- boundary and keeps it alive through the enemy phase, the following player
+-- transition, and that player's first completed BaseUpdate. This covers the
+-- engine's deferred next-action planning while still restoring every slot at
+-- one reviewed mission boundary before publishing the small result document.
 
 local M = {}
 
-M.VERSION = "observatory-callback-trial-host/1"
+M.VERSION = "observatory-callback-trial-host/2"
 
 local CAPSULE_FIELDS = {
     schema_version = true,
@@ -124,14 +126,24 @@ local function copy_runtime(runtime)
     return result
 end
 
-local function runtime_matches_manifest(runtime, manifest)
+local function runtime_stable_identity_matches(runtime, manifest)
     return runtime.mission_id == manifest.expected_mission_id
-        and runtime.turn == manifest.expected_turn
-        and runtime.phase == manifest.expected_phase
         and runtime.timeline_fingerprint == manifest.timeline_fingerprint
         and runtime.master_seed == manifest.master_seed
         and runtime.region_id == manifest.region_id
         and runtime.ai_seed_fingerprint == manifest.ai_seed_fingerprint
+end
+
+local function runtime_matches_capture_start(runtime, manifest)
+    return runtime_stable_identity_matches(runtime, manifest)
+        and runtime.turn == manifest.expected_turn
+        and runtime.phase == manifest.expected_phase
+end
+
+local function runtime_matches_capture_finish(runtime, manifest)
+    return runtime_stable_identity_matches(runtime, manifest)
+        and runtime.turn == manifest.expected_turn + 1
+        and runtime.phase == "combat_player"
 end
 
 local function validate_capsule(capsule)
@@ -333,8 +345,7 @@ function Host:_begin(runtime)
 end
 
 function Host:_finish(runtime)
-    self.runtime_snapshot = runtime
-    if not runtime_matches_manifest(runtime, self.manifest) then
+    if not runtime_matches_capture_finish(runtime, self.manifest) then
         return self:_fail("runtime identity changed during callback window", self.runtime_before, runtime)
     end
     if self.condition == "exact_hook" then
@@ -345,6 +356,10 @@ function Host:_finish(runtime)
     else
         self.controller:disarm()
     end
+    -- The controller's attested runtime provider must remain pinned to the
+    -- enemy-boundary identity through checkpoint validation. Record the later
+    -- player boundary only after the controller is fully disarmed.
+    self.runtime_snapshot = runtime
     if not self:_all_restored() then
         return self:_fail("callback slots were not restored", self.runtime_before, runtime)
     end
@@ -386,13 +401,25 @@ function Host:step(stage)
                 return self:_fail("expected turn was missed", runtime, nil)
             end
             if runtime.phase ~= self.manifest.expected_phase then return "waiting" end
-            if not runtime_matches_manifest(runtime, self.manifest) then
+            if not runtime_matches_capture_start(runtime, self.manifest) then
                 return self:_fail("live runtime identity mismatch", runtime, nil)
             end
             return self:_begin(runtime)
         end
-        if self.state == "capturing" and stage == "base_update_after" then
-            return self:_finish(runtime)
+        if self.state == "capturing" then
+            if stage == "base_update_after"
+                and runtime_matches_capture_finish(runtime, self.manifest) then
+                return self:_finish(runtime)
+            end
+            if runtime_matches_capture_start(runtime, self.manifest)
+                or runtime_matches_capture_finish(runtime, self.manifest) then
+                return "capturing"
+            end
+            return self:_fail(
+                "runtime identity changed during callback window",
+                self.runtime_before,
+                runtime
+            )
         end
         return self.state
     end)
@@ -453,11 +480,26 @@ function M.new(options)
     if options.activation_nonce ~= manifest.arm_nonce then
         error("activation nonce does not match callback capsule", 2)
     end
+    local identity_manifest = rawget(
+        options.capsule.binding_manifest,
+        "identity_manifest"
+    )
+    local attested_limits = type(identity_manifest) == "table"
+        and rawget(identity_manifest, "limits") or nil
+    if type(attested_limits) ~= "table" then
+        error("callback capsule binding limits are unavailable", 2)
+    end
+    local enumeration_limits = {
+        max_roots = rawget(attested_limits, "max_roots"),
+        max_depth = rawget(attested_limits, "max_depth"),
+        max_functions = rawget(attested_limits, "max_functions"),
+        max_text_bytes = rawget(attested_limits, "max_text_bytes"),
+    }
     local document, live_bindings, binding_error =
         options.callback_bindings_module.enumerate(
             options.globals,
             options.callback_manifest_module,
-            nil
+            enumeration_limits
         )
     if type(document) ~= "table" or type(live_bindings) ~= "table" then
         error(binding_error or "callback binding enumeration failed", 2)

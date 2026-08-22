@@ -265,6 +265,21 @@ def test_complete_raw_snapshot_finalizes_to_native_checkpoint():
     assert result["caller_catalog_verified"] is False
 
 
+def test_complete_lua_snapshot_may_omit_nil_stopped_reason():
+    raw = _snapshot()
+    del raw["integrity"]["stopped_reason"]
+    receipt = _receipt()
+
+    checkpoint = build_rng_core_checkpoint(
+        raw,
+        build_receipt=receipt,
+        observed_module_sha256=receipt["module_sha256"],
+    )
+
+    assert checkpoint["integrity"]["stopped_reason"] is None
+    assert checkpoint["integrity"]["complete"] is True
+
+
 def test_raw_snapshot_requires_independently_observed_module_hash():
     with pytest.raises(NativeCheckpointError, match="observed observer module"):
         build_rng_core_checkpoint(

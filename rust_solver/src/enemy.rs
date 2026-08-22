@@ -15,6 +15,7 @@ use crate::simulate::{
     apply_damage_defer_death_explosion,
     apply_damage_with_bombrock_exclusion,
     apply_death_explosion,
+    apply_environment_push,
     apply_push,
     apply_push_dead_bumps_live_blocker,
     apply_push_no_edge_bump,
@@ -957,7 +958,7 @@ fn simulate_conveyor_belts(board: &mut Board, result: &mut ActionResult) {
                 }
             }
         }
-        apply_push(board, x, y, dir, result);
+        apply_environment_push(board, x, y, dir, result);
         let moved = board.units[idx].x != x || board.units[idx].y != y;
         if moved {
             moved_uids.push(uid);
@@ -1027,7 +1028,7 @@ fn simulate_mission_wind(board: &mut Board, result: &mut ActionResult) {
     for (x, y) in targets {
         if let Some(idx) = board.unit_at(x, y) {
             if board.units[idx].hp > 0 {
-                apply_push(board, x, y, dir, result);
+                apply_environment_push(board, x, y, dir, result);
             }
         }
     }
@@ -2033,9 +2034,9 @@ pub fn simulate_enemy_attacks(
                 // Piercing beam: fires in cardinal direction from enemy position,
                 // damage starts at wdef.damage and decreases by 1 per tile (floor 1).
                 // Stops at mountains and buildings (after damaging them).
-                let dx = (qtx - queued_origin.0 as i8).signum();
-                let dy = (qty - queued_origin.1 as i8).signum();
-                if (dx != 0) != (dy != 0) {
+                if let Some((dx, dy)) = projectile_delta_from_queued_or_current(
+                    ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
+                ) {
                     let mut dmg = wdef.damage;
                     for i in 1..8i8 {
                         let nx = ex as i8 + dx * i;
@@ -2069,16 +2070,10 @@ pub fn simulate_enemy_attacks(
                 //
                 // range_min guard: if the PUSHED distance is below the weapon's
                 // minimum range, attack cancels (e.g. pushed adjacent to target).
-                let (offset_x, offset_y) = if let Some((raw_x, raw_y)) = raw_queued_target {
-                    let raw_offset_x = raw_x - queued_origin.0 as i8;
-                    let raw_offset_y = raw_y - queued_origin.1 as i8;
-                    if (raw_offset_x != 0) != (raw_offset_y != 0) {
-                        (raw_offset_x, raw_offset_y)
-                    } else {
-                        (qtx - queued_origin.0 as i8, qty - queued_origin.1 as i8)
-                    }
-                } else {
-                    (qtx - queued_origin.0 as i8, qty - queued_origin.1 as i8)
+                let Some((offset_x, offset_y)) = queued_cardinal_offset_from_raw_or_current(
+                    ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
+                ) else {
+                    break 'queued_attack;
                 };
                 let new_tx = ex as i8 + offset_x;
                 let new_ty = ey as i8 + offset_y;
@@ -2251,11 +2246,9 @@ pub fn simulate_enemy_attacks(
 
             WeaponType::Charge => {
                 // Charge from CURRENT position in original queued direction
-                let dx = (qtx - queued_origin.0 as i8).signum();
-                let dy = (qty - queued_origin.1 as i8).signum();
-
-                // Must be valid cardinal direction
-                if (dx != 0) != (dy != 0) {
+                if let Some((dx, dy)) = projectile_delta_from_queued_or_current(
+                    ex, ey, queued_origin.0, queued_origin.1, qtx, qty, raw_queued_target,
+                ) {
                     let mut hit: Option<(u8, u8)> = None;
                     let mut last_free = (ex, ey);
                     let mut path: Vec<(u8, u8)> = Vec::new();
@@ -2474,8 +2467,19 @@ pub fn simulate_enemy_attacks(
                         // but live captures show p2 is still interpreted as the
                         // original attacker-relative offset. A pushed Goo keeps
                         // firing; the target tile shifts by the same displacement.
-                        let offset_x = qtx - queued_origin.0 as i8;
-                        let offset_y = qty - queued_origin.1 as i8;
+                        let Some((offset_x, offset_y)) =
+                            queued_cardinal_offset_from_raw_or_current(
+                                ex,
+                                ey,
+                                queued_origin.0,
+                                queued_origin.1,
+                                qtx,
+                                qty,
+                                raw_queued_target,
+                            )
+                        else {
+                            break 'queued_attack;
+                        };
                         let new_tx = ex as i8 + offset_x;
                         let new_ty = ey as i8 + offset_y;
                         if !in_bounds(new_tx, new_ty) { break 'queued_attack; }
@@ -3089,12 +3093,17 @@ pub(crate) fn queued_enemy_threat_target(board: &Board, enemy: &Unit) -> Option<
     }
 }
 
-fn cardinal_delta(from_x: u8, from_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
-    if qtx < 0 { return None; }
-    let dx = (qtx - from_x as i8).signum();
-    let dy = (qty - from_y as i8).signum();
-    if (dx != 0 && dy != 0) || (dx == 0 && dy == 0) { return None; }
+fn cardinal_offset(from_x: u8, from_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
+    if qtx < 0 || qty < 0 { return None; }
+    let dx = qtx - from_x as i8;
+    let dy = qty - from_y as i8;
+    if (dx != 0) == (dy != 0) { return None; }
     Some((dx, dy))
+}
+
+fn cardinal_delta(from_x: u8, from_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
+    let (dx, dy) = cardinal_offset(from_x, from_y, qtx, qty)?;
+    Some((dx.signum(), dy.signum()))
 }
 
 fn projectile_delta_from_queued(orig_x: u8, orig_y: u8, qtx: i8, qty: i8) -> Option<(i8, i8)> {
@@ -3115,51 +3124,65 @@ fn projectile_delta_from_queued_or_current(
     qty: i8,
     raw_target: Option<(i8, i8)>,
 ) -> Option<(i8, i8)> {
-    // A normalized bridge target is expressed from the attacker's CURRENT
-    // tile, while the retained raw piQueuedShot is expressed from piOrigin.
-    // When those two independent vectors agree, trust that direction before
-    // interpreting the normalized target against the stale origin. Otherwise
-    // a displaced adjacent attacker can reverse its melee (live regression:
-    // Scorpion G1 -> tank G2, with piOrigin G3 and raw shot G4).
-    if let Some((raw_qtx, raw_qty)) = raw_target {
-        if let (Some(current_delta), Some(raw_delta)) = (
-            cardinal_delta(ex, ey, qtx, qty),
-            projectile_delta_from_queued(orig_x, orig_y, raw_qtx, raw_qty),
-        ) {
-            if current_delta == raw_delta {
-                return Some(current_delta);
-            }
+    // The reconciled queued target is expressed from the attacker's CURRENT
+    // tile. Raw piQueuedShot is save-derived and anchored to piOrigin, but can
+    // remain stale after a native DIR_FLIP. Reconcile all three views:
+    // agreement identifies either a normalized or legacy payload; otherwise
+    // a valid current-frame target wins and raw is only the collapse fallback.
+    let current_delta = cardinal_delta(ex, ey, qtx, qty);
+    let origin_delta = projectile_delta_from_queued(orig_x, orig_y, qtx, qty);
+    let raw_delta = raw_target.and_then(|(raw_qtx, raw_qty)| {
+        projectile_delta_from_queued(orig_x, orig_y, raw_qtx, raw_qty)
+    });
+
+    if let Some(raw_delta) = raw_delta {
+        if current_delta == Some(raw_delta) {
+            return current_delta;
         }
-    }
-    if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, qtx, qty) {
-        return Some(delta);
-    }
-    if let Some((raw_qtx, raw_qty)) = raw_target {
-        if let Some(delta) = projectile_delta_from_queued(orig_x, orig_y, raw_qtx, raw_qty) {
-            return Some(delta);
+        if origin_delta == Some(raw_delta) {
+            return Some(raw_delta);
         }
-        if (ex, ey) != (orig_x, orig_y) {
-            if let Some(delta) = cardinal_delta(ex, ey, raw_qtx, raw_qty) {
-                return Some(delta);
-            }
+        if current_delta.is_some() {
+            return current_delta;
         }
+        return Some(raw_delta);
     }
-    // Mid-turn bridge reads after a pushed projectile Vek can report the
-    // queued target as the Vek's original tile, while queued_origin still
-    // points at that same original tile. Live then fires from the current
-    // position toward that target tile.
-    if qtx == orig_x as i8 && qty == orig_y as i8 && (ex, ey) != (orig_x, orig_y) {
-        return cardinal_delta(ex, ey, qtx, qty);
+
+    current_delta.or(origin_delta)
+}
+
+fn queued_cardinal_offset_from_raw_or_current(
+    ex: u8,
+    ey: u8,
+    orig_x: u8,
+    orig_y: u8,
+    qtx: i8,
+    qty: i8,
+    raw_target: Option<(i8, i8)>,
+) -> Option<(i8, i8)> {
+    let current_offset = cardinal_offset(ex, ey, qtx, qty);
+    let origin_offset = cardinal_offset(orig_x, orig_y, qtx, qty);
+    let raw_offset = raw_target.and_then(|(raw_qtx, raw_qty)| {
+        cardinal_offset(orig_x, orig_y, raw_qtx, raw_qty)
+    });
+
+    if let Some(raw_offset) = raw_offset {
+        if current_offset == Some(raw_offset) {
+            return current_offset;
+        }
+        if origin_offset == Some(raw_offset) {
+            return Some(raw_offset);
+        }
+        if current_offset.is_some() {
+            return current_offset;
+        }
+        return Some(raw_offset);
     }
-    // Some live mid-turn effects (notably Science Swap on a queued Bouncer)
-    // can update the queued target to the current attack tile while leaving
-    // queued_origin at the pre-swap tile. If the origin-relative vector is no
-    // longer cardinal but the current tile can plainly attack the queued
-    // target, live fires from the current tile.
-    if (ex, ey) != (orig_x, orig_y) {
-        return cardinal_delta(ex, ey, qtx, qty);
-    }
-    None
+
+    // Legacy payloads without raw piQueuedShot store the full offset against
+    // the recorded origin. Preserve that compatibility before falling back to
+    // an unambiguous current-frame offset.
+    origin_offset.or(current_offset)
 }
 
 fn find_projectile_target_in_direction(board: &Board, ex: u8, ey: u8, dx: i8, dy: i8) -> Option<(u8, u8)> {
@@ -3704,6 +3727,195 @@ mod tests {
 
         assert_eq!(board.tile(5, 7).building_hp, 2, "old A3 target should survive");
         assert_eq!(board.tile(6, 7).building_hp, 0, "shifted A2 target should be hit");
+    }
+
+    #[test]
+    fn test_perpendicular_push_then_laser_uses_raw_cardinal_direction() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 2;
+
+        let laser_idx = add_enemy_with_type(&mut board, 1031, 4, 4, 3, "Snowlaser1", 3, 4);
+        board.units[laser_idx].queued_origin_x = 4;
+        board.units[laser_idx].queued_origin_y = 4;
+        board.units[laser_idx].queued_target_raw_x = 3;
+        board.units[laser_idx].queued_target_raw_y = 4;
+        board.units[laser_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut push_result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut push_result);
+        assert_eq!((board.units[laser_idx].x, board.units[laser_idx].y), (4, 3));
+        assert_eq!(
+            (board.units[laser_idx].queued_target_x, board.units[laser_idx].queued_target_y),
+            (3, 3),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(3, 3).building_hp,
+            0,
+            "the displaced Laser-Bot must still fire west instead of cancelling a false diagonal",
+        );
+    }
+
+    #[test]
+    fn test_displaced_laser_prefers_live_target_over_stale_raw_direction() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        for x in [3, 5] {
+            board.tile_mut(x, 3).terrain = Terrain::Building;
+            board.tile_mut(x, 3).building_hp = 2;
+        }
+
+        let laser_idx = add_enemy_with_type(&mut board, 1034, 4, 4, 3, "Snowlaser1", 5, 4);
+        board.units[laser_idx].queued_origin_x = 4;
+        board.units[laser_idx].queued_origin_y = 4;
+        // Raw save intent is west, but reconciled live queued_target is east
+        // after a prior native DIR_FLIP.
+        board.units[laser_idx].queued_target_raw_x = 3;
+        board.units[laser_idx].queued_target_raw_y = 4;
+        board.units[laser_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut push_result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut push_result);
+        assert_eq!((board.units[laser_idx].x, board.units[laser_idx].y), (4, 3));
+        assert_eq!(
+            (board.units[laser_idx].queued_target_x, board.units[laser_idx].queued_target_y),
+            (5, 3),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 3).building_hp, 0, "live east target must be hit");
+        assert_eq!(board.tile(3, 3).building_hp, 2, "stale raw west target must survive");
+    }
+
+    #[test]
+    fn test_perpendicular_push_then_charge_uses_raw_cardinal_direction() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 2;
+
+        let beetle_idx = add_enemy_with_type(&mut board, 1032, 4, 4, 4, "Beetle1", 3, 4);
+        board.units[beetle_idx].queued_origin_x = 4;
+        board.units[beetle_idx].queued_origin_y = 4;
+        board.units[beetle_idx].queued_target_raw_x = 3;
+        board.units[beetle_idx].queued_target_raw_y = 4;
+        board.units[beetle_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut push_result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut push_result);
+        assert_eq!((board.units[beetle_idx].x, board.units[beetle_idx].y), (4, 3));
+        assert_eq!(
+            (board.units[beetle_idx].queued_target_x, board.units[beetle_idx].queued_target_y),
+            (3, 3),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(
+            board.tile(3, 3).building_hp,
+            1,
+            "the displaced Beetle must charge west instead of cancelling a false diagonal",
+        );
+        assert_eq!((board.units[beetle_idx].x, board.units[beetle_idx].y), (4, 3));
+    }
+
+    #[test]
+    fn test_perpendicular_push_then_blob_damage_uses_raw_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 4;
+        board.tile_mut(3, 2).terrain = Terrain::Building;
+        board.tile_mut(3, 2).building_hp = 4;
+
+        let goo_idx = add_enemy_with_type(&mut board, 1033, 4, 4, 3, "BlobBoss", 3, 4);
+        board.units[goo_idx].queued_origin_x = 4;
+        board.units[goo_idx].queued_origin_y = 4;
+        board.units[goo_idx].queued_target_raw_x = 3;
+        board.units[goo_idx].queued_target_raw_y = 4;
+        board.units[goo_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut push_result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut push_result);
+        assert_eq!((board.units[goo_idx].x, board.units[goo_idx].y), (4, 3));
+        assert_eq!(
+            (board.units[goo_idx].queued_target_x, board.units[goo_idx].queued_target_y),
+            (3, 3),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 3).building_hp, 0, "the west target should take Goo damage");
+        assert_eq!(
+            board.tile(3, 2).building_hp,
+            4,
+            "the stale-origin diagonal must not redirect Goo damage northwest",
+        );
+    }
+
+    #[test]
+    fn test_displaced_blob_prefers_live_target_over_stale_raw_offset() {
+        let mut board = Board::default();
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        for x in [3, 5] {
+            board.tile_mut(x, 3).terrain = Terrain::Building;
+            board.tile_mut(x, 3).building_hp = 4;
+        }
+
+        let goo_idx = add_enemy_with_type(&mut board, 1035, 4, 4, 3, "BlobBoss", 5, 4);
+        board.units[goo_idx].queued_origin_x = 4;
+        board.units[goo_idx].queued_origin_y = 4;
+        board.units[goo_idx].queued_target_raw_x = 3;
+        board.units[goo_idx].queued_target_raw_y = 4;
+        board.units[goo_idx].flags.insert(
+            UnitFlags::HAS_QUEUED_ATTACK
+                | UnitFlags::QUEUED_ORIGIN_SET
+                | UnitFlags::QUEUED_RAW_TARGET_SET,
+        );
+
+        let mut push_result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut push_result);
+        assert_eq!((board.units[goo_idx].x, board.units[goo_idx].y), (4, 3));
+        assert_eq!(
+            (board.units[goo_idx].queued_target_x, board.units[goo_idx].queued_target_y),
+            (5, 3),
+        );
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(5, 3).building_hp, 0, "live east target must take Goo damage");
+        assert_eq!(board.tile(3, 3).building_hp, 4, "stale raw west target must survive");
     }
 
     #[test]

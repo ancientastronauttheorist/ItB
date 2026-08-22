@@ -10,7 +10,7 @@ from typing import Any
 
 RESULT_SCHEMA_VERSION = 1
 RESULT_KIND = "observatory_callback_trial_result"
-HOST_VERSION = "observatory-callback-trial-host/1"
+HOST_VERSION = "observatory-callback-trial-host/2"
 CALLBACK_FAMILIES = frozenset(
     {"get_target_area", "enemy_target_score", "get_skill_effect", "score_positioning"}
 )
@@ -69,6 +69,9 @@ _PAIR_IDENTITY_FIELDS = (
     "slot_count",
 )
 _RUNTIME_IDENTITY_FIELDS = tuple(sorted(_RUNTIME_FIELDS - {"now_epoch"}))
+_RUNTIME_STABLE_FIELDS = tuple(
+    sorted(_RUNTIME_FIELDS - {"now_epoch", "turn", "phase"})
+)
 
 
 class CallbackTrialResultError(RuntimeError):
@@ -176,8 +179,16 @@ def validate_callback_trial_result(
         raise CallbackTrialResultError("callback result counters are invalid")
     before = _runtime(result["runtime_before"], "runtime_before")
     after = _runtime(result["runtime_after"], "runtime_after")
-    if any(before[field] != after[field] for field in _RUNTIME_IDENTITY_FIELDS):
+    if any(before[field] != after[field] for field in _RUNTIME_STABLE_FIELDS):
         raise CallbackTrialResultError("runtime identity changed inside callback window")
+    if (
+        before["phase"] != "combat_enemy"
+        or after["phase"] != "combat_player"
+        or after["turn"] != before["turn"] + 1
+    ):
+        raise CallbackTrialResultError(
+            "callback window did not cover exactly one enemy decision cycle"
+        )
     controller = _exact(result["controller_status"], _CONTROLLER_FIELDS, "controller_status")
     if any(type(controller[field]) is not bool for field in _CONTROLLER_FIELDS):
         raise CallbackTrialResultError("controller status flags must be booleans")

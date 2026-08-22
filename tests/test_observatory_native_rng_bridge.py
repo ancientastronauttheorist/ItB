@@ -75,6 +75,34 @@ def test_native_rng_seed_command_is_no_argument_and_fixed(
     )
     assert commands == ["OBS_NATIVE_RNG_SEED"]
 
+
+def test_native_rng_seed_and_arm_is_one_fixed_command(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        protocol, "NATIVE_RNG_SNAPSHOT_FILE", tmp_path / "snapshot.json"
+    )
+    monkeypatch.setattr(
+        protocol, "NATIVE_RNG_SNAPSHOT_TMP", tmp_path / "snapshot.json.tmp"
+    )
+    monkeypatch.setattr(protocol, "is_bridge_alive", lambda **_kwargs: True)
+    commands: list[str] = []
+    monkeypatch.setattr(protocol, "write_command", commands.append)
+    monkeypatch.setattr(
+        protocol,
+        "wait_for_ack",
+        lambda **_kwargs: (
+            "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=native-pair-01 "
+            "seed=324508639"
+        ),
+    )
+
+    assert protocol.seed_and_arm_observatory_native_rng(
+        "native-pair-01"
+    ).endswith("seed=324508639")
+    assert commands == ["OBS_NATIVE_RNG_SEED_AND_ARM native-pair-01"]
+
+
 @pytest.mark.parametrize("capture_id", ["", "Upper", "a/b", "a" * 97])
 def test_native_rng_arm_rejects_noncanonical_capture_ids(capture_id: str):
     with pytest.raises(protocol.BridgeError, match="capture ID"):
@@ -137,15 +165,27 @@ def test_modloader_native_rng_path_is_fixed_one_shot_and_restores_before_ack():
     )
     assert native_sha in MODLOADER
     seed = MODLOADER.index('elseif cmd == "OBS_NATIVE_RNG_SEED" then')
+    seed_and_arm = MODLOADER.index(
+        'elseif cmd == "OBS_NATIVE_RNG_SEED_AND_ARM" then'
+    )
     arm = MODLOADER.index('elseif cmd == "OBS_NATIVE_RNG_ARM" then')
     status = MODLOADER.index('elseif cmd == "OBS_NATIVE_RNG_STATUS" then')
     finish = MODLOADER.index('elseif cmd == "OBS_NATIVE_RNG_FINISH" then')
     lua = MODLOADER.index('elseif cmd == "LUA" then')
-    assert seed < arm < status < finish < lua
-    seed_block = MODLOADER[seed:arm]
+    assert seed < seed_and_arm < arm < status < finish < lua
+    seed_block = MODLOADER[seed:seed_and_arm]
     assert "NATIVE_RNG_FIXED_SEED" in seed_block
     assert "requires spent player actors" in seed_block
     assert "parts[2]" not in seed_block
+    atomic_block = MODLOADER[seed_and_arm:arm]
+    assert "load_observatory_rng_seed_helper" in atomic_block
+    assert "load_observatory_native_rng_module" in atomic_block
+    assert atomic_block.index("load_observatory_native_rng_module") < (
+        atomic_block.index('rawget(seed_helper, "seed")')
+    )
+    assert atomic_block.index('rawget(seed_helper, "seed")') < (
+        atomic_block.index('rawget(observer, "arm")')
+    )
     block = MODLOADER[finish:lua]
     assert 'rawget(_observatory_native_rng_module, "finish")' in block
     assert "validate_observatory_native_rng_snapshot(" in block

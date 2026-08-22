@@ -1057,15 +1057,27 @@
         },
         {
           "classification": "unresolved",
-          "statement": "The native RNG implementation, state, and complete consumption order have not been traced for this build."
+          "statement": "The native RNG implementation and complete semantic consumption order have not been reconstructed for this build; the observer now records build-keyed core calls, but no Spawner:NextPawn span markers identify the draws responsible for spawn selection."
         },
         {
           "classification": "fact",
           "statement": "The build-keyed six-pair seeded RNG campaign preserved every direct random_int/random_bool wrapper result, but four matched whole-game pairs differed only in the next spawning tile coordinate."
         },
         {
+          "classification": "fact",
+          "statement": "Two counterbalanced atomic native-RNG trials captured the fixed seed's first core result (24356), produced complete single-threaded checkpoints with zero unknown callers or integrity errors, and restored the patched RNG-core bytes without conflict."
+        },
+        {
+          "classification": "fact",
+          "statement": "Both native checkpoints observed reviewed direct callers for AI seed advance, one-argument random_int/random_bool, candidate-loop tie-breaking, and both record-selector RNG sites; the candidate-loop, record-selector, and AI-seed-advance result subsequences repeated across exact trials."
+        },
+        {
+          "classification": "fact",
+          "statement": "The two observed exact outcomes repeated, while two unobserved controls restored from the same save and seeded identically selected different next spawn coordinates."
+        },
+        {
           "classification": "inference",
-          "statement": "Direct Lua-wrapper return preservation is insufficient to infer native spawn-selection RNG state or call order."
+          "statement": "Neither a preserved Lua-wrapper return nor a fixed native RNG seed is sufficient to infer spawn-selection call order from save state alone on this build."
         }
       ],
       "id": "spawn-selection",
@@ -1080,7 +1092,8 @@
       ],
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, random_int/random_bool behavior, RNG state, and complete pre-spawn call order are unresolved.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, full random_int/random_bool behavior, cross-boundary scheduling, and complete pre-spawn call order are unresolved.",
+        "No Spawner:NextPawn enter/exit span or selected-pawn record was installed, so the captured native RNG stream cannot yet attribute individual draws to spawn selection.",
         "The parameter matrix does not itself determine spawn count, timing, locations, or roster; selection fallbacks, living caps, streak rules, and conditional promotion can change the nominal weak, upgrade, and boss outcomes."
       ],
       "sources": [
@@ -1137,6 +1150,24 @@
             "\"direct_boundary_matches\":6",
             "\"whole_game_mismatches\":4",
             "\"mismatch_scope\":[\"/spawning_tiles/0/1\"]"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json",
+          "symbols": [
+            "\"kind\":\"observatory_native_rng_atomic_campaign_receipt\"",
+            "\"complete_restored_checkpoints\":2",
+            "\"first_seeded_result\":24356",
+            "\"exact_result_stream_common_prefix\":104",
+            "\"stable_reviewed_result_sequences\":[19,29,30,31]"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json",
+          "symbols": [
+            "\"callback_families\":{\"enemy_target_score\":1,\"get_skill_effect\":2,\"get_target_area\":1,\"score_positioning\":1}",
+            "\"complete_restored_pairs\":5",
+            "\"whole_game_mismatches\":2"
           ]
         }
       ]

@@ -374,6 +374,40 @@ def seed_observatory_native_rng(*, timeout: float = 10.0) -> str:
     return ack
 
 
+def seed_and_arm_observatory_native_rng(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically apply the fixed seed and arm the native RNG observer."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("native RNG capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "native RNG seed-and-arm requires an unpaused active mission heartbeat"
+        )
+    if NATIVE_RNG_SNAPSHOT_FILE.exists() or NATIVE_RNG_SNAPSHOT_TMP.exists():
+        raise BridgeError("native RNG snapshot output already exists")
+    command = f"OBS_NATIVE_RNG_SEED_AND_ARM {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = (
+        f"OK OBS_NATIVE_RNG_SEED_AND_ARM capture={capture_id} "
+        f"seed={OBSERVATORY_NATIVE_RNG_SEED}"
+    )
+    if ack != expected:
+        raise BridgeError(f"unexpected native RNG seed-and-arm ACK: {ack}")
+    return ack
+
+
 def status_observatory_native_rng(*, timeout: float = 10.0) -> tuple[str, dict]:
     """Read the fixed native observer's bounded status table."""
     write_command("OBS_NATIVE_RNG_STATUS")

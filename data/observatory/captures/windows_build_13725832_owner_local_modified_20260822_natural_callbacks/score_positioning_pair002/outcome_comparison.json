@@ -1,0 +1,16 @@
+{
+  "capture_id": "owner-callback-score-positioning-pair-002",
+  "control_semantic_sha256": "bf1731707f271c913cd0ec82a8f3b77c4fd6f334f4ed4e154e68263c9472e98b",
+  "control_state_sha256": "e63c4fb7aab0e0adfc09a345da06838cc22229bb90b36498362e43e1c3411647",
+  "difference_count": 0,
+  "differences": [],
+  "differences_truncated": false,
+  "exact_hook_semantic_sha256": "bf1731707f271c913cd0ec82a8f3b77c4fd6f334f4ed4e154e68263c9472e98b",
+  "exact_hook_state_sha256": "ef3a468521ae3dd3c2b72965e6270afb0263f91ea4fbef4dba8bed1130bf1ce6",
+  "ignored_top_level_fields": [
+    "timestamp"
+  ],
+  "kind": "observatory_rng_trial_outcome_comparison",
+  "schema_version": 1,
+  "status": "matched"
+}

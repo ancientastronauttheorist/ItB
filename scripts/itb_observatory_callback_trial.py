@@ -76,6 +76,7 @@ def _parser() -> argparse.ArgumentParser:
     arm.add_argument("--condition", choices=("control", "exact_hook"), required=True)
     arm.add_argument("--activation-nonce", required=True)
     arm.add_argument("--capsule-sha256", required=True)
+    arm.add_argument("--continue-helper-sha256")
 
     compare = commands.add_parser("compare-results")
     compare.add_argument("--control", type=Path, required=True)
@@ -171,12 +172,14 @@ def _arm(args: argparse.Namespace) -> int:
         condition=args.condition,
         activation_nonce=args.activation_nonce,
         capsule_sha256=args.capsule_sha256,
+        continue_helper_sha256=args.continue_helper_sha256,
     )
     path = arm_callback_trial_request(
         bridge_root=args.bridge_root,
         condition=args.condition,
         activation_nonce=args.activation_nonce,
         capsule_sha256=args.capsule_sha256,
+        continue_helper_sha256=args.continue_helper_sha256,
     )
     print(
         f"request={path} sha256={hashlib.sha256(payload).hexdigest()} "

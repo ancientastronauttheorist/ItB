@@ -742,7 +742,13 @@ def build_rng_core_checkpoint(
     ):
         raise NativeCheckpointError("RNG-core snapshot summary is inconsistent")
 
-    integrity = _object(snapshot["integrity"], "snapshot.integrity")
+    raw_integrity = _object(snapshot["integrity"], "snapshot.integrity")
+    # Lua table fields assigned nil do not survive JSON serialization.  The
+    # native observer emits a nil stopped_reason on a normal complete capture,
+    # so canonicalize that one optional wire field back to explicit None while
+    # retaining exact-field validation for every other integrity claim.
+    integrity = dict(raw_integrity)
+    integrity.setdefault("stopped_reason", None)
     _exact(
         integrity,
         {

@@ -11,12 +11,12 @@ from src.observatory.callback_trial_result import (
 )
 
 
-def _runtime(now: int) -> dict:
+def _runtime(now: int, *, turn: int, phase: str) -> dict:
     return {
         "now_epoch": now,
         "mission_id": "Mission_Test",
-        "turn": 2,
-        "phase": "combat_enemy",
+        "turn": turn,
+        "phase": phase,
         "timeline_fingerprint": "1" * 64,
         "master_seed": -17,
         "region_id": "Archive_A",
@@ -29,7 +29,7 @@ def _result(condition: str) -> dict:
     return {
         "schema_version": 1,
         "kind": "observatory_callback_trial_result",
-        "host_version": "observatory-callback-trial-host/1",
+        "host_version": "observatory-callback-trial-host/2",
         "capture_track": "owner_local_modified",
         "condition": condition,
         "capsule_sha256": "a" * 64,
@@ -41,8 +41,16 @@ def _result(condition: str) -> dict:
         "callback_family": "score_positioning",
         "status": "complete",
         "error": "",
-        "runtime_before": _runtime(1001 if exact else 2001),
-        "runtime_after": _runtime(1002 if exact else 2002),
+        "runtime_before": _runtime(
+            1001 if exact else 2001,
+            turn=2,
+            phase="combat_enemy",
+        ),
+        "runtime_after": _runtime(
+            1002 if exact else 2002,
+            turn=3,
+            phase="combat_player",
+        ),
         "controller_status": {
             "consumed": True,
             "prepared": True,
@@ -109,6 +117,6 @@ def test_pair_rejects_zero_events_and_identity_drift():
         )
 
     drifted = copy.deepcopy(_result("exact_hook"))
-    drifted["runtime_after"]["turn"] = 3
-    with pytest.raises(CallbackTrialResultError, match="changed inside"):
+    drifted["runtime_after"]["turn"] = 4
+    with pytest.raises(CallbackTrialResultError, match="exactly one enemy decision cycle"):
         validate_callback_trial_result(drifted)

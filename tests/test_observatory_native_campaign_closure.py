@@ -36,8 +36,8 @@ def _artifact(value: dict) -> Path:
     return path
 
 
-def _source_artifact(value: dict) -> Path:
-    path = REPO_ROOT / value["path"]
+def _source_artifact(value: dict, *, archived_path: Path | None = None) -> Path:
+    path = archived_path or (REPO_ROOT / value["path"])
     payload = path.read_bytes()
     if value.get("line_endings") == "lf":
         payload = payload.replace(b"\r\n", b"\n")
@@ -83,9 +83,18 @@ def test_callback_binding_receipt_binds_two_inert_fresh_process_captures():
     ]["slot_family_counts"]
     assert receipt["instrumentation"]["candidate_callback_invoked_or_wrapped"] is False
     assert receipt["instrumentation"]["native_hook_installed"] is False
-    _artifact(receipt["instrumentation"]["deployed_modloader"])
+    deployed_modloader = _artifact(receipt["instrumentation"]["deployed_modloader"])
     for source in receipt["instrumentation"]["collector_sources"]:
-        _source_artifact(source)
+        # The loader remains active development after a sealed capture. Its
+        # deployed archive is the exact CRLF copy of the then-current source,
+        # so normalize and bind that immutable artifact instead of requiring
+        # the live source path to remain frozen forever.
+        archived_path = (
+            deployed_modloader
+            if source["path"] == "src/bridge/modloader.lua"
+            else None
+        )
+        _source_artifact(source, archived_path=archived_path)
 
 
 def test_cleanup_receipt_closes_pending_restore_with_exact_inventory_and_save():

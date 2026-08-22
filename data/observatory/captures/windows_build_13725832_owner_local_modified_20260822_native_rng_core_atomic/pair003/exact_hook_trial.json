@@ -1,0 +1,59 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\native_rng_core\\pair003\\exact_runtime",
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "arm_ack": null,
+      "capture_id": "owner-native-rng-atomic-pair-003-exact",
+      "condition": "exact_hook",
+      "end_turn_status": "OK",
+      "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=owner-native-rng-atomic-pair-003-exact records=1481 complete=true",
+      "hook_bytes_restored": true,
+      "record_count": 1481,
+      "seed_ack": null,
+      "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=owner-native-rng-atomic-pair-003-exact seed=324508639",
+      "snapshot_sha256": "0d7193d7755c3549c7c0c7288ef6a96d9e2d8d22da1ebfbaae532913492bbee4",
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -99757.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "arm_ack": null,
+    "capture_id": "owner-native-rng-atomic-pair-003-exact",
+    "condition": "exact_hook",
+    "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=owner-native-rng-atomic-pair-003-exact records=1481 complete=true",
+    "hook_bytes_restored": true,
+    "record_count": 1481,
+    "seed_ack": null,
+    "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=owner-native-rng-atomic-pair-003-exact seed=324508639",
+    "snapshot_sha256": "0d7193d7755c3549c7c0c7288ef6a96d9e2d8d22da1ebfbaae532913492bbee4",
+    "state": "complete"
+  },
+  "capture_id": "owner-native-rng-atomic-pair-003-exact",
+  "checkpoint": {
+    "diagnostic_complete": true,
+    "hook_bytes_restored": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\native_rng_core\\pair003\\native_rng_checkpoint.json",
+    "record_count": 1481,
+    "sha256": "bcbcd7a766eac5819a6c2a654db04552980d222f72faae35bf7858e79b5ecaec"
+  },
+  "condition": "exact_hook",
+  "created_at": "2026-08-22T09:53:24.836955+00:00",
+  "errors": {
+    "abort": "",
+    "checkpoint": "",
+    "runner": ""
+  },
+  "kind": "observatory_native_rng_turn_trial",
+  "pair_id": "owner-native-rng-atomic-pair-003",
+  "schema_version": 1,
+  "session_file": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\native_rng_core\\pair003\\exact_runtime\\session.json",
+  "status": "complete",
+  "valid_trial": true
+}

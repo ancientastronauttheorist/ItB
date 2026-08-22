@@ -1,0 +1,17 @@
+{
+  "arm_packet_sha256": "227e7757c086ec1f843695037366b9f9dcc57c8ddf83978be85b67a6e62ceb83",
+  "binding_manifest_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3",
+  "both_restored": true,
+  "callback_family": "get_skill_effect",
+  "callback_join_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+  "capsule_sha256": "1e03ea36ceaf4508ca9348b72f432165aa9a4ae81f0bd621e5d44f648958cb40",
+  "capture_id": "owner-callback-get-skill-effect-pair-003",
+  "checkpoint_seq": 0,
+  "exact_hook_attempted_calls": 147,
+  "exact_hook_event_count": 146,
+  "kind": "observatory_callback_trial_result_comparison",
+  "schema_version": 1,
+  "serialization_errors": 0,
+  "slot_count": 65,
+  "status": "matched"
+}

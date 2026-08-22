@@ -72,6 +72,93 @@ def _bridge_with_mech(*, flying=False, danger=None):
     }
 
 
+def test_projected_checkpoints_materialize_sparse_rust_tiles():
+    bridge = _bridge_with_mech()
+    sparse = json.loads(json.dumps(bridge))
+    sparse["tiles"] = [
+        {"x": 3, "y": 2, "terrain": "ground", "smoke": True},
+        {"x": 4, "y": 4, "terrain": "building", "building_hp": 2},
+    ]
+    enriched = {
+        "post_player_board": json.loads(json.dumps(sparse)),
+        "final_board": json.loads(json.dumps(sparse)),
+    }
+
+    post_player = commands._projected_post_player_board_data(enriched, bridge)
+    final_board = commands._projected_final_board_data(enriched)
+
+    for checkpoint in (post_player, final_board):
+        assert len(checkpoint["tiles"]) == 64
+        tiles = {(tile["x"], tile["y"]): tile for tile in checkpoint["tiles"]}
+        assert set(tiles) == {(x, y) for x in range(8) for y in range(8)}
+        assert tiles[(3, 2)]["smoke"] is True
+        assert tiles[(4, 4)]["building_hp"] == 2
+        assert tiles[(0, 0)] == {"x": 0, "y": 0, "terrain": "ground"}
+        assert commands._held_end_turn_bridge_checkpoint_schema_error(
+            checkpoint
+        ) is None
+
+
+def test_projected_checkpoint_does_not_hide_malformed_sparse_tiles():
+    checkpoint = _bridge_with_mech()
+    checkpoint["tiles"] = [
+        {"x": 3, "y": 2, "terrain": "ground"},
+        {"x": 3, "y": 2, "terrain": "building", "building_hp": 1},
+    ]
+
+    materialized = commands._materialize_solver_checkpoint_tiles(checkpoint)
+
+    assert materialized["tiles"] == checkpoint["tiles"]
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(
+        materialized
+    ) == "checkpoint_tile_position_duplicate"
+
+
+def test_projected_checkpoint_carries_exact_player_identity_and_loadout():
+    bridge = _bridge_with_mech()
+    bridge["units"][0].update({
+        "type": "PunchMech",
+        "hp": 6,
+        "max_hp": 6,
+        "move": 3,
+        "pilot_id": "Pilot_Detritus",
+        "pilot_level": 2,
+        "pilot_skills": ["skill1=9", "skill2=8"],
+        "pilot_value": 1.35,
+        "weapons": ["Prime_Punchmech_B", "Prime_Lasermech_A"],
+    })
+    projected = json.loads(json.dumps(bridge))
+    projected["units"][0].pop("pilot_id")
+    projected["units"][0].pop("pilot_level")
+    projected["units"][0].pop("pilot_skills")
+    projected["units"][0].pop("pilot_value")
+    projected["units"][0]["weapons"] = ["Prime_Punchmech"]
+
+    carried = commands._carry_projected_summary_metadata(projected, bridge)
+
+    assert carried["units"][0]["pilot_id"] == "Pilot_Detritus"
+    assert carried["units"][0]["pilot_level"] == 2
+    assert carried["units"][0]["pilot_skills"] == ["skill1=9", "skill2=8"]
+    assert carried["units"][0]["pilot_value"] == 1.35
+    assert carried["units"][0]["weapons"] == [
+        "Prime_Punchmech_B",
+        "Prime_Lasermech_A",
+    ]
+    assert Board.from_bridge_data(carried).units[0].pilot_value == 1.35
+
+
+def test_projected_checkpoint_does_not_carry_metadata_across_identity_change():
+    bridge = _bridge_with_mech()
+    bridge["units"][0]["pilot_id"] = "Pilot_Detritus"
+    projected = json.loads(json.dumps(bridge))
+    projected["units"][0]["type"] = "DifferentMech"
+    projected["units"][0].pop("pilot_id")
+
+    carried = commands._carry_projected_summary_metadata(projected, bridge)
+
+    assert "pilot_id" not in carried["units"][0]
+
+
 def test_summary_carries_bridge_remaining_spawns_signal():
     data = _bridge_with_mech()
     data.update({
@@ -782,6 +869,142 @@ def test_click_end_turn_blocks_live_post_player_checkpoint_drift(monkeypatch):
 
     assert result["status"] == "END_TURN_BLOCKED"
     assert result["reason"] == "held_end_turn_post_player_mismatch"
+
+
+def test_click_end_turn_accepts_omitted_zero_default_bridge_counters(monkeypatch):
+    _, _, solve_data = _held_end_turn_case(monkeypatch)
+    live_data = json.loads(json.dumps(solve_data["post_player_board"]))
+    for field in (
+        "freeze_building_target",
+        "mission_kill_limit",
+        "mission_kill_target",
+        "mission_mountain_target",
+        "mission_mountains_destroyed",
+        "repair_platform_target",
+        "repair_platforms_used",
+    ):
+        live_data.pop(field)
+    live_board = Board.from_bridge_data(live_data)
+    monkeypatch.setattr(
+        commands,
+        "read_bridge_state",
+        lambda: (live_board, live_data),
+    )
+
+    result = commands.cmd_click_end_turn()
+
+    assert result["status"] == "PLAN"
+
+
+def test_post_player_parity_ignores_stale_queue_points_on_non_attacker():
+    checkpoint = _bridge_with_mech()
+    checkpoint["units"][0]["active"] = False
+    checkpoint["units"][0]["can_move"] = False
+    checkpoint["units"].append({
+        "uid": 1250,
+        "type": "Spider2",
+        "x": 4,
+        "y": 4,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 6,
+        "mech": False,
+        "move": 3,
+        "weapons": ["SpiderAtk2"],
+        "active": False,
+        "can_move": True,
+        "pushable": True,
+        "queued_target": [-1, -1],
+        "queued_origin": [-1, -1],
+    })
+    live = json.loads(json.dumps(checkpoint))
+    live_enemy = live["units"][1]
+    live_enemy.update({
+        "has_queued_attack": False,
+        "queued_target": [4, 4],
+        "queued_origin": [4, 4],
+        "queued_target_raw": [3, 4],
+    })
+
+    error = commands._held_end_turn_post_player_parity_error(
+        {"post_player_board": checkpoint},
+        Board.from_bridge_data(live),
+        live,
+    )
+
+    assert error is None
+
+
+def test_post_player_parity_rederives_solver_only_unit_objectives():
+    checkpoint = _bridge_with_mech()
+    checkpoint.update({
+        "mission_id": "Mission_Power",
+        "bonus_objective_ids": [7],
+        "destroy_objective_unit_types": ["BonusDebris"],
+    })
+    checkpoint["units"][0]["active"] = False
+    checkpoint["units"][0]["can_move"] = False
+    checkpoint["units"].append({
+        "uid": 991,
+        "type": "BonusDebris",
+        "x": 6,
+        "y": 6,
+        "hp": 1,
+        "max_hp": 1,
+        "team": 2,
+        "mech": False,
+        "move": 0,
+        "active": False,
+        "can_move": False,
+        "pushable": True,
+    })
+    live = json.loads(json.dumps(checkpoint))
+    live["destroy_objective_unit_types"] = []
+
+    error = commands._held_end_turn_post_player_parity_error(
+        {"post_player_board": checkpoint},
+        Board.from_bridge_data(live),
+        live,
+    )
+
+    assert error is None
+
+
+def test_post_player_parity_keeps_active_queue_target_strict():
+    checkpoint = _bridge_with_mech()
+    checkpoint["units"][0]["active"] = False
+    checkpoint["units"][0]["can_move"] = False
+    checkpoint["units"].append({
+        "uid": 1253,
+        "type": "Centipede2",
+        "x": 5,
+        "y": 3,
+        "hp": 3,
+        "max_hp": 3,
+        "team": 6,
+        "mech": False,
+        "move": 3,
+        "weapons": ["CentipedeAtk2"],
+        "active": False,
+        "can_move": True,
+        "pushable": True,
+        "has_queued_attack": True,
+        "queued_target": [3, 4],
+        "queued_origin": [4, 4],
+        "queued_target_raw": [3, 4],
+    })
+    checkpoint["attack_order"] = [1253]
+    live = json.loads(json.dumps(checkpoint))
+    live["units"][1]["queued_target"] = [4, 3]
+
+    error = commands._held_end_turn_post_player_parity_error(
+        {"post_player_board": checkpoint},
+        Board.from_bridge_data(live),
+        live,
+    )
+
+    assert error is not None
+    assert error["reason"] == "post_player_checkpoint_unit_intent_mismatch"
 
 
 def test_click_end_turn_requires_positive_active_mission_evidence(monkeypatch):

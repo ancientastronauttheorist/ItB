@@ -11,10 +11,16 @@ native engine. The Lua already exposes weapon effects, targeting areas, spawn
 selection, mission logic, and much of enemy target scoring. Targeted analysis
 of one pinned Windows executable has now also mapped its RNG implementation,
 enemy candidate tournament, native equal-best tie-break, and selected AI record.
-The remaining unknowns are narrower and more valuable: native path and movement
-enumeration details, complete RNG caller attribution and consumption order,
-downstream action-queue and turn orchestration, effect execution, and hidden
-engine state.
+Two atomic live captures further bind 2,982 native RNG records to the exact
+build and exercise reviewed RNG leaves, candidate tie-breaking, record
+selection, and seed advance with clean byte restoration. Five natural callback
+pairs cover all loaded `ScorePositioning`, `GetTargetArea`, `GetTargetScore`,
+and `GetSkillEffect` slots. The owner save and all 689 accepted install entries
+have since been restored exactly, with no active Observatory file remaining.
+The remaining unknowns are narrower and more
+valuable: native path and movement enumeration, spawn-span attribution and
+scheduling, direct selected-record-to-queue correlation, effect execution, and
+hidden engine state.
 
 The strategic ordering should therefore be:
 
@@ -415,7 +421,9 @@ verifier facts.
 The remaining native priorities are now narrower:
 
 1. Correlate the selected AI record with the downstream Pawn action queue.
-2. Attribute shared-RNG callers, especially spawn selection, in exact order.
+2. Add `Spawner:NextPawn` spans so the now-observed shared-RNG stream can be
+   attributed to spawn selection rather than treated as one undivided process
+   stream.
 3. Resolve native pathfinding and reachability details needed by mismatches.
 4. Resolve turn-phase ordering, queued effect execution, and hidden state.
 5. Validate every behavior used by Rust with controlled matched captures.
@@ -531,18 +539,23 @@ The scaling hierarchy should be:
 
 ## Recommended first project: ITB Engine Observatory v0
 
-Current implementation status (2026-08-21): the provenance inventory and
+Current implementation status (2026-08-22): the provenance inventory and
 focused offline Windows boundary map are complete; runtime callback identity
-and defining-slot inventories are deterministic; the Lua RNG boundary has six
-seeded, return-preserving pairs but fails the stricter whole-game neutrality
-test in four spawn-coordinate outcomes; and the native RNG observer plus all
-four one-family callback trial paths are built and tested offline. Rust now has
-an explicit conformance safeguard that projections never fabricate an
-unresolved future spawn pawn or coordinate. Accepted native observer records,
-natural callback pairs, selected-action correlation, and candidate tournaments
-still require a controllable Windows input desktop. The completed owner-track
-cleanup is sealed separately: the 689-file installation and 33-file save tree
-match their accepted baselines, and no Observatory diagnostic remains active.
+and defining-slot inventories are deterministic; and the Lua RNG boundary has
+six seeded, return-preserving pairs but fails the stricter whole-game neutrality
+test in four spawn-coordinate outcomes. Five natural callback pairs now cover
+all four planned families with safe restoration. Two counterbalanced atomic
+native-RNG pairs capture the fixed seed's first result and reviewed candidate,
+selector, seed, and Lua-leaf callers in complete restored checkpoints. The
+native exact outcomes repeat, but unobserved controls from the same sealed save
+and fixed seed do not, so spawn selection remains non-replayable from those
+inputs. Rust has an explicit conformance safeguard that projections never
+fabricate an unresolved future spawn pawn or coordinate. Direct
+`Spawner:NextPawn` span attribution and selected-record correlation remain
+optional targeted follow-ups rather than blockers to the conservative solver.
+The final closure receipt proves the baseline 33-file save tree, Mod Loader,
+and 689-entry installation were restored and the active bridge/install contain
+no Observatory diagnostic file.
 
 ### Milestone 1: Provenance inventory
 
@@ -553,18 +566,23 @@ match their accepted baselines, and no Observatory diagnostic remains active.
 
 ### Milestone 2: Enemy decision trace
 
-- Add an opt-in trace mode.
-- Capture every target and position score considered during controlled enemy
-  turns.
-- Compare final engine choices with the current Rust enemy model.
+- **Partially complete:** opt-in natural traces now capture `ScorePositioning`,
+  `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` one family at a time.
+- Mine mechanic-specific callback records only where a Rust prediction provides
+  a trustworthy comparison oracle.
+- Add native candidate/final-selection records only for mismatches that cannot
+  be resolved from these Lua-visible callbacks and final bridge queues.
 - Construct symmetrical boards to isolate tie-breaking.
 
 ### Milestone 3: RNG trace
 
-- Wrap `random_int` and `random_bool` during controlled experiments.
-- Record call order, bounds, results, phase, and caller evidence.
-- Compare outputs with captured `aiSeed` transitions.
-- Determine whether Lua tracing observes all relevant randomness.
+- **Complete at the bounded core:** Lua wrappers have six seeded pairs, and two
+  atomic native trials record the exact build's core results and caller IDs
+  beginning with the first seeded draw.
+- The evidence proves the Lua wrappers do not expose every determinant of the
+  following spawn coordinate.
+- `Spawner:NextPawn` span markers remain necessary before assigning individual
+  native draws to spawn semantics.
 
 ### Milestone 4: Hidden-state survey
 
@@ -610,11 +628,14 @@ Useful metrics include:
 ## Final recommendation
 
 The targeted offline map is now deep enough; do not broaden into full
-decompilation. The next concrete experiment should use a disposable,
-non-achievement installation and add one reviewed observation family at a time.
-Start with one global RNG wrapper, prove enabled/disabled equivalence, then move
-to bounded native caller attribution, candidate scores, and correlation of the
-selected record with the final queued action.
+decompilation. The reversible owner campaign has completed the planned Lua RNG,
+natural callback, and bounded native RNG observations without yielding a safe
+spawn-selection model. Keep the current Rust non-fabrication rule. If a future
+solver mismatch justifies more runtime work, add only the missing narrow
+boundary—`Spawner:NextPawn` spans, selected-record correlation, or one native
+candidate record—under the same matched and reversible protocol. Use a
+disposable installation only when the desired conclusion specifically requires
+pristine-depot neutrality.
 
 Once those traces improve the Rust world model, parallel VMs become a powerful
 force multiplier instead of a way to scale uncertainty.

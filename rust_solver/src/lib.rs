@@ -2414,6 +2414,14 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v400 - Player-phase displacement keeps an enemy's queued target in the
+// attacker's current coordinate frame while retaining the original native
+// queue origin and raw piQueuedShot. This aligns live post-player checkpoints
+// and threat tiles after pushes, teleports, throws, swaps, and Control Shot.
+// Direction and full-offset consumers reconcile that live target with raw and
+// origin metadata so perpendicular displacement cannot create a false diagonal
+// and stale save-derived raw data after native DIR_FLIP cannot reverse intent.
+// Pre-v400 corpus archived as recordings/failure_db_snapshot_sim_v399.jsonl.
 // v399 - Support_Force (Targeted Strike) inherits Grenade_Base's all-board
 // target area including self and intact buildings. Rust keeps only effectful
 // actions, then applies one center damage and four zero-damage outward pushes.
@@ -2473,7 +2481,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 399;
+pub const SIMULATOR_VERSION: u32 = 400;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

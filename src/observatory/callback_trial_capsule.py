@@ -28,6 +28,7 @@ CAPSULE_PREFIX = "itb_observatory_callback_capsule_"
 CAPSULE_SUFFIX = ".lua"
 REQUEST_FILENAME = "itb_observatory_callback_trial.request"
 REQUEST_TOKEN = "observatory-callback-trial-request/1"
+REQUEST_TOKEN_WITH_CONTINUE = "observatory-callback-trial-request/2"
 MAX_CAPSULE_BYTES = 4 * 1024 * 1024
 MAX_SAFE_LUA_INTEGER = (1 << 53) - 1
 
@@ -392,13 +393,26 @@ def write_callback_trial_capsule(rendered: str, *, root: Path) -> Path:
 
 
 def render_callback_trial_request(
-    *, condition: str, activation_nonce: str, capsule_sha256: str
+    *,
+    condition: str,
+    activation_nonce: str,
+    capsule_sha256: str,
+    continue_helper_sha256: str | None = None,
 ) -> bytes:
     if condition not in _CONDITIONS:
         raise CallbackTrialCapsuleError("condition must be control or exact_hook")
     if type(activation_nonce) is not str or _NONCE_RE.fullmatch(activation_nonce) is None:
         raise CallbackTrialCapsuleError("activation nonce is invalid")
     _sha256(capsule_sha256, "capsule_sha256")
+    if continue_helper_sha256 is not None:
+        _sha256(continue_helper_sha256, "continue_helper_sha256")
+        return (
+            f"{REQUEST_TOKEN_WITH_CONTINUE}\n"
+            f"condition={condition}\n"
+            f"activation_nonce={activation_nonce}\n"
+            f"capsule_sha256={capsule_sha256}\n"
+            f"continue_helper_sha256={continue_helper_sha256}\n"
+        ).encode("ascii")
     return (
         f"{REQUEST_TOKEN}\n"
         f"condition={condition}\n"
@@ -413,11 +427,13 @@ def arm_callback_trial_request(
     condition: str,
     activation_nonce: str,
     capsule_sha256: str,
+    continue_helper_sha256: str | None = None,
 ) -> Path:
     payload = render_callback_trial_request(
         condition=condition,
         activation_nonce=activation_nonce,
         capsule_sha256=capsule_sha256,
+        continue_helper_sha256=continue_helper_sha256,
     )
     root = Path(os.path.abspath(Path(bridge_root).expanduser()))
     if not root.is_dir():

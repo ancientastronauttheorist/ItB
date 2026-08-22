@@ -11,5 +11,6 @@ data/observatory/inventories/windows_build_13725832_31fe35265598_owner_local_mod
 src/bridge/modloader.lua text eol=lf whitespace=cr-at-eol
 src/bridge/observatory_callback_bindings.lua -text whitespace=cr-at-eol
 src/bridge/observatory_callback_manifest.lua -text whitespace=cr-at-eol
+src/native/observatory_continue.c -text whitespace=cr-at-eol
 src/native/observatory_rng_core_observer.c -text whitespace=cr-at-eol
 src/native/observatory_rng_seed.c -text whitespace=cr-at-eol

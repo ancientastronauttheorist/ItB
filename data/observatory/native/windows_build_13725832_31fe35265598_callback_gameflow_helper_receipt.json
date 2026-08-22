@@ -1,0 +1,61 @@
+{
+  "architecture": "x86",
+  "battle_ui_vtable_rva": "0x00430148",
+  "build_id": "13725832",
+  "compiler": "Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30154 for x86",
+  "compiler_stdout": "observatory_continue.c\n   Creating library <temporary-build>\\itb_observatory_continue.lib and object <temporary-build>\\itb_observatory_continue.exp",
+  "end_turn_action_region_sha256": "3eff056cdd650e48c1c508f48da151d39bcd987afc1043257acc4d33bf1ea756",
+  "end_turn_action_relocations": [
+    6,
+    22,
+    59,
+    89,
+    132,
+    154
+  ],
+  "end_turn_action_rva": "0x00186b40",
+  "end_turn_action_size": 222,
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "export_name": "luaopen_itb_observatory_continue",
+  "game_app_vtable_rva": "0x00435014",
+  "gl_swap_iat_rva": "0x003d63b4",
+  "helper_version": "observatory-callback-gameflow-helper/6",
+  "host_global_rva": "0x004b9cf8",
+  "kind": "observatory_callback_gameflow_helper_build",
+  "menu_button_vtable_rva": "0x004358f4",
+  "menu_vtable_rva": "0x0043597c",
+  "module_filename": "itb_observatory_continue_e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a.dll",
+  "module_sha256": "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a",
+  "module_size": 78848,
+  "new_game_action_region_sha256": "4ae664238c4b6678a7c0c769c72d5850014e4cd5b8fdb2c6d034a16d2ee3eceb",
+  "new_game_action_relocations": [
+    6,
+    22,
+    82,
+    135
+  ],
+  "new_game_action_rva": "0x00217900",
+  "new_game_action_size": 283,
+  "render_present_iat_rva": "0x003d6384",
+  "schema_version": 1,
+  "screen_root_vtable_rva": "0x0043544c",
+  "sdl2_exports": {
+    "SDL_GL_SwapWindow": "0x0000fff0",
+    "SDL_RenderPresent": "0x000118c0"
+  },
+  "sdl2_sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+  "sdl2_size": 891904,
+  "source_path": "src/native/observatory_continue.c",
+  "source_sha256": "b08a26c45b78441d61cc9a2162932ed61595d5e82450e98cbcef8dd32d197d2b",
+  "title_key_action_region_sha256": "981a2a39bfcc7ae40d5aa7e4c049b3ad97877404807b979a938a0bf10bd0f481",
+  "title_key_action_relocations": [
+    6,
+    24,
+    321,
+    343,
+    957,
+    979
+  ],
+  "title_key_action_rva": "0x0021c650",
+  "title_key_action_size": 1026
+}

@@ -254,9 +254,24 @@ SHA-256
 `8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c`).
 The adjacent hook-plan and restore-hash documents are
 the exact externally trusted transaction inputs. The generated DLL is omitted;
-the committed source and builder reproduce it. These artifacts prove build and
-static transaction properties only. No accepted live observer checkpoint is
-present.
+the committed source and builder reproduce it.
+
+`captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic/`
+contains two counterbalanced live pairs created through one atomic
+`OBS_NATIVE_RNG_SEED_AND_ARM` dispatch. The exact checkpoints contain 1,481 and
+1,501 records, begin with the fixed seed's first result (`24356`), bind all
+callers to the committed catalog, and report exact core-byte restoration with
+no unknown caller or integrity error. The exact outcomes repeat, while the two
+unobserved seeded controls select different spawn coordinates. The strict
+receipt
+`captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json`
+therefore classifies this as restored build-keyed stream observation, not
+observer neutrality or spawn-selection semantics. Rebuild the receipt with:
+
+```powershell
+python scripts/itb_observatory_native_rng_campaign.py `
+  data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic
+```
 
 ## Callback slot evidence and trial tooling
 
@@ -277,7 +292,47 @@ claim are sealed in
 and exact one-family plan from those slot bindings and the source join. The Lua
 host/controller supports `ScorePositioning`, `GetTargetScore`, `GetTargetArea`,
 and `GetSkillEffect`, restores all slots before create-only publication, and
-leaves the RNG globals untouched. No matched natural callback runtime pair is
-archived yet. The active installation and bridge contain no Observatory
-diagnostic files; the generated helpers and modified loader copy were moved to
-a recoverable staging quarantine after the durable evidence was verified.
+leaves the RNG globals untouched.
+
+`captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/`
+archives five natural pairs covering all four families. They contain 622
+attempts and 620 bounded events, restore every slot, and report no serialization
+or restore error. `ScorePositioning`, `GetTargetArea`, and `GetTargetScore`
+match their paired whole-game outcomes. Two counterbalanced `GetSkillEffect`
+pairs repeat the same event stream and condition-specific outcomes, but their
+control/exact outcomes differ only at the next spawn coordinate. The receipt
+`captures/windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json`
+keeps invocation/restoration separate from whole-game neutrality. Rebuild it
+with:
+
+```powershell
+python scripts/itb_observatory_callback_campaign.py `
+  data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks
+```
+
+The callback campaign's in-process Continue/End Turn helper is reproducible
+from `src/native/observatory_continue.c` with
+`scripts/build_itb_observatory_continue_helper.py`. Two independent `/Brepro`
+builds produced the same 78,848-byte DLL and the same normalized receipt bytes.
+The generated DLL is intentionally omitted. Its exact build receipt and the
+two-build attestation are:
+
+- `native/windows_build_13725832_31fe35265598_callback_gameflow_helper_receipt.json`
+- `native/windows_build_13725832_31fe35265598_callback_gameflow_helper_reproducibility.json`
+
+The active installation and bridge must contain no Observatory diagnostic file
+after a campaign. Generated helpers and modified loader copies remain only in
+recoverable owner staging after the durable evidence and final cleanup receipt
+are verified. `scripts/itb_observatory_cleanup.py` is dry-run by default,
+requires the exact baseline Mod Loader hash, confines deletions to
+`scripts/{itb_observatory_,observatory_}*` and matching bridge files, and needs
+`--allow-cleanup` before changing either root.
+
+The later closure receipt
+`captures/windows_build_13725832_owner_local_modified_20260822_callback_native_campaign_cleanup_receipt.json`
+(SHA-256
+`e95ca9273cec02173a9fcd23b0c8bc47e07b0da7c890856e2a196f7997e65758`)
+closes both new campaign receipts' pending save/install fields. It binds a
+689/689 accepted-install match, the restored 33-file owner-save tree, the exact
+baseline loader, zero active Observatory files, and the preserved recoverable
+staging area.

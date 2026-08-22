@@ -1,0 +1,17 @@
+{
+  "arm_packet_sha256": "3a168439d02f328a5581e4dc72ff14000d38f75f61c42912449f34719eb6dbae",
+  "binding_manifest_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3",
+  "both_restored": true,
+  "callback_family": "score_positioning",
+  "callback_join_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+  "capsule_sha256": "15c7e0318986f35298fd637ed3eebfdb125ff36ce192ff6f06a5f9f957854625",
+  "capture_id": "owner-callback-score-positioning-pair-002",
+  "checkpoint_seq": 0,
+  "exact_hook_attempted_calls": 100,
+  "exact_hook_event_count": 100,
+  "kind": "observatory_callback_trial_result_comparison",
+  "schema_version": 1,
+  "serialization_errors": 0,
+  "slot_count": 65,
+  "status": "matched"
+}

@@ -1805,6 +1805,15 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v400: Player-phase displacement keeps an enemy's queued target in the
+# attacker's current coordinate frame while retaining the original native
+# queue origin and raw piQueuedShot. This matches the live post-player board
+# and keeps checkpoint/threat tiles aligned after pushes, teleports, throws,
+# swaps, and Control Shot. Direction/full-offset consumers reconcile the live
+# target against raw/origin metadata, avoiding false diagonals after
+# perpendicular displacement and stale raw vectors after native DIR_FLIP.
+# Pre-v400 corpus is archived as
+# recordings/failure_db_snapshot_sim_v399.jsonl.
 # v399: Support_Force (Targeted Strike) inherits Grenade_Base's all-board
 # target area including self and intact buildings. Rust keeps only effectful
 # actions, then applies one center damage and four zero-damage outward pushes.
@@ -1859,7 +1868,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 399
+SIMULATOR_VERSION = 400
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

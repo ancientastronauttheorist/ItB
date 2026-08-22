@@ -3297,6 +3297,71 @@ local function load_observatory_rng_seed_helper(directory, rng_control)
     return helper
 end
 
+local function load_observatory_callback_gameflow_helper(
+    directory, helper_sha256
+)
+    if not is_windows() then
+        return nil, "callback game-flow helper requires Windows"
+    end
+    if type(directory) ~= "string"
+        or not valid_lower_sha256(helper_sha256) then
+        return nil, "callback game-flow helper identity is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_continue_"
+        .. helper_sha256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        "luaopen_itb_observatory_continue"
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load callback game-flow helper: "
+            .. tostring(load_error or loader)
+    end
+    local opened, helper = pcall(loader)
+    if not opened or type(helper) ~= "table" then
+        return nil, "callback game-flow helper failed to open: "
+            .. tostring(helper)
+    end
+    if rawget(helper, "VERSION")
+            ~= "observatory-callback-gameflow-helper/6"
+        or rawget(helper, "BUILD_ID") ~= "13725832"
+        or rawget(helper, "EXECUTABLE_SHA256")
+            ~= "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9"
+        or rawget(helper, "ARCHITECTURE") ~= "x86"
+        or rawget(helper, "HOST_GLOBAL_RVA") ~= "0x004b9cf8"
+        or rawget(helper, "GAME_APP_VTABLE_RVA") ~= "0x00435014"
+        or rawget(helper, "MENU_VTABLE_RVA") ~= "0x0043597c"
+        or rawget(helper, "MENU_BUTTON_VTABLE_RVA") ~= "0x004358f4"
+        or rawget(helper, "TITLE_KEY_ACTION_RVA") ~= "0x0021c650"
+        or rawget(helper, "TITLE_KEY_ACTION_REGION_SHA256")
+            ~= "981a2a39bfcc7ae40d5aa7e4c049b3ad97877404807b979a938a0bf10bd0f481"
+        or rawget(helper, "NEW_GAME_ACTION_RVA") ~= "0x00217900"
+        or rawget(helper, "NEW_GAME_ACTION_REGION_SHA256")
+            ~= "4ae664238c4b6678a7c0c769c72d5850014e4cd5b8fdb2c6d034a16d2ee3eceb"
+        or rawget(helper, "SCREEN_ROOT_VTABLE_RVA") ~= "0x0043544c"
+        or rawget(helper, "BATTLE_UI_VTABLE_RVA") ~= "0x00430148"
+        or rawget(helper, "END_TURN_ACTION_RVA") ~= "0x00186b40"
+        or rawget(helper, "END_TURN_ACTION_REGION_SHA256")
+            ~= "3eff056cdd650e48c1c508f48da151d39bcd987afc1043257acc4d33bf1ea756"
+        or rawget(helper, "SDL2_SHA256")
+            ~= "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10"
+        or rawget(helper, "RENDER_PRESENT_IAT_RVA") ~= "0x003d6384"
+        or rawget(helper, "GL_SWAP_IAT_RVA") ~= "0x003d63b4"
+        or type(rawget(helper, "continue_saved_timeline")) ~= "function"
+        or type(rawget(helper, "continue_status")) ~= "function"
+        or type(rawget(helper, "end_player_turn")) ~= "function" then
+        return nil, "callback game-flow helper contract mismatch"
+    end
+    return helper
+end
+
 local function observatory_path_exists(path)
     local file = io.open(path, "r")
     if not file then return false end
@@ -3682,20 +3747,38 @@ local function initialize_observatory_callback_trial(request)
         "callback trial host"
     )
     if not host then return nil, host_error end
-    if rawget(host, "VERSION") ~= "observatory-callback-trial-host/1"
+    if rawget(host, "VERSION") ~= "observatory-callback-trial-host/2"
         or type(rawget(host, "new")) ~= "function" then
         return nil, "callback trial host contract mismatch"
     end
     local controller_filename = "itb_observatory_controller_"
         .. rawget(trusted, "controller_sha256") .. ".lua"
-    local controller, controller_error = load_observatory_trial_artifact(
+    local controller_source, controller_error = load_observatory_trial_artifact(
         directory, controller_filename, "callback trial controller"
     )
-    if not controller then return nil, controller_error end
-    if rawget(controller, "VERSION")
+    if not controller_source then return nil, controller_error end
+    if rawget(controller_source, "VERSION")
+            ~= "observatory-callback-controller/1"
+        or type(rawget(controller_source, "bind_runtime")) ~= "function" then
+        return nil, "callback trial controller contract mismatch"
+    end
+    local trace_runtime, trace_error = load_observatory_trial_artifact(
+        directory,
+        "observatory_trace.lua",
+        "callback trial trace runtime"
+    )
+    if not trace_runtime then return nil, trace_error end
+    if rawget(trace_runtime, "VERSION") ~= "observatory-lua/1" then
+        return nil, "callback trial trace runtime contract mismatch"
+    end
+    local bound_ok, controller = pcall(
+        rawget(controller_source, "bind_runtime"), trace_runtime
+    )
+    if not bound_ok or type(controller) ~= "table"
+        or rawget(controller, "VERSION")
             ~= "observatory-callback-controller/1"
         or type(rawget(controller, "new")) ~= "function" then
-        return nil, "callback trial controller contract mismatch"
+        return nil, "callback trial controller binding failed"
     end
     local callback_manifest, callback_manifest_error =
         load_observatory_callback_module()
@@ -3783,28 +3866,106 @@ local function consume_observatory_callback_trial_startup_request()
     if extra ~= nil or type(content) ~= "string" then
         return nil, "callback trial startup request exceeds its cap"
     end
-    local condition, nonce, capsule_sha256 = string.match(
+    local condition, nonce, capsule_sha256, continue_helper_sha256
+    condition, nonce, capsule_sha256 = string.match(
         content,
         "^observatory%-callback%-trial%-request/1"
             .. "\ncondition=([a-z_]+)"
             .. "\nactivation_nonce=([0-9a-f]+)"
             .. "\ncapsule_sha256=([0-9a-f]+)\n$"
     )
+    if condition == nil then
+        condition, nonce, capsule_sha256, continue_helper_sha256 = string.match(
+            content,
+            "^observatory%-callback%-trial%-request/2"
+                .. "\ncondition=([a-z_]+)"
+                .. "\nactivation_nonce=([0-9a-f]+)"
+                .. "\ncapsule_sha256=([0-9a-f]+)"
+                .. "\ncontinue_helper_sha256=([0-9a-f]+)\n$"
+        )
+    end
     if (condition ~= "control" and condition ~= "exact_hook")
         or type(nonce) ~= "string"
         or string.len(nonce) < 32
         or string.len(nonce) > 64
-        or not valid_lower_sha256(capsule_sha256) then
+        or not valid_lower_sha256(capsule_sha256)
+        or (continue_helper_sha256 ~= nil
+            and not valid_lower_sha256(continue_helper_sha256)) then
         return nil, "invalid callback trial startup request"
     end
-    local trial, trial_error = initialize_observatory_callback_trial({
+    local request = {
         condition = condition,
         activation_nonce = nonce,
         capsule_sha256 = capsule_sha256,
-    })
-    if not trial then return nil, trial_error end
-    _ITB_OBSERVATORY_CALLBACK_TRIAL = trial
-    log_bridge("OBS CALLBACK TRIAL armed condition=" .. condition)
+    }
+    local gameflow = nil
+    if continue_helper_sha256 ~= nil then
+        local directory, directory_error = modloader_script_directory()
+        if not directory then
+            return nil, directory_error
+        end
+        local helper, helper_error =
+            load_observatory_callback_gameflow_helper(
+                directory, continue_helper_sha256
+            )
+        if not helper then
+            return nil, helper_error
+        end
+        gameflow = helper
+    end
+    local trial, trial_error = initialize_observatory_callback_trial(request)
+    local roots_not_loaded = type(trial_error) == "string"
+        and string.find(
+            trial_error,
+            "callback trial initialization failed: invalid roots",
+            1,
+            true
+        ) ~= nil
+    if not trial and not (gameflow ~= nil and roots_not_loaded) then
+        return nil, trial_error
+    end
+    if trial then _ITB_OBSERVATORY_CALLBACK_TRIAL = trial end
+    if gameflow ~= nil then
+        local invoked_ok, invoked = pcall(
+            rawget(gameflow, "continue_saved_timeline")
+        )
+        if not invoked_ok or invoked ~= true then
+            local invoke_error = "title Continue helper invocation failed: "
+                .. tostring(invoked)
+            if trial then
+                pcall(rawget(trial, "abort"), trial, invoke_error)
+            end
+            _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+            return nil, invoke_error
+        end
+        _ITB_OBSERVATORY_CALLBACK_GAMEFLOW = gameflow
+        local status_ok, continue_status = pcall(
+            rawget(gameflow, "continue_status")
+        )
+        if not status_ok
+            or (continue_status ~= "pending"
+                and continue_status ~= "invoked") then
+            _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+            _ITB_OBSERVATORY_CALLBACK_GAMEFLOW = nil
+            return nil, "title Continue bootstrap status is invalid"
+        end
+        log_bridge(
+            "OBS CALLBACK TRIAL title Continue bootstrap accepted status="
+            .. continue_status
+        )
+    end
+    if trial then
+        log_bridge("OBS CALLBACK TRIAL armed condition=" .. condition)
+    else
+        _ITB_OBSERVATORY_CALLBACK_PENDING = {
+            request = request,
+            attempts = 0,
+        }
+        log_bridge(
+            "OBS CALLBACK TRIAL pending mission callback roots condition="
+            .. condition
+        )
+    end
     return true
 end
 
@@ -4050,6 +4211,8 @@ local function execute_command(cmd_str)
 
     elseif cmd == "END_TURN" then
         local method = "unknown"
+        local start_count = -1
+        pcall(function() start_count = Game:GetTurnCount() end)
         local ok, err = pcall(function()
             if Game and Game.EndTurn then
                 Game:EndTurn()
@@ -4067,15 +4230,12 @@ local function execute_command(cmd_str)
             end
         end)
         if not ok then
-            -- Game:EndTurn() doesn't exist on this ITB build AND ITB-ModLoader
-            -- is not installed, so there's no way to actually advance the turn
-            -- from Lua alone — the engine only transitions on a real UI click
-            -- on the End Turn button. We still SetActive all player pawns so
-            -- the solver sees a consistent "no remaining actions" state, then
-            -- hand back a NEEDS_MCP_CLICK sentinel so the Python side routes
-            -- through plan_end_turn() and a computer_batch click dispatch.
+            -- Game:EndTurn() does not exist on this ITB build. Keep the normal
+            -- bridge contract click-only, but an armed Observatory callback
+            -- trial may use its exact-build, one-shot native UI action. The
+            -- helper is loaded only by the content-addressed startup request.
             log_bridge("WARN: EndTurn() failed (" .. tostring(err) ..
-                       "); SetActive only, caller must MCP-click End Turn")
+                       "); trying reviewed fallback")
             method = "SetActive"
             local ok2, err2 = pcall(function()
                 local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
@@ -4089,19 +4249,49 @@ local function execute_command(cmd_str)
                 log_bridge("END_TURN ERROR: " .. tostring(err2))
                 return
             end
-            write_ack("NEEDS_MCP_CLICK END_TURN method=SetActive")
-            return
+            local gameflow = rawget(
+                _G, "_ITB_OBSERVATORY_CALLBACK_GAMEFLOW"
+            )
+            local trial = rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL")
+            if type(trial) == "table"
+                and type(gameflow) == "table"
+                and rawget(gameflow, "VERSION")
+                    == "observatory-callback-gameflow-helper/6"
+                and type(rawget(gameflow, "end_player_turn"))
+                    == "function" then
+                local native_ok, invoked = pcall(
+                    rawget(gameflow, "end_player_turn")
+                )
+                if not native_ok or invoked ~= true then
+                    write_ack(
+                        "ERROR: Observatory native End Turn failed: "
+                        .. tostring(invoked)
+                    )
+                    log_bridge(
+                        "END_TURN OBSERVATORY ERROR: " .. tostring(invoked)
+                    )
+                    return
+                end
+                method = "observatory_native"
+                log_bridge("OBS CALLBACK TRIAL native End Turn invoked")
+            else
+                write_ack("NEEDS_MCP_CLICK END_TURN method=SetActive")
+                return
+            end
         end
-        -- Game:EndTurn() branch (reserved for future ITB builds that expose
-        -- the method). Wait for the full player→enemy→player cycle.
-        local start_count = -1
-        pcall(function() start_count = Game:GetTurnCount() end)
-        wait_until_coro(function()
+        -- Wait for the full player→enemy→player cycle.
+        local advanced = wait_until_coro(function()
             if Board:IsBusy() then return false end
             local cur_count = -1
             pcall(function() cur_count = Game:GetTurnCount() end)
             return cur_count > start_count
         end, 60)
+        if not advanced then
+            write_ack(
+                "ERROR: END_TURN transition timed out method=" .. method
+            )
+            return
+        end
         local phase = "unknown"
         if Game then
             local ok_tt, tt = pcall(function() return Game:GetTeamTurn() end)
@@ -4320,6 +4510,125 @@ local function execute_command(cmd_str)
         end
         write_ack("OK OBS_NATIVE_RNG_SEED seed="
             .. tostring(NATIVE_RNG_FIXED_SEED))
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_SEED_AND_ARM" then
+        -- Exact-hook trials must not yield a BaseUpdate between fixing the
+        -- native seed and installing the observer. Load and validate both
+        -- content-addressed modules first, then seed and arm in this single
+        -- command dispatch. The only caller-controlled value is a bounded
+        -- evidence label; no address, path, seed, or hook shape is accepted.
+        local capture_id = parts[2]
+        if #parts ~= 2
+            or not valid_observatory_capture_id(capture_id)
+            or string.len(capture_id) > 96 then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_SEED_AND_ARM requires one capture ID"
+            )
+            return
+        end
+        if not Board or not Game then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_SEED_AND_ARM requires an active mission"
+            )
+            return
+        end
+        local team_ok, team_turn = pcall(function()
+            return Game:GetTeamTurn()
+        end)
+        if not team_ok or team_turn ~= TEAM_PLAYER then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_SEED_AND_ARM requires combat_player"
+            )
+            return
+        end
+        local actors_spent = true
+        local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+        for _, actor_id in ipairs(actor_ids) do
+            local actor = Board:GetPawn(actor_id)
+            local active_ok, active = pcall(function()
+                return actor and actor:IsActive()
+            end)
+            if active_ok and active then actors_spent = false break end
+        end
+        if not actors_spent then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_SEED_AND_ARM requires spent player actors"
+            )
+            return
+        end
+        if _observatory_native_rng_module ~= nil then
+            write_ack("ERROR: native RNG observer is already consumed")
+            return
+        end
+        if observatory_path_exists(NATIVE_RNG_SNAPSHOT_FILE)
+            or observatory_path_exists(NATIVE_RNG_SNAPSHOT_TMP) then
+            write_ack("ERROR: native RNG snapshot output already exists")
+            return
+        end
+        local directory, directory_error = modloader_script_directory()
+        if not directory then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM "
+                .. tostring(directory_error))
+            return
+        end
+        local seed_helper, seed_helper_error =
+            load_observatory_rng_seed_helper(
+                directory,
+                {
+                    helper_version = "observatory-rng-seed-helper/1",
+                    helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+                    executable_sha256 =
+                        NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+                    architecture = "x86",
+                    build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+                    rng_seed_rva = "0x00387f37",
+                    rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+                }
+            )
+        if not seed_helper then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM "
+                .. tostring(seed_helper_error))
+            return
+        end
+        -- Loading validates the observer contract but installs no patch;
+        -- observer.arm below is the sole mutation point.
+        local observer, observer_error =
+            load_observatory_native_rng_module()
+        if not observer then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM "
+                .. tostring(observer_error))
+            return
+        end
+        local seed_ok, seeded = pcall(
+            rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+        )
+        if not seed_ok or seeded ~= true then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM seed failed: "
+                .. tostring(seeded))
+            return
+        end
+        _observatory_native_rng_module = observer
+        _observatory_native_rng_capture_id = capture_id
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM arm failed: "
+                .. tostring(armed))
+            return
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "patch_installed") ~= true then
+            pcall(rawget(observer, "finish"))
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED_AND_ARM status mismatch")
+            return
+        end
+        write_ack(
+            "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=" .. capture_id
+            .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
+        )
         return
 
     elseif cmd == "OBS_NATIVE_RNG_ARM" then
@@ -4561,6 +4870,65 @@ local function step_observatory_rng_trial()
     end
 end
 
+local function activate_pending_observatory_callback_trial()
+    local pending = rawget(_G, "_ITB_OBSERVATORY_CALLBACK_PENDING")
+    if type(pending) ~= "table" then return end
+    local request = rawget(pending, "request")
+    local attempts = rawget(pending, "attempts")
+    if type(request) ~= "table" or type(attempts) ~= "number" then
+        _ITB_OBSERVATORY_CALLBACK_PENDING = nil
+        _ITB_OBSERVATORY_CALLBACK_GAMEFLOW = nil
+        log_bridge("OBS CALLBACK TRIAL pending state is invalid")
+        return
+    end
+    attempts = attempts + 1
+    rawset(pending, "attempts", attempts)
+    local gameflow = rawget(_G, "_ITB_OBSERVATORY_CALLBACK_GAMEFLOW")
+    local continue_status = nil
+    if type(gameflow) == "table"
+        and type(rawget(gameflow, "continue_status")) == "function" then
+        local status_ok, status = pcall(rawget(gameflow, "continue_status"))
+        if status_ok then continue_status = status end
+    end
+    if continue_status ~= "invoked" then
+        if continue_status == "pending" and attempts < 120 then return end
+        _ITB_OBSERVATORY_CALLBACK_PENDING = nil
+        _ITB_OBSERVATORY_CALLBACK_GAMEFLOW = nil
+        write_ack("ERROR: Observatory title Continue bootstrap failed")
+        log_bridge(
+            "OBS CALLBACK TRIAL title Continue bootstrap failed status="
+            .. tostring(continue_status)
+        )
+        return
+    end
+    local trial, trial_error = initialize_observatory_callback_trial(request)
+    if trial then
+        _ITB_OBSERVATORY_CALLBACK_TRIAL = trial
+        _ITB_OBSERVATORY_CALLBACK_PENDING = nil
+        log_bridge(
+            "OBS CALLBACK TRIAL armed condition="
+            .. tostring(rawget(request, "condition"))
+            .. " after mission load"
+        )
+        return
+    end
+    local roots_not_loaded = type(trial_error) == "string"
+        and string.find(
+            trial_error,
+            "callback trial initialization failed: invalid roots",
+            1,
+            true
+        ) ~= nil
+    if roots_not_loaded and attempts < 120 then return end
+    _ITB_OBSERVATORY_CALLBACK_PENDING = nil
+    _ITB_OBSERVATORY_CALLBACK_GAMEFLOW = nil
+    write_ack("ERROR: Observatory callback trial deferred startup failed")
+    log_bridge(
+        "OBS CALLBACK TRIAL deferred startup failed: "
+        .. tostring(trial_error)
+    )
+end
+
 local function step_observatory_callback_trial(stage)
     local observatory_trial = rawget(
         _G, "_ITB_OBSERVATORY_CALLBACK_TRIAL"
@@ -4607,9 +4975,14 @@ Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
     _ITB_CURRENT_MISSION = self
     clear_stale_teleporter_pairs_for(self)
-    -- The callback controller, if explicitly armed, stays active only across
-    -- the natural enemy NextTurn-to-first-BaseUpdate boundary. Checkpointing
-    -- here restores every callback slot before any bridge polling or state I/O.
+    -- A title-screen bootstrap cannot enumerate enemy Skill globals yet.
+    -- Construct the inert callback host only after the continued mission has
+    -- loaded those roots, before any player command can end the turn.
+    activate_pending_observatory_callback_trial()
+    -- An explicitly armed callback controller remains active across the enemy
+    -- phase and the following player transition. The host checkpoints here
+    -- only on that player's first completed BaseUpdate, restoring every slot
+    -- before any bridge polling or state I/O.
     step_observatory_callback_trial("base_update_after")
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
@@ -4660,7 +5033,9 @@ Mission.NextTurn = function(self)
     _ITB_CURRENT_MISSION = self
     clear_stale_teleporter_pairs_for(self)
     -- Explicit callback trials arm only after the original transition has
-    -- selected TEAM_ENEMY, before control returns to the engine's AI planner.
+    -- selected TEAM_ENEMY. On the next player transition they deliberately
+    -- remain armed until the following completed BaseUpdate so deferred enemy
+    -- planning after NextTurn is still inside the bounded window.
     step_observatory_callback_trial("next_turn")
     pcall(function()
         if Game and Game:GetTeamTurn() == TEAM_PLAYER then
@@ -4941,7 +5316,8 @@ elseif _rng_trial_startup_requested then
         end
     end
 elseif _callback_trial_startup_requested then
-    if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") ~= nil then
+    if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") ~= nil
+        or rawget(_G, "_ITB_OBSERVATORY_CALLBACK_PENDING") ~= nil then
         write_ack("ERROR: an Observatory callback trial is already active")
         log_bridge(
             "OBS CALLBACK TRIAL startup rejected: trial already active"

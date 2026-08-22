@@ -3441,12 +3441,55 @@ def _carry_projected_summary_metadata(
         except (TypeError, ValueError):
             continue
         raw = raw_units.get(uid)
+        if not isinstance(raw, dict):
+            continue
+        stable_identity_matches = bool(
+            raw.get("type") == unit.get("type")
+            and raw.get("team") == unit.get("team")
+            and raw.get("mech") == unit.get("mech")
+        )
+        if not stable_identity_matches:
+            continue
         if (
-            isinstance(raw, dict)
-            and raw.get("bridge_reported_max_hp") is not None
+            raw.get("bridge_reported_max_hp") is not None
             and unit.get("bridge_reported_max_hp") is None
         ):
             unit["bridge_reported_max_hp"] = raw.get("bridge_reported_max_hp")
+
+        # Rust serializes the combat-affecting pilot flags it understands, but
+        # an unknown pilot ID and the strategy-only pilot value are still part
+        # of the exact player actor identity checked before End Turn. Likewise,
+        # the save-overlay loadout may contain upgraded weapon IDs that cannot
+        # be reconstructed from the pawn type alone. These fields are stable
+        # across a player action, so retain their exact solve-input values on
+        # the projected checkpoint for the same player mech only.
+        if raw.get("team") == 1 and raw.get("mech") is True:
+            pilot_id = raw.get("pilot_id")
+            if isinstance(pilot_id, str):
+                unit["pilot_id"] = pilot_id
+            pilot_level = raw.get("pilot_level")
+            if type(pilot_level) is int and pilot_level >= 0:
+                unit["pilot_level"] = pilot_level
+            pilot_skills = raw.get("pilot_skills")
+            if (
+                isinstance(pilot_skills, list)
+                and all(isinstance(skill, str) and skill for skill in pilot_skills)
+            ):
+                unit["pilot_skills"] = list(pilot_skills)
+            pilot_value = raw.get("pilot_value")
+            if (
+                not isinstance(pilot_value, bool)
+                and isinstance(pilot_value, (int, float))
+                and math.isfinite(float(pilot_value))
+                and pilot_value >= 0
+            ):
+                unit["pilot_value"] = pilot_value
+            weapons = raw.get("weapons")
+            if (
+                isinstance(weapons, list)
+                and all(isinstance(weapon, str) and weapon for weapon in weapons)
+            ):
+                unit["weapons"] = list(weapons)
     return projected_data
 
 
@@ -4187,10 +4230,48 @@ def _terminal_pending_grid_debt(baseline: dict, actual: dict) -> int:
     return max(0, hp_lost - grid_lost)
 
 
+def _materialize_solver_checkpoint_tiles(checkpoint: object) -> dict:
+    """Expand Rust's sparse tile encoding into a complete bridge checkpoint.
+
+    The Rust simulator omits ordinary, unmodified ground tiles from replay
+    boards.  Held-End-Turn validation intentionally requires all 64 tiles so
+    that a persisted checkpoint cannot silently depend on parser defaults.
+    Materialize only well-formed, unique in-bounds sparse tile lists; malformed
+    lists remain untouched so the downstream schema guard still rejects them.
+    """
+    if not isinstance(checkpoint, dict):
+        return {}
+    materialized = deepcopy(checkpoint)
+    tiles = materialized.get("tiles")
+    if not isinstance(tiles, list):
+        return materialized
+
+    by_position: dict[tuple[int, int], dict] = {}
+    for tile in tiles:
+        if not isinstance(tile, dict):
+            return materialized
+        x, y = tile.get("x"), tile.get("y")
+        if (
+            type(x) is not int
+            or type(y) is not int
+            or not (0 <= x < 8 and 0 <= y < 8)
+            or (x, y) in by_position
+        ):
+            return materialized
+        by_position[(x, y)] = tile
+
+    materialized["tiles"] = [
+        by_position.get((x, y), {"x": x, "y": y, "terrain": "ground"})
+        for y in range(8)
+        for x in range(8)
+    ]
+    return materialized
+
+
 def _projected_final_board_data(enriched: dict) -> dict:
     final_board_data = enriched.get("final_board") or {}
     if final_board_data:
-        return final_board_data
+        return _materialize_solver_checkpoint_tiles(final_board_data)
     board_json = enriched.get("board_json")
     if isinstance(board_json, str) and board_json.strip():
         try:
@@ -4198,7 +4279,7 @@ def _projected_final_board_data(enriched: dict) -> dict:
         except Exception:
             return {}
         if isinstance(parsed, dict):
-            return parsed
+            return _materialize_solver_checkpoint_tiles(parsed)
     return {}
 
 
@@ -4258,7 +4339,7 @@ def _projected_post_player_board_data(
                 objective_name = raw_tile.get("objective_name")
                 if objective_name:
                     tile["objective_name"] = objective_name
-    return projected
+    return _materialize_solver_checkpoint_tiles(projected)
 
 
 def _audit_projected_post_player_threats(
@@ -6093,6 +6174,71 @@ def _is_transient_delayed_multihit_damage_diff(
         else:
             return False
     return True
+
+
+def _is_transient_delayed_push_position_diff(
+    diff,
+    pre_attack: dict | None,
+    phase: str,
+) -> bool:
+    """Return true while one pushed unit is still at its pre-attack tile.
+
+    A bridge command can ACK before a single-tile push animation updates the
+    exported board.  Retry only the exact position-only shape: one unit, its
+    live position is identical to the solver's pre-attack snapshot, and the
+    predicted post-attack position is one cardinal tile away.  A persistent
+    lag or a reread that moves somewhere else remains an ordinary desync.
+    """
+    if phase != "attack" or not isinstance(pre_attack, dict):
+        return False
+    if getattr(diff, "tile_diffs", []) or getattr(diff, "scalar_diffs", []):
+        return False
+    unit_diffs = getattr(diff, "unit_diffs", []) or []
+    if len(unit_diffs) != 1:
+        return False
+
+    unit_diff = unit_diffs[0]
+    if unit_diff.get("field") != "pos":
+        return False
+    predicted_pos = unit_diff.get("predicted")
+    actual_pos = unit_diff.get("actual")
+    if not (
+        isinstance(predicted_pos, (list, tuple))
+        and isinstance(actual_pos, (list, tuple))
+        and len(predicted_pos) == 2
+        and len(actual_pos) == 2
+    ):
+        return False
+    try:
+        uid = int(unit_diff.get("uid"))
+        predicted_xy = (int(predicted_pos[0]), int(predicted_pos[1]))
+        actual_xy = (int(actual_pos[0]), int(actual_pos[1]))
+    except (TypeError, ValueError):
+        return False
+    if sum(abs(predicted_xy[i] - actual_xy[i]) for i in (0, 1)) != 1:
+        return False
+
+    pre_unit = next(
+        (
+            unit
+            for unit in pre_attack.get("units", []) or []
+            if isinstance(unit, dict) and unit.get("uid") == uid
+        ),
+        None,
+    )
+    if not isinstance(pre_unit, dict):
+        return False
+    pre_pos = pre_unit.get("pos")
+    if not (
+        isinstance(pre_pos, (list, tuple))
+        and len(pre_pos) == 2
+    ):
+        return False
+    try:
+        pre_xy = (int(pre_pos[0]), int(pre_pos[1]))
+    except (TypeError, ValueError):
+        return False
+    return actual_xy == pre_xy
 
 
 def _delayed_multihit_reread_became_nontransient(
@@ -10445,8 +10591,11 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "safety_widening": selected_candidate_eval.get("safety_widening", []),
         "action_results": enriched["action_results"],
         "predicted_states": enriched.get("predicted_states", []),
-        "post_player_board": enriched.get("post_player_board", {}),
-        "final_board": enriched.get("final_board", {}),
+        "post_player_board": _projected_post_player_board_data(
+            enriched,
+            bridge_data,
+        ),
+        "final_board": _projected_final_board_data(enriched),
         "replay_annotations": enriched.get("replay_annotations", []),
         "current_outcome": current_outcome,
         "predicted_outcome": predicted_outcome,
@@ -10972,8 +11121,10 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
     # Support both old format (flat snapshot) and new format (post_move/post_attack).
     if "post_attack" in predicted_entry:
         predicted = predicted_entry["post_attack"]
+        pre_attack = predicted_entry.get("post_move")
     else:
         predicted = predicted_entry
+        pre_attack = None
 
     # Refresh bridge and read the actual current state.
     try:
@@ -11016,6 +11167,9 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
         )
         or _is_transient_delayed_repair_platform_diff(diff, "move")
         or delayed_chained_bombrock
+        or _is_transient_delayed_push_position_diff(
+            diff, pre_attack, "attack"
+        )
     ):
         initial_diff = diff
         attempts = (
@@ -11047,6 +11201,19 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
                 print(
                     f"VERIFY {action_index}: delayed chained BombRock blast "
                     "settled into a non-transient mismatch"
+                )
+                break
+            if (
+                _is_transient_delayed_push_position_diff(
+                    initial_diff, pre_attack, "attack"
+                )
+                and not _is_transient_delayed_push_position_diff(
+                    reread_diff, pre_attack, "attack"
+                )
+            ):
+                print(
+                    f"VERIFY {action_index}: delayed push settled into "
+                    "a non-transient mismatch"
                 )
                 break
 
@@ -13516,6 +13683,18 @@ def _held_end_turn_bridge_checkpoint_schema_error(
                 return f"checkpoint_unit_{field}_invalid"
         if "pilot_id" in unit and not isinstance(unit["pilot_id"], str):
             return "checkpoint_unit_pilot_id_invalid"
+        if "pilot_level" in unit and (
+            type(unit["pilot_level"]) is not int or unit["pilot_level"] < 0
+        ):
+            return "checkpoint_unit_pilot_level_invalid"
+        if "pilot_skills" in unit and (
+            not isinstance(unit["pilot_skills"], list)
+            or any(
+                not isinstance(skill, str) or not skill
+                for skill in unit["pilot_skills"]
+            )
+        ):
+            return "checkpoint_unit_pilot_skills_invalid"
         if "pilot_value" in unit:
             pilot_value = unit["pilot_value"]
             if (
@@ -13614,16 +13793,78 @@ def _held_end_turn_post_player_parity_error(
     checkpoint = solve_data.get("post_player_board")
     if not isinstance(checkpoint, dict):
         return {"reason": "post_player_checkpoint_missing"}
+    normalized_checkpoint_data = deepcopy(checkpoint)
+    normalized_live_data = deepcopy(live_bridge_data)
+
+    # Solver checkpoints include deterministic Python-derived objective
+    # metadata that the Lua bridge does not emit verbatim. Re-run the same
+    # resolvers on both sides before strict parity instead of either ignoring
+    # those safety-relevant fields or treating their live omission as drift.
+    try:
+        from src.solver.mission_bonus_objectives import (
+            inject_into_bridge as _inject_bonus_objectives,
+        )
+        from src.solver.mission_unit_objectives import (
+            inject_into_bridge as _inject_unit_objectives,
+        )
+
+        for data in (normalized_checkpoint_data, normalized_live_data):
+            _inject_bonus_objectives(data)
+            _inject_unit_objectives(data)
+    except Exception as exc:
+        return {
+            "reason": "post_player_objective_metadata_derivation_failed",
+            "error": str(exc),
+        }
+
+    def _canonicalize_non_attacking_queued_intents(data: dict) -> None:
+        """Erase queue coordinates that have no live attack semantics.
+
+        The native pawn can retain its current/original point fields after
+        ``iQueuedSkill`` becomes inactive. Rust deliberately clears those
+        stale coordinates. Canonicalize only an explicit non-attack, or the
+        serializer's omitted-false plus exact sentinel form; a missing attack
+        flag paired with a real target remains unknown and therefore strict.
+        """
+        for unit in data.get("units", []) or []:
+            if not isinstance(unit, dict):
+                continue
+            target = unit.get("queued_target")
+            explicitly_inactive = unit.get("has_queued_attack") is False
+            serialized_inactive = bool(
+                "has_queued_attack" not in unit
+                and target in (None, [-1, -1], (-1, -1))
+            )
+            if not (explicitly_inactive or serialized_inactive):
+                continue
+            unit["has_queued_attack"] = False
+            unit["queued_target"] = [-1, -1]
+            unit["queued_origin"] = [-1, -1]
+            unit.pop("queued_target_raw", None)
+
+    _canonicalize_non_attacking_queued_intents(normalized_checkpoint_data)
+    _canonicalize_non_attacking_queued_intents(normalized_live_data)
+    zero_default_fields = (
+        "freeze_building_target",
+        "mission_kill_limit",
+        "mission_kill_target",
+        "mission_mountain_target",
+        "mission_mountains_destroyed",
+        "repair_platform_target",
+        "repair_platforms_used",
+    )
+    for data in (normalized_checkpoint_data, normalized_live_data):
+        for field in zero_default_fields:
+            if field not in data:
+                data[field] = 0
     checkpoint_schema_error = _held_end_turn_bridge_checkpoint_schema_error(
-        checkpoint
+        normalized_checkpoint_data
     )
     if checkpoint_schema_error is not None:
         return {
             "reason": "post_player_checkpoint_schema_invalid",
             "error": checkpoint_schema_error,
         }
-    normalized_checkpoint_data = deepcopy(checkpoint)
-    normalized_live_data = deepcopy(live_bridge_data)
     live_schema_error = _held_end_turn_bridge_checkpoint_schema_error(
         normalized_live_data
     )
@@ -14048,15 +14289,7 @@ def _held_end_turn_post_player_parity_error(
         "total_turns",
         "victory_turns",
     )
-    zero_default_parity_fields = (
-        "freeze_building_target",
-        "mission_kill_limit",
-        "mission_kill_target",
-        "mission_mountain_target",
-        "mission_mountains_destroyed",
-        "repair_platform_target",
-        "repair_platforms_used",
-    )
+    zero_default_parity_fields = zero_default_fields
     raw_mismatches = {}
     for field in ordered_list_parity_fields:
         checkpoint_value = checkpoint.get(field) or []
@@ -54522,6 +54755,35 @@ def _check_winnability(turn: int, score: float,
     }
 
 
+def _end_turn_with_observatory_boundary(boundary, end_turn):
+    """Run one diagnostic pre/post boundary around an End Turn delivery.
+
+    ``boundary`` is deliberately private to the Observatory runner.  Ordinary
+    ``game_loop.py auto_turn`` calls pass ``None`` and retain the exact normal
+    path.  A diagnostic boundary must arm and seed only after every player
+    actor is spent, then restore its native hook immediately after the
+    synchronous End Turn transition returns.  Any failure asks the boundary
+    to restore itself before propagating the error.
+    """
+    if boundary is None:
+        return end_turn(), None
+
+    try:
+        boundary.before_end_turn()
+        result = end_turn()
+        evidence = boundary.after_end_turn(result)
+        return result, evidence
+    except Exception:
+        try:
+            boundary.abort()
+        except Exception:
+            # The caller will fail closed and stop further combat.  Preserve
+            # the original exception; process teardown also removes a native
+            # in-memory patch if an observer restore command itself failed.
+            pass
+        raise
+
+
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0,
                   wait_poll_interval: float = 1.5,
@@ -54538,7 +54800,8 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   resume_fast_guard_seconds: float = 0.0,
                   pause_between_actions: bool = False,
                   frontier_diagnostics: bool = True,
-                  quiet: bool = False) -> dict:
+                  quiet: bool = False,
+                  _observatory_native_rng_boundary=None) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -54566,6 +54829,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     ``frontier_diagnostics`` controls blocked-plan lookahead/robust previews.
     Lightning hot paths disable it to avoid spending timed-run seconds and
     emitting large nested JSON when a safety block is already decisive.
+
+    ``_observatory_native_rng_boundary`` is an internal, fail-closed hook used
+    only by the build-keyed native RNG trial runner.  It is intentionally not
+    exposed by the ordinary game-loop CLI.
 
     Returns dict with turn results or error.
     """
@@ -54630,6 +54897,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_data,
         weapon_name: str | None,
         phase: str,
+        pre_attack: dict | None = None,
     ) -> bool:
         return (
             _is_transient_predicted_status_gain(diff)
@@ -54646,6 +54914,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             or _is_transient_delayed_chained_bombrock_building_diff(
                 diff, predicted, phase
             )
+            or _is_transient_delayed_push_position_diff(
+                diff, pre_attack, phase
+            )
         )
 
     def _settle_transient_verify_diff(
@@ -54654,6 +54925,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_data,
         phase: str,
         weapon_name: str | None,
+        pre_attack: dict | None = None,
     ):
         """Re-read briefly for bridge effects that apply after command ACK."""
         diff = diff_states(predicted, actual_board)
@@ -54667,7 +54939,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     "(building-shield ledger advanced from exact replay)"
                 )
         if diff.is_empty() or not _is_transient_verify_diff(
-            diff, predicted, actual_board, actual_data, weapon_name, phase
+            diff,
+            predicted,
+            actual_board,
+            actual_data,
+            weapon_name,
+            phase,
+            pre_attack,
         ):
             return actual_board, actual_data, diff
 
@@ -54692,6 +54970,9 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     diff, predicted, actual_board, phase
                 )
                 or _is_transient_delayed_repair_platform_diff(diff, phase)
+                or _is_transient_delayed_push_position_diff(
+                    diff, pre_attack, phase
+                )
             )
             else 3
         )
@@ -54722,6 +55003,19 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                 print(
                     f"  {phase.upper()} verify: delayed chained BombRock "
                     "blast settled into a non-transient mismatch"
+                )
+                return reread_board, reread_data, reread_diff
+            if (
+                _is_transient_delayed_push_position_diff(
+                    diff, pre_attack, phase
+                )
+                and not _is_transient_delayed_push_position_diff(
+                    reread_diff, pre_attack, phase
+                )
+            ):
+                print(
+                    f"  {phase.upper()} verify: delayed push settled into "
+                    "a non-transient mismatch"
                 )
                 return reread_board, reread_data, reread_diff
             if (
@@ -54761,10 +55055,16 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         actual_data,
         phase: str,
         weapon_name: str | None = None,
+        pre_attack: dict | None = None,
     ):
         """Re-read transient or implausibly stale verify snapshots."""
         actual_board, actual_data, diff = _settle_transient_verify_diff(
-            predicted, actual_board, actual_data, phase, weapon_name
+            predicted,
+            actual_board,
+            actual_data,
+            phase,
+            weapon_name,
+            pre_attack,
         )
         expected_mission_id = _expected_verify_mission_id()
         if (
@@ -55871,7 +56171,12 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
 
         if actual_board and pred_post_attack:
             actual_board, actual_data, diff, stale_verify_blocked = _settle_verify_diff(
-                pred_post_attack, actual_board, actual_data, final_phase, action.weapon
+                pred_post_attack,
+                actual_board,
+                actual_data,
+                final_phase,
+                action.weapon,
+                pred_post_move,
             )
             if not diff.is_empty():
                 if stale_verify_blocked:
@@ -56553,10 +56858,32 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         )
         _print_result(pause_error)
         return pause_error
-    end_result = cmd_end_turn(
-        _prevalidated=True,
-        _lightning_speed_loss_allowed=allow_lightning_speed_loss,
-    )
+    try:
+        end_result, observatory_boundary_evidence = (
+            _end_turn_with_observatory_boundary(
+                _observatory_native_rng_boundary,
+                lambda: cmd_end_turn(
+                    _prevalidated=True,
+                    _lightning_speed_loss_allowed=allow_lightning_speed_loss,
+                ),
+            )
+        )
+    except Exception as exc:
+        result = {
+            "status": "OBSERVATORY_NATIVE_RNG_BOUNDARY_BLOCKED",
+            "blocking": True,
+            "error": str(exc),
+            "turn": turn,
+            "actions_completed": actions_completed,
+            "retry_allowed": False,
+            "next_step": (
+                "Stop this diagnostic process. Do not retry End Turn; "
+                "restore the exact trial save and start a fresh process."
+            ),
+        }
+        result = _persist_held_end_turn_block(session, result, turn=turn)
+        _print_result(result)
+        return result
     if "error" in end_result:
         result = {
             "status": "END_TURN_BLOCKED",
@@ -56673,6 +57000,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
+    if observatory_boundary_evidence is not None:
+        result["observatory_native_rng_boundary"] = (
+            observatory_boundary_evidence
+        )
     if resume_before_execute_result is not None:
         result["resume_before_execute"] = resume_before_execute_result
     if lightning_speed_loss_summary:

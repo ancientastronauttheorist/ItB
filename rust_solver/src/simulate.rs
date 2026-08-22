@@ -281,14 +281,12 @@ pub fn apply_teleport_on_land(board: &mut Board, unit_idx: usize) {
     // push-onto-wreck is treated: blocker).
     let partner_idx = board.unit_at(px, py);
     // Move current unit to the partner pad.
-    board.units[unit_idx].x = px;
-    board.units[unit_idx].y = py;
+    relocate_unit_preserving_queued_intent(board, unit_idx, px, py);
     // Swap the partner unit (if any, and not the same pawn in multi-tile
     // edge cases) back onto the original pad.
     if let Some(other_idx) = partner_idx {
         if other_idx != unit_idx {
-            board.units[other_idx].x = ux;
-            board.units[other_idx].y = uy;
+            relocate_unit_preserving_queued_intent(board, other_idx, ux, uy);
         }
     }
 }
@@ -1291,6 +1289,57 @@ fn acid_storm_active(board: &Board) -> bool {
         && board.units[..board.unit_count as usize]
             .iter()
             .any(|u| u.hp > 0 && u.type_name_str() == "Storm_Generator")
+}
+
+/// Relocate one pawn while preserving the live queued-intent invariant.
+///
+/// The bridge reports a queued target in the attacker's current frame: when
+/// a queued Vek is displaced, the telegraphed target moves by the same delta
+/// while the retained raw target and queued origin stay anchored to the
+/// original queue event.  Keeping an old absolute target here made projected
+/// post-player checkpoints disagree with the live board and could make threat
+/// scoring inspect the wrong tile.
+fn relocate_unit_preserving_queued_intent(
+    board: &mut Board,
+    unit_idx: usize,
+    new_x: u8,
+    new_y: u8,
+) {
+    let unit = &mut board.units[unit_idx];
+    let old_x = unit.x;
+    let old_y = unit.y;
+    if (old_x, old_y) == (new_x, new_y) {
+        return;
+    }
+
+    if unit.has_queued_attack()
+        && unit.queued_target_x >= 0
+        && unit.queued_target_y >= 0
+    {
+        let dx = new_x as i16 - old_x as i16;
+        let dy = new_y as i16 - old_y as i16;
+        let target_x = unit.queued_target_x as i16 + dx;
+        let target_y = unit.queued_target_y as i16 + dy;
+        if (0..8).contains(&target_x) && (0..8).contains(&target_y) {
+            unit.queued_target_x = target_x as i8;
+            unit.queued_target_y = target_y as i8;
+        } else {
+            unit.queued_target_x = -1;
+            unit.queued_target_y = -1;
+            unit.queued_target_raw_x = -1;
+            unit.queued_target_raw_y = -1;
+            unit.queued_origin_x = -1;
+            unit.queued_origin_y = -1;
+            unit.flags.remove(
+                UnitFlags::HAS_QUEUED_ATTACK
+                    | UnitFlags::QUEUED_ORIGIN_SET
+                    | UnitFlags::QUEUED_RAW_TARGET_SET,
+            );
+        }
+    }
+
+    unit.x = new_x;
+    unit.y = new_y;
 }
 
 /// Apply the ACID Storm mission update at a completed simulator boundary.
@@ -2650,8 +2699,7 @@ pub fn apply_throw(board: &mut Board, ax: u8, ay: u8, tx: u8, ty: u8, dir: usize
     // effects (web-break, fire/ACID pickup, water/lava/chasm death,
     // lava-ignites-flying, mines, teleporter pad). See
     // `apply_landing_effects` for the full ordered pipeline.
-    board.units[unit_idx].x = nx;
-    board.units[unit_idx].y = ny;
+    relocate_unit_preserving_queued_intent(board, unit_idx, nx, ny);
     apply_landing_effects(board, unit_idx, result);
 }
 
@@ -2689,24 +2737,35 @@ pub fn flip_queued_attack(board: &mut Board, x: u8, y: u8) {
     } else {
         (ux, uy)
     };
-    let mut offset_x = qtx - origin_x;
-    let mut offset_y = qty - origin_y;
-    // A fresh mid-turn bridge read normalizes a displaced queued attack to
-    // the attacker's current tile while retaining the original `piOrigin`.
-    // If the normalized target happens to be that stale origin, the simple
-    // target-origin subtraction collapses to zero even though the raw queued
-    // shot still carries a real attack vector.  Recover that vector before
-    // deciding this is a self-targeted attack.
-    if offset_x == 0
-        && offset_y == 0
-        && (ux, uy) != (origin_x, origin_y)
-        && unit.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET)
+    // A displaced queued attack stores its translated target in the
+    // attacker's current frame while retaining raw piQueuedShot and piOrigin
+    // in the original queue frame. Raw can itself be stale after a native
+    // DIR_FLIP, so reconcile the current, origin, and raw vectors. A valid
+    // current-frame vector is authoritative when the save-derived raw vector
+    // disagrees; raw remains the fallback for collapsed/non-cardinal targets.
+    let is_cardinal = |(dx, dy): (i32, i32)| (dx != 0) != (dy != 0);
+    let current_offset = (qtx - ux, qty - uy);
+    let origin_offset = (qtx - origin_x, qty - origin_y);
+    let raw_offset = if unit.flags.contains(UnitFlags::QUEUED_RAW_TARGET_SET)
         && unit.queued_target_raw_x >= 0
         && unit.queued_target_raw_y >= 0
     {
-        offset_x = unit.queued_target_raw_x as i32 - origin_x;
-        offset_y = unit.queued_target_raw_y as i32 - origin_y;
-    }
+        Some((
+            unit.queued_target_raw_x as i32 - origin_x,
+            unit.queued_target_raw_y as i32 - origin_y,
+        ))
+    } else {
+        None
+    };
+    let (offset_x, offset_y) = match raw_offset.filter(|&offset| is_cardinal(offset)) {
+        Some(raw) if is_cardinal(current_offset) && current_offset == raw => current_offset,
+        Some(raw) if is_cardinal(origin_offset) && origin_offset == raw => raw,
+        Some(_) if is_cardinal(current_offset) => current_offset,
+        Some(raw) => raw,
+        None if is_cardinal(current_offset) => current_offset,
+        None if is_cardinal(origin_offset) => origin_offset,
+        None => origin_offset,
+    };
     if offset_x == 0 && offset_y == 0 {
         // Self-targeted (suicide bomber / egg spawner) — no vector to flip.
         return;
@@ -2913,6 +2972,27 @@ pub fn apply_push(board: &mut Board, x: u8, y: u8, direction: usize, result: &mu
     apply_push_with_policy(board, x, y, direction, result, DEFAULT_PUSH_POLICY);
 }
 
+/// Environment-owned displacement retains the environment phase's fixed
+/// queued impact coordinate. Belt and wind missions resolve outside the
+/// player-action semantics captured by `relocate_unit_preserving_queued_intent`.
+pub(crate) fn apply_environment_push(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+) {
+    apply_push_with_policy_inner(
+        board,
+        x,
+        y,
+        direction,
+        result,
+        DEFAULT_PUSH_POLICY,
+        false,
+    );
+}
+
 pub(crate) fn apply_push_no_edge_bump(
     board: &mut Board,
     x: u8,
@@ -2957,6 +3037,26 @@ fn apply_push_with_policy(
     direction: usize,
     result: &mut ActionResult,
     policy: PushPolicy,
+) {
+    apply_push_with_policy_inner(
+        board,
+        x,
+        y,
+        direction,
+        result,
+        policy,
+        true,
+    );
+}
+
+fn apply_push_with_policy_inner(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    direction: usize,
+    result: &mut ActionResult,
+    policy: PushPolicy,
+    translate_queued_intent: bool,
 ) {
     // Find ANY unit (including dead) — simultaneous damage+push
     let unit_idx = match board.any_unit_at(x, y) {
@@ -3086,8 +3186,12 @@ fn apply_push_with_policy(
                 || (policy.friendly_live_pusher_enters_wreck && board.units[unit_idx].is_player()));
         if live_pusher_enters_wreck {
             clear_unit_web(board, unit_idx);
-            board.units[unit_idx].x = nx;
-            board.units[unit_idx].y = ny;
+            if translate_queued_intent {
+                relocate_unit_preserving_queued_intent(board, unit_idx, nx, ny);
+            } else {
+                board.units[unit_idx].x = nx;
+                board.units[unit_idx].y = ny;
+            }
             apply_pod_on_land(board, unit_idx, result);
             if board.tile(nx, ny).acid() && board.tile(nx, ny).terrain != Terrain::Water {
                 if board.units[unit_idx].hp > 0 && !board.units[unit_idx].shield() {
@@ -3140,8 +3244,12 @@ fn apply_push_with_policy(
     // Destination clear: only an actual tile change breaks the pushed unit's
     // own web. Blocked pushes bump in place and leave the grapple attached.
     clear_unit_web(board, unit_idx);
-    board.units[unit_idx].x = nx;
-    board.units[unit_idx].y = ny;
+    if translate_queued_intent {
+        relocate_unit_preserving_queued_intent(board, unit_idx, nx, ny);
+    } else {
+        board.units[unit_idx].x = nx;
+        board.units[unit_idx].y = ny;
+    }
     if retarget_death_egg {
         retarget_pending_spider_egg(board, x, y, nx, ny);
     }
@@ -3863,8 +3971,7 @@ fn sim_hydraulic_lifter(
 
     let landing_was_forest = board.tile(tx, ty).terrain == Terrain::Forest;
     let landing_was_repair_platform = board.tile(tx, ty).repair_platform();
-    board.units[unit_idx].x = tx;
-    board.units[unit_idx].y = ty;
+    relocate_unit_preserving_queued_intent(board, unit_idx, tx, ty);
     if landing_was_repair_platform {
         // Live Mission_Repair resolves the Lifter's landing damage before the
         // item heal. The item applies to enemies too, but only player mechs
@@ -5858,10 +5965,18 @@ fn sim_force_swap(
     let first_old = (board.units[first_idx].x, board.units[first_idx].y);
     let second_old = (board.units[second_idx].x, board.units[second_idx].y);
     let moved_uids = [board.units[first_idx].uid, board.units[second_idx].uid];
-    board.units[first_idx].x = second_old.0;
-    board.units[first_idx].y = second_old.1;
-    board.units[second_idx].x = first_old.0;
-    board.units[second_idx].y = first_old.1;
+    relocate_unit_preserving_queued_intent(
+        board,
+        first_idx,
+        second_old.0,
+        second_old.1,
+    );
+    relocate_unit_preserving_queued_intent(
+        board,
+        second_idx,
+        first_old.0,
+        first_old.1,
+    );
     result.events.push(format!(
         "force_swap:{}:{}:{}:{}",
         first_old.0, first_old.1, second_old.0, second_old.1
@@ -5946,8 +6061,7 @@ fn sim_control_shot(
 
     let was_enemy = board.units[target_idx].is_enemy();
     let old = (board.units[target_idx].x, board.units[target_idx].y);
-    board.units[target_idx].x = second.0;
-    board.units[target_idx].y = second.1;
+    relocate_unit_preserving_queued_intent(board, target_idx, second.0, second.1);
     result.events.push(format!(
         "control_shot:{}:{}:{}:{}:distance:{}",
         old.0, old.1, second.0, second.1, distance
@@ -5984,10 +6098,8 @@ fn sim_pull_or_swap(board: &mut Board, attacker_idx: usize, wdef: &WeaponDef, tx
                 return;
             }
             // Swap positions
-            board.units[target_idx].x = ax;
-            board.units[target_idx].y = ay;
-            board.units[attacker_idx].x = tx;
-            board.units[attacker_idx].y = ty;
+            relocate_unit_preserving_queued_intent(board, target_idx, ax, ay);
+            relocate_unit_preserving_queued_intent(board, attacker_idx, tx, ty);
             // Landing effects on BOTH swapped units: terrain death (water/
             // lava/chasm), fire pickup, ACID pickup, mine triggers,
             // teleporter-pad relocation. Per Lua weapons_science.lua:216,
@@ -7384,6 +7496,175 @@ mod tests {
         board.mission_id = "Mission_Dam".to_string();
         board.dam_alive = true;
         board.dam_primary = Some(primary);
+    }
+
+    #[test]
+    fn test_displaced_enemy_keeps_queued_target_in_current_frame() {
+        let mut board = make_test_board();
+        let enemy_idx = add_enemy_type(
+            &mut board,
+            1253,
+            4,
+            4,
+            3,
+            "Centipede2",
+        );
+        let enemy = &mut board.units[enemy_idx];
+        enemy.flags |= UnitFlags::HAS_QUEUED_ATTACK
+            | UnitFlags::QUEUED_ORIGIN_SET
+            | UnitFlags::QUEUED_RAW_TARGET_SET;
+        enemy.queued_origin_x = 4;
+        enemy.queued_origin_y = 4;
+        enemy.queued_target_x = 3;
+        enemy.queued_target_y = 4;
+        enemy.queued_target_raw_x = 3;
+        enemy.queued_target_raw_y = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 1, &mut result);
+        apply_push(&mut board, 5, 4, 2, &mut result);
+
+        let enemy = &board.units[enemy_idx];
+        assert_eq!((enemy.x, enemy.y), (5, 3));
+        assert_eq!(
+            (enemy.queued_target_x, enemy.queued_target_y),
+            (4, 3),
+            "the current-frame target translates by the exact displacement",
+        );
+        assert_eq!(
+            (enemy.queued_origin_x, enemy.queued_origin_y),
+            (4, 4),
+            "queue origin remains anchored to the native queue event",
+        );
+        assert_eq!(
+            (enemy.queued_target_raw_x, enemy.queued_target_raw_y),
+            (3, 4),
+            "raw piQueuedShot remains anchored to the native queue event",
+        );
+    }
+
+    #[test]
+    fn test_perpendicular_push_then_flip_uses_anchored_raw_vector() {
+        let mut board = make_test_board();
+        let enemy_idx = add_enemy_type(&mut board, 1254, 4, 4, 3, "Firefly1");
+        let enemy = &mut board.units[enemy_idx];
+        enemy.flags |= UnitFlags::HAS_QUEUED_ATTACK
+            | UnitFlags::QUEUED_ORIGIN_SET
+            | UnitFlags::QUEUED_RAW_TARGET_SET;
+        enemy.queued_origin_x = 4;
+        enemy.queued_origin_y = 4;
+        enemy.queued_target_x = 3;
+        enemy.queued_target_y = 4;
+        enemy.queued_target_raw_x = 3;
+        enemy.queued_target_raw_y = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut result);
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 3));
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (3, 3),
+            "the perpendicular push translates the visible target north",
+        );
+
+        flip_queued_attack(&mut board, 4, 3);
+
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (5, 3),
+            "westward raw intent must flip east from the displaced tile",
+        );
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_origin_x,
+                board.units[enemy_idx].queued_origin_y,
+            ),
+            (4, 3),
+        );
+        assert!(!board.units[enemy_idx]
+            .flags
+            .contains(UnitFlags::QUEUED_RAW_TARGET_SET));
+    }
+
+    #[test]
+    fn test_perpendicular_push_then_flip_prefers_live_target_over_stale_raw() {
+        let mut board = make_test_board();
+        let enemy_idx = add_enemy_type(&mut board, 1255, 4, 4, 3, "Firefly1");
+        let enemy = &mut board.units[enemy_idx];
+        enemy.flags |= UnitFlags::HAS_QUEUED_ATTACK
+            | UnitFlags::QUEUED_ORIGIN_SET
+            | UnitFlags::QUEUED_RAW_TARGET_SET;
+        enemy.queued_origin_x = 4;
+        enemy.queued_origin_y = 4;
+        enemy.queued_target_x = 5;
+        enemy.queued_target_y = 4;
+        // Save-derived raw still points west after an earlier native DIR_FLIP;
+        // the reconciled live target above is authoritative and points east.
+        enemy.queued_target_raw_x = 3;
+        enemy.queued_target_raw_y = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 2, &mut result);
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (4, 3));
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (5, 3),
+        );
+
+        flip_queued_attack(&mut board, 4, 3);
+
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (3, 3),
+            "a second flip must reverse the live east vector, not stale raw west",
+        );
+    }
+
+    #[test]
+    fn test_same_axis_push_then_flip_without_raw_uses_current_frame_target() {
+        let mut board = make_test_board();
+        let enemy_idx = add_enemy_type(&mut board, 1256, 4, 4, 3, "Scorpion1");
+        let enemy = &mut board.units[enemy_idx];
+        enemy.flags |= UnitFlags::HAS_QUEUED_ATTACK | UnitFlags::QUEUED_ORIGIN_SET;
+        enemy.queued_origin_x = 4;
+        enemy.queued_origin_y = 4;
+        enemy.queued_target_x = 3;
+        enemy.queued_target_y = 4;
+
+        let mut result = ActionResult::default();
+        apply_push(&mut board, 4, 4, 1, &mut result);
+        apply_push(&mut board, 5, 4, 1, &mut result);
+        assert_eq!((board.units[enemy_idx].x, board.units[enemy_idx].y), (6, 4));
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (5, 4),
+        );
+
+        flip_queued_attack(&mut board, 6, 4);
+
+        assert_eq!(
+            (
+                board.units[enemy_idx].queued_target_x,
+                board.units[enemy_idx].queued_target_y,
+            ),
+            (7, 4),
+            "translated west intent must flip east even when stale origin also looks cardinal",
+        );
     }
 
     #[test]

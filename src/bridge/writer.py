@@ -17,6 +17,7 @@ from src.bridge.protocol import (
     arm_observatory_native_rng,
     finish_observatory_native_rng,
     request_observatory_callback_manifest,
+    seed_and_arm_observatory_native_rng,
     seed_observatory_native_rng,
     status_observatory_native_rng,
     write_command,
@@ -235,13 +236,15 @@ def repair_mech(uid: int) -> str:
 def execute_bridge_end_turn() -> str:
     """Send END_TURN command via bridge.
 
-    On this ITB build the Lua handler can only SetActive all player pawns —
-    it cannot advance the turn. It ACKs immediately with NEEDS_MCP_CLICK and
-    Python's cmd_end_turn routes through plan_end_turn for the actual click.
-    SetActive iteration is sub-second; 10 s is plenty of headroom.
+    The ordinary bridge path ACKs immediately with NEEDS_MCP_CLICK. An armed
+    Observatory trial can instead use the reviewed native action, whose Lua
+    handler deliberately waits through the complete player/enemy/player cycle
+    for up to 60 seconds before acknowledging. Keep the Python deadline beyond
+    that in-game deadline so a successful one-shot delivery is not mislabeled
+    as unconfirmed while enemy animations are still running.
     """
     write_command("END_TURN")
-    return wait_for_ack(timeout=10.0)
+    return wait_for_ack(timeout=max(70.0, _ACTION_TIMEOUT))
 
 
 def reactivate_player_pawns() -> str:
@@ -316,6 +319,15 @@ def bridge_observatory_native_rng_arm(
 def bridge_observatory_native_rng_seed(*, timeout: float = 10.0) -> str:
     """Apply the fixed build-keyed RNG seed for a matched trial."""
     return seed_observatory_native_rng(timeout=timeout)
+
+
+def bridge_observatory_native_rng_seed_and_arm(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically apply the fixed seed and arm the native RNG observer."""
+    return seed_and_arm_observatory_native_rng(capture_id, timeout=timeout)
 
 
 def bridge_observatory_native_rng_status(

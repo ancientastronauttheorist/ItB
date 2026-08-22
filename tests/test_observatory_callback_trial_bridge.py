@@ -29,6 +29,19 @@ def test_modloader_compiles_and_uses_fixed_callback_trial_protocol():
     assert "itb_observatory_callback_capsule_" in SOURCE
     assert "observatory_callback_trial_host.lua" in SOURCE
     assert "observatory-callback-controller/1" in SOURCE
+    assert '"observatory_trace.lua"' in SOURCE
+    assert '"observatory-lua/1"' in SOURCE
+    assert 'rawget(controller_source, "bind_runtime")' in SOURCE
+    assert '"^observatory%-callback%-trial%-request/2"' in SOURCE
+    assert 'load_observatory_callback_gameflow_helper(' in SOURCE
+    assert 'rawget(helper, "continue_saved_timeline")' in SOURCE
+    assert SOURCE.count('"observatory-callback-gameflow-helper/6"') == 2
+    assert 'rawget(helper, "SCREEN_ROOT_VTABLE_RVA")' in SOURCE
+    assert 'rawget(helper, "RENDER_PRESENT_IAT_RVA")' in SOURCE
+    assert 'rawget(helper, "GL_SWAP_IAT_RVA")' in SOURCE
+    assert 'invoked ~= true' in SOURCE
+    assert 'rawget(gameflow, "end_player_turn")' in SOURCE
+    assert 'method = "observatory_native"' in SOURCE
 
 
 def test_callback_host_is_advanced_only_at_reviewed_mission_boundaries():

@@ -1,0 +1,29 @@
+{
+  "capture_id": "owner-native-rng-atomic-pair-003",
+  "control_semantic_sha256": "e4a2053f1f14cac6bf1a3e11f24a9125aebbed204cda07ef3c8272c538c9755f",
+  "control_state_sha256": "faf8d940853168cc3a56f117c8a32919acc424d3cf25faf1d7fcddd6acdec412",
+  "difference_count": 2,
+  "differences": [
+    {
+      "control": 5,
+      "exact_hook": 6,
+      "kind": "value",
+      "path": "/spawning_tiles/0/0"
+    },
+    {
+      "control": 4,
+      "exact_hook": 5,
+      "kind": "value",
+      "path": "/spawning_tiles/0/1"
+    }
+  ],
+  "differences_truncated": false,
+  "exact_hook_semantic_sha256": "f7f613a1f803c77fe45a3fac964bc437e3ca05d5feb8f053612c4eaebbabb89a",
+  "exact_hook_state_sha256": "f765edd818bcb0b1d3f3d75865e9c1ed56dbd04599cd14c66303fe18d983481c",
+  "ignored_top_level_fields": [
+    "timestamp"
+  ],
+  "kind": "observatory_rng_trial_outcome_comparison",
+  "schema_version": 1,
+  "status": "mismatched"
+}

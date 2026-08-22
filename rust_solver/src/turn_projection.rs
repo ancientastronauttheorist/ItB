@@ -1403,11 +1403,14 @@ mod tests {
             &WEAPONS,
         );
 
-        // The seeded native campaign proved that spawn-coordinate selection
-        // can diverge even when the direct Lua RNG wrapper preserves its
-        // result. Until native selection/call order is captured, projection
-        // may consume observed emergence markers but must not invent either a
-        // pawn identity or a replacement coordinate.
+        // The Lua-wrapper campaign and the later atomic native-RNG campaign
+        // both leave spawn selection unresolved. The atomic campaign captured
+        // the fixed seed's first native result and reviewed candidate/selector
+        // callers with clean byte restoration, yet counterbalanced controls
+        // from the same sealed save still selected different coordinates and
+        // no Spawner:NextPawn span marker was installed. Projection may
+        // consume observed emergence markers but must not invent either a pawn
+        // identity or a replacement coordinate.
         assert_eq!(projected.unit_count, before_unit_count);
         assert!(projected.unit_at(2, 2).is_none());
         assert!(projected.unit_at(5, 5).is_none());

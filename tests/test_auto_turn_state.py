@@ -1131,7 +1131,15 @@ def test_partial_re_solve_record_preserves_final_board(monkeypatch):
         "done_uids": [],
         "mid_action_uid": None,
     }
-    assert solve_data["final_board"] == final_board
+    expected_final = cmd_mod._carry_projected_summary_metadata(
+        cmd_mod._materialize_solver_checkpoint_tiles(final_board),
+        bridge_data,
+    )
+    assert solve_data["final_board"] == expected_final
+    assert len(solve_data["final_board"]["tiles"]) == 64
+    assert solve_data["final_board"]["units"][0]["weapons"] == [
+        "Prime_Punchmech"
+    ]
 
 
 def test_enemy_survived_fuzzy_blocks_end_turn_even_when_audit_clean():
@@ -1866,6 +1874,62 @@ def test_prime_leap_delayed_push_position_gets_settle_retry():
     assert cmd_mod._is_transient_delayed_multihit_damage_diff(
         diff, "Prime_Leap_AB", "attack"
     ) is True
+
+
+def test_delayed_push_position_gets_narrow_pre_attack_settle_retry():
+    diff = DiffResult(unit_diffs=[{
+        "uid": 1253,
+        "type": "Centipede2",
+        "field": "pos",
+        "predicted": [5, 4],
+        "actual": [4, 4],
+    }])
+    pre_attack = {
+        "units": [{"uid": 1253, "type": "Centipede2", "pos": [4, 4]}]
+    }
+
+    assert cmd_mod._is_transient_delayed_push_position_diff(
+        diff, pre_attack, "attack"
+    ) is True
+    assert cmd_mod._is_transient_delayed_push_position_diff(
+        diff, pre_attack, "move"
+    ) is False
+
+
+def test_delayed_push_position_rejects_non_pre_attack_or_mixed_diff():
+    pre_attack = {
+        "units": [{"uid": 1253, "type": "Centipede2", "pos": [4, 4]}]
+    }
+    moved_elsewhere = DiffResult(unit_diffs=[{
+        "uid": 1253,
+        "type": "Centipede2",
+        "field": "pos",
+        "predicted": [5, 4],
+        "actual": [4, 5],
+    }])
+    mixed = DiffResult(
+        unit_diffs=[{
+            "uid": 1253,
+            "type": "Centipede2",
+            "field": "pos",
+            "predicted": [5, 4],
+            "actual": [4, 4],
+        }],
+        tile_diffs=[{
+            "x": 3,
+            "y": 4,
+            "field": "fire",
+            "predicted": True,
+            "actual": False,
+        }],
+    )
+
+    assert cmd_mod._is_transient_delayed_push_position_diff(
+        moved_elsewhere, pre_attack, "attack"
+    ) is False
+    assert cmd_mod._is_transient_delayed_push_position_diff(
+        mixed, pre_attack, "attack"
+    ) is False
 
 
 def test_prime_leap_push_settle_retry_rejects_mixed_status_diff():

@@ -1,0 +1,59 @@
+{
+  "activation_nonce": "7343e14dc128a43e3dfc56f2d083ce2c",
+  "artifacts": {
+    "arm_packet": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\get_skill_effect\\pair003\\itb_observatory_arm_owner-callback-get-skill-effect-pair-003_0_227e7757c086ec1f843695037366b9f9dcc57c8ddf83978be85b67a6e62ceb83.json",
+      "sha256": "227e7757c086ec1f843695037366b9f9dcc57c8ddf83978be85b67a6e62ceb83"
+    },
+    "bindings": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\captures\\windows_build_13725832_owner_local_modified_20260822T025049Z_callback_bindings_live_slot_update.json",
+      "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24"
+    },
+    "callback_join": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\captures\\windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb"
+    },
+    "callback_join_document_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+    "capsule": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\get_skill_effect\\pair003\\itb_observatory_callback_capsule_1e03ea36ceaf4508ca9348b72f432165aa9a4ae81f0bd621e5d44f648958cb40.lua",
+      "sha256": "1e03ea36ceaf4508ca9348b72f432165aa9a4ae81f0bd621e5d44f648958cb40"
+    },
+    "capture_identity": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\get_skill_effect\\pair003\\itb_observatory_callback_owner-callback-get-skill-effect-pair-003_capture_identity.json",
+      "sha256": "eb3eb68d4855d5ad21893f122ef750284f745a21d074f5d4cb932183f9eddc49"
+    },
+    "config": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\get_skill_effect\\pair003\\itb_observatory_callback_owner-callback-get-skill-effect-pair-003_config.json",
+      "sha256": "fb189a96ed4274f081cf98ddae9d57ba28bbb2fcdcc8d4a2ea42548e6796508b"
+    },
+    "controller": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\itb_observatory_controller_4c30aeb71aa53332f1558133205e716c40230e0db4dbc08f386c23cd2f69fdee.lua",
+      "sha256": "4c30aeb71aa53332f1558133205e716c40230e0db4dbc08f386c23cd2f69fdee"
+    },
+    "hook_plan": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_callback_natural_campaign\\get_skill_effect\\pair003\\itb_observatory_callback_owner-callback-get-skill-effect-pair-003_hook_plan.json",
+      "sha256": "bdd85391c3ef0e4f199c2a8118d196d5447beefe3488377db06f559d06fce336"
+    },
+    "installed_modloader": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\modloader.lua",
+      "sha256": "0babc54e68539102b0c6b35e09307705736a2cdbb9dd4e0f36628a48fc497eb4"
+    },
+    "inventory": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\inventories\\windows_build_13725832_31fe35265598_local_modified.json",
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f"
+    },
+    "trial_host": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\observatory_callback_trial_host.lua",
+      "sha256": "c9a11a37f37551a5019cbe9c60afd4636b05b10806652632e29bb1228e533851"
+    }
+  },
+  "callback_family": "get_skill_effect",
+  "capture_id": "owner-callback-get-skill-effect-pair-003",
+  "capture_track": "owner_local_modified",
+  "conditions": [
+    "control",
+    "exact_hook"
+  ],
+  "kind": "observatory_callback_trial_pair_plan",
+  "schema_version": 1
+}

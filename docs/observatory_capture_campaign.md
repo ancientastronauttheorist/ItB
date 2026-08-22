@@ -3,13 +3,19 @@
 ## Current boundary
 
 The reversible owner track now contains deterministic callback identities,
-exact callback-slot bindings, and six build-keyed seeded Lua-RNG pairs. No
-accepted native observer checkpoint or natural callback-hook pair exists yet.
-All achievements are complete, and the user explicitly authorized runtime
-research in the current owner installation. Evidence from that installation is
-accepted for practical, build-keyed Observatory work when the reversible-owner
-gate below passes. It is labelled `owner_local_modified`; it does not prove
-that an uninstrumented pristine Steam depot is neutral.
+exact callback-slot bindings, six build-keyed seeded Lua-RNG pairs, five
+natural callback pairs, and two counterbalanced atomic native-RNG captures.
+Both native checkpoints include the fixed seed's first core result, bind every
+caller to the exact executable catalog, and report clean byte restoration. All
+achievements are complete, and the user explicitly authorized runtime research
+in the current owner installation. Evidence from that installation is accepted
+for practical, build-keyed Observatory work when the reversible-owner gate
+below passes. It is labelled `owner_local_modified`; it does not prove that an
+uninstrumented pristine Steam depot is neutral.
+
+The 2026-08-22 callback/native series is closed: a later receipt binds the
+restored 33-file save tree, a 689/689 accepted-install comparison, the exact
+baseline Mod Loader, zero active Observatory files, and a stopped game process.
 
 There are now two accepted capture tracks:
 
@@ -43,14 +49,15 @@ not be relabelled as clean stock.
 
 | Track | Repository state | Runtime state |
 |---|---|---|
-| Exact PE boundaries | Verified for Windows build `13725832` and executable SHA-256 `31fe3526...4493fe9` | No hook installed |
-| RNG caller identity | Stable IDs for all 118 raw calls to the shared core; 11 reviewed and 107 explicitly unclassified | No caller observed |
+| Exact PE boundaries | Verified for Windows build `13725832` and executable SHA-256 `31fe3526...4493fe9` | Every live native checkpoint revalidated the exact build identity |
+| RNG caller identity | Stable IDs for all 118 raw calls to the shared core; 11 reviewed and 107 explicitly unclassified | Two complete captures observed 28/29 distinct catalogued IDs and no ID 0; reviewed IDs 19, 21, 25, 29, 30, and 31 occur in both |
 | Hook-neutrality trials | Strict control/exact-hook suite for one-argument `random_int` and `random_bool`, seeded schema-v2 result contract, exact outcome comparator, and rejected-pair archive | Six seeded direct-boundary matches; only two of six whole-game outcomes matched, so whole-game wrapper neutrality remains unproven |
-| Native checkpoint | Reproducible build-keyed RNG-core observer, exact hook/restore manifests, bounded checkpoint schema, and one-purpose seed-control helper | Observer module reproduced byte-for-byte; no accepted live observer checkpoint |
+| Native checkpoint | Reproducible build-keyed RNG-core observer, exact hook/restore manifests, bounded checkpoint schema, one-purpose seed-control helper, and atomic seed-and-arm command | Two accepted checkpoints contain 1,481 and 1,501 records, zero integrity errors, one thread, and exact hook restoration |
 | Callback identities and slots | Inert runtime enumeration, bounded enemy-root discovery, exact lexical join, and raw defining-table resolution | Complete: 81 roots, 324 method records, 65 exact slots; two updated fresh-process slot captures are byte-identical |
-| Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Offline Lua 5.1 lifecycle and restore proofs complete; no natural matched runtime pair |
-| Spawn RNG | Span attribution plus a Rust non-fabrication safeguard | Seeded outcomes expose spawn-coordinate instability; native `Spawner:NextPawn` call order remains unresolved |
-| Selected action | `aiDest`/`aiTarget` to Pawn queue correlation analyzer | Awaiting selected-record and queue checkpoints |
+| Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Five natural pairs completed: 622 attempts, 620 bounded events, every slot restored, no serialization/restore errors; three whole outcomes matched and both repeated `GetSkillEffect` pairs differed only at the spawn marker |
+| Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
+| Spawn RNG | Span attribution plus a Rust non-fabrication safeguard | Atomic capture begins at the seeded first draw, but controls still select different spawn coordinates and no `Spawner:NextPawn` span exists; selection remains unresolved |
+| Selected action | `aiDest`/`aiTarget` to Pawn queue correlation analyzer | Full bridge outcomes prove the queued enemy-action state matched within all seven new callback/native pairs; direct selected-record-to-queue correlation is still absent |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
 The diagnostic checkpoint is deliberately separate from authoritative
@@ -207,7 +214,46 @@ time. The subsequent
 closes the pending state with a 689/689 install comparison, the restored
 33-file save tree, and zero active Observatory bridge files.
 
-## Exact callback slots and dormant natural-call trials
+## Atomic native-RNG campaign
+
+The first native trials seeded and armed with two consecutive bridge commands.
+Their exact streams exposed a one-tick race: one run began with result `24356`,
+while a later run began with the following result `2578`. The final boundary
+therefore uses one Lua dispatch,
+`OBS_NATIVE_RNG_SEED_AND_ARM <capture_id>`, which loads and validates both
+pinned helpers while the RNG bytes are pristine, applies seed `324508639`, and
+arms the observer without returning to a game tick.
+
+Two fresh-state pairs then ran in opposite condition order. Their exact
+checkpoints contain 1,481 and 1,501 records, are single-threaded, contain no
+unknown caller, overflow, torn record, or restore conflict, and report the
+trusted RNG-core hash after restoration. Both begin with native result `24356`.
+The first 104 result values repeat, although the caller/result tuple differs at
+the first record and the streams diverge afterward. Reviewed callers for AI
+seed advance, one-argument `random_int` and `random_bool`, candidate-loop
+tie-breaking, and both record-selector sites appear in both checkpoints. The
+candidate-loop, record-selector, and seed-advance result subsequences repeat;
+the later `random_int`/`random_bool` leaf subsequences do not.
+
+Both exact observed outcomes are semantically identical after removing the
+bridge timestamp and select spawn `[6, 5]`. The controls, restored from the
+same sealed save and seeded identically, select `[5, 4]` and `[5, 2]`.
+Within each pair, the only semantic difference is the next spawn coordinate.
+This is useful negative evidence: fixed native seed plus save state does not
+define a reproducible linear spawn-selection experiment on this runtime, and
+the observer cannot be called whole-game neutral. It does not justify a guessed
+spawn algorithm. Rust therefore retains the conformance safeguard that it may
+consume observed markers but never fabricate an unknown pawn or replacement
+coordinate.
+
+The build-keyed artifacts and deterministic validator are under
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic/`.
+The campaign receipt is
+`windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json`.
+It explicitly leaves `Spawner:NextPawn` draw attribution, observer neutrality,
+and native selected-record semantics unproven.
+
+## Exact callback slots and natural-call trials
 
 The callback binding collector resolves each published method through raw
 table-only inheritance to its actual defining holder. Shared inherited methods
@@ -234,11 +280,39 @@ holder is restored before publishing a result. Control runs prepare the same
 packet without installing or writing a hook. Capsule, request, result,
 comparison, raw-finalization, and CLI paths are create-only and fail closed.
 
-These are readiness and restoration proofs, not behavioral evidence. Windows
-input-desktop access prevented an autonomous synthetic-mission transition, so
-no matched natural callback pair is promoted. The next live work is one family
-at a time, beginning with the single `ScorePositioning` slot, whenever a normal
-interactive desktop can be driven.
+The live natural-call campaign used the sealed `Mission_Power` turn-1 state and
+wrapped one family at a time. It completed one `ScorePositioning` pair (100
+attempts/events), one `GetTargetArea` pair (47/47), one `GetTargetScore` pair
+(181/181), and two counterbalanced `GetSkillEffect` pairs (147 attempts and 146
+bounded events each). Every pair covered exactly one enemy decision cycle,
+restored every installed slot, and reported no serialization or restoration
+error. The one dropped event in each `GetSkillEffect` trace is an explicit
+`max_total_event_bytes` bound, not a callback failure; the original call still
+returned normally.
+
+The `ScorePositioning`, `GetTargetArea`, and `GetTargetScore` control/exact
+bridge outcomes match in full except for timestamp. Both `GetSkillEffect`
+repetitions produce byte-equivalent event lists and repeat their respective
+control and exact outcomes, but the paired conditions differ at only the next
+spawn coordinate (`[6, 5]` versus `[5, 3]`). Therefore the campaign proves
+natural invocation and safe restoration for all four families, not general
+whole-game neutrality. Because every other bridge field matches, the final
+queued enemy actions also match within all five pairs. Direct native
+selected-record correlation and native candidate-enumeration records remain
+separate gaps.
+
+The archived pairs and strict receipt are under
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/`
+and
+`windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json`.
+
+The host's gameflow helper invokes only the exact reviewed title Continue and
+battle End Turn boundaries after validating the pinned executable, SDL frame
+bridge, active screen registry, and battle UI identities. It exposes no cursor,
+keyboard, message, remote-process, file, network, or general memory surface.
+Two independent deterministic builds produced the same 78,848-byte DLL and
+the same normalized receipt. The DLL is not committed; the source, builder,
+build receipt, and two-build reproducibility receipt are committed.
 
 ## Capture-track acceptance gate
 
@@ -356,8 +430,12 @@ remains.
 The 2026-08-22 owner-track cleanup completed this gate: the accepted and
 post-cleanup inventories compare as 689 identical, zero changed, zero missing;
 the 33-file save tree matches its sealed manifest; and no Observatory file
-remains in the active installation or bridge. Experimental files were moved to
-a recoverable staging quarantine rather than discarded.
+remains in the active installation or bridge. The dry-run-first cleanup command
+restored the pinned baseline loader and removed only 62 verified experimental
+install files and 32 bridge scratch files; recoverable owner staging was
+preserved. The later
+`windows_build_13725832_owner_local_modified_20260822_callback_native_campaign_cleanup_receipt.json`
+closes the pending save/install fields in both new immutable campaign receipts.
 
 Only repeated, neutral, build-keyed results may become Rust conformance tests
 or simulator changes. Each simulator semantic change still follows the normal

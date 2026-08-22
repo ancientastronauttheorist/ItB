@@ -16,10 +16,14 @@ string candidates into reviewed function boundaries for:
 - the final selected 24-byte AI decision-record copy.
 
 “Complete” here means the focused static map needed to choose experiment
-boundaries is finished. It does not mean the native engine is reconstructed or
-that any hook is safe to install. The exact downstream Pawn action queue
-commit, runtime subclass coverage, spawn-call ordering, and detour neutrality
-still require a disposable controlled capture.
+boundaries is finished. It does not mean the native engine is reconstructed.
+The RNG-core transaction has since been exercised twice with build guards,
+bounded records, and exact byte restoration, and all four Lua-exposed callback
+families have natural runtime evidence. Whole-game observer neutrality, the
+exact downstream Pawn action-queue commit, spawn-call ordering, and native
+selected-record correlation remain unresolved. A disposable installation is
+optional for those owner-build questions and required only for a pristine
+stock-depot claim.
 
 The durable artifacts are:
 
@@ -218,24 +222,34 @@ The broad static boundary search is no longer the blocker. The reversible-owner
 track is accepted for build-keyed work, so a disposable installation is optional
 unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 
-1. Run the reproducible RNG-core observer in a matched control/exact series and
-   require complete bounded caller IDs plus exact restoration. The module,
-   hook/restore manifests, Mod Loader bridge, and checkpoint validators are
-   complete; no live checkpoint is accepted yet.
-2. Correlate `Spawner:NextPawn` spans with the native RNG records and the
-   downstream Pawn queue. Six seeded Lua-global pairs preserved every direct
-   result, but four whole-game outcomes changed only the spawning-tile y
-   coordinate, so native spawn selection/call order remains unresolved.
-3. Run the dormant natural callback controller one family at a time. Exact
-   defining-slot coverage is 11 `GetTargetArea`, 15 `GetTargetScore`, 38
-   `GetSkillEffect`, and one `ScorePositioning`; matched live neutrality is not
-   yet established.
-4. Correlate the selected-record copy with the downstream Pawn action queue.
-5. Current series complete: evidence is finalized offline, the unresolved-spawn
-   safeguard is a Rust conformance test, experimental files are removed from
-   the active roots, the sealed save is restored, and all 689 install entries
-   match the accepted starting inventory. Repeat this cleanup gate after every
-   future live series.
+1. **Completed for bounded observation:** the atomic RNG-core series produced
+   two complete, single-threaded checkpoints (1,481 and 1,501 records) with no
+   unknown callers or integrity errors and exact trusted-byte restoration.
+   Both start with seeded result `24356`. The observer is not promoted as
+   whole-game neutral because control/exact outcomes differ at the next spawn
+   coordinate.
+2. Correlate `Spawner:NextPawn` enter/exit spans with native RNG records and the
+   downstream Pawn queue. The exact captures observe reviewed spawn-adjacent
+   caller families, but contain no span marker, so native spawn selection and
+   complete call order remain unresolved.
+3. **Completed for natural invocation/restoration:** five callback pairs cover
+   all exact defining slots for `ScorePositioning`, `GetTargetArea`,
+   `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
+   bounded events with no adapter or restoration error. Only the three
+   non-`GetSkillEffect` pairs match whole-game outcomes; two counterbalanced
+   `GetSkillEffect` pairs repeat a spawn-coordinate-only mismatch.
+4. Correlate the proven selected-record copy directly with the downstream Pawn
+   action queue. All seven new paired bridge outcomes have identical queued
+   enemy actions, but that outcome-level fact does not identify the native copy
+   boundary or cancellation/retarget path.
+5. Add native candidate records only if a solver mismatch needs more than the
+   observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
+   candidate-loop RNG caller IDs.
+6. **Completed for this series:** the later callback/native cleanup receipt
+   closes both immutable campaign receipts' pending save/install fields. The
+   accepted and post-cleanup inventories match 689/689, the 33-file save tree
+   is byte-exact, the baseline Mod Loader hash is restored, and no active
+   Observatory file remains. Repeat this gate after every future live series.
 
 The exact isolation gate, helper constraints, counterbalanced experiment order,
 abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
@@ -246,4 +260,10 @@ different fresh-process RNG probes disproved the old unseeded method. Seeded
 pairs 007 through 012 then matched all six direct wrapper results and restored
 every target, while four of six whole-game outcomes still differed only in the
 spawn coordinate. The correct conclusion is return preservation without a
-whole-game neutrality claim, not a simulator rule for spawn selection.
+whole-game neutrality claim, not a simulator rule for spawn selection. The
+later atomic native campaign and natural callback campaign are sealed in
+`windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json`.
+Their restoration is closed by
+`windows_build_13725832_owner_local_modified_20260822_callback_native_campaign_cleanup_receipt.json`.

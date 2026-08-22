@@ -39,7 +39,14 @@ BINDING_DOCUMENT = {
     schema_version = 1,
     runtime_version = "observatory-callback-bindings/1",
     method_order = {"GetTargetArea", "GetTargetScore", "GetSkillEffect", "ScorePositioning"},
-    identity_manifest = {},
+    identity_manifest = {
+        limits = {
+            max_roots = 256,
+            max_depth = 16,
+            max_functions = 1024,
+            max_text_bytes = 512,
+        },
+    },
     roots = {},
     slots = {{
         slot_id = "slot-0001",
@@ -62,8 +69,10 @@ LIVE_BINDINGS = {{
 }}
 
 MANIFEST_MODULE = {}
+ENUMERATE_OPTIONS = nil
 BINDINGS_MODULE = {
-    enumerate = function()
+    enumerate = function(_, _, options)
+        ENUMERATE_OPTIONS = options
         return BINDING_DOCUMENT, LIVE_BINDINGS
     end,
 }
@@ -177,17 +186,25 @@ CAPSULE = {
     },
 }
 
+RUNTIME_TURN = 2
+RUNTIME_PHASE = "combat_enemy"
+
 function runtime_state()
     return {
         now_epoch = 1001,
         mission_id = "Mission_Test",
-        turn = 2,
-        phase = "combat_enemy",
+        turn = RUNTIME_TURN,
+        phase = RUNTIME_PHASE,
         timeline_fingerprint = sha("4"),
         master_seed = -17,
         region_id = "Archive_A",
         ai_seed_fingerprint = sha("5"),
     }
+end
+
+function advance_runtime_to_player()
+    RUNTIME_TURN = 3
+    RUNTIME_PHASE = "combat_player"
 end
 
 function new_host(condition, raw_writer, result_writer)
@@ -235,13 +252,22 @@ def test_exact_hook_captures_natural_call_and_restores(lua):
         assert(ScorePositioning ~= ORIGINAL_POSITIONING)
         local score = ScorePositioning(point(3, 4), Pawn)
         assert(score == 34.17)
+        assert(host:step("base_update_after") == "capturing")
+        assert(ScorePositioning ~= ORIGINAL_POSITIONING)
+        advance_runtime_to_player()
+        assert(host:step("next_turn") == "capturing")
+        assert(ScorePositioning(point(4, 5), Pawn) == 45.17)
         assert(host:step("base_update_after") == "complete")
         assert(ScorePositioning == ORIGINAL_POSITIONING)
-        assert(raw ~= nil and #raw.events == 1)
+        assert(raw ~= nil and #raw.events == 2)
         assert(raw.events[1].payload.position[1] == 3)
+        assert(raw.events[2].payload.position[1] == 4)
         assert(result.status == "complete")
-        assert(result.raw_written and result.raw_event_count == 1)
-        assert(result.attempted_calls == 1)
+        assert(result.raw_written and result.raw_event_count == 2)
+        assert(result.attempted_calls == 2)
+        assert(result.runtime_before.phase == "combat_enemy")
+        assert(result.runtime_after.phase == "combat_player")
+        assert(result.runtime_after.turn == result.runtime_before.turn + 1)
         assert(result.slots_restored)
         assert(result.controller_status.written)
         """
@@ -261,10 +287,27 @@ def test_control_uses_same_boundary_without_installing_or_writing(lua):
         assert(host:step("next_turn") == "capturing")
         assert(ScorePositioning == ORIGINAL_POSITIONING)
         assert(ScorePositioning(point(2, 1), Pawn) == 21.17)
+        assert(host:step("base_update_after") == "capturing")
+        advance_runtime_to_player()
+        assert(host:step("next_turn") == "capturing")
         assert(host:step("base_update_after") == "complete")
         assert(not wrote_raw and not result.raw_written)
         assert(result.raw_event_count == 0 and result.attempted_calls == 0)
         assert(result.slots_restored)
+        """
+    )
+
+
+def test_host_reuses_attested_binding_limits(lua):
+    lua.execute(
+        r"""
+        local host = new_host("control")
+        assert(host ~= nil)
+        assert(ENUMERATE_OPTIONS ~= nil)
+        assert(ENUMERATE_OPTIONS.max_roots == 256)
+        assert(ENUMERATE_OPTIONS.max_depth == 16)
+        assert(ENUMERATE_OPTIONS.max_functions == 1024)
+        assert(ENUMERATE_OPTIONS.max_text_bytes == 512)
         """
     )
 
@@ -294,6 +337,9 @@ def test_writer_failure_still_restores_all_slots(lua):
         )
         assert(host:step("next_turn") == "capturing")
         ScorePositioning(point(1, 1), Pawn)
+        assert(host:step("base_update_after") == "capturing")
+        advance_runtime_to_player()
+        assert(host:step("next_turn") == "capturing")
         local status, err = host:step("base_update_after")
         assert(status == "failed")
         assert(ScorePositioning == ORIGINAL_POSITIONING)

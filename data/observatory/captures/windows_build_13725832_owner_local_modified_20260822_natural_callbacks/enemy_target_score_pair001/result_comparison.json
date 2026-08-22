@@ -1,0 +1,17 @@
+{
+  "arm_packet_sha256": "b587aaf7aee68a2731d6db76cde4ca6eb249daf64dbdf5e029d4ffedfd31c203",
+  "binding_manifest_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3",
+  "both_restored": true,
+  "callback_family": "enemy_target_score",
+  "callback_join_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+  "capsule_sha256": "9facfd510ced1273dbc1478f3739b9520903b98dec0c4890c8dc1b51ccdb703e",
+  "capture_id": "owner-callback-enemy-target-score-pair-001",
+  "checkpoint_seq": 0,
+  "exact_hook_attempted_calls": 181,
+  "exact_hook_event_count": 181,
+  "kind": "observatory_callback_trial_result_comparison",
+  "schema_version": 1,
+  "serialization_errors": 0,
+  "slot_count": 65,
+  "status": "matched"
+}

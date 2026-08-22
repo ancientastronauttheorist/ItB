@@ -1,0 +1,16 @@
+{
+  "build_id": "13725832",
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "helper_receipt_filename": "windows_build_13725832_31fe35265598_callback_gameflow_helper_receipt.json",
+  "helper_receipt_sha256": "ee128f51bb0212245f584c473d95c6db8b1aacd197dd917a553c52924505a3d6",
+  "independent_build_count": 2,
+  "kind": "observatory_callback_gameflow_helper_reproducibility",
+  "module_bytes_identical": true,
+  "module_filename": "itb_observatory_continue_e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a.dll",
+  "module_sha256": "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a",
+  "module_size": 78848,
+  "receipt_bytes_identical": true,
+  "schema_version": 1,
+  "source_path": "src/native/observatory_continue.c",
+  "source_sha256": "b08a26c45b78441d61cc9a2162932ed61595d5e82450e98cbcef8dd32d197d2b"
+}
