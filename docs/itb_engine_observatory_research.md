@@ -20,10 +20,12 @@ have since been restored exactly, with no active Observatory file remaining.
 Three source-verified `Spawner:NextPawn` spans now resolve the normal
 weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
 triplets also correlate the final selected record to the immediate Pawn queue
-commit for a bounded Firefly scenario. The remaining unknowns are narrower and
-more valuable: native path and movement enumeration, spawn replay state and
-coordinate scheduling, broader selected-action paths, effect execution, and
-hidden engine state.
+commit for a bounded Firefly scenario. Three later spawn-replay captures recover
+the exact observable MSVC pre-call state class and export the effective ratios
+and ordered candidates needed to reproduce `Firefly2`, `Scarab2`, and
+`Firefly2` exactly. The remaining unknowns are narrower and more valuable:
+native spawn-coordinate scheduling, path and movement enumeration, broader
+selected-action paths, effect execution, and hidden engine state.
 
 The strategic ordering should therefore be:
 
@@ -146,10 +148,15 @@ The spawn algorithm is therefore not fundamentally unknown. For the exact
 inventoried Windows executable, the shared RNG algorithm and state transition
 are now mapped. Three cleanly restored `Spawner:NextPawn` spans each contain
 exactly three reviewed `random_int(max)` leaf draws, resolving the ordinary
-source order as weak class, available pawn, then upgrade. The unresolved pieces
-are the pre-span CRT cursor and exact runtime `available` ordering needed for
-replay, spawn-coordinate scheduling outside `NextPawn`, optional branch
-coverage, and equivalence on other platform builds.
+source order as weak class, available pawn, then upgrade. Three subsequent
+captures export each span's effective weak/upgrade ratios, exact runtime
+`available` order, and selected pawn. Three consecutive results recover one
+exact observable pre-call MSVC state class: the two raw 32-bit candidates differ
+only in hidden bit 31 and have the same future `rand()` stream. Replaying those
+inputs reproduces all three selected pawns exactly. The unresolved pieces are
+exporting that capsule *before* selection for ordinary solver use,
+spawn-coordinate scheduling outside `NextPawn`, natural boss-branch coverage,
+and equivalence on other platform builds.
 
 ### Enemy targeting
 
@@ -214,8 +221,10 @@ pool mapping or formal call-order fit was performed, so the experiment did not
 establish whether `master_seed` and `ai_seed` are sufficient. Those recordings
 also lack build identity, so the now-mapped Windows MSVC-style RNG cannot be
 applied to them retroactively. The later span campaign resolves the normal
-three-draw `NextPawn` order, but not the pre-span CRT state, exact runtime pawn
-array, or separate coordinate scheduler needed for replay.
+three-draw `NextPawn` order. The spawn-replay campaign then recovers the
+observable pre-span CRT state and exact runtime pawn array and reproduces every
+observed pawn choice. It still does not make those inputs available before the
+live call or resolve the separate coordinate scheduler.
 
 Related local research:
 
@@ -429,8 +438,9 @@ verifier facts.
 
 The remaining native priorities are now narrower:
 
-1. Export or otherwise prove the pre-span RNG state and exact spawn candidate
-   ordering needed for replay, and isolate the later coordinate scheduler.
+1. Isolate the later spawn-coordinate scheduler and its RNG call ordering; only
+   then decide whether a pre-call replay capsule is worth exposing to ordinary
+   solver input.
 2. Resolve native pathfinding and reachability details needed by mismatches.
 3. Resolve turn-phase ordering, queued effect execution, and hidden state.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
@@ -559,17 +569,19 @@ all four planned families with safe restoration. Two counterbalanced atomic
 native-RNG pairs capture the fixed seed's first result and reviewed candidate,
 selector, seed, and Lua-leaf callers in complete restored checkpoints. The
 native exact outcomes repeat, but unobserved controls from the same sealed save
-and fixed seed do not, so spawn selection remains non-replayable from those
-inputs. Three later `Spawner:NextPawn` spans resolve the normal three-draw
-weak/pawn/upgrade order, while confirming that ordinary solver inputs still do
-not expose the replay cursor or exact candidate array. Three later selected-
-queue triplets correlate the reviewed final selected record to the immediate
-Firefly queue commit with exact destination, target/shot, and weapon/skill
-agreement. Rust retains its non-fabrication spawn safeguard and adds a focused
-Firefly queue-direction conformance regression. The final closure receipts
-prove the baseline 33-file save tree, Mod Loader, and 689-entry installation
-were restored and the active bridge/install contain no Observatory diagnostic
-file.
+and fixed seed do not, so those inputs alone do not replay spawn selection.
+Three later `Spawner:NextPawn` spans resolve the normal three-draw
+weak/pawn/upgrade order. Three counterbalanced replay pairs then recover the
+observable pre-call CRT state and exact candidate array and reproduce all three
+observed pawn choices. Ordinary solver inputs still do not expose that capsule
+before selection, and the later coordinate scheduler remains unresolved. Three
+selected-queue triplets correlate the reviewed final selected record to the
+immediate Firefly queue commit with exact destination, target/shot, and
+weapon/skill agreement. Rust retains its non-fabrication spawn safeguard and
+adds a focused Firefly queue-direction conformance regression. The final
+closure receipts prove the baseline 33-file save tree, Mod Loader, and
+689-entry installation were restored and the active bridge/install contain no
+Observatory diagnostic file.
 
 ### Milestone 1: Provenance inventory
 
@@ -600,8 +612,10 @@ file.
   following spawn coordinate.
 - **Complete for the ordinary `NextPawn` branch:** three spans assign the three
   enclosed native draws to weak class, available pawn, and upgrade in source
-  order. Replay still requires the missing pre-span cursor and exact available
-  array, and coordinates are scheduled outside this span.
+  order. Three later capsules recover the observable pre-span cursor, preserve
+  the exact available array, and replay each selected pawn exactly. Advance
+  prediction still needs those inputs before the call, and coordinates are
+  scheduled outside this span.
 
 ### Milestone 4: Hidden-state survey
 
@@ -648,12 +662,14 @@ Useful metrics include:
 
 The targeted offline map is now deep enough; do not broaden into full
 decompilation. The reversible owner campaign has completed the planned Lua RNG,
-natural callback, bounded native RNG, `Spawner:NextPawn` span, and selected-
-queue observations without yielding a safe spawn-replay model. Keep the current
-Rust non-fabrication rule. If a future solver mismatch justifies more runtime
-work, add only the missing narrow input—pre-span RNG state, exact spawn
-candidate ordering, coordinate scheduling, a broader selected-action path, or
-one native candidate record—under the same matched and reversible protocol.
+natural callback, bounded native RNG, `Spawner:NextPawn` span/replay, and
+selected-queue observations. The replay model is exact when supplied its
+captured state and candidates, but ordinary planning still lacks those inputs
+before the call and lacks the selected coordinate. Keep the current Rust
+non-fabrication rule. If a future solver mismatch justifies more runtime work,
+add only the missing narrow input—coordinate scheduling, pre-call capsule
+delivery, a broader selected-action path, or one native candidate record—under
+the same matched and reversible protocol.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

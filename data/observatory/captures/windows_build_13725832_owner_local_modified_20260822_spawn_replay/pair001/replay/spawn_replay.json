@@ -1,0 +1,87 @@
+{
+  "analysis_kind": "spawn_rng_replay_capsule",
+  "boss_branch": {
+    "boss_available": true,
+    "chance": null,
+    "guard_reached": false,
+    "raw_result": null,
+    "selected_boss": false
+  },
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "helper_sha256": "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c",
+    "hook_plan_sha256": "a3d09bbc95ed32c1d8fc4c4155f6b09cabea69a90c361bbb966e2de69023f378",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "restore_manifest_sha256": "d7ad5662a8ba8cdce081f56705ea8302ad425e5f7dbf6830ba4056f99408b73d",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48"
+  },
+  "candidate_choice": {
+    "available": [
+      "Mosquito",
+      "Scarab",
+      "Firefly"
+    ],
+    "raw_result": 26456,
+    "selected_base": "Firefly",
+    "selected_index_zero_based": 2
+  },
+  "capture_id": "spawn-replay-p001-replay-r3",
+  "controller_sha256": "c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f",
+  "future_observable_stream_exact": true,
+  "native_results": [
+    6988,
+    26456,
+    12828
+  ],
+  "observable_pre_state": 348686130,
+  "observable_pre_state_hex": "0x14c88732",
+  "raw_pre_state_candidates": [
+    "0x14c88732",
+    "0x94c88732"
+  ],
+  "raw_record_range": [
+    1473,
+    1476
+  ],
+  "raw_state_hidden_bit_ambiguous": true,
+  "replay_verified": true,
+  "schema_version": 1,
+  "selected_pawn": "Firefly2",
+  "source_identity": {
+    "random_element_expected_linedefined": 560,
+    "random_element_expected_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+    "random_element_expected_source_suffix": "scripts/global.lua",
+    "random_element_runtime_linedefined": 560,
+    "random_element_runtime_source": "scripts/global.lua",
+    "source_locations_verified": true,
+    "spawner_expected_linedefined": 174,
+    "spawner_expected_sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
+    "spawner_expected_source_suffix": "scripts/spawner_backend.lua",
+    "spawner_runtime_linedefined": 174,
+    "spawner_runtime_source": "scripts/spawner_backend.lua"
+  },
+  "span_id": 1,
+  "thread_slot": 0,
+  "upgrade_branch": {
+    "break_streak": false,
+    "denominator": 5,
+    "living_upgrade_cap_forced_downgrade": false,
+    "modulo_result": 3,
+    "numerator": 5,
+    "raw_result": 12828,
+    "selected_max_level": 2,
+    "selected_upgrade": true
+  },
+  "weak_branch": {
+    "denominator": 5,
+    "modulo_result": 3,
+    "numerator": 2,
+    "raw_result": 6988,
+    "selected_weak": false
+  }
+}

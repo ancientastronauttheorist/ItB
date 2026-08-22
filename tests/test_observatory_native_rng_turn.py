@@ -127,6 +127,86 @@ def test_native_rng_spawn_span_boundary_restores_both_layers(monkeypatch):
     assert summary["spawn_wrapper_restored"] is True
 
 
+def test_native_rng_spawn_replay_boundary_is_natural_and_restores_both_slots(
+    monkeypatch,
+):
+    calls = []
+    snapshot = {
+        "summary": {"record_count": 7},
+        "integrity": {"hook_bytes_restored": True},
+    }
+    ledger = {
+        "summary": {"span_count": 1},
+        "integrity": {
+            "next_wrapper_restored": True,
+            "random_wrapper_restored": True,
+        },
+    }
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_arm_spawn_replay",
+        lambda capture_id: calls.append(("arm_replay", capture_id)) or "ARM",
+    )
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_finish_spawn_replay",
+        lambda capture_id: (
+            calls.append(("finish_replay", capture_id))
+            or ("FINISH", snapshot, ledger)
+        ),
+    )
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_seed",
+        lambda: calls.append("unexpected_seed"),
+    )
+    boundary = mod.NativeRngTurnBoundary(
+        condition="spawn_replay", capture_id="native-rng-replay-001"
+    )
+
+    boundary.before_end_turn()
+    summary = boundary.after_end_turn({"status": "OK"})
+
+    assert calls == [
+        ("arm_replay", "native-rng-replay-001"),
+        ("finish_replay", "native-rng-replay-001"),
+    ]
+    assert summary["state"] == "complete"
+    assert summary["spawn_replay_span_count"] == 1
+    assert summary["spawn_replay_wrappers_restored"] is True
+
+
+def test_spawn_replay_control_loads_dormant_artifacts_without_seed_or_finish(
+    monkeypatch,
+):
+    calls = []
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_spawn_replay_control",
+        lambda capture_id: calls.append(("control", capture_id)) or "CONTROL",
+    )
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_seed",
+        lambda: calls.append("unexpected_seed"),
+    )
+    monkeypatch.setattr(
+        mod,
+        "bridge_observatory_native_rng_finish",
+        lambda capture_id: calls.append("unexpected_finish"),
+    )
+    boundary = mod.NativeRngTurnBoundary(
+        condition="spawn_replay_control",
+        capture_id="native-rng-replay-control-001",
+    )
+
+    boundary.before_end_turn()
+    summary = boundary.after_end_turn({"status": "OK"})
+
+    assert calls == [("control", "native-rng-replay-control-001")]
+    assert summary["state"] == "complete"
+
+
 def test_native_rng_control_boundary_never_arms_or_finishes(monkeypatch):
     calls = []
     monkeypatch.setattr(

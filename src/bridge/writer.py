@@ -15,8 +15,11 @@ from src.bridge.protocol import (
     BridgeError,
     request_observatory_callback_bindings,
     arm_observatory_native_rng,
+    arm_observatory_native_rng_spawn_replay,
     finish_observatory_native_rng,
+    finish_observatory_native_rng_spawn_replay,
     finish_observatory_native_rng_spawn_span,
+    prepare_observatory_spawn_replay_control,
     request_observatory_callback_manifest,
     run_observatory_selected_queue_trial,
     seed_and_arm_observatory_native_rng,
@@ -344,6 +347,28 @@ def bridge_observatory_native_rng_seed_and_arm_spawn_span(
     )
 
 
+def bridge_observatory_native_rng_arm_spawn_replay(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically arm native RNG and exact spawn replay observation."""
+    return arm_observatory_native_rng_spawn_replay(
+        capture_id, timeout=timeout
+    )
+
+
+def bridge_observatory_spawn_replay_control(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Load replay artifacts inertly for an unmodified matched control."""
+    return prepare_observatory_spawn_replay_control(
+        capture_id, timeout=timeout
+    )
+
+
 def bridge_observatory_native_rng_status(
     *, timeout: float = 10.0
 ) -> tuple[str, dict]:
@@ -367,6 +392,17 @@ def bridge_observatory_native_rng_finish_spawn_span(
 ) -> tuple[str, dict, dict]:
     """Restore native RNG and NextPawn, retrieving both fresh outputs."""
     return finish_observatory_native_rng_spawn_span(capture_id, timeout=timeout)
+
+
+def bridge_observatory_native_rng_finish_spawn_replay(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict, dict]:
+    """Restore native RNG and both replay wrappers, retrieving both outputs."""
+    return finish_observatory_native_rng_spawn_replay(
+        capture_id, timeout=timeout
+    )
 
 
 def bridge_observatory_selected_queue_trial(

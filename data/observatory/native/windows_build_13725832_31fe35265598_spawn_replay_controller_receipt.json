@@ -1,0 +1,21 @@
+{
+  "controller_sha256": "c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f",
+  "controller_source": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\src\\bridge\\observatory_spawn_replay_controller.lua",
+  "controller_version": "observatory-spawn-replay-controller/1",
+  "global_source": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\global.lua",
+  "global_source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+  "kind": "observatory_spawn_replay_controller_build",
+  "loading_is_inert": true,
+  "modloader_sha256": "7453206560640f72f3989031b75f0ae543ca45784992d52a54244151a1785663",
+  "module_filename": "itb_observatory_spawn_replay_controller_c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f.lua",
+  "module_sha256": "c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f",
+  "random_element_source_linedefined": 560,
+  "random_element_source_suffix": "scripts/global.lua",
+  "runtime_mutation": "exact_Spawner.NextPawn_slot_and_in_span_random_element_slot",
+  "schema_version": 1,
+  "spawner_source": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\spawner_backend.lua",
+  "spawner_source_linedefined": 174,
+  "spawner_source_sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
+  "spawner_source_suffix": "scripts/spawner_backend.lua",
+  "write_mode": "create_only"
+}

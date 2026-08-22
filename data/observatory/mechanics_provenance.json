@@ -1056,8 +1056,12 @@
           "statement": "The exact inventoried spawner.lua defines 16 difficulty/sector parameter sets for weak selection, upgrade selection, simultaneous living-upgrade caps, and conditional boss promotion; Mission:CreateSpawner instantiates the current difficulty/sector entry with optional mission-specific data overrides for Spawner:NextPawn."
         },
         {
-          "classification": "unresolved",
-          "statement": "The native RNG implementation and complete semantic consumption order have not been reconstructed for this build; the observer now records build-keyed core calls, but no Spawner:NextPawn span markers identify the draws responsible for spawn selection."
+          "classification": "fact",
+          "statement": "Three source-verified Spawner:NextPawn spans on the exact build each enclosed three reviewed random_int(max) leaf calls in source order: weak-class choice, ordered available-pawn choice, then upgrade choice."
+        },
+        {
+          "classification": "fact",
+          "statement": "Three later replay captures exported the effective weak/upgrade ratios and exact ordered available array, recovered one observable MSVC pre-call state class from the enclosed results, and reproduced Firefly2, Scarab2, and Firefly2 exactly."
         },
         {
           "classification": "fact",
@@ -1088,13 +1092,34 @@
             "project_plan_scenarios",
             "project_plan_with_spawns"
           ]
+        },
+        {
+          "path": "src/observatory/msvc_rng_replay.py",
+          "symbols": [
+            "recover_observable_pre_state",
+            "replay_results"
+          ]
+        },
+        {
+          "path": "src/observatory/spawn_replay_ledger.py",
+          "symbols": [
+            "analyze_spawn_replay",
+            "validate_spawn_replay_ledger"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_native_boundary_campaign.py",
+          "symbols": [
+            "test_committed_spawn_replay_campaign_recovers_exact_native_choices"
+          ]
         }
       ],
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, full random_int/random_bool behavior, cross-boundary scheduling, and complete pre-spawn call order are unresolved.",
-        "No Spawner:NextPawn enter/exit span or selected-pawn record was installed, so the captured native RNG stream cannot yet attribute individual draws to spawn selection.",
-        "The parameter matrix does not itself determine spawn count, timing, locations, or roster; selection fallbacks, living caps, streak rules, and conditional promotion can change the nominal weak, upgrade, and boss outcomes."
+        "Ordinary bridge input does not export the exact native pre-call state, effective ratios, and ordered candidate array before NextPawn executes, so the solver cannot yet use the proven replay model prospectively.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, spawn-coordinate selection, and the coordinate RNG call order outside NextPawn remain unresolved.",
+        "The parameter matrix does not itself determine spawn count, timing, locations, roster, or the exact runtime replay capsule.",
+        "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
         {

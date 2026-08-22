@@ -1403,14 +1403,14 @@ mod tests {
             &WEAPONS,
         );
 
-        // Three source-verified Spawner:NextPawn spans resolved the ordinary
-        // three-draw order (weak class, available pawn, upgrade) with clean
-        // restoration. The sealed campaign still lacks the pre-span CRT state
-        // and exact runtime available-array order needed for solver replay, and
-        // spawn-coordinate selection occurs outside NextPawn. Projection may
-        // consume observed emergence markers but must not invent either a pawn
-        // identity or a replacement coordinate. See the 20260822 spawn-span
-        // campaign receipt.
+        // Three source-verified replay capsules now prove that the observable
+        // pre-call CRT state, effective ratios, and ordered candidate array are
+        // sufficient to recover the exact NextPawn identity. Ordinary bridge
+        // input does not provide that capsule before selection, however, and
+        // spawn-coordinate selection remains a separate unresolved native
+        // boundary. Projection may consume observed emergence markers but must
+        // not invent either a pawn identity or a replacement coordinate. See
+        // the 20260822 spawn-replay campaign receipt.
         assert_eq!(projected.unit_count, before_unit_count);
         assert!(projected.unit_at(2, 2).is_none());
         assert!(projected.unit_at(5, 5).is_none());

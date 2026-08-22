@@ -14,11 +14,14 @@ from collections.abc import Mapping
 from typing import Any
 
 from src.bridge.writer import (
+    bridge_observatory_native_rng_arm_spawn_replay,
     bridge_observatory_native_rng_finish,
+    bridge_observatory_native_rng_finish_spawn_replay,
     bridge_observatory_native_rng_finish_spawn_span,
     bridge_observatory_native_rng_seed,
     bridge_observatory_native_rng_seed_and_arm,
     bridge_observatory_native_rng_seed_and_arm_spawn_span,
+    bridge_observatory_spawn_replay_control,
 )
 
 
@@ -44,9 +47,16 @@ class NativeRngTurnBoundary:
     """Arm/seed/restore one control or exact native RNG turn trial."""
 
     def __init__(self, *, condition: str, capture_id: str) -> None:
-        if condition not in {"control", "exact_hook", "spawn_span"}:
+        if condition not in {
+            "control",
+            "exact_hook",
+            "spawn_span",
+            "spawn_replay_control",
+            "spawn_replay",
+        }:
             raise NativeRngTurnBoundaryError(
-                "native RNG condition must be control, exact_hook, or spawn_span"
+                "native RNG condition must be control, exact_hook, spawn_span, "
+                "spawn_replay_control, or spawn_replay"
             )
         if type(capture_id) is not str or _CAPTURE_ID.fullmatch(capture_id) is None:
             raise NativeRngTurnBoundaryError("native RNG capture ID is invalid")
@@ -59,6 +69,7 @@ class NativeRngTurnBoundary:
         self.finish_ack: str | None = None
         self.snapshot: dict[str, Any] | None = None
         self.spawn_span_ledger: dict[str, Any] | None = None
+        self.spawn_replay_ledger: dict[str, Any] | None = None
 
     @property
     def armed(self) -> bool:
@@ -70,11 +81,12 @@ class NativeRngTurnBoundary:
                 f"native RNG boundary cannot start from state {self.state}"
             )
         try:
-            if self.condition in {"exact_hook", "spawn_span"}:
-                # One bridge command loads both pinned modules while the RNG
-                # bytes are pristine, seeds, and arms without yielding a game
-                # tick.  Mark the arm as pending before delivery because a
-                # lost ACK is ambiguous and must trigger a restore attempt.
+            if self.condition in {"exact_hook", "spawn_span", "spawn_replay"}:
+                # One bridge command starts the exact transaction without
+                # yielding a game tick. Seeded conditions seed and arm; replay
+                # preserves the naturally reached state and only arms. Mark the
+                # arm pending because a lost ACK is ambiguous and must trigger
+                # a restore attempt.
                 self.state = "arm_pending"
                 if self.condition == "spawn_span":
                     self.seed_and_arm_ack = (
@@ -82,11 +94,20 @@ class NativeRngTurnBoundary:
                             self.capture_id
                         )
                     )
+                elif self.condition == "spawn_replay":
+                    self.arm_ack = bridge_observatory_native_rng_arm_spawn_replay(
+                        self.capture_id
+                    )
                 else:
                     self.seed_and_arm_ack = (
                         bridge_observatory_native_rng_seed_and_arm(self.capture_id)
                     )
                 self.state = "armed"
+            elif self.condition == "spawn_replay_control":
+                self.arm_ack = bridge_observatory_spawn_replay_control(
+                    self.capture_id
+                )
+                self.state = "dormant"
             else:
                 self.seed_ack = bridge_observatory_native_rng_seed()
                 self.state = "seeded"
@@ -99,9 +120,12 @@ class NativeRngTurnBoundary:
         return self.summary()
 
     def after_end_turn(self, end_turn_result: object) -> dict[str, Any]:
-        expected_state = (
-            "armed" if self.condition in {"exact_hook", "spawn_span"} else "seeded"
-        )
+        if self.condition in {"exact_hook", "spawn_span", "spawn_replay"}:
+            expected_state = "armed"
+        elif self.condition == "spawn_replay_control":
+            expected_state = "dormant"
+        else:
+            expected_state = "seeded"
         if self.state != expected_state:
             raise NativeRngTurnBoundaryError(
                 f"native RNG boundary cannot finish from state {self.state}"
@@ -111,7 +135,7 @@ class NativeRngTurnBoundary:
             if isinstance(end_turn_result, Mapping)
             else None
         )
-        if self.condition in {"exact_hook", "spawn_span"}:
+        if self.condition in {"exact_hook", "spawn_span", "spawn_replay"}:
             try:
                 if self.condition == "spawn_span":
                     (
@@ -119,6 +143,14 @@ class NativeRngTurnBoundary:
                         self.snapshot,
                         self.spawn_span_ledger,
                     ) = bridge_observatory_native_rng_finish_spawn_span(
+                        self.capture_id
+                    )
+                elif self.condition == "spawn_replay":
+                    (
+                        self.finish_ack,
+                        self.snapshot,
+                        self.spawn_replay_ledger,
+                    ) = bridge_observatory_native_rng_finish_spawn_replay(
                         self.capture_id
                     )
                 else:
@@ -144,7 +176,11 @@ class NativeRngTurnBoundary:
         return self.summary()
 
     def _restore_if_armed(self) -> Exception | None:
-        if self.condition not in {"exact_hook", "spawn_span"} or self.state not in {
+        if self.condition not in {
+            "exact_hook",
+            "spawn_span",
+            "spawn_replay",
+        } or self.state not in {
             "arm_pending",
             "armed",
         }:
@@ -156,6 +192,14 @@ class NativeRngTurnBoundary:
                     self.snapshot,
                     self.spawn_span_ledger,
                 ) = bridge_observatory_native_rng_finish_spawn_span(
+                    self.capture_id
+                )
+            elif self.condition == "spawn_replay":
+                (
+                    self.finish_ack,
+                    self.snapshot,
+                    self.spawn_replay_ledger,
+                ) = bridge_observatory_native_rng_finish_spawn_replay(
                     self.capture_id
                 )
             else:
@@ -213,6 +257,27 @@ class NativeRngTurnBoundary:
                     ),
                     "spawn_wrapper_restored": (
                         ledger_integrity.get("wrapper_restored")
+                        if isinstance(ledger_integrity, Mapping)
+                        else None
+                    ),
+                }
+            )
+        if self.spawn_replay_ledger is not None:
+            ledger_summary = self.spawn_replay_ledger.get("summary")
+            ledger_integrity = self.spawn_replay_ledger.get("integrity")
+            result.update(
+                {
+                    "spawn_replay_ledger_sha256": _canonical_sha256(
+                        self.spawn_replay_ledger
+                    ),
+                    "spawn_replay_span_count": (
+                        ledger_summary.get("span_count")
+                        if isinstance(ledger_summary, Mapping)
+                        else None
+                    ),
+                    "spawn_replay_wrappers_restored": (
+                        ledger_integrity.get("next_wrapper_restored") is True
+                        and ledger_integrity.get("random_wrapper_restored") is True
                         if isinstance(ledger_integrity, Mapping)
                         else None
                     ),

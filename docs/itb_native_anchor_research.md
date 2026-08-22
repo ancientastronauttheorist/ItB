@@ -22,10 +22,12 @@ bounded records, and exact byte restoration, and all four Lua-exposed callback
 families have natural runtime evidence. Three later `Spawner:NextPawn` spans
 resolve the normal weak/pawn/upgrade draw order, and three counterbalanced
 hardware-observer triplets correlate the final selected record to the immediate
-Pawn action queue for a bounded Firefly scenario. Whole-game native-RNG
-observer neutrality, spawn replay inputs and coordinate scheduling, broader
-selected-action paths, and the complete native candidate tournament remain
-unresolved. A disposable installation is optional for those owner-build
+Pawn action queue for a bounded Firefly scenario. Three spawn-replay captures
+also recover the exact observable pre-call state class and reproduce the
+captured pawn choices from their effective ratios and ordered candidates.
+Whole-game native-RNG observer neutrality, prospective capsule delivery, spawn
+coordinate scheduling, broader selected-action paths, and the complete native
+candidate tournament remain unresolved. A disposable installation is optional for those owner-build
 questions and required only for a pristine stock-depot claim.
 
 The durable artifacts are:
@@ -241,9 +243,11 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 2. **Completed for the normal `Spawner:NextPawn` path:** three source-verified,
    cleanly restored spans each enclose exactly three caller-21 native draws.
    Their source order is weak-class choice, available-pawn choice, then upgrade
-   choice. The optional boss `random_bool` branch did not execute. Solver replay
-   still lacks the pre-span CRT state and exact runtime available-array order;
-   coordinate selection occurs outside this span.
+   choice. Three later replay captures recover the exact observable pre-call
+   state class, retain the exact runtime available-array order, and reproduce
+   every selected pawn. The optional boss `random_bool` branch did not execute.
+   Ordinary solver input still lacks the capsule before the call, and coordinate
+   selection occurs outside this span.
 3. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
@@ -258,8 +262,8 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 5. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
-6. **Completed for both live series:** the callback/native and later native-
-   boundaries cleanup receipts close all four immutable campaign receipts'
+6. **Completed for all live series:** the callback/native, native-boundaries,
+   and spawn-replay cleanup receipts close all five immutable campaign receipts'
    pending save/install fields. Each accepted/post-cleanup comparison matches
    689/689, the 33-file save tree is byte-exact, the baseline Mod Loader hash
    is restored, and no active Observatory file remains. Repeat this gate after

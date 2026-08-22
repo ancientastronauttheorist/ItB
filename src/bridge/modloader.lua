@@ -83,6 +83,12 @@ local SPAWN_SPAN_LEDGER_TMP =
     BRIDGE_DIR .. "/itb_observatory_spawn_span_ledger.json.tmp"
 local SPAWN_SPAN_CONTROLLER_SHA256 =
     "4923ee3b08c802824f17963dc625015d2c91e6e467149b72bba218c49830935d"
+local SPAWN_REPLAY_LEDGER_FILE =
+    BRIDGE_DIR .. "/itb_observatory_spawn_replay_ledger.json"
+local SPAWN_REPLAY_LEDGER_TMP =
+    BRIDGE_DIR .. "/itb_observatory_spawn_replay_ledger.json.tmp"
+local SPAWN_REPLAY_CONTROLLER_SHA256 =
+    "c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f"
 local SELECTED_QUEUE_SNAPSHOT_FILE =
     BRIDGE_DIR .. "/itb_observatory_selected_queue_snapshot.json"
 local SELECTED_QUEUE_SNAPSHOT_TMP =
@@ -120,6 +126,7 @@ local NATIVE_GAMEFLOW_HELPER_SHA256 =
 local _observatory_native_rng_module = nil
 local _observatory_native_rng_capture_id = nil
 local _observatory_spawn_span_controller = nil
+local _observatory_spawn_replay_controller = nil
 local _observatory_native_gameflow = nil
 local _observatory_selected_queue_module = nil
 
@@ -3592,6 +3599,66 @@ local function load_observatory_spawn_span_controller(observer, capture_id)
     return controller
 end
 
+local function load_observatory_spawn_replay_controller(observer, capture_id)
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local filename = "itb_observatory_spawn_replay_controller_"
+        .. SPAWN_REPLAY_CONTROLLER_SHA256 .. ".lua"
+    local module, module_error = load_observatory_trial_artifact(
+        directory, filename, "spawn replay controller"
+    )
+    if not module then return nil, module_error end
+    if rawget(module, "VERSION")
+            ~= "observatory-spawn-replay-controller/1"
+        or rawget(module, "SPAWNER_SOURCE_SUFFIX")
+            ~= "scripts/spawner_backend.lua"
+        or rawget(module, "SPAWNER_SOURCE_LINE") ~= 174
+        or rawget(module, "SPAWNER_SOURCE_SHA256")
+            ~= "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
+        or rawget(module, "RANDOM_ELEMENT_SOURCE_SUFFIX")
+            ~= "scripts/global.lua"
+        or rawget(module, "RANDOM_ELEMENT_SOURCE_LINE") ~= 560
+        or rawget(module, "RANDOM_ELEMENT_SOURCE_SHA256")
+            ~= "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+        or rawget(module, "MAX_SPANS") ~= 8
+        or rawget(module, "MAX_CANDIDATES") ~= 64
+        or rawget(module, "MAX_NATIVE_RECORDS") ~= 4096
+        or type(rawget(module, "new")) ~= "function" then
+        return nil, "spawn replay controller contract mismatch"
+    end
+    local spawner = rawget(_G, "Spawner")
+    local random_element_fn = rawget(_G, "random_element")
+    local debug_table = rawget(_G, "debug")
+    local getinfo = type(debug_table) == "table"
+        and rawget(debug_table, "getinfo") or nil
+    if type(spawner) ~= "table"
+        or type(rawget(spawner, "NextPawn")) ~= "function"
+        or type(random_element_fn) ~= "function"
+        or type(getinfo) ~= "function" then
+        return nil, "spawn replay runtime boundaries are unavailable"
+    end
+    local opened, controller, controller_error = pcall(
+        rawget(module, "new"),
+        {
+            capture_id = capture_id,
+            spawner = spawner,
+            observer = observer,
+            getinfo = getinfo,
+            globals = _G,
+        }
+    )
+    if not opened or type(controller) ~= "table" then
+        return nil, "spawn replay controller construction failed: "
+            .. tostring(controller_error or controller)
+    end
+    if type(rawget(controller, "activate")) ~= "function"
+        or type(rawget(controller, "checkpoint")) ~= "function"
+        or type(rawget(controller, "abort")) ~= "function" then
+        return nil, "spawn replay controller instance contract mismatch"
+    end
+    return controller
+end
+
 local function validate_observatory_native_rng_snapshot(snapshot, capture_id)
     if type(snapshot) ~= "table"
         or rawget(snapshot, "schema_version") ~= 1
@@ -3694,6 +3761,178 @@ local function validate_observatory_spawn_span_ledger(
     return true
 end
 
+local function validate_observatory_spawn_replay_ledger(
+    ledger, capture_id, raw_record_count
+)
+    if type(ledger) ~= "table"
+        or rawget(ledger, "schema_version") ~= 1
+        or rawget(ledger, "kind") ~= "spawn_rng_replay_ledger"
+        or rawget(ledger, "controller_version")
+            ~= "observatory-spawn-replay-controller/1"
+        or rawget(ledger, "controller_sha256")
+            ~= SPAWN_REPLAY_CONTROLLER_SHA256
+        or rawget(ledger, "capture_id") ~= capture_id
+        or rawget(ledger, "write_mode") ~= "create_only"
+        or rawget(ledger, "raw_record_count") ~= raw_record_count
+        or type(rawget(ledger, "source_identity")) ~= "table"
+        or type(rawget(ledger, "integrity")) ~= "table"
+        or type(rawget(ledger, "spans")) ~= "table"
+        or type(rawget(ledger, "summary")) ~= "table" then
+        return nil, "spawn replay ledger contract mismatch"
+    end
+    local source = rawget(ledger, "source_identity")
+    local integrity = rawget(ledger, "integrity")
+    local summary = rawget(ledger, "summary")
+    if rawget(source, "spawner_expected_sha256")
+            ~= "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
+        or rawget(source, "spawner_expected_source_suffix")
+            ~= "scripts/spawner_backend.lua"
+        or rawget(source, "spawner_expected_linedefined") ~= 174
+        or rawget(source, "spawner_runtime_linedefined") ~= 174
+        or rawget(source, "random_element_expected_sha256")
+            ~= "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+        or rawget(source, "random_element_expected_source_suffix")
+            ~= "scripts/global.lua"
+        or rawget(source, "random_element_expected_linedefined") ~= 560
+        or rawget(source, "random_element_runtime_linedefined") ~= 560
+        or rawget(source, "source_locations_verified") ~= true
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "next_wrapper_restored") ~= true
+        or rawget(integrity, "random_wrapper_restored") ~= true
+        or rawget(integrity, "restore_conflict") ~= false
+        or rawget(integrity, "nested_next_count") ~= 0
+        or rawget(integrity, "nested_random_count") ~= 0
+        or rawget(integrity, "observer_status_error_count") ~= 0
+        or rawget(integrity, "span_overflow_count") ~= 0
+        or rawget(integrity, "candidate_overflow_count") ~= 0
+        or rawget(integrity, "invalid_candidate_count") ~= 0
+        or rawget(integrity, "input_snapshot_error_count") ~= 0
+        or rawget(integrity, "random_install_error_count") ~= 0
+        or rawget(integrity, "candidate_count_mismatch_count") ~= 0
+        or rawget(integrity, "active_depth") ~= 0
+        or rawget(summary, "span_count") ~= #ledger.spans
+        or rawget(summary, "candidate_event_count") ~= #ledger.spans
+        or rawget(summary, "complete") ~= true then
+        return nil, "spawn replay ledger is incomplete: spans="
+            .. tostring(rawget(summary, "span_count"))
+            .. " events=" .. tostring(rawget(summary, "candidate_event_count"))
+            .. " next_restored="
+            .. tostring(rawget(integrity, "next_wrapper_restored"))
+            .. " random_restored="
+            .. tostring(rawget(integrity, "random_wrapper_restored"))
+            .. " conflict=" .. tostring(rawget(integrity, "restore_conflict"))
+            .. " nested_next="
+            .. tostring(rawget(integrity, "nested_next_count"))
+            .. " nested_random="
+            .. tostring(rawget(integrity, "nested_random_count"))
+            .. " observer_status="
+            .. tostring(rawget(integrity, "observer_status_error_count"))
+            .. " span_overflow="
+            .. tostring(rawget(integrity, "span_overflow_count"))
+            .. " candidate_overflow="
+            .. tostring(rawget(integrity, "candidate_overflow_count"))
+            .. " invalid_candidate="
+            .. tostring(rawget(integrity, "invalid_candidate_count"))
+            .. " input_snapshot="
+            .. tostring(rawget(integrity, "input_snapshot_error_count"))
+            .. " random_install="
+            .. tostring(rawget(integrity, "random_install_error_count"))
+            .. " candidate_mismatch="
+            .. tostring(rawget(integrity, "candidate_count_mismatch_count"))
+            .. " active_depth=" .. tostring(rawget(integrity, "active_depth"))
+    end
+    local scalar_fields = {
+        "num_weak", "num_upgrades", "upgrade_streak", "num_spawns",
+        "upgrade_max", "used_bosses", "num_bosses",
+    }
+    local previous_exit = 0
+    for index, span in ipairs(ledger.spans) do
+        if type(span) ~= "table"
+            or rawget(span, "span_id") ~= index
+            or rawget(span, "name") ~= "spawner_next_pawn"
+            or rawget(span, "detail") ~= "normal"
+            or rawget(span, "inputs_valid") ~= true
+            or type(rawget(span, "inputs")) ~= "table"
+            or type(rawget(span, "candidate_events")) ~= "table"
+            or #span.candidate_events ~= 1
+            or type(rawget(span, "entry_count")) ~= "number"
+            or span.entry_count ~= math.floor(span.entry_count)
+            or type(rawget(span, "exit_count")) ~= "number"
+            or span.exit_count ~= math.floor(span.exit_count)
+            or span.entry_count < previous_exit
+            or span.entry_count < 0
+            or span.exit_count - span.entry_count < 3
+            or span.exit_count - span.entry_count > 4
+            or span.exit_count > raw_record_count
+            or type(rawget(span, "selected_pawn")) ~= "string"
+            or string.len(span.selected_pawn) < 2
+            or string.len(span.selected_pawn) > 100
+            or type(rawget(span, "selected_max_level")) ~= "number"
+            or span.selected_max_level ~= math.floor(span.selected_max_level)
+            or span.selected_max_level < 1 or span.selected_max_level > 2
+            or type(rawget(span, "boss_available")) ~= "boolean"
+            or rawget(span, "random_wrapper_restored") ~= true then
+            return nil, "spawn replay ledger contains an invalid span"
+        end
+        for _, field in ipairs(scalar_fields) do
+            local value = rawget(span.inputs, field)
+            if value ~= false and (type(value) ~= "number"
+                or value ~= math.floor(value)) then
+                return nil, "spawn replay ledger contains invalid scalar inputs"
+            end
+        end
+        for _, field in ipairs({"curr_weak_ratio", "curr_upgrade_ratio"}) do
+            local ratio = rawget(span.inputs, field)
+            if type(ratio) ~= "table"
+                or type(rawget(ratio, "present")) ~= "boolean"
+                or (rawget(ratio, "numerator") ~= false
+                    and (type(rawget(ratio, "numerator")) ~= "number"
+                        or ratio.numerator ~= math.floor(ratio.numerator)))
+                or (rawget(ratio, "denominator") ~= false
+                    and (type(rawget(ratio, "denominator")) ~= "number"
+                        or ratio.denominator ~= math.floor(ratio.denominator))) then
+                return nil, "spawn replay ledger contains invalid ratio inputs"
+            end
+        end
+        local event = span.candidate_events[1]
+        if type(event) ~= "table"
+            or rawget(event, "event_id") ~= 1
+            or rawget(event, "detail") ~= "normal"
+            or rawget(event, "candidates_valid") ~= true
+            or type(rawget(event, "entry_count")) ~= "number"
+            or event.entry_count ~= math.floor(event.entry_count)
+            or type(rawget(event, "exit_count")) ~= "number"
+            or event.exit_count ~= event.entry_count + 1
+            or event.entry_count < span.entry_count
+            or event.exit_count > span.exit_count
+            or type(rawget(event, "list_length")) ~= "number"
+            or event.list_length ~= math.floor(event.list_length)
+            or event.list_length < 1 or event.list_length > 64
+            or type(rawget(event, "available")) ~= "table"
+            or #event.available ~= event.list_length
+            or type(rawget(event, "selected_base")) ~= "string"
+            or string.sub(span.selected_pawn, 1, string.len(event.selected_base))
+                ~= event.selected_base then
+            return nil, "spawn replay ledger contains an invalid candidate event"
+        end
+        local selected_found = false
+        for candidate_index, candidate in ipairs(event.available) do
+            if candidate_index > event.list_length
+                or type(candidate) ~= "string"
+                or string.len(candidate) < 1
+                or string.len(candidate) > 96 then
+                return nil, "spawn replay ledger contains an invalid candidate"
+            end
+            if candidate == event.selected_base then selected_found = true end
+        end
+        if not selected_found then
+            return nil, "spawn replay selected base is absent from candidates"
+        end
+        previous_exit = span.exit_count
+    end
+    return true
+end
+
 local function start_observatory_native_rng_with_spawn_span(capture_id)
     local command_name = "OBS_NATIVE_RNG_SEED_AND_ARM_SPAWN_SPAN"
     if not valid_observatory_capture_id(capture_id)
@@ -3784,6 +4023,129 @@ local function start_observatory_native_rng_with_spawn_span(capture_id)
     _observatory_native_gameflow = gameflow
     return command_name .. " capture=" .. capture_id
         .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
+end
+
+local function start_observatory_native_rng_with_spawn_replay(capture_id)
+    local command_name = "OBS_NATIVE_RNG_ARM_SPAWN_REPLAY"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if active_ok and active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if _observatory_native_rng_module ~= nil
+        or _observatory_spawn_span_controller ~= nil
+        or _observatory_spawn_replay_controller ~= nil then
+        return nil, "native RNG spawn-replay observer is already consumed"
+    end
+    if observatory_path_exists(NATIVE_RNG_SNAPSHOT_FILE)
+        or observatory_path_exists(NATIVE_RNG_SNAPSHOT_TMP)
+        or observatory_path_exists(SPAWN_REPLAY_LEDGER_FILE)
+        or observatory_path_exists(SPAWN_REPLAY_LEDGER_TMP) then
+        return nil, "native RNG spawn-replay output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    local observer, observer_error = load_observatory_native_rng_module()
+    if not observer then return nil, tostring(observer_error) end
+    local controller, controller_error =
+        load_observatory_spawn_replay_controller(observer, capture_id)
+    if not controller then return nil, tostring(controller_error) end
+
+    _observatory_native_rng_module = observer
+    _observatory_native_rng_capture_id = capture_id
+    local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+    if not arm_ok or armed ~= true then
+        pcall(rawget(observer, "finish"))
+        return nil, "native observer arm failed: " .. tostring(armed)
+    end
+    local activate_ok, activated = pcall(
+        rawget(controller, "activate"), controller
+    )
+    if not activate_ok or activated ~= true then
+        pcall(rawget(controller, "abort"), controller)
+        pcall(rawget(observer, "finish"))
+        return nil, "spawn replay activation failed: " .. tostring(activated)
+    end
+    local status_ok, status = pcall(rawget(observer, "status"))
+    if not status_ok or type(status) ~= "table"
+        or rawget(status, "state") ~= "capturing"
+        or rawget(status, "patch_installed") ~= true then
+        pcall(rawget(controller, "abort"), controller)
+        pcall(rawget(observer, "finish"))
+        return nil, "post-activation observer status mismatch"
+    end
+    _observatory_spawn_replay_controller = controller
+    _observatory_native_gameflow = gameflow
+    return command_name .. " capture=" .. capture_id
+end
+
+local function prepare_observatory_spawn_replay_control(capture_id)
+    local command_name = "OBS_SPAWN_REPLAY_CONTROL"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if active_ok and active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if _observatory_native_rng_module ~= nil
+        or _observatory_spawn_span_controller ~= nil
+        or _observatory_spawn_replay_controller ~= nil then
+        return nil, "native RNG observer is already consumed"
+    end
+    if observatory_path_exists(NATIVE_RNG_SNAPSHOT_FILE)
+        or observatory_path_exists(NATIVE_RNG_SNAPSHOT_TMP)
+        or observatory_path_exists(SPAWN_REPLAY_LEDGER_FILE)
+        or observatory_path_exists(SPAWN_REPLAY_LEDGER_TMP) then
+        return nil, "spawn replay control output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    local observer, observer_error = load_observatory_native_rng_module()
+    if not observer then return nil, tostring(observer_error) end
+    local controller, controller_error =
+        load_observatory_spawn_replay_controller(observer, capture_id)
+    if not controller then return nil, tostring(controller_error) end
+    -- Loading and constructing both content-addressed modules is the dormant
+    -- control. Neither arm() nor activate() is called, and no output is made.
+    _observatory_native_gameflow = gameflow
+    return command_name .. " capture=" .. capture_id .. " dormant=true"
 end
 
 local function validate_observatory_selected_queue_snapshot(snapshot, capture_id)
@@ -5182,6 +5544,40 @@ local function execute_command(cmd_str)
         write_ack("OK " .. started)
         return
 
+    elseif cmd == "OBS_SPAWN_REPLAY_CONTROL" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SPAWN_REPLAY_CONTROL requires one capture ID"
+            )
+            return
+        end
+        local prepared, prepare_error =
+            prepare_observatory_spawn_replay_control(parts[2])
+        if not prepared then
+            write_ack("ERROR: OBS_SPAWN_REPLAY_CONTROL "
+                .. tostring(prepare_error))
+            return
+        end
+        write_ack("OK " .. prepared)
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_ARM_SPAWN_REPLAY" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_NATIVE_RNG_ARM_SPAWN_REPLAY requires one capture ID"
+            )
+            return
+        end
+        local started, start_error =
+            start_observatory_native_rng_with_spawn_replay(parts[2])
+        if not started then
+            write_ack("ERROR: OBS_NATIVE_RNG_ARM_SPAWN_REPLAY "
+                .. tostring(start_error))
+            return
+        end
+        write_ack("OK " .. started)
+        return
+
     elseif cmd == "OBS_NATIVE_RNG_SEED_AND_ARM" then
         -- Exact-hook trials must not yield a BaseUpdate between fixing the
         -- native seed and installing the observer. Load and validate both
@@ -5379,6 +5775,7 @@ local function execute_command(cmd_str)
             return
         end
         local span_ledger = nil
+        local replay_ledger = nil
         if _observatory_spawn_span_controller ~= nil then
             local checkpoint_ok, checkpoint_value = pcall(
                 rawget(_observatory_spawn_span_controller, "checkpoint"),
@@ -5395,6 +5792,25 @@ local function execute_command(cmd_str)
                 pcall(
                     rawget(_observatory_spawn_span_controller, "abort"),
                     _observatory_spawn_span_controller
+                )
+            end
+        end
+        if _observatory_spawn_replay_controller ~= nil then
+            local checkpoint_ok, checkpoint_value = pcall(
+                rawget(_observatory_spawn_replay_controller, "checkpoint"),
+                _observatory_spawn_replay_controller
+            )
+            if checkpoint_ok and type(checkpoint_value) == "table" then
+                replay_ledger = checkpoint_value
+                rawset(
+                    replay_ledger,
+                    "controller_sha256",
+                    SPAWN_REPLAY_CONTROLLER_SHA256
+                )
+            else
+                pcall(
+                    rawget(_observatory_spawn_replay_controller, "abort"),
+                    _observatory_spawn_replay_controller
                 )
             end
         end
@@ -5428,6 +5844,19 @@ local function execute_command(cmd_str)
                 return
             end
         end
+        if _observatory_spawn_replay_controller ~= nil then
+            local ledger_valid, ledger_error =
+                validate_observatory_spawn_replay_ledger(
+                    replay_ledger,
+                    _observatory_native_rng_capture_id,
+                    rawget(snapshot.summary, "record_count")
+                )
+            if not ledger_valid then
+                write_ack("ERROR: OBS_NATIVE_RNG_FINISH "
+                    .. tostring(ledger_error))
+                return
+            end
+        end
         local wrote, write_error = write_observatory_create_only_json(
             NATIVE_RNG_SNAPSHOT_FILE,
             NATIVE_RNG_SNAPSHOT_TMP,
@@ -5449,6 +5878,20 @@ local function execute_command(cmd_str)
                 )
             if not ledger_wrote then
                 write_ack("ERROR: OBS_NATIVE_RNG_FINISH span ledger output failed: "
+                    .. tostring(ledger_write_error))
+                return
+            end
+        end
+        if replay_ledger ~= nil then
+            local ledger_wrote, ledger_write_error =
+                write_observatory_create_only_json(
+                    SPAWN_REPLAY_LEDGER_FILE,
+                    SPAWN_REPLAY_LEDGER_TMP,
+                    replay_ledger,
+                    256 * 1024
+                )
+            if not ledger_wrote then
+                write_ack("ERROR: OBS_NATIVE_RNG_FINISH replay ledger output failed: "
                     .. tostring(ledger_write_error))
                 return
             end

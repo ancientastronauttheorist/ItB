@@ -340,9 +340,11 @@ that selected it.
 - The mapped 24-byte selected record maps one-to-one to the immediate queue
   commit in three bounded `Firefly1` captures. Do cancellation, retarget,
   multi-weapon, or other pawn paths use additional commit shapes?
-- Three `Spawner:NextPawn` spans resolve the normal weak/pawn/upgrade draw order.
-  How can the pre-span CRT state, exact runtime available-array ordering, and
-  later spawn-coordinate scheduler be exported for replay?
+- Three `Spawner:NextPawn` replay captures now recover the observable pre-span
+  CRT state, preserve the exact runtime candidate order, and reproduce the
+  selected pawn. How can that capsule be delivered before the live call, and
+  where does the later spawn-coordinate scheduler consume RNG? A natural boss
+  branch also remains to be captured.
 
 These remaining questions are explicitly unresolved. The codec makes future
 answers comparable; it does not promote the diagnostic observers as generally

@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 from src.observatory.native_boundary_campaign import (  # noqa: E402
     NativeBoundaryCampaignError,
     build_selected_queue_campaign_receipt,
+    build_spawn_replay_campaign_receipt,
     build_spawn_span_campaign_receipt,
     publish_campaign_receipt,
 )
@@ -23,7 +24,7 @@ from src.observatory.native_boundary_campaign import (  # noqa: E402
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("kind", choices=("spawn", "selected"))
+    parser.add_argument("kind", choices=("spawn", "spawn_replay", "selected"))
     parser.add_argument("campaign_root", type=Path)
     parser.add_argument("--repository-root", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path)
@@ -33,11 +34,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        builder = (
-            build_spawn_span_campaign_receipt
-            if args.kind == "spawn"
-            else build_selected_queue_campaign_receipt
-        )
+        builders = {
+            "spawn": build_spawn_span_campaign_receipt,
+            "spawn_replay": build_spawn_replay_campaign_receipt,
+            "selected": build_selected_queue_campaign_receipt,
+        }
+        builder = builders[args.kind]
         value = builder(
             args.campaign_root,
             repository_root=args.repository_root,

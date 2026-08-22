@@ -31,6 +31,7 @@ from src.observatory.native_rng_turn import (  # noqa: E402
     NativeRngTurnBoundaryError,
 )
 from src.observatory.spawn_rng_attribution import analyze_spawn_rng  # noqa: E402
+from src.observatory.spawn_replay_ledger import analyze_spawn_replay  # noqa: E402
 from src.observatory.spawn_span_ledger import merge_spawn_span_ledger  # noqa: E402
 from src.observatory.trace_store import (  # noqa: E402
     TraceStoreError,
@@ -44,7 +45,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--pair-id", required=True)
     parser.add_argument(
         "--condition",
-        choices=["control", "exact_hook", "spawn_span"],
+        choices=[
+            "control",
+            "exact_hook",
+            "spawn_span",
+            "spawn_replay_control",
+            "spawn_replay",
+        ],
         required=True,
     )
     parser.add_argument("--capture-id", required=True)
@@ -74,6 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkpoint-output", type=Path)
     parser.add_argument("--spawn-controller", type=Path)
     parser.add_argument("--spawn-analysis-output", type=Path)
+    parser.add_argument("--spawn-replay-controller", type=Path)
+    parser.add_argument("--spawn-replay-output", type=Path)
     return parser
 
 
@@ -159,6 +168,14 @@ def _exact_inputs(
         ):
             if value is None:
                 missing.append(label)
+    if args.condition == "spawn_replay":
+        for label, value in (
+            ("outcome output", args.outcome_output),
+            ("spawn replay controller", args.spawn_replay_controller),
+            ("spawn replay output", args.spawn_replay_output),
+        ):
+            if value is None:
+                missing.append(label)
     if missing:
         raise ValueError(
             f"{args.condition} requires " + ", ".join(missing)
@@ -170,14 +187,20 @@ def _exact_inputs(
     return_map = load_json_object(args.rng_return_map, "RNG return map")
     restore_hashes = load_json_object(args.restore_hashes, "restore hashes")
     module_sha256 = stable_file_sha256(args.module)
+    if args.condition == "spawn_span":
+        controller_path = args.spawn_controller
+    elif args.condition == "spawn_replay":
+        controller_path = args.spawn_replay_controller
+    else:
+        controller_path = None
     controller_sha256 = (
-        stable_file_sha256(args.spawn_controller)
-        if args.condition == "spawn_span"
-        else None
+        stable_file_sha256(controller_path) if controller_path is not None else None
     )
     analysis_output = (
         _absolute_output(args.spawn_analysis_output, "spawn analysis output")
         if args.condition == "spawn_span"
+        else _absolute_output(args.spawn_replay_output, "spawn replay output")
+        if args.condition == "spawn_replay"
         else None
     )
     return (
@@ -223,7 +246,11 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         if args.outcome_output is not None
         else None
     )
-    exact_inputs = _exact_inputs(args) if args.condition != "control" else None
+    exact_inputs = (
+        _exact_inputs(args)
+        if args.condition in {"exact_hook", "spawn_span", "spawn_replay"}
+        else None
+    )
     boundary = NativeRngTurnBoundary(
         condition=args.condition,
         capture_id=args.capture_id,
@@ -271,7 +298,10 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
     checkpoint_summary = None
     checkpoint_error = ""
     spawn_analysis_summary = None
-    if args.condition != "control" and boundary.snapshot is not None:
+    if (
+        args.condition in {"exact_hook", "spawn_span", "spawn_replay"}
+        and boundary.snapshot is not None
+    ):
         assert exact_inputs is not None
         (
             receipt,
@@ -334,6 +364,31 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
                         "resolved_with_draws"
                     ],
                 }
+            elif args.condition == "spawn_replay":
+                if boundary.spawn_replay_ledger is None:
+                    raise NativeCheckpointError(
+                        "spawn replay ledger was not captured"
+                    )
+                assert controller_sha256 is not None
+                assert analysis_output is not None
+                analysis = analyze_spawn_replay(
+                    checkpoint,
+                    boundary.spawn_replay_ledger,
+                    expected_controller_sha256=controller_sha256,
+                    expected_identity=checkpoint["identity"],
+                    return_map=return_map,
+                    expected_restore_hashes=restore_hashes,
+                )
+                _write_create_only(analysis_output, analysis)
+                spawn_analysis_summary = {
+                    "path": str(analysis_output),
+                    "sha256": stable_file_sha256(analysis_output),
+                    "span_count": 1,
+                    "replay_verified": analysis["replay_verified"],
+                    "observable_pre_state_hex": analysis[
+                        "observable_pre_state_hex"
+                    ],
+                }
             _write_create_only(checkpoint_output, checkpoint)
             checkpoint_summary = {
                 "path": str(checkpoint_output),
@@ -358,7 +413,7 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         and auto_summary.get("desyncs_detected") == 0
         and boundary.state == "complete"
         and (
-            args.condition == "control"
+            args.condition in {"control", "spawn_replay_control"}
             or (
                 checkpoint_summary is not None
                 and checkpoint_summary["hook_bytes_restored"] is True
@@ -396,6 +451,8 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
     }
     if args.condition == "spawn_span":
         trial["spawn_analysis"] = spawn_analysis_summary
+    elif args.condition == "spawn_replay":
+        trial["spawn_replay"] = spawn_analysis_summary
     _write_create_only(trial_output, trial)
     trial["trial_output"] = {
         "path": str(trial_output),

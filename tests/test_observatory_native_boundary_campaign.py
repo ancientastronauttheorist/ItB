@@ -6,7 +6,9 @@ from pathlib import Path
 from src.observatory.native_boundary_campaign import (
     SELECTED_RECEIPT_KIND,
     SPAWN_RECEIPT_KIND,
+    SPAWN_REPLAY_RECEIPT_KIND,
     build_selected_queue_campaign_receipt,
+    build_spawn_replay_campaign_receipt,
     build_spawn_span_campaign_receipt,
 )
 
@@ -15,6 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CAPTURES = ROOT / "data" / "observatory" / "captures"
 SPAWN_ROOT = CAPTURES / (
     "windows_build_13725832_owner_local_modified_20260822_spawn_span"
+)
+SPAWN_REPLAY_ROOT = CAPTURES / (
+    "windows_build_13725832_owner_local_modified_20260822_spawn_replay"
 )
 SELECTED_ROOT = CAPTURES / (
     "windows_build_13725832_owner_local_modified_20260822_selected_queue"
@@ -50,6 +55,47 @@ def test_committed_spawn_span_campaign_is_complete_and_source_bounded():
         == {
             "native_hook_bytes": True,
             "spawn_wrapper": True,
+            "restore_conflict": False,
+        }
+        for pair in receipt["pairs"]
+    )
+
+
+def test_committed_spawn_replay_campaign_recovers_exact_native_choices():
+    receipt = build_spawn_replay_campaign_receipt(
+        SPAWN_REPLAY_ROOT,
+        repository_root=ROOT,
+    )
+
+    assert receipt["kind"] == SPAWN_REPLAY_RECEIPT_KIND
+    assert receipt["campaign"]["pair_count"] == 3
+    assert receipt["results"]["draw_count_per_replay"] == [3, 3, 3]
+    assert receipt["results"]["selected_pawns"] == [
+        "Firefly2",
+        "Scarab2",
+        "Firefly2",
+    ]
+    assert receipt["results"]["observable_pre_states"] == [
+        "0x14c88732",
+        "0x14ca8e21",
+        "0x14cf8cc9",
+    ]
+    assert receipt["results"]["whole_game_outcomes"] == [
+        "matched",
+        "mismatched",
+        "mismatched",
+    ]
+    assert [pair["replay"]["native_results"] for pair in receipt["pairs"]] == [
+        [6988, 26456, 12828],
+        [14826, 21631, 24783],
+        [2424, 29057, 30541],
+    ]
+    assert all(
+        pair["restoration"]
+        == {
+            "native_hook_bytes": True,
+            "nextpawn_wrapper": True,
+            "random_element_wrapper": True,
             "restore_conflict": False,
         }
         for pair in receipt["pairs"]
@@ -101,6 +147,12 @@ def test_published_receipts_rebuild_exactly_when_present():
             CAPTURES
             / "windows_build_13725832_owner_local_modified_20260822_spawn_span_receipt.json",
             build_spawn_span_campaign_receipt,
+        ),
+        (
+            SPAWN_REPLAY_ROOT,
+            CAPTURES
+            / "windows_build_13725832_owner_local_modified_20260822_spawn_replay_receipt.json",
+            build_spawn_replay_campaign_receipt,
         ),
         (
             SELECTED_ROOT,

@@ -61,6 +61,12 @@ SPAWN_SPAN_LEDGER_FILE = (
 SPAWN_SPAN_LEDGER_TMP = (
     BRIDGE_DIR / "itb_observatory_spawn_span_ledger.json.tmp"
 )
+SPAWN_REPLAY_LEDGER_FILE = (
+    BRIDGE_DIR / "itb_observatory_spawn_replay_ledger.json"
+)
+SPAWN_REPLAY_LEDGER_TMP = (
+    BRIDGE_DIR / "itb_observatory_spawn_replay_ledger.json.tmp"
+)
 SELECTED_QUEUE_SNAPSHOT_FILE = (
     BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json"
 )
@@ -467,6 +473,82 @@ def seed_and_arm_observatory_native_rng_spawn_span(
     return ack
 
 
+def arm_observatory_native_rng_spawn_replay(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Atomically arm native RNG observation and exact spawn replay capture."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("native RNG spawn-replay capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "native RNG spawn-replay observer requires an unpaused mission heartbeat"
+        )
+    outputs = (
+        NATIVE_RNG_SNAPSHOT_FILE,
+        NATIVE_RNG_SNAPSHOT_TMP,
+        SPAWN_REPLAY_LEDGER_FILE,
+        SPAWN_REPLAY_LEDGER_TMP,
+    )
+    if any(path.exists() for path in outputs):
+        raise BridgeError("native RNG spawn-replay output already exists")
+    command = f"OBS_NATIVE_RNG_ARM_SPAWN_REPLAY {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = f"OK OBS_NATIVE_RNG_ARM_SPAWN_REPLAY capture={capture_id}"
+    if ack != expected:
+        raise BridgeError(f"unexpected native RNG spawn-replay arm ACK: {ack}")
+    return ack
+
+
+def prepare_observatory_spawn_replay_control(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Load replay artifacts inertly and prepare native End Turn gameflow."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-replay control capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "spawn-replay control requires an unpaused mission heartbeat"
+        )
+    outputs = (
+        NATIVE_RNG_SNAPSHOT_FILE,
+        NATIVE_RNG_SNAPSHOT_TMP,
+        SPAWN_REPLAY_LEDGER_FILE,
+        SPAWN_REPLAY_LEDGER_TMP,
+    )
+    if any(path.exists() for path in outputs):
+        raise BridgeError("spawn-replay control output already exists")
+    command = f"OBS_SPAWN_REPLAY_CONTROL {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = (
+        f"OK OBS_SPAWN_REPLAY_CONTROL capture={capture_id} dormant=true"
+    )
+    if ack != expected:
+        raise BridgeError(f"unexpected spawn-replay control ACK: {ack}")
+    return ack
+
+
 def status_observatory_native_rng(*, timeout: float = 10.0) -> tuple[str, dict]:
     """Read the fixed native observer's bounded status table."""
     write_command("OBS_NATIVE_RNG_STATUS")
@@ -583,6 +665,47 @@ def finish_observatory_native_rng_spawn_span(
             raise BridgeError("spawn span ledger does not match its native snapshot")
         return ack, snapshot, ledger
     raise TimeoutError(f"Fresh spawn span ledger timeout after {timeout:.0f}s")
+
+
+def finish_observatory_native_rng_spawn_replay(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict, dict]:
+    """Restore both replay boundaries and retrieve their fresh outputs."""
+    before = _file_generation(SPAWN_REPLAY_LEDGER_FILE)
+    ack, snapshot = finish_observatory_native_rng(capture_id, timeout=timeout)
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SPAWN_REPLAY_LEDGER_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            ledger = json.loads(
+                SPAWN_REPLAY_LEDGER_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"spawn replay ledger is not valid JSON: {exc}"
+            ) from exc
+        if (
+            not isinstance(ledger, dict)
+            or ledger.get("schema_version") != 1
+            or ledger.get("kind") != "spawn_rng_replay_ledger"
+            or ledger.get("capture_id") != capture_id
+            or ledger.get("write_mode") != "create_only"
+            or ledger.get("raw_record_count")
+                != snapshot.get("summary", {}).get("record_count")
+            or ledger.get("integrity", {}).get("complete") is not True
+        ):
+            raise BridgeError(
+                "spawn replay ledger does not match its native snapshot"
+            )
+        return ack, snapshot, ledger
+    raise TimeoutError(
+        f"Fresh spawn replay ledger timeout after {timeout:.0f}s"
+    )
 
 
 def run_observatory_selected_queue_trial(

@@ -134,6 +134,41 @@ def test_native_rng_spawn_span_arm_is_one_fixed_command(
     ]
 
 
+@pytest.mark.parametrize(
+    ("function", "ack", "command"),
+    [
+        (
+            protocol.arm_observatory_native_rng_spawn_replay,
+            "OK OBS_NATIVE_RNG_ARM_SPAWN_REPLAY capture=native-pair-01",
+            "OBS_NATIVE_RNG_ARM_SPAWN_REPLAY native-pair-01",
+        ),
+        (
+            protocol.prepare_observatory_spawn_replay_control,
+            "OK OBS_SPAWN_REPLAY_CONTROL capture=native-pair-01 dormant=true",
+            "OBS_SPAWN_REPLAY_CONTROL native-pair-01",
+        ),
+    ],
+)
+def test_spawn_replay_arm_and_control_are_fixed_unseeded_commands(
+    function, ack, command, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    for name in (
+        "NATIVE_RNG_SNAPSHOT_FILE",
+        "NATIVE_RNG_SNAPSHOT_TMP",
+        "SPAWN_REPLAY_LEDGER_FILE",
+        "SPAWN_REPLAY_LEDGER_TMP",
+    ):
+        monkeypatch.setattr(protocol, name, tmp_path / name.lower())
+    monkeypatch.setattr(protocol, "is_bridge_alive", lambda **_kwargs: True)
+    commands: list[str] = []
+    monkeypatch.setattr(protocol, "write_command", commands.append)
+    monkeypatch.setattr(protocol, "wait_for_ack", lambda **_kwargs: ack)
+
+    assert function("native-pair-01") == ack
+    assert commands == [command]
+    assert "SEED" not in command
+
+
 @pytest.mark.parametrize("capture_id", ["", "Upper", "a/b", "a" * 97])
 def test_native_rng_arm_rejects_noncanonical_capture_ids(capture_id: str):
     with pytest.raises(protocol.BridgeError, match="capture ID"):
@@ -214,6 +249,38 @@ def test_spawn_span_finish_requires_matching_fresh_ledger(
 
     monkeypatch.setattr(protocol, "finish_observatory_native_rng", finish)
     ack, observed, ledger = protocol.finish_observatory_native_rng_spawn_span(
+        "native-pair-01", timeout=0.2
+    )
+    assert ack == "FINISH"
+    assert observed is snapshot
+    assert ledger["raw_record_count"] == 3
+
+
+def test_spawn_replay_finish_requires_matching_fresh_ledger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    ledger_path = tmp_path / "replay.json"
+    monkeypatch.setattr(protocol, "SPAWN_REPLAY_LEDGER_FILE", ledger_path)
+    snapshot = _snapshot("native-pair-01", record_count=3)
+
+    def finish(capture_id, **_kwargs):
+        ledger_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "kind": "spawn_rng_replay_ledger",
+                    "capture_id": capture_id,
+                    "write_mode": "create_only",
+                    "raw_record_count": 3,
+                    "integrity": {"complete": True},
+                }
+            ),
+            encoding="utf-8",
+        )
+        return "FINISH", snapshot
+
+    monkeypatch.setattr(protocol, "finish_observatory_native_rng", finish)
+    ack, observed, ledger = protocol.finish_observatory_native_rng_spawn_replay(
         "native-pair-01", timeout=0.2
     )
     assert ack == "FINISH"

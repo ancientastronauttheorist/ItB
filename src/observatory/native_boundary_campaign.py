@@ -11,7 +11,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.observatory.native_checkpoint import validate_native_checkpoint
+from src.observatory.msvc_rng_replay import (
+    recover_observable_pre_state,
+    recover_raw_pre_states,
+    replay_results,
+)
+from src.observatory.native_checkpoint import (
+    validate_native_checkpoint,
+    validate_return_map_binding,
+)
 from src.observatory.rng_trial_outcome import compare_rng_trial_outcomes
 from src.observatory.selected_queue_hw import correlate_selected_queue_snapshot
 from src.observatory.spawn_rng_attribution import analyze_spawn_rng
@@ -19,9 +27,13 @@ from src.observatory.spawn_rng_attribution import analyze_spawn_rng
 
 SCHEMA_VERSION = 1
 SPAWN_RECEIPT_KIND = "observatory_spawn_span_campaign_receipt"
+SPAWN_REPLAY_RECEIPT_KIND = "observatory_spawn_replay_campaign_receipt"
 SELECTED_RECEIPT_KIND = "observatory_selected_queue_campaign_receipt"
 FIXED_SEED = 324_508_639
 CONTROLLER_SHA256 = "4923ee3b08c802824f17963dc625015d2c91e6e467149b72bba218c49830935d"
+SPAWN_REPLAY_CONTROLLER_SHA256 = (
+    "c411c5e1d84cfae079b6b5f6b69b9bc022d0f0a9a87af5bf877ca1c1badb699f"
+)
 SELECTED_MODULE_SHA256 = "2cf202cc2e58c33651864ed8939b8491cc082048c300d82b63ff3cfbd76a5676"
 SAVE_TREE_SHA256 = "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5"
 
@@ -42,6 +54,13 @@ SELECTED_RECEIPT = Path(
     "windows_build_13725832_31fe35265598_selected_queue_hw_observer_receipt.json"
 )
 SPAWNER_SOURCE_SHA256 = "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
+RANDOM_ELEMENT_SOURCE_SHA256 = (
+    "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+)
+SPAWN_REPLAY_CONTROLLER_RECEIPT = Path(
+    "data/observatory/native/"
+    "windows_build_13725832_31fe35265598_spawn_replay_controller_receipt.json"
+)
 
 SPAWN_PAIR_SPECS = {
     "pair001": {
@@ -64,6 +83,45 @@ SPAWN_PAIR_SPECS = {
         "selected_pawn": "Scarab2",
         "draw_results": [6793, 13804, 4449],
         "difference_paths": [],
+    },
+}
+
+SPAWN_REPLAY_PAIR_SPECS = {
+    "pair001": {
+        "order": "control_then_spawn_replay",
+        "capture_ids": (
+            "spawn-replay-p001-control-r3",
+            "spawn-replay-p001-replay-r3",
+        ),
+        "selected_pawn": "Firefly2",
+        "selected_base": "Firefly",
+        "draw_results": [6988, 26456, 12828],
+        "observable_pre_state_hex": "0x14c88732",
+        "difference_paths": [],
+    },
+    "pair002": {
+        "order": "spawn_replay_then_control",
+        "capture_ids": (
+            "spawn-replay-p002-control",
+            "spawn-replay-p002-replay",
+        ),
+        "selected_pawn": "Scarab2",
+        "selected_base": "Scarab",
+        "draw_results": [14826, 21631, 24783],
+        "observable_pre_state_hex": "0x14ca8e21",
+        "difference_paths": ["/spawning_tiles/0/0", "/spawning_tiles/0/1"],
+    },
+    "pair003": {
+        "order": "control_then_spawn_replay",
+        "capture_ids": (
+            "spawn-replay-p003-control",
+            "spawn-replay-p003-replay",
+        ),
+        "selected_pawn": "Firefly2",
+        "selected_base": "Firefly",
+        "draw_results": [2424, 29057, 30541],
+        "observable_pre_state_hex": "0x14cf8cc9",
+        "difference_paths": ["/spawning_tiles/0/0", "/spawning_tiles/0/1"],
     },
 }
 
@@ -145,6 +203,17 @@ def _mapping(value: Any, label: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise NativeBoundaryCampaignError(f"{label} must be an object")
     return value
+
+
+def _exact_fields(
+    value: Mapping[str, Any], names: set[str], label: str
+) -> None:
+    actual = set(value)
+    if actual != names:
+        raise NativeBoundaryCampaignError(
+            f"{label} fields differ; missing={sorted(names - actual)}, "
+            f"unknown={sorted(actual - names)}"
+        )
 
 
 def _artifact(path: Path, repository_root: Path) -> dict[str, Any]:
@@ -471,6 +540,528 @@ def build_spawn_span_campaign_receipt(
         },
         "supporting_artifacts": {
             "observer_build_receipt": _artifact(repo / OBSERVER_RECEIPT, repo),
+            "return_map": _artifact(repo / RETURN_MAP, repo),
+            "restore_hashes": _artifact(repo / RESTORE_HASHES, repo),
+        },
+    }
+
+
+def _validate_spawn_replay_trial(
+    trial: Mapping[str, Any],
+    *,
+    pair_id: str,
+    condition: str,
+    capture_id: str,
+    outcome_path: Path,
+    checkpoint_path: Path | None = None,
+    replay_path: Path | None = None,
+) -> None:
+    if (
+        trial.get("schema_version") != 1
+        or trial.get("kind") != "observatory_native_rng_turn_trial"
+        or trial.get("pair_id") != pair_id
+        or trial.get("condition") != condition
+        or trial.get("capture_id") != capture_id
+        or trial.get("status") != "complete"
+        or trial.get("valid_trial") is not True
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_id} {condition} trial differs")
+    errors = _mapping(trial.get("errors"), f"{pair_id} {condition} errors")
+    if any(errors.values()):
+        raise NativeBoundaryCampaignError(f"{pair_id} {condition} trial has errors")
+    auto = _mapping(trial.get("auto_turn"), f"{pair_id} {condition} auto turn")
+    if (
+        auto.get("status") != "ok"
+        or auto.get("actions_completed") != 3
+        or auto.get("desyncs_detected") != 0
+        or auto.get("re_solves") != 0
+        or auto.get("post_phase") != "combat_player"
+        or auto.get("grid_power") != "4/7"
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_id} {condition} turn was not clean")
+    outcome = _mapping(trial.get("outcome"), f"{pair_id} {condition} outcome")
+    if outcome.get("sha256") != _file_sha256(outcome_path):
+        raise NativeBoundaryCampaignError(f"{pair_id} {condition} outcome hash differs")
+    boundary = _mapping(trial.get("boundary"), f"{pair_id} {condition} boundary")
+    if (
+        boundary.get("condition") != condition
+        or boundary.get("capture_id") != capture_id
+        or boundary.get("state") != "complete"
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_id} {condition} boundary differs")
+
+    if condition == "spawn_replay_control":
+        if (
+            trial.get("checkpoint") is not None
+            or "spawn_replay" in trial
+            or boundary.get("finish_ack") is not None
+            or boundary.get("arm_ack")
+            != f"OK OBS_SPAWN_REPLAY_CONTROL capture={capture_id} dormant=true"
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_id} control published diagnostic evidence"
+            )
+        return
+
+    if checkpoint_path is None or replay_path is None:
+        raise NativeBoundaryCampaignError(f"{pair_id} replay paths are missing")
+    if (
+        boundary.get("hook_bytes_restored") is not True
+        or boundary.get("spawn_replay_span_count") != 1
+        or boundary.get("spawn_replay_wrappers_restored") is not True
+        or type(boundary.get("record_count")) is not int
+        or boundary["record_count"] <= 0
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_id} replay boundary was not restored")
+    checkpoint = _mapping(trial.get("checkpoint"), f"{pair_id} checkpoint")
+    replay = _mapping(trial.get("spawn_replay"), f"{pair_id} replay capsule")
+    if (
+        checkpoint.get("sha256") != _file_sha256(checkpoint_path)
+        or checkpoint.get("diagnostic_complete") is not True
+        or checkpoint.get("hook_bytes_restored") is not True
+        or checkpoint.get("record_count") != boundary["record_count"]
+        or replay.get("sha256") != _file_sha256(replay_path)
+        or replay.get("replay_verified") is not True
+        or replay.get("span_count") != 1
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_id} replay artifact hash differs")
+
+
+def _validate_spawn_replay_capsule(
+    capsule: Mapping[str, Any],
+    checkpoint: Mapping[str, Any],
+    *,
+    capture_id: str,
+    expected_identity: Mapping[str, Any],
+    return_map: Mapping[str, Any],
+    expected_restore_hashes: Mapping[str, Any],
+) -> dict[str, Any]:
+    _exact_fields(
+        capsule,
+        {
+            "schema_version",
+            "analysis_kind",
+            "capture_id",
+            "build_identity",
+            "source_identity",
+            "controller_sha256",
+            "span_id",
+            "thread_slot",
+            "raw_record_range",
+            "native_results",
+            "raw_pre_state_candidates",
+            "observable_pre_state",
+            "observable_pre_state_hex",
+            "raw_state_hidden_bit_ambiguous",
+            "future_observable_stream_exact",
+            "weak_branch",
+            "candidate_choice",
+            "upgrade_branch",
+            "boss_branch",
+            "selected_pawn",
+            "replay_verified",
+        },
+        f"{capture_id} replay capsule",
+    )
+    if (
+        capsule.get("schema_version") != 1
+        or capsule.get("analysis_kind") != "spawn_rng_replay_capsule"
+        or capsule.get("capture_id") != capture_id
+        or capsule.get("build_identity") != expected_identity
+        or capsule.get("controller_sha256") != SPAWN_REPLAY_CONTROLLER_SHA256
+        or capsule.get("span_id") != 1
+        or capsule.get("raw_state_hidden_bit_ambiguous") is not True
+        or capsule.get("future_observable_stream_exact") is not True
+        or capsule.get("replay_verified") is not True
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} replay capsule identity differs")
+    source = _mapping(capsule.get("source_identity"), f"{capture_id} source identity")
+    expected_source = {
+        "spawner_expected_sha256": SPAWNER_SOURCE_SHA256,
+        "spawner_expected_source_suffix": "scripts/spawner_backend.lua",
+        "spawner_expected_linedefined": 174,
+        "random_element_expected_sha256": RANDOM_ELEMENT_SOURCE_SHA256,
+        "random_element_expected_source_suffix": "scripts/global.lua",
+        "random_element_expected_linedefined": 560,
+        "source_locations_verified": True,
+    }
+    if any(source.get(field) != value for field, value in expected_source.items()):
+        raise NativeBoundaryCampaignError(f"{capture_id} replay source differs")
+    for prefix, suffix, line in (
+        ("spawner", "scripts/spawner_backend.lua", 174),
+        ("random_element", "scripts/global.lua", 560),
+    ):
+        runtime_source = source.get(f"{prefix}_runtime_source")
+        if (
+            type(runtime_source) is not str
+            or "\\" in runtime_source
+            or not runtime_source.endswith(suffix)
+            or source.get(f"{prefix}_runtime_linedefined") != line
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{capture_id} runtime source differs for {prefix}"
+            )
+
+    verification = validate_native_checkpoint(
+        checkpoint,
+        expected_identity=expected_identity,
+        return_map=return_map,
+        expected_restore_hashes=expected_restore_hashes,
+    )
+    if not verification["diagnostic_complete"]:
+        raise NativeBoundaryCampaignError(f"{capture_id} checkpoint is incomplete")
+    callers = validate_return_map_binding(checkpoint, return_map)
+    random_int = callers.get(21)
+    if (
+        not isinstance(random_int, Mapping)
+        or random_int.get("status") != "reviewed_direct_call"
+        or random_int.get("source_region") != "random_int_1"
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} random_int caller is unbound")
+    records = checkpoint["records"]
+    raw_range = capsule.get("raw_record_range")
+    if (
+        not isinstance(raw_range, list)
+        or len(raw_range) != 2
+        or any(type(value) is not int for value in raw_range)
+        or not 0 <= raw_range[0] < raw_range[1] <= len(records)
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} raw record range is invalid")
+    enclosed = records[raw_range[0] : raw_range[1]]
+    if (
+        len(enclosed) not in {3, 4}
+        or [record["caller_id"] for record in enclosed]
+        != [21, 21, 21] + ([25] if len(enclosed) == 4 else [])
+        or any(record["kind"] != "rng_core" for record in enclosed)
+        or any(record["thread_slot"] != capsule.get("thread_slot") for record in enclosed)
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} enclosed RNG records differ")
+    observed = [record["result"] for record in enclosed]
+    if capsule.get("native_results") != observed:
+        raise NativeBoundaryCampaignError(f"{capture_id} native result join differs")
+    raw_states = recover_raw_pre_states(observed)
+    observable_state = recover_observable_pre_state(observed)
+    if (
+        capsule.get("raw_pre_state_candidates")
+        != [f"0x{state:08x}" for state in raw_states]
+        or capsule.get("observable_pre_state") != observable_state
+        or capsule.get("observable_pre_state_hex") != f"0x{observable_state:08x}"
+        or list(replay_results(observable_state, len(observed))) != observed
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} recovered RNG state differs")
+
+    weak = _mapping(capsule.get("weak_branch"), f"{capture_id} weak branch")
+    candidate = _mapping(
+        capsule.get("candidate_choice"), f"{capture_id} candidate choice"
+    )
+    upgrade = _mapping(capsule.get("upgrade_branch"), f"{capture_id} upgrade branch")
+    boss = _mapping(capsule.get("boss_branch"), f"{capture_id} boss branch")
+    for branch, result, label in (
+        (weak, observed[0], "weak"),
+        (candidate, observed[1], "candidate"),
+        (upgrade, observed[2], "upgrade"),
+    ):
+        if branch.get("raw_result") != result:
+            raise NativeBoundaryCampaignError(
+                f"{capture_id} {label} branch result differs"
+            )
+    weak_denominator = weak.get("denominator")
+    weak_numerator = weak.get("numerator")
+    if (
+        type(weak_denominator) is not int
+        or weak_denominator <= 0
+        or type(weak_numerator) is not int
+        or weak.get("modulo_result") != observed[0] % weak_denominator
+        or weak.get("selected_weak")
+        is not (observed[0] % weak_denominator < weak_numerator)
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} weak replay differs")
+    available = candidate.get("available")
+    if (
+        not isinstance(available, list)
+        or not available
+        or any(type(value) is not str or not value for value in available)
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} candidate array is invalid")
+    candidate_index = observed[1] % len(available)
+    if (
+        candidate.get("selected_index_zero_based") != candidate_index
+        or candidate.get("selected_base") != available[candidate_index]
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} candidate replay differs")
+    upgrade_denominator = upgrade.get("denominator")
+    upgrade_numerator = upgrade.get("numerator")
+    if (
+        type(upgrade_denominator) is not int
+        or upgrade_denominator <= 0
+        or type(upgrade_numerator) is not int
+        or upgrade.get("modulo_result") != observed[2] % upgrade_denominator
+        or type(upgrade.get("break_streak")) is not bool
+        or type(upgrade.get("selected_max_level")) is not int
+        or upgrade.get("selected_upgrade")
+        is not (
+            observed[2] % upgrade_denominator < upgrade_numerator
+            and upgrade["selected_max_level"] != 1
+            and not upgrade["break_streak"]
+        )
+        or type(upgrade.get("living_upgrade_cap_forced_downgrade")) is not bool
+    ):
+        raise NativeBoundaryCampaignError(f"{capture_id} upgrade replay differs")
+    if len(observed) == 3:
+        if boss != {
+            "guard_reached": False,
+            "boss_available": True,
+            "chance": None,
+            "raw_result": None,
+            "selected_boss": False,
+        }:
+            raise NativeBoundaryCampaignError(f"{capture_id} boss guard differs")
+    else:
+        chance = boss.get("chance")
+        if (
+            boss.get("guard_reached") is not True
+            or type(chance) is not int
+            or chance <= 0
+            or boss.get("raw_result") != observed[3]
+            or boss.get("selected_boss") is not (observed[3] % chance == 0)
+        ):
+            raise NativeBoundaryCampaignError(f"{capture_id} boss replay differs")
+    selected_base = candidate["selected_base"]
+    selected_pawn = capsule.get("selected_pawn")
+    if type(selected_pawn) is not str or not selected_pawn.startswith(selected_base):
+        raise NativeBoundaryCampaignError(f"{capture_id} selected pawn differs")
+    expected_suffix = (
+        "Boss"
+        if boss["selected_boss"]
+        else "1"
+        if not upgrade["selected_upgrade"]
+        or upgrade["living_upgrade_cap_forced_downgrade"]
+        else "2"
+    )
+    if selected_pawn != selected_base + expected_suffix:
+        raise NativeBoundaryCampaignError(f"{capture_id} final pawn replay differs")
+    return {
+        "selected_pawn": selected_pawn,
+        "selected_base": selected_base,
+        "native_results": observed,
+        "observable_pre_state_hex": capsule["observable_pre_state_hex"],
+        "raw_record_range": raw_range,
+        "thread_slot": capsule["thread_slot"],
+    }
+
+
+def build_spawn_replay_campaign_receipt(
+    campaign_root: Path,
+    *,
+    repository_root: Path,
+) -> dict[str, Any]:
+    root = campaign_root.resolve()
+    repo = repository_root.resolve()
+    _exact_children(root, set(SPAWN_REPLAY_PAIR_SPECS), directories=True)
+    build = _mapping(_load(repo / OBSERVER_RECEIPT), "RNG observer receipt")
+    return_map = _mapping(_load(repo / RETURN_MAP), "RNG return map")
+    restore_hashes = _mapping(_load(repo / RESTORE_HASHES), "restore hashes")
+    controller_build = _mapping(
+        _load(repo / SPAWN_REPLAY_CONTROLLER_RECEIPT),
+        "spawn replay controller receipt",
+    )
+    controller_source = repo / "src/bridge/observatory_spawn_replay_controller.lua"
+    if (
+        controller_build.get("schema_version") != 1
+        or controller_build.get("kind")
+        != "observatory_spawn_replay_controller_build"
+        or controller_build.get("controller_version")
+        != "observatory-spawn-replay-controller/1"
+        or controller_build.get("controller_sha256")
+        != SPAWN_REPLAY_CONTROLLER_SHA256
+        or controller_build.get("module_sha256")
+        != SPAWN_REPLAY_CONTROLLER_SHA256
+        or _file_sha256(controller_source) != SPAWN_REPLAY_CONTROLLER_SHA256
+        or controller_build.get("spawner_source_sha256")
+        != SPAWNER_SOURCE_SHA256
+        or controller_build.get("global_source_sha256")
+        != RANDOM_ELEMENT_SOURCE_SHA256
+        or controller_build.get("loading_is_inert") is not True
+        or controller_build.get("write_mode") != "create_only"
+    ):
+        raise NativeBoundaryCampaignError("spawn replay controller receipt differs")
+    expected_identity = _expected_rng_identity(build)
+    pairs: list[dict[str, Any]] = []
+
+    for pair_name, spec in SPAWN_REPLAY_PAIR_SPECS.items():
+        pair_dir = root / pair_name
+        _exact_children(pair_dir, {"control", "replay"}, directories=True)
+        control_dir = pair_dir / "control"
+        replay_dir = pair_dir / "replay"
+        _exact_children(control_dir, {"trial.json", "outcome.json"}, directories=False)
+        _exact_children(
+            replay_dir,
+            {"trial.json", "outcome.json", "checkpoint.json", "spawn_replay.json"},
+            directories=False,
+        )
+        control_trial = _mapping(_load(control_dir / "trial.json"), "control trial")
+        replay_trial = _mapping(_load(replay_dir / "trial.json"), "replay trial")
+        control_capture, replay_capture = spec["capture_ids"]
+        pair_id = f"spawn-replay-pair-{pair_name[-3:]}"
+        _validate_spawn_replay_trial(
+            control_trial,
+            pair_id=pair_id,
+            condition="spawn_replay_control",
+            capture_id=control_capture,
+            outcome_path=control_dir / "outcome.json",
+        )
+        _validate_spawn_replay_trial(
+            replay_trial,
+            pair_id=pair_id,
+            condition="spawn_replay",
+            capture_id=replay_capture,
+            outcome_path=replay_dir / "outcome.json",
+            checkpoint_path=replay_dir / "checkpoint.json",
+            replay_path=replay_dir / "spawn_replay.json",
+        )
+        order = (
+            "control_then_spawn_replay"
+            if _created_at(control_trial, "control trial")
+            < _created_at(replay_trial, "replay trial")
+            else "spawn_replay_then_control"
+        )
+        if order != spec["order"]:
+            raise NativeBoundaryCampaignError(f"{pair_name} condition order differs")
+
+        checkpoint = _mapping(_load(replay_dir / "checkpoint.json"), "checkpoint")
+        capsule = _mapping(_load(replay_dir / "spawn_replay.json"), "replay capsule")
+        replay = _validate_spawn_replay_capsule(
+            capsule,
+            checkpoint,
+            capture_id=replay_capture,
+            expected_identity=expected_identity,
+            return_map=return_map,
+            expected_restore_hashes=restore_hashes,
+        )
+        if (
+            replay["selected_pawn"] != spec["selected_pawn"]
+            or replay["selected_base"] != spec["selected_base"]
+            or replay["native_results"] != spec["draw_results"]
+            or replay["observable_pre_state_hex"]
+            != spec["observable_pre_state_hex"]
+        ):
+            raise NativeBoundaryCampaignError(f"{pair_name} replay transcript differs")
+
+        comparison = compare_rng_trial_outcomes(
+            _mapping(_load(control_dir / "outcome.json"), "control outcome"),
+            _mapping(_load(replay_dir / "outcome.json"), "replay outcome"),
+            capture_id=f"spawn-replay-{pair_name}",
+        )
+        difference_paths = [item["path"] for item in comparison["differences"]]
+        if difference_paths != spec["difference_paths"]:
+            raise NativeBoundaryCampaignError(f"{pair_name} outcome scope differs")
+        pairs.append(
+            {
+                "pair": pair_name,
+                "pair_id": pair_id,
+                "condition_order": order,
+                "replay": replay,
+                "restoration": {
+                    "native_hook_bytes": True,
+                    "nextpawn_wrapper": True,
+                    "random_element_wrapper": True,
+                    "restore_conflict": False,
+                },
+                "whole_game_outcome": {
+                    "status": comparison["status"],
+                    "difference_paths": difference_paths,
+                    "control_semantic_sha256": comparison["control_semantic_sha256"],
+                    "replay_semantic_sha256": comparison[
+                        "exact_hook_semantic_sha256"
+                    ],
+                },
+                "artifacts": {
+                    "control_trial": _artifact(control_dir / "trial.json", repo),
+                    "control_outcome": _artifact(control_dir / "outcome.json", repo),
+                    "replay_trial": _artifact(replay_dir / "trial.json", repo),
+                    "replay_outcome": _artifact(replay_dir / "outcome.json", repo),
+                    "replay_checkpoint": _artifact(
+                        replay_dir / "checkpoint.json", repo
+                    ),
+                    "replay_capsule": _artifact(
+                        replay_dir / "spawn_replay.json", repo
+                    ),
+                },
+            }
+        )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": SPAWN_REPLAY_RECEIPT_KIND,
+        "capture_track": "owner_local_modified",
+        "build_identity": expected_identity,
+        "campaign": {
+            "pair_count": len(pairs),
+            "conditions": ["spawn_replay_control", "spawn_replay"],
+            "condition_orders": dict(
+                Counter(pair["condition_order"] for pair in pairs)
+            ),
+            "controller_sha256": SPAWN_REPLAY_CONTROLLER_SHA256,
+            "spawner_source_sha256": SPAWNER_SOURCE_SHA256,
+            "random_element_source_sha256": RANDOM_ELEMENT_SOURCE_SHA256,
+            "save_tree_sha256": SAVE_TREE_SHA256,
+        },
+        "pairs": pairs,
+        "results": {
+            "classification": (
+                "spawn_identity_replay_inputs_resolved_coordinate_rng_still_unresolved"
+            ),
+            "complete_verified_replays": len(pairs),
+            "draw_count_per_replay": [len(pair["replay"]["native_results"]) for pair in pairs],
+            "selected_pawns": [pair["replay"]["selected_pawn"] for pair in pairs],
+            "observable_pre_states": [
+                pair["replay"]["observable_pre_state_hex"] for pair in pairs
+            ],
+            "whole_game_outcomes": [
+                pair["whole_game_outcome"]["status"] for pair in pairs
+            ],
+        },
+        "claims": {
+            "proven": [
+                "Each of three source-verified NextPawn calls exported the exact ordered candidate array, effective weak and upgrade ratios, selected base, selected final pawn, and its enclosed native RNG results.",
+                "Three consecutive MSVC rand results recover one exact observable pre-call state class; the two raw candidates differ only in permanently hidden bit 31 and produce the same future observable stream.",
+                "Replaying each recovered state through weak choice, candidate modulo choice, and upgrade choice reproduces Firefly2, Scarab2, and Firefly2 exactly.",
+                "Every native hook, NextPawn wrapper, and in-span random_element wrapper restored without conflict before evidence publication.",
+            ],
+            "not_proven": [
+                "Advance prediction from ordinary solver input; the current bridge does not export this native pre-call state and candidate capsule before selection executes.",
+                "Future spawn-coordinate selection, which occurs after NextPawn and produced the only paired outcome differences.",
+                "Whole-game observer neutrality; fresh processes used naturally different native RNG states, so the counterbalanced controls are not RNG-state matched.",
+                "The conditional boss branch in a natural live capture; it is modeled and unit-tested but none of these three calls reached its guard.",
+                "Pristine-depot behavior; this is the attested owner-local-modified Windows build.",
+            ],
+        },
+        "solver_conformance": {
+            "resolved_model": (
+                "MSVC observable state plus the effective NextPawn ratios and ordered "
+                "candidate array are sufficient to replay ordinary pawn identity exactly"
+            ),
+            "runtime_rule": (
+                "do not materialize a future pawn until the exact pre-call replay capsule "
+                "and the still-unresolved spawn coordinate are available"
+            ),
+            "rust_safeguard_test": (
+                "test_projection_never_fabricates_unresolved_native_spawn_selection"
+            ),
+            "capture_backed_test": (
+                "test_committed_spawn_replay_campaign_recovers_exact_native_choices"
+            ),
+        },
+        "restore": {
+            "install_restoration_pending": True,
+            "save_restoration_pending": True,
+            "save_tree_sha256": SAVE_TREE_SHA256,
+        },
+        "supporting_artifacts": {
+            "observer_build_receipt": _artifact(repo / OBSERVER_RECEIPT, repo),
+            "controller_build_receipt": _artifact(
+                repo / SPAWN_REPLAY_CONTROLLER_RECEIPT, repo
+            ),
             "return_map": _artifact(repo / RETURN_MAP, repo),
             "restore_hashes": _artifact(repo / RESTORE_HASHES, repo),
         },

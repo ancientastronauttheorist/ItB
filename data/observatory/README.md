@@ -273,6 +273,39 @@ python scripts/itb_observatory_native_rng_campaign.py `
   data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic
 ```
 
+## Spawn-boundary evidence
+
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_span/`
+contains three source-verified `Spawner:NextPawn` spans. They establish the
+ordinary three-draw order—weak class, ordered candidate choice, then upgrade—
+but the first campaign intentionally did not export enough inputs to replay the
+choice.
+
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_replay/`
+contains three later counterbalanced control/replay pairs. Each replay binds a
+complete restored native checkpoint to the exact effective ratios, ordered
+candidate array, and selected pawn. Three consecutive MSVC results recover one
+observable low-31-bit pre-call state class; the two possible raw states differ
+only in hidden bit 31 and have the same future observable stream. The committed
+capsules reproduce `Firefly2`, `Scarab2`, and `Firefly2` exactly. One paired
+outcome matches and two differ only at the later spawn coordinate. Fresh
+processes were naturally seeded, so this proves exact in-span replay and clean
+restoration, not native-state-matched whole-game neutrality or coordinate
+selection.
+
+Rebuild the replay receipt with:
+
+```powershell
+python scripts/itb_observatory_native_boundary_campaign.py spawn_replay `
+  data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_replay
+```
+
+The replay campaign receipt is closed by
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_replay_cleanup_receipt.json`.
+Its post-cleanup inventory matches all 689 accepted owner-local entries, the
+33-file save matches its sealed tree, the baseline Mod Loader is exact, and no
+Observatory file remains in the active installation or bridge.
+
 ## Callback slot evidence and trial tooling
 
 The final callback-binding captures ending in

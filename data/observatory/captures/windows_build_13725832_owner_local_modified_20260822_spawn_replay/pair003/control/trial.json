@@ -1,0 +1,52 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_replay_campaign\\pair003\\control\\runtime",
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "arm_ack": "OK OBS_SPAWN_REPLAY_CONTROL capture=spawn-replay-p003-control dormant=true",
+      "capture_id": "spawn-replay-p003-control",
+      "condition": "spawn_replay_control",
+      "end_turn_status": "OK",
+      "finish_ack": null,
+      "seed_ack": null,
+      "seed_and_arm_ack": null,
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -99757.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "arm_ack": "OK OBS_SPAWN_REPLAY_CONTROL capture=spawn-replay-p003-control dormant=true",
+    "capture_id": "spawn-replay-p003-control",
+    "condition": "spawn_replay_control",
+    "finish_ack": null,
+    "seed_ack": null,
+    "seed_and_arm_ack": null,
+    "state": "complete"
+  },
+  "capture_id": "spawn-replay-p003-control",
+  "checkpoint": null,
+  "condition": "spawn_replay_control",
+  "created_at": "2026-08-22T16:29:22.330177+00:00",
+  "errors": {
+    "abort": "",
+    "checkpoint": "",
+    "outcome": "",
+    "runner": ""
+  },
+  "kind": "observatory_native_rng_turn_trial",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_replay_campaign\\pair003\\control\\outcome.json",
+    "sha256": "92df3224f60617a4f1722f70f73eb7e601f06142927a5e188bea39422715b5e9"
+  },
+  "pair_id": "spawn-replay-pair-003",
+  "schema_version": 1,
+  "session_file": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_replay_campaign\\pair003\\control\\runtime\\session.json",
+  "status": "complete",
+  "valid_trial": true
+}
