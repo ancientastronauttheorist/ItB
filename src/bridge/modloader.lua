@@ -53,6 +53,50 @@ local CALLBACK_MANIFEST_REQUEST_FILE =
     BRIDGE_DIR .. "/itb_observatory_callback_manifest.request"
 local CALLBACK_MANIFEST_REQUEST_TOKEN =
     "observatory-callback-manifest-request/1"
+local CALLBACK_BINDINGS_FILE =
+    BRIDGE_DIR .. "/itb_observatory_callback_bindings.json"
+local CALLBACK_BINDINGS_TMP =
+    BRIDGE_DIR .. "/itb_observatory_callback_bindings.json.tmp"
+local CALLBACK_BINDINGS_REQUEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_callback_bindings.request"
+local CALLBACK_BINDINGS_REQUEST_TOKEN =
+    "observatory-callback-bindings-request/1"
+local RNG_TRIAL_REQUEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_rng_trial.request"
+local RNG_TRIAL_REQUEST_TOKEN =
+    "observatory-rng-trial-request/1"
+local CALLBACK_TRIAL_REQUEST_FILE =
+    BRIDGE_DIR .. "/itb_observatory_callback_trial.request"
+local CALLBACK_TRIAL_REQUEST_TOKEN =
+    "observatory-callback-trial-request/1"
+local NATIVE_RNG_SNAPSHOT_FILE =
+    BRIDGE_DIR .. "/itb_observatory_native_rng_snapshot.json"
+local NATIVE_RNG_SNAPSHOT_TMP =
+    BRIDGE_DIR .. "/itb_observatory_native_rng_snapshot.json.tmp"
+local NATIVE_RNG_OBSERVER_SHA256 =
+    "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c"
+local NATIVE_RNG_OBSERVER_EXPORT =
+    "luaopen_itb_observatory_rng_core_observer"
+local NATIVE_RNG_OBSERVER_BUILD_ID = "13725832"
+local NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256 =
+    "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9"
+local NATIVE_RNG_OBSERVER_CORE_RVA = "0x00387f16"
+local NATIVE_RNG_OBSERVER_CORE_SHA256 =
+    "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179"
+local NATIVE_RNG_OBSERVER_RETURN_MAP_SHA256 =
+    "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48"
+local NATIVE_RNG_OBSERVER_HOOK_PLAN_SHA256 =
+    "a3d09bbc95ed32c1d8fc4c4155f6b09cabea69a90c361bbb966e2de69023f378"
+local NATIVE_RNG_OBSERVER_RESTORE_SHA256 =
+    "d7ad5662a8ba8cdce081f56705ea8302ad425e5f7dbf6830ba4056f99408b73d"
+local NATIVE_RNG_FIXED_SEED = 324508639
+local NATIVE_RNG_SEED_HELPER_SHA256 =
+    "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787"
+local NATIVE_RNG_SEED_REGION_SHA256 =
+    "67b19fe39627674ef04d07bd86e989a39ce744be2e93f9265c16e2aeb928cf9d"
+
+local _observatory_native_rng_module = nil
+local _observatory_native_rng_capture_id = nil
 
 if is_windows() then
     os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
@@ -3028,7 +3072,7 @@ local function direct_repair_pawn(target, target_uid, heal, save_data, effect_re
     return new_hp
 end
 
-local function observatory_callback_module_path()
+local function modloader_script_directory()
     local debug_table = rawget(_G, "debug")
     if type(debug_table) ~= "table"
         or type(rawget(debug_table, "getinfo")) ~= "function" then
@@ -3036,7 +3080,7 @@ local function observatory_callback_module_path()
     end
     local ok, info = pcall(
         rawget(debug_table, "getinfo"),
-        observatory_callback_module_path,
+        modloader_script_directory,
         "S"
     )
     if not ok or type(info) ~= "table"
@@ -3049,7 +3093,19 @@ local function observatory_callback_module_path()
     if type(directory) ~= "string" or directory == "" then
         return nil, "modloader source directory is unavailable"
     end
+    return directory
+end
+
+local function observatory_callback_module_path()
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
     return directory .. "/observatory_callback_manifest.lua"
+end
+
+local function observatory_callback_bindings_module_path()
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    return directory .. "/observatory_callback_bindings.lua"
 end
 
 local function load_observatory_callback_module()
@@ -3068,6 +3124,26 @@ local function load_observatory_callback_module()
         or type(rawget(module, "discover_enemy_skill_roots")) ~= "function"
         or type(rawget(module, "enumerate")) ~= "function" then
         return nil, "callback module contract mismatch"
+    end
+    return module
+end
+
+local function load_observatory_callback_bindings_module()
+    local path, path_error = observatory_callback_bindings_module_path()
+    if not path then return nil, path_error end
+    local chunk, load_error = loadfile(path)
+    if type(chunk) ~= "function" then
+        return nil, "cannot load sibling callback bindings module: "
+            .. tostring(load_error)
+    end
+    local ok, module = pcall(chunk)
+    if not ok or type(module) ~= "table" then
+        return nil, "callback bindings module failed to load: "
+            .. tostring(module)
+    end
+    if rawget(module, "VERSION") ~= "observatory-callback-bindings/1"
+        or type(rawget(module, "enumerate")) ~= "function" then
+        return nil, "callback bindings module contract mismatch"
     end
     return module
 end
@@ -3100,6 +3176,635 @@ local function write_observatory_callback_manifest(content)
         os.remove(CALLBACK_MANIFEST_TMP)
         return false, tostring(rename_error)
     end
+    return true
+end
+
+local function write_observatory_callback_bindings(content)
+    if type(content) ~= "string" or string.len(content) > 8 * 1024 * 1024 then
+        return false, "callback bindings manifest exceeds its output cap"
+    end
+    local file, open_error = io.open(CALLBACK_BINDINGS_TMP, "w")
+    if not file then return false, tostring(open_error) end
+    local write_ok, write_error = pcall(function()
+        file:write(content)
+        file:flush()
+    end)
+    file:close()
+    if not write_ok then
+        os.remove(CALLBACK_BINDINGS_TMP)
+        return false, tostring(write_error)
+    end
+    local renamed, rename_error = os.rename(
+        CALLBACK_BINDINGS_TMP, CALLBACK_BINDINGS_FILE
+    )
+    if not renamed and is_windows() then
+        os.remove(CALLBACK_BINDINGS_FILE)
+        renamed, rename_error = os.rename(
+            CALLBACK_BINDINGS_TMP, CALLBACK_BINDINGS_FILE
+        )
+    end
+    if not renamed then
+        os.remove(CALLBACK_BINDINGS_TMP)
+        return false, tostring(rename_error)
+    end
+    return true
+end
+
+local function valid_lower_sha256(value)
+    return type(value) == "string"
+        and string.len(value) == 64
+        and string.match(value, "^[0-9a-f]+$") ~= nil
+end
+
+local function valid_observatory_capture_id(value)
+    return type(value) == "string"
+        and string.len(value) >= 1
+        and string.len(value) <= 128
+        and string.match(value, "^[a-z0-9][a-z0-9._-]*$") ~= nil
+end
+
+local function load_observatory_trial_artifact(directory, filename, label)
+    if type(directory) ~= "string"
+        or type(filename) ~= "string"
+        or string.len(filename) < 1
+        or string.len(filename) > 192
+        or string.match(filename, "^[A-Za-z0-9_.-]+$") == nil then
+        return nil, "invalid " .. label .. " filename"
+    end
+    local chunk, load_error = loadfile(directory .. "/" .. filename)
+    if type(chunk) ~= "function" then
+        return nil, "cannot load " .. label .. ": " .. tostring(load_error)
+    end
+    local ok, artifact = pcall(chunk)
+    if not ok or type(artifact) ~= "table" then
+        return nil, label .. " failed to load: " .. tostring(artifact)
+    end
+    return artifact
+end
+
+local function load_observatory_rng_seed_helper(directory, rng_control)
+    if not is_windows() then
+        return nil, "native RNG seed helper requires Windows"
+    end
+    if type(rng_control) ~= "table"
+        or rawget(rng_control, "helper_version")
+            ~= "observatory-rng-seed-helper/1"
+        or not valid_lower_sha256(rawget(rng_control, "helper_sha256"))
+        or not valid_lower_sha256(rawget(rng_control, "executable_sha256"))
+        or rawget(rng_control, "architecture") ~= "x86"
+        or type(rawget(rng_control, "build_id")) ~= "string"
+        or type(rawget(rng_control, "rng_seed_rva")) ~= "string"
+        or not valid_lower_sha256(
+            rawget(rng_control, "rng_seed_region_sha256")
+        ) then
+        return nil, "native RNG seed helper identity is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_rng_seed_"
+        .. rawget(rng_control, "helper_sha256") .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        "luaopen_itb_observatory_rng_seed"
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load native RNG seed helper: "
+            .. tostring(load_error or loader)
+    end
+    local opened, helper = pcall(loader)
+    if not opened or type(helper) ~= "table" then
+        return nil, "native RNG seed helper failed to open: "
+            .. tostring(helper)
+    end
+    if rawget(helper, "VERSION") ~= rawget(rng_control, "helper_version")
+        or rawget(helper, "BUILD_ID") ~= rawget(rng_control, "build_id")
+        or rawget(helper, "EXECUTABLE_SHA256")
+            ~= rawget(rng_control, "executable_sha256")
+        or rawget(helper, "ARCHITECTURE")
+            ~= rawget(rng_control, "architecture")
+        or rawget(helper, "RNG_SEED_RVA")
+            ~= rawget(rng_control, "rng_seed_rva")
+        or rawget(helper, "RNG_SEED_REGION_SHA256")
+            ~= rawget(rng_control, "rng_seed_region_sha256")
+        or type(rawget(helper, "seed")) ~= "function" then
+        return nil, "native RNG seed helper contract mismatch"
+    end
+    return helper
+end
+
+local function observatory_path_exists(path)
+    local file = io.open(path, "r")
+    if not file then return false end
+    file:close()
+    return true
+end
+
+local function write_observatory_create_only_json(
+    final_path, temp_path, value, max_bytes
+)
+    if type(final_path) ~= "string"
+        or type(temp_path) ~= "string"
+        or type(value) ~= "table"
+        or type(max_bytes) ~= "number"
+        or max_bytes < 1
+        or max_bytes > 64 * 1024 * 1024 then
+        return false, "invalid create-only output"
+    end
+    if observatory_path_exists(final_path)
+        or observatory_path_exists(temp_path) then
+        return false, "create-only output already exists"
+    end
+    local content = json_encode(value)
+    if type(content) ~= "string" or string.len(content) > max_bytes then
+        return false, "create-only output exceeds its cap"
+    end
+    local file, open_error = io.open(temp_path, "w")
+    if not file then return false, tostring(open_error) end
+    local write_ok, write_error = pcall(function()
+        file:write(content)
+        file:flush()
+    end)
+    file:close()
+    if not write_ok then
+        os.remove(temp_path)
+        return false, tostring(write_error)
+    end
+    if observatory_path_exists(final_path) then
+        os.remove(temp_path)
+        return false, "create-only output appeared during publication"
+    end
+    local renamed, rename_error = os.rename(temp_path, final_path)
+    if not renamed then
+        os.remove(temp_path)
+        return false, tostring(rename_error)
+    end
+    return true
+end
+
+local function load_observatory_native_rng_module()
+    if not is_windows() then
+        return nil, "native RNG observer requires Windows"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_rng_core_observer_"
+        .. NATIVE_RNG_OBSERVER_SHA256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        NATIVE_RNG_OBSERVER_EXPORT
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load native RNG observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "native RNG observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-rng-core-observer/1"
+        or rawget(observer, "BUILD_ID")
+            ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "RNG_CORE_RVA")
+            ~= NATIVE_RNG_OBSERVER_CORE_RVA
+        or rawget(observer, "RNG_CORE_REGION_SHA256")
+            ~= NATIVE_RNG_OBSERVER_CORE_SHA256
+        or rawget(observer, "RNG_RETURN_MAP_SHA256")
+            ~= NATIVE_RNG_OBSERVER_RETURN_MAP_SHA256
+        or rawget(observer, "HOOK_PLAN_SHA256")
+            ~= NATIVE_RNG_OBSERVER_HOOK_PLAN_SHA256
+        or rawget(observer, "RESTORE_MANIFEST_SHA256")
+            ~= NATIVE_RNG_OBSERVER_RESTORE_SHA256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "native RNG observer contract mismatch"
+    end
+    return observer
+end
+
+local function validate_observatory_native_rng_snapshot(snapshot, capture_id)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_rng_core_observer_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-rng-core-observer/1"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "records")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "native RNG snapshot contract mismatch"
+    end
+    local identity = rawget(snapshot, "identity")
+    local integrity = rawget(snapshot, "integrity")
+    local summary = rawget(snapshot, "summary")
+    if rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "rng_return_map_sha256")
+            ~= NATIVE_RNG_OBSERVER_RETURN_MAP_SHA256
+        or rawget(identity, "hook_plan_sha256")
+            ~= NATIVE_RNG_OBSERVER_HOOK_PLAN_SHA256
+        or rawget(identity, "restore_manifest_sha256")
+            ~= NATIVE_RNG_OBSERVER_RESTORE_SHA256
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "patch_installed") ~= false
+        or rawget(integrity, "hook_bytes_restored") ~= true
+        or type(rawget(summary, "record_count")) ~= "number"
+        or rawget(summary, "record_count") ~= #snapshot.records then
+        return nil, "native RNG snapshot is incomplete or inconsistent"
+    end
+    return true
+end
+
+local function observatory_trial_live_state(capsule, cached_save)
+    local packet = rawget(capsule, "packet") or {}
+    local manifest = rawget(packet, "manifest") or {}
+    local mission_id = mission_bridge_id(_ITB_CURRENT_MISSION) or ""
+    local turn = 0
+    local team_turn = 0
+    if Game then
+        pcall(function() turn = Game:GetTurnCount() end)
+        pcall(function() team_turn = Game:GetTeamTurn() end)
+    end
+    local phase = "unknown"
+    if mission_id ~= "" and team_turn == TEAM_PLAYER then
+        phase = "combat_player"
+    elseif mission_id ~= "" and team_turn == TEAM_ENEMY then
+        phase = "combat_enemy"
+    end
+    return {
+        now_epoch = os.time(),
+        mission_id = mission_id,
+        turn = turn,
+        phase = phase,
+        timeline_fingerprint = manifest.timeline_fingerprint or "",
+        master_seed = cached_save.master_seed,
+        region_id = cached_save.region_id,
+        ai_seed_fingerprint = manifest.ai_seed_fingerprint or "",
+    }
+end
+
+local function initialize_observatory_rng_trial(request)
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local capsule_filename = "itb_observatory_rng_capsule_"
+        .. request.capsule_sha256 .. ".lua"
+    local capsule, capsule_error = load_observatory_trial_artifact(
+        directory, capsule_filename, "RNG trial capsule"
+    )
+    if not capsule then return nil, capsule_error end
+    if rawget(capsule, "schema_version") ~= 2
+        or rawget(capsule, "kind") ~= "observatory_rng_trial_capsule"
+        or (rawget(capsule, "capture_track") ~= "owner_local_modified"
+            and rawget(capsule, "capture_track") ~= "pristine_reference")
+        or type(rawget(capsule, "packet")) ~= "table"
+        or type(rawget(capsule, "rng_control")) ~= "table"
+        or type(rawget(capsule, "expected_save")) ~= "table" then
+        return nil, "RNG trial capsule contract mismatch"
+    end
+    local packet = rawget(capsule, "packet")
+    local trusted = rawget(packet, "trusted")
+    local manifest = rawget(packet, "manifest")
+    local policy = rawget(packet, "policy")
+    local expected_save = rawget(capsule, "expected_save")
+    if type(trusted) ~= "table"
+        or type(manifest) ~= "table"
+        or type(policy) ~= "table"
+        or not valid_lower_sha256(rawget(trusted, "controller_sha256"))
+        or not valid_observatory_capture_id(rawget(manifest, "capture_id"))
+        or type(rawget(manifest, "checkpoint_seq")) ~= "number"
+        or rawget(manifest, "checkpoint_seq") < 0
+        or rawget(manifest, "checkpoint_seq")
+            ~= math.floor(rawget(manifest, "checkpoint_seq"))
+        or type(rawget(policy, "max_bundle_bytes")) ~= "number"
+        or rawget(policy, "max_bundle_bytes") < 1
+        or rawget(policy, "max_bundle_bytes") > 64 * 1024 * 1024 then
+        return nil, "RNG trial capsule identity is invalid"
+    end
+    local host, host_error = load_observatory_trial_artifact(
+        directory,
+        "observatory_rng_trial_host.lua",
+        "RNG trial host"
+    )
+    if not host then return nil, host_error end
+    if rawget(host, "VERSION") ~= "observatory-rng-trial-host/2"
+        or type(rawget(host, "new")) ~= "function" then
+        return nil, "RNG trial host contract mismatch"
+    end
+    local controller_filename = "itb_observatory_controller_"
+        .. rawget(trusted, "controller_sha256") .. ".lua"
+    local controller, controller_error = load_observatory_trial_artifact(
+        directory, controller_filename, "RNG trial controller"
+    )
+    if not controller then return nil, controller_error end
+    if rawget(controller, "VERSION") ~= "observatory-controller/1"
+        or type(rawget(controller, "new")) ~= "function" then
+        return nil, "RNG trial controller contract mismatch"
+    end
+    local rng_seed_helper, rng_seed_helper_error =
+        load_observatory_rng_seed_helper(
+            directory,
+            rawget(capsule, "rng_control")
+        )
+    if not rng_seed_helper then return nil, rng_seed_helper_error end
+
+    -- Read and freeze save-derived identity before any wrapper can exist.
+    -- The runtime provider below performs no file I/O; it combines these exact
+    -- cached values with the live mission/turn/team sampled outside extraction.
+    local save_data = _read_save_data()
+    local expected_region = rawget(expected_save, "region_id")
+    local region = type(save_data.mission_seeds) == "table"
+        and save_data.mission_seeds[expected_region] or nil
+    if save_data.master_seed ~= rawget(expected_save, "master_seed")
+        or type(region) ~= "table"
+        or region.ai_seed ~= rawget(expected_save, "ai_seed")
+        or region.mission ~= rawget(expected_save, "mission_slot")
+        or region.turn ~= rawget(expected_save, "turn") then
+        return nil, "RNG trial save identity mismatch"
+    end
+    local cached_save = {
+        master_seed = save_data.master_seed,
+        region_id = expected_region,
+        ai_seed = region.ai_seed,
+    }
+    local capture_id = rawget(manifest, "capture_id")
+    local checkpoint_seq = rawget(manifest, "checkpoint_seq")
+    local condition = request.condition
+    local raw_path = BRIDGE_DIR .. "/itb_observatory_trace_"
+        .. capture_id .. "_" .. tostring(checkpoint_seq) .. ".raw"
+    local result_path = BRIDGE_DIR .. "/itb_observatory_rng_trial_"
+        .. capture_id .. "_" .. condition .. ".json"
+    local live_state_provider = function()
+        return observatory_trial_live_state(capsule, cached_save)
+    end
+    local raw_writer = function(snapshot)
+        return write_observatory_create_only_json(
+            raw_path,
+            raw_path .. ".tmp",
+            snapshot,
+            rawget(policy, "max_bundle_bytes")
+        )
+    end
+    local result_writer = function(result)
+        return write_observatory_create_only_json(
+            result_path,
+            result_path .. ".tmp",
+            result,
+            256 * 1024
+        )
+    end
+    local ok, trial_or_error = pcall(
+        rawget(host, "new"),
+        {
+            condition = condition,
+            activation_nonce = request.activation_nonce,
+            capsule_sha256 = request.capsule_sha256,
+            capsule = capsule,
+            controller_module = controller,
+            rng_seed_helper = rng_seed_helper,
+            hook_holder = _G,
+            live_state_provider = live_state_provider,
+            raw_writer = raw_writer,
+            result_writer = result_writer,
+        }
+    )
+    if not ok or type(trial_or_error) ~= "table"
+        or type(rawget(trial_or_error, "step")) ~= "function" then
+        return nil, "RNG trial initialization failed: "
+            .. tostring(trial_or_error)
+    end
+    return trial_or_error
+end
+
+local function consume_observatory_rng_trial_startup_request()
+    local file = io.open(RNG_TRIAL_REQUEST_FILE, "r")
+    if not file then return false end
+    local content = file:read(512)
+    local extra = file:read(1)
+    file:close()
+    pcall(function() os.remove(RNG_TRIAL_REQUEST_FILE) end)
+    if extra ~= nil or type(content) ~= "string" then
+        return nil, "RNG trial startup request exceeds its cap"
+    end
+    local condition, nonce, capsule_sha256 = string.match(
+        content,
+        "^observatory%-rng%-trial%-request/1"
+            .. "\ncondition=([a-z_]+)"
+            .. "\nactivation_nonce=([0-9a-f]+)"
+            .. "\ncapsule_sha256=([0-9a-f]+)\n$"
+    )
+    if (condition ~= "control" and condition ~= "exact_hook")
+        or type(nonce) ~= "string"
+        or string.len(nonce) < 32
+        or string.len(nonce) > 64
+        or not valid_lower_sha256(capsule_sha256) then
+        return nil, "invalid RNG trial startup request"
+    end
+    local trial, trial_error = initialize_observatory_rng_trial({
+        condition = condition,
+        activation_nonce = nonce,
+        capsule_sha256 = capsule_sha256,
+    })
+    if not trial then return nil, trial_error end
+    _ITB_OBSERVATORY_RNG_TRIAL = trial
+    log_bridge("OBS RNG TRIAL armed condition=" .. condition)
+    return true
+end
+
+local function initialize_observatory_callback_trial(request)
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local capsule_filename = "itb_observatory_callback_capsule_"
+        .. request.capsule_sha256 .. ".lua"
+    local capsule, capsule_error = load_observatory_trial_artifact(
+        directory, capsule_filename, "callback trial capsule"
+    )
+    if not capsule then return nil, capsule_error end
+    if rawget(capsule, "schema_version") ~= 1
+        or rawget(capsule, "kind")
+            ~= "observatory_callback_trial_capsule"
+        or (rawget(capsule, "capture_track") ~= "owner_local_modified"
+            and rawget(capsule, "capture_track") ~= "pristine_reference")
+        or type(rawget(capsule, "packet")) ~= "table"
+        or type(rawget(capsule, "binding_manifest")) ~= "table"
+        or type(rawget(capsule, "callback_join")) ~= "table"
+        or type(rawget(capsule, "expected_save")) ~= "table"
+        or not valid_lower_sha256(
+            rawget(capsule, "binding_manifest_sha256")
+        )
+        or not valid_lower_sha256(rawget(capsule, "callback_join_sha256")) then
+        return nil, "callback trial capsule contract mismatch"
+    end
+    local packet = rawget(capsule, "packet")
+    local trusted = rawget(packet, "trusted")
+    local manifest = rawget(packet, "manifest")
+    local policy = rawget(packet, "policy")
+    local expected_save = rawget(capsule, "expected_save")
+    if type(trusted) ~= "table"
+        or type(manifest) ~= "table"
+        or type(policy) ~= "table"
+        or rawget(manifest, "controller_version")
+            ~= "observatory-callback-controller/1"
+        or not valid_lower_sha256(rawget(trusted, "controller_sha256"))
+        or not valid_observatory_capture_id(rawget(manifest, "capture_id"))
+        or type(rawget(manifest, "checkpoint_seq")) ~= "number"
+        or rawget(manifest, "checkpoint_seq") < 0
+        or rawget(manifest, "checkpoint_seq")
+            ~= math.floor(rawget(manifest, "checkpoint_seq"))
+        or type(rawget(policy, "max_bundle_bytes")) ~= "number"
+        or rawget(policy, "max_bundle_bytes") < 1
+        or rawget(policy, "max_bundle_bytes") > 64 * 1024 * 1024 then
+        return nil, "callback trial capsule identity is invalid"
+    end
+    local host, host_error = load_observatory_trial_artifact(
+        directory,
+        "observatory_callback_trial_host.lua",
+        "callback trial host"
+    )
+    if not host then return nil, host_error end
+    if rawget(host, "VERSION") ~= "observatory-callback-trial-host/1"
+        or type(rawget(host, "new")) ~= "function" then
+        return nil, "callback trial host contract mismatch"
+    end
+    local controller_filename = "itb_observatory_controller_"
+        .. rawget(trusted, "controller_sha256") .. ".lua"
+    local controller, controller_error = load_observatory_trial_artifact(
+        directory, controller_filename, "callback trial controller"
+    )
+    if not controller then return nil, controller_error end
+    if rawget(controller, "VERSION")
+            ~= "observatory-callback-controller/1"
+        or type(rawget(controller, "new")) ~= "function" then
+        return nil, "callback trial controller contract mismatch"
+    end
+    local callback_manifest, callback_manifest_error =
+        load_observatory_callback_module()
+    if not callback_manifest then return nil, callback_manifest_error end
+    local callback_bindings, callback_bindings_error =
+        load_observatory_callback_bindings_module()
+    if not callback_bindings then return nil, callback_bindings_error end
+
+    -- Freeze save-derived identity before the host may prepare a callback
+    -- controller. The live provider below performs no file I/O while wrappers
+    -- exist; it combines these cached values with the current mission boundary.
+    local save_data = _read_save_data()
+    local expected_region = rawget(expected_save, "region_id")
+    local region = type(save_data.mission_seeds) == "table"
+        and save_data.mission_seeds[expected_region] or nil
+    if save_data.master_seed ~= rawget(expected_save, "master_seed")
+        or type(region) ~= "table"
+        or region.ai_seed ~= rawget(expected_save, "ai_seed")
+        or region.mission ~= rawget(expected_save, "mission_slot")
+        or region.turn ~= rawget(expected_save, "turn") then
+        return nil, "callback trial save identity mismatch"
+    end
+    local cached_save = {
+        master_seed = save_data.master_seed,
+        region_id = expected_region,
+        ai_seed = region.ai_seed,
+    }
+    local capture_id = rawget(manifest, "capture_id")
+    local checkpoint_seq = rawget(manifest, "checkpoint_seq")
+    local condition = request.condition
+    local raw_path = BRIDGE_DIR .. "/itb_observatory_trace_"
+        .. capture_id .. "_" .. tostring(checkpoint_seq) .. ".raw"
+    local result_path = BRIDGE_DIR .. "/itb_observatory_callback_trial_"
+        .. capture_id .. "_" .. condition .. ".json"
+    local live_state_provider = function()
+        return observatory_trial_live_state(capsule, cached_save)
+    end
+    local raw_writer = function(snapshot)
+        return write_observatory_create_only_json(
+            raw_path,
+            raw_path .. ".tmp",
+            snapshot,
+            rawget(policy, "max_bundle_bytes")
+        )
+    end
+    local result_writer = function(result)
+        return write_observatory_create_only_json(
+            result_path,
+            result_path .. ".tmp",
+            result,
+            256 * 1024
+        )
+    end
+    local ok, trial_or_error = pcall(
+        rawget(host, "new"),
+        {
+            condition = condition,
+            activation_nonce = request.activation_nonce,
+            capsule_sha256 = request.capsule_sha256,
+            capsule = capsule,
+            controller_module = controller,
+            callback_manifest_module = callback_manifest,
+            callback_bindings_module = callback_bindings,
+            live_state_provider = live_state_provider,
+            raw_writer = raw_writer,
+            result_writer = result_writer,
+            globals = _G,
+        }
+    )
+    if not ok or type(trial_or_error) ~= "table"
+        or type(rawget(trial_or_error, "step")) ~= "function" then
+        return nil, "callback trial initialization failed: "
+            .. tostring(trial_or_error)
+    end
+    return trial_or_error
+end
+
+local function consume_observatory_callback_trial_startup_request()
+    local file = io.open(CALLBACK_TRIAL_REQUEST_FILE, "r")
+    if not file then return false end
+    local content = file:read(512)
+    local extra = file:read(1)
+    file:close()
+    pcall(function() os.remove(CALLBACK_TRIAL_REQUEST_FILE) end)
+    if extra ~= nil or type(content) ~= "string" then
+        return nil, "callback trial startup request exceeds its cap"
+    end
+    local condition, nonce, capsule_sha256 = string.match(
+        content,
+        "^observatory%-callback%-trial%-request/1"
+            .. "\ncondition=([a-z_]+)"
+            .. "\nactivation_nonce=([0-9a-f]+)"
+            .. "\ncapsule_sha256=([0-9a-f]+)\n$"
+    )
+    if (condition ~= "control" and condition ~= "exact_hook")
+        or type(nonce) ~= "string"
+        or string.len(nonce) < 32
+        or string.len(nonce) > 64
+        or not valid_lower_sha256(capsule_sha256) then
+        return nil, "invalid callback trial startup request"
+    end
+    local trial, trial_error = initialize_observatory_callback_trial({
+        condition = condition,
+        activation_nonce = nonce,
+        capsule_sha256 = capsule_sha256,
+    })
+    if not trial then return nil, trial_error end
+    _ITB_OBSERVATORY_CALLBACK_TRIAL = trial
+    log_bridge("OBS CALLBACK TRIAL armed condition=" .. condition)
     return true
 end
 
@@ -3494,6 +4199,235 @@ local function execute_command(cmd_str)
         )
         return
 
+    elseif cmd == "OBS_CALLBACK_BINDINGS" then
+        -- Explicit, inert slot enumeration. This command calls no candidate
+        -- callback and installs no wrapper; it only groups the exact raw table
+        -- fields that supply the already-enumerated callback identities.
+        if #parts ~= 1 then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS accepts no arguments")
+            return
+        end
+        local manifest_module, manifest_error =
+            load_observatory_callback_module()
+        if not manifest_module then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS " .. manifest_error)
+            return
+        end
+        local bindings_module, bindings_error =
+            load_observatory_callback_bindings_module()
+        if not bindings_module then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS " .. bindings_error)
+            return
+        end
+        local enumerate_ok, document, _live_bindings, enumerate_error = pcall(
+            rawget(bindings_module, "enumerate"),
+            _G,
+            manifest_module,
+            {
+                max_roots = 256,
+                max_depth = 16,
+                max_functions = 1024,
+                max_text_bytes = 512,
+            }
+        )
+        if not enumerate_ok then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS enumeration failed: "
+                .. tostring(document))
+            return
+        end
+        if type(document) ~= "table" then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS enumeration failed: "
+                .. tostring(enumerate_error))
+            return
+        end
+        local wrote, write_error = write_observatory_callback_bindings(
+            json_encode(document)
+        )
+        if not wrote then
+            write_ack("ERROR: OBS_CALLBACK_BINDINGS output failed: "
+                .. tostring(write_error))
+            return
+        end
+        local summary = rawget(document, "summary") or {}
+        write_ack(
+            "OK OBS_CALLBACK_BINDINGS roots="
+            .. tostring(rawget(summary, "root_count") or -1)
+            .. " functions="
+            .. tostring(rawget(summary, "function_count") or -1)
+            .. " slots="
+            .. tostring(rawget(summary, "slot_count") or -1)
+        )
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_SEED" then
+        -- Fixed build-keyed seed control for matched native-observer trials.
+        -- The command accepts no seed input and is permitted only after all
+        -- player actors are spent, immediately before the End Turn click.
+        if #parts ~= 1 or not Board or not Game then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED requires an active mission")
+            return
+        end
+        local team_ok, team_turn = pcall(function()
+            return Game:GetTeamTurn()
+        end)
+        if not team_ok or team_turn ~= TEAM_PLAYER then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED requires combat_player")
+            return
+        end
+        local actors_spent = true
+        local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+        for _, actor_id in ipairs(actor_ids) do
+            local actor = Board:GetPawn(actor_id)
+            local active_ok, active = pcall(function()
+                return actor and actor:IsActive()
+            end)
+            if active_ok and active then actors_spent = false break end
+        end
+        if not actors_spent then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED requires spent player actors")
+            return
+        end
+        local directory, directory_error = modloader_script_directory()
+        if not directory then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED "
+                .. tostring(directory_error))
+            return
+        end
+        local helper, helper_error = load_observatory_rng_seed_helper(
+            directory,
+            {
+                helper_version = "observatory-rng-seed-helper/1",
+                helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+                executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+                architecture = "x86",
+                build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+                rng_seed_rva = "0x00387f37",
+                rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+            }
+        )
+        if not helper then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED "
+                .. tostring(helper_error))
+            return
+        end
+        local seed_ok, seeded = pcall(
+            rawget(helper, "seed"), NATIVE_RNG_FIXED_SEED
+        )
+        if not seed_ok or seeded ~= true then
+            write_ack("ERROR: OBS_NATIVE_RNG_SEED failed: "
+                .. tostring(seeded))
+            return
+        end
+        write_ack("OK OBS_NATIVE_RNG_SEED seed="
+            .. tostring(NATIVE_RNG_FIXED_SEED))
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_ARM" then
+        -- Explicit one-shot native diagnostic. The fixed module name and all
+        -- exported build identities are pinned above; command input supplies
+        -- only a bounded capture label, never a path, RVA, or address.
+        local capture_id = parts[2]
+        if #parts ~= 2
+            or not valid_observatory_capture_id(capture_id)
+            or string.len(capture_id) > 96 then
+            write_ack("ERROR: OBS_NATIVE_RNG_ARM requires one capture ID")
+            return
+        end
+        if _observatory_native_rng_module ~= nil then
+            write_ack("ERROR: native RNG observer is already consumed")
+            return
+        end
+        if observatory_path_exists(NATIVE_RNG_SNAPSHOT_FILE)
+            or observatory_path_exists(NATIVE_RNG_SNAPSHOT_TMP) then
+            write_ack("ERROR: native RNG snapshot output already exists")
+            return
+        end
+        local observer, observer_error =
+            load_observatory_native_rng_module()
+        if not observer then
+            write_ack("ERROR: OBS_NATIVE_RNG_ARM "
+                .. tostring(observer_error))
+            return
+        end
+        _observatory_native_rng_module = observer
+        _observatory_native_rng_capture_id = capture_id
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            write_ack("ERROR: OBS_NATIVE_RNG_ARM failed: "
+                .. tostring(armed))
+            return
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "patch_installed") ~= true then
+            pcall(rawget(observer, "finish"))
+            write_ack("ERROR: OBS_NATIVE_RNG_ARM status mismatch")
+            return
+        end
+        write_ack("OK OBS_NATIVE_RNG_ARM capture=" .. capture_id)
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_STATUS" then
+        if #parts ~= 1 or _observatory_native_rng_module == nil then
+            write_ack("ERROR: native RNG observer is not loaded")
+            return
+        end
+        local status_ok, status = pcall(
+            rawget(_observatory_native_rng_module, "status")
+        )
+        if not status_ok or type(status) ~= "table" then
+            write_ack("ERROR: OBS_NATIVE_RNG_STATUS failed: "
+                .. tostring(status))
+            return
+        end
+        write_ack("OK OBS_NATIVE_RNG_STATUS " .. json_encode(status))
+        return
+
+    elseif cmd == "OBS_NATIVE_RNG_FINISH" then
+        if #parts ~= 1 or _observatory_native_rng_module == nil
+            or _observatory_native_rng_capture_id == nil then
+            write_ack("ERROR: native RNG observer is not loaded")
+            return
+        end
+        local finish_ok, snapshot = pcall(
+            rawget(_observatory_native_rng_module, "finish")
+        )
+        if not finish_ok or type(snapshot) ~= "table" then
+            write_ack("ERROR: OBS_NATIVE_RNG_FINISH failed: "
+                .. tostring(snapshot))
+            return
+        end
+        local valid, validation_error =
+            validate_observatory_native_rng_snapshot(
+                snapshot, _observatory_native_rng_capture_id
+            )
+        if not valid then
+            write_ack("ERROR: OBS_NATIVE_RNG_FINISH "
+                .. tostring(validation_error))
+            return
+        end
+        local wrote, write_error = write_observatory_create_only_json(
+            NATIVE_RNG_SNAPSHOT_FILE,
+            NATIVE_RNG_SNAPSHOT_TMP,
+            snapshot,
+            1024 * 1024
+        )
+        if not wrote then
+            write_ack("ERROR: OBS_NATIVE_RNG_FINISH output failed: "
+                .. tostring(write_error))
+            return
+        end
+        write_ack(
+            "OK OBS_NATIVE_RNG_FINISH capture="
+            .. _observatory_native_rng_capture_id
+            .. " records="
+            .. tostring(rawget(snapshot.summary, "record_count"))
+            .. " complete=true"
+        )
+        return
+
     elseif cmd == "LUA" then
         -- Raw Lua execution (for debugging)
         local lua_code = cmd_str:match("LUA%s+(.*)")
@@ -3603,16 +4537,80 @@ local function clear_stale_teleporter_pairs_for(mission)
     end
 end
 
+local function step_observatory_rng_trial()
+    local observatory_trial = rawget(_G, "_ITB_OBSERVATORY_RNG_TRIAL")
+    if type(observatory_trial) == "table"
+        and type(rawget(observatory_trial, "step")) == "function" then
+        local step_ok, trial_status, trial_error = pcall(
+            rawget(observatory_trial, "step"), observatory_trial
+        )
+        if not step_ok then
+            local abort = rawget(observatory_trial, "abort")
+            if type(abort) == "function" then
+                pcall(abort, observatory_trial, "Mod Loader step failed")
+            end
+            log_bridge("OBS RNG TRIAL host error: " .. tostring(trial_status))
+            _ITB_OBSERVATORY_RNG_TRIAL = nil
+        elseif trial_status == "complete" or trial_status == "failed" then
+            log_bridge(
+                "OBS RNG TRIAL " .. tostring(trial_status)
+                .. (trial_error and (": " .. tostring(trial_error)) or "")
+            )
+            _ITB_OBSERVATORY_RNG_TRIAL = nil
+        end
+    end
+end
+
+local function step_observatory_callback_trial(stage)
+    local observatory_trial = rawget(
+        _G, "_ITB_OBSERVATORY_CALLBACK_TRIAL"
+    )
+    if type(observatory_trial) == "table"
+        and type(rawget(observatory_trial, "step")) == "function" then
+        local step_ok, trial_status, trial_error = pcall(
+            rawget(observatory_trial, "step"), observatory_trial, stage
+        )
+        if not step_ok then
+            local abort = rawget(observatory_trial, "abort")
+            if type(abort) == "function" then
+                pcall(abort, observatory_trial, "Mod Loader callback step failed")
+            end
+            log_bridge(
+                "OBS CALLBACK TRIAL host error: " .. tostring(trial_status)
+            )
+            _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+        elseif trial_status == "complete" or trial_status == "failed" then
+            log_bridge(
+                "OBS CALLBACK TRIAL " .. tostring(trial_status)
+                .. (trial_error and (": " .. tostring(trial_error)) or "")
+            )
+            _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+        end
+    end
+end
+
 -- BaseUpdate: resume pending command coroutine, poll for new commands,
--- and periodically dump state. Coroutine resume happens FIRST so that
+-- and periodically dump state. The one-shot Observatory trial samples the
+-- already-selected team before the original frame update is allowed to drain
+-- enemy effects; otherwise a fast loss/transition can make the enemy boundary
+-- unobservable. With no explicitly armed trial this helper is inert.
+-- Coroutine resume still happens before command polling so that
 -- wait_for_board_coro yields get unblocked the moment the engine drains
 -- its effect queue — without this, poll_commands could race a yielded
 -- coroutine and clobber _running_coroutine.
 Mission.BaseUpdate = function(self)
-    _orig_BaseUpdate(self)
-    -- Cache current mission (self is the active mission inside BaseUpdate)
+    -- Cache current mission first: the trial's live-state provider must use
+    -- this exact BaseUpdate receiver even on the first frame after a reload.
     _ITB_CURRENT_MISSION = self
     clear_stale_teleporter_pairs_for(self)
+    step_observatory_rng_trial()
+    _orig_BaseUpdate(self)
+    _ITB_CURRENT_MISSION = self
+    clear_stale_teleporter_pairs_for(self)
+    -- The callback controller, if explicitly armed, stays active only across
+    -- the natural enemy NextTurn-to-first-BaseUpdate boundary. Checkpointing
+    -- here restores every callback slot before any bridge polling or state I/O.
+    step_observatory_callback_trial("base_update_after")
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
         local f = io.open(HEARTBEAT_FILE, "w")
@@ -3661,6 +4659,9 @@ Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
     clear_stale_teleporter_pairs_for(self)
+    -- Explicit callback trials arm only after the original transition has
+    -- selected TEAM_ENEMY, before control returns to the engine's AI planner.
+    step_observatory_callback_trial("next_turn")
     pcall(function()
         if Game and Game:GetTeamTurn() == TEAM_PLAYER then
             local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
@@ -3848,6 +4849,26 @@ local function consume_observatory_callback_manifest_startup_request()
     return true
 end
 
+local function consume_observatory_callback_bindings_startup_request()
+    local file = io.open(CALLBACK_BINDINGS_REQUEST_FILE, "r")
+    if not file then return false end
+    local content = file:read(128)
+    local extra = file:read(1)
+    file:close()
+    pcall(function() os.remove(CALLBACK_BINDINGS_REQUEST_FILE) end)
+    if extra ~= nil
+        or (content ~= CALLBACK_BINDINGS_REQUEST_TOKEN
+            and content ~= CALLBACK_BINDINGS_REQUEST_TOKEN .. "\n"
+            and content ~= CALLBACK_BINDINGS_REQUEST_TOKEN .. "\r\n") then
+        write_ack("ERROR: invalid Observatory callback bindings startup request")
+        log_bridge("OBS CALLBACK BINDINGS startup request rejected")
+        return true
+    end
+    log_bridge("OBS CALLBACK BINDINGS startup request accepted")
+    execute_command("OBS_CALLBACK_BINDINGS")
+    return true
+end
+
 -- Clean up stale files from previous session
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
@@ -3863,10 +4884,82 @@ if ConsolePrint then
     ConsolePrint("ITB Bot Bridge loaded! IPC via " .. BRIDGE_DIR)
 end
 
-local _startup_request_ok, _startup_request_error = pcall(
-    consume_observatory_callback_manifest_startup_request
+local _callback_startup_requested = observatory_path_exists(
+    CALLBACK_MANIFEST_REQUEST_FILE
 )
-if not _startup_request_ok then
-    log_bridge("OBS CALLBACK MANIFEST startup request failed: "
-        .. tostring(_startup_request_error))
+local _callback_bindings_startup_requested = observatory_path_exists(
+    CALLBACK_BINDINGS_REQUEST_FILE
+)
+local _rng_trial_startup_requested = observatory_path_exists(
+    RNG_TRIAL_REQUEST_FILE
+)
+local _callback_trial_startup_requested = observatory_path_exists(
+    CALLBACK_TRIAL_REQUEST_FILE
+)
+local _observatory_startup_request_count =
+    (_callback_startup_requested and 1 or 0)
+    + (_callback_bindings_startup_requested and 1 or 0)
+    + (_rng_trial_startup_requested and 1 or 0)
+    + (_callback_trial_startup_requested and 1 or 0)
+if _observatory_startup_request_count > 1 then
+    write_ack("ERROR: multiple Observatory startup requests are armed")
+    log_bridge("OBS startup rejected: multiple requests are armed")
+elseif _callback_startup_requested then
+    local _startup_request_ok, _startup_request_error = pcall(
+        consume_observatory_callback_manifest_startup_request
+    )
+    if not _startup_request_ok then
+        log_bridge("OBS CALLBACK MANIFEST startup request failed: "
+            .. tostring(_startup_request_error))
+    end
+elseif _callback_bindings_startup_requested then
+    local _startup_request_ok, _startup_request_error = pcall(
+        consume_observatory_callback_bindings_startup_request
+    )
+    if not _startup_request_ok then
+        log_bridge("OBS CALLBACK BINDINGS startup request failed: "
+            .. tostring(_startup_request_error))
+    end
+elseif _rng_trial_startup_requested then
+    if rawget(_G, "_ITB_OBSERVATORY_RNG_TRIAL") ~= nil then
+        write_ack("ERROR: an Observatory RNG trial is already active")
+        log_bridge("OBS RNG TRIAL startup rejected: trial already active")
+    else
+        local _trial_request_ok, _trial_consumed, _trial_error = pcall(
+            consume_observatory_rng_trial_startup_request
+        )
+        if not _trial_request_ok then
+            write_ack("ERROR: Observatory RNG trial startup failed")
+            log_bridge("OBS RNG TRIAL startup failed: "
+                .. tostring(_trial_consumed))
+        elseif _trial_consumed == nil then
+            write_ack("ERROR: Observatory RNG trial startup rejected")
+            log_bridge("OBS RNG TRIAL startup rejected: "
+                .. tostring(_trial_error))
+        elseif _trial_consumed then
+            write_ack("OK OBS RNG TRIAL ARMED")
+        end
+    end
+elseif _callback_trial_startup_requested then
+    if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") ~= nil then
+        write_ack("ERROR: an Observatory callback trial is already active")
+        log_bridge(
+            "OBS CALLBACK TRIAL startup rejected: trial already active"
+        )
+    else
+        local _trial_request_ok, _trial_consumed, _trial_error = pcall(
+            consume_observatory_callback_trial_startup_request
+        )
+        if not _trial_request_ok then
+            write_ack("ERROR: Observatory callback trial startup failed")
+            log_bridge("OBS CALLBACK TRIAL startup failed: "
+                .. tostring(_trial_consumed))
+        elseif _trial_consumed == nil then
+            write_ack("ERROR: Observatory callback trial startup rejected")
+            log_bridge("OBS CALLBACK TRIAL startup rejected: "
+                .. tostring(_trial_error))
+        elseif _trial_consumed then
+            write_ack("OK OBS CALLBACK TRIAL ARMED")
+        end
+    end
 end

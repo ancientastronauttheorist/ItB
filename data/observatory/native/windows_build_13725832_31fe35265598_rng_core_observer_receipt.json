@@ -1,0 +1,102 @@
+{
+  "architecture": "x86",
+  "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+  "boundary_map_file_sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3",
+  "build_id": "13725832",
+  "caller_count": 118,
+  "compile_flags": [
+    "/c",
+    "/TC",
+    "/O2",
+    "/Oi",
+    "/Oy",
+    "/W4",
+    "/WX",
+    "/GS-",
+    "/Gy",
+    "/Zl",
+    "/DLL",
+    "/NOENTRY",
+    "/NODEFAULTLIB",
+    "/INCREMENTAL:NO",
+    "/Brepro",
+    "/OPT:REF",
+    "/OPT:ICF"
+  ],
+  "compiler": "Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30154 for x86",
+  "compiler_stdout": "observatory_rng_core_observer.c\n\n   Creating library <temporary-build>\\itb_observatory_rng_core_observer.lib and object <temporary-build>\\itb_observatory_rng_core_observer.exp",
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "executable_size": 5530112,
+  "export_name": "luaopen_itb_observatory_rng_core_observer",
+  "generated_include_sha256": "2f3a7a7daf586e1b3e5ae35d31c65f62935e25c23e2c4b3c5cc8f13869857bac",
+  "hook_plan_filename": "windows_build_13725832_rng_core_hook_plan_a3d09bbc95ed.json",
+  "hook_plan_sha256": "a3d09bbc95ed32c1d8fc4c4155f6b09cabea69a90c361bbb966e2de69023f378",
+  "imports": [
+    "bcrypt.dll",
+    "kernel32.dll"
+  ],
+  "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+  "kind": "observatory_rng_core_observer_build",
+  "loaded_or_armed": false,
+  "machine_attestation": {
+    "entry_stub": {
+      "enter_target_rva": "0x00001e10",
+      "gateway_pointer_rva": "0x00006078",
+      "post_core_rva": "0x00002150",
+      "rva": "0x00002180",
+      "saved_return_offset": 36,
+      "sha256": "7a15a3f8ee0e8115b18b97caa6f5e20c6f4ca1650dd750c0f95f6fade6ea63ea",
+      "size": 36
+    },
+    "loader_entry_absent": true,
+    "observer_enter": {
+      "branch_count": 17,
+      "direct_or_indirect_call_count": 0,
+      "instruction_count": 133,
+      "return_count": 4,
+      "rva": "0x00001e10",
+      "sha256": "6fbda3e44805608833b02203273edd2a4b491175f0a039db1e426b2c44854b99",
+      "size": 388
+    },
+    "observer_exit": {
+      "branch_count": 13,
+      "direct_or_indirect_call_count": 0,
+      "instruction_count": 130,
+      "return_count": 4,
+      "rva": "0x00001fb0",
+      "sha256": "1f524c8af925f6dbb5c8aa9f225cc0aee1024089e882bc45c3ba2499e7193479",
+      "size": 405
+    },
+    "pe_entry_point_rva": "0x00000000",
+    "post_core_stub": {
+      "exit_target_rva": "0x00001fb0",
+      "return_scratch_offset": -40,
+      "rva": "0x00002150",
+      "saved_result_offset": 28,
+      "sha256": "26157d50a28afdd783c02f43c97e94b442f3cb741c1dd83ede37d7651b02209d",
+      "size": 33
+    }
+  },
+  "module_filename": "itb_observatory_rng_core_observer_8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c.dll",
+  "module_sha256": "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c",
+  "module_size": 19968,
+  "observer_version": "observatory-rng-core-observer/1",
+  "reproducibility": {
+    "attestations_identical": true,
+    "independent_build_count": 2,
+    "module_bytes_identical": true
+  },
+  "restore_hashes_filename": "windows_build_13725832_rng_core_restore_hashes_d7ad5662a8ba.json",
+  "restore_manifest_sha256": "d7ad5662a8ba8cdce081f56705ea8302ad425e5f7dbf6830ba4056f99408b73d",
+  "rng_core_region_sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179",
+  "rng_core_rva": "0x00387f16",
+  "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+  "schema_version": 1,
+  "source_attestation": {
+    "entry_abi_source_sha256": "ec829c20523a0a294006a87e1b24b3cc2cc5437fe1188c0068866496ab1c4d61",
+    "hot_source_sha256": "533c1ecca02c55378f939a29dc4b5409b3861ca863df39f233681902afb86628",
+    "post_abi_source_sha256": "b322739da10967a7330854f72870cfac49c9879a60b715cc057dcada0ca046fd"
+  },
+  "source_path": "src/native/observatory_rng_core_observer.c",
+  "source_sha256": "ee84a6556a9c7438b68677e361e30bd9a15d09ab48fabac4385a0eeb479017c9"
+}

@@ -2,14 +2,14 @@
 
 ## Current boundary
 
-The first live, non-invasive callback-identity capture is complete on the
-reversible owner track. No native hook was installed, no candidate callback was
-called or wrapped, and the owner install was restored exactly afterward. All
-achievements are complete, and the user explicitly authorized runtime research
-in the current owner installation. Evidence from that installation is accepted
-for practical, build-keyed Observatory work when the reversible-owner gate
-below passes. It is labelled `owner_local_modified`; it does not prove that an
-uninstrumented pristine Steam depot is neutral.
+The reversible owner track now contains deterministic callback identities,
+exact callback-slot bindings, and six build-keyed seeded Lua-RNG pairs. No
+accepted native observer checkpoint or natural callback-hook pair exists yet.
+All achievements are complete, and the user explicitly authorized runtime
+research in the current owner installation. Evidence from that installation is
+accepted for practical, build-keyed Observatory work when the reversible-owner
+gate below passes. It is labelled `owner_local_modified`; it does not prove
+that an uninstrumented pristine Steam depot is neutral.
 
 There are now two accepted capture tracks:
 
@@ -45,10 +45,11 @@ not be relabelled as clean stock.
 |---|---|---|
 | Exact PE boundaries | Verified for Windows build `13725832` and executable SHA-256 `31fe3526...4493fe9` | No hook installed |
 | RNG caller identity | Stable IDs for all 118 raw calls to the shared core; 11 reviewed and 107 explicitly unclassified | No caller observed |
-| Hook-neutrality trials | Strict control/exact-hook suite, receipt, and comparator contracts | Owner track accepted; matched trials not started |
-| Native checkpoint | Strict bounded diagnostic schema with overflow, unknown-caller, torn-record, and restore gates | No native helper loaded |
-| Callback identities | Inert runtime enumeration, bounded pre-combat enemy-root discovery, fresh side-band transport, strict validation, and exact lexical-inventory join | Complete: two byte-identical fresh-process manifests; all 65 unique Lua functions joined exactly |
-| Spawn RNG | Span-based attribution analyzer with nesting, reseed, shortcut, and ambiguity handling | Awaiting `Spawner:NextPawn` markers |
+| Hook-neutrality trials | Strict control/exact-hook suite for one-argument `random_int` and `random_bool`, seeded schema-v2 result contract, exact outcome comparator, and rejected-pair archive | Six seeded direct-boundary matches; only two of six whole-game outcomes matched, so whole-game wrapper neutrality remains unproven |
+| Native checkpoint | Reproducible build-keyed RNG-core observer, exact hook/restore manifests, bounded checkpoint schema, and one-purpose seed-control helper | Observer module reproduced byte-for-byte; no accepted live observer checkpoint |
+| Callback identities and slots | Inert runtime enumeration, bounded enemy-root discovery, exact lexical join, and raw defining-table resolution | Complete: 81 roots, 324 method records, 65 exact slots; two updated fresh-process slot captures are byte-identical |
+| Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Offline Lua 5.1 lifecycle and restore proofs complete; no natural matched runtime pair |
+| Spawn RNG | Span attribution plus a Rust non-fabrication safeguard | Seeded outcomes expose spawn-coordinate instability; native `Spawner:NextPawn` call order remains unresolved |
 | Selected action | `aiDest`/`aiTarget` to Pawn queue correlation analyzer | Awaiting selected-record and queue checkpoints |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
@@ -148,6 +149,97 @@ does not prove callback behavior, native ABI/hook safety, candidate ordering or
 scores, RNG call order, selected actions, Rust equivalence, or pristine-depot
 neutrality.
 
+## Rejected RNG pair 004 and seeded campaign
+
+The first complete `_G.random_int` control/exact-hook pair reached the same
+`Mission_Power` turn-1 enemy boundary from the sealed 33-file save tree
+`ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5`.
+The exact condition installed only the return-preserving Lua-global wrapper,
+observed one call, returned the original value, published one valid schema-v2
+trace event, and restored the global. The control probe returned `4678`; the
+exact-hook probe returned `337`. The post-transition bridge states then differed
+at `/spawning_tiles/0/0` (`6` versus `5`). This pair is therefore rejected from
+neutrality evidence. It proves that a fresh process plus the same save-derived
+identity does not reconstruct the same hidden native RNG cursor; it does not
+prove that the wrapper caused the spawning-tile difference.
+
+The create-only negative-evidence receipt is
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_rejected_receipt.json`.
+It binds both legacy results, the finalized trace, the exact outcome comparison,
+the build identity, and the restored save-tree hash.
+
+To remove that confound, the repository now contains a one-purpose x86 seed
+helper and reproducible builder. The DLL has exactly one export,
+`luaopen_itb_observatory_rng_seed`; exposes only `seed`; verifies the full pinned
+PE identity plus exact RNG-core and seed-setter bytes at runtime; and has no
+detour, arbitrary memory, remote-process, file, socket, or clock surface. Two
+independent `/Brepro` builds produced the same 73,728-byte module SHA-256,
+`bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787`,
+and the normalized receipts were byte-identical. Its committed receipt is
+`data/observatory/native/windows_build_13725832_31fe35265598_rng_seed_helper_receipt.json`;
+the DLL itself is reproducible and is not committed. A title-screen startup
+smoke test proved that the module loaded, opened, and passed its internal build
+guard.
+
+The replacement host seeds both control and exact-hook conditions immediately
+at the exact enemy boundary and requires the mathematically predicted first CRT
+draw. The same fail-closed capsule/host/result path independently supports the
+one-argument `_G.random_int(bound)` and `_G.random_bool(argument)` boundaries;
+each pair installs exactly one matching global and records the family-specific
+integer or Boolean payload. Pairs 007 through 012 completed as three
+`random_int` and three `random_bool` pairs with counterbalanced condition order.
+All six direct probes returned the mathematically predicted value, emitted one
+valid event in the exact condition, and restored the selected global. Two
+whole-game outcomes matched; four differed only at `/spawning_tiles/0/1`.
+The sealed campaign receipt therefore classifies the boundary as
+`return_preserving_but_not_whole_game_neutral`. It does not blame the wrapper;
+it proves that the present reset/seed boundary does not control every input to
+native spawn-coordinate selection. Pair 004 must never be reinterpreted as a
+neutral pair.
+
+The campaign is archived at
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng/`,
+with the build-keyed summary in
+`windows_build_13725832_owner_local_modified_20260821_seeded_rng_campaign_receipt.json`.
+That immutable receipt records install restoration as pending at its sealing
+time. The subsequent
+`windows_build_13725832_owner_local_modified_20260822_native_campaign_cleanup_receipt.json`
+closes the pending state with a 689/689 install comparison, the restored
+33-file save tree, and zero active Observatory bridge files.
+
+## Exact callback slots and dormant natural-call trials
+
+The callback binding collector resolves each published method through raw
+table-only inheritance to its actual defining holder. Shared inherited methods
+become one slot rather than stacked wrappers. The current build resolves 65
+slots: 11 `GetTargetArea`, 15 `GetTargetScore`, 38 `GetSkillEffect`, and one
+global `ScorePositioning`. Two fresh processes using the final live-holder
+collector produced the same 131,137 bytes, raw SHA-256
+`39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24`
+and canonical SHA-256
+`d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3`.
+Enumeration calls and wraps no candidate.
+`windows_build_13725832_owner_local_modified_20260822_callback_bindings_receipt.json`
+binds both fresh-process artifacts, the exact collector source hashes, and the
+family counts.
+
+`observatory_callback_controller.lua` consumes that exact slot document and a
+complete source join, permits exactly one family, and wraps every defining slot
+in that family together. Its adapters run only after the original callback,
+preserve the complete return tuple and original error, bound all PointList and
+SkillEffect extraction, and admit only primitive JSON data. The one-shot host
+constructs inertly at script load, arms at the natural enemy `NextTurn`
+boundary, checkpoints after the following `BaseUpdate`, and verifies every
+holder is restored before publishing a result. Control runs prepare the same
+packet without installing or writing a hook. Capsule, request, result,
+comparison, raw-finalization, and CLI paths are create-only and fail closed.
+
+These are readiness and restoration proofs, not behavioral evidence. Windows
+input-desktop access prevented an autonomous synthetic-mission transition, so
+no matched natural callback pair is promoted. The next live work is one family
+at a time, beginning with the single `ScorePositioning` slot, whenever a normal
+interactive desktop can be driven.
+
 ## Capture-track acceptance gate
 
 Before the first experimental launch, record and verify all common items:
@@ -187,9 +279,10 @@ the observed post-restore hashes exactly equal that trusted manifest.
 
 ## Native helper contract
 
-Implement the native helper only after one capture-track gate passes. The first
-helper should be a build-keyed x86 DLL with no general-purpose injection or
-remote-control surface. Its hot hook must:
+The seed-control helper described above is not an observer or hook: it invokes
+only the reviewed seed setter from the game thread and immediately returns. The
+native *observer* is a separate reproducibly built, build-keyed x86 DLL with no
+general-purpose injection or remote-control surface. Its hot hook contract is:
 
 - preserve the x86 ABI, registers, flags, stack, return value, and original
   instruction sequence;
@@ -225,9 +318,9 @@ exactly. Timing is reported separately; it never excuses output drift.
 4. **Spawn spans.** Add `Spawner:NextPawn` enter/exit markers without wrapping
    RNG. Join enclosed native draws, and preserve no-draw shortcuts, reseeds,
    nesting, and ambiguity explicitly.
-5. **Runtime callback inventory.** Enumerate exact loaded method identities
-   without wrapping or calling them. Review unresolved C functions, function
-   `__index` values, cycles, replacements, and ambiguous source/line joins.
+5. **Runtime callback inventory.** Complete for this build: enumerate exact
+   loaded method identities and defining slots without wrapping or calling
+   them. Re-run this gate for any changed executable or script inventory.
 6. **One callback family.** Wrap only reviewed exact function identities for
    `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, or `GetSkillEffect`,
    one family per matched series. Coverage is the runtime manifest, not the
@@ -250,16 +343,21 @@ series without promotion.
 After every series, disarm, restore exact hook bytes, stop the helper, remove
 the experimental Mod Loader integration, and compare the active install with
 its accepted starting inventory. This includes restoring the exact prior
-`modloader.lua`,
-removing the installed sibling `observatory_callback_manifest.lua`, and
-removing `itb_observatory_callback_manifest.json` plus any `.tmp` file from the
-active bridge directory after its durable copy is verified. Also remove any
-remaining `itb_observatory_callback_manifest.request`. On the
+`modloader.lua`, removing the installed callback manifest/bindings modules,
+callback/RNG trial hosts, content-addressed controllers and capsules, native
+helper/observer DLLs, and every Observatory result, raw, `.tmp`, and request
+file from the active bridge directory after its durable copy is verified. On the
 pristine-reference track, remove the test profile and experimental evidence
 staging area only after durable evidence has been copied to the repository
 archive. On the owner track, restore the byte-exact backup and report every
 before/after difference; do not claim cleanup if any unexplained difference
 remains.
+
+The 2026-08-22 owner-track cleanup completed this gate: the accepted and
+post-cleanup inventories compare as 689 identical, zero changed, zero missing;
+the 33-file save tree matches its sealed manifest; and no Observatory file
+remains in the active installation or bridge. Experimental files were moved to
+a recoverable staging quarantine rather than discarded.
 
 Only repeated, neutral, build-keyed results may become Rust conformance tests
 or simulator changes. Each simulator semantic change still follows the normal

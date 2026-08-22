@@ -286,6 +286,16 @@ def take_screenshot(
     if os.name == "nt":
         from PIL import ImageGrab
 
+        windows = _windows_breach_windows()
+        if len(windows) == 1:
+            try:
+                ImageGrab.grab(window=windows[0]["hwnd"]).save(output_path)
+                return output_path
+            except OSError:
+                # Some Pillow/Windows combinations cannot capture an HWND.
+                # Preserve the existing visible-screen fallback for those
+                # environments.
+                pass
         if bounds:
             bbox = (
                 bounds["x"],

@@ -1,0 +1,19 @@
+{
+  "architecture": "x86",
+  "build_id": "13725832",
+  "compiler": "Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30154 for x86",
+  "compiler_stdout": "observatory_rng_seed.c\n   Creating library <temporary-build>\\itb_observatory_rng_seed.lib and object <temporary-build>\\itb_observatory_rng_seed.exp",
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "export_name": "luaopen_itb_observatory_rng_seed",
+  "helper_version": "observatory-rng-seed-helper/1",
+  "kind": "observatory_rng_seed_helper_build",
+  "module_filename": "itb_observatory_rng_seed_bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787.dll",
+  "module_sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787",
+  "module_size": 73728,
+  "native_boundaries_sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3",
+  "rng_seed_region_sha256": "67b19fe39627674ef04d07bd86e989a39ce744be2e93f9265c16e2aeb928cf9d",
+  "rng_seed_rva": "0x00387f37",
+  "schema_version": 1,
+  "source_path": "src/native/observatory_rng_seed.c",
+  "source_sha256": "1dd58c461313b4c63afb8cb6a529c1b99e044776a94d27f1851ddf52ba17c647"
+}

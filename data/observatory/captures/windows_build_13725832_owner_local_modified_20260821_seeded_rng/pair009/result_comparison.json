@@ -1,0 +1,38 @@
+{
+  "arm_packet_sha256": "03b99ffa93140da0bf64483e3d8ee206d6424bc9549a7ff4a4b82f8fd76b72b0",
+  "capsule_sha256": "7bad7bfe3bdd0189ce3c0109a7343878d3035d5ad85e22e3f90f38992e0182d2",
+  "capture_id": "owner-rng-int-pair-009",
+  "capture_track": "owner_local_modified",
+  "checkpoint_seq": 0,
+  "control_result_sha256": "e7d2e0dba9044539410ff190f10956d5db0f21adcac43c386890bf8939a5c63e",
+  "exact_hook_result_sha256": "63d3b69601c8b9d00a066f0efd2d4b5b7bbf65ea1f808b30f1a2c4b8d95b8fa3",
+  "kind": "observatory_rng_trial_comparison",
+  "probe": {
+    "kind": "random_int",
+    "result": 24356,
+    "upper_bound": 65521
+  },
+  "rng_control": {
+    "expected_result": 24356,
+    "helper_sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787",
+    "helper_version": "observatory-rng-seed-helper/1",
+    "kind": "build_keyed_seed",
+    "seed": 324508639,
+    "seed_applied": true
+  },
+  "runtime_identity": {
+    "ai_seed_fingerprint": "5d1d0ff2a35142705684bc04b87a7e3d2ef1e74900764ecbf633cf3b462257e3",
+    "master_seed": 664577925,
+    "mission_id": "Mission_Power",
+    "phase": "combat_enemy",
+    "region_id": "region1",
+    "timeline_fingerprint": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5",
+    "turn": 1
+  },
+  "schema_version": 2,
+  "status": "matched",
+  "timing": {
+    "control_duration_seconds": 0,
+    "exact_hook_duration_seconds": 0
+  }
+}

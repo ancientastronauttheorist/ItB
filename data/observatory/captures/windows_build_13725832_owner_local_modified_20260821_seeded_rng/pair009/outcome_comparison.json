@@ -1,0 +1,23 @@
+{
+  "capture_id": "owner-rng-int-pair-009",
+  "control_semantic_sha256": "af074645aa0f295a38490066eec434412ec584031890bead37cf37296b3ff4a9",
+  "control_state_sha256": "678fd598d8edbf9867e96d85288ac84050dd1cae784e7b564d6ef289cbe44ac4",
+  "difference_count": 1,
+  "differences": [
+    {
+      "control": 3,
+      "exact_hook": 4,
+      "kind": "value",
+      "path": "/spawning_tiles/0/1"
+    }
+  ],
+  "differences_truncated": false,
+  "exact_hook_semantic_sha256": "e4a2053f1f14cac6bf1a3e11f24a9125aebbed204cda07ef3c8272c538c9755f",
+  "exact_hook_state_sha256": "957fd979e83e709369fdf6825c43e3490223f8b3db6ae6f9b6750d5e09da886e",
+  "ignored_top_level_fields": [
+    "timestamp"
+  ],
+  "kind": "observatory_rng_trial_outcome_comparison",
+  "schema_version": 1,
+  "status": "mismatched"
+}

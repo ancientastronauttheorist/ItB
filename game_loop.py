@@ -70,6 +70,8 @@ from src.loop.commands import (
     cmd_recommend_mission,
     cmd_bridge_speed,
     cmd_bridge_ui_probe,
+    cmd_observatory_callback_bindings,
+    cmd_observatory_callback_bindings_arm_startup,
     cmd_observatory_callback_manifest,
     cmd_observatory_callback_manifest_arm_startup,
     cmd_lightning_preflight,
@@ -645,6 +647,20 @@ def main():
         help=(
             "Create the fixed one-shot request for a callback manifest on "
             "the next ITB startup"
+        ),
+    )
+    sub.add_parser(
+        "observatory_callback_bindings",
+        help=(
+            "Capture inert runtime callback table-slot identities during an "
+            "unpaused deployment or active mission"
+        ),
+    )
+    sub.add_parser(
+        "observatory_callback_bindings_arm_startup",
+        help=(
+            "Create the fixed one-shot request for a callback slot manifest "
+            "on the next ITB startup"
         ),
     )
 
@@ -2255,6 +2271,10 @@ def main():
         cmd_observatory_callback_manifest()
     elif args.command == "observatory_callback_manifest_arm_startup":
         cmd_observatory_callback_manifest_arm_startup()
+    elif args.command == "observatory_callback_bindings":
+        cmd_observatory_callback_bindings()
+    elif args.command == "observatory_callback_bindings_arm_startup":
+        cmd_observatory_callback_bindings_arm_startup()
     elif args.command == "lightning_preflight":
         cmd_lightning_preflight(
             profile=args.profile,

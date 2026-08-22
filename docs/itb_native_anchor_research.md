@@ -208,27 +208,42 @@ Community work remains useful for feasibility and independent probes:
 The inventoried `lua5.1.dll` is 419,840 bytes with SHA-256
 `0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14`.
 At the pinned Mod Loader revision this identity corresponds to the preserved
-original DLL, not its smaller proxy. Nothing in this offline pass installed a
-proxy, changed the bridge, launched the game, or touched the protected session.
+original DLL, not its smaller proxy. The completed offline pass did not install
+a proxy. Subsequent owner-track experiments used the ordinary Mod Loader and a
+separate one-purpose seed-control DLL; they did not replace `lua5.1.dll`.
 
 ## Remaining proof
 
-The broad static boundary search is no longer the blocker. The next evidence is
-controlled and dynamic:
+The broad static boundary search is no longer the blocker. The reversible-owner
+track is accepted for build-keyed work, so a disposable installation is optional
+unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 
-1. Prepare a disposable non-achievement installation without relying on a VM.
-2. Re-inventory its exact executable, Lua DLL, Mod Loader, controller, scripts,
-   maps, and profile isolation.
-3. Add only one reviewed family at a time, beginning with either the Lua global
-   wrapper or the RNG core plus bounded caller IDs.
-4. Run matched enabled/disabled trials and reject any outcome or timing drift.
-5. Correlate the selected-record copy with the downstream Pawn queue.
-6. Capture actual subclass coverage and separate spawn-selection callers.
-7. Finalize evidence offline, convert proven behavior into Rust conformance
-   tests, remove the experimental hooks, and verify the installation is clean.
+1. Run the reproducible RNG-core observer in a matched control/exact series and
+   require complete bounded caller IDs plus exact restoration. The module,
+   hook/restore manifests, Mod Loader bridge, and checkpoint validators are
+   complete; no live checkpoint is accepted yet.
+2. Correlate `Spawner:NextPawn` spans with the native RNG records and the
+   downstream Pawn queue. Six seeded Lua-global pairs preserved every direct
+   result, but four whole-game outcomes changed only the spawning-tile y
+   coordinate, so native spawn selection/call order remains unresolved.
+3. Run the dormant natural callback controller one family at a time. Exact
+   defining-slot coverage is 11 `GetTargetArea`, 15 `GetTargetScore`, 38
+   `GetSkillEffect`, and one `ScorePositioning`; matched live neutrality is not
+   yet established.
+4. Correlate the selected-record copy with the downstream Pawn action queue.
+5. Current series complete: evidence is finalized offline, the unresolved-spawn
+   safeguard is a Rust conformance test, experimental files are removed from
+   the active roots, the sealed save is restored, and all 689 install entries
+   match the accepted starting inventory. Repeat this cleanup gate after every
+   future live series.
 
 The exact isolation gate, helper constraints, counterbalanced experiment order,
 abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
-The repository now validates matched-trial receipts, bounded native diagnostic
+The repository validates matched-trial receipts, bounded native diagnostic
 checkpoints, runtime callback manifests, spawn RNG spans, and selected-record
-queue correlations. No runtime result exists yet.
+queue correlations. Runtime pair 004 remains explicitly rejected evidence:
+different fresh-process RNG probes disproved the old unseeded method. Seeded
+pairs 007 through 012 then matched all six direct wrapper results and restored
+every target, while four of six whole-game outcomes still differed only in the
+spawn coordinate. The correct conclusion is return preservation without a
+whole-game neutrality claim, not a simulator rule for spawn selection.

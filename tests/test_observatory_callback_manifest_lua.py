@@ -261,6 +261,7 @@ def test_enemy_skill_discovery_is_bounded_exact_and_callback_inert(lua):
         assert(roots[3].root_id == "global.ScorePositioning")
         assert(roots[1].object == firefly)
         assert(roots[2].object == scorpion)
+        assert(roots[3].object == globals)
         assert(calls == 0)
 
         local manifest = assert(CALLBACK_MANIFEST.enumerate(roots, {

@@ -405,7 +405,10 @@ function M.discover_enemy_skill_roots(globals)
     end
     roots[#roots + 1] = {
         root_id = "global.ScorePositioning",
-        object = {ScorePositioning = score_positioning},
+        -- Preserve the actual defining table for later reversible slot
+        -- binding.  Enumeration still uses raw, bounded lookups and therefore
+        -- does not scan or invoke any other global.
+        object = globals,
         expected = {},
     }
     return roots

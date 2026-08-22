@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_callback_binding_capture_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-22T03:05:51Z",
+  "repository_base_commit": "0a5763428208b9afb0e0656db85d5577922b6352",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "attempts": [
+    {
+      "status": "complete",
+      "phase": "script_load_title_screen",
+      "captured_at_utc": "2026-08-22T02:50:49Z",
+      "artifact": {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822T025049Z_callback_bindings_live_slot_update.json",
+        "size": 131137,
+        "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24"
+      }
+    },
+    {
+      "status": "complete_repeat",
+      "phase": "script_load_title_screen",
+      "captured_at_utc": "2026-08-22T02:51:39Z",
+      "artifact": {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822T025139Z_callback_bindings_live_slot_update_repeat.json",
+        "size": 131137,
+        "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24"
+      }
+    }
+  ],
+  "determinism": {
+    "fresh_process_count": 2,
+    "byte_identical": true,
+    "raw_sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24",
+    "canonical_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3"
+  },
+  "document": {
+    "schema_version": 1,
+    "runtime_version": "observatory-callback-bindings/1",
+    "summary": {
+      "root_count": 81,
+      "method_count": 324,
+      "function_count": 65,
+      "slot_count": 65
+    },
+    "slot_family_counts": {
+      "GetTargetArea": 11,
+      "GetTargetScore": 15,
+      "GetSkillEffect": 38,
+      "ScorePositioning": 1
+    }
+  },
+  "instrumentation": {
+    "candidate_callback_invoked_or_wrapped": false,
+    "native_hook_installed": false,
+    "startup_request_bytes": 40,
+    "startup_request_sha256": "705d2bec98b4aa54363795e583fd317cd7223d2110e13b3fe0963674c592d366",
+    "deployed_modloader": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_callback_bindings_modloader_c4d7b48e882f7d83b13fef34151e1262be408a89ff6027e7d75754003bb0fc7b.lua",
+      "size": 216320,
+      "sha256": "c4d7b48e882f7d83b13fef34151e1262be408a89ff6027e7d75754003bb0fc7b"
+    },
+    "collector_sources": [
+      {
+        "path": "src/bridge/modloader.lua",
+        "size": 213063,
+        "sha256": "d0a42b023bad3bd47788ac07bc8e42262e55ce04edcb82d628159891e37ebce2",
+        "line_endings": "lf"
+      },
+      {
+        "path": "src/bridge/observatory_callback_manifest.lua",
+        "size": 16960,
+        "sha256": "c6ccb974dc5a01cc08776d68474ce42906800b39f42123a7d722e2be9353c14c"
+      },
+      {
+        "path": "src/bridge/observatory_callback_bindings.lua",
+        "size": 8865,
+        "sha256": "29234c80cae2685e48c691a2165d5460fbe4dc50f700d33253c5a1fbcecff3c8"
+      }
+    ]
+  },
+  "restore": {
+    "status": "verified_after_campaign",
+    "cleanup_receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_campaign_cleanup_receipt.json"
+  },
+  "claims": {
+    "proven": [
+      "Two fresh game processes produced byte-identical callback-binding documents.",
+      "The exact build exposes 81 roots and 324 callback method records resolving to 65 defining slots.",
+      "Enumeration did not invoke or wrap a candidate callback."
+    ],
+    "not_proven": [
+      "Natural callback invocation or matched control/exact-hook neutrality.",
+      "Enemy candidate ordering, native scores, tie-breaking, or final selected actions.",
+      "Behavioral equivalence between the observed callbacks and the Rust solver."
+    ]
+  }
+}

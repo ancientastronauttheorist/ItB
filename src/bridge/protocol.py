@@ -33,6 +33,25 @@ CALLBACK_MANIFEST_REQUEST_TOKEN = "observatory-callback-manifest-request/1"
 CALLBACK_MANIFEST_REQUEST_BYTES = (
     CALLBACK_MANIFEST_REQUEST_TOKEN + "\n"
 ).encode("ascii")
+CALLBACK_BINDINGS_FILE = BRIDGE_DIR / "itb_observatory_callback_bindings.json"
+CALLBACK_BINDINGS_TMP = BRIDGE_DIR / "itb_observatory_callback_bindings.json.tmp"
+CALLBACK_BINDINGS_REQUEST_FILE = (
+    BRIDGE_DIR / "itb_observatory_callback_bindings.request"
+)
+CALLBACK_BINDINGS_REQUEST_TOKEN = "observatory-callback-bindings-request/1"
+CALLBACK_BINDINGS_REQUEST_BYTES = (
+    CALLBACK_BINDINGS_REQUEST_TOKEN + "\n"
+).encode("ascii")
+NATIVE_RNG_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_native_rng_snapshot.json"
+)
+NATIVE_RNG_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_native_rng_snapshot.json.tmp"
+)
+_OBSERVATORY_CAPTURE_ID_RE = re.compile(
+    r"[a-z][a-z0-9_.-]{0,95}\Z"
+)
+OBSERVATORY_NATIVE_RNG_SEED = 324_508_639
 
 # State file must be newer than this many seconds
 STALENESS_THRESHOLD = 300.0  # 5 minutes
@@ -253,6 +272,193 @@ def request_observatory_callback_manifest(
     )
 
 
+def request_observatory_callback_bindings(
+    timeout: float = 15.0,
+) -> tuple[str, dict]:
+    """Request one fresh, inert callback-slot manifest."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "callback bindings require an unpaused active mission heartbeat"
+        )
+    before = _file_generation(CALLBACK_BINDINGS_FILE)
+    write_command("OBS_CALLBACK_BINDINGS")
+    pending_command = f"#{_seq_counter} OBS_CALLBACK_BINDINGS"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_CALLBACK_BINDINGS roots=(\d+) functions=(\d+) slots=(\d+)",
+        ack,
+    )
+    if match is None:
+        raise BridgeError(f"unexpected callback bindings ACK: {ack}")
+    expected_roots, expected_functions, expected_slots = map(int, match.groups())
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(CALLBACK_BINDINGS_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            payload = json.loads(CALLBACK_BINDINGS_FILE.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"callback bindings result is not valid JSON: {exc}"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise BridgeError("callback bindings result must be a JSON object")
+        summary = payload.get("summary")
+        if not isinstance(summary, dict) or (
+            summary.get("root_count") != expected_roots
+            or summary.get("function_count") != expected_functions
+            or summary.get("slot_count") != expected_slots
+        ):
+            raise BridgeError(
+                "callback bindings result does not match its ACK summary"
+            )
+        return ack, payload
+    raise TimeoutError(
+        f"Fresh callback bindings result timeout after {timeout:.0f}s"
+    )
+
+
+def arm_observatory_native_rng(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Arm the fixed, build-keyed one-shot native RNG observer."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("native RNG capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "native RNG observer requires an unpaused active mission heartbeat"
+        )
+    if NATIVE_RNG_SNAPSHOT_FILE.exists() or NATIVE_RNG_SNAPSHOT_TMP.exists():
+        raise BridgeError("native RNG snapshot output already exists")
+    command = f"OBS_NATIVE_RNG_ARM {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = f"OK OBS_NATIVE_RNG_ARM capture={capture_id}"
+    if ack != expected:
+        raise BridgeError(f"unexpected native RNG arm ACK: {ack}")
+    return ack
+
+
+def seed_observatory_native_rng(*, timeout: float = 10.0) -> str:
+    """Apply the fixed build-keyed seed immediately before End Turn."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "native RNG seed control requires an unpaused mission heartbeat"
+        )
+    write_command("OBS_NATIVE_RNG_SEED")
+    pending_command = f"#{_seq_counter} OBS_NATIVE_RNG_SEED"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = f"OK OBS_NATIVE_RNG_SEED seed={OBSERVATORY_NATIVE_RNG_SEED}"
+    if ack != expected:
+        raise BridgeError(f"unexpected native RNG seed ACK: {ack}")
+    return ack
+
+
+def status_observatory_native_rng(*, timeout: float = 10.0) -> tuple[str, dict]:
+    """Read the fixed native observer's bounded status table."""
+    write_command("OBS_NATIVE_RNG_STATUS")
+    pending_command = f"#{_seq_counter} OBS_NATIVE_RNG_STATUS"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    prefix = "OK OBS_NATIVE_RNG_STATUS "
+    if not ack.startswith(prefix):
+        raise BridgeError(f"unexpected native RNG status ACK: {ack}")
+    try:
+        payload = json.loads(ack[len(prefix) :])
+    except json.JSONDecodeError as exc:
+        raise BridgeError(f"native RNG status ACK is not JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise BridgeError("native RNG status must be a JSON object")
+    return ack, payload
+
+
+def finish_observatory_native_rng(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict]:
+    """Restore the native hook and require one fresh complete snapshot."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("native RNG capture ID is invalid")
+    before = _file_generation(NATIVE_RNG_SNAPSHOT_FILE)
+    write_command("OBS_NATIVE_RNG_FINISH")
+    pending_command = f"#{_seq_counter} OBS_NATIVE_RNG_FINISH"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_NATIVE_RNG_FINISH capture=([a-z][a-z0-9_.-]{0,95}) "
+        r"records=(0|[1-9][0-9]*) complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != capture_id:
+        raise BridgeError(f"unexpected native RNG finish ACK: {ack}")
+    expected_records = int(match.group(2))
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(NATIVE_RNG_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            payload = json.loads(
+                NATIVE_RNG_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"native RNG snapshot is not valid JSON: {exc}"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise BridgeError("native RNG snapshot must be a JSON object")
+        summary = payload.get("summary")
+        integrity = payload.get("integrity")
+        if (
+            payload.get("capture_id") != capture_id
+            or payload.get("kind") != "native_rng_core_observer_snapshot"
+            or not isinstance(summary, dict)
+            or summary.get("record_count") != expected_records
+            or not isinstance(integrity, dict)
+            or integrity.get("complete") is not True
+            or integrity.get("hook_bytes_restored") is not True
+            or integrity.get("patch_installed") is not False
+        ):
+            raise BridgeError(
+                "native RNG snapshot does not match its complete ACK"
+            )
+        return ack, payload
+    raise TimeoutError(
+        f"Fresh native RNG snapshot timeout after {timeout:.0f}s"
+    )
+
+
 def arm_observatory_callback_manifest_startup() -> Path:
     """Create the exact one-shot request consumed on the next game load.
 
@@ -276,6 +482,23 @@ def arm_observatory_callback_manifest_startup() -> Path:
             f"cannot arm callback manifest startup request: {exc}"
         ) from exc
     return CALLBACK_MANIFEST_REQUEST_FILE
+
+
+def arm_observatory_callback_bindings_startup() -> Path:
+    """Create the fixed one-shot slot-manifest request for next game load."""
+    BRIDGE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(CALLBACK_BINDINGS_REQUEST_FILE, "xb") as file:
+            file.write(CALLBACK_BINDINGS_REQUEST_BYTES)
+            file.flush()
+            os.fsync(file.fileno())
+    except FileExistsError as exc:
+        raise BridgeError("callback bindings startup request already exists") from exc
+    except OSError as exc:
+        raise BridgeError(
+            f"cannot arm callback bindings startup request: {exc}"
+        ) from exc
+    return CALLBACK_BINDINGS_REQUEST_FILE
 
 
 def read_state() -> dict | None:

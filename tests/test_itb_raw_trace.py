@@ -441,6 +441,18 @@ def test_finalize_rejects_stopped_capture_even_when_counters_reconcile():
         _finalize(raw)
 
 
+def test_finalize_accepts_only_empty_lua_array_for_empty_reason_maps():
+    raw = _raw()
+    raw["summary"]["truncation_reasons"] = []
+    raw["summary"]["stop_reasons"] = []
+    assert _finalize(raw)["summary"]["truncation_reasons"] == {}
+
+    raw = _raw()
+    raw["summary"]["truncation_reasons"] = ["max_events"]
+    with pytest.raises(RawTraceError, match="must be an object"):
+        _finalize(raw)
+
+
 def test_build_identity_digest_is_canonical_and_type_sensitive():
     identity = _build_identity()
     reordered = dict(reversed(list(identity.items())))
@@ -591,3 +603,241 @@ def test_cli_build_arm_and_finalize_raw_end_to_end(tmp_path, capsys):
     final_output = capsys.readouterr().out.strip()
     final_path = next(final_root.glob("*.json"))
     assert f"sha256={stable_file_sha256(final_path)}" in final_output
+
+
+_CALLBACK_SLOTS = (
+    ("slot-0001", "GetTargetArea", "get_target_area", "fn-0001"),
+    ("slot-0002", "GetTargetArea", "get_target_area", "fn-0002"),
+    ("slot-0003", "GetTargetScore", "enemy_target_score", "fn-0003"),
+    ("slot-0004", "GetSkillEffect", "get_skill_effect", "fn-0004"),
+    ("slot-0005", "ScorePositioning", "score_positioning", "fn-0005"),
+)
+
+
+def _callback_hook_plan(installed_kind: str) -> list[dict]:
+    plan = [
+        {
+            "hook_id": f"callback.{slot_id}",
+            "event_kind": kind,
+            "target": f"runtime.callback.{slot_id}.{method}.{function_id}",
+            "target_kind": (
+                "lua_global" if method == "ScorePositioning" else "lua_method"
+            ),
+            "status": "installed" if kind == installed_kind else "disabled",
+            "source_sha256": HASH_C,
+        }
+        for slot_id, method, kind, function_id in _CALLBACK_SLOTS
+    ]
+    covered = {entry["event_kind"] for entry in plan}
+    for kind in sorted(EVENT_KINDS - covered):
+        plan.append(
+            {
+                "hook_id": f"disabled.{kind}",
+                "event_kind": kind,
+                "target": f"disabled.{kind}",
+                "target_kind": (
+                    "lua_global"
+                    if kind in {"random_bool", "random_int"}
+                    else "native_boundary"
+                ),
+                "status": "disabled",
+                "source_sha256": HASH_D,
+            }
+        )
+    return sorted(plan, key=lambda item: (item["event_kind"], item["target"]))
+
+
+def _callback_capture_identity(installed_kind: str) -> dict:
+    capture = _capture_identity()
+    capture["controller_version"] = "observatory-callback-controller/1"
+    coverage = [
+        {key: value for key, value in entry.items() if key != "hook_id"}
+        for entry in _callback_hook_plan(installed_kind)
+    ]
+    capture["hook_coverage_sha256"] = hook_coverage_sha256(coverage)
+    return capture
+
+
+def _callback_event(kind: str) -> dict:
+    payloads = {
+        "score_positioning": {
+            "pawn_uid": 42,
+            "candidate_order": 0,
+            "position": [2, 3],
+            "score": 4.5,
+        },
+        "get_target_area": {
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "pawn_uid": 42,
+            "skill_id": "ScorpionAtk1",
+            "origin": [2, 3],
+            "target_area": [[2, 4], [2, 5]],
+            "call_order": 0,
+        },
+        "enemy_target_score": {
+            "payload_version": 1,
+            "representation": "get_target_score_arguments",
+            "pawn_uid": 42,
+            "skill_id": "ScorpionAtk1",
+            "pawn_space": [1, 3],
+            "p1": [2, 3],
+            "p2": [2, 5],
+            "call_order": 0,
+            "score": 7.25,
+        },
+        "get_skill_effect": {
+            "payload_version": 1,
+            "representation": "raw_opaque_primitives",
+            "pawn_uid": 42,
+            "skill_id": "ScorpionAtk1",
+            "origin": [2, 3],
+            "target": [2, 4],
+            "call_order": 0,
+            "primitive_count": 3,
+            "primitive_summary": {
+                "effect": [
+                    {
+                        "index": 0,
+                        "fields": [
+                            {"name": "iDamage", "value": 2},
+                            {"name": "iPush", "value": 1},
+                            {"name": "loc", "value": [2, 4]},
+                        ],
+                    }
+                ],
+                "q_effect": [],
+            },
+        },
+    }
+    return {
+        "seq": 0,
+        "kind": kind,
+        "phase": "combat_enemy",
+        "mission_id": "Mission_Test",
+        "turn": 2,
+        "context": {
+            "call_site": "runtime.callback.slot-0001.Test.fn-0001",
+            "source": "fn-0001",
+        },
+        "payload": payloads[kind],
+    }
+
+
+def _callback_raw(installed_kind: str) -> tuple[dict, dict, dict]:
+    capture = _callback_capture_identity(installed_kind)
+    plan = _callback_hook_plan(installed_kind)
+    coverage = [
+        {key: value for key, value in entry.items() if key != "hook_id"}
+        for entry in plan
+    ]
+    event = _callback_event(installed_kind)
+    raw = _raw(capture)
+    raw["hook_coverage"] = coverage
+    raw["events"] = [event]
+    raw["attempted_calls"] = {kind: 0 for kind in EVENT_KINDS}
+    raw["attempted_calls"][installed_kind] = 1
+    raw["summary"]["event_byte_upper_bound"] = len(
+        json.dumps(
+            event,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ) + 501
+    packet = build_arm_packet(
+        build_identity=_build_identity(),
+        capture_identity=capture,
+        config=_config().to_dict(),
+        hook_plan=plan,
+        max_attempts=64,
+        checkpoint_seq=7,
+    )
+    return raw, capture, packet
+
+
+def _finalize_callback(installed_kind: str) -> dict:
+    raw, capture, packet = _callback_raw(installed_kind)
+    return finalize_raw_checkpoint(
+        raw,
+        build_identity=_build_identity(),
+        capture_identity=capture,
+        arm_packet=packet,
+        expected_arm_packet_sha256=arm_packet_sha256(packet),
+    )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "score_positioning",
+        "get_target_area",
+        "enemy_target_score",
+        "get_skill_effect",
+    ],
+)
+def test_callback_raw_events_promote_to_schema_v2(kind):
+    trace = _finalize_callback(kind)
+    event = trace["events"][0]
+    assert event["kind"] == kind
+    assert trace["checkpoint"]["attempted_calls"][kind] == 1
+    if kind == "get_target_area":
+        assert "call_order" not in event["payload"]
+        assert event["payload"]["target_area"] == [[2, 4], [2, 5]]
+    elif kind == "enemy_target_score":
+        assert event["payload"]["origin"] == [1, 3]
+        assert event["payload"]["destination"] == [2, 3]
+        assert event["payload"]["target"] == [2, 5]
+        assert event["payload"]["candidate_order"] == 0
+    elif kind == "get_skill_effect":
+        summary = _callback_event(kind)["payload"]["primitive_summary"]
+        expected = hashlib.sha256(
+            (
+                json.dumps(
+                    summary,
+                    ensure_ascii=False,
+                    allow_nan=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                )
+                + "\n"
+            ).encode("utf-8")
+        ).hexdigest()
+        assert event["payload"]["summary_sha256"] == expected
+        assert event["payload"]["primitive_count"] == 3
+
+
+def test_callback_arm_packet_rejects_partial_family_or_non_slot_install():
+    kind = "get_target_area"
+    capture = _callback_capture_identity(kind)
+    plan = _callback_hook_plan(kind)
+    second = next(entry for entry in plan if entry["hook_id"] == "callback.slot-0002")
+    second["status"] = "disabled"
+    coverage = [
+        {key: value for key, value in entry.items() if key != "hook_id"}
+        for entry in plan
+    ]
+    capture["hook_coverage_sha256"] = hook_coverage_sha256(coverage)
+    with pytest.raises(RawTraceError, match="family-complete"):
+        build_arm_packet(
+            build_identity=_build_identity(),
+            capture_identity=capture,
+            config=_config().to_dict(),
+            hook_plan=plan,
+            max_attempts=64,
+            checkpoint_seq=7,
+        )
+
+
+def test_callback_finalize_rejects_torn_skill_effect_summary():
+    raw, capture, packet = _callback_raw("get_skill_effect")
+    raw["events"][0]["payload"]["primitive_count"] = 4
+    with pytest.raises(RawTraceError, match="primitive_count mismatch"):
+        finalize_raw_checkpoint(
+            raw,
+            build_identity=_build_identity(),
+            capture_identity=capture,
+            arm_packet=packet,
+            expected_arm_packet_sha256=arm_packet_sha256(packet),
+        )

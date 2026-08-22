@@ -1,0 +1,97 @@
+{
+  "artifacts": {
+    "control_result": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_control_result.json",
+      "sha256": "8200d245ff236efa8816f6385870ca40596f7fa9692add29bbf3e2096f008807",
+      "size": 1275
+    },
+    "exact_hook_result": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_exact_hook_result.json",
+      "sha256": "313e806c5ec445b578cfa7188fd4af1e588c9c1cd018b83e615a6d9ab8cf2dbc",
+      "size": 1275
+    },
+    "finalized_trace": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_trace_555ad64003c4.json",
+      "sha256": "555ad64003c4d6b23e0048e5408e5c1a0ae192d07e4bd24272a7f72eef8a53ea",
+      "size": 4878
+    },
+    "outcome_comparison": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_outcome_comparison.json",
+      "sha256": "34ba6519aca76bb367a03d8d0387f9dc951018cd7d0ea6124323154840ddbe3a",
+      "size": 786
+    }
+  },
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "capture_id": "owner-rng-int-pair-004",
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "control versus exact-hook behavioral neutrality",
+      "equivalent hidden native RNG state across fresh processes",
+      "causation between the probe mismatch and the spawning-tile difference",
+      "native RNG-core hook safety or caller completeness",
+      "pristine Steam depot neutrality"
+    ],
+    "proven": [
+      "Both fresh processes reached the exact Mission_Power turn-1 enemy boundary from the same sealed save identity.",
+      "The exact Lua wrapper observed one _G.random_int call, returned the original value unchanged, published one finalized schema-v2 event, and restored the wrapped global.",
+      "The control and exact-hook processes produced different random_int probe values despite matching save-derived runtime identity.",
+      "The resulting bridge states differed semantically at one spawning-tile coordinate, so this pair is rejected from neutrality evidence.",
+      "The protected save was byte-restored to its sealed baseline after the rejected pair."
+    ]
+  },
+  "instrumentation": {
+    "arm_packet_sha256": "7954cc3d03ff2ac89a8e70e8d5bb0fd0610cc9e67a503f6adcde00203530f4ce",
+    "capsule_sha256": "1c6408dc7084133bc7c9996822a8da7484697d910a0aef276b2eeef21ddac318",
+    "controller_sha256": "938ad7e4f1e6bc965a2227de172b07f76a90d7245fe0430848ecbd39609e801e",
+    "host_version": "observatory-rng-trial-host/1",
+    "installed_modloader_sha256": "41586b98c109584e907b9d767a3e25d569b0c8d90a678f83f525fa45c3922cbe",
+    "lua_global_wrapped": "_G.random_int",
+    "native_helper_loaded": false,
+    "native_hook_installed": false,
+    "target_restored": true
+  },
+  "kind": "observatory_rng_trial_rejected_pair_receipt",
+  "outcome": {
+    "difference_count": 1,
+    "differences": [
+      {
+        "control": 6,
+        "exact_hook": 5,
+        "kind": "value",
+        "path": "/spawning_tiles/0/0"
+      }
+    ],
+    "status": "mismatched"
+  },
+  "probe": {
+    "control_result": 4678,
+    "exact_hook_result": 337,
+    "kind": "random_int",
+    "matched": false,
+    "upper_bound": 65521
+  },
+  "rejection": {
+    "classification": "uncontrolled_process_local_native_rng_state",
+    "reason": "Fresh-process replay did not reconstruct the same hidden native RNG cursor; an explicit build-keyed seed control is required before neutrality can be tested.",
+    "status": "rejected_for_matched_neutrality"
+  },
+  "repository_base_commit": "0a5763428208b9afb0e0656db85d5577922b6352",
+  "restore": {
+    "install_restoration_pending": true,
+    "sealed_save_file_count": 33,
+    "sealed_save_tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5",
+    "sealed_save_total_bytes": 2456758,
+    "save_restored_to_sealed_baseline": true
+  },
+  "schema_version": 1,
+  "sealed_at_utc": "2026-08-21T22:24:53Z"
+}

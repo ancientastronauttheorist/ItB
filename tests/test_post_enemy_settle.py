@@ -1583,6 +1583,58 @@ def _m16_moved_spider_egg_web_case():
     return board, solve_data, deltas, punch_item, vip_item
 
 
+def _observatory_pair4_vacated_spider_destination_case():
+    """Model pair 004's Spider entering a tile vacated by another Vek."""
+    board, solve_data, deltas, punch_item, vip_item = (
+        _m16_moved_spider_egg_web_case()
+    )
+    spider = next(unit for unit in board.units if unit.uid == 1339)
+    spider.hp = 3
+    next(
+        unit
+        for unit in solve_data["final_board"]["units"]
+        if unit["uid"] == spider.uid
+    )["hp"] = spider.hp
+    vacater = _enemy(1400, 5, 4)
+    vacater.type = "FireflyBoss"
+    vacater.hp = vacater.max_hp = 5
+    vacater.move_speed = vacater.base_move = 3
+    vacater.weapon = "FireflyAtk2"
+    vacater.acid = True
+    vacater.has_queued_attack = True
+    vacater.queued_origin_x, vacater.queued_origin_y = vacater.x, vacater.y
+    vacater.queued_target_x, vacater.queued_target_y = 5, 5
+    board.units.append(vacater)
+
+    checkpoint = {
+        "uid": vacater.uid,
+        "type": vacater.type,
+        "team": 6,
+        "hp": vacater.hp,
+        "x": 6,
+        "y": 4,
+        "move": 3,
+        "base_move": 3,
+        "can_move": True,
+        "acid": False,
+        "fire": False,
+        "frozen": False,
+        "shield": False,
+        "web": False,
+        "queued_origin": [6, 4],
+        "queued_target": [6, 5],
+    }
+    solve_data["post_player_board"]["units"].append(dict(checkpoint))
+    solve_data["final_board"]["units"].append(dict(checkpoint))
+    solve_data["final_board"]["tiles"].append({
+        "x": 5,
+        "y": 4,
+        "terrain": "rubble",
+        "acid": True,
+    })
+    return board, solve_data, deltas, punch_item, vip_item, vacater
+
+
 def _m16_multistep_spider_egg_web_case():
     """Reproduce Mission_Civilians turn 3 -> 4 from run 20260713_052159_731."""
     board = _board(4)
@@ -1868,6 +1920,101 @@ def test_m16_moved_spider_egg_web_explains_mech_and_vip_status():
         result,
         RunSession(run_id="run", difficulty=3),
     )
+
+
+def test_observatory_pair4_spider_destination_vacated_by_proven_enemy_move():
+    board, solve_data, deltas, _punch_item, _vip_item, vacater = (
+        _observatory_pair4_vacated_spider_destination_case()
+    )
+
+    result = commands._classify_next_turn_web_grapples(
+        deltas,
+        solve_data,
+        board,
+        actual_turn=2,
+        expected_turn=2,
+    )
+
+    assert len(result["next_turn_web_grapples"]) == 2
+    assert all(
+        item["spider_destination_vacated_by"] == {
+            "uid": vacater.uid,
+            "type": vacater.type,
+            "previous_position": [6, 4],
+            "position": [5, 4],
+        }
+        for item in result["next_turn_web_grapples"]
+    )
+    assert result["unexpected_events"] == []
+    assert not commands._post_enemy_needs_investigation(
+        result,
+        RunSession(run_id="run", difficulty=3),
+    )
+
+
+def test_observatory_pair4_vacated_destination_proof_stays_fail_closed():
+    cases = (
+        "missing_live_vacater",
+        "identity_mismatch",
+        "hp_mismatch",
+        "cannot_move",
+        "did_not_vacate",
+        "destination_path_blocked",
+        "status_mismatch",
+        "duplicate_checkpoint_occupant",
+    )
+    for case in cases:
+        board, solve_data, deltas, punch_item, vip_item, vacater = (
+            _observatory_pair4_vacated_spider_destination_case()
+        )
+        final_vacater = solve_data["final_board"]["units"][-1]
+        if case == "missing_live_vacater":
+            board.units.remove(vacater)
+        elif case == "identity_mismatch":
+            vacater.type = "Firefly2"
+        elif case == "hp_mismatch":
+            vacater.hp -= 1
+        elif case == "cannot_move":
+            final_vacater["can_move"] = False
+        elif case == "did_not_vacate":
+            vacater.x, vacater.y = 6, 4
+        elif case == "destination_path_blocked":
+            next(
+                tile
+                for tile in solve_data["final_board"]["tiles"]
+                if (tile["x"], tile["y"]) == (5, 4)
+            )["terrain"] = "water"
+        elif case == "status_mismatch":
+            vacater.shield = True
+        elif case == "duplicate_checkpoint_occupant":
+            solve_data["final_board"]["units"].append({
+                "uid": 1401,
+                "type": "Leaper1",
+                "team": 6,
+                "hp": 2,
+                "x": 6,
+                "y": 4,
+            })
+
+        result = commands._classify_next_turn_web_grapples(
+            deltas,
+            solve_data,
+            board,
+            actual_turn=2,
+            expected_turn=2,
+        )
+
+        assert result["mech_status_diff"][0]["unexplained_unexpected"] == [
+            punch_item
+        ], case
+        assert result["mech_status_diff"][1]["unexplained_unexpected"] == [
+            vip_item
+        ], case
+        assert result["next_turn_web_grapples"] == [], case
+        assert commands._post_enemy_needs_investigation(
+            result,
+            RunSession(run_id="run", difficulty=3),
+        ), case
 
 
 def test_m16_multistep_spider_egg_web_explains_hornet_and_vip_status():
@@ -3280,7 +3427,7 @@ def test_explained_next_turn_web_does_not_hide_independent_grid_loss():
     )
 
 
-def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
+def test_record_post_enemy_blocks_nonlethal_mech_damage_for_lightning_war(
     tmp_path,
     monkeypatch,
 ):
@@ -3320,8 +3467,8 @@ def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
     actual.units[0].hp = 1
     result = commands._record_post_enemy(session, actual, 1)
 
-    assert result["status"] == "POST_ENEMY_RECORDED"
-    assert result["blocking"] is False
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
     assert result["deltas"]["mech_hp_diff"] == [{
         "uid": 0,
         "type": "JetMech",
@@ -3333,7 +3480,7 @@ def test_record_post_enemy_records_nonlethal_mech_damage_for_lightning_war(
         result["deltas"]["unexpected_events"]
         == ["JetMech took 1 unexpected damage"]
     )
-    assert session.post_enemy_block is None
+    assert session.post_enemy_block is not None
 
 
 def test_record_post_enemy_blocks_mech_death_for_lightning_war(
@@ -3478,7 +3625,7 @@ def test_record_post_enemy_accepts_predicted_mech_death_for_unfair(
     assert session.post_enemy_block is None
 
 
-def test_record_post_enemy_records_unexpected_mech_status_for_lightning_war(
+def test_record_post_enemy_blocks_unexpected_mech_status_for_lightning_war(
     tmp_path,
     monkeypatch,
 ):
@@ -3519,8 +3666,8 @@ def test_record_post_enemy_records_unexpected_mech_status_for_lightning_war(
     actual.units[0].web = True
     result = commands._record_post_enemy(session, actual, 1)
 
-    assert result["status"] == "POST_ENEMY_RECORDED"
-    assert result["blocking"] is False
+    assert result["status"] == "INVESTIGATE_POST_ENEMY"
+    assert result["blocking"] is True
     assert result["deltas"]["mech_status_diff"] == [{
         "key": "mechs_webbed",
         "status": "Web",
@@ -3537,7 +3684,7 @@ def test_record_post_enemy_records_unexpected_mech_status_for_lightning_war(
         result["deltas"]["unexpected_events"]
         == ["JetMech gained unexpected Web status"]
     )
-    assert session.post_enemy_block is None
+    assert session.post_enemy_block is not None
 
 
 def test_record_post_enemy_blocks_late_turn_window_without_comparing(tmp_path, monkeypatch):

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_native_campaign_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-22T03:09:31Z",
+  "repository_base_commit": "0a5763428208b9afb0e0656db85d5577922b6352",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "seeded_rng_campaign": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_campaign_receipt.json",
+      "size": 25550,
+      "sha256": "46ac1d1cbb5616fdde0de881ea44aa110fe8cda74db28b6b326930b5cd9b3403"
+    },
+    "callback_bindings": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_callback_bindings_receipt.json",
+      "size": 4152,
+      "sha256": "9f3017af49ba80ac0cce94814b660863cee4e609e5e439d2dbdc4c0b3e7c3eda"
+    }
+  },
+  "supersedes_pending_state": {
+    "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_campaign_receipt.json",
+    "field": "restore.install_restoration_pending",
+    "prior_value": true,
+    "resolved": true,
+    "resolution": "The earlier immutable campaign receipt described state at campaign sealing; this later receipt records the completed exact install and save restoration."
+  },
+  "install_restore": {
+    "accepted_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "size": 125477,
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f"
+    },
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_native_campaign_restore_20260822.json",
+      "size": 125498,
+      "sha256": "56e4bfee9696f3aadc667d52a82fb32f386a1803caa7f542db22ea8acd40393a"
+    },
+    "comparison_summary": {
+      "identical": 689,
+      "changed": 0,
+      "missing": 0,
+      "platform_specific": 0
+    },
+    "installed_modloader_sha256": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+    "remaining_experimental_file_count": 0
+  },
+  "save_restore": {
+    "baseline_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_start_state_manifest.json",
+      "size": 6821,
+      "sha256": "cca55087ce7b19e37e43d0a36057685627fffe6b8d93db47a1e5d705dfd1658c"
+    },
+    "verified_file_count": 33,
+    "verified_byte_count": 2456758,
+    "tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5",
+    "file_set_and_bytes_match": true
+  },
+  "bridge_cleanup": {
+    "remaining_observatory_file_count": 0,
+    "archived_observatory_file_count": 24
+  },
+  "quarantine": {
+    "disposition": "recoverable owner staging quarantine outside the active installation and bridge",
+    "file_count": 44,
+    "byte_count": 929402,
+    "includes_modified_loader_copy": true
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "native_observer_installed": false,
+    "native_seed_helper_installed": false,
+    "callback_trial_installed": false
+  },
+  "claims": {
+    "proven": [
+      "The active installation matches all 689 entries in the accepted owner-local inventory.",
+      "The active owner save file set and bytes match the sealed 33-file baseline.",
+      "No Observatory diagnostic file remains in the active bridge or game installation.",
+      "The prior installed Mod Loader file was restored byte-exactly."
+    ],
+    "not_proven": [
+      "Pristine Steam depot neutrality.",
+      "Native RNG observer neutrality or complete caller attribution.",
+      "Matched natural callback neutrality, selected-action correlation, or candidate tournament behavior."
+    ]
+  }
+}

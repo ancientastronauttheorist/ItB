@@ -1,0 +1,11 @@
+{
+  "allowed_phases": [
+    "combat_enemy"
+  ],
+  "enabled": true,
+  "max_bundle_bytes": 3145728,
+  "max_event_bytes": 4096,
+  "max_events": 8,
+  "max_events_per_turn": 8,
+  "max_total_event_bytes": 65536
+}

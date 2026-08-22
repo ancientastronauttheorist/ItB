@@ -1,5 +1,15 @@
 # These Observatory artifacts are bound by raw SHA-256 in capture receipts.
 data/observatory/callbacks/*.json -text whitespace=cr-at-eol
 data/observatory/captures/*.json -text whitespace=cr-at-eol
+data/observatory/captures/** -text whitespace=cr-at-eol
+data/observatory/inventories/*.json -text whitespace=cr-at-eol
+data/observatory/native/*.json -text whitespace=cr-at-eol
 data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json -text whitespace=cr-at-eol
 data/observatory/inventories/windows_build_13725832_31fe35265598_owner_local_modified_post_callback_restore_20260821.json -text whitespace=cr-at-eol
+
+# These exact sources are themselves bound by Observatory receipts.
+src/bridge/modloader.lua text eol=lf whitespace=cr-at-eol
+src/bridge/observatory_callback_bindings.lua -text whitespace=cr-at-eol
+src/bridge/observatory_callback_manifest.lua -text whitespace=cr-at-eol
+src/native/observatory_rng_core_observer.c -text whitespace=cr-at-eol
+src/native/observatory_rng_seed.c -text whitespace=cr-at-eol

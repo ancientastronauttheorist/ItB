@@ -1,0 +1,59 @@
+{
+  "activation_nonce": "92a53d3af7b4b34290f42012a0b68fe0",
+  "artifacts": {
+    "arm_packet": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260821_rng_trial\\pair_007\\itb_observatory_arm_owner-rng-int-pair-007_0_9fd682578be4d38ccfeacb4345f2385eb6173452069363777593ba12ae872d2d.json",
+      "sha256": "9fd682578be4d38ccfeacb4345f2385eb6173452069363777593ba12ae872d2d"
+    },
+    "callback_join": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\captures\\windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb"
+    },
+    "capsule": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\observatory_staging\\20260821_rng_trial\\pair_007\\itb_observatory_rng_capsule_e69ab6e239b86689ec610e68ceb52ad74e3e23f529869738e36a0d5e88f86bcc.lua",
+      "sha256": "e69ab6e239b86689ec610e68ceb52ad74e3e23f529869738e36a0d5e88f86bcc"
+    },
+    "capture_identity": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\observatory_staging\\20260821_rng_trial\\pair_007\\itb_observatory_rng_owner-rng-int-pair-007_capture_identity.json",
+      "sha256": "4c69f1d80fa987d736fe94d64b82142210b6c69e5c4bc894eb9c4eaa11bb25d6"
+    },
+    "config": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\observatory_staging\\20260821_rng_trial\\pair_007\\itb_observatory_rng_owner-rng-int-pair-007_config.json",
+      "sha256": "156e008776fc0cf8c2bc05ea8898bbc4030b7db6d249cf3c6dd965f3e5c8c60a"
+    },
+    "controller": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260821_rng_trial\\itb_observatory_controller_938ad7e4f1e6bc965a2227de172b07f76a90d7245fe0430848ecbd39609e801e.lua",
+      "sha256": "938ad7e4f1e6bc965a2227de172b07f76a90d7245fe0430848ecbd39609e801e"
+    },
+    "hook_plan": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\observatory_staging\\20260821_rng_trial\\pair_007\\itb_observatory_rng_owner-rng-int-pair-007_hook_plan.json",
+      "sha256": "dfae5af3fd0b9d10fa9510673f114672ce28ac6454316c75bfdcf433d04bf798"
+    },
+    "installed_modloader": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\modloader.lua",
+      "sha256": "42aa51721abd911630e9ae966d195dbcee399f9e889a0a9ff1eef94df7e33a82"
+    },
+    "inventory": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\inventories\\windows_build_13725832_31fe35265598_local_modified.json",
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f"
+    },
+    "native_boundaries": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\native\\windows_build_13725832_31fe35265598_pe_boundaries.json",
+      "sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3"
+    },
+    "seed_helper": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\itb_observatory_rng_seed_bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787.dll",
+      "sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787",
+      "version": "observatory-rng-seed-helper/1"
+    },
+    "trial_host": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\observatory_rng_trial_host.lua",
+      "sha256": "c0e19b9fe6cd13a3860ce81955de74cf2c220f55d73625180010833ff8232f81"
+    }
+  },
+  "capture_id": "owner-rng-int-pair-007",
+  "capture_track": "owner_local_modified",
+  "kind": "observatory_rng_trial_pair_plan",
+  "probe_kind": "random_int",
+  "schema_version": 1
+}

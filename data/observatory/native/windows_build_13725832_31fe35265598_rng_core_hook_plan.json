@@ -1,0 +1,57 @@
+{
+  "cold_transaction": {
+    "arm_requires_exact_full_file_sha256": true,
+    "arm_requires_exact_live_core_bytes": true,
+    "entry_instruction_pointer_rejected": true,
+    "failed_arm_rollback_required": true,
+    "failed_resume_handles_retained_for_retry": true,
+    "instruction_cache_flushed": true,
+    "new_thread_start_serialized_by_loader_lock": true,
+    "other_threads_suspended": true,
+    "post_core_instruction_pointer_rejected": true,
+    "protection_restored": true,
+    "readback_required": true,
+    "write_size": 5
+  },
+  "hot_contract": {
+    "addresses_published": false,
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "source_sha256": "ee84a6556a9c7438b68677e361e30bd9a15d09ab48fabac4385a0eeb479017c9"
+  },
+  "kind": "observatory_rng_core_hook_plan",
+  "limits": {
+    "caller_count": 118,
+    "nesting_capacity": 8,
+    "record_capacity": 4096,
+    "thread_capacity": 32,
+    "unknown_caller_id": 0
+  },
+  "observer_version": "observatory-rng-core-observer/1",
+  "patch": {
+    "continuation_rva": "0x00387f1b",
+    "detour_kind": "x86_e9_rel32_to_pinned_module",
+    "entry_rva": "0x00387f16",
+    "expected_bytes_hex": "e8176e0000",
+    "expected_bytes_sha256": "c5d7b6e1ba58c307ff96fc389ebb870c0b40cf28e178d5f7cda258a943aeffab",
+    "gateway_kind": "relocated_e8_then_e9_tail_jump",
+    "overwrite_size": 5,
+    "region_id": "rng_core",
+    "relocated_call_target_rva": "0x0038ed32",
+    "return_strategy": "bounded_per_thread_return_address_substitution"
+  },
+  "schema_version": 1
+}

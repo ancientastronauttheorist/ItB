@@ -1,0 +1,16 @@
+{
+  "capture_id": "owner-rng-int-pair-008",
+  "control_semantic_sha256": "73cd99656b9add1f59bb9ab80b669d12472112a1a1b6475827f1990e18e14c88",
+  "control_state_sha256": "37a1202742d0e2fc1e758f86b87b9113e71fd3dc0ecb4df66caf7ddab585e486",
+  "difference_count": 0,
+  "differences": [],
+  "differences_truncated": false,
+  "exact_hook_semantic_sha256": "73cd99656b9add1f59bb9ab80b669d12472112a1a1b6475827f1990e18e14c88",
+  "exact_hook_state_sha256": "f5705a95b64db6b0b6c7c7f589f3900bf8627322fcf9005afebb64f1802fe9aa",
+  "ignored_top_level_fields": [
+    "timestamp"
+  ],
+  "kind": "observatory_rng_trial_outcome_comparison",
+  "schema_version": 1,
+  "status": "matched"
+}

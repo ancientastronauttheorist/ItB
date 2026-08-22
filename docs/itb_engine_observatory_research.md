@@ -531,6 +531,19 @@ The scaling hierarchy should be:
 
 ## Recommended first project: ITB Engine Observatory v0
 
+Current implementation status (2026-08-21): the provenance inventory and
+focused offline Windows boundary map are complete; runtime callback identity
+and defining-slot inventories are deterministic; the Lua RNG boundary has six
+seeded, return-preserving pairs but fails the stricter whole-game neutrality
+test in four spawn-coordinate outcomes; and the native RNG observer plus all
+four one-family callback trial paths are built and tested offline. Rust now has
+an explicit conformance safeguard that projections never fabricate an
+unresolved future spawn pawn or coordinate. Accepted native observer records,
+natural callback pairs, selected-action correlation, and candidate tournaments
+still require a controllable Windows input desktop. The completed owner-track
+cleanup is sealed separately: the 689-file installation and 33-file save tree
+match their accepted baselines, and no Observatory diagnostic remains active.
+
 ### Milestone 1: Provenance inventory
 
 - Hash and identify the installed game build.

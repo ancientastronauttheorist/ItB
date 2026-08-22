@@ -1,0 +1,18 @@
+{
+  "activated_at_utc": "2026-08-22T01:10:32Z",
+  "ai_seed_fingerprint": "5d1d0ff2a35142705684bc04b87a7e3d2ef1e74900764ecbf633cf3b462257e3",
+  "arm_nonce": "af9d207653170502d593e80f917a02c1",
+  "capture_id": "owner-rng-bool-pair-010",
+  "config_sha256": "bc404fb4829c6aed31623b4500f85693c7befa4b497e2ce54f2d534966e88e98",
+  "controller_sha256": "938ad7e4f1e6bc965a2227de172b07f76a90d7245fe0430848ecbd39609e801e",
+  "controller_version": "observatory-controller/1",
+  "expected_mission_id": "Mission_Power",
+  "expected_phase": "combat_enemy",
+  "expected_turn": 1,
+  "expires_at_utc": "2026-08-22T01:25:32Z",
+  "hook_coverage_sha256": "071e43410cf2aba9f18f8e28f69d9028d6852079dc5dc01a8cce4a0727f05556",
+  "installed_modloader_sha256": "42aa51721abd911630e9ae966d195dbcee399f9e889a0a9ff1eef94df7e33a82",
+  "master_seed": 664577925,
+  "region_id": "region1",
+  "timeline_fingerprint": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5"
+}

@@ -1388,6 +1388,35 @@ mod tests {
     }
 
     #[test]
+    fn test_projection_never_fabricates_unresolved_native_spawn_selection() {
+        let mut b = Board::default();
+        b.total_turns = 5;
+        b.current_turn = 1;
+        b.remaining_spawns = 2;
+        let before_unit_count = b.unit_count;
+        let spawn_points = vec![(2, 2), (5, 5)];
+
+        let (projected, result, projected_spawn_points) = project_plan_with_spawns(
+            &b,
+            &[],
+            &spawn_points,
+            &WEAPONS,
+        );
+
+        // The seeded native campaign proved that spawn-coordinate selection
+        // can diverge even when the direct Lua RNG wrapper preserves its
+        // result. Until native selection/call order is captured, projection
+        // may consume observed emergence markers but must not invent either a
+        // pawn identity or a replacement coordinate.
+        assert_eq!(projected.unit_count, before_unit_count);
+        assert!(projected.unit_at(2, 2).is_none());
+        assert!(projected.unit_at(5, 5).is_none());
+        assert!(projected_spawn_points.is_empty());
+        assert_eq!(projected.remaining_spawns, b.remaining_spawns);
+        assert_eq!(result.spawns_blocked, 0);
+    }
+
+    #[test]
     fn test_projection_retains_marker_when_blocking_damage_kills_blocker() {
         let mut b = Board::default();
         b.total_turns = 5;

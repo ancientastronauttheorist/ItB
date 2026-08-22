@@ -67,8 +67,10 @@ from src.capture.detect_grid import find_game_window, grid_from_window
 from src.bridge.protocol import (
     is_bridge_active, is_bridge_alive, refresh_bridge_state,
     refresh_bridge_state_fresh, read_state,
-    BridgeError, ACK_FILE, CALLBACK_MANIFEST_FILE,
+    BridgeError, ACK_FILE, CALLBACK_BINDINGS_FILE,
+    CALLBACK_BINDINGS_REQUEST_BYTES, CALLBACK_MANIFEST_FILE,
     CALLBACK_MANIFEST_REQUEST_BYTES, CMD_FILE, STATE_FILE, STATE_TMP,
+    arm_observatory_callback_bindings_startup,
     arm_observatory_callback_manifest_startup,
 )
 from src.bridge.reader import (
@@ -80,6 +82,7 @@ from src.bridge.reader import (
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
+    bridge_observatory_callback_bindings,
     bridge_observatory_callback_manifest,
     move_mech, attack_mech, attack_mech_two, skip_mech, repair_mech,
     reactivate_player_pawns,
@@ -87,6 +90,11 @@ from src.bridge.writer import (
 from src.observatory.runtime_callback_manifest import (
     RuntimeCallbackManifestError,
     validate_runtime_callback_manifest,
+)
+from src.observatory.runtime_callback_bindings import (
+    RuntimeCallbackBindingError,
+    callback_binding_manifest_sha256,
+    validate_runtime_callback_bindings,
 )
 from src.loop.session import RunSession, SolverAction, resolve_session_file
 from src.itb_paths import get_artifact_path
@@ -6724,8 +6732,11 @@ def _classify_next_turn_web_grapples(
     or is a newly materialized Vek reachable from a consumed spawn marker. An
     existing source may target a mech deterministically displaced to the exact
     final-board position when that checkpoint also proves the source survived
-    and could reach its live position; emergent-source proof still requires
-    stationarity. Everything incomplete, stale, or mixed remains fail-closed.
+    and could reach its live position. A moved Spider may enter an occupied
+    replay tile only when the exact occupying enemy is independently proven to
+    have vacated it during the same next-AI setup; emergent-source proof still
+    requires stationarity. Everything incomplete, stale, or mixed remains
+    fail-closed.
     """
     deltas["next_turn_web_grapples"] = []
     if actual_turn != expected_turn or not isinstance(solve_data, dict):
@@ -6885,6 +6896,7 @@ def _classify_next_turn_web_grapples(
     explained_all: list[dict] = []
     used_emergent_sources: set[int] = set()
     spider_parent_by_egg_uid: dict[int, Unit] = {}
+    spider_vacater_by_egg_uid: dict[int, dict] = {}
     used_spider_parent_uids: set[int] = set()
     emergent_candidates_by_source: dict[int, list[tuple[int, int]]] = {}
     emergent_spawn_owner: dict[tuple[int, int], int] = {}
@@ -7020,9 +7032,12 @@ def _classify_next_turn_web_grapples(
             # Rust bridge serialization omits ordinary ground tiles.
             return found if found is not None else {"terrain": "ground"}
 
-        def final_checkpoint_occupied(pos: tuple[int, int]) -> bool | None:
+        def final_checkpoint_occupants(
+            pos: tuple[int, int],
+        ) -> list[dict] | None:
             if not isinstance(final_units, list):
                 return None
+            occupants: list[dict] = []
             for raw in final_units:
                 if not isinstance(raw, dict) or not plain_int(raw.get("hp")):
                     return None
@@ -7030,14 +7045,19 @@ def _classify_next_turn_web_grapples(
                 if raw_pos is None:
                     return None
                 if raw_pos == pos:
-                    # A serialized dead row is a wreck until proven otherwise.
-                    return True
-            return False
+                    occupants.append(raw)
+            return occupants
+
+        def final_checkpoint_occupied(pos: tuple[int, int]) -> bool | None:
+            occupants = final_checkpoint_occupants(pos)
+            return None if occupants is None else bool(occupants)
 
         def final_checkpoint_ground_path_exists(
             start: tuple[int, int],
             destination: tuple[int, int],
             move_budget,
+            *,
+            proven_vacated: frozenset[tuple[int, int]] = frozenset(),
         ) -> bool:
             """Prove a conservative regular-Spider path in the final board.
 
@@ -7076,7 +7096,10 @@ def _classify_next_turn_web_grapples(
                         not isinstance(tile, dict)
                         or str(tile.get("terrain") or "ground").lower()
                         != "ground"
-                        or occupied is not False
+                        or (
+                            occupied is not False
+                            and pos not in proven_vacated
+                        )
                         or (
                             pos == destination
                             and tile.get("smoke") not in (None, False)
@@ -7088,6 +7111,91 @@ def _classify_next_turn_web_grapples(
                     seen.add(pos)
                     frontier.append((pos, distance + 1))
             return False
+
+        def proven_next_setup_vacater(
+            pos: tuple[int, int],
+            *,
+            excluded_uid: int,
+        ) -> dict | None:
+            """Prove one replay occupant moved away before the Spider arrived."""
+            occupants = final_checkpoint_occupants(pos)
+            if occupants is None or len(occupants) != 1:
+                return None
+            checkpoint = occupants[0]
+            uid = checkpoint.get("uid")
+            if (
+                not plain_int(uid)
+                or int(uid) == excluded_uid
+                or checkpoint.get("is_extra_tile") is True
+                or not plain_int(checkpoint.get("team"))
+                or int(checkpoint["team"]) != 6
+                or not plain_int(checkpoint.get("hp"))
+                or int(checkpoint["hp"]) <= 0
+                or checkpoint.get("can_move") is not True
+                or not plain_int(checkpoint.get("move"))
+                or not 1 <= int(checkpoint["move"]) <= 8
+                or (
+                    checkpoint.get("base_move") is not None
+                    and (
+                        not plain_int(checkpoint.get("base_move"))
+                        or int(checkpoint["base_move"]) != int(checkpoint["move"])
+                    )
+                )
+            ):
+                return None
+            live = actual_by_uid.get(int(uid))
+            if (
+                live is None
+                or not getattr(live, "is_enemy", False)
+                or getattr(live, "is_extra_tile", False)
+                or int(getattr(live, "hp", 0) or 0) != int(checkpoint["hp"])
+                or str(getattr(live, "type", ""))
+                != str(checkpoint.get("type") or "")
+                or int(getattr(live, "move_speed", 0) or 0)
+                != int(checkpoint["move"])
+            ):
+                return None
+            live_pos = (int(live.x), int(live.y))
+            destination_tile = final_checkpoint_tile(live_pos)
+            for key in ("fire", "frozen", "shield", "web"):
+                value = checkpoint.get(key, False)
+                if (
+                    not isinstance(value, bool)
+                    or value != bool(getattr(live, key, False))
+                ):
+                    return None
+            checkpoint_acid = checkpoint.get("acid", False)
+            expected_live_acid = (
+                checkpoint_acid is True
+                or (
+                    isinstance(destination_tile, dict)
+                    and destination_tile.get("acid") is True
+                )
+            )
+            if (
+                not isinstance(checkpoint_acid, bool)
+                or bool(getattr(live, "acid", False)) != expected_live_acid
+                or live_pos == pos
+                or abs(live_pos[0] - pos[0]) + abs(live_pos[1] - pos[1]) != 1
+                or not isinstance(destination_tile, dict)
+                or str(destination_tile.get("terrain") or "ground").lower()
+                not in {"ground", "rubble"}
+                or destination_tile.get("smoke") is True
+                or final_checkpoint_occupied(live_pos) is not False
+                or sum(
+                    1
+                    for unit in actual_by_uid.values()
+                    if not getattr(unit, "is_extra_tile", False)
+                    and (int(unit.x), int(unit.y)) == live_pos
+                ) != 1
+            ):
+                return None
+            return {
+                "uid": int(uid),
+                "type": str(live.type),
+                "previous_position": [pos[0], pos[1]],
+                "position": [live_pos[0], live_pos[1]],
+            }
 
         egg_position = (int(egg.x), int(egg.y))
         egg_checkpoint_tile = final_checkpoint_tile(egg_position)
@@ -7101,7 +7209,7 @@ def _classify_next_turn_web_grapples(
         ):
             return None
 
-        candidates: list[Unit] = []
+        candidates: list[tuple[Unit, dict | None]] = []
         for spider in actual_by_uid.values():
             spider_uid = int(getattr(spider, "uid", -1) or -1)
             spider_type = str(getattr(spider, "type", ""))
@@ -7178,6 +7286,14 @@ def _classify_next_turn_web_grapples(
                 final_move = final_spider.get("move")
                 destination_tile = final_checkpoint_tile(live_spider_pos)
                 destination_occupied = final_checkpoint_occupied(live_spider_pos)
+                destination_vacater = (
+                    proven_next_setup_vacater(
+                        live_spider_pos,
+                        excluded_uid=spider_uid,
+                    )
+                    if destination_occupied is True
+                    else None
+                )
                 moved_parent_proven = (
                     final_spider.get("can_move") is True
                     and plain_int(final_move)
@@ -7193,6 +7309,11 @@ def _classify_next_turn_web_grapples(
                         final_spider_pos,
                         live_spider_pos,
                         final_move,
+                        proven_vacated=(
+                            frozenset({live_spider_pos})
+                            if destination_vacater is not None
+                            else frozenset()
+                        ),
                     )
                     and (
                         final_spider.get("frozen") is None
@@ -7207,8 +7328,13 @@ def _classify_next_turn_web_grapples(
                     and str(destination_tile.get("terrain") or "ground").lower()
                     == "ground"
                     and destination_tile.get("smoke") is not True
-                    and destination_occupied is False
+                    and (
+                        destination_occupied is False
+                        or destination_vacater is not None
+                    )
                 )
+            else:
+                destination_vacater = None
             parent_position_proven = (
                 checkpoint_parent_unchanged
                 and (
@@ -7229,6 +7355,11 @@ def _classify_next_turn_web_grapples(
                         == int(final_spider["hp"]) + 1
                         and previous_spider.get("fire") is True
                         and final_spider.get("fire") is True
+                    )
+                    or (
+                        destination_vacater is not None
+                        and int(previous_spider["hp"])
+                        > int(final_spider["hp"]) > 0
                     )
                 )
             )
@@ -7266,12 +7397,14 @@ def _classify_next_turn_web_grapples(
                 )
             ):
                 continue
-            candidates.append(spider)
+            candidates.append((spider, destination_vacater))
 
         if len(candidates) != 1:
             return None
-        parent = candidates[0]
+        parent, destination_vacater = candidates[0]
         spider_parent_by_egg_uid[egg_uid] = parent
+        if destination_vacater is not None:
+            spider_vacater_by_egg_uid[egg_uid] = destination_vacater
         used_spider_parent_uids.add(int(parent.uid))
         return parent
 
@@ -7468,6 +7601,16 @@ def _classify_next_turn_web_grapples(
                                 ],
                             }
                             if parent_moved and previous_parent_pos is not None
+                            else {}
+                        ),
+                        **(
+                            {
+                                "spider_destination_vacated_by":
+                                    spider_vacater_by_egg_uid[
+                                        int(source.uid)
+                                    ]
+                            }
+                            if int(source.uid) in spider_vacater_by_egg_uid
                             else {}
                         ),
                     })
@@ -20707,6 +20850,82 @@ def cmd_observatory_callback_manifest_arm_startup() -> dict:
         "next_step": (
             "Restart ITB. The request is consumed once after shipped scripts "
             "load, and the result is written to the callback manifest file."
+        ),
+    }
+    _print_result(result)
+    return result
+
+
+def cmd_observatory_callback_bindings() -> dict:
+    """Capture and strictly validate one inert callback-slot manifest."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        result = {
+            "status": "NO_BRIDGE",
+            "reason": "bridge_heartbeat_stale_or_missing",
+            "next_step": (
+                "Use the fixed startup request and restart ITB, or enter an "
+                "unpaused deployment/mission with both callback modules installed."
+            ),
+        }
+        _print_result(result)
+        return result
+    try:
+        ack, raw_manifest = bridge_observatory_callback_bindings(timeout=20.0)
+        manifest = validate_runtime_callback_bindings(raw_manifest)
+        raw_sha256 = hashlib.sha256(CALLBACK_BINDINGS_FILE.read_bytes()).hexdigest()
+        canonical_sha256 = callback_binding_manifest_sha256(manifest)
+    except (
+        TimeoutError,
+        BridgeError,
+        RuntimeCallbackBindingError,
+        OSError,
+    ) as exc:
+        result = {"status": "ERROR", "error": str(exc)}
+        _print_result(result)
+        return result
+
+    summary = manifest["summary"]
+    function_cap = manifest["identity_manifest"]["summary"]["status_counts"].get(
+        "function_cap", 0
+    )
+    result = {
+        "status": "INCOMPLETE" if function_cap else "OK",
+        "ack": ack,
+        "manifest_file": str(CALLBACK_BINDINGS_FILE),
+        "raw_sha256": raw_sha256,
+        "canonical_sha256": canonical_sha256,
+        "summary": summary,
+        "slot_ids": [slot["slot_id"] for slot in manifest["slots"]],
+    }
+    if function_cap:
+        result["reason"] = "nested callback identity catalog reached its hard cap"
+    print("\n=== OBSERVATORY CALLBACK BINDINGS ===")
+    print(f"  status:      {result['status']}")
+    print(f"  roots:       {summary['root_count']}")
+    print(f"  functions:   {summary['function_count']}")
+    print(f"  slots:       {summary['slot_count']}")
+    print(f"  canonical:   {canonical_sha256}")
+    _print_result(result)
+    return result
+
+
+def cmd_observatory_callback_bindings_arm_startup() -> dict:
+    """Create the fixed one-shot request for a title-screen slot capture."""
+    try:
+        request_file = arm_observatory_callback_bindings_startup()
+    except BridgeError as exc:
+        result = {"status": "ERROR", "error": str(exc)}
+        _print_result(result)
+        return result
+    result = {
+        "status": "ARMED",
+        "request_file": str(request_file),
+        "request_sha256": hashlib.sha256(
+            CALLBACK_BINDINGS_REQUEST_BYTES
+        ).hexdigest(),
+        "next_step": (
+            "Restart ITB. The request is consumed once after shipped scripts "
+            "load, without calling or wrapping a candidate callback."
         ),
     }
     _print_result(result)

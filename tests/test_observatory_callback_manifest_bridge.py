@@ -13,7 +13,7 @@ SOURCE = (ROOT / "src" / "bridge" / "modloader.lua").read_text(
 
 def _command_block() -> str:
     start = SOURCE.index('elseif cmd == "OBS_CALLBACK_MANIFEST" then')
-    end = SOURCE.index('elseif cmd == "LUA" then', start)
+    end = SOURCE.index('elseif cmd == "OBS_CALLBACK_BINDINGS" then', start)
     return SOURCE[start:end]
 
 
@@ -21,14 +21,23 @@ def test_callback_module_is_deferred_and_sibling_only():
     assert (
         'return directory .. "/observatory_callback_manifest.lua"' in SOURCE
     )
-    assert SOURCE.count("load_observatory_callback_module()") == 2
+    assert SOURCE.count("load_observatory_callback_module()") == 4
     definition = SOURCE.index("local function load_observatory_callback_module()")
+    trial = SOURCE.index("local function initialize_observatory_callback_trial")
+    trial_end = SOURCE.index(
+        "local function consume_observatory_callback_trial_startup_request",
+        trial,
+    )
     command = SOURCE.index('elseif cmd == "OBS_CALLBACK_MANIFEST" then')
-    invocation = SOURCE.index(
+    trial_invocation = SOURCE.index(
         "load_observatory_callback_module()",
         definition + len("local function load_observatory_callback_module()"),
     )
-    assert definition < command < invocation
+    command_invocation = SOURCE.index(
+        "load_observatory_callback_module()", command
+    )
+    assert definition < trial < trial_invocation < trial_end < command
+    assert command < command_invocation
 
 
 def test_manifest_command_is_no_argument_read_only_and_file_first():

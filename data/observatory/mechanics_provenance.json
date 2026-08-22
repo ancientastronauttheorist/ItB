@@ -1058,6 +1058,14 @@
         {
           "classification": "unresolved",
           "statement": "The native RNG implementation, state, and complete consumption order have not been traced for this build."
+        },
+        {
+          "classification": "fact",
+          "statement": "The build-keyed six-pair seeded RNG campaign preserved every direct random_int/random_bool wrapper result, but four matched whole-game pairs differed only in the next spawning tile coordinate."
+        },
+        {
+          "classification": "inference",
+          "statement": "Direct Lua-wrapper return preservation is insufficient to infer native spawn-selection RNG state or call order."
         }
       ],
       "id": "spawn-selection",
@@ -1118,7 +1126,17 @@
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
-            "test_projection_consumes_unblocked_spawn_markers"
+            "test_projection_consumes_unblocked_spawn_markers",
+            "test_projection_never_fabricates_unresolved_native_spawn_selection"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_campaign_receipt.json",
+          "symbols": [
+            "\"classification\":\"return_preserving_but_not_whole_game_neutral\"",
+            "\"direct_boundary_matches\":6",
+            "\"whole_game_mismatches\":4",
+            "\"mismatch_scope\":[\"/spawning_tiles/0/1\"]"
           ]
         }
       ]

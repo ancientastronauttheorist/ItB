@@ -926,6 +926,89 @@ function Runtime:_observe(event_kind, observer, results, arguments)
     self:_finish_outcome()
 end
 
+-- Callback methods return and accept ITB userdata (Point, PointList, Pawn,
+-- SkillEffect).  The ordinary observer path intentionally rejects those
+-- values before invoking its observer.  This sibling path invokes one trusted
+-- family adapter on shallow, disposable argument/result packs and admits only
+-- the adapter's bounded primitive extraction.  It is never selected by the
+-- RNG controller.
+function Runtime:_observe_adapted(event_kind, adapter, results, arguments)
+    if not self.enabled then return end
+    local runtime, runtime_error = self:_runtime_state()
+    if not runtime then
+        self:_count_attempt(event_kind)
+        self.serialization_errors = self.serialization_errors + 1
+        self:_stop(runtime_error)
+        return
+    end
+    if runtime.now_epoch < self.manifest.activated_epoch
+        or runtime.now_epoch > self.manifest.expires_epoch then
+        self:_stop("capture_expired")
+        return
+    end
+    local call_order = self:_count_attempt(event_kind)
+    if not same_runtime(self.manifest, runtime) then
+        self.filtered_events = self.filtered_events + 1
+        self:_stop("runtime_identity_changed")
+        return
+    end
+    local turn_key = runtime.mission_id .. ":" .. tostring(runtime.turn)
+    local turn_count = self.accepted_by_turn[turn_key] or 0
+    if turn_count >= self.policy.max_events_per_turn then
+        self:_drop("max_events_per_turn")
+        self:_stop("max_events_per_turn")
+        return
+    end
+    local ok, extraction = pcall(
+        adapter,
+        results,
+        arguments,
+        call_order,
+        runtime
+    )
+    if not ok
+        or not exact_fields(extraction, EXTRACTION_FIELDS)
+        or type(extraction.context) ~= "table"
+        or type(extraction.payload) ~= "table" then
+        self.serialization_errors = self.serialization_errors + 1
+        self:_finish_outcome()
+        return
+    end
+    local event = {
+        seq = #self.events,
+        kind = event_kind,
+        phase = runtime.phase,
+        mission_id = runtime.mission_id,
+        turn = runtime.turn,
+        context = extraction.context,
+        payload = extraction.payload,
+    }
+    local copied_event, event_error, event_byte_upper_bound = bounded_copy(
+        event, self.policy.max_event_bytes - 1
+    )
+    if event_error then
+        if event_error == "primitive budget exceeded" then
+            self:_drop("max_event_bytes")
+        else
+            self.serialization_errors = self.serialization_errors + 1
+        end
+        self:_finish_outcome()
+        return
+    end
+    event_byte_upper_bound = event_byte_upper_bound + 1
+    if self.event_byte_upper_bound + event_byte_upper_bound
+        > self.policy.max_total_event_bytes then
+        self:_drop("max_total_event_bytes")
+        self:_stop("max_total_event_bytes")
+        return
+    end
+    self.events[#self.events + 1] = copied_event
+    self.event_byte_upper_bound =
+        self.event_byte_upper_bound + event_byte_upper_bound
+    self.accepted_by_turn[turn_key] = turn_count + 1
+    self:_finish_outcome()
+end
+
 function Runtime:install_proven_non_yielding_hook(hook_id, observer)
     if not self.enabled then return false, "trace is disabled" end
     local plan = self.hook_plan_by_id[hook_id]
@@ -975,6 +1058,96 @@ function Runtime:install_proven_non_yielding_hook(hook_id, observer)
                 observer,
                 results,
                 arguments
+            )
+            if not observe_ok then
+                if runtime.total_attempts == attempts_before then
+                    runtime:_count_attempt(plan.event_kind)
+                end
+                if runtime:_outcome_count() == outcomes_before then
+                    runtime.serialization_errors =
+                        runtime.serialization_errors + 1
+                end
+                pcall(
+                    runtime._stop,
+                    runtime,
+                    "observation_runtime_failed"
+                )
+            end
+        end)
+        runtime.in_trace = false
+        if not trace_ok then
+            runtime.enabled = false
+            pcall(runtime.restore_hooks, runtime)
+        end
+        return unpack(results, 1, results.n)
+    end
+    local hook = {
+        hook_id = hook_id,
+        holder = holder,
+        key = key,
+        original = original,
+        wrapper = wrapper,
+        registry = holder_registry,
+    }
+    self.hooks[#self.hooks + 1] = hook
+    self.installed_hook_ids[hook_id] = true
+    holder_registry[key] = hook
+    holder[key] = wrapper
+    return true
+end
+
+function Runtime:install_proven_non_yielding_adapter_hook(hook_id, adapter)
+    if not self.enabled then return false, "trace is disabled" end
+    local plan = self.hook_plan_by_id[hook_id]
+    local binding = self.hook_bindings[hook_id]
+    if not plan
+        or plan.status ~= "installed"
+        or not binding
+        or type(adapter) ~= "function" then
+        return false, "invalid hook"
+    end
+    if self.installed_hook_ids[hook_id] then
+        return false, "hook already installed"
+    end
+    local holder = binding.holder
+    local key = binding.key
+    if holder[key] ~= binding.original then
+        return false, "hook target changed"
+    end
+    local holder_registry = self.hook_registry[holder]
+    if holder_registry == nil then
+        holder_registry = {}
+        self.hook_registry[holder] = holder_registry
+    elseif type(holder_registry) ~= "table" then
+        return false, "invalid global hook registry"
+    end
+    if holder_registry[key] ~= nil then
+        return false, "hook already registered"
+    end
+    local original = holder[key]
+    local runtime = self
+    local wrapper
+    wrapper = function(...)
+        if not runtime.enabled or runtime.in_trace then
+            return original(...)
+        end
+        -- Deliberately outside pcall: original errors propagate unchanged.
+        local results = pack(original(...))
+        -- The adapter receives disposable packs. Assigning into either pack
+        -- cannot replace the values returned to the game.
+        local observation_results = pack(unpack(results, 1, results.n))
+        local observation_arguments = pack(...)
+        runtime.in_trace = true
+        local trace_ok = pcall(function()
+            local attempts_before = runtime.total_attempts
+            local outcomes_before = runtime:_outcome_count()
+            local observe_ok = pcall(
+                runtime._observe_adapted,
+                runtime,
+                plan.event_kind,
+                adapter,
+                observation_results,
+                observation_arguments
             )
             if not observe_ok then
                 if runtime.total_attempts == attempts_before then

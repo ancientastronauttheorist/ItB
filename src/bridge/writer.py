@@ -13,7 +13,12 @@ from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
 from src.bridge.protocol import (
     BridgeError,
+    request_observatory_callback_bindings,
+    arm_observatory_native_rng,
+    finish_observatory_native_rng,
     request_observatory_callback_manifest,
+    seed_observatory_native_rng,
+    status_observatory_native_rng,
     write_command,
     wait_for_ack,
 )
@@ -290,3 +295,40 @@ def bridge_observatory_callback_manifest(
 ) -> tuple[str, dict]:
     """Capture one fresh inert enemy callback-identity manifest."""
     return request_observatory_callback_manifest(timeout=timeout)
+
+
+def bridge_observatory_callback_bindings(
+    *, timeout: float = 15.0
+) -> tuple[str, dict]:
+    """Capture one fresh inert enemy callback-slot manifest."""
+    return request_observatory_callback_bindings(timeout=timeout)
+
+
+def bridge_observatory_native_rng_arm(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Arm the fixed build-keyed native RNG-core observer."""
+    return arm_observatory_native_rng(capture_id, timeout=timeout)
+
+
+def bridge_observatory_native_rng_seed(*, timeout: float = 10.0) -> str:
+    """Apply the fixed build-keyed RNG seed for a matched trial."""
+    return seed_observatory_native_rng(timeout=timeout)
+
+
+def bridge_observatory_native_rng_status(
+    *, timeout: float = 10.0
+) -> tuple[str, dict]:
+    """Read the native RNG-core observer status."""
+    return status_observatory_native_rng(timeout=timeout)
+
+
+def bridge_observatory_native_rng_finish(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict]:
+    """Restore the native hook and retrieve a fresh complete snapshot."""
+    return finish_observatory_native_rng(capture_id, timeout=timeout)

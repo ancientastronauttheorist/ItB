@@ -216,3 +216,68 @@ edges receive semantic labels. A native diagnostic stores the small ID, never
 the absolute return address. Any observed ID 0 invalidates complete caller
 attribution. File publication is create-only and restricted to direct JSON
 children of `data/observatory/native/`; omit `--output` to use stdout elsewhere.
+
+## RNG seed control and runtime evidence
+
+`native/windows_build_13725832_31fe35265598_rng_seed_helper_receipt.json`
+attests the reproducible one-purpose x86 seed-control helper. The helper source
+and builder are committed; the generated DLL is intentionally not. Two clean
+builds produced the same module and normalized receipt bytes. The helper is not
+an observer or detour and exposes only the exact build-keyed seed operation.
+
+`captures/windows_build_13725832_owner_local_modified_20260821_rng_pair004_rejected_receipt.json`
+binds the first completed control/exact `_G.random_int` pair. It is negative
+evidence: the wrapper restored correctly and emitted one finalized event, but
+the unseeded fresh processes produced different probes and bridge outcomes.
+Consequently it is rejected from neutrality evidence and motivated the seeded
+schema-v2 protocol. That protocol accepts exactly one selected one-argument Lua
+RNG family per pair (`random_int` or `random_bool`), verifies the pinned CRT
+first-draw result with the correct integer/Boolean type, and keeps the other
+family disabled.
+
+`captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng/`
+contains pairs 007 through 012 and their finalized traces. The campaign receipt
+binds three pairs per RNG family with counterbalanced condition order. All six
+direct results matched; only two whole-game outcomes matched, while four
+differed at the spawning-tile y coordinate. Treat the campaign as proof of
+direct return preservation and exact restoration, not whole-game neutrality or
+native spawn-selection semantics. The later
+`captures/windows_build_13725832_owner_local_modified_20260822_native_campaign_cleanup_receipt.json`
+closes the campaign receipt's then-pending install restoration: all 689 accepted
+install entries and the sealed 33-file owner save now match exactly.
+
+## Native RNG observer artifacts
+
+`native/windows_build_13725832_31fe35265598_rng_core_observer_receipt.json`
+attests two byte-identical builds of the 19,968-byte native observer (module
+SHA-256
+`8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c`).
+The adjacent hook-plan and restore-hash documents are
+the exact externally trusted transaction inputs. The generated DLL is omitted;
+the committed source and builder reproduce it. These artifacts prove build and
+static transaction properties only. No accepted live observer checkpoint is
+present.
+
+## Callback slot evidence and trial tooling
+
+The final callback-binding captures ending in
+`callback_bindings_live_slot_update.json` and
+`callback_bindings_live_slot_update_repeat.json` are fresh-process,
+byte-identical 131,137-byte documents. They resolve 81 runtime roots and 324
+method records to 65 defining slots without invoking or wrapping a callback.
+The raw SHA-256 is
+`39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24`;
+the canonical document SHA-256 is
+`d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3`.
+The build identity, both artifacts, collector hashes, and inert-enumeration
+claim are sealed in
+`captures/windows_build_13725832_owner_local_modified_20260822_callback_bindings_receipt.json`.
+
+`scripts/itb_observatory_callback_trial.py` builds a content-addressed capsule
+and exact one-family plan from those slot bindings and the source join. The Lua
+host/controller supports `ScorePositioning`, `GetTargetScore`, `GetTargetArea`,
+and `GetSkillEffect`, restores all slots before create-only publication, and
+leaves the RNG globals untouched. No matched natural callback runtime pair is
+archived yet. The active installation and bridge contain no Observatory
+diagnostic files; the generated helpers and modified loader copy were moved to
+a recoverable staging quarantine after the durable evidence was verified.

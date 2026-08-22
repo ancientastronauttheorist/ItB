@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from typing import Any
@@ -33,7 +35,11 @@ from src.observatory.trace_codec import (
 
 RAW_SCHEMA_VERSION = 1
 RUNTIME_VERSION = "observatory-lua/1"
-CONTROLLER_VERSION = "observatory-controller/1"
+RNG_CONTROLLER_VERSION = "observatory-controller/1"
+CALLBACK_CONTROLLER_VERSION = "observatory-callback-controller/1"
+CONTROLLER_VERSIONS = frozenset(
+    {RNG_CONTROLLER_VERSION, CALLBACK_CONTROLLER_VERSION}
+)
 HARD_MAX_EVENTS = 4096
 HARD_MAX_EVENTS_PER_TURN = 1024
 HARD_MAX_EVENT_BYTES = 64 * 1024
@@ -41,7 +47,26 @@ HARD_MAX_TOTAL_EVENT_BYTES = 4 * 1024 * 1024
 HARD_MAX_ATTEMPTS = 16 * 1024
 HARD_BUNDLE_RESERVE_BYTES = 2 * 1024 * 1024
 LUA_MAX_EXACT_INTEGER = (2**53) - 1
-CONTROLLER_V1_KINDS = frozenset({"random_int", "random_bool"})
+RNG_CONTROLLER_KINDS = frozenset({"random_int", "random_bool"})
+CALLBACK_CONTROLLER_KINDS = frozenset(
+    {
+        "enemy_target_score",
+        "get_skill_effect",
+        "get_target_area",
+        "score_positioning",
+    }
+)
+CALLBACK_METHOD_KINDS = {
+    "GetTargetArea": "get_target_area",
+    "GetTargetScore": "enemy_target_score",
+    "GetSkillEffect": "get_skill_effect",
+    "ScorePositioning": "score_positioning",
+}
+_CALLBACK_TARGET_RE = re.compile(
+    r"^runtime\.callback\.(slot-[0-9]{4})\."
+    r"(GetTargetArea|GetTargetScore|GetSkillEffect|ScorePositioning)\."
+    r"(fn-[0-9]{4})$"
+)
 
 RAW_FIELDS = frozenset(
     {
@@ -142,6 +167,46 @@ _CAPTURE_RAW_FIELDS = (
     "hook_coverage_sha256",
 )
 
+_RAW_EVENT_FIELDS = frozenset(
+    {"seq", "kind", "phase", "mission_id", "turn", "context", "payload"}
+)
+_CALLBACK_EFFECT_SUMMARY_FIELDS = frozenset({"effect", "q_effect"})
+_CALLBACK_EFFECT_RECORD_FIELDS = frozenset({"index", "fields"})
+_CALLBACK_EFFECT_FIELD_FIELDS = frozenset({"name", "value"})
+_CALLBACK_EFFECT_FIELD_ORDER = (
+    "bEvacuate",
+    "bHide",
+    "bHideIcon",
+    "bHidePath",
+    "bKO_Effect",
+    "bSimpleMark",
+    "fDelay",
+    "iAcid",
+    "iCrack",
+    "iDamage",
+    "iFire",
+    "iFrozen",
+    "iInjure",
+    "iPawnTeam",
+    "iPush",
+    "iShield",
+    "iSmoke",
+    "iTerrain",
+    "sAnimation",
+    "sImageMark",
+    "sItem",
+    "sPawn",
+    "sScript",
+    "sSound",
+    "loc",
+    "piOrigin",
+    "piTarget",
+)
+_CALLBACK_EFFECT_POINT_FIELDS = frozenset({"loc", "piOrigin", "piTarget"})
+_CALLBACK_EFFECT_FIELD_RANK = {
+    name: index for index, name in enumerate(_CALLBACK_EFFECT_FIELD_ORDER)
+}
+
 
 class RawTraceError(RuntimeError):
     """Raised when an arm packet or raw checkpoint fails closed."""
@@ -222,6 +287,11 @@ def _positive_counts(
     allowed: frozenset[str],
     label: str,
 ) -> dict[str, int]:
+    # The in-game Lua JSON encoder has no table shape metadata and serializes
+    # an empty key/value table as ``[]``. Accept only that empty transport
+    # sentinel; a non-empty array can never represent a trusted reason map.
+    if value == []:
+        return {}
     if not isinstance(value, Mapping):
         raise RawTraceError(f"{label} must be an object")
     result: dict[str, int] = {}
@@ -424,7 +494,8 @@ def build_arm_packet(
         raise RawTraceError(f"invalid trace config: {exc}") from exc
     if capture["expected_phase"] != "combat_enemy":
         raise RawTraceError("Lua Observatory captures require combat_enemy")
-    if capture["controller_version"] != CONTROLLER_VERSION:
+    controller_version = capture["controller_version"]
+    if controller_version not in CONTROLLER_VERSIONS:
         raise RawTraceError("unsupported Observatory controller version")
     _validate_lua_config(parsed_config)
     if (
@@ -447,22 +518,58 @@ def build_arm_packet(
     installed_entries = [
         entry for entry in coverage if entry["status"] == "installed"
     ]
-    if (
-        len(installed_entries) != 1
-        or installed_entries[0]["event_kind"] not in CONTROLLER_V1_KINDS
-    ):
-        raise RawTraceError(
-            "controller v1 requires exactly one installed RNG hook"
-        )
-    installed = installed_entries[0]
-    expected_target = f"_G.{installed['event_kind']}"
-    if (
-        installed["target"] != expected_target
-        or installed["target_kind"] != "lua_global"
-    ):
-        raise RawTraceError(
-            "controller v1 requires the exact Lua global RNG target"
-        )
+    if controller_version == RNG_CONTROLLER_VERSION:
+        if (
+            len(installed_entries) != 1
+            or installed_entries[0]["event_kind"] not in RNG_CONTROLLER_KINDS
+        ):
+            raise RawTraceError(
+                "RNG controller requires exactly one installed RNG hook"
+            )
+        installed = installed_entries[0]
+        expected_target = f"_G.{installed['event_kind']}"
+        if (
+            installed["target"] != expected_target
+            or installed["target_kind"] != "lua_global"
+        ):
+            raise RawTraceError(
+                "RNG controller requires the exact Lua global RNG target"
+            )
+    else:
+        if len(installed_kinds) != 1 or installed_kinds[0] not in (
+            CALLBACK_CONTROLLER_KINDS
+        ):
+            raise RawTraceError(
+                "callback controller requires exactly one installed family"
+            )
+        installed_kind = installed_kinds[0]
+        callback_entries = []
+        for entry in normalized_plan:
+            match = _CALLBACK_TARGET_RE.fullmatch(entry["target"])
+            if match is None:
+                if entry["status"] == "installed":
+                    raise RawTraceError(
+                        "callback controller accepts only exact callback slots"
+                    )
+                continue
+            callback_entries.append(entry)
+            slot_id, method, _function_id = match.groups()
+            expected_kind = CALLBACK_METHOD_KINDS[method]
+            expected_target_kind = (
+                "lua_global" if method == "ScorePositioning" else "lua_method"
+            )
+            if (
+                entry["hook_id"] != f"callback.{slot_id}"
+                or entry["event_kind"] != expected_kind
+                or entry["target_kind"] != expected_target_kind
+                or (entry["status"] == "installed")
+                != (entry["event_kind"] == installed_kind)
+            ):
+                raise RawTraceError(
+                    "callback controller hook plan is not family-complete"
+                )
+        if not callback_entries or not installed_entries:
+            raise RawTraceError("callback controller has no resolved slots")
     config_digest = trace_config_sha256(parsed_config)
     coverage_digest = hook_coverage_sha256(coverage)
     if capture["config_sha256"] != config_digest:
@@ -540,6 +647,268 @@ def build_arm_packet(
     }
     _exact_fields(packet, ARM_PACKET_FIELDS, "arm packet")
     return _copy(packet)
+
+
+def _callback_coordinate(value: Any, label: str) -> list[int]:
+    if (
+        not isinstance(value, list)
+        or len(value) != 2
+        or any(type(part) is not int or part < 0 or part > 7 for part in value)
+    ):
+        raise RawTraceError(f"{label} must be an [x, y] board coordinate")
+    return list(value)
+
+
+def _callback_finite_number(value: Any, label: str) -> int | float:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+    ):
+        raise RawTraceError(f"{label} must be a finite number")
+    return value
+
+
+def _callback_text(value: Any, label: str) -> str:
+    if type(value) is not str or not value:
+        raise RawTraceError(f"{label} must be non-empty text")
+    return value
+
+
+def _validate_callback_effect_summary(
+    value: Any,
+) -> tuple[dict[str, Any], int]:
+    summary = _exact_fields(
+        value,
+        _CALLBACK_EFFECT_SUMMARY_FIELDS,
+        "raw GetSkillEffect primitive_summary",
+    )
+    normalized: dict[str, list[dict[str, Any]]] = {}
+    primitive_count = 0
+    for list_name in ("effect", "q_effect"):
+        raw_records = summary[list_name]
+        if not isinstance(raw_records, list) or len(raw_records) > 128:
+            raise RawTraceError(
+                f"raw GetSkillEffect {list_name} exceeds its record cap"
+            )
+        records: list[dict[str, Any]] = []
+        for record_index, raw_record in enumerate(raw_records):
+            record = _exact_fields(
+                raw_record,
+                _CALLBACK_EFFECT_RECORD_FIELDS,
+                f"raw GetSkillEffect {list_name}[{record_index}]",
+            )
+            if type(record["index"]) is not int or record["index"] != record_index:
+                raise RawTraceError(
+                    f"raw GetSkillEffect {list_name} record index mismatch"
+                )
+            raw_fields = record["fields"]
+            if not isinstance(raw_fields, list) or len(raw_fields) > len(
+                _CALLBACK_EFFECT_FIELD_ORDER
+            ):
+                raise RawTraceError("raw GetSkillEffect field list is invalid")
+            fields: list[dict[str, Any]] = []
+            previous_rank = -1
+            for field_index, raw_field in enumerate(raw_fields):
+                field = _exact_fields(
+                    raw_field,
+                    _CALLBACK_EFFECT_FIELD_FIELDS,
+                    (
+                        f"raw GetSkillEffect {list_name}[{record_index}]"
+                        f".fields[{field_index}]"
+                    ),
+                )
+                name = field["name"]
+                if type(name) is not str or name not in _CALLBACK_EFFECT_FIELD_RANK:
+                    raise RawTraceError("raw GetSkillEffect field name is invalid")
+                rank = _CALLBACK_EFFECT_FIELD_RANK[name]
+                if rank <= previous_rank:
+                    raise RawTraceError(
+                        "raw GetSkillEffect fields are not canonical"
+                    )
+                previous_rank = rank
+                field_value = field["value"]
+                if name in _CALLBACK_EFFECT_POINT_FIELDS:
+                    normalized_value: Any = _callback_coordinate(
+                        field_value,
+                        f"raw GetSkillEffect field {name}",
+                    )
+                elif type(field_value) in {bool, str}:
+                    normalized_value = field_value
+                else:
+                    normalized_value = _callback_finite_number(
+                        field_value,
+                        f"raw GetSkillEffect field {name}",
+                    )
+                fields.append({"name": name, "value": normalized_value})
+                primitive_count += 1
+            records.append({"index": record_index, "fields": fields})
+        normalized[list_name] = records
+    return normalized, primitive_count
+
+
+def _promote_callback_events(
+    events: Sequence[Any],
+    *,
+    controller_version: str,
+    installed_kinds: Sequence[str],
+) -> list[dict[str, Any]]:
+    if controller_version == RNG_CONTROLLER_VERSION:
+        return _copy(list(events))
+    if (
+        controller_version != CALLBACK_CONTROLLER_VERSION
+        or len(installed_kinds) != 1
+        or installed_kinds[0] not in CALLBACK_CONTROLLER_KINDS
+    ):
+        raise RawTraceError("raw callback event controller identity is invalid")
+    installed_kind = installed_kinds[0]
+    promoted: list[dict[str, Any]] = []
+    for event_index, raw_event in enumerate(events):
+        event = dict(
+            _exact_fields(raw_event, _RAW_EVENT_FIELDS, f"raw event[{event_index}]")
+        )
+        if event["seq"] != event_index or event["kind"] != installed_kind:
+            raise RawTraceError("raw callback event sequence or family mismatch")
+        payload = event["payload"]
+        if installed_kind == "score_positioning":
+            promoted_payload = _copy(payload)
+        elif installed_kind == "get_target_area":
+            raw_payload = _exact_fields(
+                payload,
+                frozenset(
+                    {
+                        "payload_version",
+                        "representation",
+                        "pawn_uid",
+                        "skill_id",
+                        "origin",
+                        "target_area",
+                        "call_order",
+                    }
+                ),
+                "raw GetTargetArea payload",
+            )
+            _nonnegative_integer(
+                raw_payload["call_order"], "raw GetTargetArea call_order"
+            )
+            promoted_payload = {
+                key: _copy(raw_payload[key])
+                for key in (
+                    "payload_version",
+                    "representation",
+                    "pawn_uid",
+                    "skill_id",
+                    "origin",
+                    "target_area",
+                )
+            }
+        elif installed_kind == "enemy_target_score":
+            raw_payload = _exact_fields(
+                payload,
+                frozenset(
+                    {
+                        "payload_version",
+                        "representation",
+                        "pawn_uid",
+                        "skill_id",
+                        "pawn_space",
+                        "p1",
+                        "p2",
+                        "call_order",
+                        "score",
+                    }
+                ),
+                "raw GetTargetScore payload",
+            )
+            if (
+                raw_payload["payload_version"] != 1
+                or raw_payload["representation"]
+                != "get_target_score_arguments"
+            ):
+                raise RawTraceError("raw GetTargetScore representation is invalid")
+            promoted_payload = {
+                "pawn_uid": _nonnegative_integer(
+                    raw_payload["pawn_uid"], "raw GetTargetScore pawn_uid"
+                ),
+                "skill_id": _callback_text(
+                    raw_payload["skill_id"], "raw GetTargetScore skill_id"
+                ),
+                # The shipped Lua contract names p1/p2 as the attack source
+                # and target. The live Pawn space remains separate in raw
+                # evidence and is promoted as the actor's pre-choice origin.
+                "origin": _callback_coordinate(
+                    raw_payload["pawn_space"], "raw GetTargetScore pawn_space"
+                ),
+                "destination": _callback_coordinate(
+                    raw_payload["p1"], "raw GetTargetScore p1"
+                ),
+                "target": _callback_coordinate(
+                    raw_payload["p2"], "raw GetTargetScore p2"
+                ),
+                "candidate_order": _nonnegative_integer(
+                    raw_payload["call_order"], "raw GetTargetScore call_order"
+                ),
+                "target_score": _callback_finite_number(
+                    raw_payload["score"], "raw GetTargetScore score"
+                ),
+            }
+        elif installed_kind == "get_skill_effect":
+            raw_payload = _exact_fields(
+                payload,
+                frozenset(
+                    {
+                        "payload_version",
+                        "representation",
+                        "pawn_uid",
+                        "skill_id",
+                        "origin",
+                        "target",
+                        "call_order",
+                        "primitive_count",
+                        "primitive_summary",
+                    }
+                ),
+                "raw GetSkillEffect payload",
+            )
+            if (
+                raw_payload["payload_version"] != 1
+                or raw_payload["representation"] != "raw_opaque_primitives"
+            ):
+                raise RawTraceError("raw GetSkillEffect representation is invalid")
+            _nonnegative_integer(
+                raw_payload["call_order"], "raw GetSkillEffect call_order"
+            )
+            summary, primitive_count = _validate_callback_effect_summary(
+                raw_payload["primitive_summary"]
+            )
+            if raw_payload["primitive_count"] != primitive_count:
+                raise RawTraceError("raw GetSkillEffect primitive_count mismatch")
+            summary_sha256 = hashlib.sha256(
+                (_canonical_line(summary) + "\n").encode("utf-8")
+            ).hexdigest()
+            promoted_payload = {
+                "payload_version": 1,
+                "representation": "opaque_primitive_summary",
+                "pawn_uid": _nonnegative_integer(
+                    raw_payload["pawn_uid"], "raw GetSkillEffect pawn_uid"
+                ),
+                "skill_id": _callback_text(
+                    raw_payload["skill_id"], "raw GetSkillEffect skill_id"
+                ),
+                "origin": _callback_coordinate(
+                    raw_payload["origin"], "raw GetSkillEffect origin"
+                ),
+                "target": _callback_coordinate(
+                    raw_payload["target"], "raw GetSkillEffect target"
+                ),
+                "primitive_count": primitive_count,
+                "summary_sha256": summary_sha256,
+            }
+        else:  # pragma: no cover - guarded by the controller kind set.
+            raise RawTraceError("unsupported raw callback event kind")
+        event["payload"] = promoted_payload
+        promoted.append(_copy(event))
+    return promoted
 
 
 def finalize_raw_checkpoint(
@@ -621,6 +990,13 @@ def finalize_raw_checkpoint(
         raise RawTraceError("raw hook coverage does not match arm packet")
     if any(entry["status"] == "unavailable" for entry in coverage):
         raise RawTraceError("Lua checkpoint cannot report unavailable hooks")
+    installed_kinds = sorted(
+        {
+            entry["event_kind"]
+            for entry in coverage
+            if entry["status"] == "installed"
+        }
+    )
 
     activated_epoch = _nonnegative_integer(
         raw["activated_epoch"], "raw activated_epoch"
@@ -717,8 +1093,8 @@ def finalize_raw_checkpoint(
         raise RawTraceError(
             "raw attempted calls do not reconcile with outcomes"
         )
-    exact_event_bytes = _event_bytes(events)
-    if exact_event_bytes > upper_bound:
+    raw_event_bytes = _event_bytes(events)
+    if raw_event_bytes > upper_bound:
         raise RawTraceError(
             "raw event byte upper bound is below canonical event bytes"
         )
@@ -754,6 +1130,13 @@ def finalize_raw_checkpoint(
     if raw_bytes > config.max_bundle_bytes:
         raise RawTraceError("raw checkpoint exceeds max_bundle_bytes")
 
+    promoted_events = _promote_callback_events(
+        events,
+        controller_version=capture["controller_version"],
+        installed_kinds=installed_kinds,
+    )
+    final_event_bytes = _event_bytes(promoted_events)
+
     final_trace = {
         "schema_version": 2,
         "build_identity": build,
@@ -770,10 +1153,10 @@ def finalize_raw_checkpoint(
         },
         "hook_coverage": coverage,
         "config": config.to_dict(),
-        "events": _copy(events),
+        "events": promoted_events,
         "summary": {
             "accepted_events": accepted,
-            "event_bytes": exact_event_bytes,
+            "event_bytes": final_event_bytes,
             "dropped_events": dropped,
             "filtered_events": filtered,
             "serialization_errors": serialization_errors,
