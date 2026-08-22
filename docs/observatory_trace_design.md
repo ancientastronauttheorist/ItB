@@ -59,10 +59,13 @@ reachability API, path constants, Board search vtable, and Henry Kwan's
 rule. A second read-only artifact resolves the static cost/order continuation:
 unit-cost reachability, native direction and priority comparators, `(x,y)`
 output, weighted GetPath reconstruction, ordinary identity-based occupancy,
-and Massive Water. Simulator v402 consumes the Water correction. Neither map
-required a trace hook or broadens controller v1; future path tracing is reserved
-for matched point vectors, corpse classification, or `AddMove` execution when
-a concrete mismatch needs them.
+and Massive Water. Simulator v402 consumes the Water correction. A third
+read-only map joins `Pawn:IsDead`/`Pawn:IsCorpse` to mode-1 traversal and
+destination filtering; simulator v403 consumes the persistent-corpse versus
+transient-dead distinction and Road Runner corpse transit/no-stop rule. None of
+the maps required a trace hook or broadens controller v1; future path tracing
+is reserved for matched point vectors, runtime subclass/removal timing, or
+`AddMove` execution when a concrete mismatch needs them.
 
 For these v1 RNG records, the on-wire `context.call_site` field is the exact
 configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
@@ -345,8 +348,9 @@ that selected it.
   the same stream at variable counts before gameplay selection.
 - Can the mapped candidate loop be observed without perturbing vector order or
   dynamic callback lookup? Native path costs, comparators, output/reconstruction
-  order, Road Runner occupancy, and Massive Water are already closed offline;
-  corpse classification and `AddMove` execution remain separate questions.
+  order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
+  pathing are already closed offline; runtime `IsCorpse()` subclass/removal
+  timing and `AddMove` execution remain separate questions.
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
   overrides bypass a base wrapper for this build. Which mismatch, if any,
   requires a native candidate-tournament record beyond those Lua slots?

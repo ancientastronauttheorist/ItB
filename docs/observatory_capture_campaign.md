@@ -44,9 +44,12 @@ them as destinations. Simulator v401 incorporates the rule. A follow-up static
 map closes unit reachability costs, native direction/tie comparators, `(x,y)`
 result ordering, weighted GetPath reconstruction, ordinary identity-based pawn
 blocking, and Massive Water; simulator v402 fixes the resulting ordinary Water
-gap. Any future live path campaign should therefore target matched point
-vectors, corpse traversal, or `AddMove` step/scheduler behavior rather than
-repeat these boundaries.
+gap. A third exact-build map proves that mode-1 occupancy counts live pawns and
+persistent corpses, skips transient dead non-corpses, and lets Road Runner
+cross—but not stop on—persistent corpses; simulator v403 carries that rule.
+Any future live path campaign should therefore target matched point vectors,
+runtime `IsCorpse()` subclass values/removal timing, or `AddMove`
+step/scheduler behavior rather than repeat these boundaries.
 
 There are now two accepted capture tracks:
 
@@ -89,7 +92,7 @@ not be relabelled as clean stock.
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
 | Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer plus strict selected-to-queue correlator | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill |
-| Native path boundary | Two exact-build API/profile/vtable and cost/order maps with region hashes, control windows, direction/cost tables, comparators, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 transit/occupied-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, and Massive Water. Simulators v401/v402 have focused regressions; corpse and `AddMove` execution remain on demand |
+| Native path boundary | Three exact-build API/profile/vtable, cost/order, and lifecycle-occupancy maps with region hashes, control windows, direction/cost tables, comparators, lifecycle bindings, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 live/corpse transit-versus-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, Massive Water, and live-or-persistent-corpse mode-1 occupancy. Simulators v401/v402/v403 have focused regressions; runtime subclass/removal timing, matched vectors, and `AddMove` execution remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
 The diagnostic checkpoint is deliberately separate from authoritative

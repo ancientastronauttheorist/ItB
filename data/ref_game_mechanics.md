@@ -135,6 +135,24 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 
 ---
 
+## Movement Occupancy
+
+- Exact Windows build `13725832` mode-1 path occupancy is
+  `not Pawn:IsDead() or Pawn:IsCorpse()`.
+- A live pawn blocks ordinary traversal and every returned destination.
+- A persistent corpse blocks ordinary traversal and every destination.
+- A retained transient dead non-corpse blocks neither traversal nor stopping;
+  it is an effect-lifetime body, not a path obstacle.
+- Henry Kwan's `PATH_ROADRUNNER=4` may cross live pawns and persistent corpses,
+  but the common destination filter still forbids stopping on either.
+- Simulator v403 carries current `corpse`, static `corpse_on_death`, and the
+  legacy disabled-player-mech fallback through checkpoints. General
+  same-effect push/collision corpse handling remains separate from pathing.
+- Exact provenance:
+  `data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json`.
+
+---
+
 ## Status Effects
 
 ### Fire

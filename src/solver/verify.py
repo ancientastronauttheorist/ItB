@@ -1805,6 +1805,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v403: Exact Windows lifecycle/path analysis proves mode-1 occupancy counts
+# live pawns plus persistent corpses, but skips retained transient dead
+# non-corpses. Ordinary movement blocks persistent corpses; Road Runner may
+# cross but not stop on them. Bridge, static pawn metadata, checkpoints, and
+# Rust movement now preserve that distinction. Pre-v403 corpus is archived as
+# recordings/failure_db_snapshot_sim_v402.jsonl.
 # v402: Exact Windows path-cost/order analysis proves PATH_MASSIVE=2 and
 # PATH_ROADRUNNER=4 both traverse and stop on Water. Ordinary movement now
 # retains Massive and Road Runner Water routes while preserving the existing
@@ -1880,7 +1886,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 402
+SIMULATOR_VERSION = 403
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
@@ -1974,6 +1980,11 @@ def snapshot_after_move(
             "active": getattr(u, "active", True),
             "is_mech": u.is_mech,
             "team": u.team,
+            "corpse": getattr(u, "corpse", False),
+            "corpse_on_death": getattr(u, "corpse_on_death", False),
+            "persistent_path_corpse": getattr(
+                u, "persistent_path_corpse", False
+            ),
             "queued_target": (
                 [u.queued_target_x, u.queued_target_y]
                 if getattr(u, "queued_target_x", -1) >= 0
@@ -2079,6 +2090,11 @@ def snapshot_after_action(
             "active": getattr(u, "active", True),
             "is_mech": u.is_mech,
             "team": u.team,
+            "corpse": getattr(u, "corpse", False),
+            "corpse_on_death": getattr(u, "corpse_on_death", False),
+            "persistent_path_corpse": getattr(
+                u, "persistent_path_corpse", False
+            ),
             "queued_target": (
                 [u.queued_target_x, u.queued_target_y]
                 if getattr(u, "queued_target_x", -1) >= 0
@@ -2264,18 +2280,25 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             })
             continue
 
-        # Unit only in predicted: removed by the actual game. Dead enemies are
-        # expected to be absent, but player-mech wrecks must persist because
-        # their occupied tile remains a movement/push blocker.
+        # Unit only in predicted: removed dead non-corpses are expected, but
+        # native mode-1 persistent corpses must remain because their tile is a
+        # movement blocker.
         if au is None:
             pu_alive = pu.get("alive", True)
             pu_hp = pu.get("hp", 1)
-            persistent_player_wreck = bool(
-                pu.get("is_mech") is True
-                and pu.get("team") == 1
-                and (not pu_alive or pu_hp <= 0)
+            persistent_path_corpse = bool(
+                (not pu_alive or pu_hp <= 0)
+                and (
+                    pu.get("persistent_path_corpse") is True
+                    or pu.get("corpse") is True
+                    or pu.get("corpse_on_death") is True
+                    or (
+                        pu.get("is_mech") is True
+                        and pu.get("team") == 1
+                    )
+                )
             )
-            if (not pu_alive or pu_hp <= 0) and not persistent_player_wreck:
+            if (not pu_alive or pu_hp <= 0) and not persistent_path_corpse:
                 continue  # expected: dead enemy gone from bridge
             result.unit_diffs.append({
                 "uid": uid,
@@ -2286,22 +2309,27 @@ def diff_states(predicted: dict, actual_board) -> DiffResult:
             })
             continue
 
-        # Dead enemy state is irrelevant after removal. A dead player mech is
-        # different: its UID/type/tile define persistent wreck topology used
-        # by every subsequent movement and push simulation.
+        # Dead non-corpses are irrelevant after removal. Persistent corpses
+        # retain UID/type/tile topology for subsequent native path queries.
         pu_alive = pu.get("alive", True)
         au_alive = au.hp > 0
         if not pu_alive and not au_alive:
             predicted_wreck = bool(
-                pu.get("is_mech") is True and pu.get("team") == 1
+                pu.get("persistent_path_corpse") is True
+                or pu.get("corpse") is True
+                or pu.get("corpse_on_death") is True
+                or (pu.get("is_mech") is True and pu.get("team") == 1)
             )
-            actual_wreck = bool(au.is_mech and au.is_player)
+            actual_wreck = bool(
+                getattr(au, "persistent_path_corpse", False)
+            )
             if predicted_wreck or actual_wreck:
                 for field, predicted_value, actual_value in (
                     ("type", pu.get("type"), au.type),
                     ("pos", list(pu.get("pos", [-1, -1])), [au.x, au.y]),
                     ("team", pu.get("team"), au.team),
                     ("is_mech", pu.get("is_mech"), au.is_mech),
+                    ("persistent_path_corpse", predicted_wreck, actual_wreck),
                 ):
                     if predicted_value != actual_value:
                         result.unit_diffs.append({

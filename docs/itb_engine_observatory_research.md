@@ -202,8 +202,11 @@ bindings, path constants, Board search vtable, and Road Runner profile-4
 transit/stop boundary are also pinned. A follow-up exact-build map now pins
 unit reachability costs, direction and priority comparators, `(x,y)` output,
 weighted GetPath reconstruction, identity-based ordinary occupancy, and
-Massive Water. Corpse classification, runtime subclass coverage, higher-level
-record selection, and broader queue paths remain to be validated. One bounded
+Massive Water. A third exact-build map now proves native mode-1 occupancy as
+live-or-persistent-corpse, including Road Runner corpse transit but no corpse
+stop; simulator v403 carries that rule. Runtime `IsCorpse()` subclass values,
+transient removal timing, higher-level record selection, and broader queue
+paths remain to be validated. One bounded
 `Firefly1` campaign now proves the final selected record's immediate queue
 handoff with exact destination, target/shot, and weapon/skill agreement.
 
@@ -697,9 +700,13 @@ Observatory diagnostic file.
   pin unit reachability costs, native directions and comparators, `(x,y)`
   reachable output, weighted GetPath reconstruction, ordinary identity-based
   occupancy, and Massive Water. Simulator v402 carries the proven Water rule.
-- Keep corpse classification, matched point vectors, `AddMove` execution, and
-  serialization analysis mismatch-driven rather than attempting broad
-  reconstruction.
+- **Path occupancy lifecycle continuation complete:** eight regions and ten
+  control windows join `Pawn:IsDead`/`Pawn:IsCorpse` to mode-1 traversal and
+  destination filtering. Simulator v403 distinguishes persistent corpses from
+  transient dead non-corpses and preserves Road Runner's transit/no-stop split.
+- Keep runtime subclass values, transient removal timing, matched point
+  vectors, `AddMove` execution, and serialization analysis mismatch-driven
+  rather than attempting broad reconstruction.
 - Validate the mapped interpretations and hook neutrality dynamically before
   promoting trace-derived behavior into Rust.
 

@@ -200,6 +200,9 @@ bitflags! {
     }
 }
 
+const PATH_LIFECYCLE_CORPSE: u8 = 0b0000_0001;
+const PATH_LIFECYCLE_CORPSE_ON_DEATH: u8 = 0b0000_0010;
+
 // ── WeaponId placeholder ─────────────────────────────────────────────────────
 // Full enum defined in weapons.rs; re-exported. Using u16 for now.
 
@@ -262,6 +265,10 @@ pub struct Unit {
     /// Combat-affecting pilot passives (see `PilotFlags` above). Empty
     /// for enemies, neutrals, and mechs with no recognized pilot.
     pub pilot_flags: PilotFlags,
+    /// Two compact native path-lifecycle bits. Stored separately because all
+    /// 32 general UnitFlags bits are occupied; this byte fits existing Unit
+    /// tail padding and keeps Board copies at their prior hot-path size.
+    pub path_lifecycle: u8,
 }
 
 impl Unit {
@@ -296,6 +303,12 @@ impl Unit {
     pub fn burrower(&self) -> bool { self.flags.contains(UnitFlags::BURROWER) }
     pub fn grappled(&self) -> bool { self.flags.contains(UnitFlags::GRAPPLED) }
     pub fn jumper(&self) -> bool { self.flags.contains(UnitFlags::JUMPER) }
+    pub fn corpse(&self) -> bool {
+        self.path_lifecycle & PATH_LIFECYCLE_CORPSE != 0
+    }
+    pub fn corpse_on_death(&self) -> bool {
+        self.path_lifecycle & PATH_LIFECYCLE_CORPSE_ON_DEATH != 0
+    }
 
     pub fn set_active(&mut self, v: bool) { self.flags.set(UnitFlags::ACTIVE, v); }
     pub fn set_shield(&mut self, v: bool) { self.flags.set(UnitFlags::SHIELD, v); }
@@ -306,6 +319,20 @@ impl Unit {
     pub fn set_boosted(&mut self, v: bool) { self.flags.set(UnitFlags::BOOSTED, v); }
     pub fn set_infected(&mut self, v: bool) { self.flags.set(UnitFlags::INFECTED, v); }
     pub fn set_burrowed(&mut self, v: bool) { self.flags.set(UnitFlags::BURROWED, v); }
+    pub fn set_corpse(&mut self, v: bool) {
+        if v {
+            self.path_lifecycle |= PATH_LIFECYCLE_CORPSE;
+        } else {
+            self.path_lifecycle &= !PATH_LIFECYCLE_CORPSE;
+        }
+    }
+    pub fn set_corpse_on_death(&mut self, v: bool) {
+        if v {
+            self.path_lifecycle |= PATH_LIFECYCLE_CORPSE_ON_DEATH;
+        } else {
+            self.path_lifecycle &= !PATH_LIFECYCLE_CORPSE_ON_DEATH;
+        }
+    }
 
     pub fn is_player(&self) -> bool { self.team == Team::Player }
     pub fn is_enemy(&self) -> bool { self.team == Team::Enemy }
@@ -331,6 +358,19 @@ impl Unit {
         self.is_enemy() && !self.minor() && !self.is_pinnacle_bot()
     }
     pub fn alive(&self) -> bool { self.hp > 0 }
+
+    /// Whether this dead unit occupies a tile for native mode-1 path queries.
+    ///
+    /// Current bridge `IsCorpse` is authoritative when available. Static
+    /// `Corpse=true` keeps projected checkpoints correct after a source-known
+    /// pawn dies, and player-mech fallback preserves legacy recordings whose
+    /// disabled wrecks predate the lifecycle fields.
+    pub fn persistent_path_corpse(&self) -> bool {
+        self.hp <= 0
+            && (self.corpse()
+                || self.corpse_on_death()
+                || (self.is_player() && self.is_mech()))
+    }
 
     // Pilot-passive accessors. Enemies and neutrals never have these bits,
     // so there's no team check needed at call sites — a raw pilot_flags
@@ -834,7 +874,8 @@ impl Board {
         None
     }
 
-    /// Check if dead unit wreck at (x, y). Wrecks block movement.
+    /// Check if any dead unit body at (x, y). Combat effect/push semantics use
+    /// this broad predicate; native pathfinding uses `path_corpse_at` instead.
     pub fn wreck_at(&self, x: u8, y: u8) -> bool {
         for i in 0..self.unit_count as usize {
             let u = &self.units[i];
@@ -842,6 +883,30 @@ impl Board {
                 return true;
             }
         }
+        false
+    }
+
+    /// Check native mode-1 path occupancy by a persistent corpse at (x, y).
+    pub fn path_corpse_at(&self, x: u8, y: u8) -> bool {
+        for i in 0..self.unit_count as usize {
+            let u = &self.units[i];
+            if u.x == x && u.y == y && u.persistent_path_corpse() {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Native destination filtering: terrain plus live/persistent pawn
+    /// occupancy. Unlike the broad simulator blocker, a retained transient
+    /// dead non-corpse pawn does not reject a destination.
+    pub fn is_path_destination_blocked(&self, x: u8, y: u8, flying: bool) -> bool {
+        let t = self.tile(x, y);
+        if t.terrain.blocks_all() { return true; }
+        if !flying && t.terrain.is_deadly_ground() { return true; }
+        if self.unit_at(x, y).is_some() { return true; }
+        if self.path_corpse_at(x, y) { return true; }
+        if t.terrain == Terrain::Building { return true; }
         false
     }
 

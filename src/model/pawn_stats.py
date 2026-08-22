@@ -26,6 +26,7 @@ class PawnStats:
     ignore_smoke: bool = False
     ignore_fire: bool = False
     void_shock_immune: bool = False
+    corpse_on_death: bool = False
     default_weapon: str = ""
     class_type: str = ""     # Prime, Brute, Ranged, Science, TechnoVek
 
@@ -283,18 +284,23 @@ VEK_STATS = {
 
 # Neutral / environmental pawns
 NEUTRAL_STATS = {
-    "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False),
+    "Dam_Pawn":          PawnStats(move_speed=0, massive=True, pushable=False,
+                                   corpse_on_death=True),
     "Train_Pawn":        PawnStats(move_speed=0, massive=True, pushable=False,
-                                   ignore_fire=True, ignore_smoke=True),
+                                   ignore_fire=True, ignore_smoke=True,
+                                   corpse_on_death=True),
     "Train_Damaged":     PawnStats(move_speed=0, massive=True, pushable=False,
-                                   ignore_fire=True),
+                                   ignore_fire=True, corpse_on_death=True),
     "Train_Armored":     PawnStats(move_speed=0, massive=True, armor=True,
                                    pushable=False, ignore_fire=True,
                                    ignore_smoke=True,
+                                   corpse_on_death=True,
                                    default_weapon="Armored_Train_Move"),
     "Train_Armored_Damaged": PawnStats(move_speed=0, massive=True, armor=True,
-                                       pushable=False, ignore_fire=True),
-    "Filler_Pawn":       PawnStats(move_speed=0, pushable=False),
+                                       pushable=False, ignore_fire=True,
+                                       corpse_on_death=True),
+    "Filler_Pawn":       PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True),
     # Tumblebug explosive boulder. The live bridge exposes this as a neutral
     # pawn (1 HP, Move 0) with the engine's Explodes flag.
     "BombRock":          PawnStats(move_speed=0),
@@ -308,13 +314,30 @@ NEUTRAL_STATS = {
     # one-HP pawns. Their directional skills are captured for identity only;
     # native Mission_Auto ordering remains gated until traced.
     "Pawn_Piston_U":     PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
                                    default_weapon="Piston_U_Atk"),
     "Pawn_Piston_R":     PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
                                    default_weapon="Piston_R_Atk"),
     "Pawn_Piston_D":     PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
                                    default_weapon="Piston_D_Atk"),
     "Pawn_Piston_L":     PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
                                    default_weapon="Piston_L_Atk"),
+    # Mission_Laser's directional bodies inherit Corpse=true from Pawn_Laser_U.
+    "Pawn_Laser_U":      PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
+                                   default_weapon="Laser_U_Atk"),
+    "Pawn_Laser_R":      PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
+                                   default_weapon="Laser_R_Atk"),
+    "Pawn_Laser_D":      PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
+                                   default_weapon="Laser_D_Atk"),
+    "Pawn_Laser_L":      PawnStats(move_speed=0, pushable=False,
+                                   corpse_on_death=True,
+                                   default_weapon="Laser_L_Atk"),
     # Freeze Tank (Pinnacle Robotics) — friendly NPC on Mission_FreezeBots
     # ("Pinnacle Garden"). Per scripts/missions/snow/snow_helper.lua:
     #   Health=1, MoveSpeed=4, SkillList={"Pinnacle_FreezeTank"},
@@ -327,8 +350,10 @@ NEUTRAL_STATS = {
                                    default_weapon="Pinnacle_FreezeTank"),
     "SatelliteRocket":   PawnStats(move_speed=0, massive=True, pushable=False,
                                    ignore_smoke=True,
+                                   corpse_on_death=True,
                                    default_weapon="Rocket_Launch"),
     "ArchiveArtillery":  PawnStats(move_speed=1, ranged=1,
+                                   corpse_on_death=True,
                                    default_weapon="Archive_ArtShot"),
     "Archive_Tank":      PawnStats(move_speed=4, ranged=1,
                                    default_weapon="Deploy_TankShot"),

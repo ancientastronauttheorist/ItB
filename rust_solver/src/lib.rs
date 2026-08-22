@@ -2414,6 +2414,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v403 - Exact Windows lifecycle/path analysis proves mode-1 occupancy counts
+// live pawns plus persistent corpses, but skips retained transient dead
+// non-corpses. Ordinary movement blocks persistent corpses; Road Runner may
+// cross but not stop on them. Bridge, static pawn metadata, checkpoints, and
+// Rust movement now preserve that distinction. Pre-v403 corpus archived as
+// recordings/failure_db_snapshot_sim_v402.jsonl.
 // v402 - Exact Windows path-cost/order analysis proves PATH_MASSIVE=2 and
 // PATH_ROADRUNNER=4 both traverse and stop on Water. Ordinary movement now
 // retains Massive and Road Runner Water routes while preserving the existing
@@ -2493,7 +2499,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 402;
+pub const SIMULATOR_VERSION: u32 = 403;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

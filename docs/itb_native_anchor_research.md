@@ -16,8 +16,8 @@ string candidates into reviewed function boundaries for:
 - the final selected 24-byte AI decision-record copy; and
 - the native path/reachability API, path profiles, Board search vtable, and
   Road Runner transit/destination boundary, followed by exact path costs,
-  direction/priority ordering, reconstruction, ordinary occupancy, and
-  Massive-Water handling.
+  direction/priority ordering, reconstruction, ordinary occupancy,
+  Massive-Water handling, and dead-versus-persistent-corpse occupancy.
 
 “Complete” here means the focused static map needed to choose experiment
 boundaries is finished. It does not mean the native engine is reconstructed.
@@ -42,10 +42,11 @@ offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
 ordinary selector call. A disposable installation is optional for those
 owner-build questions and required only for a pristine stock-depot claim.
-The two exact-build path maps close Henry Kwan's Road Runner occupancy rule,
+The three exact-build path maps close Henry Kwan's Road Runner occupancy rule,
 weighted cost/priority ordering, ordinary team-agnostic pawn blocking, and
-Massive Water traversal. Corpse classification, matched runtime point vectors,
-and `AddMove` step/scheduler effects remain mismatch-driven questions.
+Massive Water traversal, then prove mode-1 occupancy as live-or-persistent-
+corpse. Matched runtime `IsCorpse()` subclass values, transient removal timing,
+point vectors, and `AddMove` step/scheduler effects remain mismatch-driven.
 
 The durable artifacts are:
 
@@ -75,6 +76,10 @@ The durable artifacts are:
   for 26 reviewed code/table regions, 14 control windows, the exact direction
   and priority comparators, reachable output order, GetPath reconstruction,
   ordinary identity-based occupancy, and Massive-Water proof.
+- `data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json`
+  for eight reviewed regions, ten control windows, the `Pawn:IsDead` and
+  `Pawn:IsCorpse` bindings, mode-1 counted occupancy, the concrete Board path-
+  manager vtable, and ordinary/Road Runner corpse transit-versus-stop proof.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -250,8 +255,20 @@ any differently identified counted pawn blocks profiles 0/2 while the mover's
 own identifier is exempt. `PATH_MASSIVE=2` passes both Water traversal and stop
 checks. Simulator v402 fixes the v401 ordinary-movement omission of Massive
 and Road Runner Water routes while preserving solver-side Chasm/Lava and ACID
-safety policy. Corpse classification, live output-vector matching, and
-`AddMove` per-step/scheduler behavior remain unpromoted.
+safety policy.
+
+The lifecycle continuation joins the native `Pawn:IsDead` virtual thunk and
+direct `Pawn:IsCorpse` binding to the counted-occupancy helper. Mode 1 counts
+an entry when `not IsDead()` or `IsCorpse()`. Ordinary traversal and the
+concrete Board destination wrapper both use mode 1: a persistent corpse blocks
+ordinary transit and every stop, while a retained transient dead non-corpse
+does neither. `PATH_ROADRUNNER=4` exits before occupancy, so it may cross a
+persistent corpse, but the common destination wrapper still prevents stopping
+there. Simulator v403 carries live/static lifecycle identity through the
+bridge, model, Rust paths, verification, and projected checkpoints while
+leaving general same-effect corpse collision behavior unchanged. Matched live
+subclass values, removal timing, output vectors, and `AddMove` scheduling
+remain unpromoted.
 
 Reverify the artifact with
 `scripts/itb_observatory_path_boundaries.py verify` against the exact
@@ -264,6 +281,12 @@ Reverify the cost/order continuation with
 checks every region hash, instruction-start control window, initialized
 direction pair, cost/stop jump table, property string, and the exact 1.01
 float constant.
+
+Reverify the lifecycle continuation with
+`scripts/itb_observatory_path_occupancy_lifecycle.py verify`; it checks the
+exact executable identity, all eight region hashes, all ten instruction-start
+control windows, both lifecycle bindings, path-manager slots, mode-1 predicate,
+and ordinary/Road Runner transit-versus-stop conclusions.
 
 ## Reproducible analysis workflow
 
@@ -353,14 +376,17 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    commit on the same thread, with exact destination, target/shot, and
    weapon/skill agreement. Wider pawn types, multi-weapon selection,
    cancellation, and retarget paths remain untested.
-6. **Completed offline for native path costs and ordering:** the exact
+6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit
    reachability costs, `(x,y)` result order, weighted GetPath priority and
-   endpoint reconstruction, identity-not-team occupancy, and Massive Water.
+   endpoint reconstruction, identity-not-team occupancy, and Massive Water. A
+   third map proves mode-1 live-or-persistent-corpse occupancy and Road Runner's
+   corpse transit/no-stop split.
    Simulator v401 implements Road Runner occupancy; v402 implements the proven
-   Water correction. Corpse classification and `AddMove` execution remain
-   mismatch-driven.
+   Water correction; v403 implements corpse lifecycle pathing. Runtime
+   subclass values, removal timing, matched vectors, and `AddMove` execution
+   remain mismatch-driven.
 7. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

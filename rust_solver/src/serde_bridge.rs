@@ -300,6 +300,8 @@ pub struct JsonUnit {
     pub armor: Option<bool>,
     pub massive: Option<bool>,
     pub minor: Option<bool>,
+    pub corpse: Option<bool>,
+    pub corpse_on_death: Option<bool>,
     pub void_shock_immune: Option<bool>,
     pub pushable: Option<bool>,
     pub active: Option<bool>,
@@ -378,6 +380,32 @@ fn known_minor_type(type_name: &str) -> bool {
             | "AcidVat"
             | "BombRock"
             | "BonusDebris"
+    )
+}
+
+/// Exact shipped Lua pawn definitions whose `Corpse=true` body persists for
+/// native mode-1 path occupancy. The fallback keeps pre-v403 recordings
+/// faithful when they omit the bridge lifecycle fields; explicit payload
+/// values remain authoritative.
+fn known_corpse_on_death_type(type_name: &str) -> bool {
+    matches!(
+        type_name,
+        "Dam_Pawn"
+            | "Train_Pawn"
+            | "Train_Damaged"
+            | "Train_Armored"
+            | "Train_Armored_Damaged"
+            | "Filler_Pawn"
+            | "SatelliteRocket"
+            | "ArchiveArtillery"
+            | "Pawn_Piston_U"
+            | "Pawn_Piston_R"
+            | "Pawn_Piston_D"
+            | "Pawn_Piston_L"
+            | "Pawn_Laser_U"
+            | "Pawn_Laser_R"
+            | "Pawn_Laser_D"
+            | "Pawn_Laser_L"
     )
 }
 
@@ -812,6 +840,10 @@ pub fn board_from_json(json_str: &str)
             if ju.flying.unwrap_or(false) { flags |= UnitFlags::FLYING; }
             if ju.massive.unwrap_or(false) { flags |= UnitFlags::MASSIVE; }
             if ju.minor.unwrap_or_else(|| known_minor_type(&ju.unit_type)) { flags |= UnitFlags::MINOR; }
+            let corpse = ju.corpse.unwrap_or(false);
+            let corpse_on_death = ju
+                .corpse_on_death
+                .unwrap_or_else(|| known_corpse_on_death_type(&ju.unit_type));
             if ju
                 .void_shock_immune
                 .unwrap_or_else(|| known_void_shock_immune_type(&ju.unit_type))
@@ -950,9 +982,12 @@ pub fn board_from_json(json_str: &str)
                 } else {
                     crate::board::PilotFlags::empty()
                 },
+                path_lifecycle: 0,
             };
 
             unit.set_type_name(&ju.unit_type);
+            unit.set_corpse(corpse);
+            unit.set_corpse_on_death(corpse_on_death);
             board.add_unit(unit);
         }
     }
@@ -1927,6 +1962,34 @@ mod tests {
 
         assert!(board.units[0].void_shock_immune());
         assert!(!board.units[1].void_shock_immune());
+    }
+
+    #[test]
+    fn test_corpse_lifecycle_fields_and_source_fallback() {
+        let input = r#"{
+            "tiles": [],
+            "units": [
+                {"uid": 1, "type": "Dam_Pawn", "x": 1, "y": 1, "hp": 0, "max_hp": 2, "team": 2},
+                {"uid": 2, "type": "Pawn_Laser_D", "x": 2, "y": 1, "hp": 1, "max_hp": 1, "team": 2},
+                {"uid": 3, "type": "Scorpion1", "x": 3, "y": 1, "hp": 0, "max_hp": 2, "team": 6,
+                 "corpse": true},
+                {"uid": 4, "type": "Train_Pawn", "x": 4, "y": 1, "hp": 0, "max_hp": 2, "team": 1,
+                 "corpse_on_death": false}
+            ],
+            "grid_power": 7,
+            "spawning_tiles": []
+        }"#;
+
+        let (board, ..) = board_from_json(input).expect("bridge json parses");
+
+        assert!(board.units[0].corpse_on_death());
+        assert!(board.units[0].persistent_path_corpse());
+        assert!(board.units[1].corpse_on_death());
+        assert!(!board.units[1].persistent_path_corpse(), "living source corpse is live occupancy");
+        assert!(board.units[2].corpse());
+        assert!(board.units[2].persistent_path_corpse());
+        assert!(!board.units[3].corpse_on_death(), "explicit live false wins over fallback");
+        assert!(!board.units[3].persistent_path_corpse());
     }
 
     #[test]

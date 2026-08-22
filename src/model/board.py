@@ -277,6 +277,10 @@ class Unit:
     # for Dam_Pawn). All entries share `uid`; damage to any entry mirrors
     # HP to the rest via apply_damage.
     is_extra_tile: bool = False
+    # Native path occupancy distinguishes persistent corpses from transient
+    # dead pawns retained only while an effect finishes resolving.
+    corpse: bool = False
+    corpse_on_death: bool = False
     # Pilot info (mechs only). `pilot_id` from bridge (e.g. "Pilot_Rocks")
     # drives the pilot_value lookup: a multiplier on the mech_killed penalty
     # reflecting how costly it is to lose this pilot (permanent death + lost
@@ -297,6 +301,14 @@ class Unit:
     @property
     def receives_psion_aura(self) -> bool:
         return self.is_enemy and not self.minor and not _is_pinnacle_bot(self.type)
+
+    @property
+    def persistent_path_corpse(self) -> bool:
+        return self.hp <= 0 and (
+            self.corpse
+            or self.corpse_on_death
+            or (self.is_player and self.is_mech)
+        )
 
 
 @dataclass
@@ -542,6 +554,13 @@ class Board:
                 return True
         return False
 
+    def path_corpse_at(self, x: int, y: int) -> bool:
+        """Check native mode-1 path occupancy by a persistent corpse."""
+        return any(
+            u.x == x and u.y == y and u.persistent_path_corpse
+            for u in self.units
+        )
+
     def mechs(self) -> list[Unit]:
         return [u for u in self.units if u.is_player and u.hp > 0]
 
@@ -636,6 +655,7 @@ class Board:
                 armor=stats.armor,
                 pushable=stats.pushable,
                 minor=stats.minor,
+                corpse_on_death=stats.corpse_on_death,
                 weapon=primary_weapon,
                 weapon2=secondary_weapon,
                 active=pawn.active,
@@ -862,6 +882,10 @@ class Board:
                 armor=ud.get("armor", stats.armor),
                 pushable=ud.get("pushable", stats.pushable),
                 minor=bool(ud.get("minor", stats.minor)),
+                corpse=bool(ud.get("corpse", False)),
+                corpse_on_death=bool(
+                    ud.get("corpse_on_death", stats.corpse_on_death)
+                ),
                 weapon=primary,
                 weapon2=secondary,
                 active=ud.get("active", True),

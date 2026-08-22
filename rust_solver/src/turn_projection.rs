@@ -1101,16 +1101,12 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
     let mut units: Vec<Value> = Vec::with_capacity(board.unit_count as usize);
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        // Dead player mechs remain physical wrecks while disabled (including
-        // across later turns of the mission).
-        // Movement and push simulation consults Board::wreck_at, so dropping
-        // them from the post-player checkpoint can silently authorize an
-        // enemy-phase replay rooted in different blocker topology.  Dead
-        // enemies/neutral units are removed by the game and stay omitted.
-        let persistent_player_wreck =
-            u.hp <= 0 && u.team == crate::types::Team::Player && u.is_mech();
-        if (u.hp <= 0 && !persistent_player_wreck) || u.burrowed() { continue; }
-        let serialized_hp = if persistent_player_wreck { 0 } else { u.hp };
+        // Native mode-1 path occupancy retains disabled player mechs and any
+        // source/live Corpse pawn, but skips transient dead non-corpses. Keep
+        // that exact blocker topology through the post-player checkpoint.
+        let persistent_wreck = u.persistent_path_corpse();
+        if (u.hp <= 0 && !persistent_wreck) || u.burrowed() { continue; }
+        let serialized_hp = if persistent_wreck { 0 } else { u.hp };
         let team_int: u8 = match u.team {
             crate::types::Team::Player  => 1,
             crate::types::Team::Neutral => 2,
@@ -1156,6 +1152,8 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         if u.flying()                     { unit_val["flying"]               = json!(true); }
         if u.massive()                    { unit_val["massive"]              = json!(true); }
         if u.minor()                      { unit_val["minor"]                = json!(true); }
+        if u.corpse()                     { unit_val["corpse"]               = json!(true); }
+        if u.corpse_on_death()            { unit_val["corpse_on_death"]      = json!(true); }
         if u.armor()                      { unit_val["armor"]                = json!(true); }
         if u.shield()                     { unit_val["shield"]               = json!(true); }
         if u.acid()                       { unit_val["acid"]                 = json!(true); }
@@ -2915,6 +2913,26 @@ mod tests {
         wreck.team = Team::Player;
         wreck.flags = UnitFlags::IS_MECH | UnitFlags::PUSHABLE;
         board.add_unit(wreck);
+        let mut source_wreck = Unit::default();
+        source_wreck.uid = 43;
+        source_wreck.set_type_name("ArchiveArtillery");
+        source_wreck.x = 5;
+        source_wreck.y = 1;
+        source_wreck.hp = 0;
+        source_wreck.max_hp = 2;
+        source_wreck.team = Team::Player;
+        source_wreck.set_corpse(true);
+        source_wreck.set_corpse_on_death(true);
+        board.add_unit(source_wreck);
+        let mut transient_dead = Unit::default();
+        transient_dead.uid = 44;
+        transient_dead.set_type_name("Scorpion1");
+        transient_dead.x = 4;
+        transient_dead.y = 1;
+        transient_dead.hp = 0;
+        transient_dead.max_hp = 2;
+        transient_dead.team = Team::Enemy;
+        board.add_unit(transient_dead);
         let alive_before: usize = (0..board.unit_count as usize)
             .filter(|&i| board.units[i].alive()).count();
         let json_str = board_to_json(&board, &spawn_points);
@@ -2941,6 +2959,21 @@ mod tests {
             .expect("dead player-mech wreck must survive round-trip");
         assert_eq!((wreck_after.x, wreck_after.y, wreck_after.hp), (6, 1, 0));
         assert!(b2.wreck_at(6, 1));
+        let source_wreck_after = (0..b2.unit_count as usize)
+            .map(|i| &b2.units[i])
+            .find(|unit| unit.uid == 43)
+            .expect("source-defined corpse must survive round-trip");
+        assert_eq!(
+            (source_wreck_after.x, source_wreck_after.y, source_wreck_after.hp),
+            (5, 1, 0),
+        );
+        assert!(source_wreck_after.corpse());
+        assert!(source_wreck_after.corpse_on_death());
+        assert!(b2.path_corpse_at(5, 1));
+        assert!(
+            (0..b2.unit_count as usize).all(|i| b2.units[i].uid != 44),
+            "transient dead non-corpse must stay omitted",
+        );
         assert_eq!(b2.bonus_dont_kill_types, vec!["Volatile_Vek".to_string()]);
         assert_eq!(b2.destroy_objective_unit_types, vec!["Hacked_Building".to_string()]);
         assert_eq!(b2.protect_objective_unit_types, vec!["Snowtank".to_string()]);

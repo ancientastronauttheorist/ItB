@@ -227,9 +227,7 @@ The same proof closes ordinary team handling and one solver-relevant uncommon
 profile edge: low profiles 0/2 compare pawn identity without a team branch,
 and `PATH_MASSIVE=2` can both cross and stop on Water. Simulator v402 corrects
 ordinary Massive/Hotshot Water movement and archives the pre-v402 corpus as
-`recordings/failure_db_snapshot_sim_v401.jsonl`. Corpse classification,
-matched runtime output vectors, and `AddMove` step/scheduler effects remain
-open.
+`recordings/failure_db_snapshot_sim_v401.jsonl`.
 
 Verify the immutable follow-up map with:
 
@@ -238,6 +236,31 @@ python scripts/itb_observatory_path_cost_ordering.py verify `
   --executable "<Into the Breach>\Breach.exe" `
   --path-cost-map data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json
 ```
+
+The third exact-build map,
+`native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json`,
+joins the shipped `Pawn:IsDead` and `Pawn:IsCorpse` bindings to counted tile
+occupancy, ordinary traversal, the concrete Board path-manager vtable, and
+destination filtering. Mode 1 counts exactly a live pawn or a dead pawn whose
+`IsCorpse()` predicate is true. Ordinary paths therefore block persistent
+corpses but ignore a retained transient dead non-corpse; Road Runner may cross
+a persistent corpse but the common destination filter still forbids stopping
+there. Simulator v403 adds live/static lifecycle fields, source fallbacks,
+path-only occupancy, projected-checkpoint preservation, and focused Rust/Python
+regressions without changing broad same-effect corpse collision behavior. The
+pre-v403 corpus is `recordings/failure_db_snapshot_sim_v402.jsonl`.
+
+Verify the lifecycle map with:
+
+```powershell
+python scripts/itb_observatory_path_occupancy_lifecycle.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --path-occupancy-map data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json
+```
+
+Matched runtime `IsCorpse()` values across pawn subclasses, transient-pawn
+removal timing between actions, matched output vectors, and `AddMove`
+step/scheduler effects remain dynamic or mismatch-driven questions.
 
 ## Native RNG return-address IDs
 

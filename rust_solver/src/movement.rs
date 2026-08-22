@@ -7,8 +7,9 @@ use crate::board::*;
 ///
 /// Returns Vec of (x, y) positions. Includes current position.
 /// Live units hard-block ordinary ground movement. Henry Kwan's native
-/// PATH_ROADRUNNER profile may route through them but still cannot stop there.
-/// Dead wrecks hard-block (can't pass at all).
+/// PATH_ROADRUNNER profile may route through live units and persistent corpses
+/// but still cannot stop there. Retained dead non-corpse pawns do not occupy a
+/// tile for native path queries.
 pub fn reachable_tiles(board: &Board, unit_idx: usize) -> Vec<(u8, u8)> {
     let unit = &board.units[unit_idx];
     reachable_tiles_with_speed(board, unit_idx, unit.move_speed)
@@ -47,7 +48,7 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 if dist > speed {
                     continue;
                 }
-                if !board.is_blocked(x, y, true) {
+                if !board.is_path_destination_blocked(x, y, true) {
                     if unit.is_player() && board.tile(x, y).acid() {
                         continue;
                     }
@@ -124,23 +125,23 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
                 continue;
             }
 
-            // Native PATH_ROADRUNNER (profile 4) ignores occupancy while
-            // expanding the path, but Board:IsBlocked still rejects an
-            // occupied destination. Same-uid multi-tile bodies do not block
-            // themselves. See the build-keyed Observatory path artifact.
+            // Native PATH_ROADRUNNER (profile 4) ignores mode-1 occupancy
+            // while expanding the path, but Board:IsBlocked still rejects a
+            // live-pawn or persistent-corpse destination. Same-uid multi-tile
+            // bodies do not block themselves.
             let occupied_by_other = board.unit_at(nx, ny)
                 .is_some_and(|blocker_idx| board.units[blocker_idx].uid != uid);
             if occupied_by_other && !can_transit_live_units {
                 continue;
             }
 
-            // Dead unit wrecks hard-block
-            if board.wreck_at(nx, ny) {
+            let occupied_by_path_corpse = board.path_corpse_at(nx, ny);
+            if occupied_by_path_corpse && !can_transit_live_units {
                 continue;
             }
 
             visited[idx] = new_cost;
-            if !occupied_by_other {
+            if !occupied_by_other && !occupied_by_path_corpse {
                 result.push((nx, ny));
             }
             queue[tail] = (nx, ny, new_cost);
@@ -216,7 +217,7 @@ pub fn controlled_reachable_tiles_with_cost(
                 if dist > speed {
                     continue;
                 }
-                if !board.is_blocked(x, y, true) {
+                if !board.is_path_destination_blocked(x, y, true) {
                     if unit.is_player() && board.tile(x, y).acid() {
                         continue;
                     }
@@ -283,12 +284,13 @@ pub fn controlled_reachable_tiles_with_cost(
                 continue;
             }
 
-            if board.wreck_at(nx, ny) {
+            let occupied_by_path_corpse = board.path_corpse_at(nx, ny);
+            if occupied_by_path_corpse && !can_transit_live_units {
                 continue;
             }
 
             visited[idx] = new_cost;
-            if !occupied_by_other {
+            if !occupied_by_other && !occupied_by_path_corpse {
                 result.push(((nx, ny), new_cost));
             }
             queue[tail] = (nx, ny, new_cost);
@@ -352,7 +354,7 @@ pub fn illegal_move_reason(board: &Board, unit_idx: usize, move_to: (u8, u8)) ->
     if board.unit_at(move_to.0, move_to.1).is_some() {
         return Some("blocked_unit");
     }
-    if board.wreck_at(move_to.0, move_to.1) {
+    if board.path_corpse_at(move_to.0, move_to.1) {
         return Some("blocked_wreck");
     }
     Some("out_of_range")
@@ -751,21 +753,94 @@ mod tests {
     }
 
     #[test]
-    fn test_wreck_hard_blocks() {
+    fn test_persistent_corpse_hard_blocks_ordinary_ground_path() {
         let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
-        // Place a dead wreck at (1, 0)
         let mut wreck = Unit::default();
         wreck.uid = 2;
         wreck.x = 1;
         wreck.y = 0;
-        wreck.hp = 0; // dead
-        wreck.team = Team::Player;
+        wreck.hp = 0;
+        wreck.set_corpse_on_death(true);
         board.add_unit(wreck);
 
         let tiles = reachable_tiles(&board, idx);
-        // Can't pass through wreck at all
         assert!(!tiles.contains(&(1, 0)));
-        assert!(!tiles.contains(&(2, 0))); // blocked behind wreck
+        assert!(!tiles.contains(&(2, 0)));
+        assert_eq!(
+            illegal_move_reason(&board, idx, (1, 0)),
+            Some("blocked_wreck"),
+        );
+    }
+
+    #[test]
+    fn test_transient_dead_non_corpse_does_not_block_path_or_stop() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
+        let transient = Unit {
+            uid: 2,
+            x: 1,
+            y: 0,
+            hp: 0,
+            ..Default::default()
+        };
+        board.add_unit(transient);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(tiles.contains(&(1, 0)));
+        assert!(tiles.contains(&(2, 0)));
+        assert_eq!(illegal_move_reason(&board, idx, (1, 0)), None);
+
+        let controlled = controlled_reachable_tiles_with_cost(&board, idx, 3);
+        assert!(controlled.contains(&((1, 0), 1)));
+        assert!(controlled.contains(&((2, 0), 2)));
+    }
+
+    #[test]
+    fn test_roadrunner_crosses_persistent_corpse_but_cannot_stop() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
+        board.units[idx].pilot_flags = PilotFlags::HOTSHOT;
+        let mut corpse = Unit {
+            uid: 2,
+            x: 1,
+            y: 0,
+            hp: 0,
+            ..Default::default()
+        };
+        corpse.set_corpse_on_death(true);
+        board.add_unit(corpse);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(!tiles.contains(&(1, 0)));
+        assert!(tiles.contains(&(2, 0)));
+        assert!(tiles.contains(&(3, 0)));
+
+        let controlled = controlled_reachable_tiles_with_cost(&board, idx, 3);
+        assert!(!controlled.iter().any(|(pos, _cost)| *pos == (1, 0)));
+        assert!(controlled.contains(&((2, 0), 2)));
+    }
+
+    #[test]
+    fn test_flying_destination_distinguishes_corpse_lifecycle() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 3, true);
+        board.add_unit(Unit {
+            uid: 2,
+            x: 1,
+            y: 0,
+            hp: 0,
+            ..Default::default()
+        });
+        let mut corpse = Unit {
+            uid: 3,
+            x: 2,
+            y: 0,
+            hp: 0,
+            ..Default::default()
+        };
+        corpse.set_corpse(true);
+        board.add_unit(corpse);
+
+        let tiles = reachable_tiles(&board, idx);
+        assert!(tiles.contains(&(1, 0)));
+        assert!(!tiles.contains(&(2, 0)));
     }
 
     #[test]

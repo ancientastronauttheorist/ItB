@@ -1,0 +1,316 @@
+{
+  "analysis_kind": "native_path_occupancy_lifecycle_map",
+  "bindings": [
+    {
+      "binding_kind": "direct_member",
+      "evidence_class": "fact",
+      "member_store_rva": "0x0027bd0d",
+      "name": "IsCorpse",
+      "name_reference_rva": "0x0027bd23",
+      "native_entry_rva": "0x0022cde0",
+      "string_rva": "0x00438eb8"
+    },
+    {
+      "binding_kind": "virtual_thunk",
+      "evidence_class": "fact",
+      "member_store_rva": "0x0027c0a4",
+      "name": "IsDead",
+      "name_reference_rva": "0x0027c0ba",
+      "native_entry_rva": "0x002e39a2",
+      "string_rva": "0x00438ffc",
+      "vtable_slot": "0x10"
+    }
+  ],
+  "conclusions": [
+    {
+      "claim": "The mode-1 tile predicate returns occupied immediately when Pawn:IsDead is false. For a dead pawn it returns occupied only when Pawn:IsCorpse is true; dead non-corpse entries are skipped.",
+      "evidence_class": "inference",
+      "id": "mode_one_means_live_or_persistent_corpse"
+    },
+    {
+      "claim": "Ordinary low path profiles call the tile predicate with literal mode 1, so a live pawn or persistent corpse blocks traversal while a retained transient dead non-corpse pawn does not.",
+      "evidence_class": "inference",
+      "id": "ordinary_pathing_counts_persistent_corpses"
+    },
+    {
+      "claim": "Board IsBlocked dispatches through path-manager slot 0x50; that wrapper hardcodes mode 1, so returned reachable destinations cannot be live-pawn or persistent-corpse spaces.",
+      "evidence_class": "inference",
+      "id": "destination_filter_counts_persistent_corpses"
+    },
+    {
+      "claim": "PATH_ROADRUNNER=4 exits its terrain-only traversal branch before occupancy calls and may therefore transit a persistent corpse, while the common destination filter still rejects stopping there.",
+      "evidence_class": "inference",
+      "id": "roadrunner_transits_but_does_not_stop_on_corpses"
+    },
+    {
+      "claim": "Rust v402 treated every hp<=0 unit as a hard path blocker and gave Road Runner no corpse transit exception. Exact native conformance requires distinguishing current/persistent corpse state from transient dead non-corpse state.",
+      "evidence_class": "inference",
+      "id": "solver_needed_explicit_corpse_lifecycle_state"
+    }
+  ],
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "constructor_path_manager_vtable",
+      "instruction_hex": "c707fce28200c70358e28200",
+      "meaning": "The Board constructor installs RVA 0x0042e258 on the +0x0c path-manager subobject.",
+      "size": 12,
+      "start_rva": "0x0015f1f0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_stop_pawnspace_call",
+      "instruction_hex": "8b460c8d4e0cff750cff75088b4050ffd084c07418",
+      "meaning": "Board stop filtering calls path-manager vtable slot 0x50 and blocks when it returns true.",
+      "size": 21,
+      "start_rva": "0x0015ff94"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "default_pawnspace_hardcodes_true",
+      "instruction_hex": "558bec8b016a01ff750cff75088b404cffd05dc20800",
+      "meaning": "The slot-0x50 wrapper pushes literal mode 1 before delegating to slot 0x4c.",
+      "size": 22,
+      "start_rva": "0x0016fd50"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawnspace_query_forwards_mode",
+      "instruction_hex": "8b4508ff75108d0c408b465069750cbc2b00000334888bcee87a0103005e8be55dc20c00ff751083c65c8bcee8660103005e8be55dc20c00",
+      "meaning": "Both in-bounds and fallback tile paths forward the supplied mode to counted occupancy.",
+      "size": 56,
+      "start_rva": "0x0016fda9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "roadrunner_terrain_only",
+      "instruction_hex": "83f80475238b86e02a000083f801740e83f804740983f8090f85d50000005f33c05e8be55dc20400",
+      "meaning": "Low profile 4 returns from its terrain-only branch before ordinary occupancy calls.",
+      "size": 40,
+      "start_rva": "0x001a0188"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_traversal_occupancy",
+      "instruction_hex": "83f802530f94450be84afdffff3bc78bce6a010f94c7e86cfdffff84c074168bcee881f100008bc8e85adf090084c07404b301eb0232db6a018bcee847fdffff84c0740484ff7448",
+      "meaning": "Ordinary traversal calls counted occupancy with literal mode 1 and blocks a different counted pawn.",
+      "size": 72,
+      "start_rva": "0x001a01b9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "count_live_or_corpse",
+      "instruction_hex": "8b86a00000008d1cbd000000008b0c038b018b4010ffd084c0742f8b8ea00000008b0c19e837ce080084c0751d8b86a4000000472b86a0000000c1f8023bf872bf",
+      "meaning": "Mode 1 counts an entry when IsDead is false or, for a dead pawn, IsCorpse is true.",
+      "size": 65,
+      "start_rva": "0x0019ff80"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "iscorpse_binding",
+      "instruction_hex": "ff75f0c745e8e0cd6200ff75f0c745ec00000000518d4de85168b88e83008bc8e821070100",
+      "meaning": "The shipped IsCorpse name is registered to native RVA 0x0022cde0.",
+      "size": 37,
+      "start_rva": "0x0027bd0a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "isdead_binding",
+      "instruction_hex": "ff75f0c745e8a2396e00ff75f0c745ec00000000518d4de85168fc8f83008bc8e88a030100",
+      "meaning": "The shipped IsDead name is registered to the RVA 0x002e39a2 virtual thunk.",
+      "size": 37,
+      "start_rva": "0x0027c0a1"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "isdead_thunk",
+      "instruction_hex": "8b01ff6010",
+      "meaning": "Pawn IsDead dispatches through vtable slot 0x10.",
+      "size": 5,
+      "start_rva": "0x002e39a2"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows"
+  },
+  "method": {
+    "boundary_review": "Focused x86 disassembly and a Ghidra 12.1.3 decompiler cross-check joined the shipped Pawn lifecycle bindings to tile occupancy, the Board path-manager vtable, ordinary traversal, and destination filtering.",
+    "limitations": [
+      "Semantic role names are bounded analyst inferences over exact machine-code facts.",
+      "The artifact proves predicate behavior, not when the effect scheduler removes a transient dead pawn from the tile vector.",
+      "Runtime IsCorpse values for every pawn subclass and lifecycle phase are not exhaustively captured.",
+      "AddMove interruption, per-step effects, and scheduler timing remain outside this artifact.",
+      "The artifact applies only to the exact owner-observed Windows executable."
+    ]
+  },
+  "occupancy_mode": {
+    "destination_filter_mode": 1,
+    "mode_0": {
+      "evidence_class": "inference",
+      "result": "any_tile_entry"
+    },
+    "mode_1": {
+      "counts_dead_corpse_pawn": true,
+      "counts_dead_non_corpse_pawn": false,
+      "counts_live_pawn": true,
+      "evidence_class": "inference",
+      "predicate": "not IsDead() or IsCorpse()"
+    },
+    "ordinary_traversal_mode": 1
+  },
+  "path_behavior": {
+    "evidence_class": "inference",
+    "live_pawn_blocks_destination": true,
+    "ordinary_live_other_pawn_blocks_transit": true,
+    "ordinary_persistent_corpse_blocks_transit": true,
+    "ordinary_transient_dead_non_corpse_blocks_transit": false,
+    "persistent_corpse_blocks_destination": true,
+    "roadrunner_live_pawn_blocks_transit": false,
+    "roadrunner_persistent_corpse_blocks_transit": false,
+    "transient_dead_non_corpse_blocks_destination": false
+  },
+  "path_manager_vtable": {
+    "evidence_class": "fact",
+    "slots": [
+      {
+        "offset": "0x4c",
+        "role": "pawn_space_query_with_mode",
+        "target_rva": "0x0016fd70"
+      },
+      {
+        "offset": "0x50",
+        "role": "pawn_space_query_default_mode_true",
+        "target_rva": "0x0016fd50"
+      }
+    ],
+    "vtable_rva": "0x0042e258"
+  },
+  "regions": [
+    {
+      "boundary_basis": "Complete Board GridSearchable stop predicate through RET 0x0c.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0015ffd3",
+      "evidence_class": "fact",
+      "id": "board_is_blocked",
+      "section": ".text",
+      "sha256": "17436eb425b49baa211547ca79073ef7a473c124ca30f87fe099acdfd3f9752d",
+      "size": 147,
+      "start_rva": "0x0015ff40"
+    },
+    {
+      "boundary_basis": "Complete two-coordinate wrapper through RET 0x08.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0016fd66",
+      "evidence_class": "fact",
+      "id": "path_manager_default_pawnspace",
+      "section": ".text",
+      "sha256": "b5eed1df511c992ecc74b23340515fe754981e7328c9cd6293c2771e0243e758",
+      "size": 22,
+      "start_rva": "0x0016fd50"
+    },
+    {
+      "boundary_basis": "Complete coordinate/mode pawn-space query through RET 0x0c.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0016fde1",
+      "evidence_class": "fact",
+      "id": "path_manager_pawnspace_query",
+      "section": ".text",
+      "sha256": "8bed0407e45f2443921799cbe630af6ddae0d7f14b1d3c6199c6e3de818d6f69",
+      "size": 113,
+      "start_rva": "0x0016fd70"
+    },
+    {
+      "boundary_basis": "Complete per-tile counted-occupancy predicate through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0019ffd3",
+      "evidence_class": "fact",
+      "id": "counted_occupancy",
+      "section": ".text",
+      "sha256": "1e3282851e31b74bfaba10d692ac4c31517d7416d47201c7e2eb5fdf36e4b1f1",
+      "size": 147,
+      "start_rva": "0x0019ff40"
+    },
+    {
+      "boundary_basis": "Complete per-tile traversal predicate through RET 0x04.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x001a0288",
+      "evidence_class": "fact",
+      "id": "grid_tile_can_traverse",
+      "section": ".text",
+      "sha256": "548085ece564eb40e21535d5cbd8eb55b6f3fe2c60c35400ecd9028537f081ee",
+      "size": 312,
+      "start_rva": "0x001a0150"
+    },
+    {
+      "boundary_basis": "Complete native Pawn IsCorpse member through RET.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x0022ce47",
+      "evidence_class": "fact",
+      "id": "pawn_is_corpse",
+      "section": ".text",
+      "sha256": "806702601f6a75193f6479e0357150d5264c10b7661a434bac7eeb1a807606c7",
+      "size": 103,
+      "start_rva": "0x0022cde0"
+    },
+    {
+      "boundary_basis": "Complete Pawn IsDead virtual thunk at vtable slot 0x10.",
+      "decoded_as_code": true,
+      "end_rva_exclusive": "0x002e39a7",
+      "evidence_class": "fact",
+      "id": "pawn_is_dead_thunk",
+      "section": ".text",
+      "sha256": "2583df412e7df54ae54a5b27baf8262583a3e4de9ed4ddfd2fef4f3209c53670",
+      "size": 5,
+      "start_rva": "0x002e39a2"
+    },
+    {
+      "boundary_basis": "Board +0x0c path-manager vtable through slot 0x54.",
+      "decoded_as_code": false,
+      "end_rva_exclusive": "0x0042e2b0",
+      "evidence_class": "fact",
+      "id": "path_manager_vtable",
+      "section": ".rdata",
+      "sha256": "a28b80cae5599855be0bda4f19477e7c6199dbeba11bc75275d7ea4c544c1fd2",
+      "size": 88,
+      "start_rva": "0x0042e258"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "upstream_artifacts": [
+      {
+        "canonical_sha256": "99c8c30fa2e213039e6ba07f5f5062d6487aaa6286eee9cc9cb0cf6aaed23afc",
+        "file_sha256": "098cbbc5a9dc4c99a07b5f85eac7aaa19812bf093249d1d3f6e6c5ec49277486",
+        "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json"
+      },
+      {
+        "canonical_sha256": "2bd57afec6c28ca75f7964995dd69125439fe913286a94a7a7fda877c0d0ad7d",
+        "file_sha256": "f21127154c770ca5db14fec30ec8f9460c7694927bda2c152db1d9d0e3961fb5",
+        "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json"
+      }
+    ]
+  },
+  "summary": {
+    "binding_count": 2,
+    "control_window_count": 10,
+    "mode_1_predicate": "live_or_persistent_corpse",
+    "ordinary_persistent_corpse_blocks": true,
+    "ordinary_transient_dead_non_corpse_blocks": false,
+    "region_count": 8,
+    "remaining_runtime_proof": [
+      "matched IsCorpse values across disabled mechs and source Corpse=true pawns",
+      "transient dead-pawn removal timing between separate player actions",
+      "AddMove step effects, interruption, and scheduler timing",
+      "non-Windows build equivalence"
+    ],
+    "roadrunner_persistent_corpse_stop": false,
+    "roadrunner_persistent_corpse_transit": true,
+    "simulator_version": 403
+  }
+}

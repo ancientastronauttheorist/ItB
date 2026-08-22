@@ -2558,7 +2558,7 @@
       ],
       "known_gaps": [
         "Lua has no explicit extra-tile predicate: Rust's alive/non-extra representation protects duplicate multi-tile entries, but native Board:IsPawnSpace behavior on every ExtraSpace coordinate has not been established.",
-        "Exact Windows static evidence now pins Board:GetReachable/GetPath costs, direction and tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, and Massive Water. Board:IsPawnSpace, corpse classification, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow remain incomplete across status, collision, per-step effects, and scheduling.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath costs, direction and tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-persistent-corpse occupancy. Board:IsPawnSpace extra-tile identity, runtime IsCorpse subclass/removal timing, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow remain incomplete across status, collision, per-step effects, and scheduling.",
         "Lua does not textually reject choosing the origin as the second click. Whether Board:GetReachable publishes that no-op destination remains a native uncertainty; Rust deliberately omits zero-distance moves.",
         "The bridge now prefers live predicate calls, but legacy payload defaults and static known Burrower/Jumper fallbacks can differ from native state. The updated modloader has not been installed or controlled-captured during the protected achievement session.",
         "Rust's independent fixed-budget BFS and direct coordinate mutation remain an approximation of native path profiles and AddMove/AddLeap/AddBurrow sequencing, including landing effects.",
@@ -5182,7 +5182,7 @@
         }
       ],
       "known_gaps": [
-        "Exact Windows static evidence now pins Board:GetReachable/GetPath unit costs, directions, tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, and Massive Water. AvoidingMines, corpse classification, matched Mine-Bot path vectors, and every path/collision/terrain edge remain incomplete.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath unit costs, directions, tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-persistent-corpse occupancy. AvoidingMines, runtime corpse subclass/removal timing, matched Mine-Bot path vectors, and every path/collision/terrain edge remain incomplete.",
         "The source construction order establishes Freeze_Mine before AddMove, but native scheduler, animation, movement interruption, item replacement, status, terrain, and simultaneous-effect ordering remain incomplete without a controlled capture.",
         "Rust consumes live queued targets for current enemy actions and does not reproduce native enemy movement, score-list candidate selection, AI target choice, random state, or tie-breaking for Snow bot families.",
         "Mission_BotDefense setup placement, Board:AddPawn placement/UID allocation, objective UI/reward scheduling, and Boss mission robot selection remain live-engine dependencies; no fresh controlled bridge capture was taken during the protected live achievement session."
@@ -5573,7 +5573,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Piston_U_Atk queues a local hide/animation effect and then queues SpaceDamage on the single forward tile with zero damage and its fixed direction, producing a forward push; the R, L, and D skills inherit that callback. Simulator v386 strictly captures and corroborates the complete live Piston action set, preserves neutral identity and source-static traits through projected JSON, and hard-blocks solving or End Turn while native Mission_Auto scheduling or Corpse occupancy remains unproven."
+          "statement": "Piston_U_Atk queues a local hide/animation effect and then queues SpaceDamage on the single forward tile with zero damage and its fixed direction, producing a forward push; the R, L, and D skills inherit that callback. Simulator v386 strictly captures and corroborates the complete live Piston action set, preserves neutral identity and source-static traits through projected JSON, and hard-blocks solving or End Turn while native Mission_Auto scheduling or runtime corpse/action lifetime remains unproven."
         }
       ],
       "id": "mission-piston-trash-compactors",
@@ -5650,7 +5650,7 @@
       "known_gaps": [
         "The source proves each queued forward push but not where Mission_Auto invokes neutral Piston skills relative to environment effects, queued Vek attacks, or other Pistons. Simulator v386 therefore retains state and blocks rather than inventing an order; no push replay is claimed.",
         "Mission setup consumes the native pistons zone, Board validity/edge/occupancy/terrain helpers, Board:ClearSpace, random_removal, and random_element. Rust does not reproduce setup RNG, rejected-candidate consumption, exact tile clearing, or placement order.",
-        "Corpse=true is source-proven, but dead neutral pawn occupancy, blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
+        "Corpse=true is source-proven and exact Windows static evidence now proves mode-1 live-or-persistent-corpse path occupancy. Matched runtime Piston IsCorpse values, corpse removal/blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
         "Native SkillEffect queue boundaries, animation/hide timing, SpaceDamage push/collision ordering, attack-order integration, and target-score scheduling are not exhaustively traced. No fresh controlled live capture was taken during the protected achievement session."
       ],
       "sources": [

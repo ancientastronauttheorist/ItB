@@ -13380,6 +13380,24 @@ def _held_end_turn_plan_safety_valid(
     )
 
 
+def _unit_payload_persistent_path_corpse(unit: object) -> bool:
+    """Return native mode-1 corpse occupancy for a raw unit payload."""
+    if not isinstance(unit, dict) or type(unit.get("hp")) is not int:
+        return False
+    if unit["hp"] > 0:
+        return False
+    if unit.get("corpse") is True:
+        return True
+    corpse_on_death = unit.get("corpse_on_death")
+    if type(corpse_on_death) is bool:
+        if corpse_on_death:
+            return True
+    elif isinstance(unit.get("type"), str):
+        if get_pawn_stats(unit["type"]).corpse_on_death:
+            return True
+    return unit.get("team") == 1 and unit.get("mech") is True
+
+
 def _held_end_turn_bridge_checkpoint_schema_error(
     data: object,
 ) -> str | None:
@@ -13598,6 +13616,8 @@ def _held_end_turn_bridge_checkpoint_schema_error(
         "flying",
         "massive",
         "armor",
+        "corpse",
+        "corpse_on_death",
         "shield",
         "acid",
         "frozen",
@@ -13651,16 +13671,12 @@ def _held_end_turn_bridge_checkpoint_schema_error(
             if uid in primary_unit_uids:
                 return "checkpoint_primary_unit_uid_duplicate"
             primary_unit_uids.add(uid)
-        persistent_player_wreck = bool(
-            unit["hp"] == 0
-            and unit["team"] == 1
-            and unit["mech"] is True
-        )
+        persistent_path_corpse = _unit_payload_persistent_path_corpse(unit)
         if (
             unit["max_hp"] <= 0
             or unit["hp"] < 0
             or unit["hp"] > unit["max_hp"]
-            or (unit["hp"] == 0 and not persistent_player_wreck)
+            or (unit["hp"] == 0 and not persistent_path_corpse)
         ):
             return "checkpoint_unit_hp_invalid"
         for field in unit_bool_fields:
@@ -13745,6 +13761,8 @@ def _held_end_turn_bridge_checkpoint_schema_error(
         "flying",
         "massive",
         "armor",
+        "corpse",
+        "corpse_on_death",
         "shield",
         "acid",
         "frozen",
@@ -13874,7 +13892,7 @@ def _held_end_turn_post_player_parity_error(
             "error": live_schema_error,
         }
 
-    def _player_mech_wreck_record(unit: object) -> tuple | None:
+    def _path_corpse_record(unit: object) -> tuple | None:
         if not (
             isinstance(unit, dict)
             and type(unit.get("uid")) is int
@@ -13883,8 +13901,7 @@ def _held_end_turn_post_player_parity_error(
             and type(unit.get("y")) is int
             and type(unit.get("hp")) is int
             and unit["hp"] == 0
-            and unit.get("team") == 1
-            and unit.get("mech") is True
+            and _unit_payload_persistent_path_corpse(unit)
         ):
             return None
         return (
@@ -13898,7 +13915,7 @@ def _held_end_turn_post_player_parity_error(
     checkpoint_wrecks = sorted(
         record
         for record in (
-            _player_mech_wreck_record(unit)
+            _path_corpse_record(unit)
             for unit in normalized_checkpoint_data.get("units", [])
         )
         if record is not None
@@ -13906,7 +13923,7 @@ def _held_end_turn_post_player_parity_error(
     live_wrecks = sorted(
         record
         for record in (
-            _player_mech_wreck_record(unit)
+            _path_corpse_record(unit)
             for unit in normalized_live_data.get("units", [])
         )
         if record is not None
@@ -13918,19 +13935,19 @@ def _held_end_turn_post_player_parity_error(
             "live_wrecks": [list(record) for record in live_wrecks],
         }
 
-    # A dead player mech affects the replay only through wreck occupancy.
-    # Compare that topology explicitly above, then omit corpse-only status
-    # flags from the general unit-intent diff: the live pawn cleanup and Rust
-    # action simulator need not retain identical Active/status bits after HP 0.
+    # Persistent dead mechs/source corpses affect the replay through path
+    # occupancy. Compare topology explicitly, then omit corpse-only status
+    # flags from the general unit-intent diff: live cleanup and the Rust action
+    # simulator need not retain identical Active/status bits after HP 0.
     normalized_checkpoint_data["units"] = [
         unit
         for unit in normalized_checkpoint_data.get("units", [])
-        if _player_mech_wreck_record(unit) is None
+        if _path_corpse_record(unit) is None
     ]
     normalized_live_data["units"] = [
         unit
         for unit in normalized_live_data.get("units", [])
-        if _player_mech_wreck_record(unit) is None
+        if _path_corpse_record(unit) is None
     ]
     checkpoint = normalized_checkpoint_data
     uid_equivalence_fields = (
@@ -13949,6 +13966,8 @@ def _held_end_turn_post_player_parity_error(
         "weapon",
         "weapon2",
         "minor",
+        "corpse",
+        "corpse_on_death",
         "active",
         "base_move",
         "shield",
@@ -14171,6 +14190,8 @@ def _held_end_turn_post_player_parity_error(
         "weapon",
         "weapon2",
         "minor",
+        "corpse",
+        "corpse_on_death",
         "active",
         "base_move",
         "shield",

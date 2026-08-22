@@ -442,11 +442,12 @@ uses the separate fixed 2/3/3/4 controlled-movement budgets. The bridge now
 captures the native predicate values and validates both native target lists
 before `GetFinalEffect`. Exact Windows static evidence now pins native unit
 costs, direction and tie comparators, output/reconstruction order, ordinary
-identity-based occupancy, Road Runner, and Massive Water. It remains `partial`:
-Rust represents pawn space as alive/non-extra and uses coordinate mutation
-rather than native effect sequencing; extra tiles, corpse classification,
-no-op destinations, `AddMove` scheduling, visible UI, and achievement credit
-still need controlled evidence.
+identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-
+persistent-corpse occupancy. Simulator v403 preserves the corpse distinction
+through bridge/model/checkpoints. The record remains `partial`: extra-tile
+identity, runtime `IsCorpse()` subclass/removal timing, no-op destinations,
+native `AddMove` sequencing, visible UI, and achievement credit still need
+controlled evidence.
 
 The sixth slice, `player-weapon-needle-shot`, adds the previously unindexed
 `weapons_technovek.lua` source plus inherited Spear targeting. It pins all four
@@ -537,9 +538,10 @@ implementation links Mine-Bot actor/target/simulation handling, static
 Snow-family definitions, and queued-artillery side-hit threat coverage. The
 record remains `partial`: exact Windows static evidence now pins basic native
 path costs, directions, tie comparators, result/reconstruction order, ordinary
-identity-based occupancy, Road Runner, and Massive Water, but `AvoidingMines`,
-corpse classification, matched Mine-Bot path vectors, movement/item scheduling,
-setup placement, and enemy AI/RNG remain outside the proven contract.
+identity-based occupancy, Road Runner, Massive Water, and persistent-corpse
+mode-1 occupancy. `AvoidingMines`, matched Mine-Bot path vectors, runtime corpse
+subclass/removal timing, movement/item scheduling, setup placement, and enemy
+AI/RNG remain outside the proven contract.
 
 The tenth player-weapon slice, `player-weapon-passive-board-effects`, adds the
 previously unindexed `weapons_passive.lua`, `advanced/ae_weapons_base.lua`, and

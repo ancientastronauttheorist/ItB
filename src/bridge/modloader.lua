@@ -1020,6 +1020,17 @@ local function dump_state()
                 if ok_bm and type(live_base_move) == "number" then
                     base_move = live_base_move
                 end
+                -- Native mode-1 path occupancy counts a dead pawn only while
+                -- Pawn:IsCorpse() is true. Export both the live predicate and
+                -- source/static Corpse property so projected deaths retain
+                -- the right blocker identity without installing any hook.
+                local current_corpse = false
+                local ok_co, is_corpse = pcall(function() return p:IsCorpse() end)
+                if ok_co and is_corpse == true then
+                    current_corpse = true
+                end
+                local corpse_on_death =
+                    pawn_def and pawn_def.Corpse == true or false
                 local unit = {
                     uid = pid,
                     type = ptype,
@@ -1032,6 +1043,8 @@ local function dump_state()
                     move = p:GetMoveSpeed(),
                     base_move = base_move,
                     minor = pawn_def and pawn_def.Minor or false,
+                    corpse = current_corpse,
+                    corpse_on_death = corpse_on_death,
                     void_shock_immune = pawn_def and pawn_def.VoidShockImmune or false,
                 }
 
