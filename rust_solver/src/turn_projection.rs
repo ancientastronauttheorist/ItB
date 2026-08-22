@@ -1410,6 +1410,9 @@ mod tests {
         // coordinate campaign proves ordered-candidate modulo selection at
         // direct RNG caller 60, but its upstream ordinal varies with shared
         // presentation draws and selector-time native state is still absent.
+        // Exact-build control flow also maps caller 59 to logged emergency
+        // placement and caller 66 to upstream predicate-order sampling; neither
+        // exposes the future selector state to ordinary projection input.
         // Projection may consume observed emergence markers but must not invent
         // either a pawn identity or a replacement coordinate. See the 20260822
         // spawn-replay and spawn-coordinate/RNG campaign receipts.

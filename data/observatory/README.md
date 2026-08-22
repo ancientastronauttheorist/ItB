@@ -320,6 +320,17 @@ selector uses `raw_rng % candidate_count`. The bridge spawn marker matches the
 indexed candidate in every armed run. The scheduler and fallback paths were not
 observed.
 
+`native/windows_build_13725832_31fe35265598_spawn_coordinate_paths.json`
+closes the corresponding offline control-flow question without claiming
+runtime reachability. It pins both reviewed function hashes, all direct callers,
+three literal anchors, six exact control windows, and RNG caller IDs 59, 60,
+and 66. Caller 59 is the logged emergency-placement selector after the ordinary
+candidate vector is empty. Caller 66 samples a supplied point vector without
+replacement for opaque predicate checks and, if that path proceeds, calls the
+ordinary caller-60 selector separately; it does not choose the final coordinate.
+The two unobserved paths therefore need a live capture only if a concrete
+solver mismatch makes their runtime inputs relevant.
+
 `captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/`
 contains three later same-process captures that combine that observer with the
 complete RNG-core stream. The coordinate draw uniquely maps to caller ID 60 at
@@ -344,7 +355,9 @@ python scripts/itb_observatory_native_boundary_campaign.py spawn_coordinate_rng 
 ```
 
 Reproduce the caller-role overlay against the exact executable with
-`scripts/itb_observatory_rng_caller_roles.py verify`. The cleanup receipt
+`scripts/itb_observatory_rng_caller_roles.py verify`, and reproduce the static
+coordinate path map with
+`scripts/itb_observatory_spawn_coordinate_paths.py verify`. The cleanup receipt
 `captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`
 closes both coordinate receipts: all 689 install entries and all 33 sealed save
 files match, the baseline Mod Loader is restored, and no diagnostic remains in

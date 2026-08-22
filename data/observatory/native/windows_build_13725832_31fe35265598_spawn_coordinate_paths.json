@@ -1,0 +1,304 @@
+{
+  "analysis_kind": "native_spawn_coordinate_path_map",
+  "conclusions": [
+    {
+      "claim": "Caller 59 is reached only after the ordinary filtered vector is empty and the executable emits its emergency-placement log.",
+      "evidence_class": "inference",
+      "id": "fallback_is_emergency_placement"
+    },
+    {
+      "claim": "Callers 59 and 60 both choose an 8-byte point with raw shared RNG modulo the exact candidate count.",
+      "evidence_class": "inference",
+      "id": "both_final_selectors_use_modulo"
+    },
+    {
+      "claim": "Caller 66 randomizes a without-replacement order for opaque predicate checks. If the path proceeds, a separate call to the ordinary selector chooses the final coordinate.",
+      "evidence_class": "inference",
+      "id": "scheduler_is_predicate_order_not_final_selection"
+    },
+    {
+      "claim": "When the scheduler path runs, zero or more caller-66 draws can advance the same shared stream before the final selector draw.",
+      "evidence_class": "inference",
+      "id": "scheduler_draws_are_upstream_state"
+    }
+  ],
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_nonempty_gate",
+      "instruction_hex": "3bce0f94c084c00f84dd010000",
+      "meaning": "The final filtered ordinary vector branches directly to the standard selector when begin and end differ; equality continues into emergency placement.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 13,
+      "start_rva": "0x00172c79"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_modulo_selection",
+      "instruction_hex": "3bfe743b2bf7c1fe0385f6750433d2eb08e8fb50210099f7fe8b75088b04d789068b44d704894604",
+      "meaning": "A nonempty emergency point vector computes its 8-byte element count, calls the shared RNG core, divides by that count, and copies the remainder-indexed point to the result.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 40,
+      "start_rva": "0x00172e05"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_modulo_selection",
+      "instruction_hex": "2bf1c1fe0385f6750433d2eb0be8a15021008b4dc899f7fe8b5cd1048b3cd1",
+      "meaning": "The ordinary point vector computes its 8-byte element count, calls the shared RNG core, divides by that count, and loads the remainder-indexed point.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 31,
+      "start_rva": "0x00172e63"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "scheduler_modulo_sample",
+      "instruction_hex": "8b550c8bf28b45082bf0c1fe0385f6750433c9eb10e86b2d210099f7fe8b45088bca8b550c",
+      "meaning": "The scheduler derives an 8-byte point count and obtains a remainder index from caller 66.",
+      "region_id": "spawn_coordinate_scheduler",
+      "size": 37,
+      "start_rva": "0x00175191"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "scheduler_remove_and_repeat",
+      "instruction_hex": "8b34c88d04c88b58048d48082bd1525150e8b4931f008b450c83c40c83e80889450c39450875a3",
+      "meaning": "The sampled point is loaded, the following elements are shifted over it, the local vector end is reduced by eight bytes, and the predicate loop repeats while candidates remain.",
+      "region_id": "spawn_coordinate_scheduler",
+      "size": 39,
+      "start_rva": "0x001751b6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "scheduler_predicate_then_selector",
+      "instruction_hex": "8b078bcf6a0053568b400cffd084c074188b473c8bcf0345ecff308d45d850e88fd8ffff8b308b5804",
+      "meaning": "After the opaque virtual predicate remains true, the scheduler calls the separate spawn-coordinate selector; the sampled point is not copied as that selector's result.",
+      "region_id": "spawn_coordinate_scheduler",
+      "size": 41,
+      "start_rva": "0x001751dd"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e16",
+      "id": "emergency_selector_to_rng_core",
+      "instruction_hex": "e8fb502100",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e70",
+      "id": "ordinary_selector_to_rng_core",
+      "instruction_hex": "e8a1502100",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001751a6",
+      "id": "scheduler_to_rng_core",
+      "instruction_hex": "e86b2d2100",
+      "source_region": "spawn_coordinate_scheduler",
+      "target_id": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001751fc",
+      "id": "scheduler_to_coordinate_selector",
+      "instruction_hex": "e88fd8ffff",
+      "source_region": "spawn_coordinate_scheduler",
+      "target_id": "spawn_coordinate_selector",
+      "target_rva": "0x00172a90"
+    }
+  ],
+  "direct_callsites": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00168ed8",
+      "id": "selector_call_168ed8",
+      "instruction_hex": "e8b39b0000",
+      "target_id": "spawn_coordinate_selector",
+      "target_rva": "0x00172a90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00169457",
+      "id": "selector_call_169457",
+      "instruction_hex": "e834960000",
+      "target_id": "spawn_coordinate_selector",
+      "target_rva": "0x00172a90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016e935",
+      "id": "selector_call_16e935",
+      "instruction_hex": "e856410000",
+      "target_id": "spawn_coordinate_selector",
+      "target_rva": "0x00172a90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001751fc",
+      "id": "selector_call_1751fc",
+      "instruction_hex": "e88fd8ffff",
+      "target_id": "spawn_coordinate_selector",
+      "target_rva": "0x00172a90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00183b5d",
+      "id": "scheduler_call_183b5d",
+      "instruction_hex": "e88e15ffff",
+      "target_id": "spawn_coordinate_scheduler",
+      "target_rva": "0x001750f0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00185526",
+      "id": "scheduler_call_185526",
+      "instruction_hex": "e8c5fbfeff",
+      "target_id": "spawn_coordinate_scheduler",
+      "target_rva": "0x001750f0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001870ac",
+      "id": "scheduler_call_1870ac",
+      "instruction_hex": "e83fe0feff",
+      "target_id": "spawn_coordinate_scheduler",
+      "target_rva": "0x001750f0"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "platform": "windows"
+  },
+  "method": {
+    "boundary_review": "The two contiguous functions were reviewed with focused x86 disassembly, independently decoded, and hashed.",
+    "control_flow_review": "Exact branch, vector-count, modulo, erase-loop, log, and direct-call windows are pinned. All E8 rel32 candidates targeting either reviewed function are exhaustively scanned in executable sections.",
+    "limitations": [
+      "The semantic names are conservative analyst inferences over exact machine-code facts.",
+      "The scheduler's indirect virtual predicates are intentionally unnamed and unresolved.",
+      "Static control flow does not prove natural runtime reachability or draw counts.",
+      "The artifact applies only to the exact owner-observed Windows executable and original return map."
+    ]
+  },
+  "regions": [
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET; the next bytes are alignment padding.",
+      "end_rva_exclusive": "0x00172ef6",
+      "evidence_class": "fact",
+      "id": "spawn_coordinate_selector",
+      "section": ".text",
+      "sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+      "size": 1126,
+      "start_rva": "0x00172a90"
+    },
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET and one following INT3 alignment byte.",
+      "end_rva_exclusive": "0x0017526b",
+      "evidence_class": "fact",
+      "id": "spawn_coordinate_scheduler",
+      "section": ".text",
+      "sha256": "639ea27e48757d5c7f08499522d7f8933dc874957f4d00a74bbeec4a6750bd89",
+      "size": 379,
+      "start_rva": "0x001750f0"
+    }
+  ],
+  "rng_callers": [
+    {
+      "call_rva": "0x00172e16",
+      "caller_id": 59,
+      "domain": "gameplay",
+      "evidence_class": "inference",
+      "meaning": "Selects one point from the emergency-placement vector by exact raw RNG modulo candidate count.",
+      "region_id": "spawn_coordinate_selector",
+      "return_rva": "0x00172e1b",
+      "role_id": "emergency_coordinate_modulo"
+    },
+    {
+      "call_rva": "0x00172e70",
+      "caller_id": 60,
+      "domain": "gameplay",
+      "evidence_class": "inference",
+      "meaning": "Selects one point from the final ordinary spawn vector by exact raw RNG modulo candidate count.",
+      "region_id": "spawn_coordinate_selector",
+      "return_rva": "0x00172e75",
+      "role_id": "ordinary_coordinate_modulo"
+    },
+    {
+      "call_rva": "0x001751a6",
+      "caller_id": 66,
+      "domain": "gameplay",
+      "evidence_class": "inference",
+      "meaning": "Chooses the next supplied point to test, removes it from the local vector, and repeats; it does not choose the final spawn coordinate.",
+      "region_id": "spawn_coordinate_scheduler",
+      "return_rva": "0x001751ab",
+      "role_id": "scheduler_predicate_order"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48"
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_enemy_candidate_class",
+      "instruction_hex": "68a0e98200",
+      "reference_rva": "0x00172b06",
+      "role_id": "ordinary_candidate_source",
+      "string_rva": "0x0042e9a0",
+      "text": "enemy"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_placement_log",
+      "instruction_hex": "6898eb8200",
+      "reference_rva": "0x00172c86",
+      "role_id": "emergency_fallback",
+      "string_rva": "0x0042eb98",
+      "text": "Cannot spawn enemy in standard locations. Emergency placement engaged.\n"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "placement_failure_log",
+      "instruction_hex": "68f4eb8200",
+      "reference_rva": "0x00172e44",
+      "role_id": "emergency_fallback_failure",
+      "string_rva": "0x0042ebf4",
+      "text": "Failed to find somewhere to put unit\n"
+    }
+  ],
+  "summary": {
+    "control_window_count": 6,
+    "direct_edge_count": 4,
+    "fallback_is_emergency_only": true,
+    "final_selector_rng_caller_ids": [
+      59,
+      60
+    ],
+    "region_count": 2,
+    "rng_caller_ids": [
+      59,
+      60,
+      66
+    ],
+    "scheduler_direct_callsite_count": 3,
+    "scheduler_rng_caller_ids": [
+      66
+    ],
+    "scheduler_selects_final_coordinate": false,
+    "selector_direct_callsite_count": 4,
+    "string_anchor_count": 3
+  }
+}

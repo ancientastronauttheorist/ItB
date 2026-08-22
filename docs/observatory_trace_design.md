@@ -347,9 +347,12 @@ that selected it.
   selected pawn. Three later combined captures place standard coordinate
   selection at direct caller 60 and explain its variable ordinal completely.
   How can the pawn capsule and selector-time RNG state be delivered before the
-  live calls without replaying timing-dependent presentation work? The
-  scheduler/fallback coordinate paths and a natural boss branch also remain to
-  be captured if a solver mismatch needs them.
+  live calls without replaying timing-dependent presentation work? Offline
+  review now resolves the coordinate special-path control flow: caller 59 is
+  logged emergency placement, and caller 66 randomizes scheduler predicate
+  order before a separate ordinary selector call. Their opaque runtime inputs,
+  plus a natural boss branch, remain capture-on-demand if a solver mismatch
+  needs them.
 
 These remaining questions are explicitly unresolved. The codec makes future
 answers comparable; it does not promote the diagnostic observers as generally

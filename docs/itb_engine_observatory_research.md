@@ -29,11 +29,14 @@ scheduler/selector candidates and proves the standard selector's exact
 captures place that draw at caller 60 and ordinals 1495, 1475, and 1450.
 Focused static review classifies every caller whose upstream count varied: the
 dominant consumers are particle, pilot-portrait, and `UnitAcid` presentation
-code sharing the same native RNG stream. The remaining unknowns are therefore
-narrower and more valuable: prospective selector-state delivery or upstream
-draw control, unexercised scheduler/fallback coordinate paths, path and
-movement enumeration, broader selected-action paths, effect execution, and
-hidden engine state.
+code sharing the same native RNG stream. Focused offline control-flow review
+then resolves the two unobserved seams: caller 59 is the logged emergency
+fallback, while caller 66 randomizes a without-replacement predicate-check
+order before a separate call to the ordinary selector. The remaining unknowns
+are therefore narrower and more valuable: prospective selector-state delivery
+or upstream draw control, runtime inputs for those special paths only when a
+real mismatch needs them, path and movement enumeration, broader
+selected-action paths, effect execution, and hidden engine state.
 
 The strategic ordering should therefore be:
 
@@ -167,7 +170,12 @@ boss-branch coverage, and equivalence on other platform builds. Outside
 `NextPawn`, the later standard coordinate selector is now resolved to ordered
 candidate modulo selection at direct shared-RNG caller 60. Its future value is
 still unavailable from ordinary solver state because timing-dependent
-presentation draws make the upstream ordinal unstable.
+presentation draws make the upstream ordinal unstable. The build-keyed static
+path map also establishes that caller 59 performs the same modulo operation on
+the logged emergency-placement vector. Caller 66 belongs to a scheduler loop
+that samples supplied points without replacement for opaque predicate checks;
+it advances the shared stream but delegates any final coordinate to the
+ordinary selector.
 
 ### Enemy targeting
 
@@ -452,8 +460,10 @@ The remaining native priorities are now narrower:
 1. Decide whether to expose the native RNG state immediately before the
    standard coordinate selector or to control/replay every upstream draw. The
    direct caller and modulo rule are resolved, but timing-dependent
-   presentation consumers make a save-plus-seed ordinal unstable. Capture the
-   scheduler and selector-fallback paths only if a concrete solver need arises.
+   presentation consumers make a save-plus-seed ordinal unstable. The
+   scheduler and selector-fallback control flow is now statically resolved;
+   capture its opaque predicate inputs and runtime reachability only if a
+   concrete solver need arises.
 2. Resolve native pathfinding and reachability details needed by mismatches.
 3. Resolve turn-phase ordering, queued effect execution, and hidden state.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
@@ -594,6 +604,11 @@ that the coordinate draw occurs at ordinals 1495, 1475, and 1450 despite the
 same restored save and fixed seed. A build-keyed caller-role overlay accounts
 for every ordinal delta: presentation domains consume 1271, 1250, and 1225
 upstream draws, with particle and `UnitAcid` effects dominating the variation.
+An exact-build static path map further classifies caller 59 as the logged
+emergency-placement modulo selector and caller 66 as without-replacement
+scheduler predicate ordering; the scheduler calls caller 60 separately for any
+final coordinate. Neither result supplies selector-time state to ordinary
+solver input.
 The correct solver rule remains fail-closed unless selector-time native state
 or complete upstream replay is available. Three selected-queue triplets
 correlate the reviewed final selected record to the

@@ -386,6 +386,16 @@ select indices `0`, `3`, and `3` by exact modulo and match the bridge spawn
 marker. Scheduler and fallback paths did not execute. The immutable receipt is
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_receipt.json`.
 
+The follow-up offline path map
+`windows_build_13725832_31fe35265598_spawn_coordinate_paths.json` resolves what
+those dormant seams mean without promoting them as naturally exercised.
+Caller 59 is guarded by the literal emergency-placement branch after ordinary
+candidates are exhausted and uses the same exact modulo rule. Caller 66
+randomizes a supplied point vector without replacement for opaque predicate
+checks, then invokes the ordinary selector separately if the path proceeds; it
+does not return the sampled point as the final coordinate. Runtime predicate
+inputs remain capture-on-demand evidence.
+
 The follow-up combined campaign prepares that hardware observer first and then
 atomically seeds and arms the RNG-core observer, so both transcripts cover the
 same End Turn in one process. Caller 60 at `0x00172e70` uniquely matches the

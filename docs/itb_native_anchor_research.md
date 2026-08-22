@@ -31,10 +31,13 @@ coordinate/RNG captures show that the selector ordinal is not stable under a
 restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
 environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
 observer neutrality, prospective selector-state delivery or complete upstream
-replay, unexercised scheduler/fallback paths, broader selected-action paths,
-and the complete native candidate tournament remain unresolved. A disposable
-installation is optional for those owner-build questions and required only for
-a pristine stock-depot claim.
+replay, runtime inputs for the special coordinate paths, broader
+selected-action paths, and the complete native candidate tournament remain
+unresolved. The scheduler/fallback *control flow* is no longer unknown: exact
+offline review identifies caller 59 as the logged emergency modulo selector
+and caller 66 as without-replacement predicate ordering before a separate
+ordinary selector call. A disposable installation is optional for those
+owner-build questions and required only for a pristine stock-depot claim.
 
 The durable artifacts are:
 
@@ -52,6 +55,10 @@ The durable artifacts are:
   needed to explain coordinate-ordinal drift. Five reviewed function extents,
   14 literal anchors, and one direct call edge bind the presentation/gameplay
   roles without changing the checkpointed return-map digest.
+- `data/observatory/native/windows_build_13725832_31fe35265598_spawn_coordinate_paths.json`
+  for the exact scheduler/fallback/ordinary control-flow map. It binds callers
+  59, 60, and 66, both function hashes, all seven direct callsites, three log
+  or class strings, and six branch/vector/modulo windows.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -268,7 +275,10 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Lua leaf; classified count deltas `[0,-20,-45]` exactly match the ordinal
    deltas. Presentation functions account for 1271, 1250, and 1225 draws, so a
    fixed seed plus ordinary save state is not a stable prediction boundary.
-   Scheduler and fallback selector paths remain unexercised.
+   Scheduler and fallback selector paths remain unexercised at runtime. Their
+   offline semantics are now resolved: caller 59 is emergency placement after
+   the ordinary vector empties, while caller 66 samples predicate-check order
+   without replacement and delegates the final coordinate to caller 60.
 4. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
