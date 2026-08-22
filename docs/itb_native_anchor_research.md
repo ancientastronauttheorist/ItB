@@ -25,10 +25,16 @@ hardware-observer triplets correlate the final selected record to the immediate
 Pawn action queue for a bounded Firefly scenario. Three spawn-replay captures
 also recover the exact observable pre-call state class and reproduce the
 captured pawn choices from their effective ratios and ordered candidates.
-Whole-game native-RNG observer neutrality, prospective capsule delivery, spawn
-coordinate scheduling, broader selected-action paths, and the complete native
-candidate tournament remain unresolved. A disposable installation is optional for those owner-build
-questions and required only for a pristine stock-depot claim.
+A later coordinate hardware observer resolves the standard selector's ordered
+candidates, direct shared-RNG caller, and modulo rule. Three same-process
+coordinate/RNG captures show that the selector ordinal is not stable under a
+restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
+environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
+observer neutrality, prospective selector-state delivery or complete upstream
+replay, unexercised scheduler/fallback paths, broader selected-action paths,
+and the complete native candidate tournament remain unresolved. A disposable
+installation is optional for those owner-build questions and required only for
+a pristine stock-depot claim.
 
 The durable artifacts are:
 
@@ -41,6 +47,11 @@ The durable artifacts are:
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
   remain explicitly unclassified until runtime evidence or further review.
+- `data/observatory/native/windows_build_13725832_31fe35265598_rng_caller_roles.json`
+  for a separate, return-map-preserving semantic overlay on the 13 callers
+  needed to explain coordinate-ordinal drift. Five reviewed function extents,
+  14 literal anchors, and one direct call edge bind the presentation/gameplay
+  roles without changing the checkpointed return-map digest.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -248,26 +259,36 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    every selected pawn. The optional boss `random_bool` branch did not execute.
    Ordinary solver input still lacks the capsule before the call, and coordinate
    selection occurs outside this span.
-3. **Completed for natural invocation/restoration:** five callback pairs cover
+3. **Completed for the standard spawn-coordinate path:** three
+   control/dormant/armed hardware-observer triplets capture the same ordered
+   five candidates and prove `selected = candidates[raw_rng % 5]`. Three later
+   combined captures join the selector event to caller ID 60 in the complete
+   RNG-core stream at ordinals 1495, 1475, and 1450. Every varying upstream
+   caller is classified by the static overlay or the already-reviewed caller-21
+   Lua leaf; classified count deltas `[0,-20,-45]` exactly match the ordinal
+   deltas. Presentation functions account for 1271, 1250, and 1225 draws, so a
+   fixed seed plus ordinary save state is not a stable prediction boundary.
+   Scheduler and fallback selector paths remain unexercised.
+4. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
    bounded events with no adapter or restoration error. Only the three
    non-`GetSkillEffect` pairs match whole-game outcomes; two counterbalanced
    `GetSkillEffect` pairs repeat a spawn-coordinate-only mismatch.
-4. **Completed for a bounded `Firefly1` queue path:** three counterbalanced
+5. **Completed for a bounded `Firefly1` queue path:** three counterbalanced
    triplets correlate one final selected record directly to one immediate queue
    commit on the same thread, with exact destination, target/shot, and
    weapon/skill agreement. Wider pawn types, multi-weapon selection,
    cancellation, and retarget paths remain untested.
-5. Add native candidate records only if a solver mismatch needs more than the
+6. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
-6. **Completed for all live series:** the callback/native, native-boundaries,
-   and spawn-replay cleanup receipts close all five immutable campaign receipts'
-   pending save/install fields. Each accepted/post-cleanup comparison matches
-   689/689, the 33-file save tree is byte-exact, the baseline Mod Loader hash
-   is restored, and no active Observatory file remains. Repeat this gate after
-   every future live series.
+7. **Completed for all live series:** the callback/native, native-boundaries,
+   spawn-replay, and spawn-coordinate cleanup receipts close all seven
+   immutable campaign receipts' pending save/install fields. Each
+   accepted/post-cleanup comparison matches 689/689, the 33-file save tree is
+   byte-exact, the baseline Mod Loader hash is restored, and no active
+   Observatory file remains. Repeat this gate after every future live series.
 
 The exact isolation gate, helper constraints, counterbalanced experiment order,
 abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
@@ -291,3 +312,10 @@ and
 `windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json`;
 their restoration is closed by
 `windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json`.
+The coordinate candidate/modulo evidence and same-process RNG attribution are
+sealed in
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json`;
+their restoration is closed by
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`.

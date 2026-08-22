@@ -1,0 +1,99 @@
+{
+  "breakpoints": [
+    {
+      "expected_prebytes_hex": "8b45088bca8b550c",
+      "expected_prebytes_sha256": "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "EAX=quotient; EDX=selected index; ESI=count; [EBP+8]=begin; [EBP+0xc]=end",
+      "rva": "0x001751ae",
+      "semantic_boundary": "scheduler_draw_resolved",
+      "slot": "DR0"
+    },
+    {
+      "expected_prebytes_hex": "8b75088b04d78906",
+      "expected_prebytes_sha256": "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "EAX=quotient; EDX=selected index; ESI=count; EDI=begin; [EBP-0x44]=begin; [EBP-0x40]=end",
+      "rva": "0x00172e1e",
+      "semantic_boundary": "selector_fallback_draw_resolved",
+      "slot": "DR1"
+    },
+    {
+      "expected_prebytes_hex": "8b5cd1048b3cd18b",
+      "expected_prebytes_sha256": "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "EAX=quotient; EDX=selected index; ESI=count; ECX=begin; [EBP-0x38]=begin; [EBP-0x34]=end",
+      "rva": "0x00172e7b",
+      "semantic_boundary": "selector_standard_draw_resolved",
+      "slot": "DR2"
+    }
+  ],
+  "debug_register_contract": {
+    "arm_rejects_any_nonzero_dr0_dr1_dr2_dr3_or_dr7": true,
+    "dr7_exact": "0x00000015",
+    "finish_clears_dr0_dr1_dr2_dr3_dr6_dr7": true,
+    "finish_requires_exact_owned_state_before_clear": true,
+    "transition": "private_RaiseException_handled_by_VEH"
+  },
+  "hot_contract": {
+    "addresses_or_pointers_published": false,
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false,
+    "windows_api_calls": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "source_sha256": "a523f46a585773c6ca199310c71f1dce8153cf97a043f3efe5b0c2485c7a8e3b"
+  },
+  "kind": "observatory_spawn_coordinate_hardware_breakpoint_plan",
+  "limits": {
+    "candidate_capacity_per_record": 64,
+    "record_capacity": 256,
+    "thread_capacity": 1
+  },
+  "mutation_contract": {
+    "detour_installed": false,
+    "executable_bytes_modified": false,
+    "gateway_allocated": false,
+    "page_protection_changed": false
+  },
+  "observer_version": "observatory-spawn-coordinate-hw-observer/1",
+  "rng_reconstruction": {
+    "accepted_domain": {
+      "candidate_count_max": 64,
+      "candidate_count_min": 1,
+      "quotient_max": 32767,
+      "quotient_min": 0,
+      "selected_index_min": 0
+    },
+    "basis": "resolved state immediately after signed idiv",
+    "formula": "raw_rng = quotient * candidate_count + selected_index"
+  },
+  "schema_version": 1,
+  "static_regions": [
+    {
+      "id": "spawn_coordinate_selector",
+      "reviewed_role": "filters native point candidates and performs the final standard or fallback coordinate draw",
+      "rva": "0x00172a90",
+      "sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+      "size": 1126
+    },
+    {
+      "id": "spawn_coordinate_scheduler",
+      "reviewed_role": "randomly removes candidate points before invoking the final coordinate selector",
+      "rva": "0x001750f0",
+      "sha256": "639ea27e48757d5c7f08499522d7f8933dc874957f4d00a74bbeec4a6750bd89",
+      "size": 379
+    }
+  ]
+}

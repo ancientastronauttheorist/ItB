@@ -291,7 +291,8 @@ capsules reproduce `Firefly2`, `Scarab2`, and `Firefly2` exactly. One paired
 outcome matches and two differ only at the later spawn coordinate. Fresh
 processes were naturally seeded, so this proves exact in-span replay and clean
 restoration, not native-state-matched whole-game neutrality or coordinate
-selection.
+selection. The later coordinate campaigns below resolve the standard
+coordinate selector itself while preserving this narrower replay claim.
 
 Rebuild the replay receipt with:
 
@@ -305,6 +306,49 @@ The replay campaign receipt is closed by
 Its post-cleanup inventory matches all 689 accepted owner-local entries, the
 33-file save matches its sealed tree, the baseline Mod Loader is exact, and no
 Observatory file remains in the active installation or bridge.
+
+## Spawn-coordinate and shared-RNG evidence
+
+`native/windows_build_13725832_31fe35265598_spawn_coordinate_hw_observer_receipt.json`
+attests the no-entrypoint x86 hardware observer for the reviewed scheduler,
+fallback-selector, and standard-selector seams. The generated DLL is omitted;
+its source, exact breakpoint plan, deterministic builder, and two-build receipt
+are committed. Three counterbalanced triplets under
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate/`
+capture the same five candidates in the same order and prove that the standard
+selector uses `raw_rng % candidate_count`. The bridge spawn marker matches the
+indexed candidate in every armed run. The scheduler and fallback paths were not
+observed.
+
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/`
+contains three later same-process captures that combine that observer with the
+complete RNG-core stream. The coordinate draw uniquely maps to caller ID 60 at
+ordinals 1495, 1475, and 1450, with raw values `3642`, `15777`, and `30530`.
+The static overlay
+`native/windows_build_13725832_31fe35265598_rng_caller_roles.json` keeps the
+original return-map digest intact while pinning five function hashes, 14
+literal anchors, and the 13 variable callers needed for explanation. The
+classified upstream-count deltas exactly reproduce the ordinal deltas. Most
+variation is presentation work sharing the native stream: particle emitters
+consume 1233/1188/1200 draws and `UnitAcid` effects consume 30/54/18; pilot
+portrait draws add 8/8/7. This is a conformance result and a prediction guard,
+not permission to synthesize a future coordinate from a save plus seed.
+
+Rebuild the immutable receipts with:
+
+```powershell
+python scripts/itb_observatory_native_boundary_campaign.py spawn_coordinate `
+  data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate
+python scripts/itb_observatory_native_boundary_campaign.py spawn_coordinate_rng `
+  data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng
+```
+
+Reproduce the caller-role overlay against the exact executable with
+`scripts/itb_observatory_rng_caller_roles.py verify`. The cleanup receipt
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`
+closes both coordinate receipts: all 689 install entries and all 33 sealed save
+files match, the baseline Mod Loader is restored, and no diagnostic remains in
+the active install or bridge.
 
 ## Callback slot evidence and trial tooling
 

@@ -1,0 +1,170 @@
+{
+  "capture_id": "spawn-coordinate-rng-pair003",
+  "events": [
+    {
+      "call_rva": "0x00172e70",
+      "caller_classification": {
+        "edge_id": null,
+        "meaning": null,
+        "source_region": null,
+        "status": "unclassified_raw_candidate"
+      },
+      "caller_id": 60,
+      "candidate_count": 5,
+      "candidates": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "coordinate_sequence": 0,
+      "following_rng_window": [
+        {
+          "caller_id": 4,
+          "result": 3367,
+          "seq": 1450
+        },
+        {
+          "caller_id": 5,
+          "result": 12061,
+          "seq": 1451
+        },
+        {
+          "caller_id": 6,
+          "result": 1852,
+          "seq": 1452
+        },
+        {
+          "caller_id": 7,
+          "result": 18960,
+          "seq": 1453
+        }
+      ],
+      "kind": "selector_standard_draw",
+      "preceding_rng_window": [
+        {
+          "caller_id": 30,
+          "result": 19975,
+          "seq": 1441
+        },
+        {
+          "caller_id": 19,
+          "result": 32453,
+          "seq": 1442
+        },
+        {
+          "caller_id": 21,
+          "result": 20112,
+          "seq": 1443
+        },
+        {
+          "caller_id": 21,
+          "result": 3225,
+          "seq": 1444
+        },
+        {
+          "caller_id": 21,
+          "result": 27723,
+          "seq": 1445
+        },
+        {
+          "caller_id": 107,
+          "result": 14916,
+          "seq": 1446
+        },
+        {
+          "caller_id": 107,
+          "result": 6627,
+          "seq": 1447
+        },
+        {
+          "caller_id": 108,
+          "result": 11348,
+          "seq": 1448
+        }
+      ],
+      "raw_rng": 30530,
+      "return_rva": "0x00172e75",
+      "rng_ordinal": 1450,
+      "rng_sequence": 1449,
+      "selected": [
+        5,
+        2
+      ],
+      "selected_index": 0,
+      "thread_slot": 0,
+      "upstream_caller_counts": {
+        "10": 141,
+        "101": 7,
+        "103": 6,
+        "107": 102,
+        "108": 51,
+        "11": 141,
+        "114": 9,
+        "115": 9,
+        "116": 1,
+        "117": 1,
+        "12": 141,
+        "13": 141,
+        "19": 6,
+        "21": 7,
+        "29": 37,
+        "30": 6,
+        "31": 2,
+        "33": 1,
+        "4": 72,
+        "5": 141,
+        "6": 141,
+        "7": 141,
+        "72": 2,
+        "78": 1,
+        "79": 1,
+        "9": 141
+      },
+      "upstream_draw_count": 1449
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows"
+  },
+  "kind": "spawn_coordinate_rng_attribution",
+  "schema_version": 1,
+  "status": "attributed",
+  "summary": {
+    "all_events_uniquely_attributed": true,
+    "coordinate_event_count": 1,
+    "coordinate_observer_restored": true,
+    "pinned_direct_callers_verified": true,
+    "rng_checkpoint_complete": true,
+    "rng_core_observer_restored": true,
+    "selector_caller_ids": [
+      60
+    ],
+    "selector_event_count": 1,
+    "selector_rng_ordinals": [
+      1450
+    ]
+  }
+}

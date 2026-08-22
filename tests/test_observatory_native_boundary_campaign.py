@@ -5,9 +5,13 @@ from pathlib import Path
 
 from src.observatory.native_boundary_campaign import (
     SELECTED_RECEIPT_KIND,
+    SPAWN_COORDINATE_RECEIPT_KIND,
+    SPAWN_COORDINATE_RNG_RECEIPT_KIND,
     SPAWN_RECEIPT_KIND,
     SPAWN_REPLAY_RECEIPT_KIND,
     build_selected_queue_campaign_receipt,
+    build_spawn_coordinate_campaign_receipt,
+    build_spawn_coordinate_rng_campaign_receipt,
     build_spawn_replay_campaign_receipt,
     build_spawn_span_campaign_receipt,
 )
@@ -23,6 +27,12 @@ SPAWN_REPLAY_ROOT = CAPTURES / (
 )
 SELECTED_ROOT = CAPTURES / (
     "windows_build_13725832_owner_local_modified_20260822_selected_queue"
+)
+SPAWN_COORDINATE_ROOT = CAPTURES / (
+    "windows_build_13725832_owner_local_modified_20260822_spawn_coordinate"
+)
+SPAWN_COORDINATE_RNG_ROOT = CAPTURES / (
+    "windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng"
 )
 
 
@@ -140,6 +150,82 @@ def test_committed_selected_queue_campaign_is_neutral_and_correlated():
     assert all(pair["observer_integrity"]["seam_bytes_unchanged"] for pair in receipt["pairs"])
 
 
+def test_committed_spawn_coordinate_campaign_proves_order_and_modulo_only():
+    receipt = build_spawn_coordinate_campaign_receipt(
+        SPAWN_COORDINATE_ROOT,
+        repository_root=ROOT,
+    )
+
+    assert receipt["kind"] == SPAWN_COORDINATE_RECEIPT_KIND
+    assert receipt["campaign"]["pair_count"] == 3
+    assert receipt["campaign"]["condition_orders"] == [
+        ["control", "dormant", "armed"],
+        ["armed", "dormant", "control"],
+        ["dormant", "control", "armed"],
+    ]
+    assert receipt["results"]["candidate_order"] == [
+        [5, 2],
+        [5, 3],
+        [5, 4],
+        [6, 2],
+        [6, 5],
+    ]
+    assert receipt["results"]["raw_rng_values"] == [5290, 3963, 20348]
+    assert receipt["results"]["selected_indices"] == [0, 3, 3]
+    assert receipt["results"]["control_dormant_statuses"] == [
+        "mismatched",
+        "mismatched",
+        "mismatched",
+    ]
+    assert receipt["results"]["control_armed_statuses"] == [
+        "mismatched",
+        "matched",
+        "mismatched",
+    ]
+    assert receipt["results"]["classification"].endswith(
+        "upstream_rng_call_order_unresolved"
+    )
+
+
+def test_committed_combined_coordinate_rng_campaign_explains_ordinal_drift():
+    receipt = build_spawn_coordinate_rng_campaign_receipt(
+        SPAWN_COORDINATE_RNG_ROOT,
+        repository_root=ROOT,
+    )
+
+    assert receipt["kind"] == SPAWN_COORDINATE_RNG_RECEIPT_KIND
+    assert receipt["campaign"]["pair_count"] == 3
+    assert receipt["results"]["selector_caller_ids"] == [60, 60, 60]
+    assert receipt["results"]["selector_raw_rng"] == [3642, 15777, 30530]
+    assert receipt["results"]["selector_rng_ordinals"] == [1495, 1475, 1450]
+    assert receipt["results"]["ordinal_deltas_from_first"] == [0, -20, -45]
+    assert receipt["results"]["classified_count_deltas_from_first"] == [
+        0,
+        -20,
+        -45,
+    ]
+    assert receipt["results"]["ordinal_deltas_fully_accounted"] is True
+    assert receipt["results"]["unclassified_varying_caller_ids"] == []
+    assert receipt["results"]["domain_counts"] == [
+        {"domain": "presentation", "counts": [1271, 1250, 1225]},
+        {"domain": "gameplay", "counts": [2, 3, 2]},
+        {"domain": "shared_lua_boundary", "counts": [6, 6, 7]},
+    ]
+    assert receipt["solver_conformance"]["simulator_version_bump_required"] is False
+    assert all(
+        pair["restoration"]
+        == {
+            "rng_core_complete": True,
+            "rng_core_hook_bytes_restored": True,
+            "coordinate_complete": True,
+            "coordinate_debug_registers_cleared": True,
+            "coordinate_veh_removed": True,
+            "coordinate_seam_bytes_unchanged": True,
+        }
+        for pair in receipt["pairs"]
+    )
+
+
 def test_published_receipts_rebuild_exactly_when_present():
     cases = [
         (
@@ -159,6 +245,18 @@ def test_published_receipts_rebuild_exactly_when_present():
             CAPTURES
             / "windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json",
             build_selected_queue_campaign_receipt,
+        ),
+        (
+            SPAWN_COORDINATE_ROOT,
+            CAPTURES
+            / "windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_receipt.json",
+            build_spawn_coordinate_campaign_receipt,
+        ),
+        (
+            SPAWN_COORDINATE_RNG_ROOT,
+            CAPTURES
+            / "windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
+            build_spawn_coordinate_rng_campaign_receipt,
         ),
     ]
     for campaign_root, receipt_path, builder in cases:

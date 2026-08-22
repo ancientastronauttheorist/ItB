@@ -22,6 +22,11 @@ from src.observatory.native_checkpoint import (
 )
 from src.observatory.rng_trial_outcome import compare_rng_trial_outcomes
 from src.observatory.selected_queue_hw import correlate_selected_queue_snapshot
+from src.observatory.spawn_coordinate_hw import correlate_spawn_coordinate_snapshot
+from src.observatory.spawn_coordinate_rng import (
+    attribute_spawn_coordinate_rng,
+    explain_spawn_coordinate_rng_variation,
+)
 from src.observatory.spawn_rng_attribution import analyze_spawn_rng
 
 
@@ -29,6 +34,12 @@ SCHEMA_VERSION = 1
 SPAWN_RECEIPT_KIND = "observatory_spawn_span_campaign_receipt"
 SPAWN_REPLAY_RECEIPT_KIND = "observatory_spawn_replay_campaign_receipt"
 SELECTED_RECEIPT_KIND = "observatory_selected_queue_campaign_receipt"
+SPAWN_COORDINATE_RECEIPT_KIND = (
+    "observatory_spawn_coordinate_campaign_receipt"
+)
+SPAWN_COORDINATE_RNG_RECEIPT_KIND = (
+    "observatory_spawn_coordinate_rng_campaign_receipt"
+)
 FIXED_SEED = 324_508_639
 CONTROLLER_SHA256 = "4923ee3b08c802824f17963dc625015d2c91e6e467149b72bba218c49830935d"
 SPAWN_REPLAY_CONTROLLER_SHA256 = (
@@ -52,6 +63,18 @@ RESTORE_HASHES = Path(
 SELECTED_RECEIPT = Path(
     "data/observatory/native/"
     "windows_build_13725832_31fe35265598_selected_queue_hw_observer_receipt.json"
+)
+SPAWN_COORDINATE_RECEIPT = Path(
+    "data/observatory/native/"
+    "windows_build_13725832_31fe35265598_"
+    "spawn_coordinate_hw_observer_receipt.json"
+)
+SPAWN_COORDINATE_MODULE_SHA256 = (
+    "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1"
+)
+RNG_CALLER_ROLE_OVERLAY = Path(
+    "data/observatory/native/"
+    "windows_build_13725832_31fe35265598_rng_caller_roles.json"
 )
 SPAWNER_SOURCE_SHA256 = "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301"
 RANDOM_ELEMENT_SOURCE_SHA256 = (
@@ -163,6 +186,88 @@ SELECTED_NATIVE_EXPECTED = {
     "queued_skill_raw": 1,
     "selected_rank_fields_raw": [5, 5],
     "base_current_weapon_raw": -1,
+}
+
+SPAWN_COORDINATE_PAIR_SPECS = {
+    "pair001": {
+        "order": ["control", "dormant", "armed"],
+        "capture_ids": {
+            "control": "spawn-coordinate-pair001-control",
+            "dormant": "spawn-coordinate-pair001-dormant",
+            "armed": "spawn-coordinate-pair001-armed",
+        },
+        "raw_rng": 5290,
+        "selected_index": 0,
+        "selected": [5, 2],
+        "comparison_status": {
+            "control_dormant": "mismatched",
+            "control_armed": "mismatched",
+        },
+    },
+    "pair002": {
+        "order": ["armed", "dormant", "control"],
+        "capture_ids": {
+            "control": "spawn-coordinate-pair002-control",
+            "dormant": "spawn-coordinate-pair002-dormant",
+            "armed": "spawn-coordinate-pair002-armed",
+        },
+        "raw_rng": 3963,
+        "selected_index": 3,
+        "selected": [6, 2],
+        "comparison_status": {
+            "control_dormant": "mismatched",
+            "control_armed": "matched",
+        },
+    },
+    "pair003": {
+        "order": ["dormant", "control", "armed"],
+        "capture_ids": {
+            "control": "spawn-coordinate-pair003-control",
+            "dormant": "spawn-coordinate-pair003-dormant",
+            "armed": "spawn-coordinate-pair003-armed",
+        },
+        "raw_rng": 20348,
+        "selected_index": 3,
+        "selected": [6, 2],
+        "comparison_status": {
+            "control_dormant": "mismatched",
+            "control_armed": "mismatched",
+        },
+    },
+}
+SPAWN_COORDINATE_CANDIDATES = [
+    [5, 2],
+    [5, 3],
+    [5, 4],
+    [6, 2],
+    [6, 5],
+]
+
+SPAWN_COORDINATE_RNG_PAIR_SPECS = {
+    "pair001": {
+        "capture_id": "spawn-coordinate-rng-pair001",
+        "record_count": 1517,
+        "raw_rng": 3642,
+        "rng_ordinal": 1495,
+        "selected_index": 2,
+        "selected": [5, 4],
+    },
+    "pair002": {
+        "capture_id": "spawn-coordinate-rng-pair002",
+        "record_count": 1498,
+        "raw_rng": 15777,
+        "rng_ordinal": 1475,
+        "selected_index": 2,
+        "selected": [5, 4],
+    },
+    "pair003": {
+        "capture_id": "spawn-coordinate-rng-pair003",
+        "record_count": 1490,
+        "raw_rng": 30530,
+        "rng_ordinal": 1450,
+        "selected_index": 0,
+        "selected": [5, 2],
+    },
 }
 
 
@@ -1064,6 +1169,736 @@ def build_spawn_replay_campaign_receipt(
             ),
             "return_map": _artifact(repo / RETURN_MAP, repo),
             "restore_hashes": _artifact(repo / RESTORE_HASHES, repo),
+        },
+    }
+
+
+def _validate_spawn_coordinate_trial(
+    trial: Mapping[str, Any],
+    *,
+    pair_id: str,
+    condition: str,
+    capture_id: str,
+    outcome_path: Path,
+    build_receipt_sha256: str,
+) -> None:
+    if (
+        trial.get("schema_version") != 1
+        or trial.get("kind") != "observatory_spawn_coordinate_turn_trial"
+        or trial.get("pair_id") != pair_id
+        or trial.get("condition") != condition
+        or trial.get("capture_id") != capture_id
+        or trial.get("capture_track") != "owner_local_modified"
+        or trial.get("status") != "complete"
+        or trial.get("valid_trial") is not True
+        or trial.get("module_sha256") != SPAWN_COORDINATE_MODULE_SHA256
+        or trial.get("build_receipt_sha256") != build_receipt_sha256
+    ):
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} coordinate trial differs"
+        )
+    errors = _mapping(trial.get("errors"), f"{pair_id} {condition} errors")
+    if (
+        errors.get("runner")
+        or errors.get("abort")
+        or errors.get("outcome")
+        or errors.get("outcome_validation")
+        or errors.get("analysis")
+    ):
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} coordinate trial has errors"
+        )
+    auto = _mapping(trial.get("auto_turn"), f"{pair_id} {condition} auto turn")
+    if (
+        auto.get("status") != "ok"
+        or auto.get("actions_completed") != 3
+        or auto.get("desyncs_detected") != 0
+        or auto.get("post_phase") != "combat_player"
+    ):
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} coordinate turn was not clean"
+        )
+    boundary = _mapping(
+        trial.get("boundary"), f"{pair_id} {condition} boundary"
+    )
+    if (
+        boundary.get("condition") != condition
+        or boundary.get("capture_id") != capture_id
+        or boundary.get("state") != "complete"
+    ):
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} coordinate boundary was not complete"
+        )
+    outcome = _mapping(trial.get("outcome"), f"{pair_id} {condition} outcome")
+    if outcome.get("sha256") != _file_sha256(outcome_path):
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} coordinate outcome hash differs"
+        )
+    if condition == "armed":
+        snapshot = _mapping(
+            trial.get("snapshot"), f"{pair_id} coordinate snapshot metadata"
+        )
+        analysis = _mapping(
+            trial.get("analysis"), f"{pair_id} coordinate analysis metadata"
+        )
+        if (
+            snapshot.get("record_count") != 1
+            or snapshot.get("complete") is not True
+            or analysis.get("status") != "correlated"
+            or boundary.get("record_count") != 1
+            or boundary.get("selector_count") != 1
+            or boundary.get("seam_bytes_unchanged") is not True
+            or boundary.get("debug_registers_cleared") is not True
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_id} armed coordinate evidence is incomplete"
+            )
+    elif trial.get("snapshot") is not None or trial.get("analysis") is not None:
+        raise NativeBoundaryCampaignError(
+            f"{pair_id} {condition} published coordinate observer output"
+        )
+
+
+def build_spawn_coordinate_campaign_receipt(
+    campaign_root: Path,
+    *,
+    repository_root: Path,
+) -> dict[str, Any]:
+    """Validate and seal the counterbalanced coordinate campaign."""
+    root = campaign_root.resolve()
+    repo = repository_root.resolve()
+    _exact_children(root, set(SPAWN_COORDINATE_PAIR_SPECS), directories=True)
+    build = _mapping(
+        _load(repo / SPAWN_COORDINATE_RECEIPT),
+        "spawn-coordinate build receipt",
+    )
+    build_receipt_sha256 = _file_sha256(repo / SPAWN_COORDINATE_RECEIPT)
+    if build.get("module_sha256") != SPAWN_COORDINATE_MODULE_SHA256:
+        raise NativeBoundaryCampaignError(
+            "spawn-coordinate build receipt module differs"
+        )
+    pairs: list[dict[str, Any]] = []
+
+    for pair_name, spec in SPAWN_COORDINATE_PAIR_SPECS.items():
+        pair_dir = root / pair_name
+        _exact_children(
+            pair_dir, {"control", "dormant", "armed"}, directories=True
+        )
+        trials: dict[str, Mapping[str, Any]] = {}
+        outcomes: dict[str, Mapping[str, Any]] = {}
+        artifacts: dict[str, dict[str, Any]] = {}
+        for condition in ("control", "dormant", "armed"):
+            condition_dir = pair_dir / condition
+            expected_files = {"trial.json", "outcome.json"}
+            if condition == "armed":
+                expected_files |= {"snapshot.json", "analysis.json"}
+            _exact_children(condition_dir, expected_files, directories=False)
+            trial = _mapping(
+                _load(condition_dir / "trial.json"),
+                f"{pair_name} {condition} coordinate trial",
+            )
+            _validate_spawn_coordinate_trial(
+                trial,
+                pair_id=f"spawn-coordinate-pair-{pair_name[-3:]}",
+                condition=condition,
+                capture_id=spec["capture_ids"][condition],
+                outcome_path=condition_dir / "outcome.json",
+                build_receipt_sha256=build_receipt_sha256,
+            )
+            trials[condition] = trial
+            outcomes[condition] = _mapping(
+                _load(condition_dir / "outcome.json"),
+                f"{pair_name} {condition} coordinate outcome",
+            )
+            artifacts[f"{condition}_trial"] = _artifact(
+                condition_dir / "trial.json", repo
+            )
+            artifacts[f"{condition}_outcome"] = _artifact(
+                condition_dir / "outcome.json", repo
+            )
+
+        actual_order = [
+            condition
+            for condition, _ in sorted(
+                (
+                    (
+                        item,
+                        _created_at(
+                            trials[item], f"{pair_name} {item} coordinate"
+                        ),
+                    )
+                    for item in trials
+                ),
+                key=lambda item: item[1],
+            )
+        ]
+        if actual_order != spec["order"]:
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate condition order differs"
+            )
+
+        armed_dir = pair_dir / "armed"
+        snapshot = _mapping(
+            _load(armed_dir / "snapshot.json"), f"{pair_name} coordinate snapshot"
+        )
+        analysis = correlate_spawn_coordinate_snapshot(
+            snapshot,
+            outcomes["armed"],
+            build_receipt=build,
+            observed_module_sha256=SPAWN_COORDINATE_MODULE_SHA256,
+        )
+        if analysis != _load(armed_dir / "analysis.json"):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate analysis drift"
+            )
+        events = analysis.get("events")
+        if not isinstance(events, list) or len(events) != 1:
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate event count differs"
+            )
+        event = _mapping(events[0], f"{pair_name} coordinate event")
+        if (
+            analysis.get("status") != "correlated"
+            or event.get("kind") != "selector_standard_draw"
+            or event.get("raw_rng") != spec["raw_rng"]
+            or event.get("selected_index") != spec["selected_index"]
+            or event.get("selected") != spec["selected"]
+            or event.get("candidates") != SPAWN_COORDINATE_CANDIDATES
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} native coordinate transcript differs"
+            )
+        if (
+            snapshot.get("integrity", {}).get("complete") is not True
+            or snapshot.get("integrity", {}).get("debug_registers_cleared")
+            is not True
+            or snapshot.get("integrity", {}).get("veh_removed") is not True
+            or snapshot.get("integrity", {}).get("seam_bytes_unchanged")
+            is not True
+            or snapshot.get("integrity", {}).get("executable_bytes_modified")
+            is not False
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate observer restoration differs"
+            )
+        artifacts["armed_snapshot"] = _artifact(
+            armed_dir / "snapshot.json", repo
+        )
+        artifacts["armed_analysis"] = _artifact(
+            armed_dir / "analysis.json", repo
+        )
+
+        comparisons = {
+            "control_dormant": compare_rng_trial_outcomes(
+                outcomes["control"],
+                outcomes["dormant"],
+                capture_id=f"coordinate-{pair_name}-dormant",
+            ),
+            "control_armed": compare_rng_trial_outcomes(
+                outcomes["control"],
+                outcomes["armed"],
+                capture_id=f"coordinate-{pair_name}-armed",
+            ),
+        }
+        if {
+            key: value["status"] for key, value in comparisons.items()
+        } != spec["comparison_status"]:
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate outcome comparison differs"
+            )
+        pairs.append(
+            {
+                "pair": pair_name,
+                "pair_id": f"spawn-coordinate-pair-{pair_name[-3:]}",
+                "condition_order": actual_order,
+                "native": {
+                    "event_kind": event["kind"],
+                    "raw_rng": event["raw_rng"],
+                    "candidate_count": event["candidate_count"],
+                    "candidates": event["candidates"],
+                    "selected_index": event["selected_index"],
+                    "selected": event["selected"],
+                },
+                "restoration": {
+                    "complete": True,
+                    "debug_registers_cleared": True,
+                    "veh_removed": True,
+                    "seam_bytes_unchanged": True,
+                    "executable_bytes_modified": False,
+                },
+                "whole_game_outcome": {
+                    key: {
+                        "status": comparison["status"],
+                        "difference_paths": [
+                            item["path"] for item in comparison["differences"]
+                        ],
+                        "control_semantic_sha256": comparison[
+                            "control_semantic_sha256"
+                        ],
+                        "observed_semantic_sha256": comparison[
+                            "exact_hook_semantic_sha256"
+                        ],
+                    }
+                    for key, comparison in comparisons.items()
+                },
+                "artifacts": artifacts,
+            }
+        )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": SPAWN_COORDINATE_RECEIPT_KIND,
+        "capture_track": "owner_local_modified",
+        "build_identity": {
+            field: build[field]
+            for field in (
+                "build_id",
+                "architecture",
+                "executable_sha256",
+                "executable_size",
+                "inventory_canonical_sha256",
+                "boundary_map_canonical_sha256",
+                "hardware_breakpoint_plan_sha256",
+                "selector_region_sha256",
+                "scheduler_region_sha256",
+                "module_sha256",
+            )
+        },
+        "campaign": {
+            "pair_count": len(pairs),
+            "conditions": ["control", "dormant", "armed"],
+            "fixed_seed": FIXED_SEED,
+            "condition_orders": [pair["condition_order"] for pair in pairs],
+        },
+        "pairs": pairs,
+        "results": {
+            "classification": (
+                "spawn_coordinate_candidate_order_and_modulo_selection_"
+                "resolved_upstream_rng_call_order_unresolved"
+            ),
+            "complete_restored_snapshots": len(pairs),
+            "candidate_order": SPAWN_COORDINATE_CANDIDATES,
+            "raw_rng_values": [pair["native"]["raw_rng"] for pair in pairs],
+            "selected_indices": [
+                pair["native"]["selected_index"] for pair in pairs
+            ],
+            "selected_coordinates": [
+                pair["native"]["selected"] for pair in pairs
+            ],
+            "control_dormant_statuses": [
+                pair["whole_game_outcome"]["control_dormant"]["status"]
+                for pair in pairs
+            ],
+            "control_armed_statuses": [
+                pair["whole_game_outcome"]["control_armed"]["status"]
+                for pair in pairs
+            ],
+        },
+        "claims": {
+            "proven": [
+                "All three armed runs captured the same five spawn-coordinate candidates in the same native order.",
+                "The standard selector used raw_rng modulo candidate_count, and the indexed candidate exactly matched the bridge spawn marker in every armed run.",
+                "Every coordinate observer cleared its debug registers, removed its VEH, retained byte-exact seam code, and reported no executable-byte modification.",
+            ],
+            "not_proven": [
+                "A stable upstream RNG draw ordinal or call order; the same fixed seed reached three different raw coordinate results.",
+                "Whole-game observer neutrality; only one of three control-versus-armed outcomes matched, while every control-versus-dormant outcome also differed.",
+                "The scheduler and selector-fallback paths; this campaign observed only the standard selector path.",
+                "Pristine-depot behavior; this is the attested owner-local-modified Windows build.",
+            ],
+        },
+        "solver_conformance": {
+            "resolved_rule": (
+                "preserve native candidate order and select "
+                "candidates[raw_rng % candidate_count]"
+            ),
+            "remaining_guard": (
+                "do not predict a future spawn coordinate until the exact "
+                "upstream native RNG state/call ordinal is available"
+            ),
+            "rust_test": (
+                "test_projection_never_fabricates_unresolved_native_spawn_selection"
+            ),
+        },
+        "restore": {
+            "install_restoration_pending": True,
+            "save_restoration_pending": True,
+            "save_tree_sha256": SAVE_TREE_SHA256,
+        },
+        "supporting_artifacts": {
+            "observer_build_receipt": _artifact(
+                repo / SPAWN_COORDINATE_RECEIPT, repo
+            )
+        },
+    }
+
+
+def _validate_spawn_coordinate_rng_trial(
+    trial: Mapping[str, Any],
+    *,
+    pair_name: str,
+    spec: Mapping[str, Any],
+    pair_dir: Path,
+    rng_build_receipt_sha256: str,
+    coordinate_build_receipt_sha256: str,
+    rng_module_sha256: str,
+) -> None:
+    pair_id = f"spawn-coordinate-rng-pair-{pair_name[-3:]}"
+    capture_id = spec["capture_id"]
+    if (
+        trial.get("schema_version") != 1
+        or trial.get("kind") != "observatory_spawn_coordinate_rng_turn_trial"
+        or trial.get("pair_id") != pair_id
+        or trial.get("capture_id") != capture_id
+        or trial.get("capture_track") != "owner_local_modified"
+        or trial.get("condition") != "combined_exact_hook_and_coordinate_hw"
+        or trial.get("status") != "complete"
+        or trial.get("valid_trial") is not True
+        or trial.get("build_receipts")
+        != {
+            "coordinate_sha256": coordinate_build_receipt_sha256,
+            "rng_core_sha256": rng_build_receipt_sha256,
+        }
+        or trial.get("modules")
+        != {
+            "coordinate_sha256": SPAWN_COORDINATE_MODULE_SHA256,
+            "rng_core_sha256": rng_module_sha256,
+        }
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_name} combined trial differs")
+    errors = _mapping(trial.get("errors"), f"{pair_name} combined errors")
+    if any(errors.get(field) for field in ("runner", "abort", "outcome", "analysis")):
+        raise NativeBoundaryCampaignError(f"{pair_name} combined trial has errors")
+    auto = _mapping(trial.get("auto_turn"), f"{pair_name} combined auto turn")
+    if (
+        auto.get("status") != "ok"
+        or auto.get("actions_completed") != 3
+        or auto.get("desyncs_detected") != 0
+        or auto.get("post_phase") != "combat_player"
+    ):
+        raise NativeBoundaryCampaignError(f"{pair_name} combined turn was not clean")
+    boundary = _mapping(trial.get("boundary"), f"{pair_name} combined boundary")
+    coordinate = _mapping(
+        boundary.get("coordinate"), f"{pair_name} coordinate boundary"
+    )
+    rng_core = _mapping(boundary.get("rng_core"), f"{pair_name} RNG boundary")
+    if (
+        boundary.get("state") != "complete"
+        or boundary.get("capture_id") != capture_id
+        or boundary.get("condition") != "combined_exact_hook_and_coordinate_hw"
+        or coordinate.get("state") != "complete"
+        or coordinate.get("capture_id") != capture_id
+        or coordinate.get("condition") != "armed"
+        or coordinate.get("record_count") != 1
+        or coordinate.get("selector_count") != 1
+        or coordinate.get("seam_bytes_unchanged") is not True
+        or coordinate.get("debug_registers_cleared") is not True
+        or rng_core.get("state") != "complete"
+        or rng_core.get("capture_id") != capture_id
+        or rng_core.get("condition") != "exact_hook"
+        or rng_core.get("record_count") != spec["record_count"]
+        or rng_core.get("hook_bytes_restored") is not True
+    ):
+        raise NativeBoundaryCampaignError(
+            f"{pair_name} combined boundary was not completely restored"
+        )
+    artifacts = _mapping(trial.get("artifacts"), f"{pair_name} trial artifacts")
+    expected_artifacts = {
+        "outcome": "outcome.json",
+        "rng_checkpoint": "rng_checkpoint.json",
+        "coordinate_snapshot": "coordinate_snapshot.json",
+        "coordinate_analysis": "coordinate_analysis.json",
+        "attribution": "attribution.json",
+    }
+    if set(artifacts) != set(expected_artifacts):
+        raise NativeBoundaryCampaignError(f"{pair_name} trial artifact set differs")
+    for key, filename in expected_artifacts.items():
+        metadata = _mapping(artifacts[key], f"{pair_name} trial artifact {key}")
+        if metadata.get("sha256") != _file_sha256(pair_dir / filename):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} trial artifact hash differs for {key}"
+            )
+
+
+def build_spawn_coordinate_rng_campaign_receipt(
+    campaign_root: Path,
+    *,
+    repository_root: Path,
+) -> dict[str, Any]:
+    """Validate and seal same-process coordinate plus RNG-core captures."""
+    root = campaign_root.resolve()
+    repo = repository_root.resolve()
+    _exact_children(
+        root,
+        set(SPAWN_COORDINATE_RNG_PAIR_SPECS),
+        directories=True,
+    )
+    rng_build = _mapping(_load(repo / OBSERVER_RECEIPT), "RNG build receipt")
+    coordinate_build = _mapping(
+        _load(repo / SPAWN_COORDINATE_RECEIPT),
+        "coordinate build receipt",
+    )
+    return_map = _mapping(_load(repo / RETURN_MAP), "RNG return map")
+    restore_hashes = _mapping(_load(repo / RESTORE_HASHES), "restore hashes")
+    caller_roles = _mapping(
+        _load(repo / RNG_CALLER_ROLE_OVERLAY),
+        "RNG caller-role overlay",
+    )
+    expected_identity = _expected_rng_identity(rng_build)
+    rng_receipt_sha256 = _file_sha256(repo / OBSERVER_RECEIPT)
+    coordinate_receipt_sha256 = _file_sha256(repo / SPAWN_COORDINATE_RECEIPT)
+    rng_module_sha256 = str(rng_build.get("module_sha256"))
+    pairs: list[dict[str, Any]] = []
+    analyses: list[Mapping[str, Any]] = []
+    created: list[datetime] = []
+
+    expected_files = {
+        "trial.json",
+        "outcome.json",
+        "rng_checkpoint.json",
+        "coordinate_snapshot.json",
+        "coordinate_analysis.json",
+        "attribution.json",
+    }
+    for pair_name, spec in SPAWN_COORDINATE_RNG_PAIR_SPECS.items():
+        pair_dir = root / pair_name
+        _exact_children(pair_dir, expected_files, directories=False)
+        trial = _mapping(_load(pair_dir / "trial.json"), f"{pair_name} trial")
+        _validate_spawn_coordinate_rng_trial(
+            trial,
+            pair_name=pair_name,
+            spec=spec,
+            pair_dir=pair_dir,
+            rng_build_receipt_sha256=rng_receipt_sha256,
+            coordinate_build_receipt_sha256=coordinate_receipt_sha256,
+            rng_module_sha256=rng_module_sha256,
+        )
+        created.append(_created_at(trial, f"{pair_name} combined trial"))
+        outcome = _mapping(_load(pair_dir / "outcome.json"), f"{pair_name} outcome")
+        checkpoint = _mapping(
+            _load(pair_dir / "rng_checkpoint.json"),
+            f"{pair_name} RNG checkpoint",
+        )
+        checkpoint_result = validate_native_checkpoint(
+            checkpoint,
+            expected_identity=expected_identity,
+            return_map=return_map,
+            expected_restore_hashes=restore_hashes,
+        )
+        if (
+            checkpoint_result.get("diagnostic_complete") is not True
+            or checkpoint_result.get("summary", {}).get("record_count")
+            != spec["record_count"]
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} RNG checkpoint is incomplete"
+            )
+        coordinate_snapshot = _mapping(
+            _load(pair_dir / "coordinate_snapshot.json"),
+            f"{pair_name} coordinate snapshot",
+        )
+        coordinate_analysis = correlate_spawn_coordinate_snapshot(
+            coordinate_snapshot,
+            outcome,
+            build_receipt=coordinate_build,
+            observed_module_sha256=SPAWN_COORDINATE_MODULE_SHA256,
+        )
+        if coordinate_analysis != _load(pair_dir / "coordinate_analysis.json"):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} coordinate analysis drift"
+            )
+        attribution = attribute_spawn_coordinate_rng(
+            checkpoint,
+            coordinate_snapshot,
+            coordinate_build_receipt=coordinate_build,
+            coordinate_module_sha256=SPAWN_COORDINATE_MODULE_SHA256,
+            return_map=return_map,
+            expected_restore_hashes=restore_hashes,
+        )
+        if attribution != _load(pair_dir / "attribution.json"):
+            raise NativeBoundaryCampaignError(f"{pair_name} attribution drift")
+        events = attribution.get("events")
+        if not isinstance(events, list) or len(events) != 1:
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} selector attribution count differs"
+            )
+        event = _mapping(events[0], f"{pair_name} selector attribution")
+        if (
+            event.get("kind") != "selector_standard_draw"
+            or event.get("caller_id") != 60
+            or event.get("call_rva") != "0x00172e70"
+            or event.get("return_rva") != "0x00172e75"
+            or event.get("raw_rng") != spec["raw_rng"]
+            or event.get("rng_ordinal") != spec["rng_ordinal"]
+            or event.get("rng_sequence") != spec["rng_ordinal"] - 1
+            or event.get("candidate_count") != len(SPAWN_COORDINATE_CANDIDATES)
+            or event.get("candidates") != SPAWN_COORDINATE_CANDIDATES
+            or event.get("selected_index") != spec["selected_index"]
+            or event.get("selected") != spec["selected"]
+            or event.get("raw_rng") % event.get("candidate_count", 1)
+            != event.get("selected_index")
+        ):
+            raise NativeBoundaryCampaignError(
+                f"{pair_name} selector attribution differs"
+            )
+        analyses.append(attribution)
+        pairs.append(
+            {
+                "pair": pair_name,
+                "pair_id": trial["pair_id"],
+                "capture_id": trial["capture_id"],
+                "rng_record_count": checkpoint_result["summary"]["record_count"],
+                "selector": {
+                    "caller_id": event["caller_id"],
+                    "call_rva": event["call_rva"],
+                    "return_rva": event["return_rva"],
+                    "rng_sequence": event["rng_sequence"],
+                    "rng_ordinal": event["rng_ordinal"],
+                    "raw_rng": event["raw_rng"],
+                    "candidate_count": event["candidate_count"],
+                    "candidates": event["candidates"],
+                    "selected_index": event["selected_index"],
+                    "selected": event["selected"],
+                },
+                "restoration": {
+                    "rng_core_complete": True,
+                    "rng_core_hook_bytes_restored": True,
+                    "coordinate_complete": True,
+                    "coordinate_debug_registers_cleared": True,
+                    "coordinate_veh_removed": True,
+                    "coordinate_seam_bytes_unchanged": True,
+                },
+                "artifacts": {
+                    filename.removesuffix(".json"): _artifact(
+                        pair_dir / filename,
+                        repo,
+                    )
+                    for filename in sorted(expected_files)
+                },
+            }
+        )
+
+    if created != sorted(created) or len(set(created)) != len(created):
+        raise NativeBoundaryCampaignError(
+            "combined capture timestamps are not strictly ordered"
+        )
+    explanation = explain_spawn_coordinate_rng_variation(
+        analyses,
+        caller_role_overlay=caller_roles,
+        return_map=return_map,
+    )
+    expected_role_counts = {
+        "particle_presentation": [1233, 1188, 1200],
+        "environment_xp_allocation": [2, 3, 2],
+        "pilot_portrait_presentation": [8, 8, 7],
+        "unit_acid_presentation": [30, 54, 18],
+        "lua_random_int_boundary": [6, 6, 7],
+    }
+    actual_role_counts = {
+        item["role_id"]: item["counts"] for item in explanation["role_counts"]
+    }
+    if (
+        explanation.get("classification")
+        != "coordinate_direct_caller_resolved_ordinal_variable_shared_presentation_rng"
+        or explanation.get("selector_rng_ordinals") != [1495, 1475, 1450]
+        or explanation.get("ordinal_deltas_from_first") != [0, -20, -45]
+        or explanation.get("classified_count_deltas_from_first")
+        != [0, -20, -45]
+        or explanation.get("ordinal_deltas_fully_accounted") is not True
+        or explanation.get("unclassified_varying_caller_ids") != []
+        or actual_role_counts != expected_role_counts
+    ):
+        raise NativeBoundaryCampaignError(
+            "combined upstream caller explanation differs"
+        )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": SPAWN_COORDINATE_RNG_RECEIPT_KIND,
+        "capture_track": "owner_local_modified",
+        "build_identity": expected_identity,
+        "campaign": {
+            "pair_count": len(pairs),
+            "condition": "combined_exact_hook_and_coordinate_hw",
+            "fixed_seed": FIXED_SEED,
+            "save_tree_sha256": SAVE_TREE_SHA256,
+            "capture_order": [pair["capture_id"] for pair in pairs],
+        },
+        "pairs": pairs,
+        "results": {
+            "classification": (
+                "spawn_coordinate_direct_rng_resolved_shared_presentation_"
+                "stream_blocks_stable_prediction"
+            ),
+            "candidate_order": SPAWN_COORDINATE_CANDIDATES,
+            "selector_caller_ids": explanation["selector_caller_ids"],
+            "selector_raw_rng": explanation["selector_raw_rng"],
+            "selector_rng_ordinals": explanation["selector_rng_ordinals"],
+            "ordinal_deltas_from_first": explanation[
+                "ordinal_deltas_from_first"
+            ],
+            "role_counts": explanation["role_counts"],
+            "domain_counts": explanation["domain_counts"],
+            "classified_varying_caller_ids": explanation[
+                "classified_varying_caller_ids"
+            ],
+            "unclassified_varying_caller_ids": explanation[
+                "unclassified_varying_caller_ids"
+            ],
+            "classified_count_deltas_from_first": explanation[
+                "classified_count_deltas_from_first"
+            ],
+            "ordinal_deltas_fully_accounted": explanation[
+                "ordinal_deltas_fully_accounted"
+            ],
+        },
+        "claims": {
+            "proven": [
+                "The standard coordinate selector consumed the shared RNG core directly at caller 60 in all three same-process captures.",
+                "The same restored save, fixed seed, reviewed three-action line, and five candidates reached selector ordinals 1495, 1475, and 1450 with three different raw results.",
+                "Every varying upstream caller is accounted for by the reviewed overlay or the already-reviewed Lua random_int boundary; no varying caller remains unclassified.",
+                "Presentation functions contributed 1271, 1250, and 1225 pre-selector draws; particle and UnitAcid presentation were the dominant variable roles.",
+                "The classified caller-count deltas exactly equal the selector-ordinal deltas, and both observers restored all bounded process state after every capture.",
+            ],
+            "not_proven": [
+                "A stable selector ordinal or future coordinate from ordinary solver/save state; these captures disprove that assumption for this procedure.",
+                "The Lua source responsible for caller 21, because the RNG-core boundary sees only the reviewed random_int leaf.",
+                "The scheduler and selector-fallback paths; all three captures used the standard selector.",
+                "Pristine-depot behavior or whole-game neutrality; this is the attested owner-local-modified track.",
+            ],
+        },
+        "solver_conformance": {
+            "resolved_rule": (
+                "preserve native candidate order and select "
+                "candidates[raw_rng % candidate_count]"
+            ),
+            "remaining_guard": (
+                "do not fabricate a future coordinate without native RNG state "
+                "at the selector or deterministic replay/control of every "
+                "upstream draw, including timing-dependent presentation draws"
+            ),
+            "rust_test": (
+                "test_projection_never_fabricates_unresolved_native_spawn_selection"
+            ),
+            "simulator_version_bump_required": False,
+        },
+        "restore": {
+            "install_restoration_pending": True,
+            "save_restoration_pending": True,
+            "save_tree_sha256": SAVE_TREE_SHA256,
+        },
+        "supporting_artifacts": {
+            "rng_core_build_receipt": _artifact(repo / OBSERVER_RECEIPT, repo),
+            "coordinate_build_receipt": _artifact(
+                repo / SPAWN_COORDINATE_RECEIPT,
+                repo,
+            ),
+            "rng_return_map": _artifact(repo / RETURN_MAP, repo),
+            "rng_restore_hashes": _artifact(repo / RESTORE_HASHES, repo),
+            "rng_caller_role_overlay": _artifact(
+                repo / RNG_CALLER_ROLE_OVERLAY,
+                repo,
+            ),
         },
     }
 

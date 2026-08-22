@@ -1,0 +1,89 @@
+{
+  "bridge": {
+    "spawning_tiles": [
+      [
+        5,
+        4
+      ]
+    ]
+  },
+  "capture_id": "spawn-coordinate-rng-pair002",
+  "events": [
+    {
+      "candidate_count": 5,
+      "candidates": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "kind": "selector_standard_draw",
+      "raw_rng": 15777,
+      "rng_quotient": 3155,
+      "selected": [
+        5,
+        4
+      ],
+      "selected_index": 2,
+      "seq": 0
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "6c22aa5cb62552afd7f08d9e942a82cbceb620aab3b1853f004c98534ea74e09",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "scheduler_prebytes_sha256": "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7",
+    "scheduler_region_sha256": "639ea27e48757d5c7f08499522d7f8933dc874957f4d00a74bbeec4a6750bd89",
+    "selector_fallback_prebytes_sha256": "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6",
+    "selector_region_sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+    "selector_standard_prebytes_sha256": "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011"
+  },
+  "kind": "spawn_coordinate_hw_correlation",
+  "module_sha256": "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1",
+  "native": {
+    "raw_rng_sequence": [
+      15777
+    ],
+    "scheduler_draw_count": 0,
+    "selected_spawn_coordinates": [
+      [
+        5,
+        4
+      ]
+    ],
+    "selector_draw_count": 1,
+    "selector_fallback_count": 0,
+    "selector_standard_count": 1
+  },
+  "reasons": [],
+  "schema_version": 1,
+  "snapshot_sha256": "787240a260f63d53e09f1bf3abe967f2617e826b7ffe55c26167401187d0d441",
+  "status": "correlated",
+  "summary": {
+    "candidate_order_captured": true,
+    "correlated": true,
+    "rng_reconstruction_exact": true,
+    "selector_matches_spawn_markers": true
+  }
+}

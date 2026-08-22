@@ -1,0 +1,74 @@
+{
+  "analysis": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_campaign\\pair003\\armed\\analysis.json",
+    "sha256": "5344b068373e7256f060ab653bb87380d494f817f1cbd823e1f520fdfadcfead",
+    "status": "correlated"
+  },
+  "artifact_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_campaign\\pair003\\armed",
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "abort_ack": null,
+      "capture_id": "spawn-coordinate-pair003-armed",
+      "condition": "armed",
+      "debug_registers_cleared": true,
+      "end_turn_status": "OK",
+      "finish_ack": "OK OBS_SPAWN_COORDINATE_FINISH condition=armed capture=spawn-coordinate-pair003-armed records=1 scheduler=0 fallback=0 standard=1 selectors=1 complete=true",
+      "prepare_ack": "OK OBS_SPAWN_COORDINATE_PREPARE condition=armed capture=spawn-coordinate-pair003-armed seed=324508639 armed=true",
+      "record_count": 1,
+      "seam_bytes_unchanged": true,
+      "selector_count": 1,
+      "snapshot_sha256": "cdc30bac1297c950069c970133d477b16987de65ec65df2da47fb8720064157c",
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -99757.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "abort_ack": null,
+    "capture_id": "spawn-coordinate-pair003-armed",
+    "condition": "armed",
+    "debug_registers_cleared": true,
+    "finish_ack": "OK OBS_SPAWN_COORDINATE_FINISH condition=armed capture=spawn-coordinate-pair003-armed records=1 scheduler=0 fallback=0 standard=1 selectors=1 complete=true",
+    "prepare_ack": "OK OBS_SPAWN_COORDINATE_PREPARE condition=armed capture=spawn-coordinate-pair003-armed seed=324508639 armed=true",
+    "record_count": 1,
+    "seam_bytes_unchanged": true,
+    "selector_count": 1,
+    "snapshot_sha256": "cdc30bac1297c950069c970133d477b16987de65ec65df2da47fb8720064157c",
+    "state": "complete"
+  },
+  "build_receipt_sha256": "c4f367a488097449dbccdd904ac9a96dba9e8d13f247cb8e9899fb1bcf7c4a19",
+  "capture_id": "spawn-coordinate-pair003-armed",
+  "capture_track": "owner_local_modified",
+  "condition": "armed",
+  "created_at": "2026-08-22T18:22:01.745304+00:00",
+  "errors": {
+    "abort": "",
+    "analysis": "",
+    "outcome": "",
+    "outcome_validation": [],
+    "runner": ""
+  },
+  "kind": "observatory_spawn_coordinate_turn_trial",
+  "module_sha256": "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_campaign\\pair003\\armed\\outcome.json",
+    "sha256": "d4c45e0560f215a31485f6ccec36db848b001f4428b1cc7c0bcbcfea0495c8ea"
+  },
+  "pair_id": "spawn-coordinate-pair-003",
+  "schema_version": 1,
+  "session_file": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_campaign\\pair003\\armed\\runtime\\session.json",
+  "snapshot": {
+    "complete": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_campaign\\pair003\\armed\\snapshot.json",
+    "record_count": 1,
+    "sha256": "3ce992123b05d93d8121813c9d0a2a7e26e9e98c04adea3c28de04d7e3763c2e"
+  },
+  "status": "complete",
+  "valid_trial": true
+}

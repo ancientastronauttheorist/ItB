@@ -73,6 +73,12 @@ SELECTED_QUEUE_SNAPSHOT_FILE = (
 SELECTED_QUEUE_SNAPSHOT_TMP = (
     BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json.tmp"
 )
+SPAWN_COORDINATE_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_spawn_coordinate_snapshot.json"
+)
+SPAWN_COORDINATE_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_spawn_coordinate_snapshot.json.tmp"
+)
 _OBSERVATORY_CAPTURE_ID_RE = re.compile(
     r"[a-z][a-z0-9_.-]{0,95}\Z"
 )
@@ -780,6 +786,181 @@ def run_observatory_selected_queue_trial(
             raise BridgeError("selected/queue snapshot does not match its ACK")
         return ack, snapshot
     raise TimeoutError(f"Fresh selected/queue snapshot timeout after {timeout:.0f}s")
+
+
+def prepare_observatory_spawn_coordinate(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Seed and optionally arm the coordinate observer immediately pre-turn."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("spawn-coordinate condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "spawn-coordinate prepare requires an unpaused active mission heartbeat"
+        )
+    if (
+        SPAWN_COORDINATE_SNAPSHOT_FILE.exists()
+        or SPAWN_COORDINATE_SNAPSHOT_TMP.exists()
+    ):
+        raise BridgeError("spawn-coordinate snapshot output already exists")
+    command = f"OBS_SPAWN_COORDINATE_PREPARE {condition} {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_COORDINATE_PREPARE "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) seed=324508639 "
+        r"armed=(true|false)",
+        ack,
+    )
+    expected_armed = "true" if condition == "armed" else "false"
+    if (
+        match is None
+        or match.group(1) != condition
+        or match.group(2) != capture_id
+        or match.group(3) != expected_armed
+    ):
+        raise BridgeError(f"unexpected spawn-coordinate prepare ACK: {ack}")
+    return ack
+
+
+def finish_observatory_spawn_coordinate(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict | None]:
+    """Restore the observer and retrieve its fresh snapshot when armed."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("spawn-coordinate condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capture ID is invalid")
+    before = _file_generation(SPAWN_COORDINATE_SNAPSHOT_FILE)
+    command = f"OBS_SPAWN_COORDINATE_FINISH {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_COORDINATE_FINISH "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) records=(\d+) "
+        r"scheduler=(\d+) fallback=(\d+) standard=(\d+) selectors=(\d+) "
+        r"complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != condition or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected spawn-coordinate finish ACK: {ack}")
+    record_count = int(match.group(3))
+    scheduler_count = int(match.group(4))
+    fallback_count = int(match.group(5))
+    standard_count = int(match.group(6))
+    selector_count = int(match.group(7))
+    if condition != "armed":
+        if (
+            any(
+                value != 0
+                for value in (
+                    record_count,
+                    scheduler_count,
+                    fallback_count,
+                    standard_count,
+                    selector_count,
+                )
+            )
+            or _file_generation(SPAWN_COORDINATE_SNAPSHOT_FILE) != before
+        ):
+            raise BridgeError("unarmed spawn-coordinate boundary published output")
+        return ack, None
+    if (
+        not 1 <= record_count <= 256
+        or record_count != scheduler_count + fallback_count + standard_count
+        or selector_count != fallback_count + standard_count
+        or selector_count < 1
+    ):
+        raise BridgeError("armed spawn-coordinate boundary counts differ")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SPAWN_COORDINATE_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                SPAWN_COORDINATE_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"spawn-coordinate snapshot is not valid JSON: {exc}"
+            ) from exc
+        summary = snapshot.get("summary", {}) if isinstance(snapshot, dict) else {}
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind")
+                != "native_spawn_coordinate_hw_observer_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or summary.get("record_count") != record_count
+            or summary.get("scheduler_count") != scheduler_count
+            or summary.get("selector_fallback_count") != fallback_count
+            or summary.get("selector_standard_count") != standard_count
+            or summary.get("selector_count") != selector_count
+        ):
+            raise BridgeError("spawn-coordinate snapshot does not match its ACK")
+        return ack, snapshot
+    raise TimeoutError(
+        f"Fresh spawn-coordinate snapshot timeout after {timeout:.0f}s"
+    )
+
+
+def abort_observatory_spawn_coordinate(
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Restore an armed coordinate observer without publishing evidence."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capture ID is invalid")
+    command = f"OBS_SPAWN_COORDINATE_ABORT {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_COORDINATE_ABORT "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) restored=true",
+        ack,
+    )
+    if match is None or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected spawn-coordinate abort ACK: {ack}")
+    return ack
 
 
 def arm_observatory_callback_manifest_startup() -> Path:

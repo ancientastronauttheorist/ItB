@@ -6,7 +6,9 @@ The reversible owner track now contains deterministic callback identities,
 exact callback-slot bindings, six build-keyed seeded Lua-RNG pairs, five
 natural callback pairs, two counterbalanced atomic native-RNG captures, three
 source-verified `Spawner:NextPawn` spans, three counterbalanced spawn-replay
-pairs, and three counterbalanced control/dormant/armed selected-record triplets.
+pairs, three coordinate hardware-observer triplets, three same-process
+coordinate/RNG-core captures, and three counterbalanced control/dormant/armed
+selected-record triplets.
 Both seeded native checkpoints include
 the fixed seed's first core result, bind every caller to the exact executable
 catalog, and report clean byte restoration. The later spans resolve the normal
@@ -30,6 +32,10 @@ The spawn-replay series is closed by
 `windows_build_13725832_owner_local_modified_20260822_spawn_replay_cleanup_receipt.json`;
 its post-cleanup inventory again matches all 689 accepted entries and the same
 33-file save tree.
+The coordinate-only and combined coordinate/RNG series are closed by
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`
+with another 689/689 match, the same sealed save tree, the exact baseline Mod
+Loader, no active Observatory file, and a stopped game process.
 
 There are now two accepted capture tracks:
 
@@ -70,7 +76,7 @@ not be relabelled as clean stock.
 | Callback identities and slots | Inert runtime enumeration, bounded enemy-root discovery, exact lexical join, and raw defining-table resolution | Complete: 81 roots, 324 method records, 65 exact slots; two updated fresh-process slot captures are byte-identical |
 | Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Five natural pairs completed: 622 attempts, 620 bounded events, every slot restored, no serialization/restore errors; three whole outcomes matched and both repeated `GetSkillEffect` pairs differed only at the spawn marker |
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
-| Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, and a Rust non-fabrication safeguard | Three restored replays recover distinct pre-call observable states and reproduce `Firefly2`, `Scarab2`, and `Firefly2` from the exact ratios/candidate order. Ordinary solver input still lacks the capsule before selection, and later coordinate selection remains unresolved |
+| Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer plus strict selected-to-queue correlator | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
@@ -331,7 +337,7 @@ Two independent deterministic builds produced the same 78,848-byte DLL and
 the same normalized receipt. The DLL is not committed; the source, builder,
 build receipt, and two-build reproducibility receipt are committed.
 
-## Spawn-span, spawn-replay, and selected-queue campaigns
+## Spawn-span, spawn-replay, coordinate, and selected-queue campaigns
 
 Three fresh-state spawn pairs counterbalanced an exact native-RNG checkpoint
 against the same checkpoint plus a source-verified `Spawner:NextPawn` span.
@@ -370,6 +376,33 @@ cleanup receipts are
 `windows_build_13725832_owner_local_modified_20260822_spawn_replay_receipt.json`
 and
 `windows_build_13725832_owner_local_modified_20260822_spawn_replay_cleanup_receipt.json`.
+
+The coordinate campaign uses x86 hardware breakpoints at the reviewed
+scheduler append, fallback selector, and standard selector seams; it modifies
+no executable bytes. Three counterbalanced control/dormant/armed triplets
+capture the same ordered candidates `[[5,2],[5,3],[5,4],[6,2],[6,5]]` in every
+armed trial. The observed standard selector results `5290`, `3963`, and `20348`
+select indices `0`, `3`, and `3` by exact modulo and match the bridge spawn
+marker. Scheduler and fallback paths did not execute. The immutable receipt is
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_receipt.json`.
+
+The follow-up combined campaign prepares that hardware observer first and then
+atomically seeds and arms the RNG-core observer, so both transcripts cover the
+same End Turn in one process. Caller 60 at `0x00172e70` uniquely matches the
+coordinate draw in all three checkpoints. Its zero-based sequences are 1494,
+1474, and 1449 (ordinals 1495, 1475, and 1450), and its raw values are `3642`,
+`15777`, and `30530`. A separate build-keyed static overlay preserves the
+original return-map digest while classifying every caller whose count varied.
+Presentation domains contribute 1271, 1250, and 1225 upstream draws; particle
+emitters vary by 45 draws and `UnitAcid` effects by 36. Environment-XP and the
+reviewed Lua `random_int` boundary vary by one draw each. The classified count
+deltas `[0,-20,-45]` exactly equal the selector-ordinal deltas, with no varying
+caller left unclassified. This resolves the direct caller and the cause of the
+unstable ordinal; it does not make a future coordinate predictable from
+ordinary save/solver state. The immutable evidence and closure receipts are
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`.
 
 The selected-action campaign used a build-keyed x86 hardware-breakpoint
 observer that modifies no executable bytes. Each of three fresh-state triplets

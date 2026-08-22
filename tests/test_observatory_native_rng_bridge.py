@@ -460,3 +460,124 @@ def test_selected_queue_modloader_path_is_build_keyed_and_synthetic():
     assert 'rawget(observer, "arm")' in MODLOADER
     assert 'rawget(observer, "finish")' in MODLOADER
     assert "write_observatory_create_only_json(" in MODLOADER
+
+
+@pytest.mark.parametrize(
+    ("condition", "counts"),
+    [
+        ("control", (0, 0, 0, 0, 0)),
+        ("dormant", (0, 0, 0, 0, 0)),
+        ("armed", (2, 1, 0, 1, 1)),
+    ],
+)
+def test_spawn_coordinate_boundary_is_fixed_and_requires_fresh_armed_output(
+    condition: str,
+    counts: tuple[int, int, int, int, int],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    snapshot_path = tmp_path / "spawn-coordinate.json"
+    monkeypatch.setattr(protocol, "SPAWN_COORDINATE_SNAPSHOT_FILE", snapshot_path)
+    monkeypatch.setattr(
+        protocol,
+        "SPAWN_COORDINATE_SNAPSHOT_TMP",
+        tmp_path / "spawn-coordinate.json.tmp",
+    )
+    monkeypatch.setattr(protocol, "is_bridge_alive", lambda **_kwargs: True)
+    commands: list[str] = []
+    monkeypatch.setattr(protocol, "write_command", commands.append)
+    capture_id = f"spawn-coordinate-{condition}-01"
+    record_count, scheduler, fallback, standard, selectors = counts
+
+    def ack(**_kwargs):
+        command = commands[-1]
+        if command.startswith("OBS_SPAWN_COORDINATE_PREPARE"):
+            armed = "true" if condition == "armed" else "false"
+            return (
+                f"OK OBS_SPAWN_COORDINATE_PREPARE condition={condition} "
+                f"capture={capture_id} seed=324508639 armed={armed}"
+            )
+        if condition == "armed":
+            snapshot_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "native_spawn_coordinate_hw_observer_snapshot",
+                        "capture_id": capture_id,
+                        "integrity": {"complete": True},
+                        "summary": {
+                            "record_count": record_count,
+                            "scheduler_count": scheduler,
+                            "selector_fallback_count": fallback,
+                            "selector_standard_count": standard,
+                            "selector_count": selectors,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+        return (
+            f"OK OBS_SPAWN_COORDINATE_FINISH condition={condition} "
+            f"capture={capture_id} records={record_count} "
+            f"scheduler={scheduler} fallback={fallback} standard={standard} "
+            f"selectors={selectors} complete=true"
+        )
+
+    monkeypatch.setattr(protocol, "wait_for_ack", ack)
+    prepare_ack = protocol.prepare_observatory_spawn_coordinate(
+        condition, capture_id, timeout=0.2
+    )
+    finish_ack, snapshot = protocol.finish_observatory_spawn_coordinate(
+        condition, capture_id, timeout=0.2
+    )
+    assert prepare_ack.endswith(
+        f"armed={'true' if condition == 'armed' else 'false'}"
+    )
+    assert finish_ack.endswith(f"selectors={selectors} complete=true")
+    assert (snapshot is not None) is (condition == "armed")
+    assert commands == [
+        f"OBS_SPAWN_COORDINATE_PREPARE {condition} {capture_id}",
+        f"OBS_SPAWN_COORDINATE_FINISH {capture_id}",
+    ]
+
+
+def test_spawn_coordinate_abort_requires_a_clean_restore_ack(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(protocol, "write_command", lambda _command: None)
+    monkeypatch.setattr(
+        protocol,
+        "wait_for_ack",
+        lambda **_kwargs: (
+            "OK OBS_SPAWN_COORDINATE_ABORT condition=armed "
+            "capture=spawn-coordinate-armed-01 restored=true"
+        ),
+    )
+    assert protocol.abort_observatory_spawn_coordinate(
+        "spawn-coordinate-armed-01"
+    ).endswith("restored=true")
+
+
+def test_spawn_coordinate_modloader_path_is_build_keyed_and_read_only():
+    assert 'elseif cmd == "OBS_SPAWN_COORDINATE_PREPARE" then' in MODLOADER
+    assert 'elseif cmd == "OBS_SPAWN_COORDINATE_FINISH" then' in MODLOADER
+    assert 'elseif cmd == "OBS_SPAWN_COORDINATE_ABORT" then' in MODLOADER
+    assert "prepare_observatory_spawn_coordinate_trial(parts[2], parts[3])" in MODLOADER
+    assert "finish_observatory_spawn_coordinate_trial(parts[2])" in MODLOADER
+    assert "abort_observatory_spawn_coordinate_trial(parts[2])" in MODLOADER
+    assert (
+        "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1"
+    ) in MODLOADER
+    assert "load_observatory_spawn_coordinate_module" in MODLOADER
+    prepare_start = MODLOADER.index(
+        "local function prepare_observatory_spawn_coordinate_trial"
+    )
+    finish_start = MODLOADER.index(
+        "local function finish_observatory_spawn_coordinate_trial"
+    )
+    prepare_block = MODLOADER[prepare_start:finish_start]
+    assert 'rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED' in prepare_block
+    assert 'rawget(observer, "arm")' in prepare_block
+    assert "end_player_turn" not in prepare_block
+    assert 'rawget(observer, "finish")' in MODLOADER
+    assert "SPAWN_COORDINATE_SNAPSHOT_FILE" in MODLOADER

@@ -23,9 +23,17 @@ triplets also correlate the final selected record to the immediate Pawn queue
 commit for a bounded Firefly scenario. Three later spawn-replay captures recover
 the exact observable MSVC pre-call state class and export the effective ratios
 and ordered candidates needed to reproduce `Firefly2`, `Scarab2`, and
-`Firefly2` exactly. The remaining unknowns are narrower and more valuable:
-native spawn-coordinate scheduling, path and movement enumeration, broader
-selected-action paths, effect execution, and hidden engine state.
+`Firefly2` exactly. A later hardware observer now captures the coordinate
+scheduler/selector candidates and proves the standard selector's exact
+`raw_rng % candidate_count` rule. Three same-process coordinate-plus-RNG-core
+captures place that draw at caller 60 and ordinals 1495, 1475, and 1450.
+Focused static review classifies every caller whose upstream count varied: the
+dominant consumers are particle, pilot-portrait, and `UnitAcid` presentation
+code sharing the same native RNG stream. The remaining unknowns are therefore
+narrower and more valuable: prospective selector-state delivery or upstream
+draw control, unexercised scheduler/fallback coordinate paths, path and
+movement enumeration, broader selected-action paths, effect execution, and
+hidden engine state.
 
 The strategic ordering should therefore be:
 
@@ -154,9 +162,12 @@ captures export each span's effective weak/upgrade ratios, exact runtime
 exact observable pre-call MSVC state class: the two raw 32-bit candidates differ
 only in hidden bit 31 and have the same future `rand()` stream. Replaying those
 inputs reproduces all three selected pawns exactly. The unresolved pieces are
-exporting that capsule *before* selection for ordinary solver use,
-spawn-coordinate scheduling outside `NextPawn`, natural boss-branch coverage,
-and equivalence on other platform builds.
+exporting that capsule *before* selection for ordinary solver use, natural
+boss-branch coverage, and equivalence on other platform builds. Outside
+`NextPawn`, the later standard coordinate selector is now resolved to ordered
+candidate modulo selection at direct shared-RNG caller 60. Its future value is
+still unavailable from ordinary solver state because timing-dependent
+presentation draws make the upstream ordinal unstable.
 
 ### Enemy targeting
 
@@ -438,9 +449,11 @@ verifier facts.
 
 The remaining native priorities are now narrower:
 
-1. Isolate the later spawn-coordinate scheduler and its RNG call ordering; only
-   then decide whether a pre-call replay capsule is worth exposing to ordinary
-   solver input.
+1. Decide whether to expose the native RNG state immediately before the
+   standard coordinate selector or to control/replay every upstream draw. The
+   direct caller and modulo rule are resolved, but timing-dependent
+   presentation consumers make a save-plus-seed ordinal unstable. Capture the
+   scheduler and selector-fallback paths only if a concrete solver need arises.
 2. Resolve native pathfinding and reachability details needed by mismatches.
 3. Resolve turn-phase ordering, queued effect execution, and hidden state.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
@@ -574,8 +587,16 @@ Three later `Spawner:NextPawn` spans resolve the normal three-draw
 weak/pawn/upgrade order. Three counterbalanced replay pairs then recover the
 observable pre-call CRT state and exact candidate array and reproduce all three
 observed pawn choices. Ordinary solver inputs still do not expose that capsule
-before selection, and the later coordinate scheduler remains unresolved. Three
-selected-queue triplets correlate the reviewed final selected record to the
+before selection. Three coordinate hardware-observer triplets resolve the
+standard coordinate candidate order and modulo selection. Three following
+same-process coordinate/RNG-core captures identify direct caller 60 and show
+that the coordinate draw occurs at ordinals 1495, 1475, and 1450 despite the
+same restored save and fixed seed. A build-keyed caller-role overlay accounts
+for every ordinal delta: presentation domains consume 1271, 1250, and 1225
+upstream draws, with particle and `UnitAcid` effects dominating the variation.
+The correct solver rule remains fail-closed unless selector-time native state
+or complete upstream replay is available. Three selected-queue triplets
+correlate the reviewed final selected record to the
 immediate Firefly queue commit with exact destination, target/shot, and
 weapon/skill agreement. Rust retains its non-fabrication spawn safeguard and
 adds a focused Firefly queue-direction conformance regression. The final

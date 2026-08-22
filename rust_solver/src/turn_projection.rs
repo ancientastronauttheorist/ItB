@@ -1406,11 +1406,13 @@ mod tests {
         // Three source-verified replay capsules now prove that the observable
         // pre-call CRT state, effective ratios, and ordered candidate array are
         // sufficient to recover the exact NextPawn identity. Ordinary bridge
-        // input does not provide that capsule before selection, however, and
-        // spawn-coordinate selection remains a separate unresolved native
-        // boundary. Projection may consume observed emergence markers but must
-        // not invent either a pawn identity or a replacement coordinate. See
-        // the 20260822 spawn-replay campaign receipt.
+        // input does not provide that capsule before selection. The later
+        // coordinate campaign proves ordered-candidate modulo selection at
+        // direct RNG caller 60, but its upstream ordinal varies with shared
+        // presentation draws and selector-time native state is still absent.
+        // Projection may consume observed emergence markers but must not invent
+        // either a pawn identity or a replacement coordinate. See the 20260822
+        // spawn-replay and spawn-coordinate/RNG campaign receipts.
         assert_eq!(projected.unit_count, before_unit_count);
         assert!(projected.unit_at(2, 2).is_none());
         assert!(projected.unit_at(5, 5).is_none());
@@ -1620,10 +1622,11 @@ mod tests {
         assert_eq!(result.spawns_blocked, 1);
         assert_eq!(projected.env_tides_index, Some(4));
         assert!(projected.is_tides_spawn_permanently_blocked(5, 4));
-        // Rust does not model native future-spawn selection, and the effect of
-        // BlockSpawn on a marker that already persisted through emergence is
-        // untraced. Conservatively retain that known marker; do not fabricate
-        // a native deletion from the source-derived future eligibility mask.
+        // Rust does not receive selector-time native RNG state for future
+        // spawn selection, and the effect of BlockSpawn on a marker that
+        // already persisted through emergence is untraced. Conservatively
+        // retain that known marker; do not fabricate a native deletion from
+        // the source-derived future eligibility mask.
         assert_eq!(projected_spawns, vec![(5, 4)]);
         assert_eq!(projected.units[0].hp, 1);
     }

@@ -13,13 +13,16 @@ from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
 from src.bridge.protocol import (
     BridgeError,
-    request_observatory_callback_bindings,
+    abort_observatory_spawn_coordinate,
     arm_observatory_native_rng,
     arm_observatory_native_rng_spawn_replay,
     finish_observatory_native_rng,
     finish_observatory_native_rng_spawn_replay,
     finish_observatory_native_rng_spawn_span,
+    finish_observatory_spawn_coordinate,
+    prepare_observatory_spawn_coordinate,
     prepare_observatory_spawn_replay_control,
+    request_observatory_callback_bindings,
     request_observatory_callback_manifest,
     run_observatory_selected_queue_trial,
     seed_and_arm_observatory_native_rng,
@@ -415,3 +418,36 @@ def bridge_observatory_selected_queue_trial(
     return run_observatory_selected_queue_trial(
         condition, capture_id, timeout=timeout
     )
+
+
+def bridge_observatory_spawn_coordinate_prepare(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Seed and optionally arm one natural spawn-coordinate boundary."""
+    return prepare_observatory_spawn_coordinate(
+        condition, capture_id, timeout=timeout
+    )
+
+
+def bridge_observatory_spawn_coordinate_finish(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict | None]:
+    """Restore one natural spawn-coordinate boundary and fetch evidence."""
+    return finish_observatory_spawn_coordinate(
+        condition, capture_id, timeout=timeout
+    )
+
+
+def bridge_observatory_spawn_coordinate_abort(
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Restore an armed coordinate boundary without publishing evidence."""
+    return abort_observatory_spawn_coordinate(capture_id, timeout=timeout)

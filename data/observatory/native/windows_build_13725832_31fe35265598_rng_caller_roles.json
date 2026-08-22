@@ -1,0 +1,372 @@
+{
+  "analysis_kind": "native_rng_caller_role_overlay",
+  "caller_roles": [
+    {
+      "call_rva": "0x000bcac9",
+      "caller_id": 4,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_update",
+      "return_rva": "0x000bcace",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcb56",
+      "caller_id": 5,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcb5b",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcb96",
+      "caller_id": 6,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcb9b",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcbea",
+      "caller_id": 7,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcbef",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcc47",
+      "caller_id": 9,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcc4c",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcca1",
+      "caller_id": 10,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcca6",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bccca",
+      "caller_id": 11,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcccf",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bccf4",
+      "caller_id": 12,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bccf9",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x000bcd48",
+      "caller_id": 13,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG populates or perturbs particle-emitter presentation parameters; the associated parser exposes variance, rotation, particle-count, burst-count, and image-count fields.",
+      "region_id": "particle_emitter_spawn",
+      "return_rva": "0x000bcd4d",
+      "role_id": "particle_presentation"
+    },
+    {
+      "call_rva": "0x0018f321",
+      "caller_id": 72,
+      "domain": "gameplay",
+      "evidence_class": "inference",
+      "meaning": "RNG distributes the env_xp integer across an eligible object vector.",
+      "region_id": "environment_xp_allocator",
+      "return_rva": "0x0018f326",
+      "role_id": "environment_xp_allocation"
+    },
+    {
+      "call_rva": "0x00225b45",
+      "caller_id": 101,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "RNG selects timing or variants for Pilot_Blink, Pilot_Glare, and Pilot_Look portrait presentation.",
+      "region_id": "pilot_portrait_update",
+      "return_rva": "0x00225b4a",
+      "role_id": "pilot_portrait_presentation"
+    },
+    {
+      "call_rva": "0x00233c3a",
+      "caller_id": 114,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "The paired RNG calls choose UnitAcid effect coordinates inside the unit status-effect presentation update.",
+      "region_id": "unit_status_effect_update",
+      "return_rva": "0x00233c3f",
+      "role_id": "unit_acid_presentation"
+    },
+    {
+      "call_rva": "0x00233c49",
+      "caller_id": 115,
+      "domain": "presentation",
+      "evidence_class": "inference",
+      "meaning": "The paired RNG calls choose UnitAcid effect coordinates inside the unit status-effect presentation update.",
+      "region_id": "unit_status_effect_update",
+      "return_rva": "0x00233c4e",
+      "role_id": "unit_acid_presentation"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000bc93d",
+      "id": "particle_update_to_spawn",
+      "instruction_hex": "e8ce010000",
+      "meaning": "The particle update function directly invokes the particle parameter initializer.",
+      "source_region": "particle_emitter_update",
+      "target_region": "particle_emitter_spawn",
+      "target_rva": "0x000bcb10"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "platform": "windows"
+  },
+  "method": {
+    "boundary_review": "Contiguous function extents were reviewed with focused x86 disassembly; every extent is independently decoded and hashed.",
+    "limitations": [
+      "The overlay labels only callers needed by the matched coordinate campaign.",
+      "Static roles do not by themselves prove runtime ordering or draw counts.",
+      "Presentation labels describe the reviewed functions, not whole-game RNG independence.",
+      "The overlay is valid only for the exact executable and original return-map digest."
+    ],
+    "semantic_review": "Roles are conservative inferences from literal anchors, direct calls, parameter math, and the original stable caller IDs."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET, with the next byte beginning INT3 alignment padding.",
+      "end_rva_exclusive": "0x000bcb09",
+      "evidence_class": "fact",
+      "id": "particle_emitter_update",
+      "section": ".text",
+      "sha256": "1aa268abcbe940e46d51d62d5eb2f1cc5e0808f5c05fa9e9b418416948499739",
+      "size": 505,
+      "start_rva": "0x000bc910"
+    },
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET, with the next byte beginning INT3 alignment padding.",
+      "end_rva_exclusive": "0x000bcd8f",
+      "evidence_class": "fact",
+      "id": "particle_emitter_spawn",
+      "section": ".text",
+      "sha256": "08ad84f7ed82e6e9922a84d69a7b0935a84034651a07d78d84cdbd3a7f6ae0c3",
+      "size": 639,
+      "start_rva": "0x000bcb10"
+    },
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET, corroborated by both env_xp literal references.",
+      "end_rva_exclusive": "0x0018f37f",
+      "evidence_class": "fact",
+      "id": "environment_xp_allocator",
+      "section": ".text",
+      "sha256": "9dbcb30e982d9491c9d6ffeb4af06e4651f31292246d5eb16484f968e3093c5d",
+      "size": 447,
+      "start_rva": "0x0018f1c0"
+    },
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET, corroborated by Pilot_Blink, Pilot_Glare, and Pilot_Look literals.",
+      "end_rva_exclusive": "0x00225db9",
+      "evidence_class": "fact",
+      "id": "pilot_portrait_update",
+      "section": ".text",
+      "sha256": "9a0e31e6c085670ca7d1ae797274f0e0fca39e0dcf47a27e609aaad3f1b01f70",
+      "size": 2441,
+      "start_rva": "0x00225430"
+    },
+    {
+      "boundary_basis": "Reviewed contiguous function extent through its RET, corroborated by water-splash, UnitFire, UnitInfected, and UnitAcid literals.",
+      "end_rva_exclusive": "0x00233ed3",
+      "evidence_class": "fact",
+      "id": "unit_status_effect_update",
+      "section": ".text",
+      "sha256": "9abf728541fd750a1065f6ad725037caa6a0ff7e80abc52aa2351d832a053c62",
+      "size": 3523,
+      "start_rva": "0x00233110"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48"
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "particle_variance",
+      "instruction_hex": "6800618200",
+      "reference_rva": "0x000bbd1b",
+      "role_id": "particle_presentation",
+      "string_rva": "0x00426100",
+      "text": "variance"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "particle_random_rot",
+      "instruction_hex": "6824618200",
+      "reference_rva": "0x000bbe63",
+      "role_id": "particle_presentation",
+      "string_rva": "0x00426124",
+      "text": "random_rot"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "particle_angle_variance",
+      "instruction_hex": "6830618200",
+      "reference_rva": "0x000bbeb5",
+      "role_id": "particle_presentation",
+      "string_rva": "0x00426130",
+      "text": "angle_variance"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "particle_max_particles",
+      "instruction_hex": "685c618200",
+      "reference_rva": "0x000bbfe1",
+      "role_id": "particle_presentation",
+      "string_rva": "0x0042615c",
+      "text": "max_particles"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "particle_burst_count",
+      "instruction_hex": "687c618200",
+      "reference_rva": "0x000bc159",
+      "role_id": "particle_presentation",
+      "string_rva": "0x0042617c",
+      "text": "burst_count"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "particle_image_count",
+      "instruction_hex": "6888618200",
+      "reference_rva": "0x000bc1a9",
+      "role_id": "particle_presentation",
+      "string_rva": "0x00426188",
+      "text": "image_count"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "environment_xp",
+      "instruction_hex": "687cfc8200",
+      "reference_rva": "0x0018f20b",
+      "role_id": "environment_xp_allocation",
+      "string_rva": "0x0042fc7c",
+      "text": "env_xp"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pilot_blink",
+      "instruction_hex": "68305a8300",
+      "reference_rva": "0x00225af2",
+      "role_id": "pilot_portrait_presentation",
+      "string_rva": "0x00435a30",
+      "text": "Pilot_Blink"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pilot_glare",
+      "instruction_hex": "b9bc5d8300",
+      "reference_rva": "0x00225b9a",
+      "role_id": "pilot_portrait_presentation",
+      "string_rva": "0x00435dbc",
+      "text": "Pilot_Glare"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pilot_look",
+      "instruction_hex": "b8a05d8300",
+      "reference_rva": "0x00225b9f",
+      "role_id": "pilot_portrait_presentation",
+      "string_rva": "0x00435da0",
+      "text": "Pilot_Look"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "water_splash",
+      "instruction_hex": "6824658300",
+      "reference_rva": "0x002332a2",
+      "role_id": "unit_status_presentation",
+      "string_rva": "0x00436524",
+      "text": "/props/water_splash_small"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "unit_fire",
+      "instruction_hex": "ba50658300",
+      "reference_rva": "0x002335fe",
+      "role_id": "unit_status_presentation",
+      "string_rva": "0x00436550",
+      "text": "UnitFire"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "unit_infected",
+      "instruction_hex": "ba40658300",
+      "reference_rva": "0x00233912",
+      "role_id": "unit_status_presentation",
+      "string_rva": "0x00436540",
+      "text": "UnitInfected"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "unit_acid",
+      "instruction_hex": "ba68658300",
+      "reference_rva": "0x00233b89",
+      "role_id": "unit_acid_presentation",
+      "string_rva": "0x00436568",
+      "text": "UnitAcid"
+    }
+  ],
+  "summary": {
+    "caller_role_count": 13,
+    "direct_call_edge_count": 1,
+    "gameplay_caller_ids": [
+      72
+    ],
+    "presentation_caller_ids": [
+      4,
+      5,
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      13,
+      101,
+      114,
+      115
+    ],
+    "region_count": 5,
+    "string_anchor_count": 14
+  }
+}

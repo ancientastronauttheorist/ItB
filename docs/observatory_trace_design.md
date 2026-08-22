@@ -329,7 +329,9 @@ that selected it.
 - The ABI-safe shared-RNG observer captured two complete bounded streams using
   the 118-entry return-address catalog and restored exactly. Can a future
   boundary control every whole-game input well enough to establish behavioral
-  neutrality? The present control/exact spawn-coordinate mismatch says no.
+  neutrality? The coordinate/RNG campaign now explains why a fixed seed is not
+  enough: particle, pilot-portrait, and unit-status presentation code consumes
+  the same stream at variable counts before gameplay selection.
 - Can the mapped candidate loop be observed without perturbing vector order,
   dynamic callback lookup, or native pathfinding state?
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
@@ -342,9 +344,12 @@ that selected it.
   multi-weapon, or other pawn paths use additional commit shapes?
 - Three `Spawner:NextPawn` replay captures now recover the observable pre-span
   CRT state, preserve the exact runtime candidate order, and reproduce the
-  selected pawn. How can that capsule be delivered before the live call, and
-  where does the later spawn-coordinate scheduler consume RNG? A natural boss
-  branch also remains to be captured.
+  selected pawn. Three later combined captures place standard coordinate
+  selection at direct caller 60 and explain its variable ordinal completely.
+  How can the pawn capsule and selector-time RNG state be delivered before the
+  live calls without replaying timing-dependent presentation work? The
+  scheduler/fallback coordinate paths and a natural boss branch also remain to
+  be captured if a solver mismatch needs them.
 
 These remaining questions are explicitly unresolved. The codec makes future
 answers comparable; it does not promote the diagnostic observers as generally

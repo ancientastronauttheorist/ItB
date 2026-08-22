@@ -1,0 +1,127 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002",
+  "artifacts": {
+    "attribution": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\attribution.json",
+      "selector_rng_ordinals": [
+        1475
+      ],
+      "sha256": "cc038744925fccdf7b9c5fbe791c37ce299acc79affad5c3b06022ca3c9548b5",
+      "status": "attributed"
+    },
+    "coordinate_analysis": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\coordinate_analysis.json",
+      "sha256": "07ef8de4df93f4da76e2c48e82fe983d4c65c2f4f3996a58c0f61f0b8ee82f92",
+      "status": "correlated"
+    },
+    "coordinate_snapshot": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\coordinate_snapshot.json",
+      "record_count": 1,
+      "sha256": "e9fa034208e43b97ecc934963f92fcaf8dabe8fc3b58430bf7b97375155d3d6d"
+    },
+    "outcome": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\outcome.json",
+      "sha256": "671fcdf72287db552b036f17b84f70b114ca1fa52fc91eac28d4744248b887b0"
+    },
+    "rng_checkpoint": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\rng_checkpoint.json",
+      "record_count": 1498,
+      "sha256": "710903eb0e54c0cf3a3f2f0ff379a36c7bde7a91a3ecc570b58de9d78a204e5a"
+    }
+  },
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "capture_id": "spawn-coordinate-rng-pair002",
+      "condition": "combined_exact_hook_and_coordinate_hw",
+      "coordinate": {
+        "abort_ack": null,
+        "capture_id": "spawn-coordinate-rng-pair002",
+        "condition": "armed",
+        "debug_registers_cleared": true,
+        "finish_ack": "OK OBS_SPAWN_COORDINATE_FINISH condition=armed capture=spawn-coordinate-rng-pair002 records=1 scheduler=0 fallback=0 standard=1 selectors=1 complete=true",
+        "prepare_ack": "OK OBS_SPAWN_COORDINATE_PREPARE condition=armed capture=spawn-coordinate-rng-pair002 seed=324508639 armed=true",
+        "record_count": 1,
+        "seam_bytes_unchanged": true,
+        "selector_count": 1,
+        "snapshot_sha256": "b3bfa4fb62cdd8f1db96eebcd6fc633fdffb2b9c1c9f0ae3acbcac927ae046dc",
+        "state": "complete"
+      },
+      "end_turn_status": "OK",
+      "rng_core": {
+        "arm_ack": null,
+        "capture_id": "spawn-coordinate-rng-pair002",
+        "condition": "exact_hook",
+        "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=spawn-coordinate-rng-pair002 records=1498 complete=true",
+        "hook_bytes_restored": true,
+        "record_count": 1498,
+        "seed_ack": null,
+        "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=spawn-coordinate-rng-pair002 seed=324508639",
+        "snapshot_sha256": "a37554b30a63b2e222aefc31c8543896cd8b46375af2501bd00f959931ff1dba",
+        "state": "complete"
+      },
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -99757.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "capture_id": "spawn-coordinate-rng-pair002",
+    "condition": "combined_exact_hook_and_coordinate_hw",
+    "coordinate": {
+      "abort_ack": null,
+      "capture_id": "spawn-coordinate-rng-pair002",
+      "condition": "armed",
+      "debug_registers_cleared": true,
+      "finish_ack": "OK OBS_SPAWN_COORDINATE_FINISH condition=armed capture=spawn-coordinate-rng-pair002 records=1 scheduler=0 fallback=0 standard=1 selectors=1 complete=true",
+      "prepare_ack": "OK OBS_SPAWN_COORDINATE_PREPARE condition=armed capture=spawn-coordinate-rng-pair002 seed=324508639 armed=true",
+      "record_count": 1,
+      "seam_bytes_unchanged": true,
+      "selector_count": 1,
+      "snapshot_sha256": "b3bfa4fb62cdd8f1db96eebcd6fc633fdffb2b9c1c9f0ae3acbcac927ae046dc",
+      "state": "complete"
+    },
+    "rng_core": {
+      "arm_ack": null,
+      "capture_id": "spawn-coordinate-rng-pair002",
+      "condition": "exact_hook",
+      "finish_ack": "OK OBS_NATIVE_RNG_FINISH capture=spawn-coordinate-rng-pair002 records=1498 complete=true",
+      "hook_bytes_restored": true,
+      "record_count": 1498,
+      "seed_ack": null,
+      "seed_and_arm_ack": "OK OBS_NATIVE_RNG_SEED_AND_ARM capture=spawn-coordinate-rng-pair002 seed=324508639",
+      "snapshot_sha256": "a37554b30a63b2e222aefc31c8543896cd8b46375af2501bd00f959931ff1dba",
+      "state": "complete"
+    },
+    "state": "complete"
+  },
+  "build_receipts": {
+    "coordinate_sha256": "c4f367a488097449dbccdd904ac9a96dba9e8d13f247cb8e9899fb1bcf7c4a19",
+    "rng_core_sha256": "47d501c89103db8d98ea67eb8aa6b55e26e2834c24f074e8f22054416e888be0"
+  },
+  "capture_id": "spawn-coordinate-rng-pair002",
+  "capture_track": "owner_local_modified",
+  "condition": "combined_exact_hook_and_coordinate_hw",
+  "created_at": "2026-08-22T18:49:51.330670+00:00",
+  "errors": {
+    "abort": "",
+    "analysis": "",
+    "outcome": "",
+    "runner": ""
+  },
+  "kind": "observatory_spawn_coordinate_rng_turn_trial",
+  "modules": {
+    "coordinate_sha256": "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1",
+    "rng_core_sha256": "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c"
+  },
+  "pair_id": "spawn-coordinate-rng-pair-002",
+  "schema_version": 1,
+  "session_file": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260822_spawn_coordinate_rng_campaign\\pair002\\runtime\\session.json",
+  "status": "complete",
+  "valid_trial": true
+}

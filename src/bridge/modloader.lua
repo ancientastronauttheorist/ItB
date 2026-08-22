@@ -99,6 +99,16 @@ local SELECTED_QUEUE_OBSERVER_EXPORT =
     "luaopen_itb_observatory_selected_queue_hw_observer"
 local SELECTED_QUEUE_HW_PLAN_SHA256 =
     "f99e1ba7b130799f27f6cc4e7a12aa4198bccb624ce994ae6a3fc063c30511b6"
+local SPAWN_COORDINATE_SNAPSHOT_FILE =
+    BRIDGE_DIR .. "/itb_observatory_spawn_coordinate_snapshot.json"
+local SPAWN_COORDINATE_SNAPSHOT_TMP =
+    BRIDGE_DIR .. "/itb_observatory_spawn_coordinate_snapshot.json.tmp"
+local SPAWN_COORDINATE_OBSERVER_SHA256 =
+    "e9f7392eb6d529be306c085271414d9e1fe17c2de03cf4266a692af6d1af11a1"
+local SPAWN_COORDINATE_OBSERVER_EXPORT =
+    "luaopen_itb_observatory_spawn_coordinate_hw_observer"
+local SPAWN_COORDINATE_HW_PLAN_SHA256 =
+    "6c22aa5cb62552afd7f08d9e942a82cbceb620aab3b1853f004c98534ea74e09"
 local NATIVE_RNG_OBSERVER_SHA256 =
     "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c"
 local NATIVE_RNG_OBSERVER_EXPORT =
@@ -129,6 +139,10 @@ local _observatory_spawn_span_controller = nil
 local _observatory_spawn_replay_controller = nil
 local _observatory_native_gameflow = nil
 local _observatory_selected_queue_module = nil
+local _observatory_spawn_coordinate_module = nil
+local _observatory_spawn_coordinate_condition = nil
+local _observatory_spawn_coordinate_capture_id = nil
+local _observatory_spawn_coordinate_restored = false
 
 if is_windows() then
     os.execute('mkdir "' .. BRIDGE_DIR .. '" >NUL 2>NUL')
@@ -3447,6 +3461,54 @@ local function load_observatory_selected_queue_module(directory)
     return observer
 end
 
+local function load_observatory_spawn_coordinate_module(directory)
+    if not is_windows() then
+        return nil, "spawn-coordinate observer requires Windows"
+    end
+    if type(directory) ~= "string" then
+        return nil, "spawn-coordinate observer directory is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_spawn_coordinate_hw_observer_"
+        .. SPAWN_COORDINATE_OBSERVER_SHA256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        SPAWN_COORDINATE_OBSERVER_EXPORT
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load spawn-coordinate observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "spawn-coordinate observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-spawn-coordinate-hw-observer/1"
+        or rawget(observer, "BUILD_ID") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "SCHEDULER_RVA") ~= "0x001751ae"
+        or rawget(observer, "SELECTOR_FALLBACK_RVA") ~= "0x00172e1e"
+        or rawget(observer, "SELECTOR_STANDARD_RVA") ~= "0x00172e7b"
+        or rawget(observer, "HARDWARE_BREAKPOINT_PLAN_SHA256")
+            ~= SPAWN_COORDINATE_HW_PLAN_SHA256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "spawn-coordinate observer contract mismatch"
+    end
+    return observer
+end
+
 local function observatory_path_exists(path)
     local file = io.open(path, "r")
     if not file then return false end
@@ -4232,6 +4294,150 @@ local function observatory_selected_queue_snapshot_complete(snapshot)
     return true
 end
 
+local function validate_observatory_spawn_coordinate_snapshot(
+    snapshot, capture_id
+)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_spawn_coordinate_hw_observer_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-spawn-coordinate-hw-observer/1"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "records")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "spawn-coordinate snapshot contract mismatch"
+    end
+    local identity = rawget(snapshot, "identity")
+    local integrity = rawget(snapshot, "integrity")
+    local summary = rawget(snapshot, "summary")
+    if rawget(identity, "platform") ~= "windows"
+        or rawget(identity, "architecture") ~= "x86"
+        or rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "boundary_map_sha256")
+            ~= "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2"
+        or rawget(identity, "hardware_breakpoint_plan_sha256")
+            ~= SPAWN_COORDINATE_HW_PLAN_SHA256
+        or rawget(identity, "selector_region_sha256")
+            ~= "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904"
+        or rawget(identity, "scheduler_region_sha256")
+            ~= "639ea27e48757d5c7f08499522d7f8933dc874957f4d00a74bbeec4a6750bd89"
+        or rawget(identity, "scheduler_prebytes_sha256")
+            ~= "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7"
+        or rawget(identity, "selector_fallback_prebytes_sha256")
+            ~= "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6"
+        or rawget(identity, "selector_standard_prebytes_sha256")
+            ~= "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011"
+        or type(rawget(summary, "record_count")) ~= "number"
+        or rawget(summary, "record_count") ~= #snapshot.records
+        or type(rawget(summary, "scheduler_count")) ~= "number"
+        or type(rawget(summary, "selector_fallback_count")) ~= "number"
+        or type(rawget(summary, "selector_standard_count")) ~= "number"
+        or type(rawget(summary, "selector_count")) ~= "number"
+        or type(rawget(integrity, "complete")) ~= "boolean" then
+        return nil, "spawn-coordinate snapshot identity or counts mismatch"
+    end
+    if summary.record_count ~= summary.scheduler_count
+            + summary.selector_fallback_count
+            + summary.selector_standard_count
+        or summary.selector_count ~= summary.selector_fallback_count
+            + summary.selector_standard_count then
+        return nil, "spawn-coordinate summary arithmetic mismatch"
+    end
+    local kind_counts = {
+        scheduler_draw = 0,
+        selector_fallback_draw = 0,
+        selector_standard_draw = 0,
+    }
+    for index, record in ipairs(snapshot.records) do
+        local kind = type(record) == "table" and rawget(record, "kind") or nil
+        local candidates = type(record) == "table"
+            and rawget(record, "candidates") or nil
+        local candidate_count = type(record) == "table"
+            and rawget(record, "candidate_count") or nil
+        local selected_index = type(record) == "table"
+            and rawget(record, "selected_index") or nil
+        local quotient = type(record) == "table"
+            and rawget(record, "rng_quotient") or nil
+        local raw_rng = type(record) == "table"
+            and rawget(record, "raw_rng") or nil
+        if kind_counts[kind] == nil
+            or rawget(record, "seq") ~= index - 1
+            or type(candidate_count) ~= "number"
+            or candidate_count ~= math.floor(candidate_count)
+            or candidate_count < 1 or candidate_count > 64
+            or type(selected_index) ~= "number"
+            or selected_index ~= math.floor(selected_index)
+            or selected_index < 0 or selected_index >= candidate_count
+            or type(quotient) ~= "number"
+            or quotient ~= math.floor(quotient)
+            or quotient < 0 or quotient > 32767
+            or type(raw_rng) ~= "number"
+            or raw_rng ~= quotient * candidate_count + selected_index
+            or type(candidates) ~= "table"
+            or #candidates ~= candidate_count then
+            return nil, "spawn-coordinate snapshot contains an invalid record"
+        end
+        local selected = candidates[selected_index + 1]
+        if type(selected) ~= "table"
+            or rawget(selected, "x") ~= rawget(record, "selected_x")
+            or rawget(selected, "y") ~= rawget(record, "selected_y") then
+            return nil, "spawn-coordinate selected candidate mismatch"
+        end
+        for _, candidate in ipairs(candidates) do
+            if type(candidate) ~= "table"
+                or type(rawget(candidate, "x")) ~= "number"
+                or type(rawget(candidate, "y")) ~= "number" then
+                return nil, "spawn-coordinate candidate is invalid"
+            end
+        end
+        kind_counts[kind] = kind_counts[kind] + 1
+    end
+    if kind_counts.scheduler_draw ~= summary.scheduler_count
+        or kind_counts.selector_fallback_draw
+            ~= summary.selector_fallback_count
+        or kind_counts.selector_standard_draw
+            ~= summary.selector_standard_count then
+        return nil, "spawn-coordinate record-kind counts mismatch"
+    end
+    return true
+end
+
+local function observatory_spawn_coordinate_snapshot_complete(snapshot)
+    local integrity = rawget(snapshot, "integrity") or {}
+    local summary = rawget(snapshot, "summary") or {}
+    if rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "stopped_reason") ~= nil
+        or rawget(integrity, "overflow_count") ~= 0
+        or rawget(integrity, "candidate_error_count") ~= 0
+        or rawget(integrity, "pointer_fault_count") ~= 0
+        or rawget(integrity, "transition_mismatch_count") ~= 0
+        or rawget(integrity, "wrong_thread_count") ~= 0
+        or rawget(integrity, "unexpected_breakpoint_count") ~= 0
+        or rawget(integrity, "torn_record_count") ~= 0
+        or rawget(integrity, "debug_registers_armed") ~= false
+        or rawget(integrity, "debug_registers_cleared") ~= true
+        or rawget(integrity, "veh_installed") ~= false
+        or rawget(integrity, "veh_removed") ~= true
+        or rawget(integrity, "executable_file_released") ~= true
+        or rawget(integrity, "executable_bytes_modified") ~= false
+        or rawget(integrity, "seam_bytes_unchanged") ~= true
+        or type(rawget(summary, "record_count")) ~= "number"
+        or rawget(summary, "record_count") < 1
+        or rawget(summary, "record_count") > 256
+        or type(rawget(summary, "selector_count")) ~= "number"
+        or rawget(summary, "selector_count") < 1
+        or rawget(summary, "thread_count") ~= 1 then
+        return nil, "spawn-coordinate snapshot is incomplete"
+    end
+    return true
+end
+
 local function observatory_selected_queue_scenario()
     local mission = _ITB_CURRENT_MISSION
     if not mission and GetCurrentMission then
@@ -4476,6 +4682,207 @@ local function run_observatory_selected_queue_trial(condition, capture_id)
         .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
         .. " records=" .. tostring(record_count)
         .. " complete=true"
+end
+
+local function prepare_observatory_spawn_coordinate_trial(
+    condition, capture_id
+)
+    local command_name = "OBS_SPAWN_COORDINATE_PREPARE"
+    if condition ~= "control" and condition ~= "dormant"
+        and condition ~= "armed" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " capture ID is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local mission = _ITB_CURRENT_MISSION
+    if not mission and GetCurrentMission then
+        local mission_ok, current = pcall(GetCurrentMission)
+        if mission_ok then mission = current end
+    end
+    if mission_bridge_id(mission) ~= "Mission_Power" then
+        return nil, command_name .. " requires Mission_Power"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if active_ok and active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if _observatory_spawn_coordinate_condition ~= nil
+        or _observatory_spawn_coordinate_module ~= nil then
+        return nil, "spawn-coordinate boundary is already consumed"
+    end
+    if observatory_path_exists(SPAWN_COORDINATE_SNAPSHOT_FILE)
+        or observatory_path_exists(SPAWN_COORDINATE_SNAPSHOT_TMP) then
+        return nil, "spawn-coordinate snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local observer = nil
+    if condition ~= "control" then
+        local observer_error = nil
+        observer, observer_error =
+            load_observatory_spawn_coordinate_module(directory)
+        if not observer then return nil, tostring(observer_error) end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "spawn-coordinate seed failed: " .. tostring(seeded)
+    end
+    if condition == "armed" then
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "spawn-coordinate arm failed: " .. tostring(armed)
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "debug_registers_armed") ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "spawn-coordinate arm status mismatch"
+        end
+    end
+    _observatory_spawn_coordinate_module = observer or false
+    _observatory_spawn_coordinate_condition = condition
+    _observatory_spawn_coordinate_capture_id = capture_id
+    _observatory_spawn_coordinate_restored = false
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
+        .. " armed=" .. tostring(condition == "armed")
+end
+
+local function finish_observatory_spawn_coordinate_trial(capture_id)
+    local command_name = "OBS_SPAWN_COORDINATE_FINISH"
+    if capture_id ~= _observatory_spawn_coordinate_capture_id
+        or _observatory_spawn_coordinate_condition == nil then
+        return nil, command_name .. " capture does not match prepared boundary"
+    end
+    local condition = _observatory_spawn_coordinate_condition
+    local summary = {
+        record_count = 0,
+        scheduler_count = 0,
+        selector_fallback_count = 0,
+        selector_standard_count = 0,
+        selector_count = 0,
+    }
+    if condition == "armed" then
+        local observer = _observatory_spawn_coordinate_module
+        local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+        if not finish_ok or type(snapshot) ~= "table" then
+            return nil, "spawn-coordinate finish failed: " .. tostring(snapshot)
+        end
+        local integrity = rawget(snapshot, "integrity") or {}
+        _observatory_spawn_coordinate_restored =
+            rawget(integrity, "state") == "restored"
+            and rawget(integrity, "debug_registers_armed") == false
+            and rawget(integrity, "debug_registers_cleared") == true
+            and rawget(integrity, "veh_installed") == false
+            and rawget(integrity, "veh_removed") == true
+            and rawget(integrity, "executable_file_released") == true
+            and rawget(integrity, "executable_bytes_modified") == false
+            and rawget(integrity, "seam_bytes_unchanged") == true
+        _observatory_spawn_coordinate_module = false
+        if not _observatory_spawn_coordinate_restored then
+            return nil, "spawn-coordinate finish could not prove clean restore"
+        end
+        local valid, validation_error =
+            validate_observatory_spawn_coordinate_snapshot(snapshot, capture_id)
+        if not valid then return nil, tostring(validation_error) end
+        local complete, complete_error =
+            observatory_spawn_coordinate_snapshot_complete(snapshot)
+        if not complete then return nil, tostring(complete_error) end
+        local wrote, write_error = write_observatory_create_only_json(
+            SPAWN_COORDINATE_SNAPSHOT_FILE,
+            SPAWN_COORDINATE_SNAPSHOT_TMP,
+            snapshot,
+            2 * 1024 * 1024
+        )
+        if not wrote then
+            return nil, "spawn-coordinate snapshot output failed: "
+                .. tostring(write_error)
+        end
+        summary = rawget(snapshot, "summary") or summary
+    end
+    _observatory_spawn_coordinate_condition = "finished"
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " records=" .. tostring(summary.record_count or 0)
+        .. " scheduler=" .. tostring(summary.scheduler_count or 0)
+        .. " fallback=" .. tostring(summary.selector_fallback_count or 0)
+        .. " standard=" .. tostring(summary.selector_standard_count or 0)
+        .. " selectors=" .. tostring(summary.selector_count or 0)
+        .. " complete=true"
+end
+
+local function abort_observatory_spawn_coordinate_trial(capture_id)
+    local command_name = "OBS_SPAWN_COORDINATE_ABORT"
+    if capture_id ~= _observatory_spawn_coordinate_capture_id
+        or _observatory_spawn_coordinate_condition == nil then
+        return nil, command_name .. " capture does not match prepared boundary"
+    end
+    local condition = _observatory_spawn_coordinate_condition
+    local clean = true
+    if condition == "armed" then
+        local observer = _observatory_spawn_coordinate_module
+        if observer == false and _observatory_spawn_coordinate_restored then
+            clean = true
+        elseif type(observer) ~= "table" then
+            clean = false
+        else
+            local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+            local integrity = finish_ok and type(snapshot) == "table"
+                and rawget(snapshot, "integrity") or {}
+            clean = finish_ok
+                and rawget(integrity, "state") == "restored"
+                and rawget(integrity, "debug_registers_armed") == false
+                and rawget(integrity, "debug_registers_cleared") == true
+                and rawget(integrity, "veh_installed") == false
+                and rawget(integrity, "veh_removed") == true
+                and rawget(integrity, "executable_file_released") == true
+                and rawget(integrity, "executable_bytes_modified") == false
+                and rawget(integrity, "seam_bytes_unchanged") == true
+            if clean then
+                _observatory_spawn_coordinate_restored = true
+                _observatory_spawn_coordinate_module = false
+            end
+        end
+        if not clean then
+            return nil, "spawn-coordinate abort could not prove clean restore"
+        end
+    end
+    _observatory_spawn_coordinate_condition = "aborted"
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id .. " restored=" .. tostring(clean)
 end
 
 local function observatory_trial_live_state(capsule, cached_save)
@@ -5437,6 +5844,57 @@ local function execute_command(cmd_str)
             .. " slots="
             .. tostring(rawget(summary, "slot_count") or -1)
         )
+        return
+
+    elseif cmd == "OBS_SPAWN_COORDINATE_PREPARE" then
+        if #parts ~= 3 then
+            write_ack(
+                "ERROR: OBS_SPAWN_COORDINATE_PREPARE requires condition and capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            prepare_observatory_spawn_coordinate_trial(parts[2], parts[3])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_COORDINATE_PREPARE "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_COORDINATE_FINISH" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SPAWN_COORDINATE_FINISH requires capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            finish_observatory_spawn_coordinate_trial(parts[2])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_COORDINATE_FINISH "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_COORDINATE_ABORT" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SPAWN_COORDINATE_ABORT requires capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            abort_observatory_spawn_coordinate_trial(parts[2])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_COORDINATE_ABORT "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
         return
 
     elseif cmd == "OBS_SELECTED_QUEUE_TRIAL" then
