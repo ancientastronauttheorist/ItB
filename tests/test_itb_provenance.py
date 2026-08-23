@@ -5913,6 +5913,18 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_end_settlement.json"
+    ] == {
+        "final_limit_bypasses_end_block",
+        "both_final_stages_use_current_limit",
+        "mission_end_queues_native_effect",
+        "queued_effect_is_board_activity",
+        "phase_handoff_waits_for_activity_clear",
+        "final_mission_end_effects_precede_exit",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_startup.json"
     ] == {
         "native_startup_order", "final_cave_map_pool",
@@ -5943,6 +5955,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "validate_final_phase_scheduler_map",
         "validate_final_phase_scheduler_map_binding",
     }
+    assert implementations["src/observatory/final_end_settlement.py"] == {
+        "build_final_end_settlement_map",
+        "validate_final_end_settlement_map",
+        "validate_final_end_settlement_map_binding",
+    }
     assert implementations["src/observatory/final_cave_startup.py"] == {
         "build_final_cave_startup_map",
         "validate_final_cave_startup_map",
@@ -5972,6 +5989,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "scripts/itb_observatory_final_phase_scheduler.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_end_settlement.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_startup.py"
     ] == {"_parser", "main"}
     assert implementations[
@@ -5989,6 +6009,10 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "fabricates no pawn or UID" in facts
     assert "relative native path" in facts
     assert "IsNextPhase before dispatching MissionEnd" in facts
+    assert "current turn equals that limit" in facts
+    assert "before constructing or invoking IsEndBlocked" in facts
+    assert "Board activity reason 6" in facts
+    assert "cannot reach the later IsNextPhase" in facts
     assert "source-selected handoff target is exact" in facts
     assert "map selection, map loading/AddMap" in facts
     assert "exactly nine final_cave-tagged maps" in facts
@@ -6000,10 +6024,10 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "no concrete cross-stage Rust forecast" in facts
     gaps = " ".join(record["known_gaps"])
     assert "Env_Final records cover exact current bridge selections" in gaps
-    assert "exact-build native maps now close relative" in gaps
-    assert "incoming pre-map-draw CRT state" in gaps
+    assert "exact-build native maps now close the ordinary turn-limit" in gaps
+    assert "Incoming pre-map-draw CRT state" in gaps
     assert "concrete selected map" in gaps
-    assert "external state change that advances both Final missions" in gaps
+    assert "post-StartMechTravel campaign settlement" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated native replacement cycles" in gaps
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps

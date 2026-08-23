@@ -527,13 +527,48 @@ python scripts/itb_observatory_final_phase_scheduler.py verify `
   --scheduler-map data/observatory/native/windows_build_13725832_31fe35265598_final_phase_scheduler.json
 ```
 
-This is a relative static order proof, not a runtime timestamp. The native
-event that advances either always-blocked Final mission, queued `MissionEnd`
-effect settlement, the cave countdown outcome, and non-Windows equivalence
-remain explicit gaps. The following artifact closes the static cave-startup
-order while retaining concrete RNG and settlement as gaps. No current-turn
-Rust simulator change follows from either map; the safe boundary remains a
-fresh bridge read after the live stage change.
+This is a relative static order proof, not a runtime timestamp. Its conservative
+`final_end_state_trigger` and `mission_end_effect_settlement` gaps are resolved
+by the follow-up below. Cave initialization outputs, the final post-travel
+campaign path, the countdown outcome, and non-Windows equivalence remain
+explicit gaps. No current-turn Rust simulator change follows; the safe boundary
+remains a fresh bridge read after the live stage change.
+
+## Final end and MissionEnd settlement boundary
+
+`native/windows_build_13725832_31fe35265598_final_end_settlement.json`
+supersedes two gaps in the scheduler artifact. It joins three exact shipped Lua
+files to 15 reviewed native regions, four callback-string anchors, two vtable
+pointers, 11 instruction-start control windows, and eight direct call edges.
+For the pinned Windows build it establishes that:
+
+- end readiness calls the current `GetTurnLimit` and returns true when an active
+  Board exists, the current turn equals that limit, and BoardPlayer state is 2;
+- that exact return occurs before the fallback `IsEndBlocked` dispatch, so both
+  shipped Final stages use the ordinary limit boundary despite their always-true
+  overrides; the cave's source-level `TurnLimit + 2` replacement extension moves
+  the queried boundary;
+- both Final `MissionEnd` callbacks route `Board:AddEffect` through the reviewed
+  native binding into the Board effect vector at `+0x2c50`;
+- a nonempty vector yields Board activity reason 6 through the pinned Board and
+  BoardPlayer vtable slots; and
+- after `MissionEnd` requests completion state 5, the primary orchestrator does
+  not reach `IsNextPhase` and the phase/exit handoff until comprehensive Board
+  activity is clear.
+
+Verify the executable, exact sources, region hashes, strings, vtable pointers,
+control windows, and direct edges with:
+
+```powershell
+python scripts/itb_observatory_final_end_settlement.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --settlement-map data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json
+```
+
+The map proves ordinary queue-empty/activity-clear ordering, not wall-clock
+timing, arbitrary modified-effect cancellation, or the post-`StartMechTravel`
+campaign-victory/save/UI path. It requires no Rust simulator change.
 
 ## Final Cave startup boundary
 

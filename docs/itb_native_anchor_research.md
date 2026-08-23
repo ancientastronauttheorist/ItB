@@ -80,6 +80,10 @@ The durable artifacts are:
   for eight reviewed regions, ten control windows, the `Pawn:IsDead` and
   `Pawn:IsCorpse` bindings, mode-1 counted occupancy, the concrete Board path-
   manager vtable, and ordinary/Road Runner corpse transit-versus-stop proof.
+- `data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json`
+  for the Final turn-limit/state-2 end-readiness short circuit, native
+  `Board:AddEffect` enqueue path, Board/BoardPlayer activity vtables, and the
+  activity-clear completion handoff.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct
@@ -387,12 +391,16 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Water correction; v403 implements corpse lifecycle pathing. Runtime
    subclass values, removal timing, matched vectors, and `AddMove` execution
    remain mismatch-driven.
-7. **Completed offline for the Final surface-to-cave startup boundary:** seven
-   exact native regions and their call/control windows prove the ordinary
-   `IsEndBlocked` veto, `IsNextPhase` before `MissionEnd`, and the later
-   `IsNextPhase`-guarded `GAME.CreateNextPhase` dispatch. Exact shipped Lua
-   selects `Mission_Final_Cave` and replaces the current mission slot once that
-   branch is reached. The follow-up exact-build map continues through native
+7. **Completed offline for the Final surface-to-cave startup boundary:** the
+   initial seven-region map proves the ordinary `IsEndBlocked` veto,
+   `IsNextPhase` before `MissionEnd`, and the later `IsNextPhase`-guarded
+   `GAME.CreateNextPhase` dispatch. The settlement follow-up resolves its two
+   conservative gaps: current `GetTurnLimit` equality with an active Board in
+   BoardPlayer state 2 returns ready before `IsEndBlocked`, and a Final
+   `MissionEnd` `Board:AddEffect` remains Board activity until the effect vector
+   and comprehensive activity gate clear. Exact shipped Lua selects
+   `Mission_Final_Cave` and replaces the current mission slot once that branch
+   is reached. The startup exact-build map continues through native
    map selection/loading and `BaseStart`, inventories all nine `final_cave`
    maps and their startup zones, and pins the shipped Lua call skeleton from
    the one-entry map tag through lava-path, bomb/Mech, dropper, boss,
@@ -403,8 +411,9 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    draws: `random_int(1)` advances and returns zero, then `random_int(9)` maps
    its remainder to the nine ordered candidates. The incoming CRT state,
    concrete later draws, nested spawn RNG, queued startup-effect settlement,
-   the external Final end-state trigger, countdown outcome, and non-Windows
-   equivalence remain open; no speculative Rust forecast follows.
+   bomb replacement result, countdown outcome, post-`StartMechTravel` campaign
+   path, and non-Windows equivalence remain open; no speculative Rust forecast
+   follows.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

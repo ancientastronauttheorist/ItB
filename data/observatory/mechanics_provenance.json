@@ -9041,6 +9041,14 @@
           "statement": "The exact Windows-build Final scheduler map pins the relative native path: ordinary end readiness treats a true IsEndBlocked result as a veto; the reviewed completion branch evaluates IsNextPhase before dispatching MissionEnd; the primary orchestrator later evaluates IsNextPhase again and calls the phase-transition routine only when it is true; that routine dispatches GAME.CreateNextPhase. This is static relative order, not a timestamped runtime trace or proof of the external end-state trigger."
         },
         {
+          "classification": "inference",
+          "statement": "The exact-build settlement follow-up resolves that conservative trigger gap. Native end readiness queries the current GetTurnLimit and, when an active Board exists, the current turn equals that limit, and BoardPlayer state is 2, returns true before constructing or invoking IsEndBlocked. Both shipped Final stages therefore use this ordinary limit boundary despite their always-true IsEndBlocked overrides; Mission_Final_Cave's source-level TurnLimit increment by 2 moves the queried equality boundary."
+        },
+        {
+          "classification": "inference",
+          "statement": "The same settlement map joins both shipped Final MissionEnd Board:AddEffect calls to the exact native binding and Board effect vector at +0x2c50. A nonempty vector returns Board activity reason 6 through the pinned Board and BoardPlayer vtable slots. MissionEnd then requests completion state 5, and the primary orchestrator cannot reach the later IsNextPhase and phase/exit handoff until comprehensive Board activity clears. This proves ordinary queue-empty ordering, not a wall-clock timestamp, arbitrary modified-effect cancellation, or post-StartMechTravel campaign settlement."
+        },
+        {
           "classification": "fact",
           "statement": "The exact shipped base sources define Mission:IsNextPhase as a nonempty NextPhase test and GameObject:CreateNextPhase as replacement of the current mission slot with CreateMission(next_phase). Mission_Final sets NextPhase=Mission_Final_Cave, so the source-selected handoff target is exact once the mapped native phase branch is reached."
         },
@@ -9088,6 +9096,10 @@
           "symbols": ["normal_end_readiness_veto", "mission_end_callback_order", "native_phase_handoff_order", "create_next_phase_dispatch", "final_surface_target", "solver_boundary"]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json",
+          "symbols": ["final_limit_bypasses_end_block", "both_final_stages_use_current_limit", "mission_end_queues_native_effect", "queued_effect_is_board_activity", "phase_handoff_waits_for_activity_clear", "final_mission_end_effects_precede_exit", "solver_boundary"]
+        },
+        {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
           "symbols": ["native_startup_order", "final_cave_map_pool", "base_start_source_order", "startup_rng_skeleton", "center_assignment", "solver_boundary"]
         },
@@ -9120,6 +9132,10 @@
           "symbols": ["build_final_phase_scheduler_map", "validate_final_phase_scheduler_map", "validate_final_phase_scheduler_map_binding"]
         },
         {
+          "path": "src/observatory/final_end_settlement.py",
+          "symbols": ["build_final_end_settlement_map", "validate_final_end_settlement_map", "validate_final_end_settlement_map_binding"]
+        },
+        {
           "path": "src/observatory/final_cave_startup.py",
           "symbols": ["build_final_cave_startup_map", "validate_final_cave_startup_map", "validate_final_cave_startup_map_binding"]
         },
@@ -9148,6 +9164,10 @@
           "symbols": ["_parser", "main"]
         },
         {
+          "path": "scripts/itb_observatory_final_end_settlement.py",
+          "symbols": ["_parser", "main"]
+        },
+        {
           "path": "scripts/itb_observatory_final_cave_startup.py",
           "symbols": ["_parser", "main"]
         },
@@ -9157,11 +9177,11 @@
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, and the ordinary two-draw map boundary. The external Final end-state trigger, incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued effect settlement, replacement timing/coordinate, and full runtime scheduler conformance remain open.",
-        "Mission_Infinite inheritance, native turn and team callback order, the external state change that advances both Final missions despite their always-true IsEndBlocked callbacks, MissionEnd presentation and travel settlement, native spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, and the ordinary two-draw map boundary. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, replacement timing/coordinate, post-StartMechTravel campaign settlement, and full runtime scheduler conformance remain open.",
+        "Mission_Infinite inheritance, native turn and team callback order outside the pinned completion branch, post-StartMechTravel campaign victory/save/presentation, native spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
         "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
-        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove relative callback/control-flow order, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, and installed map/zone candidates, while the terrain fingerprint alone does not prove the live end-state trigger, Mission_Final:MissionEnd queued-effect settlement, concrete cave initialization results, or queued startup effects executed conformantly."
+        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, Mission_Final and Mission_Final_Cave MissionEnd effect-vector activity gating, relative callback/control-flow order, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, and installed map/zone candidates. They do not prove concrete cave initialization results, queued startup effects executing conformantly, arbitrary modified-effect cancellation, or the post-travel campaign path."
       ],
       "sources": [
         {
@@ -9224,6 +9244,10 @@
         {
           "path": "tests/test_observatory_final_phase_scheduler.py",
           "symbols": ["test_committed_map_closes_relative_handoff_without_claiming_trigger", "test_binding_rejects_control_flow_source_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_end_settlement.py",
+          "symbols": ["test_committed_map_closes_final_end_and_effect_settlement_boundaries", "test_binding_rejects_pointer_source_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
         },
         {
           "path": "tests/test_observatory_final_cave_startup.py",

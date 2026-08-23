@@ -1,0 +1,718 @@
+{
+  "analysis_kind": "final_end_settlement_boundary_map",
+  "contracts": {
+    "mission_end_effect_handoff": {
+      "board_activity_vtable_offset": "0x68",
+      "boardplayer_activity_vtable_offset": "0x40",
+      "cave_exit_after_clear": "IsNextPhase is false and the ordinary completed-mission exit branch runs.",
+      "completion_state": 5,
+      "handoff_requires_activity_clear": true,
+      "lua_enqueue": "MissionEnd calls Board:AddEffect(effect)",
+      "native_effect_vector_end_offset": "0x2c54",
+      "native_effect_vector_offset": "0x2c50",
+      "nonempty_activity_reason": 6,
+      "surface_handoff_after_clear": "IsNextPhase -> phase_transition -> GAME.CreateNextPhase"
+    },
+    "ordinary_final_end_trigger": {
+      "applies_to": [
+        "Mission_Final",
+        "Mission_Final_Cave"
+      ],
+      "cave_extension_behavior": "Mission_Final_Cave may increase TurnLimit by 2 after a missing bomb; the equality check uses the current Lua value.",
+      "inputs": [
+        "active Board pointer is nonzero",
+        "current turn equals Mission:GetTurnLimit()",
+        "BoardPlayer state equals 2"
+      ],
+      "is_end_blocked_invoked_on_this_branch": false,
+      "result": "end_readiness returns true"
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "board_secondary_vtable_install",
+      "instruction_hex": "c707fce28200c70358e28200",
+      "meaning": "Install the Board primary vtable and its secondary vtable at Board+0x0c.",
+      "region_id": "board_constructor",
+      "sha256": "633f628a27e1edb785cebb5496d767187baa2f0a9f4eae59abdbb2f678965a8f",
+      "size": 12,
+      "start_rva": "0x0015f1f0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "effect_enqueue_vector",
+      "instruction_hex": "8d8574ffffffc645fc01508d8e502c0000e8524f01008d45f0508d8e5c2c0000e8d3520100",
+      "meaning": "Append the copied 0x7c-byte effect to the Board vector at +0x2c50 and its parallel timing value at +0x2c5c.",
+      "region_id": "effect_enqueue",
+      "sha256": "4ea5f7385b4238ca0f9b98c7e3bf48f610db853f77a1a62708868c1750f22bb5",
+      "size": 37,
+      "start_rva": "0x00160708"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "effect_queue_activity_reason",
+      "instruction_hex": "8b86502c00003b86542c00007424b8060000005f5e5b8be55dc3",
+      "meaning": "Return nonzero activity reason 6 while the +0x2c50 effect vector begin and end pointers differ.",
+      "region_id": "board_activity_reason",
+      "sha256": "f2135cb89f164aa90a0776086917499c358838ec5baa2e0a68b970b27185fef7",
+      "size": 26,
+      "start_rva": "0x00169a5c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "activity_reason_to_boolean",
+      "instruction_hex": "83c1f4e808000000f7d81bc0f7d8c3",
+      "meaning": "Call the Board activity-reason routine and return true exactly when its result is nonzero.",
+      "region_id": "board_activity_boolean",
+      "sha256": "0f857820b8f5fea9fcf8165260e7311c458f592b1b952c69bf9da7711359b11c",
+      "size": 15,
+      "start_rva": "0x001698e0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "boardplayer_vtable_install",
+      "instruction_hex": "c70648018300",
+      "meaning": "Install the BoardPlayer vtable at VA 0x00830148.",
+      "region_id": "boardplayer_constructor",
+      "sha256": "859275cde0f2a1378942d26a610b49cf0b2db0d8b6ce18dbc631f2e734cb5274",
+      "size": 6,
+      "start_rva": "0x0017fac8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_construction_and_attachment",
+      "instruction_hex": "e8a96f1d0083c4048945f08bc8c645fc23e80decfdffc645fc228d9600390000894604",
+      "meaning": "Allocate and construct the Board, then retain its pointer at BoardPlayer+0x04.",
+      "region_id": "boardplayer_constructor",
+      "sha256": "a7acc7f89e5d0061eb3f16ecf993c177c67e359609943f51e539f134b7898f58",
+      "size": 35,
+      "start_rva": "0x0018052d"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_limit_short_circuit",
+      "instruction_hex": "e84a38ecff83bee40f0000007424398654010000752283bec80f0000027513b0018b4df464890d00000000595f5e8be55dc3",
+      "meaning": "After GetTurnLimit, return ready when an active Board exists, turn equals that limit, and BoardPlayer state is 2. This return precedes the later IsEndBlocked dispatch.",
+      "region_id": "end_readiness",
+      "sha256": "51f88c212d52938160e3430d776c5f7aba3e9546ec816ff876bb08addc6125ec",
+      "size": 50,
+      "start_rva": "0x00185c71"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "turn_state_store",
+      "instruction_hex": "8b4f048d8564ffffff50e8fabaf6ffc745fc000000008b9d64ffffff89b7c80f000083fe050f878a050000",
+      "meaning": "Store the requested transition argument into BoardPlayer state +0xfc8 before dispatching its state-specific branch.",
+      "region_id": "turn_state_transition",
+      "sha256": "a7e49be15551b3b742712e7a2399a2e7619db05c4f9f97f5e8e4ddef8d433e09",
+      "size": 43,
+      "start_rva": "0x0018a367"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end_callback_then_state_five",
+      "instruction_hex": "68e8f98200e882c4e7ff83ec18c745fc000000008d86d40f00008bcc50e86af2ebffc745fcffffffffe84edf00008bcee8370200006a058bcee8fee8ffff",
+      "meaning": "Dispatch MissionEnd, perform reviewed completion bookkeeping, then request BoardPlayer state 5.",
+      "region_id": "mission_end_dispatch",
+      "sha256": "572ea85fef2c34ef12908aa0bbfcb250123aa2c7d29a6ea33fe424d373f016d5",
+      "size": 62,
+      "start_rva": "0x0018b984"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "handoff_activity_gate",
+      "instruction_hex": "8b068bce8b4040ffd084c0755a8b86c80f000083f80475046a03eb4483f80575468a86a81a000084c0753c3886c845000075348d8e54200000e8d873060084c075258bcee8cd7dffff84c074098bcee862e0ffffeb11",
+      "meaning": "Exit the handoff branch when BoardPlayer activity is true. Only an activity-clear state 5 can reach IsNextPhase and the phase transition.",
+      "region_id": "primary_orchestrator",
+      "sha256": "b22e66a92620e6f89b114dcf7168258558049a2365af7b693e03fc8da20e08cc",
+      "size": 86,
+      "start_rva": "0x0018b11a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_effect_registration",
+      "instruction_hex": "c745e880085600ff75f0c745ec00000000518d4de85168b08883008bc8e836e30000",
+      "meaning": "Register native handler VA 0x00560880 under the Lua method name AddEffect.",
+      "region_id": "add_effect_registration_window",
+      "sha256": "167ef9191442cdf7ec1a7bcb98708c4b50bef6cce56c28353b6ff073a1953db9",
+      "size": 34,
+      "start_rva": "0x0027a738"
+    }
+  ],
+  "data_pointers": [
+    {
+      "data_rva": "0x00430188",
+      "evidence_class": "fact",
+      "id": "boardplayer_activity_slot",
+      "role": "BoardPlayer virtual activity slot used by the orchestrator",
+      "section": ".rdata",
+      "slot_offset": "0x40",
+      "target_region": "boardplayer_activity_bridge",
+      "target_rva": "0x001936e0",
+      "target_va": "0x005936e0",
+      "vtable_va": "0x00830148"
+    },
+    {
+      "data_rva": "0x0042e2c0",
+      "evidence_class": "fact",
+      "id": "board_activity_slot",
+      "role": "Board secondary-vtable activity boolean slot",
+      "section": ".rdata",
+      "slot_offset": "0x68",
+      "target_region": "board_activity_boolean",
+      "target_rva": "0x001698e0",
+      "target_va": "0x005698e0",
+      "vtable_va": "0x0082e258"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018053e",
+      "id": "boardplayer_constructor_to_board_constructor",
+      "instruction_hex": "e80decfdff",
+      "kind": "direct_rel32",
+      "meaning": "Construct the Board retained by BoardPlayer.",
+      "source_region": "boardplayer_constructor",
+      "target": {
+        "region": "board_constructor",
+        "rva": "0x0015f150",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016092c",
+      "id": "board_add_effect_to_effect_enqueue",
+      "instruction_hex": "e88ffdffff",
+      "kind": "direct_rel32",
+      "meaning": "Pass the copied SkillEffect to the queue insertion routine.",
+      "source_region": "board_add_effect",
+      "target": {
+        "region": "effect_enqueue",
+        "rva": "0x001606c0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001698e3",
+      "id": "board_activity_boolean_to_reason",
+      "instruction_hex": "e808000000",
+      "kind": "direct_rel32",
+      "meaning": "Obtain the comprehensive Board activity reason code.",
+      "source_region": "board_activity_boolean",
+      "target": {
+        "region": "board_activity_reason",
+        "rva": "0x001698f0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b826",
+      "id": "mission_dispatch_to_end_readiness",
+      "instruction_hex": "e895a3ffff",
+      "kind": "direct_rel32",
+      "meaning": "Evaluate the ordinary mission-end readiness boundary.",
+      "source_region": "mission_end_dispatch",
+      "target": {
+        "region": "end_readiness",
+        "rva": "0x00185bc0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b9ad",
+      "id": "mission_dispatch_to_named_invoker",
+      "instruction_hex": "e84edf0000",
+      "kind": "direct_rel32",
+      "meaning": "Execute the constructed MissionEnd callback.",
+      "source_region": "mission_end_dispatch",
+      "target": {
+        "region": "mission_named_invoker",
+        "rva": "0x00199900",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b9bd",
+      "id": "mission_dispatch_to_state_transition",
+      "instruction_hex": "e8fee8ffff",
+      "kind": "direct_rel32",
+      "meaning": "Enter requested BoardPlayer state 5 after MissionEnd.",
+      "source_region": "mission_end_dispatch",
+      "target": {
+        "region": "turn_state_transition",
+        "rva": "0x0018a2c0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b15e",
+      "id": "primary_to_is_next_phase",
+      "instruction_hex": "e8cd7dffff",
+      "kind": "direct_rel32",
+      "meaning": "Evaluate IsNextPhase only after the activity gate clears.",
+      "source_region": "primary_orchestrator",
+      "target": {
+        "region": "is_next_phase",
+        "rva": "0x00182f30",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b169",
+      "id": "primary_to_phase_transition",
+      "instruction_hex": "e862e0ffff",
+      "kind": "direct_rel32",
+      "meaning": "Create the next phase only after a true predicate result.",
+      "source_region": "primary_orchestrator",
+      "target": {
+        "region": "phase_transition",
+        "rva": "0x001891d0",
+        "type": "region"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "claim": "On the reviewed ordinary state-2 limit boundary, native end readiness returns true before constructing or invoking IsEndBlocked. The always-true Final callbacks therefore do not veto this exact branch.",
+      "evidence_class": "inference",
+      "id": "final_limit_bypasses_end_block",
+      "limitations": [
+        "Other state/turn combinations continue through the separate fallback gates."
+      ],
+      "supports": [
+        "end_readiness",
+        "get_turn_limit",
+        "final_limit_short_circuit",
+        "is_end_blocked"
+      ]
+    },
+    {
+      "claim": "Mission_Final and Mission_Final_Cave both inherit the native turn-limit completion mechanism despite overriding IsEndBlocked to true. The cave's source-level +2 replacement extension moves the equality boundary because native code queries the current GetTurnLimit value.",
+      "evidence_class": "inference",
+      "id": "both_final_stages_use_current_limit",
+      "limitations": [
+        "This does not make bomb destruction a terminal loss or predict replacement coordinates."
+      ],
+      "supports": [
+        "scripts/missions/missions.lua",
+        "scripts/missions/final/mission_final.lua",
+        "scripts/missions/final/mission_final_two.lua",
+        "ordinary_final_end_trigger"
+      ]
+    },
+    {
+      "claim": "Both shipped Final MissionEnd callbacks call Board:AddEffect. The exact AddEffect registration selects the reviewed native binding, which copies the SkillEffect and appends it to the Board vector rooted at +0x2c50.",
+      "evidence_class": "inference",
+      "id": "mission_end_queues_native_effect",
+      "limitations": [
+        "Individual presentation opcodes inside the effect are not reconstructed here."
+      ],
+      "supports": [
+        "scripts/missions/final/mission_final.lua",
+        "scripts/missions/final/mission_final_two.lua",
+        "board_add_effect",
+        "add_effect_registration",
+        "board_add_effect_to_effect_enqueue",
+        "effect_enqueue_vector"
+      ]
+    },
+    {
+      "claim": "A nonempty +0x2c50 effect vector returns Board activity reason 6; the exact Board secondary-vtable slot converts any nonzero reason to true, and BoardPlayer's activity slot delegates to that Board slot.",
+      "evidence_class": "inference",
+      "id": "queued_effect_is_board_activity",
+      "limitations": [
+        "Reason 6 is one of several activity sources checked by the comprehensive routine."
+      ],
+      "supports": [
+        "effect_queue_activity_reason",
+        "activity_reason_to_boolean",
+        "board_activity_slot",
+        "boardplayer_activity_slot",
+        "boardplayer_activity_bridge"
+      ]
+    },
+    {
+      "claim": "After dispatching MissionEnd, native code requests BoardPlayer completion state 5. The primary orchestrator exits the handoff branch while BoardPlayer activity is true; only after it is false can state 5 reach IsNextPhase and the surface phase transition.",
+      "evidence_class": "inference",
+      "id": "phase_handoff_waits_for_activity_clear",
+      "limitations": [
+        "Additional native flags in the same handoff branch can delay it further."
+      ],
+      "supports": [
+        "mission_end_callback_then_state_five",
+        "turn_state_store",
+        "handoff_activity_gate",
+        "primary_to_is_next_phase",
+        "primary_to_phase_transition"
+      ]
+    },
+    {
+      "claim": "Mission_Final's queued fall/slide effect and Mission_Final_Cave's queued StartMechTravel effect keep the reviewed handoff/exit gate closed at least until their native effect vector is empty and the comprehensive Board activity check returns zero.",
+      "evidence_class": "inference",
+      "id": "final_mission_end_effects_precede_exit",
+      "limitations": [
+        "The later campaign-victory UI and save settlement are not mapped."
+      ],
+      "supports": [
+        "mission_end_queues_native_effect",
+        "queued_effect_is_board_activity",
+        "phase_handoff_waits_for_activity_clear"
+      ]
+    },
+    {
+      "claim": "No Rust simulator semantic change follows. Combat still ends at the live limit boundary, and cross-stage state must still come from a fresh settled bridge read rather than fabricated MissionEnd animation or cave-start results.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "limitations": [
+        "Concrete cave RNG and post-travel campaign state remain separate boundaries."
+      ],
+      "supports": [
+        "both_final_stages_use_current_limit",
+        "phase_handoff_waits_for_activity_clear"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Ghidra 12.1.3 constructor, vtable, reference, call-graph, and decompiler review joined Final readiness to the Board SkillEffect queue and the later completion-state handoff.",
+    "byte_verification": "Capstone 5.0.7 redecodes every published executable region from its declared start; the verifier rechecks exact windows, direct calls, callback strings, and both vtable pointers.",
+    "limitations": [
+      "Every native address and conclusion applies only to the pinned Windows executable.",
+      "Static activity gating proves queue-empty ordering, not wall-clock timing or arbitrary modified-effect cancellation behavior.",
+      "The post-StartMechTravel campaign-victory and presentation path remains outside this map.",
+      "macOS and other executable builds require independent maps."
+    ]
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board constructor function body.",
+      "end_rva_exclusive": "0x0015f85a",
+      "evidence_class": "fact",
+      "id": "board_constructor",
+      "section": ".text",
+      "sha256": "ebeddd7980834f5a8a2715f2df794d51675107b478758cfd2db10f1d3fb11f16",
+      "size": 1802,
+      "start_rva": "0x0015f150"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 effect-enqueue function body.",
+      "end_rva_exclusive": "0x00160752",
+      "evidence_class": "fact",
+      "id": "effect_enqueue",
+      "section": ".text",
+      "sha256": "0a07ee9377f4bc3bc13be075ccd2a45a01719c8181e231a4450b56d6dd98f4ae",
+      "size": 146,
+      "start_rva": "0x001606c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board AddEffect binding body.",
+      "end_rva_exclusive": "0x00160960",
+      "evidence_class": "fact",
+      "id": "board_add_effect",
+      "section": ".text",
+      "sha256": "03a3cd32a9051785ee9467a2f63c416b72da009827f134c9dc87234d174f1965",
+      "size": 224,
+      "start_rva": "0x00160880"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board activity boolean wrapper.",
+      "end_rva_exclusive": "0x001698ef",
+      "evidence_class": "fact",
+      "id": "board_activity_boolean",
+      "section": ".text",
+      "sha256": "0f857820b8f5fea9fcf8165260e7311c458f592b1b952c69bf9da7711359b11c",
+      "size": 15,
+      "start_rva": "0x001698e0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board activity-reason function body.",
+      "end_rva_exclusive": "0x00169b22",
+      "evidence_class": "fact",
+      "id": "board_activity_reason",
+      "section": ".text",
+      "sha256": "dc9eced8706681fbaa20781c972724170efe9653c37d277e6b8eaaacc5b61a13",
+      "size": 562,
+      "start_rva": "0x001698f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer constructor function body.",
+      "end_rva_exclusive": "0x001805de",
+      "evidence_class": "fact",
+      "id": "boardplayer_constructor",
+      "section": ".text",
+      "sha256": "c735b98c1ebef4e9c52c43239f752cfd45e99a7c1c18062235a3c24d5578c84a",
+      "size": 2910,
+      "start_rva": "0x0017fa80"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x00182ffa",
+      "evidence_class": "fact",
+      "id": "is_next_phase",
+      "section": ".text",
+      "sha256": "e8f4a1233b90831e3a17c0496f71bfa3de8ead5bfbb170236763bb3d21d2d432",
+      "size": 202,
+      "start_rva": "0x00182f30"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x00185d92",
+      "evidence_class": "fact",
+      "id": "end_readiness",
+      "section": ".text",
+      "sha256": "a3fcc9c4e1f4561c46f1b371f515090001578c02bebc718029dc5939f17fae16",
+      "size": 466,
+      "start_rva": "0x00185bc0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer state-transition body.",
+      "end_rva_exclusive": "0x0018a955",
+      "evidence_class": "fact",
+      "id": "turn_state_transition",
+      "section": ".text",
+      "sha256": "903ca7d14ba5317753901f70ec24acfb31ea44e947d3ebce3246651897bc2b90",
+      "size": 1685,
+      "start_rva": "0x0018a2c0"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x0018964d",
+      "evidence_class": "fact",
+      "id": "phase_transition",
+      "section": ".text",
+      "sha256": "3a5b364d9af48610bb07f8e44d5cb9ddb4051f4cb4a5fa0ad0db8eb51522073f",
+      "size": 1149,
+      "start_rva": "0x001891d0"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x0018b36f",
+      "evidence_class": "fact",
+      "id": "primary_orchestrator",
+      "section": ".text",
+      "sha256": "8a5e7744c920a70f30f8056271d452335be6d601625f8b8d935d5457b77ebf82",
+      "size": 1247,
+      "start_rva": "0x0018ae90"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x0018b9ff",
+      "evidence_class": "fact",
+      "id": "mission_end_dispatch",
+      "section": ".text",
+      "sha256": "00e1f495aa53d2a439c4eeb6e41e1d5ac5b304e0c050e4343bd0433f9ff74ee9",
+      "size": 639,
+      "start_rva": "0x0018b780"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer virtual bridge body.",
+      "end_rva_exclusive": "0x001936ed",
+      "evidence_class": "fact",
+      "id": "boardplayer_activity_bridge",
+      "section": ".text",
+      "sha256": "28b7c171070ae6f815fb1f5bc3f59431d581243a17720b2b55a9c7a158ee521b",
+      "size": 13,
+      "start_rva": "0x001936e0"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x00199998",
+      "evidence_class": "fact",
+      "id": "mission_named_invoker",
+      "section": ".text",
+      "sha256": "f104b8d01a7d8904631d4481f8c46efca50e906ff1ba29e34f980df21dde3ac6",
+      "size": 152,
+      "start_rva": "0x00199900"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Luabind registration window inside the reviewed registration function; this is not a function boundary.",
+      "end_rva_exclusive": "0x0027a75a",
+      "evidence_class": "fact",
+      "id": "add_effect_registration_window",
+      "section": ".text",
+      "sha256": "167ef9191442cdf7ec1a7bcb98708c4b50bef6cce56c28353b6ff073a1953db9",
+      "size": 34,
+      "start_rva": "0x0027a738"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/missions.lua",
+        "reviewed_lines": [
+          [
+            56,
+            111
+          ]
+        ],
+        "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+        "size": 29573,
+        "symbols": [
+          "Mission.TurnLimit",
+          "Mission:IsEndBlocked",
+          "Mission:IsNextPhase"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final.lua",
+        "reviewed_lines": [
+          [
+            3,
+            13
+          ],
+          [
+            59,
+            122
+          ]
+        ],
+        "sha256": "f92875ba570871b7b3184adb168105c8f29150398b8b14e87a863f67d6c61e29",
+        "size": 3318,
+        "symbols": [
+          "Mission_Final",
+          "Mission_Final:MissionEnd",
+          "Mission_Final:IsEndBlocked"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "reviewed_lines": [
+          [
+            3,
+            13
+          ],
+          [
+            25,
+            33
+          ],
+          [
+            116,
+            124
+          ],
+          [
+            175,
+            177
+          ]
+        ],
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave",
+          "Mission_Final_Cave:MissionEnd",
+          "Mission_Final_Cave:UpdateMission",
+          "Mission_Final_Cave:IsEndBlocked"
+        ]
+      }
+    ]
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "get_turn_limit",
+      "instruction_hex": "6858f38200",
+      "reference_rva": "0x00185c24",
+      "region_id": "end_readiness",
+      "role": "current mission turn-limit callback",
+      "string_rva": "0x0042f358",
+      "text": "GetTurnLimit"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "is_end_blocked",
+      "instruction_hex": "6808f58200",
+      "reference_rva": "0x00185cc1",
+      "region_id": "end_readiness",
+      "role": "fallback mission-end veto callback",
+      "string_rva": "0x0042f508",
+      "text": "IsEndBlocked"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end",
+      "instruction_hex": "68e8f98200",
+      "reference_rva": "0x0018b984",
+      "region_id": "mission_end_dispatch",
+      "role": "mission completion callback",
+      "string_rva": "0x0042f9e8",
+      "text": "MissionEnd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_add_effect",
+      "instruction_hex": "68b0888300",
+      "reference_rva": "0x0027a74e",
+      "region_id": "add_effect_registration_window",
+      "role": "Board method registered to the reviewed native binding",
+      "string_rva": "0x004388b0",
+      "text": "AddEffect"
+    }
+  ],
+  "summary": {
+    "control_window_count": 11,
+    "data_pointer_count": 2,
+    "direct_edge_count": 8,
+    "final_end_state_trigger_proven": true,
+    "finding_count": 7,
+    "lua_source_count": 3,
+    "mission_effect_handoff_gate_proven": true,
+    "post_travel_campaign_victory_proven": false,
+    "region_count": 15,
+    "simulator_change_required": false,
+    "string_anchor_count": 4,
+    "unresolved_count": 3
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_phase_scheduler.json",
+    "artifact_sha256": "93b022aa4d7c745805e68485d9a6fc36466ac3cb713b519d1cfe648d1a63a79a",
+    "correction": "The earlier immutable artifact conservatively described an external Final end-state trigger. Exact review now proves a turn-limit/state-2 readiness short circuit before IsEndBlocked; no Final-only external writer is required.",
+    "narrowed_gap_ids": [
+      "cave_countdown_outcome"
+    ],
+    "resolved_gap_ids": [
+      "final_end_state_trigger",
+      "mission_end_effect_settlement"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "post_travel_campaign_victory",
+      "next_evidence": "Continue static review from the StartMechTravel binding and the cave's false IsNextPhase exit branch.",
+      "question": "How does Board:StartMechTravel settle into campaign victory, profile/save mutation, and final presentation?",
+      "static_status": "The MissionEnd queue and activity-clear exit gate are pinned; the post-script campaign path is not."
+    },
+    {
+      "id": "arbitrary_effect_cancellation",
+      "next_evidence": "Treat modified cancellation as out of scope unless observed.",
+      "question": "Can a modified/debug path cancel a queued MissionEnd effect rather than executing every action?",
+      "static_status": "Ordinary queue-empty ordering is exact; arbitrary mutation or cancellation is outside shipped Final source reachability."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the focused map against an exact macOS binary.",
+      "question": "Do macOS/native builds implement the same boundary?",
+      "static_status": "Only Windows build 13725832 is mapped."
+    }
+  ]
+}

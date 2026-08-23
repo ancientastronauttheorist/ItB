@@ -467,6 +467,10 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   `IsEndBlocked` readiness veto through `MissionEnd`, the later `IsNextPhase`
   branch, and `GAME.CreateNextPhase`, joined to the exact Lua selection of
   `Mission_Final_Cave`; and
+- the ordinary Final end trigger itself: the current `GetTurnLimit` equality
+  plus active-Board/state-2 short circuit before `IsEndBlocked`, followed by
+  `MissionEnd` effect enqueueing and the Board activity-clear gate before phase
+  handoff; and
 - the continuation from `CreateNextPhase` through map selection/loading and
   `BaseStart`, joined to the exact nine-map cave pool and shipped Lua startup
   RNG-call skeleton.
@@ -491,14 +495,17 @@ The remaining native priorities are now narrower:
    needs a runtime match. Static unit costs, tie ordering, endpoint shape,
    ordinary team handling, Road Runner, and Massive Water are complete; corpse
    classification and `AddMove` step/scheduler effects remain open.
-3. Resolve the externally advanced Final end-state trigger, queued
-   `MissionEnd` effect settlement, the pre-map-draw CRT state, concrete later
-   cave startup draws and queued-effect settlement, and the final countdown
-   outcome. Exact shipped `RandomMap`, unsorted Win32 registration order, all
-   nine remainder-to-map outcomes, `random_int(1)` advancement, and the
-   ordinary two-draw map boundary are now pinned for the current exact Windows
-   installation. A copied or reinstalled map directory must revalidate its
-   filesystem order even when all content hashes match.
+3. Resolve the pre-map-draw CRT state, concrete later cave startup draws and
+   queued startup-effect settlement, bomb replacement timing/coordinate, the
+   final countdown outcome, and the post-`StartMechTravel` campaign-victory
+   path. The ordinary Final end trigger and `MissionEnd` effect activity gate
+   are now exact: current turn-limit equality in state 2 returns before
+   `IsEndBlocked`, and the phase/exit handoff waits for comprehensive Board
+   activity to clear. Exact shipped `RandomMap`, unsorted Win32 registration
+   order, all nine remainder-to-map outcomes, `random_int(1)` advancement, and
+   the ordinary two-draw map boundary are also pinned for the current exact
+   Windows installation. A copied or reinstalled map directory must revalidate
+   its filesystem order even when all content hashes match.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
@@ -616,7 +623,7 @@ The scaling hierarchy should be:
 
 ## Recommended first project: ITB Engine Observatory v0
 
-Current implementation status (2026-08-22): the provenance inventory and
+Current implementation status (2026-08-23): the provenance inventory and
 focused offline Windows boundary map are complete; runtime callback identity
 and defining-slot inventories are deterministic; and the Lua RNG boundary has
 six seeded, return-preserving pairs but fails the stricter whole-game neutrality
@@ -660,6 +667,12 @@ adds a focused Firefly queue-direction conformance regression. The final
 closure receipts prove the baseline 33-file save tree, Mod Loader, and
 689-entry installation were restored and the active bridge/install contain no
 Observatory diagnostic file.
+The Final boundary continuation additionally proves that both shipped Final
+stages end through the current turn-limit/state-2 readiness branch before
+`IsEndBlocked`, and that queued `MissionEnd` effects hold the later handoff
+closed until comprehensive Board activity clears. The post-travel campaign
+path and concrete cave startup/countdown outcomes remain deliberately
+unmodeled.
 
 ### Milestone 1: Provenance inventory
 
