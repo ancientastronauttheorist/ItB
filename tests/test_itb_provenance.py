@@ -5822,6 +5822,25 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
             ],
         },
         {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883e"
+                "1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["random_element", "random_removal"],
+        },
+        {
+            "path": "scripts/environments.lua",
+            "sha256": (
+                "5f8a7d74f537abb33bc88c1f9669f3f"
+                "6fabdd5c8c51aad3486d2e965e4fb80ec"
+            ),
+            "symbols": [
+                "Environment:IsValidTarget", "Environment:FindEndpoints",
+                "Environment:GetCrossPath", "Env_Attack:Start",
+            ],
+        },
+        {
             "path": "scripts/missions/missions.lua",
             "sha256": (
                 "505c02a8668ba2e39d868f95051ede81"
@@ -5830,6 +5849,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
             "symbols": [
                 "Mission.NextPhase", "Mission:IsEndBlocked",
                 "Mission:IsNextPhase", "Mission:MissionEnd",
+                "CreateMission", "Mission:GetMapTag", "Mission:BaseStart",
+                "Mission:GetStartingPawns", "Mission:SpawnPawns",
+                "Mission:SetupDiffMod",
             ],
         },
         {
@@ -5845,6 +5867,14 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
                 "Mission_Final:UpdateObjectives",
                 "Mission_Final:IsEndBlocked",
             ],
+        },
+        {
+            "path": "scripts/missions/final/env_final.lua",
+            "sha256": (
+                "8d9220a9f7c0b6f3887ec8b9ffdd351"
+                "b25cd4c53696d2f401c81dbeb932a6f33"
+            ),
+            "symbols": ["Env_Final", "Env_Final:Start"],
         },
         {
             "path": "scripts/missions/final/mission_final_two.lua",
@@ -5881,6 +5911,14 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "native_phase_handoff_order", "create_next_phase_dispatch",
         "final_surface_target", "solver_boundary",
     }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_cave_startup.json"
+    ] == {
+        "native_startup_order", "final_cave_map_pool",
+        "base_start_source_order", "startup_rng_skeleton",
+        "center_assignment", "solver_boundary",
+    }
     assert implementations["src/loop/commands.py"] == {
         "_detect_terrain_stage_change", "_capture_board_summary",
         "_lookahead_forecast_gaps",
@@ -5894,6 +5932,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "build_final_phase_scheduler_map",
         "validate_final_phase_scheduler_map",
         "validate_final_phase_scheduler_map_binding",
+    }
+    assert implementations["src/observatory/final_cave_startup.py"] == {
+        "build_final_cave_startup_map",
+        "validate_final_cave_startup_map",
+        "validate_final_cave_startup_map_binding",
     }
     assert implementations["src/solver/plan_safety.py"] == {
         "audit_plan_safety", "bigbomb_replacement_unresolved",
@@ -5913,6 +5956,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert implementations[
         "scripts/itb_observatory_final_phase_scheduler.py"
     ] == {"_parser", "main"}
+    assert implementations[
+        "scripts/itb_observatory_final_cave_startup.py"
+    ] == {"_parser", "main"}
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
     assert "does not explicitly reset iDamage" in facts
@@ -5926,9 +5972,16 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "relative native path" in facts
     assert "IsNextPhase before dispatching MissionEnd" in facts
     assert "source-selected handoff target is exact" in facts
+    assert "map selection, map loading/AddMap" in facts
+    assert "exactly nine final_cave-tagged maps" in facts
+    assert "24 source-reachable center assignments" in facts
+    assert "random_int(1) state advancement" in facts
+    assert "no cross-stage Rust forecast" in facts
     gaps = " ".join(record["known_gaps"])
     assert "Env_Final records cover exact current bridge selections" in gaps
-    assert "exact-build native map now closes relative" in gaps
+    assert "exact-build native maps now close relative" in gaps
+    assert "native RandomMap choice" in gaps
+    assert "concrete selected map" in gaps
     assert "external state change that advances both Final missions" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated native replacement cycles" in gaps

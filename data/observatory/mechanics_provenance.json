@@ -9043,6 +9043,22 @@
         {
           "classification": "fact",
           "statement": "The exact shipped base sources define Mission:IsNextPhase as a nonempty NextPhase test and GameObject:CreateNextPhase as replacement of the current mission slot with CreateMission(next_phase). Mission_Final sets NextPhase=Mission_Final_Cave, so the source-selected handoff target is exact once the mapped native phase branch is reached."
+        },
+        {
+          "classification": "inference",
+          "statement": "The follow-up exact Windows-build startup map continues that static boundary: after CreateNextPhase returns, the phase routine calls map selection, map loading/AddMap, intermediate board initialization, and the BaseStart dispatcher in that relative order. The map selector obtains GetMapTag before GetMapVetoes and takes the RandomMap path for the cave's nonempty tag. This pins control flow, not the concrete native map choice or a runtime timestamp."
+        },
+        {
+          "classification": "fact",
+          "statement": "The complete exact maps revision contains exactly nine final_cave-tagged maps. All nine share deployment points (3,3), (3,4), (2,4), and (2,3), each has seven pylon-zone points, and each has three or four mountain-zone points. Removing one bomb point and then assigning Mech IDs 0, 1, and 2 to the remainder yields 24 source-reachable center assignments."
+        },
+        {
+          "classification": "fact",
+          "statement": "Exact shipped Lua pins the startup sequence: BaseStart constructs and starts Env_Final, whose Start builds LavaPath through FindEndpoints/GetCrossPath before cave StartMission; StartMission draws the bomb tile, optional pre-bomb enemy branch, every mountain dropper, three Mech placements, every pylon dropper, and boss choice; BaseStart then runs SetupDiffMod and ordinary SpawnPawns. The artifact records the conditional source-level random_int/random_bool skeleton without claiming concrete outputs, random_int(1) state advancement, nested NextPawn draws, or effect settlement timing."
+        },
+        {
+          "classification": "inference",
+          "statement": "Because native RandomMap choice, concrete RNG state, spawn internals, and startup-effect settlement remain unresolved, the static startup map justifies no cross-stage Rust forecast. The implemented safety boundary remains stage-change detection followed by a fresh settled bridge read."
         }
       ],
       "id": "mission-final-surface-and-cave-lifecycle",
@@ -9054,6 +9070,10 @@
         {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_phase_scheduler.json",
           "symbols": ["normal_end_readiness_veto", "mission_end_callback_order", "native_phase_handoff_order", "create_next_phase_dispatch", "final_surface_target", "solver_boundary"]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
+          "symbols": ["native_startup_order", "final_cave_map_pool", "base_start_source_order", "startup_rng_skeleton", "center_assignment", "solver_boundary"]
         },
         {
           "path": "src/bridge/modloader.lua",
@@ -9080,6 +9100,10 @@
           "symbols": ["build_final_phase_scheduler_map", "validate_final_phase_scheduler_map", "validate_final_phase_scheduler_map_binding"]
         },
         {
+          "path": "src/observatory/final_cave_startup.py",
+          "symbols": ["build_final_cave_startup_map", "validate_final_cave_startup_map", "validate_final_cave_startup_map_binding"]
+        },
+        {
           "path": "src/solver/plan_safety.py",
           "symbols": ["audit_plan_safety", "bigbomb_replacement_unresolved", "final_cave_emergency_pylon_loss_allowed", "final_cave_resist_gamble_allowed", "bigbomb_alive", "pylons_alive", "pylon_hp_total"]
         },
@@ -9098,14 +9122,18 @@
         {
           "path": "scripts/itb_observatory_final_phase_scheduler.py",
           "symbols": ["_parser", "main"]
+        },
+        {
+          "path": "scripts/itb_observatory_final_cave_startup.py",
+          "symbols": ["_parser", "main"]
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. This lifecycle record models the source-guaranteed missing-bomb +2 edge and stable-snapshot candidate partition, while the exact-build native map now closes relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order and the source-selected cave target. Future environmental RNG, the external Final end-state trigger, queued effect settlement, replacement timing/coordinate, and full runtime scheduler conformance remain open.",
-        "Mission_Infinite inheritance, native turn and team callback order, the external state change that advances both Final missions despite their always-true IsEndBlocked callbacks, StartMission completion, MissionEnd presentation and travel settlement, spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, RNG, boss placement, UID allocation, and map-zone contents remain native dependencies.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. This lifecycle record models the source-guaranteed missing-bomb +2 edge and stable-snapshot candidate partition; the exact-build native maps now close relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, the exact nine-map pool, and the source-level startup RNG skeleton. The external Final end-state trigger, native RandomMap choice, concrete environmental/startup RNG, queued effect settlement, replacement timing/coordinate, and full runtime scheduler conformance remain open.",
+        "Mission_Infinite inheritance, native turn and team callback order, the external state change that advances both Final missions despite their always-true IsEndBlocked callbacks, MissionEnd presentation and travel settlement, native spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
-        "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
-        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static map proves relative callback/control-flow order and the source-selected cave target, while the terrain fingerprint alone does not prove the live end-state trigger, Mission_Final:MissionEnd queued-effect settlement, or cave initialization executed conformantly."
+        "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
+        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove relative callback/control-flow order, the source-selected cave target, startup call skeleton, and installed map/zone candidates, while the terrain fingerprint alone does not prove the live end-state trigger, Mission_Final:MissionEnd queued-effect settlement, concrete cave initialization results, or queued startup effects executed conformantly."
       ],
       "sources": [
         {
@@ -9114,14 +9142,29 @@
           "symbols": ["GameObject:GetMissionId", "GameObject:GetMission", "GameObject:CreateNextPhase"]
         },
         {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": ["random_element", "random_removal"]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": ["Environment:IsValidTarget", "Environment:FindEndpoints", "Environment:GetCrossPath", "Env_Attack:Start"]
+        },
+        {
           "path": "scripts/missions/missions.lua",
           "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
-          "symbols": ["Mission.NextPhase", "Mission:IsEndBlocked", "Mission:IsNextPhase", "Mission:MissionEnd"]
+          "symbols": ["Mission.NextPhase", "Mission:IsEndBlocked", "Mission:IsNextPhase", "Mission:MissionEnd", "CreateMission", "Mission:GetMapTag", "Mission:BaseStart", "Mission:GetStartingPawns", "Mission:SpawnPawns", "Mission:SetupDiffMod"]
         },
         {
           "path": "scripts/missions/final/mission_final.lua",
           "sha256": "f92875ba570871b7b3184adb168105c8f29150398b8b14e87a863f67d6c61e29",
           "symbols": ["Mission_Final", "Mission_Final:StartMission", "Mission_Final:NextTurn", "Mission_Final:MissionEnd", "Mission_Final:UpdateMission", "Mission_Final:UpdateObjectives", "Mission_Final:IsEndBlocked"]
+        },
+        {
+          "path": "scripts/missions/final/env_final.lua",
+          "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+          "symbols": ["Env_Final", "Env_Final:Start"]
         },
         {
           "path": "scripts/missions/final/mission_final_two.lua",
@@ -9153,6 +9196,10 @@
         {
           "path": "tests/test_observatory_final_phase_scheduler.py",
           "symbols": ["test_committed_map_closes_relative_handoff_without_claiming_trigger", "test_binding_rejects_control_flow_source_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_cave_startup.py",
+          "symbols": ["test_committed_map_pins_startup_pool_and_rng_skeleton_without_outputs", "test_binding_rejects_native_map_rng_or_prose_drift", "test_exact_local_build_sources_and_maps_reproduce_map_when_available"]
         }
       ]
     },

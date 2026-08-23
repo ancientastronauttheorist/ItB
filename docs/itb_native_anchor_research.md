@@ -387,15 +387,20 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Water correction; v403 implements corpse lifecycle pathing. Runtime
    subclass values, removal timing, matched vectors, and `AddMove` execution
    remain mismatch-driven.
-7. **Completed offline for the Final surface-to-cave relative handoff:** seven
+7. **Completed offline for the Final surface-to-cave startup boundary:** seven
    exact native regions and their call/control windows prove the ordinary
    `IsEndBlocked` veto, `IsNextPhase` before `MissionEnd`, and the later
    `IsNextPhase`-guarded `GAME.CreateNextPhase` dispatch. Exact shipped Lua
    selects `Mission_Final_Cave` and replaces the current mission slot once that
-   branch is reached. The externally advanced Final end-state trigger, queued
-   effect settlement, cave startup callback/RNG order, countdown outcome, and
-   non-Windows equivalence remain open; no Rust simulator change follows from
-   the relative-order proof alone.
+   branch is reached. The follow-up exact-build map continues through native
+   map selection/loading and `BaseStart`, inventories all nine `final_cave`
+   maps and their startup zones, and pins the shipped Lua call skeleton from
+   the one-entry map tag through lava-path, bomb/Mech, dropper, boss,
+   difficulty, and ordinary spawn work. Native `RandomMap` choice,
+   `random_int(1)` state advancement, concrete draws, nested spawn RNG, queued
+   startup-effect settlement, the external Final end-state trigger, countdown
+   outcome, and non-Windows equivalence remain open; no speculative Rust
+   forecast follows from the static boundary.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

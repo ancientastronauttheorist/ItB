@@ -1,0 +1,1339 @@
+{
+  "analysis_kind": "final_cave_startup_boundary_map",
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "post_create_native_order",
+      "instruction_hex": "e83bdb000083ec188bf483ec188bcc6a00c741140f000000c741100000000068dcdf8000c60100e8c4eae7ff568bcbe8dc95ffff8b4b04e8d4c3fdff6a028bcbe8ab8000008bcbe8e41e000083ec4c8d45a48bcc50e89631faff8bcbe81fa7ffff8bcbe8789cffff",
+      "meaning": "After CreateNextPhase returns, call map_selector, map_loader, intermediate board initialization, and base_start_dispatch in that relative order.",
+      "region_id": "phase_transition",
+      "sha256": "998794e29ccb44f7e0f96384b548ec11f91916d61537b5399f93623dea8b1e40",
+      "size": 104,
+      "start_rva": "0x001894e0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "map_tag_and_veto_callbacks",
+      "instruction_hex": "83ec188bcc8965a868e4f18200e88252e8ff83ec18c645fc028bcc8d9ed40f0000895d94c741140f000000c74110000000008379141072048b01eb028bc16aff6a0053c60000e80955e8ff8d45bcc645fc0150e86cf6faff83ec18c645fc038bcc8965a8680cf28200e82652e8ff83ec18c645fc048bccc741140f000000c74110000000008379141072048b01eb028bc16aff6a0053c60000e8b654e8ff8d459cc645fc0350e879400100c645fc05",
+      "meaning": "Obtain GetMapTag before GetMapVetoes for the current mission.",
+      "region_id": "map_selector",
+      "sha256": "6034571fd83014afee50f8abc63921192dab1823f2e5186d23b4aab4a4fb0f66",
+      "size": 175,
+      "start_rva": "0x00182b7c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "nonempty_tag_random_map_branch",
+      "instruction_hex": "83ec18837dcc008bcc8965b0c741140f000000c7411000000000755f8379141072048b01eb028bc16a066804f28200c60000e86753e8ff83ec18c645fc068bccc741140f000000c74110000000008379141072048b01eb028bc16aff6a0053c60000e83754e8ff8d45d4c645fc0550e89af5faff8bf0e9990000008379141072048b01eb028bc16aff6a006878688d00c60000e80654e8ff83ec18c645fc088bcc8965b4c741140f000000c74110000000008379141072048b01eb028bc16affc600008d45bc6a0050e8d053e8ff83ec18c645fc098bccc741140f000000c74110000000008379141072048b01eb028bc16a096828f28200c60000e89e52e8ff8d45d4c645fc0550b9a8578900e85ca9f8ff8bf0",
+      "meaning": "Use GetMap only for an empty tag; a nonempty tag takes the RandomMap path.",
+      "region_id": "map_selector",
+      "sha256": "b71e49aaac1ab63b2fa37d184854b70872b1a9ebcd0d581ec3f9fdfdf0398937",
+      "size": 276,
+      "start_rva": "0x00182c32"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_map_dispatch",
+      "instruction_hex": "e82e26eaff83ec18c645fc048bcc6820e68200e85b23eaff8d45a8c645fc0050b9a8578900e8694ffdff",
+      "meaning": "Dispatch AddMap while loading the selected map.",
+      "region_id": "map_loader",
+      "sha256": "e97101de4389c8a902b53ba823f2c17acba2c43f13e5d72664c5f3d4a2b71ad9",
+      "size": 42,
+      "start_rva": "0x00165a9d"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "base_start_named_dispatch",
+      "instruction_hex": "8bccc741140f000000c74110000000008379141072048b01eb028bc16a096844f28200c60000e84c4de8ff83ec18c745fc000000008bcc8dbed40f0000c741140f000000c74110000000008379141072048b01eb028bc16aff6a0057c60000e8134ee8ffc745fcffffffffe837660100",
+      "meaning": "Construct BaseStart and dispatch it on the current mission.",
+      "region_id": "base_start_dispatch",
+      "sha256": "9e90e91750a2e814c739f5afd56c0306bcbe1084b21d610ac80e4147a941579f",
+      "size": 112,
+      "start_rva": "0x00183259"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001894e0",
+      "id": "phase_to_create_next_invoker",
+      "instruction_hex": "e83bdb0000",
+      "source_region": "phase_transition",
+      "target_region": "phase_named_invoker",
+      "target_rva": "0x00197020"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018950f",
+      "id": "phase_to_map_selector",
+      "instruction_hex": "e8dc95ffff",
+      "source_region": "phase_transition",
+      "target_region": "map_selector",
+      "target_rva": "0x00182af0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00189517",
+      "id": "phase_to_map_loader",
+      "instruction_hex": "e8d4c3fdff",
+      "source_region": "phase_transition",
+      "target_region": "map_loader",
+      "target_rva": "0x001658f0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00189543",
+      "id": "phase_to_base_start_dispatch",
+      "instruction_hex": "e8789cffff",
+      "source_region": "phase_transition",
+      "target_region": "base_start_dispatch",
+      "target_rva": "0x001831c0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001832c4",
+      "id": "base_start_to_named_invoker",
+      "instruction_hex": "e837660100",
+      "source_region": "base_start_dispatch",
+      "target_region": "mission_named_invoker",
+      "target_rva": "0x00199900"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "On the exact Windows build, phase_transition returns from CreateNextPhase, selects and loads a map, performs intermediate board initialization, and then dispatches BaseStart.",
+      "evidence_class": "inference",
+      "id": "native_startup_order",
+      "supports": [
+        "post_create_native_order",
+        "phase_to_create_next_invoker",
+        "phase_to_map_selector",
+        "phase_to_map_loader",
+        "phase_to_base_start_dispatch",
+        "base_start_to_named_invoker"
+      ]
+    },
+    {
+      "claim": "The exact map revision contains nine final_cave-tagged maps; all share the same four deployment tiles and each supplies seven pylon tiles plus three or four mountain-drop tiles.",
+      "evidence_class": "fact",
+      "id": "final_cave_map_pool",
+      "supports": [
+        "maps/cave1.map",
+        "maps/cave2.map",
+        "maps/cave3.map",
+        "maps/cave4.map",
+        "maps/cave5.map",
+        "maps/caveAE1.map",
+        "maps/caveAE2.map",
+        "maps/caveAE3.map",
+        "maps/caveAE4.map"
+      ]
+    },
+    {
+      "claim": "Exact Lua runs Env_Final:Start before Mission_Final_Cave:StartMission, then SetupDiffMod, then ordinary starting SpawnPawns.",
+      "evidence_class": "fact",
+      "id": "base_start_source_order",
+      "supports": [
+        "scripts/missions/missions.lua",
+        "scripts/missions/final/env_final.lua",
+        "scripts/missions/final/mission_final_two.lua"
+      ]
+    },
+    {
+      "claim": "Exact Lua pins the relative random_int/random_bool call skeleton from the one-entry map tag through environment path, bomb/mech assignment, dropper order, boss choice, and later difficulty/start-spawn work.",
+      "evidence_class": "fact",
+      "id": "startup_rng_skeleton",
+      "supports": [
+        "rng_schedule"
+      ]
+    },
+    {
+      "claim": "The bomb consumes one of four center deployment tiles and mech IDs 0, 1, and 2 consume the other three, producing 24 source-reachable assignment permutations.",
+      "evidence_class": "fact",
+      "id": "center_assignment",
+      "supports": [
+        "startup_contract",
+        "scripts/missions/final/mission_final_two.lua"
+      ]
+    },
+    {
+      "claim": "No cross-stage Rust forecast is justified yet: native map and spawn choices plus effect settlement remain unresolved. The solver should keep detecting the stage change and consuming a fresh settled bridge state.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "supports": [
+        "native_startup_order",
+        "final_cave_map_pool",
+        "startup_rng_skeleton"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Capstone 5.0.7 disassembly and Ghidra 12.1.3 function/reference/call-graph review joined CreateNextPhase to map selection, map loading, and BaseStart.",
+    "limitations": [
+      "Every native address applies only to the pinned Windows executable.",
+      "Static call order does not prove queued-effect settlement time.",
+      "The RandomMap algorithm, edition filtering, and concrete choice are not inferred.",
+      "The Lua RNG skeleton does not prove native state advancement or nested spawn calls.",
+      "macOS and other executable builds require independent native maps."
+    ],
+    "map_review": "The complete exact map-tree revision and every final_cave-tagged map hash, tag, and startup zone are rechecked.",
+    "source_review": "Exact Lua hashes and semantic statements pin BaseStart, environment path construction, cave startup, and random helpers."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0018964d",
+      "evidence_class": "fact",
+      "id": "phase_transition",
+      "section": ".text",
+      "sha256": "3a5b364d9af48610bb07f8e44d5cb9ddb4051f4cb4a5fa0ad0db8eb51522073f",
+      "size": 1149,
+      "start_rva": "0x001891d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00182f26",
+      "evidence_class": "fact",
+      "id": "map_selector",
+      "section": ".text",
+      "sha256": "c6190e9784cd302c39f0784bd263c9112c277522cd8e1fc54694b85a383a3761",
+      "size": 1078,
+      "start_rva": "0x00182af0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00165bdd",
+      "evidence_class": "fact",
+      "id": "map_loader",
+      "section": ".text",
+      "sha256": "1fd6e2beb3c3743510c0aeccfbf6a32701f09f74f0ab1c44f0519ff287d65e38",
+      "size": 749,
+      "start_rva": "0x001658f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0018334f",
+      "evidence_class": "fact",
+      "id": "base_start_dispatch",
+      "section": ".text",
+      "sha256": "fe91da3c9574d19e0e017385e9c5dfb1b47c3a9ef22ef009edb5ac92d1e162ec",
+      "size": 399,
+      "start_rva": "0x001831c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x001970e5",
+      "evidence_class": "fact",
+      "id": "phase_named_invoker",
+      "section": ".text",
+      "sha256": "8bef18ab0d4307aaf94a837b8780bf81c7d21d4456839ccecf1ddbef141b5b5d",
+      "size": 197,
+      "start_rva": "0x00197020"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00199998",
+      "evidence_class": "fact",
+      "id": "mission_named_invoker",
+      "section": ".text",
+      "sha256": "f104b8d01a7d8904631d4481f8c46efca50e906ff1ba29e34f980df21dde3ac6",
+      "size": 152,
+      "start_rva": "0x00199900"
+    }
+  ],
+  "rng_schedule": [
+    {
+      "bounds": [
+        1
+      ],
+      "family": "random_int",
+      "meaning": "random_element over the one-entry MapTags table selects final_cave; whether random_int(1) advances native state is open.",
+      "occurrence": "exactly once",
+      "order": 1,
+      "scope": "Mission:GetMapTag"
+    },
+    {
+      "bounds": null,
+      "family": "native map-selection RNG",
+      "meaning": "Choose from the exact tag-matching installed pool subject to native edition/filter/veto policy.",
+      "occurrence": "opaque native selection",
+      "order": 2,
+      "scope": "native RandomMap"
+    },
+    {
+      "bounds": [
+        2,
+        "endpoint_count",
+        "endpoint_count",
+        2
+      ],
+      "family": "random_bool and random_int",
+      "meaning": "Choose cross-path orientation/endpoints before the cave mission's StartMission callback.",
+      "occurrence": "orientation, two endpoint removals, optional swap",
+      "order": 3,
+      "scope": "Env_Final:Start/FindEndpoints"
+    },
+    {
+      "bounds": [
+        "best_step_count"
+      ],
+      "family": "random_int",
+      "meaning": "Choose among equally close path steps until an endpoint is reached.",
+      "occurrence": "once per accepted path step",
+      "order": 4,
+      "scope": "Environment:GetCrossPath loop"
+    },
+    {
+      "bounds": [
+        4
+      ],
+      "family": "random_int",
+      "meaning": "Remove the bomb tile from the four deployment tiles.",
+      "occurrence": "exactly once",
+      "order": 5,
+      "scope": "Mission_Final_Cave:StartMission bomb tile"
+    },
+    {
+      "bounds": [
+        2
+      ],
+      "family": "random_int",
+      "meaning": "Result zero invokes NextPawn and SpawnPawn on the bomb tile; that nested spawn-selection RNG is not statically resolved.",
+      "occurrence": "exactly once",
+      "order": 6,
+      "scope": "Mission_Final_Cave:StartMission optional enemy"
+    },
+    {
+      "bounds": [
+        "mountain_count ... 1"
+      ],
+      "family": "random_int",
+      "meaning": "Randomize effect-queue order while consuming every mountain-zone tile.",
+      "occurrence": "one removal per map mountain-zone tile",
+      "order": 7,
+      "scope": "Mission_Final_Cave:StartMission mountain droppers"
+    },
+    {
+      "bounds": [
+        3,
+        2,
+        1
+      ],
+      "family": "random_int",
+      "meaning": "Assign mech IDs 0, 1, and 2 to the three non-bomb deployment tiles.",
+      "occurrence": "exactly three removals",
+      "order": 8,
+      "scope": "SpawnMechs"
+    },
+    {
+      "bounds": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "family": "random_int",
+      "meaning": "Randomize effect-queue order while consuming every pylon-zone tile.",
+      "occurrence": "exactly seven removals",
+      "order": 9,
+      "scope": "Mission_Final_Cave:StartMission pylons"
+    },
+    {
+      "bounds": [
+        3
+      ],
+      "family": "random_int",
+      "meaning": "Choose BeetleBoss, FireflyBoss, or HornetBoss before BaseStart returns.",
+      "occurrence": "exactly once",
+      "order": 10,
+      "scope": "Mission_Final_Cave:StartMission boss"
+    },
+    {
+      "bounds": null,
+      "family": "conditional Lua RNG",
+      "meaning": "Runs after cave StartMission and can consume RNG on easy/hard modifiers.",
+      "occurrence": "depends on the native-assigned DiffMod",
+      "order": 11,
+      "scope": "Mission:SetupDiffMod"
+    },
+    {
+      "bounds": null,
+      "family": "native spawn-selection and coordinate RNG",
+      "meaning": "Runs last in BaseStart; exact NextPawn and placement RNG remain open.",
+      "occurrence": "one SpawnPawn call per computed starting count",
+      "order": 12,
+      "scope": "Mission:SpawnPawns(GetStartingPawns())"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/game.lua",
+        "sha256": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
+        "size": 9747,
+        "symbols": [
+          "GameObject:CreateNextPhase"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/global.lua",
+        "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+        "size": 17363,
+        "symbols": [
+          "random_element",
+          "random_removal"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/environments.lua",
+        "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+        "size": 8924,
+        "symbols": [
+          "Environment:IsValidTarget",
+          "Environment:FindEndpoints",
+          "Environment:GetCrossPath",
+          "Env_Attack:Start"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/missions.lua",
+        "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+        "size": 29573,
+        "symbols": [
+          "CreateMission",
+          "Mission:GetMapTag",
+          "Mission:BaseStart",
+          "Mission:GetStartingPawns",
+          "Mission:SpawnPawns",
+          "Mission:SetupDiffMod"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/env_final.lua",
+        "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+        "size": 4529,
+        "symbols": [
+          "Env_Final",
+          "Env_Final:Start"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave",
+          "SpawnMechs",
+          "Mission_Final_Cave:StartMission"
+        ]
+      }
+    ],
+    "maps": [
+      {
+        "evidence_class": "fact",
+        "path": "maps/cave1.map",
+        "sha256": "0969e29ad7645fc4758060f8cf5d47fe032e20677cd52387e6f1ab54abe0fc8a",
+        "size": 1591,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              7,
+              6
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              1,
+              7
+            ],
+            [
+              0,
+              5
+            ]
+          ],
+          "pylons": [
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              2,
+              6
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/cave2.map",
+        "sha256": "a5f49331e09055f65b57e16e185638586869b1984fdb36c43312440bead63ba4",
+        "size": 1656,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              7,
+              6
+            ],
+            [
+              5,
+              4
+            ],
+            [
+              1,
+              7
+            ]
+          ],
+          "pylons": [
+            [
+              1,
+              5
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/cave3.map",
+        "sha256": "6731d53830bce7e367b6587f8b49f2306840a200091024e8586a393d150cd228",
+        "size": 1610,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              1,
+              7
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              7,
+              2
+            ]
+          ],
+          "pylons": [
+            [
+              1,
+              6
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              4,
+              7
+            ],
+            [
+              6,
+              3
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              5,
+              1
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/cave4.map",
+        "sha256": "d2b651d5277fd5fdd985cf203c7c16cbd4f2ea70f4fb6b624654031dc0ea1654",
+        "size": 1627,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              7,
+              3
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "pylons": [
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              3
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              3,
+              0
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/cave5.map",
+        "sha256": "447fb1b56c70e6d333d9e7c10f119ce1b4018a67d79efd92352693ea9ee77004",
+        "size": 1654,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              2,
+              7
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              7,
+              2
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "pylons": [
+            [
+              7,
+              4
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              1,
+              6
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/caveAE1.map",
+        "sha256": "d65a49baefbbb7c53af6cff4363441073777d49df06c8513d05e371f48f7f1c0",
+        "size": 1663,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              7,
+              6
+            ],
+            [
+              1,
+              7
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              5,
+              3
+            ]
+          ],
+          "pylons": [
+            [
+              6,
+              6
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              6,
+              3
+            ],
+            [
+              1,
+              6
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/caveAE2.map",
+        "sha256": "d38c016d487154c2d897aa00d102b585aa9a59bc3e6ef17dccaeb62d47677679",
+        "size": 1757,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              6,
+              0
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              4,
+              3
+            ]
+          ],
+          "pylons": [
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              6,
+              3
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              4,
+              1
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/caveAE3.map",
+        "sha256": "62245dd2017b7ad3b00d86b9b8c203f4e335857a77d935b92d2511aa96b5c7e9",
+        "size": 1682,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              5,
+              0
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "pylons": [
+            [
+              5,
+              6
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              6,
+              4
+            ],
+            [
+              6,
+              3
+            ]
+          ]
+        }
+      },
+      {
+        "evidence_class": "fact",
+        "path": "maps/caveAE4.map",
+        "sha256": "dfb7ab98d97890cf89240832d1e1ca541e71e9da1c4de34d42b4b8581999e052",
+        "size": 1728,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ],
+        "zones": {
+          "deployment": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "mountain": [
+            [
+              7,
+              5
+            ],
+            [
+              7,
+              4
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "pylons": [
+            [
+              1,
+              5
+            ],
+            [
+              5,
+              4
+            ],
+            [
+              5,
+              3
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              6,
+              6
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "startup_contract": {
+    "base_start_order": [
+      "Env_Final:new",
+      "Env_Final:Start",
+      "Mission_Final_Cave:StartMission",
+      "Mission:SetupDiffMod",
+      "Mission:SpawnPawns(Mission:GetStartingPawns())"
+    ],
+    "bomb_and_mech_assignment_permutations": 24,
+    "bomb_candidates": [
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "boss_candidates": [
+      "BeetleBoss",
+      "FireflyBoss",
+      "HornetBoss"
+    ],
+    "common_deployment_tiles": [
+      [
+        3,
+        3
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "effect_queue_order": "Cave StartMission queues its combined effect before spawning the boss; BaseStart then runs SetupDiffMod and ordinary SpawnPawns.",
+    "effect_settlement_timing_proven": false,
+    "mech_ids": [
+      0,
+      1,
+      2
+    ],
+    "mountain_drop_counts": {
+      "cave1": 4,
+      "cave2": 3,
+      "cave3": 4,
+      "cave4": 4,
+      "cave5": 4,
+      "caveAE1": 4,
+      "caveAE2": 3,
+      "caveAE3": 3,
+      "caveAE4": 3
+    },
+    "native_order": [
+      "GAME.CreateNextPhase",
+      "map selection",
+      "map loading/AddMap",
+      "intermediate board initialization",
+      "mission BaseStart"
+    ],
+    "pylon_tiles_per_map": 7
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "create_next_phase",
+      "instruction_hex": "68dcf78200",
+      "reference_rva": "0x0018949d",
+      "region_id": "phase_transition",
+      "role": "phase-construction callback",
+      "string_rva": "0x0042f7dc",
+      "text": "CreateNextPhase"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_map_tag",
+      "instruction_hex": "68e4f18200",
+      "reference_rva": "0x00182b84",
+      "region_id": "map_selector",
+      "role": "mission map-tag callback",
+      "string_rva": "0x0042f1e4",
+      "text": "GetMapTag"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_map_vetoes",
+      "instruction_hex": "680cf28200",
+      "reference_rva": "0x00182be0",
+      "region_id": "map_selector",
+      "role": "mission map-veto callback",
+      "string_rva": "0x0042f20c",
+      "text": "GetMapVetoes"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_map",
+      "instruction_hex": "6804f28200",
+      "reference_rva": "0x00182c5c",
+      "region_id": "map_selector",
+      "role": "empty-tag explicit-map fallback",
+      "string_rva": "0x0042f204",
+      "text": "GetMap"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "random_map",
+      "instruction_hex": "6828f28200",
+      "reference_rva": "0x00182d25",
+      "region_id": "map_selector",
+      "role": "nonempty-tag native map selection",
+      "string_rva": "0x0042f228",
+      "text": "RandomMap"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_map",
+      "instruction_hex": "6820e68200",
+      "reference_rva": "0x00165aab",
+      "region_id": "map_loader",
+      "role": "map registration/loading callback",
+      "string_rva": "0x0042e620",
+      "text": "AddMap"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "base_start",
+      "instruction_hex": "6844f28200",
+      "reference_rva": "0x00183277",
+      "region_id": "base_start_dispatch",
+      "role": "mission startup callback",
+      "string_rva": "0x0042f244",
+      "text": "BaseStart"
+    }
+  ],
+  "summary": {
+    "concrete_rng_outputs_proven": false,
+    "control_window_count": 5,
+    "direct_edge_count": 5,
+    "effect_settlement_timing_proven": false,
+    "final_cave_map_count": 9,
+    "finding_count": 6,
+    "lua_rng_call_skeleton_proven": true,
+    "lua_source_count": 6,
+    "map_pool_proven": true,
+    "region_count": 6,
+    "relative_startup_order_proven": true,
+    "simulator_change_required": false,
+    "string_anchor_count": 7,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "id": "native_random_map",
+      "next_evidence": "Map the RandomMap callee or capture a seeded phase transition.",
+      "question": "How does RandomMap filter and choose the concrete cave map?",
+      "static_status": "The nonempty-tag branch and exact installed tag pool are pinned; native edition filtering, call count, and choice are not."
+    },
+    {
+      "id": "native_rng_state",
+      "next_evidence": "Use a matched seeded trace around one synthetic cave startup.",
+      "question": "Which source-level random calls advance native state, including random_int(1)?",
+      "static_status": "Source call order is pinned; native state transitions are not."
+    },
+    {
+      "id": "environment_path_result",
+      "next_evidence": "Replay captured RNG values or retain the live LavaPath payload.",
+      "question": "Which concrete LavaPath is selected on each cave map?",
+      "static_status": "The source algorithm and map revision are exact, but concrete RNG values and Board predicate results are not replayed here."
+    },
+    {
+      "id": "spawn_selection_and_coordinates",
+      "next_evidence": "Join existing spawn-coordinate anchors to a cave startup trace.",
+      "question": "What are exact NextPawn and SpawnPawn RNG/call-order semantics?",
+      "static_status": "The optional pre-bomb spawn, boss call, and final base SpawnPawns positions in source order are known; nested native behavior is not."
+    },
+    {
+      "id": "startup_effect_settlement",
+      "next_evidence": "Capture queue depth and board identity through one startup.",
+      "question": "When do queued rock, mech, pylon, and bomb effects settle relative to boss and ordinary starting spawns?",
+      "static_status": "Board:AddEffect source order is known, but asynchronous queue execution and reused SpaceDamage copying remain unproven."
+    }
+  ]
+}

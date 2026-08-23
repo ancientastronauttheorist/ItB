@@ -529,7 +529,44 @@ python scripts/itb_observatory_final_phase_scheduler.py verify `
 
 This is a relative static order proof, not a runtime timestamp. The native
 event that advances either always-blocked Final mission, queued `MissionEnd`
-effect settlement, cave startup callback/RNG order, the cave countdown outcome,
-and non-Windows equivalence remain explicit gaps. No current-turn Rust simulator
-change follows from this map; the safe boundary remains a fresh bridge read
-after the live stage change.
+effect settlement, the cave countdown outcome, and non-Windows equivalence
+remain explicit gaps. The following artifact closes the static cave-startup
+order while retaining concrete RNG and settlement as gaps. No current-turn
+Rust simulator change follows from either map; the safe boundary remains a
+fresh bridge read after the live stage change.
+
+## Final Cave startup boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_startup.json`
+continues the exact-build handoff from `GAME.CreateNextPhase`. It binds six
+reviewed native regions, seven callback-string anchors, five instruction-start
+control windows, five direct call edges, six exact shipped Lua files, and the
+complete exact maps revision. It establishes that:
+
+- native code selects and loads the map before dispatching mission
+  `BaseStart`;
+- the nonempty `final_cave` map tag takes the native `RandomMap` path;
+- exactly nine installed maps carry that tag, all with the same four center
+  deployment tiles, seven pylon tiles, and three or four mountain tiles;
+- `BaseStart` runs `Env_Final:Start`, cave `StartMission`, difficulty setup,
+  and ordinary starting spawns in that relative order; and
+- exact Lua fixes the source-level RNG skeleton for the lava path, bomb and
+  three-Mech placement, mountain and pylon queue order, and boss selection.
+
+The bomb plus Mech IDs 0, 1, and 2 have 24 source-reachable assignments over
+the four shared center tiles. Verify the executable, selected Lua sources,
+complete maps revision, map fields, native regions, callback strings, control
+windows, and call edges with:
+
+```powershell
+python scripts/itb_observatory_final_cave_startup.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --startup-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json
+```
+
+This does not select a concrete map, replay native RNG, prove whether
+`random_int(1)` advances state, resolve nested `NextPawn` or spawn-coordinate
+draws, or establish when the queued startup effect settles. Those boundaries
+remain explicit in the artifact. Consequently it supports fresh-state gating
+and later trace design, not a speculative cross-stage Rust forecast.
