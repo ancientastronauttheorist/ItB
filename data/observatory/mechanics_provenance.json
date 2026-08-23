@@ -9054,11 +9054,27 @@
         },
         {
           "classification": "fact",
-          "statement": "Exact shipped Lua pins the startup sequence: BaseStart constructs and starts Env_Final, whose Start builds LavaPath through FindEndpoints/GetCrossPath before cave StartMission; StartMission draws the bomb tile, optional pre-bomb enemy branch, every mountain dropper, three Mech placements, every pylon dropper, and boss choice; BaseStart then runs SetupDiffMod and ordinary SpawnPawns. The artifact records the conditional source-level random_int/random_bool skeleton without claiming concrete outputs, random_int(1) state advancement, nested NextPawn draws, or effect settlement timing."
+          "statement": "Exact shipped Lua pins the startup sequence: BaseStart constructs and starts Env_Final, whose Start builds LavaPath through FindEndpoints/GetCrossPath before cave StartMission; StartMission draws the bomb tile, optional pre-bomb enemy branch, every mountain dropper, three Mech placements, every pylon dropper, and boss choice; BaseStart then runs SetupDiffMod and ordinary SpawnPawns. The immutable first startup artifact records that conditional source-level random_int/random_bool skeleton and deliberately leaves map-choice implementation, concrete outputs, random_int(1) advancement, nested NextPawn draws, and effect settlement timing to follow-up evidence."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact maps/maphelper.lua defines MAP_LIST insertion order and RandomMap directly: AddMap appends each defined name only once; RandomMap preserves that order, ignores only matt and justin, requires both the requested tag and either the requested sector or any_sector, returns an empty string for no candidates, and otherwise returns ret[random_int(#ret)+1]. It contains no Advanced Edition filter, so all five cave and four caveAE maps are eligible."
         },
         {
           "classification": "inference",
-          "statement": "Because native RandomMap choice, concrete RNG state, spawn internals, and startup-effect settlement remain unresolved, the static startup map justifies no cross-stage Rust forecast. The implemented safety boundary remains stage-change detection followed by a fresh settled bridge read."
+          "statement": "The exact native bootstrap loads maps/maphelper.lua first, obtains the maps entries through FindFirstFileA and FindNextFileA, performs no sort, skips the maphelper entry, removes four filename characters, and dispatches AddMap. On the current installation this yields cave1 through cave5 followed by caveAE1 through caveAE4. This mapping is installation/filesystem state and must be reverified after copying or reinstalling even if every executable and content hash still matches."
+        },
+        {
+          "classification": "inference",
+          "statement": "The native selector retries a candidate found in Mission MapVetoes or its used-map registry, up to ten attempts, then records the accepted name. Mission_Final_Cave inherits the empty base veto list; startNewGame clears the registry; and exact shipped selection sources expose the final_cave tag only at this first cave phase, so no cave candidate is reachable into the registry earlier on the ordinary surface-to-cave path. That path therefore makes exactly one RandomMap attempt."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact one-argument random_int function returns zero without calling the shared RNG only when max is zero. Every nonzero max calls the shared MSVC CRT step and returns its remainder, so Mission:GetMapTag's random_int(1) consumes one draw and returns zero. The ordinary RandomMap attempt consumes the next draw with max 9 and maps remainder 0 through 8 to the installation-bound candidate order."
+        },
+        {
+          "classification": "inference",
+          "statement": "Map filtering, edition behavior, current installation order, ordinary call count, random_int(1) advancement, and the modulo-nine choice are now resolved, but the incoming shared CRT state, spawn internals, and startup-effect settlement remain unavailable. The static evidence still justifies no concrete cross-stage Rust forecast; the implemented safety boundary remains stage-change detection followed by a fresh settled bridge read."
         }
       ],
       "id": "mission-final-surface-and-cave-lifecycle",
@@ -9074,6 +9090,10 @@
         {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
           "symbols": ["native_startup_order", "final_cave_map_pool", "base_start_source_order", "startup_rng_skeleton", "center_assignment", "solver_boundary"]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_map_choice.json",
+          "symbols": ["random_map_is_shipped_lua", "installation_order", "all_nine_cave_maps_are_eligible", "ordinary_first_transition_has_one_attempt", "random_int_one_advances", "two_draw_map_boundary", "solver_boundary"]
         },
         {
           "path": "src/bridge/modloader.lua",
@@ -9104,6 +9124,10 @@
           "symbols": ["build_final_cave_startup_map", "validate_final_cave_startup_map", "validate_final_cave_startup_map_binding"]
         },
         {
+          "path": "src/observatory/final_cave_map_choice.py",
+          "symbols": ["build_final_cave_map_choice_map", "validate_final_cave_map_choice_map", "validate_final_cave_map_choice_map_binding"]
+        },
+        {
           "path": "src/solver/plan_safety.py",
           "symbols": ["audit_plan_safety", "bigbomb_replacement_unresolved", "final_cave_emergency_pylon_loss_allowed", "final_cave_resist_gamble_allowed", "bigbomb_alive", "pylons_alive", "pylon_hp_total"]
         },
@@ -9126,14 +9150,18 @@
         {
           "path": "scripts/itb_observatory_final_cave_startup.py",
           "symbols": ["_parser", "main"]
+        },
+        {
+          "path": "scripts/itb_observatory_final_cave_map_choice.py",
+          "symbols": ["_parser", "main"]
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. This lifecycle record models the source-guaranteed missing-bomb +2 edge and stable-snapshot candidate partition; the exact-build native maps now close relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, the exact nine-map pool, and the source-level startup RNG skeleton. The external Final end-state trigger, native RandomMap choice, concrete environmental/startup RNG, queued effect settlement, replacement timing/coordinate, and full runtime scheduler conformance remain open.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, and the ordinary two-draw map boundary. The external Final end-state trigger, incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued effect settlement, replacement timing/coordinate, and full runtime scheduler conformance remain open.",
         "Mission_Infinite inheritance, native turn and team callback order, the external state change that advances both Final missions despite their always-true IsEndBlocked callbacks, MissionEnd presentation and travel settlement, native spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
         "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
-        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove relative callback/control-flow order, the source-selected cave target, startup call skeleton, and installed map/zone candidates, while the terrain fingerprint alone does not prove the live end-state trigger, Mission_Final:MissionEnd queued-effect settlement, concrete cave initialization results, or queued startup effects executed conformantly."
+        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove relative callback/control-flow order, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, and installed map/zone candidates, while the terrain fingerprint alone does not prove the live end-state trigger, Mission_Final:MissionEnd queued-effect settlement, concrete cave initialization results, or queued startup effects executed conformantly."
       ],
       "sources": [
         {
@@ -9200,6 +9228,10 @@
         {
           "path": "tests/test_observatory_final_cave_startup.py",
           "symbols": ["test_committed_map_pins_startup_pool_and_rng_skeleton_without_outputs", "test_binding_rejects_native_map_rng_or_prose_drift", "test_exact_local_build_sources_and_maps_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_cave_map_choice.py",
+          "symbols": ["test_committed_map_closes_random_map_and_random_int_one_boundaries", "test_binding_rejects_order_rng_or_prose_drift", "test_exact_local_build_and_installation_order_reproduce_map_when_available"]
         }
       ]
     },

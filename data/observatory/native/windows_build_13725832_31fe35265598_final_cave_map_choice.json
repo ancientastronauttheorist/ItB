@@ -1,0 +1,846 @@
+{
+  "analysis_kind": "final_cave_map_choice_boundary_map",
+  "call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016d09c",
+      "id": "bootstrap_to_directory_enumerator",
+      "instruction_hex": "e88f21f3ff",
+      "kind": "direct_rel32",
+      "source_region": "map_bootstrap",
+      "target": {
+        "region": "directory_enumerator",
+        "rva": "0x0009f230",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00182e54",
+      "id": "selector_to_used_map_lookup",
+      "instruction_hex": "e867d3efff",
+      "kind": "direct_rel32",
+      "source_region": "map_selector",
+      "target": {
+        "region": "used_map_lookup",
+        "rva": "0x000801c0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00182e82",
+      "id": "selector_to_used_map_insert",
+      "instruction_hex": "e8f9a9f5ff",
+      "kind": "direct_rel32",
+      "source_region": "map_selector",
+      "target": {
+        "region": "used_map_insert",
+        "rva": "0x000dd880",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020c49c",
+      "id": "new_game_to_used_map_clear",
+      "instruction_hex": "e88fbff8ff",
+      "kind": "direct_rel32",
+      "source_region": "new_game",
+      "target": {
+        "region": "used_map_clear",
+        "rva": "0x00198430",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0c2d",
+      "id": "random_int_to_rng_core",
+      "instruction_hex": "e8e4722a00",
+      "kind": "direct_rel32",
+      "source_region": "random_int_1",
+      "target": {
+        "region": "rng_core",
+        "rva": "0x00387f16",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0009f39b",
+      "id": "enumerator_to_find_first_file_a",
+      "instruction_hex": "ff1524617d00",
+      "kind": "iat_indirect",
+      "source_region": "directory_enumerator",
+      "target": {
+        "iat_rva": "0x003d6124",
+        "library": "KERNEL32.dll",
+        "name": "FindFirstFileA",
+        "type": "import"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0009f4a0",
+      "id": "enumerator_to_find_next_file_a",
+      "instruction_hex": "ff1520617d00",
+      "kind": "iat_indirect",
+      "source_region": "directory_enumerator",
+      "target": {
+        "iat_rva": "0x003d6120",
+        "library": "KERNEL32.dll",
+        "name": "FindNextFileA",
+        "type": "import"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0009f4af",
+      "id": "enumerator_to_find_close",
+      "instruction_hex": "ff151c617d00",
+      "kind": "iat_indirect",
+      "source_region": "directory_enumerator",
+      "target": {
+        "iat_rva": "0x003d611c",
+        "library": "KERNEL32.dll",
+        "name": "FindClose",
+        "type": "import"
+      }
+    }
+  ],
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "bootstrap_loads_maphelper",
+      "instruction_hex": "8bcc8bd06840e98200e8dad4edff83c404b9a85789006a00e88bfeedff",
+      "meaning": "Load maps/maphelper.lua before enumerating map entries.",
+      "region_id": "map_bootstrap",
+      "sha256": "b3af48f60e3a3325519d91c5546cb1880c97d526ee3b20d436ae10dbf9628943",
+      "size": 29,
+      "start_rva": "0x0016d038"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "bootstrap_enumerates_maps",
+      "instruction_hex": "8bcc8bd06868e98200e88cd4edff83c4048d4d9432d2e88f21f3ff",
+      "meaning": "Pass maps to the native directory enumerator.",
+      "region_id": "map_bootstrap",
+      "sha256": "91a3f931b1ecf90b8a0353f7a9dd3bc8cae22e61cff394a612c7b10477cc5844",
+      "size": 27,
+      "start_rva": "0x0016d086"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "bootstrap_skips_maphelper",
+      "instruction_hex": "6a096a008d0c3e685ce98200e8df28eeff83f8ff0f854c010000",
+      "meaning": "Skip an enumerated entry whose name contains maphelper.",
+      "region_id": "map_bootstrap",
+      "sha256": "af69af9d957720877203c54ea731cb3d001aca1a3a7a65b8e149bb9359f95b8c",
+      "size": 26,
+      "start_rva": "0x0016d100"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "bootstrap_strips_extension_and_adds_map",
+      "instruction_hex": "83ec1803d78965a08bcc8b421083c0fc506a00518bcae8ca5ef2ff83ec18c645fc078bccc741140f000000c74110000000008379141072048b01eb028bc16a066820e68200c60000e878ade9ffb9a8578900c645fc03e8fa9b0000",
+      "meaning": "Remove the final four filename characters and invoke AddMap in enumeration order.",
+      "region_id": "map_bootstrap",
+      "sha256": "9725c65b28951413c2e716e4eb30e849c2d21db409c282da372cc6d646b1d617",
+      "size": 91,
+      "start_rva": "0x0016d20b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "find_first_file",
+      "instruction_hex": "6a0468241182008d4d08e8f8b1faff837d1c108d8d98feffff8d45080f4345085150ff1524617d00898594feffff83f8ff0f8417010000",
+      "meaning": "Begin unsorted directory enumeration with FindFirstFileA.",
+      "region_id": "directory_enumerator",
+      "sha256": "0ad3076c1c1b0a7b963dbc6360db5c50e45911a303b545a62772ae241408a882",
+      "size": 55,
+      "start_rva": "0x0009f379"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "append_find_next_and_close",
+      "instruction_hex": "8d45d8508d8d84feffffe8a902fbffc645fc018b45ec83f810720f6a014050ff75d8e87183f6ff83c40c8b9d94feffff8d8598feffff5053ff1520617d0085c00f8502ffffff53ff151c617d00",
+      "meaning": "Append each returned name, loop with FindNextFileA, and close the search handle without a sorting call.",
+      "region_id": "directory_enumerator",
+      "sha256": "eae1e9ddc3ab316f15aac529fc91e73fb1e4f54af10ca1a79fa23242eefeeb1a",
+      "size": 77,
+      "start_rva": "0x0009f468"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "sector_and_random_map_arguments",
+      "instruction_hex": "6878688d00c60000e80654e8ff83ec18c645fc088bcc8965b4c741140f000000c74110000000008379141072048b01eb028bc16affc600008d45bc6a0050e8d053e8ff83ec18c645fc098bccc741140f000000c74110000000008379141072048b01eb028bc16a096828f28200c60000e89e52e8ff8d45d4c645fc0550b9a8578900e85ca9f8ff",
+      "meaning": "Construct the persistent sector string and mission tag arguments, then dispatch RandomMap.",
+      "region_id": "map_selector",
+      "sha256": "631af4687cfed53f5a3d40b9ec9847cb1c91c10cc3dfa9f41f57bbf699298936",
+      "size": 135,
+      "start_rva": "0x00182cbd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "veto_used_map_retry_and_accept",
+      "instruction_hex": "8b4da0b8abaaaa2a8b759c32db2bce895db8f7e9c1fa028bc2c1e81f03c28945b0745c837e141072048b16eb028bd6837f141072078b078945b4eb03897db48b5e108bc3395f108b4db40f42471050e8bb93eeff83c40485c075188b47103bc372118b4db8b8010000000fb6c90f46c8894db883c618836db00175a78b5db88b571483fa1072048b0feb028bcf8b471003c183fa1072048b0feb028bcf51575051e8d9b4eeff83c408b960688d00508d45a850e867d3efff837da800750484db74138b45ac8b5d94408945ac83f80a0f8cbcfdffff837f1000740f57b960688d00e8f9a9f5ffc6401801",
+      "meaning": "Reject a mission-vetoed or already-used map, retry at most ten times, then record the accepted nonempty map.",
+      "region_id": "map_selector",
+      "sha256": "38a14f196a9cd7f0c23ba0678c1aa7d7fd631a4bc39154f2a64cacdf37aaff7c",
+      "size": 234,
+      "start_rva": "0x00182da1"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "new_game_clears_used_maps",
+      "instruction_hex": "6a07685ca88200c60000e840bbdfff6a00b938608900e8a4670000e88fbff8ff",
+      "meaning": "The reviewed startNewGame path clears the used-map registry.",
+      "region_id": "new_game",
+      "sha256": "f0fea4496aadc91109febc797145f169519579f96077b30d42989c7f24757d6e",
+      "size": 32,
+      "start_rva": "0x0020c481"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "random_int_one_argument_body",
+      "instruction_hex": "558bec837d0800750433c05dc3e8e4722a0099f77d088bc25dc3",
+      "meaning": "Return zero without a draw only for max zero; every nonzero max calls the shared RNG and returns its signed remainder.",
+      "region_id": "random_int_1",
+      "sha256": "76e4d6f1289067724a2b6a8348ef91cb772a9bb12f6debf07b66efc11a6dd70e",
+      "size": 26,
+      "start_rva": "0x000e0c20"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "shared_msvc_rng_step",
+      "instruction_hex": "e8176e0000694818fd43030081c1c39e2600894818c1e91081e1ff7f00008bc1c3",
+      "meaning": "Advance the 32-bit state with multiplier 0x343fd and increment 0x269ec3, then return bits 16 through 30.",
+      "region_id": "rng_core",
+      "sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179",
+      "size": 33,
+      "start_rva": "0x00387f16"
+    }
+  ],
+  "data_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "sector_argument",
+      "instruction_hex": "6878688d00",
+      "reference_rva": "0x00182cbd",
+      "region_id": "map_selector",
+      "role": "persistent sector-type string passed as RandomMap argument two",
+      "target_va": "0x008d6878"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "used_map_lookup_registry",
+      "instruction_hex": "b960688d00",
+      "reference_rva": "0x00182e4a",
+      "region_id": "map_selector",
+      "role": "used-map hash registry queried before accepting a candidate",
+      "target_va": "0x008d6860"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "used_map_insert_registry",
+      "instruction_hex": "b960688d00",
+      "reference_rva": "0x00182e7d",
+      "region_id": "map_selector",
+      "role": "same registry updated after accepting a candidate",
+      "target_va": "0x008d6860"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "RandomMap is exact shipped Lua, not an opaque native selector: it preserves MAP_LIST order, applies tag plus sector filtering, and makes one random_int candidate draw for a nonempty result.",
+      "evidence_class": "fact",
+      "id": "random_map_is_shipped_lua",
+      "supports": [
+        "maps/maphelper.lua",
+        "random_map"
+      ]
+    },
+    {
+      "claim": "Native bootstrap loads maphelper first, obtains map entries through unsorted FindFirstFileA/FindNextFileA enumeration, and registers all 376 installed .map files in returned order.",
+      "evidence_class": "inference",
+      "id": "installation_order",
+      "supports": [
+        "bootstrap_loads_maphelper",
+        "bootstrap_enumerates_maps",
+        "append_find_next_and_close",
+        "bootstrap_strips_extension_and_adds_map"
+      ]
+    },
+    {
+      "claim": "The exact current installation yields cave1 through cave5, then caveAE1 through caveAE4. All nine match final_cave plus volcano; RandomMap contains no Advanced Edition filter.",
+      "evidence_class": "fact",
+      "id": "all_nine_cave_maps_are_eligible",
+      "supports": [
+        "map_registration",
+        "random_map_contract"
+      ]
+    },
+    {
+      "claim": "The first ordinary surface-to-cave transition has one RandomMap attempt: cave vetoes are empty and no cave candidate is source-reachable into the new-game used-map registry earlier.",
+      "evidence_class": "inference",
+      "id": "ordinary_first_transition_has_one_attempt",
+      "supports": [
+        "veto_used_map_retry_and_accept",
+        "new_game_clears_used_maps",
+        "random_map_contract"
+      ]
+    },
+    {
+      "claim": "On the exact executable, random_int(1) calls the shared RNG once and returns zero; only random_int(0) skips advancement.",
+      "evidence_class": "fact",
+      "id": "random_int_one_advances",
+      "supports": [
+        "random_int_one_argument_body",
+        "random_int_to_rng_core"
+      ]
+    },
+    {
+      "claim": "Before Env_Final startup on the ordinary first transition, draw one is the one-entry final_cave tag choice and draw two selects candidate index rng_output modulo nine.",
+      "evidence_class": "inference",
+      "id": "two_draw_map_boundary",
+      "supports": [
+        "rng_contract",
+        "ordinary_first_transition_has_one_attempt"
+      ]
+    },
+    {
+      "claim": "This closes map filtering, order, call count, and modulo semantics but does not expose the pre-draw CRT state. The Rust solver should still consume a fresh settled bridge state after the phase change instead of forecasting a concrete map.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "supports": [
+        "two_draw_map_boundary",
+        "rng_contract"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "base_inventory_scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "reviewed_source_set_sha256": "ea5cb11126e9c6e8d56e292fbecdd65ef00854f0deff3188bd1139f88f9dc310"
+  },
+  "map_registration": {
+    "directory_entry_count": 377,
+    "directory_order_sha256": "b6536213370b25da2387eae604d6b4b4047d558da88f63292b0a1542ffcc5cfc",
+    "filesystem_order_warning": "Directory order is installation state, not file-content state. Reinstallation or copying can change raw RNG-to-map mapping without changing executable or map hashes.",
+    "maphelper_entry_index_zero_based": 226,
+    "maphelper_entry_skipped_during_registration": true,
+    "maphelper_loaded_before_enumeration": true,
+    "native_directory_api": [
+      "FindFirstFileA",
+      "FindNextFileA",
+      "FindClose"
+    ],
+    "other_installed_entry_types": {
+      ".map": 376
+    },
+    "registration_count": 376,
+    "registration_order_sha256": "6f89f1e48f963dbb896cc82fe61b4c9367ab61639bf1881d9745495227cc6112",
+    "registration_transform": "For each non-maphelper entry in Win32 enumeration order, load maps/<entry>, remove the final four filename characters, and invoke AddMap. AddMap preserves first insertion order.",
+    "sorting_step_present": false
+  },
+  "method": {
+    "boundary_review": "Ghidra 12.1.3 function/reference/decompiler review identified map bootstrap, unsorted Win32 enumeration, map selection retry, used-map registry, and one-argument random_int boundaries.",
+    "byte_verification": "Capstone 5.0.7 redecodes every pinned function and control window; the verifier checks direct targets and named PE IAT imports.",
+    "installation_order_review": "The verifier calls FindFirstFileA/FindNextFileA directly and rejects drift in the full entry and registration order hashes.",
+    "limitations": [
+      "Native addresses apply only to the pinned Windows executable.",
+      "The directory-order binding applies to this exact installation state.",
+      "The sector value is a static cross-call inference, not a runtime capture.",
+      "A modded or debug state that pre-marks cave maps can trigger retries.",
+      "The shared CRT state before draw one is not exposed by ordinary bridge state.",
+      "No macOS equivalence is claimed."
+    ],
+    "source_review": "Exact source hashes bind AddMap, RandomMap, random_element, mission tags, inherited vetoes, and the Final phase identity."
+  },
+  "random_map_contract": {
+    "advanced_edition_filter_present": false,
+    "candidate_count": 9,
+    "candidate_filter": [
+      "iterate MAP_LIST with ipairs, preserving registration order",
+      "ignore map names matt and justin",
+      "require one tag equal to final_cave",
+      "require one tag equal to volcano or any_sector"
+    ],
+    "candidate_order": [
+      {
+        "advanced_edition_name": false,
+        "candidate_index_zero_based": 0,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 110,
+        "map_name": "cave1",
+        "path": "maps/cave1.map",
+        "rng_remainder": 0,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": false,
+        "candidate_index_zero_based": 1,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 111,
+        "map_name": "cave2",
+        "path": "maps/cave2.map",
+        "rng_remainder": 1,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": false,
+        "candidate_index_zero_based": 2,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 112,
+        "map_name": "cave3",
+        "path": "maps/cave3.map",
+        "rng_remainder": 2,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": false,
+        "candidate_index_zero_based": 3,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 113,
+        "map_name": "cave4",
+        "path": "maps/cave4.map",
+        "rng_remainder": 3,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": false,
+        "candidate_index_zero_based": 4,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 114,
+        "map_name": "cave5",
+        "path": "maps/cave5.map",
+        "rng_remainder": 4,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": true,
+        "candidate_index_zero_based": 5,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 115,
+        "map_name": "caveAE1",
+        "path": "maps/caveAE1.map",
+        "rng_remainder": 5,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": true,
+        "candidate_index_zero_based": 6,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 116,
+        "map_name": "caveAE2",
+        "path": "maps/caveAE2.map",
+        "rng_remainder": 6,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": true,
+        "candidate_index_zero_based": 7,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 117,
+        "map_name": "caveAE3",
+        "path": "maps/caveAE3.map",
+        "rng_remainder": 7,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      },
+      {
+        "advanced_edition_name": true,
+        "candidate_index_zero_based": 8,
+        "evidence_class": "fact",
+        "map_list_index_zero_based": 118,
+        "map_name": "caveAE4",
+        "path": "maps/caveAE4.map",
+        "rng_remainder": 8,
+        "tags": [
+          "final_cave",
+          "volcano"
+        ]
+      }
+    ],
+    "empty_result": "return an empty string without an RNG draw",
+    "input_sector": "volcano",
+    "input_tag": "final_cave",
+    "mission_map_veto_basis": "Mission_Final_Cave does not override the inherited empty Mission.MapVetoes table.",
+    "mission_map_vetoes": [],
+    "native_retry_policy": "Reject a selected name found in mission vetoes or the used-map registry, retrying at most ten attempts.",
+    "nonempty_result": "return candidates[random_int(#candidates) + 1]",
+    "ordinary_first_transition_attempts": 1,
+    "ordinary_first_transition_basis": "startNewGame clears the used-map registry; exact shipped mission selection sources expose final_cave only on Mission_Final_Cave, and no cave map is explicitly named elsewhere before the first surface-to-cave transition. Therefore no candidate can already be used on that ordinary path.",
+    "sector_value_basis": "The same persistent native string is used as the sector-type argument for map selection and getRainChance. The surface Final mission was selected from the exact final_island pool, whose 15 maps all require the volcano sector and have no any_sector tag; CreateNextPhase does not replace that string before cave selection.",
+    "sector_value_evidence_class": "inference"
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0016d2e4",
+      "evidence_class": "fact",
+      "id": "map_bootstrap",
+      "section": ".text",
+      "sha256": "30d803f49998606f470555e5772364a69e311082f426bc1f3daba9335e3c3a7f",
+      "size": 756,
+      "start_rva": "0x0016cff0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0009f50e",
+      "evidence_class": "fact",
+      "id": "directory_enumerator",
+      "section": ".text",
+      "sha256": "d2c13c105a2347f4347004b7c330d933654ba4a59dcf47e51a0959aa1bb4e9a2",
+      "size": 734,
+      "start_rva": "0x0009f230"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00182f26",
+      "evidence_class": "fact",
+      "id": "map_selector",
+      "section": ".text",
+      "sha256": "c6190e9784cd302c39f0784bd263c9112c277522cd8e1fc54694b85a383a3761",
+      "size": 1078,
+      "start_rva": "0x00182af0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00080269",
+      "evidence_class": "fact",
+      "id": "used_map_lookup",
+      "section": ".text",
+      "sha256": "a869c51bb5ca9259db62300844586b855b9a31343f5fcfd7c224533c7c699d50",
+      "size": 169,
+      "start_rva": "0x000801c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x000dd9dd",
+      "evidence_class": "fact",
+      "id": "used_map_insert",
+      "section": ".text",
+      "sha256": "eb2dd02758fdae437339c05459a921e43b38e7b315dfb8222db27158aacbff1f",
+      "size": 349,
+      "start_rva": "0x000dd880"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0019849b",
+      "evidence_class": "fact",
+      "id": "used_map_clear",
+      "section": ".text",
+      "sha256": "6ec5874cf0ec26dda7cce0b6130cd63bcdf1efcdbc610d3a17bf644255361dcf",
+      "size": 107,
+      "start_rva": "0x00198430"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0020c740",
+      "evidence_class": "fact",
+      "id": "new_game",
+      "section": ".text",
+      "sha256": "e23788866a80d562032dfb9cb3311657e3e405491318915d2c5f62dbc26f86f8",
+      "size": 848,
+      "start_rva": "0x0020c3f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x000e0c3a",
+      "evidence_class": "fact",
+      "id": "random_int_1",
+      "section": ".text",
+      "sha256": "76e4d6f1289067724a2b6a8348ef91cb772a9bb12f6debf07b66efc11a6dd70e",
+      "size": 26,
+      "start_rva": "0x000e0c20"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00387f37",
+      "evidence_class": "fact",
+      "id": "rng_core",
+      "section": ".text",
+      "sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179",
+      "size": 33,
+      "start_rva": "0x00387f16"
+    }
+  ],
+  "rng_contract": {
+    "concrete_map_forecast_proven": false,
+    "core": {
+      "output": "(state >> 16) & 0x7fff",
+      "state_width_bits": 32,
+      "transition": "state = state * 0x343fd + 0x269ec3 (mod 2^32)"
+    },
+    "draw_count": 2,
+    "ordinary_first_transition_draws_before_environment": [
+      {
+        "advances_rng": true,
+        "max": 1,
+        "ordinal": 1,
+        "result": 0,
+        "semantic_result": "final_cave",
+        "source": "Mission:GetMapTag -> random_element(MapTags)"
+      },
+      {
+        "advances_rng": true,
+        "max": 9,
+        "ordinal": 2,
+        "result": "second_rng_output % 9",
+        "semantic_result": "candidate_order[result]",
+        "source": "RandomMap(final_cave, volcano)"
+      }
+    ],
+    "pre_draw_state_available_to_solver": false,
+    "random_int_one_argument": {
+      "max_nonzero": "advance once and return rng_output % max",
+      "max_zero": "return 0 without advancing the RNG"
+    }
+  },
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "maps/maphelper.lua",
+        "reviewed_lines": [
+          [
+            2,
+            12
+          ],
+          [
+            49,
+            86
+          ]
+        ],
+        "sha256": "f6455082a050f734ccc60ef3df6914619f5a250832a79f71e3ad6f1758431077",
+        "size": 2093,
+        "symbols": [
+          "AddMap",
+          "RandomMap"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/global.lua",
+        "reviewed_lines": [
+          [
+            560,
+            565
+          ]
+        ],
+        "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+        "size": 17363,
+        "symbols": [
+          "random_element"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/missions.lua",
+        "reviewed_lines": [
+          [
+            67,
+            79
+          ],
+          [
+            505,
+            511
+          ]
+        ],
+        "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+        "size": 29573,
+        "symbols": [
+          "Mission.MapVetoes",
+          "Mission:GetMapTag"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final.lua",
+        "reviewed_lines": [
+          [
+            3,
+            14
+          ]
+        ],
+        "sha256": "f92875ba570871b7b3184adb168105c8f29150398b8b14e87a863f67d6c61e29",
+        "size": 3318,
+        "symbols": [
+          "Mission_Final",
+          "Mission_Final.NextPhase"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "reviewed_lines": [
+          [
+            3,
+            14
+          ]
+        ],
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave",
+          "Mission_Final_Cave.MapTags"
+        ]
+      }
+    ]
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "maphelper_path",
+      "instruction_hex": "6840e98200",
+      "reference_rva": "0x0016d03c",
+      "region_id": "map_bootstrap",
+      "role": "helper loaded before map enumeration",
+      "string_rva": "0x0042e940",
+      "text": "maps/maphelper.lua"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "maps_directory",
+      "instruction_hex": "6868e98200",
+      "reference_rva": "0x0016d08a",
+      "region_id": "map_bootstrap",
+      "role": "directory passed to the native enumerator",
+      "string_rva": "0x0042e968",
+      "text": "maps"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "maphelper_skip",
+      "instruction_hex": "685ce98200",
+      "reference_rva": "0x0016d107",
+      "region_id": "map_bootstrap",
+      "role": "entry-name substring excluded from the registration loop",
+      "string_rva": "0x0042e95c",
+      "text": "maphelper"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "maps_prefix",
+      "instruction_hex": "6828e68200",
+      "reference_rva": "0x0016d126",
+      "region_id": "map_bootstrap",
+      "role": "prefix used to load each enumerated map entry",
+      "string_rva": "0x0042e628",
+      "text": "maps/"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_map",
+      "instruction_hex": "6820e68200",
+      "reference_rva": "0x0016d24b",
+      "region_id": "map_bootstrap",
+      "role": "Lua registration callback after removing four filename characters",
+      "string_rva": "0x0042e620",
+      "text": "AddMap"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "random_map",
+      "instruction_hex": "6828f28200",
+      "reference_rva": "0x00182d25",
+      "region_id": "map_selector",
+      "role": "Lua candidate filter and choice callback",
+      "string_rva": "0x0042f228",
+      "text": "RandomMap"
+    }
+  ],
+  "summary": {
+    "advanced_edition_filter_absent": true,
+    "call_edge_count": 8,
+    "candidate_count": 9,
+    "candidate_order_installation_bound": true,
+    "concrete_map_forecast_proven": false,
+    "control_window_count": 11,
+    "data_anchor_count": 3,
+    "finding_count": 7,
+    "ordinary_first_transition_draw_count": 2,
+    "random_int_one_advancement_proven": true,
+    "random_map_algorithm_proven": true,
+    "region_count": 9,
+    "reviewed_source_count": 5,
+    "simulator_change_required": false,
+    "string_anchor_count": 6,
+    "unresolved_count": 3
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
+    "artifact_sha256": "4cf2f05a267ed87a8cf5b14edbc874343a3969cef2dfb98e849f645ec177f942",
+    "correction": "The immutable startup artifact correctly left random_int(1) open. Exact PE evidence now proves it advances one RNG step.",
+    "narrowed_gap_ids": [
+      "native_rng_state"
+    ],
+    "resolved_gap_ids": [
+      "native_random_map"
+    ]
+  },
+  "supporting_artifacts": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json",
+      "artifact_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+      "supports": [
+        "lua_rng_registration",
+        "lua_rng_leaf_contracts",
+        "shared_rng_core"
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "pre_draw_crt_state",
+      "next_evidence": "Capture the native RNG state at the already-proven phase boundary only if concrete cross-stage forecasting becomes useful.",
+      "question": "What is the shared CRT state immediately before GetMapTag?",
+      "static_status": "Both draw semantics and all nine remainder mappings are exact; ordinary bridge/save state does not expose this native state."
+    },
+    {
+      "id": "nonstandard_used_map_state",
+      "next_evidence": "Treat such a state as out of scope or capture the registry.",
+      "question": "Can a modded/debug restore pre-mark a cave candidate as used?",
+      "static_status": "The native retry is exact and ordinary first-transition absence is proven from shipped reachability; arbitrary modified state is not."
+    },
+    {
+      "id": "downstream_startup_rng",
+      "next_evidence": "Retain a settled cave bridge snapshot or capture RNG state.",
+      "question": "What concrete lava path, placement, and spawn draws follow?",
+      "static_status": "The first two calls are now exact, but their unknown incoming state and later Board/native branches still prevent replay."
+    }
+  ]
+}

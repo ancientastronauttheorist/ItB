@@ -565,8 +565,46 @@ python scripts/itb_observatory_final_cave_startup.py verify `
   --startup-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json
 ```
 
-This does not select a concrete map, replay native RNG, prove whether
-`random_int(1)` advances state, resolve nested `NextPawn` or spawn-coordinate
-draws, or establish when the queued startup effect settles. Those boundaries
-remain explicit in the artifact. Consequently it supports fresh-state gating
-and later trace design, not a speculative cross-stage Rust forecast.
+This immutable first artifact does not select a concrete map, replay native
+RNG, prove whether `random_int(1)` advances state, resolve nested `NextPawn` or
+spawn-coordinate draws, or establish when the queued startup effect settles.
+The following artifact supersedes its first two map-choice questions; the
+remaining startup boundaries stay explicit.
+
+## Final Cave map-choice boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_map_choice.json`
+binds the exact shipped `maps/maphelper.lua` implementation to nine reviewed
+native regions, the named Win32 directory-enumeration imports, and this exact
+installation's returned map order. It establishes that:
+
+- native bootstrap loads `maphelper.lua`, enumerates the `maps` directory with
+  `FindFirstFileA` / `FindNextFileA` without sorting, strips the four-character
+  extension, and calls `AddMap` in returned order;
+- `RandomMap` preserves that order, filters by both mission tag and sector,
+  contains no Advanced Edition filter, and draws exactly once for a nonempty
+  candidate list;
+- the current installation orders the eligible maps as `cave1` through
+  `cave5`, followed by `caveAE1` through `caveAE4`;
+- the native selector can retry vetoed or already-used maps, but the inherited
+  cave veto list is empty and no cave candidate is reachable earlier on an
+  ordinary first Final Cave transition; and
+- exact one-argument `random_int` bytes prove `random_int(1)` advances the
+  shared CRT RNG and returns zero. The next map draw advances again and selects
+  candidate index `rng_output % 9`.
+
+Verify the executable, reviewed sources, complete maps revision, native Win32
+directory order, region hashes, anchors, control windows, and call edges with:
+
+```powershell
+python scripts/itb_observatory_final_cave_map_choice.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --map-choice data/observatory/native/windows_build_13725832_31fe35265598_final_cave_map_choice.json
+```
+
+Directory enumeration order belongs to the installation/filesystem, not just
+the file hashes, so copying or reinstalling the same bytes requires
+reverification. The incoming CRT state is still absent from ordinary bridge
+state; therefore the concrete map is not forecast and the solver still takes
+a fresh settled bridge read after the stage change.

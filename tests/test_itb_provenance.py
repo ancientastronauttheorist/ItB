@@ -5919,6 +5919,16 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "base_start_source_order", "startup_rng_skeleton",
         "center_assignment", "solver_boundary",
     }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_cave_map_choice.json"
+    ] == {
+        "random_map_is_shipped_lua", "installation_order",
+        "all_nine_cave_maps_are_eligible",
+        "ordinary_first_transition_has_one_attempt",
+        "random_int_one_advances", "two_draw_map_boundary",
+        "solver_boundary",
+    }
     assert implementations["src/loop/commands.py"] == {
         "_detect_terrain_stage_change", "_capture_board_summary",
         "_lookahead_forecast_gaps",
@@ -5937,6 +5947,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "build_final_cave_startup_map",
         "validate_final_cave_startup_map",
         "validate_final_cave_startup_map_binding",
+    }
+    assert implementations["src/observatory/final_cave_map_choice.py"] == {
+        "build_final_cave_map_choice_map",
+        "validate_final_cave_map_choice_map",
+        "validate_final_cave_map_choice_map_binding",
     }
     assert implementations["src/solver/plan_safety.py"] == {
         "audit_plan_safety", "bigbomb_replacement_unresolved",
@@ -5959,6 +5974,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert implementations[
         "scripts/itb_observatory_final_cave_startup.py"
     ] == {"_parser", "main"}
+    assert implementations[
+        "scripts/itb_observatory_final_cave_map_choice.py"
+    ] == {"_parser", "main"}
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
     assert "does not explicitly reset iDamage" in facts
@@ -5975,12 +5993,15 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "map selection, map loading/AddMap" in facts
     assert "exactly nine final_cave-tagged maps" in facts
     assert "24 source-reachable center assignments" in facts
-    assert "random_int(1) state advancement" in facts
-    assert "no cross-stage Rust forecast" in facts
+    assert "contains no Advanced Edition filter" in facts
+    assert "FindFirstFileA and FindNextFileA" in facts
+    assert "exactly one RandomMap attempt" in facts
+    assert "random_int(1) consumes one draw" in facts
+    assert "no concrete cross-stage Rust forecast" in facts
     gaps = " ".join(record["known_gaps"])
     assert "Env_Final records cover exact current bridge selections" in gaps
     assert "exact-build native maps now close relative" in gaps
-    assert "native RandomMap choice" in gaps
+    assert "incoming pre-map-draw CRT state" in gaps
     assert "concrete selected map" in gaps
     assert "external state change that advances both Final missions" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps

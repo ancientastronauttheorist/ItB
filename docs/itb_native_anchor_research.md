@@ -396,11 +396,15 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    map selection/loading and `BaseStart`, inventories all nine `final_cave`
    maps and their startup zones, and pins the shipped Lua call skeleton from
    the one-entry map tag through lava-path, bomb/Mech, dropper, boss,
-   difficulty, and ordinary spawn work. Native `RandomMap` choice,
-   `random_int(1)` state advancement, concrete draws, nested spawn RNG, queued
-   startup-effect settlement, the external Final end-state trigger, countdown
-   outcome, and non-Windows equivalence remain open; no speculative Rust
-   forecast follows from the static boundary.
+   difficulty, and ordinary spawn work. A second follow-up proves shipped
+   `RandomMap` filtering, the current unsorted Win32 registration order, the
+   absence of an Advanced Edition filter, the empty cave veto set, ordinary
+   first-transition used-map noncollision, and two exact pre-environment RNG
+   draws: `random_int(1)` advances and returns zero, then `random_int(9)` maps
+   its remainder to the nine ordered candidates. The incoming CRT state,
+   concrete later draws, nested spawn RNG, queued startup-effect settlement,
+   the external Final end-state trigger, countdown outcome, and non-Windows
+   equivalence remain open; no speculative Rust forecast follows.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
