@@ -628,10 +628,104 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     ]
     evidence = " ".join(item["statement"] for item in record["evidence"])
     assert "optional mission-specific data overrides" in evidence
+    assert "caller 60 as the standard selector" in evidence
+    assert "caller 59 as the emergency selector" in evidence
+    assert "caller 66 as without-replacement predicate ordering" in evidence
+    assert "candidates[raw_rng % 5]" in evidence
+    assert "all 689 accepted installation entries" in evidence
+    implementations = {
+        item["path"]: set(item["symbols"])
+        for item in record["implementations"]
+    }
+    assert implementations["src/observatory/spawn_coordinate_paths.py"] == {
+        "build_spawn_coordinate_path_map",
+        "validate_spawn_coordinate_path_map_binding",
+        "validate_spawn_coordinate_path_map",
+    }
+    assert implementations["src/observatory/spawn_coordinate_rng.py"] == {
+        "match_spawn_coordinate_rng_records",
+        "attribute_spawn_coordinate_rng",
+        "compare_spawn_coordinate_rng_attributions",
+        "explain_spawn_coordinate_rng_variation",
+    }
+    tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
+    assert tests[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_spawn_coordinate_paths.json"
+    ] == {
+        "fallback_is_emergency_placement",
+        "both_final_selectors_use_modulo",
+        "scheduler_is_predicate_order_not_final_selection",
+        "scheduler_draws_are_upstream_state",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260822_"
+        "spawn_coordinate_rng_receipt.json"
+    ] == {
+        '"classification":"spawn_coordinate_direct_rng_resolved_'
+        'shared_presentation_stream_blocks_stable_prediction"',
+        '"selector_caller_ids":[60,60,60]',
+        '"selector_rng_ordinals":[1495,1475,1450]',
+        '"ordinal_deltas_fully_accounted":true',
+    }
     gaps = " ".join(record["known_gaps"])
     assert "does not parse or apply SectorSpawners" in gaps
     assert "GAME:GetSpawnList" in gaps
-    assert "parameter matrix does not itself determine spawn count" in gaps
+    assert "Standard spawn-coordinate candidate order" in gaps
+    assert "scheduler/fallback paths' opaque predicate inputs" in gaps
+    assert "spawn-coordinate selection, and the coordinate RNG call order" not in gaps
+
+
+def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
+    repo_root = Path(__file__).resolve().parents[1]
+    provenance = load_json_object(
+        repo_root / "data/observatory/mechanics_provenance.json"
+    )
+    record = next(
+        item
+        for item in provenance["records"]
+        if item["id"] == "enemy-target-scoring"
+    )
+
+    evidence = " ".join(item["statement"] for item in record["evidence"])
+    assert "consumes the returned target-area vector sequentially" in evidence
+    assert "direct shared-RNG call modulo the equal-best count" in evidence
+    assert "accepted all 100, 47, and 181 attempts" in evidence
+    assert "every pair restored all 65 installed callback slots" in evidence
+    assert "selected 24-byte record immediately" in evidence
+    assert "aiDest matched queue origin" in evidence
+    assert "live bridge queue remains the authoritative current action" in evidence
+    tournament = next(
+        item
+        for item in record["evidence"]
+        if "consumes the returned target-area vector sequentially"
+        in item["statement"]
+    )
+    assert tournament["classification"] == "inference"
+
+    implementations = {
+        item["path"]: set(item["symbols"])
+        for item in record["implementations"]
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_pe_boundaries.json"
+    ] == {
+        "enemy_candidate_tournament",
+        "selected_ai_record",
+        "dynamic_lua_callbacks",
+    }
+    assert implementations["src/observatory/selected_queue_hw.py"] == {
+        "validate_selected_queue_snapshot",
+        "correlate_selected_queue_snapshot",
+    }
+
+    gaps = " ".join(record["known_gaps"])
+    assert "now-proven native tournament" in gaps
+    assert "no live capture serializes one complete tournament" in gaps
+    assert "one Firefly1 single-weapon shape" in gaps
+    assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
 
 
 def test_real_broad_records_keep_symbols_on_their_exact_source_files():

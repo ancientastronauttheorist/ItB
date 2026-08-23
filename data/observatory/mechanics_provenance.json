@@ -1081,7 +1081,19 @@
         },
         {
           "classification": "inference",
-          "statement": "Neither a preserved Lua-wrapper return nor a fixed native RNG seed is sufficient to infer spawn-selection call order from save state alone on this build."
+          "statement": "The exact-build spawn-coordinate path map identifies caller 60 as the standard selector, caller 59 as the emergency selector reached only after the ordinary filtered vector is empty, and caller 66 as without-replacement predicate ordering before a separate standard-selector call. Callers 59 and 60 choose from their exact ordered Point vectors with raw shared RNG modulo the candidate count."
+        },
+        {
+          "classification": "fact",
+          "statement": "Three combined coordinate/RNG captures retained the same ordered five candidates and joined the standard selector to caller 60 at native RNG ordinals 1495, 1475, and 1450. The selected point was candidates[raw_rng % 5] in every capture; all varying upstream callers were classified, and classified count deltas [0, -20, -45] exactly matched the selector-ordinal deltas."
+        },
+        {
+          "classification": "fact",
+          "statement": "The later spawn-coordinate cleanup receipt closes the combined campaign's pending restoration fields: all 689 accepted installation entries and the sealed 33-file owner save tree matched byte-for-byte, the prior Mod Loader file was restored, and no Observatory diagnostic file remained active."
+        },
+        {
+          "classification": "inference",
+          "statement": "Neither a preserved Lua-wrapper return nor a fixed native RNG seed is sufficient to forecast a future spawn coordinate from ordinary save/bridge state on this build. Timing-dependent presentation consumers advance the same shared stream before the now-proven selector call."
         }
       ],
       "id": "spawn-selection",
@@ -1108,17 +1120,35 @@
           ]
         },
         {
+          "path": "src/observatory/spawn_coordinate_paths.py",
+          "symbols": [
+            "build_spawn_coordinate_path_map",
+            "validate_spawn_coordinate_path_map_binding",
+            "validate_spawn_coordinate_path_map"
+          ]
+        },
+        {
+          "path": "src/observatory/spawn_coordinate_rng.py",
+          "symbols": [
+            "match_spawn_coordinate_rng_records",
+            "attribute_spawn_coordinate_rng",
+            "compare_spawn_coordinate_rng_attributions",
+            "explain_spawn_coordinate_rng_variation"
+          ]
+        },
+        {
           "path": "tests/test_observatory_native_boundary_campaign.py",
           "symbols": [
-            "test_committed_spawn_replay_campaign_recovers_exact_native_choices"
+            "test_committed_spawn_replay_campaign_recovers_exact_native_choices",
+            "test_committed_spawn_coordinate_campaign_proves_order_and_modulo_only",
+            "test_committed_combined_coordinate_rng_campaign_explains_ordinal_drift"
           ]
         }
       ],
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
-        "Ordinary bridge input does not export the exact native pre-call state, effective ratios, and ordered candidate array before NextPawn executes, so the solver cannot yet use the proven replay model prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, spawn-coordinate selection, and the coordinate RNG call order outside NextPawn remain unresolved.",
-        "The parameter matrix does not itself determine spawn count, timing, locations, roster, or the exact runtime replay capsule.",
+        "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor selector-time CRT state, so the solver cannot yet use either proven replay rule prospectively.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, complete coordinate-candidate construction/filtering, and the exact runtime replay capsule remain unresolved. Standard spawn-coordinate candidate order, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are now exact; only the scheduler/fallback paths' opaque predicate inputs and runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1193,6 +1223,45 @@
             "\"callback_families\":{\"enemy_target_score\":1,\"get_skill_effect\":2,\"get_target_area\":1,\"score_positioning\":1}",
             "\"complete_restored_pairs\":5",
             "\"whole_game_mismatches\":2"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_spawn_coordinate_paths.json",
+          "symbols": [
+            "fallback_is_emergency_placement",
+            "both_final_selectors_use_modulo",
+            "scheduler_is_predicate_order_not_final_selection",
+            "scheduler_draws_are_upstream_state"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
+          "symbols": [
+            "\"classification\":\"spawn_coordinate_direct_rng_resolved_shared_presentation_stream_blocks_stable_prediction\"",
+            "\"selector_caller_ids\":[60,60,60]",
+            "\"selector_rng_ordinals\":[1495,1475,1450]",
+            "\"ordinal_deltas_fully_accounted\":true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json",
+          "symbols": [
+            "observatory_spawn_coordinate_rng_cleanup_receipt",
+            "\"The active installation matches all 689 entries in the accepted owner-local inventory.\"",
+            "\"The active owner save file set and bytes match the sealed 33-file baseline.\""
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_paths.py",
+          "symbols": [
+            "test_committed_path_map_closes_offline_scheduler_and_fallback_semantics"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_rng.py",
+          "symbols": [
+            "test_exact_direct_callers_resolve_coordinate_rng_ordinals",
+            "test_role_overlay_accounts_for_ordinal_delta_by_domain"
           ]
         }
       ]
@@ -1910,7 +1979,19 @@
         },
         {
           "classification": "inference",
-          "statement": "Remaining disagreement is expected to include native candidate generation, movement/path enumeration, and tie-breaking."
+          "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
+        },
+        {
+          "classification": "fact",
+          "statement": "Five source-bounded natural callback pairs exercised ScorePositioning, GetTargetArea, GetTargetScore, and GetSkillEffect during complete enemy decision cycles. The three selection/scoring families accepted all 100, 47, and 181 attempts respectively with zero drops and matched their paired whole-game outcomes; every pair restored all 65 installed callback slots."
+        },
+        {
+          "classification": "fact",
+          "statement": "Three counterbalanced hardware-observer triplets on one bounded Firefly1 scenario correlated the selected 24-byte record immediately to the same pawn's queue commit on the same thread. aiDest matched queue origin, aiTarget matched queue target and queued shot, and current weapon matched queued skill; all control, dormant, and armed outcomes were semantically identical."
+        },
+        {
+          "classification": "inference",
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact native tournament order and equal-best tie-breaking are known, but the full runtime candidate payload and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -1927,11 +2008,27 @@
           "symbols": [
             "evaluate"
           ]
+        },
+        {
+          "path": "src/observatory/selected_queue_hw.py",
+          "symbols": [
+            "validate_selected_queue_snapshot",
+            "correlate_selected_queue_snapshot"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json",
+          "symbols": [
+            "enemy_candidate_tournament",
+            "selected_ai_record",
+            "dynamic_lua_callbacks"
+          ]
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the Lua scoring tournament.",
-        "Candidate evaluation order and native tie-breaking are not captured."
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native tournament, movement/path enumeration, per-subclass target construction, score accumulation, and shared-RNG state.",
+        "The exact static candidate order and equal-best modulo tie-break are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, per-candidate positioning and target scores, the equal-best set, and its tie-break draw remain absent from ordinary solver input.",
+        "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
         {
@@ -1951,6 +2048,56 @@
           "symbols": [
             "test_webbed_melee_enemy_reach_excludes_movement",
             "test_stationary_special_targeting_stays_queueless"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json",
+          "symbols": [
+            "\"attempted_calls\":622",
+            "\"accepted_events\":620",
+            "\"whole_game_matches\":3"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json",
+          "symbols": [
+            "\"classification\":\"final_selected_record_correlated_to_immediate_queue_commit\"",
+            "\"complete_restored_snapshots\":3",
+            "\"event_order\":[\"selected_record\",\"queued_action\"]"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json",
+          "symbols": [
+            "observatory_native_boundaries_cleanup_receipt",
+            "\"The active installation matches all 689 entries in the accepted owner-local inventory.\"",
+            "\"The active owner save file set and bytes match the sealed 33-file baseline.\""
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_callback_native_campaign_cleanup_receipt.json",
+          "symbols": [
+            "observatory_callback_native_campaign_cleanup_receipt",
+            "\"The active installation matches all 689 entries in the accepted owner-local inventory.\"",
+            "\"The active owner save file set and bytes match the sealed 33-file baseline.\""
+          ]
+        },
+        {
+          "path": "tests/test_observatory_native_boundary_campaign.py",
+          "symbols": [
+            "test_committed_selected_queue_campaign_is_neutral_and_correlated"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_selected_queue_hw.py",
+          "symbols": [
+            "test_complete_pair_validates_and_correlates_to_bridge_queue"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_observatory_selected_record_drives_firefly_queue_direction"
           ]
         }
       ]
