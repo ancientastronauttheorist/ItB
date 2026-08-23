@@ -5804,7 +5804,7 @@ def test_real_mission_snowbattle_record_pins_native_setup_gap():
     assert "safety gate after bridge state extraction" in gaps
 
 
-def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_terminal_inference():
+def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_settlement():
     record = _mission_provenance_record(
         "mission-final-surface-and-cave-lifecycle"
     )
@@ -5925,6 +5925,21 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_campaign_settlement.json"
+    ] == {
+        "start_mech_travel_initializes_native_queue",
+        "travel_queue_finishes_with_bomb_lock_and_fade",
+        "campaign_terminal_predicate_is_exact",
+        "final_campaign_bypasses_ordinary_cleanup",
+        "campaign_manager_settles_in_order",
+        "completed_run_saves_are_removed",
+        "victory_profile_and_achievement_path",
+        "profile_write_path_is_pinned",
+        "final_victory_renderer_handoff",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_startup.json"
     ] == {
         "native_startup_order", "final_cave_map_pool",
@@ -5960,6 +5975,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "validate_final_end_settlement_map",
         "validate_final_end_settlement_map_binding",
     }
+    assert implementations["src/observatory/final_campaign_settlement.py"] == {
+        "build_final_campaign_settlement_map",
+        "validate_final_campaign_settlement_map",
+        "validate_final_campaign_settlement_map_binding",
+    }
     assert implementations["src/observatory/final_cave_startup.py"] == {
         "build_final_cave_startup_map",
         "validate_final_cave_startup_map",
@@ -5992,6 +6012,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "scripts/itb_observatory_final_end_settlement.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_campaign_settlement.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_startup.py"
     ] == {"_parser", "main"}
     assert implementations[
@@ -6013,6 +6036,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "before constructing or invoking IsEndBlocked" in facts
     assert "Board activity reason 6" in facts
     assert "cannot reach the later IsNextPhase" in facts
+    assert "resolves that post-StartMechTravel gap" in facts
+    assert "4.5-second state value" in facts
+    assert "common completed-battle state" in facts
+    assert "DeleteFileA wrapper" in facts
+    assert "Result 1 alone initializes" in facts
     assert "source-selected handoff target is exact" in facts
     assert "map selection, map loading/AddMap" in facts
     assert "exactly nine final_cave-tagged maps" in facts
@@ -6027,7 +6055,8 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "exact-build native maps now close the ordinary turn-limit" in gaps
     assert "Incoming pre-map-draw CRT state" in gaps
     assert "concrete selected map" in gaps
-    assert "post-StartMechTravel campaign settlement" in gaps
+    assert "post-StartMechTravel campaign settlement" not in gaps
+    assert "live campaign-settlement timing and file contents" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated native replacement cycles" in gaps
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps

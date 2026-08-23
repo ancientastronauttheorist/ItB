@@ -567,8 +567,57 @@ python scripts/itb_observatory_final_end_settlement.py verify `
 ```
 
 The map proves ordinary queue-empty/activity-clear ordering, not wall-clock
-timing, arbitrary modified-effect cancellation, or the post-`StartMechTravel`
-campaign-victory/save/UI path. It requires no Rust simulator change.
+timing or arbitrary modified-effect cancellation. Its post-`StartMechTravel`
+gap is resolved by the continuation below. It requires no Rust simulator
+change.
+
+## Final campaign settlement boundary
+
+`native/windows_build_13725832_31fe35265598_final_campaign_settlement.json`
+continues from the cave's `Board:StartMechTravel()` script through campaign
+classification, save/profile settlement, and final-victory presentation. It
+binds one exact shipped Lua file, 24 reviewed native regions, 12 string
+anchors, two BoardPlayer vtable pointers, 16 instruction-start control
+windows, and 20 direct call edges. For the pinned Windows build it establishes
+that:
+
+- `StartMechTravel` enables Board travel mode, initializes the `+0x2cc0`
+  travel vector with a 4.5-second state value, and in ordinary mode locates
+  `BigBomb` and stores its coordinates;
+- the Board update drains `+0x2c50` effects before `+0x2cc0` travel and, once
+  ordinary travel is empty, constructs `Board:LockBomb()` followed by
+  `Board:Fade(FADE_EXPLODE)`;
+- BoardPlayer state 6 is a common completed-battle state, while the world-map
+  tick deliberately withholds ordinary cleanup for a qualifying Final
+  campaign;
+- the campaign predicate maps BoardPlayer outcome code 3 to result 2 and every
+  other outcome to result 1, with downstream consumers identifying result 1
+  as the campaign-win route;
+- the campaign manager removes `saveData.lua`, `.old`, and `.backup`, snapshots
+  presentation data, opens the result gateway, derives the win boolean, counts
+  four secured-island flags, and settles the profile in that relative order;
+- the win path records difficulty, result, island count, history/histogram, and
+  the squad/difficulty `_Victory_` achievement route, then invokes the
+  conditional `profile.lua` serializer/write path; and
+- result 1 initializes the embedded final-victory controller whose renderer
+  contains `Victory_Final_Flavor`, `Victory_Final_Protected`, and
+  `Victory_Final_Billions`.
+
+Verify the executable, exact source, regions, strings, vtable pointers, control
+windows, and direct edges with:
+
+```powershell
+python scripts/itb_observatory_final_campaign_settlement.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --campaign-map data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json
+```
+
+This is an exact relative control-flow and reachable persistence/presentation
+proof. It does not claim live timestamps, OS file-operation success, a
+particular completed run's file contents, or non-Windows equivalence. The
+profile writer's native `+0x54` precondition remains explicit. These are
+post-combat boundaries, so no Rust combat-simulator change follows.
 
 ## Final Cave startup boundary
 

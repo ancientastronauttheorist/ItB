@@ -84,6 +84,10 @@ The durable artifacts are:
   for the Final turn-limit/state-2 end-readiness short circuit, native
   `Board:AddEffect` enqueue path, Board/BoardPlayer activity vtables, and the
   activity-clear completion handoff.
+- `data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json`
+  for the cave `StartMechTravel` queue, completed-campaign predicate, ordinary
+  cleanup exclusion, run-save teardown, profile result/write path, and
+  final-victory renderer handoff.
 
 The boundary artifact contains no executable bytes or decompiled source. The
 verifier rechecks its 32 region hashes and decodes its 35 high-value direct

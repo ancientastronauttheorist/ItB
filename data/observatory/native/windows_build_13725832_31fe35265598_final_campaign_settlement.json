@@ -1,0 +1,1166 @@
+{
+  "analysis_kind": "final_campaign_settlement_boundary_map",
+  "contracts": {
+    "campaign_settlement": {
+      "manager_state_after_handoff": 3,
+      "manager_state_precondition": 1,
+      "ordered_steps": [
+        "classify terminal campaign result",
+        "remove run save and backups",
+        "snapshot run presentation data",
+        "open campaign result gateway",
+        "derive result==1 win boolean",
+        "count four secured-island flags",
+        "settle profile result and request profile write"
+      ],
+      "run_save_files_removed": [
+        "saveData.lua",
+        "saveData.lua.old",
+        "saveData.lua.backup"
+      ],
+      "secured_island_flag_offsets": [
+        "0x15c",
+        "0x2c8",
+        "0x434",
+        "0x5a0"
+      ]
+    },
+    "campaign_terminal_result": {
+      "boardplayer_outcome_vtable_offset": "0x4c",
+      "boardplayer_state_vtable_offset": "0x54",
+      "completed_state": 6,
+      "consumer_semantics": {
+        "result_1": "campaign win",
+        "result_2": "campaign non-win/loss"
+      },
+      "outcome_storage_offset": "0x1900",
+      "required_map_offsets": {
+        "active_battle": "0xc204 != 0",
+        "final_campaign_flag": "0x5324 != 0",
+        "island_or_override": "0x5238 > 1 or 0x5344 != 0",
+        "non_tutorial_battle": "battle+0x170c == 0"
+      },
+      "result_mapping": {
+        "every_other_outcome_code": 1,
+        "outcome_code_3": 2
+      }
+    },
+    "final_victory_presentation": {
+      "embedded_controller_offset": "0xbd68",
+      "gateway_result_required": 1,
+      "localization_keys": [
+        "Victory_Final_Flavor",
+        "Victory_Final_Protected",
+        "Victory_Final_Billions"
+      ],
+      "shared_renderer_warning": "The renderer is also reachable from a menu/credits route; campaign provenance comes from the result-1 gateway call."
+    },
+    "profile_result": {
+      "difficulty_offset": "0x138",
+      "file_open_mode": "GENERIC_WRITE, CREATE_ALWAYS",
+      "history_update_invoked": true,
+      "island_count_offset": "0x140",
+      "profile_output": "profile.lua",
+      "win_flag_offset": "0x13c",
+      "win_histogram_base_offset": "0x174",
+      "win_histogram_index": "max(island_count - 2, 0)",
+      "win_only_dispatch": "squad/difficulty _Victory_ achievement key",
+      "write_api": "WriteFile",
+      "writer_precondition": "profile serializer flag +0x54 is nonzero"
+    },
+    "start_mech_travel": {
+      "bomb_coordinate_offsets": [
+        "0x74d4",
+        "0x74d8"
+      ],
+      "initial_delay_seconds": 4.5,
+      "lua_entry": "Board:StartMechTravel()",
+      "ordinary_bomb_lookup": "BigBomb",
+      "ordinary_mode_flag_offset": "0x74dc",
+      "registration_handler_rva": "0x00174a80",
+      "travel_mode_offset": "0x74e0",
+      "travel_vector_offset": "0x2cc0"
+    },
+    "travel_settlement": {
+      "effect_vector_checked_first": true,
+      "effect_vector_offset": "0x2c50",
+      "final_script_order": [
+        "Board:LockBomb()",
+        "Board:Fade(FADE_EXPLODE)"
+      ],
+      "final_scripts_require_empty_travel_vector": true,
+      "final_scripts_require_ordinary_mode": true,
+      "travel_vector_offset": "0x2cc0"
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "start_travel_initialization",
+      "instruction_hex": "c787e0740000010000008d45e46a04c687d42c000000c787d02c00000000000050c787d82c000000009040e813f3ffff508d8fc02c0000e8772ff1ff",
+      "meaning": "Enable travel mode, reset travel state, set 4.5, and populate +0x2cc0.",
+      "region_id": "start_mech_travel_handler",
+      "sha256": "0e34d21cb86fe0a879b4c3b7c09c2a3d9daddc876654fa9cb9f21c989efb7ae2",
+      "size": 60,
+      "start_rva": "0x00174aad"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "effect_queue_precedes_travel",
+      "instruction_hex": "8b86502c00008d9e502c0000888d57ffffff3b43040f8491010000",
+      "meaning": "Process Board +0x2c50 effects before entering the travel-vector path.",
+      "region_id": "board_travel_state_machine",
+      "sha256": "47e4df9fbf2db2120d06b3900f0242ddfd343ff4e64fee41dce905dea3332672",
+      "size": 27,
+      "start_rva": "0x00169c46"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "travel_queue_gate",
+      "instruction_hex": "8b86c02c00008dbec02c00003b47040f8423020000",
+      "meaning": "Compare the +0x2cc0 travel vector begin/end before travel processing.",
+      "region_id": "board_travel_state_machine",
+      "sha256": "cd9a017ea649e23b09fe95e7374dfd50e59466404d18312526056cdf8c25ad84",
+      "size": 21,
+      "start_rva": "0x00169df2"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "travel_completion_gate",
+      "instruction_hex": "8b073b47040f85ab00000080bedc740000000f859e0000008d8d58ffffff",
+      "meaning": "Require an empty travel vector and ordinary +0x74dc mode before final scripts.",
+      "region_id": "board_travel_state_machine",
+      "sha256": "b521ee79398acaf295c793bc34e95a8b777ff499d3588857c209e93d971223a5",
+      "size": 30,
+      "start_rva": "0x00169f67"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_cleanup_exclusion",
+      "instruction_hex": "8b018b4054ffd084c0746580bb2053000000742283bb34520000027d0980bb405300000074108b8704c200008a800c17000084c0743a83bf40c0000000742c8b8f04c200008a810c17000084c0751381c1cc2b0000898f50d600008b01ff5008eb096a008bcfe8800e0000e88bceecff",
+      "meaning": "State 6 reaches ordinary cleanup only outside the qualifying Final campaign case.",
+      "region_id": "world_map_battle_tick",
+      "sha256": "1111e07dad851aade00f3a2156fb9aa9cc01b499a1df5687f0d97b5dd4b363a4",
+      "size": 112,
+      "start_rva": "0x0020f0f5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "campaign_eligibility",
+      "instruction_hex": "80be2453000000744783be38520000027d0980be445300000074358b8e04c2000085c9742b80b90c1700000075228b018b4054ffd084c07417",
+      "meaning": "Require Final campaign flags, an active non-tutorial battle, and state 6.",
+      "region_id": "campaign_terminal_predicate",
+      "sha256": "0e4b4ce9d451e3894a4c93f0e6c9177b88bba703698144c649751dc8ed6d6d83",
+      "size": 57,
+      "start_rva": "0x0020fa31"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "campaign_result_mapping",
+      "instruction_hex": "8b8e04c200008b01ff504c83e803f7d85e1bc083c002c3",
+      "meaning": "Map BoardPlayer outcome code 3 to result 2 and every other code to result 1.",
+      "region_id": "campaign_terminal_predicate",
+      "sha256": "1d4793c22cf60f5236c8b17567c441095996a90bafad19162050a87733cb3b19",
+      "size": 23,
+      "start_rva": "0x0020fa6a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "manager_settlement_order",
+      "instruction_hex": "837e08010f85aa0000008b4e1085c90f849f000000e84d53000085c00f8492000000e8c00100008b4e1083ec0c8bc48965f050e83f31000083ec18c745fc000000008bcc68dcdf8000e829d7dfffe87448f4ff8b4e1083c418ffb028010000e803530000508d4e2cc745fcffffffffe813d300008b4e10c7460803000000e8e45200008b4e1083f8010f94c00fb6c050e8b26c00005083ec188bcc68dcdf8000e8d2d6dfffe81d48f4ff83c4188bc8e8a35af4ff",
+      "meaning": "Classify, tear down, snapshot, present, count islands, and settle profile in order.",
+      "region_id": "campaign_end_manager",
+      "sha256": "6d5bfc69e18da107128f4a6de8eae3df6e48bd34ed341c753ed90a1f41f56379",
+      "size": 180,
+      "start_rva": "0x0020a699"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "victory_gateway_branch",
+      "instruction_hex": "8b750883fe01c745fc000000000f94c00fb6c050e807fbffff8b5d0c899fdc0c000089b7d80c0000c787b4130000ffffffffc787c8110000ffffffff83fe010f85da000000c745c400000000c745c800000000c745cc00000000c645fc0133f68b45148b4d102bc1c1f80385c0745b908b04f183b8dc000000ff750a8a809000000084c074378b0cf18d45d850e8fe910000508d4dc4c645fc02e8217de3ffc645fc018b45ec83f810720f406a0150ff75d8e8f9fcdeff83c40c8b4d108b4514462bc1c1f8033bf072a65383ec0c8d45c48bcc50e8075de5ff8d8f68bd0000e8bc0af0ff",
+      "meaning": "Only campaign result 1 initializes the embedded final-victory controller.",
+      "region_id": "campaign_result_gateway",
+      "sha256": "c4267126ee1f76f4c1f8406de1ae452cf0dbcfd7a5d6ce97fd082fb430dfba59",
+      "size": 228,
+      "start_rva": "0x00217a50"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "top_victory_dispatch",
+      "instruction_hex": "8a8368bd00008d8b68bd000084c0740ae82304f0ff",
+      "meaning": "An active embedded final controller dispatches the final renderer.",
+      "region_id": "top_screen_dispatcher",
+      "sha256": "014410ca2e41470fb908ce8316dd0fcb9944b91d11836c01491bf6164c1858e3",
+      "size": 21,
+      "start_rva": "0x00218398"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "profile_settlement_fields",
+      "instruction_hex": "84db740657e834ffffffe83f40f8ff89be400100008d8ef400000089414488594884db74138d47fe33d285c00f4fd08b8180000000ff0490e8f12409008bcee8ba210000",
+      "meaning": "Record island count, difficulty, win flag, win histogram, history, and profile write.",
+      "region_id": "profile_settlement",
+      "sha256": "79af25133cdb09974340c33d8ebb2556295128575500201417257e1e3b3b6abc",
+      "size": 68,
+      "start_rva": "0x00150202"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "profile_write_path",
+      "instruction_hex": "8d45988bcf50e84d010000688c1082008bd0c645fc058d4db0e83a7aefff83c404c645fc078b45ac83f810720f406a0150ff7598e8ff4cebff83c40c83ec18c745ac0f0000008bccc745a800000000c6459800896594c741140f000000c74110000000008379141072048b01eb028bc16affc600008d45c86a0050e88855ebff83ec18c645fc088bccc741140f000000c74110000000008379141072048b01eb028bc16affc600008d45b06a0050e85555ebffc645fc07e83cccf4ff",
+      "meaning": "Serialize the profile, select profile.lua, and invoke the exact file writer.",
+      "region_id": "profile_serializer_writer",
+      "sha256": "55d0f58e2f4593eb46f4fbc5c6217628242a80bf93428125888ff599cdf91500",
+      "size": 188,
+      "start_rva": "0x00152ac8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "delete_file_api",
+      "instruction_hex": "84db7469837d1c108d45086a000f43450850e898592e0083c40883f8ff744e837d1c108d45080f43450850ff15e0607d00",
+      "meaning": "After an existence check, invoke the imported DeleteFileA slot.",
+      "region_id": "delete_file_wrapper",
+      "sha256": "14cc19b634ce96c26abd07a38db65615debcda231c16c314845d593f395c9862",
+      "size": 49,
+      "start_rva": "0x0009e699"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "create_always_api",
+      "instruction_hex": "0f43450868800000006a026a006a00680000004050ff15f4607d00",
+      "meaning": "Open the selected path for GENERIC_WRITE with CREATE_ALWAYS.",
+      "region_id": "write_file_wrapper",
+      "sha256": "a0519ca90f67d20eb7de4239214156dc2ee0eb35639dab42e2caf1b0364f09ed",
+      "size": 27,
+      "start_rva": "0x0009f943"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "write_file_api",
+      "instruction_hex": "837d34108d4dd06a0051ff75308d45200f4345205057ff15d4607d00",
+      "meaning": "Pass the serialized buffer and length to the imported WriteFile slot.",
+      "region_id": "write_file_wrapper",
+      "sha256": "301a6f33265047f1ebbdabed644130a9f9e29b33b20cd1e4300f4dad54d7568a",
+      "size": 28,
+      "start_rva": "0x0009f9bd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "victory_achievement_route",
+      "instruction_hex": "e87b40f8ff50ff75088d4e70e84fd4f9ff",
+      "meaning": "Read difficulty and dispatch island-count victory accounting.",
+      "region_id": "victory_profile_dispatch",
+      "sha256": "7cd4717d56fc7c96f8664bf0642f73b6ea9f3673707994ad5f21e47faebd72bd",
+      "size": 17,
+      "start_rva": "0x001501d0"
+    }
+  ],
+  "data_pointers": [
+    {
+      "data_rva": "0x00430194",
+      "evidence_class": "fact",
+      "id": "boardplayer_outcome_slot",
+      "role": "BoardPlayer outcome-code virtual slot used by campaign classification.",
+      "section": ".rdata",
+      "slot_offset": "0x4c",
+      "target_region": "boardplayer_outcome",
+      "target_rva": "0x001937c0",
+      "target_va": "0x005937c0",
+      "vtable_va": "0x00830148"
+    },
+    {
+      "data_rva": "0x0043019c",
+      "evidence_class": "fact",
+      "id": "boardplayer_state_six_slot",
+      "role": "BoardPlayer completed-state virtual slot used by both consumers.",
+      "section": ".rdata",
+      "slot_offset": "0x54",
+      "target_region": "boardplayer_state_six",
+      "target_rva": "0x00183c50",
+      "target_va": "0x00583c50",
+      "vtable_va": "0x00830148"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020f15b",
+      "id": "tick_to_ordinary_cleanup",
+      "instruction_hex": "e8800e0000",
+      "kind": "direct_rel32",
+      "meaning": "Ordinary state-6 cleanup target outside the Final exclusion.",
+      "source_region": "world_map_battle_tick",
+      "target": {
+        "region": "ordinary_mission_cleanup",
+        "rva": "0x0020ffe0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a6ae",
+      "id": "manager_to_initial_predicate",
+      "instruction_hex": "e84d530000",
+      "kind": "direct_rel32",
+      "meaning": "Require a nonzero terminal campaign result.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "campaign_terminal_predicate",
+        "rva": "0x0020fa00",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a6bb",
+      "id": "manager_to_run_save_teardown",
+      "instruction_hex": "e8c0010000",
+      "kind": "direct_rel32",
+      "meaning": "Remove the completed-run save set first.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "run_save_teardown",
+        "rva": "0x0020a880",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a6cc",
+      "id": "manager_to_run_snapshot",
+      "instruction_hex": "e83f310000",
+      "kind": "direct_rel32",
+      "meaning": "Snapshot the run for result presentation.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "campaign_run_snapshot",
+        "rva": "0x0020d810",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a6f8",
+      "id": "manager_to_gateway_predicate",
+      "instruction_hex": "e803530000",
+      "kind": "direct_rel32",
+      "meaning": "Pass the exact result code to the presentation gateway.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "campaign_terminal_predicate",
+        "rva": "0x0020fa00",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a708",
+      "id": "manager_to_result_gateway",
+      "instruction_hex": "e813d30000",
+      "kind": "direct_rel32",
+      "meaning": "Initialize the campaign result top screen.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "campaign_result_gateway",
+        "rva": "0x00217a20",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a717",
+      "id": "manager_to_win_predicate",
+      "instruction_hex": "e8e4520000",
+      "kind": "direct_rel32",
+      "meaning": "Derive the exact result==1 profile win boolean.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "campaign_terminal_predicate",
+        "rva": "0x0020fa00",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a729",
+      "id": "manager_to_island_count",
+      "instruction_hex": "e8b26c0000",
+      "kind": "direct_rel32",
+      "meaning": "Count the four secured-island flags.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "secured_island_count",
+        "rva": "0x002113e0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a748",
+      "id": "manager_to_profile_settlement",
+      "instruction_hex": "e8a35af4ff",
+      "kind": "direct_rel32",
+      "meaning": "Record the island count and win boolean in the profile.",
+      "source_region": "campaign_end_manager",
+      "target": {
+        "region": "profile_settlement",
+        "rva": "0x001501f0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a91a",
+      "id": "teardown_primary_delete",
+      "instruction_hex": "e8b13ce9ff",
+      "kind": "direct_rel32",
+      "meaning": "Delete saveData.lua.",
+      "source_region": "run_save_teardown",
+      "target": {
+        "region": "delete_file_wrapper",
+        "rva": "0x0009e5d0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a965",
+      "id": "teardown_old_delete",
+      "instruction_hex": "e8663ce9ff",
+      "kind": "direct_rel32",
+      "meaning": "Delete saveData.lua.old.",
+      "source_region": "run_save_teardown",
+      "target": {
+        "region": "delete_file_wrapper",
+        "rva": "0x0009e5d0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020a9b0",
+      "id": "teardown_backup_delete",
+      "instruction_hex": "e81b3ce9ff",
+      "kind": "direct_rel32",
+      "meaning": "Delete saveData.lua.backup.",
+      "source_region": "run_save_teardown",
+      "target": {
+        "region": "delete_file_wrapper",
+        "rva": "0x0009e5d0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020aa14",
+      "id": "teardown_to_pending_flush",
+      "instruction_hex": "e84778f4ff",
+      "kind": "direct_rel32",
+      "meaning": "Flush pending profile state after clearing the run buffer.",
+      "source_region": "run_save_teardown",
+      "target": {
+        "region": "profile_pending_flush",
+        "rva": "0x00152260",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00217b2f",
+      "id": "gateway_to_victory_initializer",
+      "instruction_hex": "e8bc0af0ff",
+      "kind": "direct_rel32",
+      "meaning": "Initialize final-victory state only in the result-1 branch.",
+      "source_region": "campaign_result_gateway",
+      "target": {
+        "region": "final_victory_initializer",
+        "rva": "0x001185f0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002183a8",
+      "id": "top_to_victory_renderer",
+      "instruction_hex": "e82304f0ff",
+      "kind": "direct_rel32",
+      "meaning": "Render the active final-victory controller.",
+      "source_region": "top_screen_dispatcher",
+      "target": {
+        "region": "final_victory_renderer",
+        "rva": "0x001187d0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00150207",
+      "id": "profile_to_victory_dispatch",
+      "instruction_hex": "e834ffffff",
+      "kind": "direct_rel32",
+      "meaning": "On win, dispatch victory achievement accounting.",
+      "source_region": "profile_settlement",
+      "target": {
+        "region": "victory_profile_dispatch",
+        "rva": "0x00150140",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0015023a",
+      "id": "profile_to_history",
+      "instruction_hex": "e8f1240900",
+      "kind": "direct_rel32",
+      "meaning": "Update the campaign history record.",
+      "source_region": "profile_settlement",
+      "target": {
+        "region": "profile_history_update",
+        "rva": "0x001e2730",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00150241",
+      "id": "profile_to_writer",
+      "instruction_hex": "e8ba210000",
+      "kind": "direct_rel32",
+      "meaning": "Serialize and write the updated profile when profile output is enabled.",
+      "source_region": "profile_settlement",
+      "target": {
+        "region": "profile_serializer_writer",
+        "rva": "0x00152400",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001501dc",
+      "id": "victory_to_achievement_key",
+      "instruction_hex": "e84fd4f9ff",
+      "kind": "direct_rel32",
+      "meaning": "Build and dispatch the squad/difficulty victory key.",
+      "source_region": "victory_profile_dispatch",
+      "target": {
+        "region": "victory_achievement_dispatch",
+        "rva": "0x000ed630",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00152b7f",
+      "id": "profile_writer_to_file_writer",
+      "instruction_hex": "e83cccf4ff",
+      "kind": "direct_rel32",
+      "meaning": "Persist serialized profile.lua bytes.",
+      "source_region": "profile_serializer_writer",
+      "target": {
+        "region": "write_file_wrapper",
+        "rva": "0x0009f7c0",
+        "type": "region"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Mission_Final_Cave:MissionEnd's StartMechTravel script resolves to the pinned native handler. It enables Board travel mode, resets its state, sets 4.5 seconds, populates +0x2cc0, and in ordinary mode locates BigBomb and stores its coordinates.",
+      "evidence_class": "inference",
+      "id": "start_mech_travel_initializes_native_queue",
+      "limitations": [
+        "The travel-vector element schema is not reconstructed."
+      ],
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "start_mech_travel_binding",
+        "start_mech_travel_initialization",
+        "big_bomb_lookup"
+      ]
+    },
+    {
+      "claim": "The Board update drains +0x2c50 effects before +0x2cc0 travel. Once ordinary travel is empty, the reviewed path constructs Board:LockBomb() followed by Board:Fade(FADE_EXPLODE).",
+      "evidence_class": "inference",
+      "id": "travel_queue_finishes_with_bomb_lock_and_fade",
+      "limitations": [
+        "Individual animation timestamps remain runtime behavior."
+      ],
+      "supports": [
+        "effect_queue_precedes_travel",
+        "travel_queue_gate",
+        "travel_completion_gate",
+        "lock_bomb_script",
+        "fade_explode_script"
+      ]
+    },
+    {
+      "claim": "The campaign terminal predicate requires the pinned Final campaign flags, a non-tutorial active battle, and BoardPlayer state 6. It reads outcome +0x1900 through the exact vtable slot and returns result 2 for outcome code 3 or result 1 otherwise.",
+      "evidence_class": "inference",
+      "id": "campaign_terminal_predicate_is_exact",
+      "limitations": [
+        "Win/loss names are assigned from the downstream UI/profile consumers, not a debug symbol."
+      ],
+      "supports": [
+        "campaign_eligibility",
+        "campaign_result_mapping",
+        "boardplayer_state_six_slot",
+        "boardplayer_outcome_slot"
+      ]
+    },
+    {
+      "claim": "BoardPlayer state 6 is a common completed-battle state, not the victory screen itself. The world-map tick invokes ordinary mission cleanup only outside the matching Final campaign case, leaving the active battle for campaign-end settlement.",
+      "evidence_class": "inference",
+      "id": "final_campaign_bypasses_ordinary_cleanup",
+      "limitations": [
+        "Other ordinary cleanup branches are outside this focused claim."
+      ],
+      "supports": [
+        "ordinary_cleanup_exclusion",
+        "tick_to_ordinary_cleanup",
+        "campaign_terminal_result"
+      ]
+    },
+    {
+      "claim": "For manager state 1 and a nonzero terminal result, the campaign manager tears down the completed-run saves, snapshots run data, passes the result to the top screen, changes manager state to 3, derives result==1, counts secured islands, and settles the profile in that exact relative order.",
+      "evidence_class": "inference",
+      "id": "campaign_manager_settles_in_order",
+      "limitations": [
+        "The run-snapshot record's individual presentation fields are not named."
+      ],
+      "supports": [
+        "manager_settlement_order",
+        "manager_to_run_save_teardown",
+        "manager_to_run_snapshot",
+        "manager_to_result_gateway",
+        "manager_to_island_count",
+        "manager_to_profile_settlement"
+      ]
+    },
+    {
+      "claim": "The teardown selects saveData.lua, saveData.lua.old, and saveData.lua.backup in order and calls the same wrapper for each; that wrapper reaches the imported DeleteFileA slot after an existence check.",
+      "evidence_class": "inference",
+      "id": "completed_run_saves_are_removed",
+      "limitations": [
+        "OS-level deletion failure remains possible and is handled by native error reporting."
+      ],
+      "supports": [
+        "run_save_file",
+        "old_run_save_file",
+        "backup_run_save_file",
+        "teardown_primary_delete",
+        "teardown_old_delete",
+        "teardown_backup_delete",
+        "delete_file_api"
+      ]
+    },
+    {
+      "claim": "Profile settlement stores difficulty, result==1, and secured island count, increments the win histogram only on a win, updates campaign history, and invokes profile serialization. The win-only branch constructs the squad/difficulty _Victory_ key.",
+      "evidence_class": "inference",
+      "id": "victory_profile_and_achievement_path",
+      "limitations": [
+        "This does not prove an online Steam synchronization timestamp."
+      ],
+      "supports": [
+        "profile_settlement_fields",
+        "profile_to_victory_dispatch",
+        "profile_to_history",
+        "profile_to_writer",
+        "victory_achievement_route",
+        "victory_achievement_suffix"
+      ]
+    },
+    {
+      "claim": "When the serializer's exact +0x54 precondition is nonzero, the settlement writer serializes profile state, selects profile.lua, opens it with GENERIC_WRITE and CREATE_ALWAYS, and passes the buffer to WriteFile.",
+      "evidence_class": "inference",
+      "id": "profile_write_path_is_pinned",
+      "limitations": [
+        "Actual filesystem success remains an OS/runtime result."
+      ],
+      "supports": [
+        "profile_write_path",
+        "profile_file",
+        "profile_writer_to_file_writer",
+        "create_always_api",
+        "write_file_api"
+      ]
+    },
+    {
+      "claim": "Campaign result 1 alone feeds the run snapshot into the embedded final-victory controller at +0xbd68. The top-screen dispatcher then calls the renderer containing Victory_Final_Flavor, Victory_Final_Protected, and Victory_Final_Billions.",
+      "evidence_class": "inference",
+      "id": "final_victory_renderer_handoff",
+      "limitations": [
+        "The renderer is shared with a menu/credits route; the campaign gateway is the provenance link."
+      ],
+      "supports": [
+        "victory_gateway_branch",
+        "gateway_to_victory_initializer",
+        "top_victory_dispatch",
+        "top_to_victory_renderer",
+        "final_flavor_localization",
+        "final_protected_localization",
+        "final_billions_localization"
+      ]
+    },
+    {
+      "claim": "No Rust combat-simulator semantic change follows. These are post-combat campaign persistence and presentation boundaries; the solver must still stop at the live terminal boundary and consume later state only from fresh bridge/profile evidence.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "limitations": [
+        "Concrete cave RNG and live scheduler conformance remain separate work."
+      ],
+      "supports": [
+        "campaign_manager_settles_in_order",
+        "final_victory_renderer_handoff"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Ghidra 12.1.3 decompiler, vtable, reference, imported-API, and call-graph review followed the shipped cave MissionEnd script through the exact campaign-end manager.",
+    "byte_verification": "Capstone redecodes each published executable region from its declared start; the verifier rechecks exact windows, strings, vtable pointers, and every direct rel32 edge.",
+    "limitations": [
+      "Every native address and conclusion applies only to the pinned Windows executable.",
+      "Static control flow proves relative ordering and reachable file/UI paths, not wall-clock timing or a particular live run's bytes.",
+      "The profile writer's exact +0x54 precondition is preserved rather than silently assumed away.",
+      "The profile value passed from +0x128 to the result gateway is intentionally not semantically named here.",
+      "macOS and other executable builds require independent maps."
+    ]
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 file-delete wrapper function body.",
+      "end_rva_exclusive": "0x0009e738",
+      "evidence_class": "fact",
+      "id": "delete_file_wrapper",
+      "section": ".text",
+      "sha256": "79af732fc2168bbcf5a7603ea9a88a7b6dac6f8360d2396780d26156668d2dda",
+      "size": 360,
+      "start_rva": "0x0009e5d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 file-write wrapper function body.",
+      "end_rva_exclusive": "0x0009fa00",
+      "evidence_class": "fact",
+      "id": "write_file_wrapper",
+      "section": ".text",
+      "sha256": "01561e7242c90f977d206026344e2768627cdf9e70cd99f7220e7d93d24879eb",
+      "size": 576,
+      "start_rva": "0x0009f7c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 victory-key dispatch function body.",
+      "end_rva_exclusive": "0x000ed748",
+      "evidence_class": "fact",
+      "id": "victory_achievement_dispatch",
+      "section": ".text",
+      "sha256": "4e83bf6b640a82ceab6ce26c62ba7194cb24598f9d71106485084b2cce34ac19",
+      "size": 280,
+      "start_rva": "0x000ed630"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 final-victory controller initializer body.",
+      "end_rva_exclusive": "0x001187c3",
+      "evidence_class": "fact",
+      "id": "final_victory_initializer",
+      "section": ".text",
+      "sha256": "2bbabcc45beee55f86ec0dcf6b1569859bc043a8b87feb4ed7c0b307d1f195bd",
+      "size": 467,
+      "start_rva": "0x001185f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 final-victory/credits renderer body.",
+      "end_rva_exclusive": "0x0011c399",
+      "evidence_class": "fact",
+      "id": "final_victory_renderer",
+      "section": ".text",
+      "sha256": "6536c902378c90294bfcdda9c422bc85da904bee708d88fc4a5abc084ff3b505",
+      "size": 15305,
+      "start_rva": "0x001187d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 victory profile-dispatch body.",
+      "end_rva_exclusive": "0x001501e8",
+      "evidence_class": "fact",
+      "id": "victory_profile_dispatch",
+      "section": ".text",
+      "sha256": "29bff5a9acedc9af4d5e0c6b038ecccd212ead182a70c55cd4b402722663775c",
+      "size": 168,
+      "start_rva": "0x00150140"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 campaign-result profile settlement body.",
+      "end_rva_exclusive": "0x0015024f",
+      "evidence_class": "fact",
+      "id": "profile_settlement",
+      "section": ".text",
+      "sha256": "926d2e9269459ed4da76ebcaac51fedec97ef6551d727c74a6b692eb67df5929",
+      "size": 95,
+      "start_rva": "0x001501f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 pending profile/run buffer flush body.",
+      "end_rva_exclusive": "0x001523fc",
+      "evidence_class": "fact",
+      "id": "profile_pending_flush",
+      "section": ".text",
+      "sha256": "dd0e9dff3a1ee83a5b7303c449f2f198e771107c4b4728cdce7abc58af8cc6d1",
+      "size": 412,
+      "start_rva": "0x00152260"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 profile serializer/write body.",
+      "end_rva_exclusive": "0x00152c17",
+      "evidence_class": "fact",
+      "id": "profile_serializer_writer",
+      "section": ".text",
+      "sha256": "22bdf232b7b71f4a30d72cf3ed210a888338853b1490c644bd38d4355717d9a0",
+      "size": 2071,
+      "start_rva": "0x00152400"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board effect/travel update body.",
+      "end_rva_exclusive": "0x0016a1f5",
+      "evidence_class": "fact",
+      "id": "board_travel_state_machine",
+      "section": ".text",
+      "sha256": "c047a08e5f274e629b6fec7151c94c89f5576ec3bbf11b0535546fb65d7c7877",
+      "size": 1541,
+      "start_rva": "0x00169bf0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 StartMechTravel binding body.",
+      "end_rva_exclusive": "0x00174cba",
+      "evidence_class": "fact",
+      "id": "start_mech_travel_handler",
+      "section": ".text",
+      "sha256": "04bea81c9dc876ea05a86141fb92b8e2ada82462309b550cce30523cebba146a",
+      "size": 570,
+      "start_rva": "0x00174a80"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer state-6 predicate body.",
+      "end_rva_exclusive": "0x00183c5b",
+      "evidence_class": "fact",
+      "id": "boardplayer_state_six",
+      "section": ".text",
+      "sha256": "bbea90f22335daf7517a4cbfd792e41d6749d99dfb6e9f1996c0ad4d7dd522fa",
+      "size": 11,
+      "start_rva": "0x00183c50"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer outcome getter body.",
+      "end_rva_exclusive": "0x001937c7",
+      "evidence_class": "fact",
+      "id": "boardplayer_outcome",
+      "section": ".text",
+      "sha256": "705bd97156f230addc79eb9489880df1d2a025762435056cf5a33937b8508e79",
+      "size": 7,
+      "start_rva": "0x001937c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 historical campaign-stat update body.",
+      "end_rva_exclusive": "0x001e28a0",
+      "evidence_class": "fact",
+      "id": "profile_history_update",
+      "section": ".text",
+      "sha256": "cb501b7333e61b2c327c08ca3049a0235a8787306de4d2b22ee6100bd7275ab3",
+      "size": 368,
+      "start_rva": "0x001e2730"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 campaign-end manager update body.",
+      "end_rva_exclusive": "0x0020a877",
+      "evidence_class": "fact",
+      "id": "campaign_end_manager",
+      "section": ".text",
+      "sha256": "ea8b86f445ae612fbeeced4628a8cccc381018a6b8fcf454c83283f1489c62da",
+      "size": 519,
+      "start_rva": "0x0020a670"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 completed-run save teardown body.",
+      "end_rva_exclusive": "0x0020aa32",
+      "evidence_class": "fact",
+      "id": "run_save_teardown",
+      "section": ".text",
+      "sha256": "074a7272115b3b67c3aafa6338366f21b29e610443e489e9a6672760f839cdf3",
+      "size": 434,
+      "start_rva": "0x0020a880"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 campaign run-snapshot wrapper body.",
+      "end_rva_exclusive": "0x0020d834",
+      "evidence_class": "fact",
+      "id": "campaign_run_snapshot",
+      "section": ".text",
+      "sha256": "761688b3281d264e11960323f778c976aa177cbb348669bfdd608b910711cd13",
+      "size": 36,
+      "start_rva": "0x0020d810"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 world-map active-battle update body.",
+      "end_rva_exclusive": "0x0020f9f2",
+      "evidence_class": "fact",
+      "id": "world_map_battle_tick",
+      "section": ".text",
+      "sha256": "3ed314fbd5b9c24a0c017d5b29b10f059b951769e949b3a06907bfcf83f361ee",
+      "size": 2962,
+      "start_rva": "0x0020ee60"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 campaign terminal-result predicate body.",
+      "end_rva_exclusive": "0x0020fa85",
+      "evidence_class": "fact",
+      "id": "campaign_terminal_predicate",
+      "section": ".text",
+      "sha256": "670b07eead8b3d75c12f18ffd3a26c0444b5c7e0a89a11e1ff7098e60ec27d11",
+      "size": 133,
+      "start_rva": "0x0020fa00"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 ordinary completed-mission cleanup body.",
+      "end_rva_exclusive": "0x002102cc",
+      "evidence_class": "fact",
+      "id": "ordinary_mission_cleanup",
+      "section": ".text",
+      "sha256": "b11fbe1c31cbdeb6da8bb6f73041bee4c48d723d47ac1201527aac2ded4fc8c3",
+      "size": 748,
+      "start_rva": "0x0020ffe0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 four-island secured-flag counter body.",
+      "end_rva_exclusive": "0x0021141b",
+      "evidence_class": "fact",
+      "id": "secured_island_count",
+      "section": ".text",
+      "sha256": "a3be97dd1decdf525cef5c54d5a4995627d2e96e60632ebe0eec7593fa246e58",
+      "size": 59,
+      "start_rva": "0x002113e0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 campaign-result top-screen gateway body.",
+      "end_rva_exclusive": "0x00217d48",
+      "evidence_class": "fact",
+      "id": "campaign_result_gateway",
+      "section": ".text",
+      "sha256": "3675ae3b02423e82feaacebfb9c162550996a6d85bc6068214bf567a90333364",
+      "size": 808,
+      "start_rva": "0x00217a20"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 top-screen update/renderer dispatcher body.",
+      "end_rva_exclusive": "0x0021973c",
+      "evidence_class": "fact",
+      "id": "top_screen_dispatcher",
+      "section": ".text",
+      "sha256": "a7d82c875d51b357c40bd78762613567c2ea302e1e5875825a3d524573b6397d",
+      "size": 5436,
+      "start_rva": "0x00218200"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Luabind registration window inside a larger reviewed function; this is not a function boundary.",
+      "end_rva_exclusive": "0x00279ee9",
+      "evidence_class": "fact",
+      "id": "start_mech_travel_registration_window",
+      "section": ".text",
+      "sha256": "6ef6b686f82903d3ce3895a2e4f70d99e7caf31baaa014b5c79dc64d92cf1ecd",
+      "size": 34,
+      "start_rva": "0x00279ec7"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "reviewed_lines": [
+          [
+            116,
+            124
+          ]
+        ],
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave:MissionEnd"
+        ]
+      }
+    ]
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "start_mech_travel_binding",
+      "instruction_hex": "689c868300",
+      "reference_rva": "0x00279edd",
+      "region_id": "start_mech_travel_registration_window",
+      "role": "Names the Lua Board method registered to the pinned handler pointer.",
+      "string_rva": "0x0043869c",
+      "text": "StartMechTravel"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "big_bomb_lookup",
+      "instruction_hex": "baeceb8200",
+      "reference_rva": "0x00174b53",
+      "region_id": "start_mech_travel_handler",
+      "role": "Identifies the bomb pawn located by ordinary Final Cave travel setup.",
+      "string_rva": "0x0042ebec",
+      "text": "BigBomb"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "lock_bomb_script",
+      "instruction_hex": "6888e88200",
+      "reference_rva": "0x00169fb0",
+      "region_id": "board_travel_state_machine",
+      "role": "Names the script queued after ordinary mech travel drains.",
+      "string_rva": "0x0042e888",
+      "text": "Board:LockBomb()"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "fade_explode_script",
+      "instruction_hex": "686ce88200",
+      "reference_rva": "0x00169fdd",
+      "region_id": "board_travel_state_machine",
+      "role": "Names the fade script queued after the bomb-lock script.",
+      "string_rva": "0x0042e86c",
+      "text": "Board:Fade(FADE_EXPLODE)"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_flavor_localization",
+      "instruction_hex": "68b4ba8200",
+      "reference_rva": "0x00119f2e",
+      "region_id": "final_victory_renderer",
+      "role": "Pins the final-victory flavor localization branch.",
+      "string_rva": "0x0042bab4",
+      "text": "Victory_Final_Flavor"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_protected_localization",
+      "instruction_hex": "689cba8200",
+      "reference_rva": "0x0011a0db",
+      "region_id": "final_victory_renderer",
+      "role": "Pins the protected-population final-victory presentation.",
+      "string_rva": "0x0042ba9c",
+      "text": "Victory_Final_Protected"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_billions_localization",
+      "instruction_hex": "68e0ba8200",
+      "reference_rva": "0x0011a2c5",
+      "region_id": "final_victory_renderer",
+      "role": "Pins the billions-saved final-victory presentation.",
+      "string_rva": "0x0042bae0",
+      "text": "Victory_Final_Billions"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "profile_file",
+      "instruction_hex": "688c108200",
+      "reference_rva": "0x00152ad3",
+      "region_id": "profile_serializer_writer",
+      "role": "Names the persistent profile output selected by the settlement writer.",
+      "string_rva": "0x0042108c",
+      "text": "profile.lua"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "run_save_file",
+      "instruction_hex": "6898108200",
+      "reference_rva": "0x0020a90b",
+      "region_id": "run_save_teardown",
+      "role": "Names the primary completed-run save removed by teardown.",
+      "string_rva": "0x00421098",
+      "text": "saveData.lua"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "old_run_save_file",
+      "instruction_hex": "68cc108200",
+      "reference_rva": "0x0020a956",
+      "region_id": "run_save_teardown",
+      "role": "Names the old completed-run save removed by teardown.",
+      "string_rva": "0x004210cc",
+      "text": "saveData.lua.old"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "backup_run_save_file",
+      "instruction_hex": "6890d98200",
+      "reference_rva": "0x0020a9a1",
+      "region_id": "run_save_teardown",
+      "role": "Names the backup completed-run save removed by teardown.",
+      "string_rva": "0x0042d990",
+      "text": "saveData.lua.backup"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "victory_achievement_suffix",
+      "instruction_hex": "6878a28200",
+      "reference_rva": "0x000ed669",
+      "region_id": "victory_achievement_dispatch",
+      "role": "Pins construction of the squad/difficulty victory achievement key.",
+      "string_rva": "0x0042a278",
+      "text": "_Victory_"
+    }
+  ],
+  "summary": {
+    "control_window_count": 16,
+    "data_pointer_count": 2,
+    "direct_edge_count": 20,
+    "final_victory_presentation_proven": true,
+    "finding_count": 10,
+    "lua_source_count": 1,
+    "post_travel_campaign_victory_proven": true,
+    "profile_result_write_path_proven": true,
+    "region_count": 24,
+    "run_save_teardown_proven": true,
+    "simulator_change_required": false,
+    "string_anchor_count": 12,
+    "unresolved_count": 3
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json",
+    "artifact_sha256": "541237f7e723c1ec56b0328cb1f137f2a6725bda55c588d0a7ebc74adc55be0c",
+    "continuation": "The earlier immutable map ends after the cave MissionEnd effect/activity-clear boundary. This map continues from the registered StartMechTravel handler through campaign settlement.",
+    "resolved_gap_ids": [
+      "post_travel_campaign_victory"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "runtime_campaign_settlement_timing",
+      "next_evidence": "Capture a matched build-keyed Final completion trace when native tracing is available.",
+      "question": "What are the concrete live timestamps and file contents for one completed campaign?",
+      "static_status": "Relative control flow and reachable persistence/UI paths are exact; no runtime trace is claimed."
+    },
+    {
+      "id": "profile_gateway_value_0x128",
+      "next_evidence": "Correlate controlled profile values with the final summary UI.",
+      "question": "What source-level name belongs to the profile value passed from +0x128 to the result gateway?",
+      "static_status": "The offset and handoff are pinned, but the field name is intentionally unresolved."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the focused map against an exact macOS binary.",
+      "question": "Do macOS/native builds implement the same settlement boundary?",
+      "static_status": "Only Windows build 13725832 is mapped."
+    }
+  ]
+}
