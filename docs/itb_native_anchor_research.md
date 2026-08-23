@@ -421,11 +421,17 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    source handling therefore delays the reached boundary by replacing the bomb
    and adding two turns rather than directly selecting failure. The campaign
    continuation maps code 3 to result 2 and other committed outcomes to the
-   result-1 victory/save/profile/final-presentation route. The incoming CRT
-   state, concrete later draws, nested spawn RNG, queued startup-effect
-   settlement, replacement timing/coordinate, live campaign-settlement timing,
-   and non-Windows equivalence remain open; no speculative Rust forecast
-   follows.
+   result-1 victory/save/profile/final-presentation route. A fourth continuation
+   closes the broad replacement-materialization path: the Board effect update
+   precedes `BaseUpdate`; `AddDropper` immediately snapshots the complete
+   `SpaceDamage`; `AddEffect` queues it for a later eligible Board update; kind
+   4 constructs `PylonAnimation`; and landing applies the preserved
+   `sPawn="BigBomb"` record through the pawn factory and exact `Board:AddPawn`
+   body at the selected point. The incoming CRT state, concrete later draws,
+   nested spawn RNG, queued startup-effect settlement, callback-time replacement
+   candidate set, selected coordinate, UID, complete repeated-cycle cadence,
+   live campaign-settlement timing, and non-Windows equivalence remain open; no
+   speculative Rust forecast follows.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

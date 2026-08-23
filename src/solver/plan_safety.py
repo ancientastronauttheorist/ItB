@@ -51,9 +51,10 @@ NON_OVERRIDABLE_KINDS = {
     "pylon_hp_loss",
     # A raw loss lacks even the source-backed replacement boundary.
     "bigbomb_lost",
-    # The +2 extension is exact, but native UpdateMission timing and the
-    # replacement coordinate remain unresolved. Keep this non-overridable
-    # until a fresh live board materializes the replacement.
+    # The +2 extension and generic callback-to-AddPawn path are exact, but the
+    # callback-time RNG state, concrete coordinate, UID, and settled cadence
+    # are unavailable. Keep this non-overridable until a fresh live board
+    # supplies the concrete replacement.
     "bigbomb_replacement_unresolved",
     "objective_building_destroyed",
     "objective_building_hp_loss",
@@ -829,8 +830,9 @@ def audit_plan_safety(current: dict[str, Any],
                     pred_bigbomb,
                     (
                         "Predicted outcome destroys the current Renfield Bomb; "
-                        "source guarantees a replacement and two-turn extension, "
-                        "but its native timing and coordinate are unresolved."
+                        "native analysis guarantees its queued drop path and "
+                        "two-turn extension, but the concrete coordinate, UID, "
+                        "and settled cadence require a fresh board."
                     ),
                     {
                         "turn_extension": 2,

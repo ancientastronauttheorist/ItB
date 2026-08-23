@@ -5849,6 +5849,7 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
             "symbols": [
                 "Mission.NextPhase", "Mission:IsEndBlocked",
                 "Mission:IsNextPhase", "Mission:MissionEnd",
+                "Mission:BaseUpdate",
                 "CreateMission", "Mission:GetMapTag", "Mission:BaseStart",
                 "Mission:GetStartingPawns", "Mission:SpawnPawns",
                 "Mission:SetupDiffMod",
@@ -5937,6 +5938,20 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_cave_replacement.json"
+    ] == {
+        "source_callback_and_selection_are_exact",
+        "board_update_precedes_replacement_callback",
+        "is_busy_blocks_queued_repeat",
+        "add_dropper_copy_semantics_are_exact",
+        "add_effect_queues_for_later_dispatch",
+        "dropper_preserves_space_damage_to_impact",
+        "bigbomb_drop_resolution_path_is_exact",
+        "replacement_rng_boundary_is_narrow",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_campaign_settlement.json"
     ] == {
         "start_mech_travel_initializes_native_queue",
@@ -5992,6 +6007,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_outcome_map",
         "validate_final_cave_outcome_map_binding",
     }
+    assert implementations["src/observatory/final_cave_replacement.py"] == {
+        "build_final_cave_replacement_map",
+        "validate_final_cave_replacement_map",
+        "validate_final_cave_replacement_map_binding",
+    }
     assert implementations["src/observatory/final_campaign_settlement.py"] == {
         "build_final_campaign_settlement_map",
         "validate_final_campaign_settlement_map",
@@ -6032,6 +6052,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_outcome.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_replacement.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_campaign_settlement.py"
     ] == {"_parser", "main"}
     assert implementations[
@@ -6048,6 +6071,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "test_committed_map_closes_final_cave_countdown_outcome_boundary",
         "test_binding_rejects_pointer_source_or_prose_drift",
         "test_exact_local_executable_and_source_reproduce_map_when_available",
+    }
+    assert tests["tests/test_observatory_final_cave_replacement.py"] == {
+        "test_committed_map_closes_replacement_materialization_path_without_rng_overclaim",
+        "test_binding_rejects_pointer_source_or_prose_drift",
+        "test_exact_local_executable_and_sources_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
@@ -6072,6 +6100,10 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "delays the queried boundary by two turns rather than directly losing"
         in facts
     )
+    assert "Board effect update precedes BaseUpdate" in facts
+    assert "independent full 0x134-byte SpaceDamage copies" in facts
+    assert "landing applies the preserved sPawn=BigBomb record" in facts
+    assert "fresh settled bridge-read gate remain exact" in facts
     assert "resolves that post-StartMechTravel gap" in facts
     assert "4.5-second state value" in facts
     assert "common completed-battle state" in facts
@@ -6093,11 +6125,18 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "concrete selected map" in gaps
     assert "post-StartMechTravel campaign settlement" not in gaps
     assert "live campaign-settlement timing and file contents" in gaps
-    assert "whether reused SpaceDamage objects are copied immediately" in gaps
+    assert "whether reused SpaceDamage objects are copied immediately" not in gaps
+    assert "each earlier AddDropper record is insulated" in gaps
     assert "repeated native replacement cycles" in gaps
     assert "actual end-of-countdown outcome" not in gaps
-    assert "replacement materialization is unresolved" in gaps
-    assert "not because bomb destruction is a direct terminal mission loss" in gaps
+    assert "replacement materialization is unresolved" not in gaps
+    assert "BigBomb drop resolution itself is now statically pinned" in gaps
+    assert "concrete replacement coordinate, UID, and settled cadence" in gaps
+    assert (
+        "not because materialization mechanics are unresolved or bomb "
+        "destruction is a direct terminal mission loss"
+        in gaps
+    )
 
 
 def test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model():

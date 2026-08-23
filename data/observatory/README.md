@@ -608,9 +608,57 @@ python scripts/itb_observatory_final_cave_outcome.py verify `
   --outcome-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_outcome.json
 ```
 
-This does not predict replacement-bomb timing or coordinates. Simulator v406
-already models the exact `+2` boundary and stops before replacement
-materialization, so no Rust semantic change follows.
+This outcome map does not itself predict replacement-bomb timing or
+coordinates. The materialization continuation below closes the generic native
+drop path while retaining the runtime-dependent coordinate and cadence gates.
+
+## Final Cave replacement-bomb boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_replacement.json`
+resolves the earlier broad `replacement_materialization` gap and splits its
+remaining runtime inputs into narrower explicit gaps. It joins three exact
+shipped Lua files to 28 reviewed native code/registration regions, six string
+anchors, five vtable pointers, 20 instruction-start control windows, and 19
+direct call edges. For the pinned Windows build it establishes that:
+
+- the primary orchestrator runs the Board effect update before `BaseUpdate`,
+  whose shipped implementation later calls `Mission_Final_Cave:UpdateMission`;
+  a replacement effect queued there cannot dispatch during that already-finished
+  Board-update pass;
+- the exact `Board:IsBusy` binding uses the Board secondary-vtable activity
+  slot, and a nonempty effect vector at `+0x2c50` yields reason 6, preventing an
+  immediate repeat while the new batch remains queued;
+- `SkillEffect:AddDropper` writes kind 4 and immediately makes independent
+  full `0x134`-byte `SpaceDamage` copies, so later Lua mutation cannot alter an
+  already appended dropper record;
+- `Board:AddEffect` queues the copied batch, and a later eligible Board update
+  removes and dispatches one batch through the exact native effect slot;
+- kind 4 creates `PylonAnimation`, whose constructor preserves the record at
+  `+0x2dc`; its landing callback invokes the impact slot, which applies that
+  retained record through the Board; and
+- a nonempty `sPawn` goes through the pawn factory and exact `Board:AddPawn`
+  body at the original `SpaceDamage` coordinates. Because shipped `AddBomb`
+  set `sPawn="BigBomb"` before the immediate copy, that selected point
+  materializes a `BigBomb` when the drop lands.
+
+Verify the executable, exact sources, region hashes, strings, vtable pointers,
+control windows, and direct edges with:
+
+```powershell
+python scripts/itb_observatory_final_cave_replacement.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --replacement-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json
+```
+
+The candidate enumeration and interior preference are exact, but the
+callback-time occupancy/environment set, variable `random_removal` draw count,
+incoming shared CRT state, concrete coordinate, new pawn UID, wall-clock delay,
+and complete repeated-cycle cadence are not ordinary solver inputs. Simulator
+v406 already records the exact `+2` extension and every snapshot-reachable
+candidate without fabricating a pawn or UID, then stops for a fresh settled
+bridge read. The native proof validates that boundary; no Rust semantic change
+follows.
 
 ## Final campaign settlement boundary
 

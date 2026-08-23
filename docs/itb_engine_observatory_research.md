@@ -473,7 +473,11 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   handoff; and
 - the continuation from `CreateNextPhase` through map selection/loading and
   `BaseStart`, joined to the exact nine-map cave pool and shipped Lua startup
-  RNG-call skeleton.
+  RNG-call skeleton; and
+- the Final Cave replacement path from the post-Board-update `BaseUpdate`
+  callback through immediate `AddDropper` record copying, `AddEffect` queueing,
+  kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
+  and exact `Board:AddPawn` materialization of `BigBomb` at the selected point.
 
 The durable artifact contains reviewed region hashes and call edges decoded at
 instruction boundaries relative to the declared starts, rather than executable
@@ -496,7 +500,8 @@ The remaining native priorities are now narrower:
    ordinary team handling, Road Runner, and Massive Water are complete; corpse
    classification and `AddMove` step/scheduler effects remain open.
 3. Resolve the pre-map-draw CRT state, concrete later cave startup draws,
-   queued startup-effect settlement, and bomb replacement timing/coordinate.
+   queued startup-effect settlement, and the replacement callback's incoming
+   RNG state, selected coordinate/UID, and complete repeated-cycle cadence.
    The ordinary Final end trigger, countdown outcome, `MissionEnd` activity
    gate, and post-`StartMechTravel` campaign-victory path are now exact.
    Current turn-limit equality in state 2 writes outcome code 1 before any
@@ -505,7 +510,10 @@ The remaining native priorities are now narrower:
    comprehensive Board activity to clear. Exact shipped `RandomMap`, unsorted
    Win32 registration order, all nine remainder-to-map outcomes,
    `random_int(1)` advancement, and the ordinary two-draw map boundary are
-   also pinned for the current exact Windows installation. A copied or
+   also pinned for the current exact Windows installation. The generic
+   replacement path is also exact: Board effects update before the Lua
+   callback, `AddDropper` immediately copies its record, and the later kind-4
+   dropper impact constructs and adds `BigBomb` at the selected point. A copied or
    reinstalled map directory must revalidate its filesystem order even when
    all content hashes match.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
@@ -675,8 +683,11 @@ stages end through the current turn-limit/state-2 readiness branch before
 the bomb or objectives, and that queued `MissionEnd` effects hold the later
 handoff closed until comprehensive Board activity clears. The post-travel
 campaign settlement is pinned through the result-1 victory presentation.
-Concrete cave startup draws and replacement-bomb materialization remain
-deliberately unmodeled.
+Replacement-bomb construction and impact-time `BigBomb` materialization are
+now pinned. Concrete cave startup draws and the replacement callback's incoming
+RNG state, selected coordinate/UID, wall-clock delay, and full repeat cadence
+remain deliberately unmodeled; simulator v406 still stops for a fresh settled
+bridge read.
 
 ### Milestone 1: Provenance inventory
 
