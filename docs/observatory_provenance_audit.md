@@ -840,8 +840,9 @@ row. Their immutable ledger is
 records where the old non-atomic bridge sampled ambiguous Instant boundaries.
 The record remains `partial`: future quarter/cluster/crossing selection RNG,
 unused `GetCrossPath` call order, BigBomb exclusion, native scheduler tracing,
-and `Board:SetDangerous` enemy planning are not reproduced. Bomb replacement
-and the surface/cave lifecycle remain in their separate record. The preceding
+and `Board:SetDangerous` enemy planning are not reproduced. The source-bounded
+bomb-replacement edge and the surface/cave lifecycle remain in their separate
+record. The preceding
 `env_volcano.lua` stage retains the bounded v404 model described below.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
@@ -857,10 +858,13 @@ ordinary spawning. Its `IsFinalTurn` returns false, and each nonbusy missing-
 bomb update chooses another valid point, drops BigBomb, and extends `TurnLimit`
 by two. BigBomb's exact four-HP, neutral, no-corpse, fire-ignoring, immobile
 TEAM_PLAYER definition is pinned, but the source does not state that its loss
-is terminal. Current liveness/pylon safety and volcano-to-caverns fingerprint
-tests are conservative live-state and policy anchors, not reproduction of
-native RNG, effects, collisions, scheduling, phase handoff, or mission-end
-settlement.
+is terminal. Simulator v406 now preserves the exact missing-bomb `TurnLimit+2`
+edge, derives every AddBomb-reachable coordinate for the stable projected
+snapshot, and records the replacement as pending without fabricating a pawn,
+UID, callback time, or random result. Depth-two search stops there and the
+safety gate stays non-overridable until a fresh live board materializes the
+replacement. Native RNG, effect timing, repeated live replacement cycles,
+collisions, phase handoff, and mission-end settlement remain untraced.
 
 The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
 the then-selected mechanical source index at 96/96. The later runtime-driven

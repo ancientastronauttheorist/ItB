@@ -114,6 +114,52 @@ def test_projected_checkpoint_does_not_hide_malformed_sparse_tiles():
     ) == "checkpoint_tile_position_duplicate"
 
 
+def test_projected_checkpoint_validates_pending_bigbomb_replacement_shape():
+    checkpoint = _bridge_with_mech()
+    checkpoint.update({
+        "mission_id": "Mission_Final_Cave",
+        "turn": 2,
+        "total_turns": 6,
+        "bigbomb_replacement_pending": True,
+        "bigbomb_replacement_snapshot_candidates": [[2, 2], [3, 3]],
+    })
+
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(
+        checkpoint
+    ) is None
+
+    malformed = json.loads(json.dumps(checkpoint))
+    malformed["bigbomb_replacement_snapshot_candidates"] = []
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(
+        malformed
+    ) == "checkpoint_bigbomb_replacement_candidates_missing"
+
+    malformed = json.loads(json.dumps(checkpoint))
+    malformed["mission_id"] = "Mission_Test"
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(
+        malformed
+    ) == "checkpoint_bigbomb_replacement_mission_invalid"
+
+    malformed = json.loads(json.dumps(checkpoint))
+    malformed["units"].append({
+        "uid": 200,
+        "type": "BigBomb",
+        "x": 3,
+        "y": 3,
+        "hp": 4,
+        "max_hp": 4,
+        "team": 1,
+        "mech": False,
+        "move": 0,
+        "active": False,
+        "can_move": False,
+        "weapons": [],
+    })
+    assert commands._held_end_turn_bridge_checkpoint_schema_error(
+        malformed
+    ) == "checkpoint_bigbomb_replacement_live_bomb_invalid"
+
+
 def test_projected_checkpoint_carries_exact_player_identity_and_loadout():
     bridge = _bridge_with_mech()
     bridge["units"][0].update({
@@ -369,13 +415,37 @@ def test_click_end_turn_blocks_lethal_fire_debt(monkeypatch):
     assert result["fire_debt"][0]["uid"] == 11
 
 
-def _held_end_turn_case(monkeypatch, *, plan_safety=None, solve_extra=None):
+def _held_end_turn_case(
+    monkeypatch,
+    *,
+    plan_safety=None,
+    solve_extra=None,
+    bomb_replacement=False,
+):
     data = _bridge_with_mech()
     data.update({
         "phase": "combat_player",
         "turn": 1,
         "in_active_mission": True,
     })
+    if bomb_replacement:
+        data["mission_id"] = "Mission_Final_Cave"
+        data["total_turns"] = 4
+        data["units"].append({
+            "uid": 200,
+            "type": "BigBomb",
+            "x": 3,
+            "y": 3,
+            "hp": 4,
+            "max_hp": 4,
+            "team": 1,
+            "mech": False,
+            "move": 0,
+            "weapons": [],
+            "active": False,
+            "can_move": False,
+            "pushable": True,
+        })
     data["units"][0]["active"] = False
     data["units"][0]["can_move"] = False
     board = Board.from_bridge_data(data)
@@ -387,6 +457,16 @@ def _held_end_turn_case(monkeypatch, *, plan_safety=None, solve_extra=None):
     final_data["turn"] = 2
     final_data["units"][0]["active"] = True
     final_data["units"][0]["can_move"] = True
+    if bomb_replacement:
+        final_data["total_turns"] = 6
+        final_data["units"] = [
+            unit for unit in final_data["units"]
+            if unit["type"] != "BigBomb"
+        ]
+        final_data["bigbomb_replacement_pending"] = True
+        final_data["bigbomb_replacement_snapshot_candidates"] = [
+            [2, 2], [3, 3]
+        ]
     if isinstance(plan_safety, dict) and plan_safety.get("status") == "DIRTY":
         requested_grid = (plan_safety.get("predicted") or {}).get("grid_power")
         if type(requested_grid) is int:
@@ -419,7 +499,7 @@ def _held_end_turn_case(monkeypatch, *, plan_safety=None, solve_extra=None):
         description="TeleMech, fire Teleporter at D6",
     )
     session = RunSession(run_id="held-end-turn", squad="Flame Behemoths")
-    session.current_mission = "Mission_Test"
+    session.current_mission = data["mission_id"]
     session.mission_index = 1
     session.set_solution([action], score=10.0, turn=1)
     monkeypatch.setattr(session, "save", lambda *_args, **_kwargs: None)
@@ -483,6 +563,37 @@ def _held_end_turn_case(monkeypatch, *, plan_safety=None, solve_extra=None):
         }],
     )
     return session, action, solve_data
+
+
+def test_held_end_turn_artifact_accepts_exact_bomb_replacement_extension(
+    monkeypatch,
+):
+    session, _action, solve_data = _held_end_turn_case(
+        monkeypatch,
+        bomb_replacement=True,
+    )
+
+    assert solve_data["plan_safety"]["violations"][0]["kind"] == (
+        "bigbomb_replacement_unresolved"
+    )
+    assert commands._held_end_turn_plan_safety_valid(
+        solve_data["plan_safety"],
+        session,
+        solve_data["current_outcome"],
+        solve_data["predicted_board_summary"],
+        solve_data,
+    ) is True
+
+    solve_data["final_board"][
+        "bigbomb_replacement_snapshot_candidates"
+    ] = [[4, 4]]
+    assert commands._held_end_turn_plan_safety_valid(
+        solve_data["plan_safety"],
+        session,
+        solve_data["current_outcome"],
+        solve_data["predicted_board_summary"],
+        solve_data,
+    ) is False
 
 
 def _terminal_provenance(*, ledger):

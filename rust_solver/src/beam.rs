@@ -72,6 +72,11 @@ pub fn solve_beam(
         "k_per_level must have >= depth entries (got len {}, depth {depth})",
         k_per_level.len()
     );
+    // A pending replacement is a projected diagnostic boundary, never a
+    // complete live board from which actions may be selected.
+    if board.bigbomb_replacement_pending {
+        return Vec::new();
+    }
 
     let started = Instant::now();
     let total_budget = Duration::from_secs_f64(time_limit_secs.max(0.1));
@@ -123,6 +128,23 @@ pub fn solve_beam(
             spawn_points,
             weapons,
         );
+
+        // Mission_Final_Cave source guarantees a replacement BigBomb and a
+        // two-turn extension, but ordinary solver input does not expose the
+        // native UpdateMission callback boundary or selected coordinate. A
+        // depth-2 solve from a board with no materialized bomb would invent
+        // pathing, targets, and objective geometry, so keep this chain at its
+        // exact level-0 score until a fresh live board resolves the pending
+        // replacement.
+        if projected.bigbomb_replacement_pending {
+            let score = plan.score;
+            chains.push(BeamChain {
+                level_0: plan,
+                level_1_best: None,
+                chain_score: score,
+            });
+            continue;
+        }
 
         // Only markers blocked at emergence persist. Forwarding every input
         // marker here would let the depth-2 solve score a second block on a
@@ -305,5 +327,86 @@ mod tests {
                 None    => assert_eq!(c.chain_score, c.level_0.score),
             }
         }
+    }
+
+    #[test]
+    fn test_beam_does_not_expand_unresolved_final_cave_bomb_replacement() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Final_Cave".to_string();
+        board.current_turn = 2;
+        board.total_turns = 4;
+        board.grid_power = 5;
+        board.grid_power_max = 7;
+
+        let mut mech = Unit::default();
+        mech.uid = 0;
+        mech.set_type_name("PunchMech");
+        mech.x = 0;
+        mech.y = 0;
+        mech.hp = 3;
+        mech.max_hp = 3;
+        mech.team = Team::Player;
+        mech.flags = UnitFlags::IS_MECH
+            | UnitFlags::ACTIVE
+            | UnitFlags::CAN_MOVE
+            | UnitFlags::PUSHABLE;
+        mech.weapon = WeaponId(WId::PrimePunchmech as u16);
+        board.add_unit(mech);
+
+        let mut bomb = Unit::default();
+        bomb.uid = 200;
+        bomb.set_type_name("BigBomb");
+        bomb.x = 3;
+        bomb.y = 3;
+        bomb.hp = 4;
+        bomb.max_hp = 4;
+        bomb.team = Team::Player;
+        bomb.flags = UnitFlags::PUSHABLE;
+        board.add_unit(bomb);
+        board.bigbomb_alive = true;
+
+        let mut attacker = Unit::default();
+        attacker.uid = 300;
+        attacker.set_type_name("FireflyBoss");
+        attacker.x = 3;
+        attacker.y = 2;
+        attacker.hp = 6;
+        attacker.max_hp = 6;
+        attacker.team = Team::Enemy;
+        attacker.flags = UnitFlags::PUSHABLE | UnitFlags::HAS_QUEUED_ATTACK;
+        attacker.queued_target_x = 3;
+        attacker.queued_target_y = 3;
+        board.add_unit(attacker);
+        board.attack_order = vec![300];
+
+        let weights = eval_weights_default();
+        let beam = solve_beam(
+            &board,
+            &[],
+            2,
+            &[3, 2],
+            5.0,
+            &weights,
+            [0; 2],
+            &WEAPONS,
+        );
+        assert!(!beam.is_empty());
+        assert!(beam.iter().all(|chain| chain.level_1_best.is_none()));
+        assert!(beam.iter().all(|chain| chain.chain_score == chain.level_0.score));
+
+        let mut pending = board;
+        pending.bigbomb_alive = false;
+        pending.bigbomb_replacement_pending = true;
+        pending.bigbomb_replacement_snapshot_candidates = 1u64 << xy_to_idx(2, 2);
+        assert!(solve_beam(
+            &pending,
+            &[],
+            2,
+            &[3, 2],
+            5.0,
+            &weights,
+            [0; 2],
+            &WEAPONS,
+        ).is_empty());
     }
 }

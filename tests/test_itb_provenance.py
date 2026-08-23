@@ -5852,16 +5852,29 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "fingerprint_from_bridge_tiles", "is_stage_change",
     }
     assert implementations["src/loop/commands.py"] == {
-        "_detect_terrain_stage_change",
+        "_detect_terrain_stage_change", "_capture_board_summary",
+        "_lookahead_forecast_gaps",
+        "_held_end_turn_bridge_checkpoint_schema_error",
     }
     assert implementations["src/model/board.py"] == {
-        "from_bridge_data", "bigbomb_alive", "BigBomb",
+        "from_bridge_data", "bigbomb_alive", "bigbomb_replacement_pending",
+        "bigbomb_replacement_snapshot_candidates", "BigBomb",
     }
     assert implementations["src/solver/plan_safety.py"] == {
+        "audit_plan_safety", "bigbomb_replacement_unresolved",
         "final_cave_emergency_pylon_loss_allowed",
         "final_cave_resist_gamble_allowed", "bigbomb_alive",
         "pylons_alive", "pylon_hp_total",
     }
+    assert implementations["rust_solver/src/board.rs"] == {
+        "Board", "bigbomb_replacement_pending",
+        "bigbomb_replacement_snapshot_candidates",
+    }
+    assert implementations["rust_solver/src/turn_projection.rs"] == {
+        "apply_final_cave_bomb_replacement_boundary",
+        "final_cave_bomb_snapshot_candidates", "board_to_json",
+    }
+    assert implementations["rust_solver/src/beam.rs"] == {"solve_beam"}
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
     assert "does not explicitly reset iDamage" in facts
@@ -5870,10 +5883,12 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "IsFinalTurn returns false exactly" in facts
     assert "increments TurnLimit by 2" in facts
     assert "does not state that bomb loss is terminal" in facts
+    assert "Simulator v406 models the source-guaranteed" in facts
+    assert "fabricates no pawn or UID" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "Env_Final records now cover exact current bridge selections" in gaps
+    assert "Env_Final records cover exact current bridge selections" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
-    assert "repeated TurnLimit+2 extension" in gaps
+    assert "repeated native replacement cycles" in gaps
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps
 
 

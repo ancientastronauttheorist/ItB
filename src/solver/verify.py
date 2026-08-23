@@ -1805,6 +1805,13 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v406: A projected Mission_Final_Cave turn that destroys the live BigBomb
+# applies the source-guaranteed TurnLimit+2 edge and records an unresolved
+# replacement plus every AddBomb-reachable coordinate for that stable board
+# snapshot. It does not invent callback timing, pawn identity, or the native
+# random choice; deeper beam expansion stops and safety remains non-overridable.
+# Pre-v406 corpus is archived as
+# recordings/failure_db_snapshot_sim_v405.jsonl.
 # v405: Mission_Final_Cave carries exact current native Env_Final phase/mode,
 # Ordered/Instant state, retained LavaPath, and selected Locations/Planned.
 # Both modes apply DAMAGE_DEATH before queued Vek attacks; Rocks assign Road
@@ -1898,7 +1905,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 405
+SIMULATOR_VERSION = 406
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

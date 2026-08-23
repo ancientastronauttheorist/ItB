@@ -686,7 +686,71 @@ fn apply_plan_and_enemy_phase(
     }
     b.current_turn = b.current_turn.saturating_add(1);
     advance_environment_warning(&mut b);
+    apply_final_cave_bomb_replacement_boundary(board, &mut b);
     (b, aggregate, blocked_spawn_points)
+}
+
+/// Apply only the source-proven part of Mission_Final_Cave:UpdateMission.
+///
+/// A missing BigBomb on a non-busy board queues AddBomb and increments
+/// TurnLimit by two. The native callback boundary and random_removal result
+/// are not represented by ordinary solver input, so projection records a
+/// pending replacement and the snapshot's legal outcomes without inventing a
+/// pawn or coordinate.
+fn apply_final_cave_bomb_replacement_boundary(before: &Board, after: &mut Board) {
+    if before.mission_id != "Mission_Final_Cave"
+        || !before.bigbomb_alive
+        || after.bigbomb_alive
+        || after.bigbomb_replacement_pending
+    {
+        return;
+    }
+
+    after.total_turns = after.total_turns.saturating_add(2);
+    after.bigbomb_replacement_pending = true;
+    after.bigbomb_replacement_snapshot_candidates =
+        final_cave_bomb_snapshot_candidates(after);
+}
+
+/// Reproduce AddBomb's candidate preference for one already-materialized
+/// board snapshot. TEAM_PLAYER occupants, live buildings, and current
+/// environment-danger tiles are excluded. If any interior (x/y 2..=5) point
+/// remains, repeated random_removal can finish only on an interior point;
+/// otherwise any remaining edge point can be last. The source fallback is
+/// (4,4) when the pool is empty.
+fn final_cave_bomb_snapshot_candidates(board: &Board) -> u64 {
+    let mut eligible = 0u64;
+    let mut interior = 0u64;
+    for x in 0u8..8 {
+        for y in 0u8..8 {
+            let player_occupied = (0..board.unit_count as usize).any(|idx| {
+                let unit = &board.units[idx];
+                unit.x == x
+                    && unit.y == y
+                    && unit.is_player()
+                    && ((unit.hp > 0 && !unit.burrowed())
+                        || unit.persistent_path_corpse())
+            });
+            if player_occupied
+                || board.tile(x, y).is_building()
+                || board.is_env_danger(x, y)
+            {
+                continue;
+            }
+            let bit = 1u64 << xy_to_idx(x, y);
+            eligible |= bit;
+            if (2..=5).contains(&x) && (2..=5).contains(&y) {
+                interior |= bit;
+            }
+        }
+    }
+    if interior != 0 {
+        interior
+    } else if eligible != 0 {
+        eligible
+    } else {
+        1u64 << xy_to_idx(4, 4)
+    }
 }
 
 /// Advance source-modeled rolling warnings or consume the resolved marker.
@@ -1275,6 +1339,14 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             final_cave_lava_path.push(vec![x, y]);
         }
     }
+    let mut bomb_replacement_snapshot_candidates: Vec<Vec<u8>> = Vec::new();
+    let mut bomb_candidates = board.bigbomb_replacement_snapshot_candidates;
+    while bomb_candidates != 0 {
+        let idx = bomb_candidates.trailing_zeros() as usize;
+        bomb_candidates &= bomb_candidates - 1;
+        let (x, y) = idx_to_xy(idx);
+        bomb_replacement_snapshot_candidates.push(vec![x, y]);
+    }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
     if exact_final_cave {
         for point in &final_cave_locations {
@@ -1399,6 +1471,14 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "locations": final_cave_locations.clone(),
             "planned": final_cave_locations,
         });
+    }
+    if board.mission_id == "Mission_Final_Cave"
+        && board.bigbomb_replacement_pending
+        && !bomb_replacement_snapshot_candidates.is_empty()
+    {
+        out["bigbomb_replacement_pending"] = json!(true);
+        out["bigbomb_replacement_snapshot_candidates"] =
+            json!(bomb_replacement_snapshot_candidates);
     }
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
 }
@@ -1975,6 +2055,161 @@ mod tests {
         assert!(projected_json["mission_final_cave"].is_null());
         assert!(projected_json["environment_danger_v2"]
             .as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_final_cave_bomb_death_extends_turn_limit_without_fabricating_coordinate() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Final_Cave".to_string();
+        b.current_turn = 2;
+        b.total_turns = 4;
+        b.remaining_spawns = 1;
+
+        let mut bomb = Unit::default();
+        bomb.uid = 200;
+        bomb.set_type_name("BigBomb");
+        bomb.x = 3;
+        bomb.y = 3;
+        bomb.hp = 4;
+        bomb.max_hp = 4;
+        bomb.team = Team::Player;
+        bomb.flags = UnitFlags::PUSHABLE;
+        b.add_unit(bomb);
+        b.bigbomb_alive = true;
+
+        let mut mech = Unit::default();
+        mech.uid = 0;
+        mech.set_type_name("PunchMech");
+        mech.x = 2;
+        mech.y = 2;
+        mech.hp = 3;
+        mech.max_hp = 3;
+        mech.team = Team::Player;
+        mech.flags = UnitFlags::IS_MECH | UnitFlags::PUSHABLE;
+        b.add_unit(mech);
+        b.tile_mut(5, 5).terrain = Terrain::Building;
+        b.tile_mut(5, 5).building_hp = 1;
+
+        let mut attacker = Unit::default();
+        attacker.uid = 300;
+        attacker.set_type_name("FireflyBoss");
+        attacker.x = 3;
+        attacker.y = 2;
+        attacker.hp = 6;
+        attacker.max_hp = 6;
+        attacker.team = Team::Enemy;
+        attacker.flags = UnitFlags::PUSHABLE | UnitFlags::HAS_QUEUED_ATTACK;
+        attacker.queued_target_x = 3;
+        attacker.queued_target_y = 3;
+        b.add_unit(attacker);
+        b.attack_order = vec![300];
+
+        let (projected, _) = project_plan(&b, &[], &[], &WEAPONS);
+
+        assert_eq!(projected.current_turn, 3);
+        assert_eq!(projected.total_turns, 6);
+        assert!(!projected.bigbomb_alive);
+        assert!(projected.bigbomb_replacement_pending);
+        assert_eq!(
+            projected.bigbomb_replacement_snapshot_candidates.count_ones(),
+            14,
+            "the 4x4 interior excludes the living player mech and building",
+        );
+        assert!(
+            projected.bigbomb_replacement_snapshot_candidates
+                & (1u64 << xy_to_idx(3, 3))
+                != 0,
+            "the dead no-corpse bomb tile is source-eligible again",
+        );
+        assert_eq!(
+            projected.bigbomb_replacement_snapshot_candidates
+                & (1u64 << xy_to_idx(2, 2)),
+            0,
+        );
+        assert_eq!(
+            projected.bigbomb_replacement_snapshot_candidates
+                & (1u64 << xy_to_idx(5, 5)),
+            0,
+        );
+        assert!(projected.units[..projected.unit_count as usize]
+            .iter()
+            .all(|unit| unit.type_name_str() != "BigBomb" || unit.hp <= 0));
+
+        let projected_json = board_to_json(&projected, &[]);
+        let value: serde_json::Value = serde_json::from_str(&projected_json).unwrap();
+        assert_eq!(value["total_turns"], 6);
+        assert_eq!(value["bigbomb_replacement_pending"], true);
+        assert_eq!(
+            value["bigbomb_replacement_snapshot_candidates"]
+                .as_array().unwrap().len(),
+            14,
+        );
+        assert!(value["units"].as_array().unwrap().iter().all(|unit| {
+            unit["type"] != "BigBomb"
+        }));
+
+        let (roundtrip, ..) = board_from_json(&projected_json)
+            .expect("pending replacement boundary must round-trip");
+        assert_eq!(roundtrip.total_turns, 6);
+        assert!(roundtrip.bigbomb_replacement_pending);
+        assert_eq!(
+            roundtrip.bigbomb_replacement_snapshot_candidates,
+            projected.bigbomb_replacement_snapshot_candidates,
+        );
+
+        let (second, _) = project_plan(&roundtrip, &[], &[], &WEAPONS);
+        assert_eq!(second.total_turns, 6, "one loss extends exactly once");
+        assert!(second.bigbomb_replacement_pending);
+    }
+
+    #[test]
+    fn test_final_cave_bomb_snapshot_candidates_follow_interior_then_fallback_rule() {
+        let mut wreck_boundary = Board::default();
+        let mut disabled_mech = Unit::default();
+        disabled_mech.uid = 0;
+        disabled_mech.set_type_name("PunchMech");
+        disabled_mech.x = 2;
+        disabled_mech.y = 2;
+        disabled_mech.hp = 0;
+        disabled_mech.max_hp = 3;
+        disabled_mech.team = Team::Player;
+        disabled_mech.flags = UnitFlags::IS_MECH;
+        wreck_boundary.add_unit(disabled_mech);
+        let mut removed_bomb = Unit::default();
+        removed_bomb.uid = 200;
+        removed_bomb.set_type_name("BigBomb");
+        removed_bomb.x = 3;
+        removed_bomb.y = 3;
+        removed_bomb.hp = 0;
+        removed_bomb.max_hp = 4;
+        removed_bomb.team = Team::Player;
+        wreck_boundary.add_unit(removed_bomb);
+        let wreck_candidates = final_cave_bomb_snapshot_candidates(&wreck_boundary);
+        assert_eq!(wreck_candidates & (1u64 << xy_to_idx(2, 2)), 0);
+        assert_ne!(wreck_candidates & (1u64 << xy_to_idx(3, 3)), 0);
+
+        let mut edges_only = Board::default();
+        for x in 2u8..=5 {
+            for y in 2u8..=5 {
+                edges_only.tile_mut(x, y).terrain = Terrain::Building;
+                edges_only.tile_mut(x, y).building_hp = 1;
+            }
+        }
+        let edges = final_cave_bomb_snapshot_candidates(&edges_only);
+        assert_eq!(edges.count_ones(), 48);
+        assert_eq!(edges & (1u64 << xy_to_idx(0, 0)), 1u64 << xy_to_idx(0, 0));
+
+        let mut fallback = Board::default();
+        for x in 0u8..8 {
+            for y in 0u8..8 {
+                fallback.tile_mut(x, y).terrain = Terrain::Building;
+                fallback.tile_mut(x, y).building_hp = 1;
+            }
+        }
+        assert_eq!(
+            final_cave_bomb_snapshot_candidates(&fallback),
+            1u64 << xy_to_idx(4, 4),
+        );
     }
 
     #[test]

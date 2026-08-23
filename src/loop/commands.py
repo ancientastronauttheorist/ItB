@@ -3991,6 +3991,17 @@ def _capture_board_summary(board: Board, bridge_data: dict | None = None) -> dic
         "mech_damage_taken_total": mech_damage_taken_total,
         "mech_damage_objective_limit": mech_damage_objective_limit,
         "bigbomb_alive": bool(getattr(board, "bigbomb_alive", False)),
+        "bigbomb_replacement_pending": bool(
+            getattr(board, "bigbomb_replacement_pending", False)
+        ),
+        "bigbomb_replacement_snapshot_candidates": [
+            [int(x), int(y)]
+            for x, y in getattr(
+                board,
+                "bigbomb_replacement_snapshot_candidates",
+                [],
+            )
+        ],
         "terraform_grass_remaining": (
             len(terraform_grass_tiles)
             if mission_id == "Mission_Terraform"
@@ -5332,6 +5343,32 @@ def _lookahead_forecast_gaps(
             mobile_enemy_uids.append(uid)
 
     gaps: list[dict] = list(piston_gaps)
+    if (
+        projected_bridge.get("mission_id") == "Mission_Final_Cave"
+        and projected_bridge.get("bigbomb_replacement_pending") is True
+    ):
+        snapshot_candidates = []
+        for point in (
+            projected_bridge.get(
+                "bigbomb_replacement_snapshot_candidates",
+                [],
+            )
+            or []
+        ):
+            if (
+                isinstance(point, (list, tuple))
+                and len(point) == 2
+                and all(type(coord) is int and 0 <= coord < 8 for coord in point)
+            ):
+                snapshot_candidates.append([point[0], point[1]])
+        gaps.append({
+            "kind": "final_cave_bomb_replacement_coordinate_unmodeled",
+            "reason": (
+                "native_UpdateMission_timing_and_random_removal_result_unobserved"
+            ),
+            "turn_extension": 2,
+            "snapshot_candidates": snapshot_candidates,
+        })
     if mobile_enemy_uids:
         gaps.append({
             "kind": "enemy_movement_unmodeled",
@@ -13107,6 +13144,8 @@ _HELD_END_TURN_REQUIRED_SUMMARY_FIELDS = frozenset({
     "mech_damage_taken_total",
     "mech_damage_objective_limit",
     "bigbomb_alive",
+    "bigbomb_replacement_pending",
+    "bigbomb_replacement_snapshot_candidates",
     "terraform_grass_remaining",
     "terraform_grass_tiles",
     "mech_hp",
@@ -13163,6 +13202,8 @@ _HELD_END_TURN_FINAL_BOARD_SUMMARY_FIELDS = frozenset({
     "mech_damage_taken_total",
     "mech_damage_objective_limit",
     "bigbomb_alive",
+    "bigbomb_replacement_pending",
+    "bigbomb_replacement_snapshot_candidates",
     "terraform_grass_remaining",
     "terraform_grass_tiles",
     "mech_hp",
@@ -13274,6 +13315,31 @@ def _held_end_turn_summary_schema_valid(summary: object) -> bool:
             and len(value) == 2
             and all(type(coord) is int and 0 <= coord < 8 for coord in value)
         )
+
+    replacement_pending = summary.get("bigbomb_replacement_pending", False)
+    replacement_candidates = summary.get(
+        "bigbomb_replacement_snapshot_candidates",
+        [],
+    )
+    if type(replacement_pending) is not bool:
+        return False
+    if (
+        not isinstance(replacement_candidates, list)
+        or len(replacement_candidates) > 64
+        or any(not _point_valid(point) for point in replacement_candidates)
+        or len({tuple(point) for point in replacement_candidates})
+        != len(replacement_candidates)
+    ):
+        return False
+    if replacement_pending:
+        if (
+            summary["mission_id"] != "Mission_Final_Cave"
+            or summary["bigbomb_alive"]
+            or not replacement_candidates
+        ):
+            return False
+    elif replacement_candidates:
+        return False
 
     def _unit_identity_valid(item: object) -> bool:
         return bool(
@@ -13616,12 +13682,31 @@ def _held_end_turn_plan_safety_valid(
         final_board_data,
         plan_predicted,
     )
-    total_turn_values = [
-        artifact.get("total_turns") for artifact in artifact_summaries
+    current_total_turn_values = [
+        artifact.get("total_turns") for artifact in artifact_summaries[:3]
     ]
+    predicted_total_turn_values = [
+        artifact.get("total_turns") for artifact in artifact_summaries[3:]
+    ]
+    total_turn_values = current_total_turn_values + predicted_total_turn_values
     if any(type(value) is not int or value <= 0 for value in total_turn_values):
         return False
-    if len(set(total_turn_values)) != 1:
+    if (
+        len(set(current_total_turn_values)) != 1
+        or len(set(predicted_total_turn_values)) != 1
+    ):
+        return False
+    current_total_turns = current_total_turn_values[0]
+    predicted_total_turns = predicted_total_turn_values[0]
+    replacement_boundary = (
+        session.current_mission == "Mission_Final_Cave"
+        and current_outcome.get("bigbomb_alive") is True
+        and predicted_summary.get("bigbomb_alive") is False
+        and predicted_summary.get("bigbomb_replacement_pending") is True
+    )
+    if predicted_total_turns != current_total_turns + (
+        2 if replacement_boundary else 0
+    ):
         return False
     if any(
         artifact.get("mission_id") != session.current_mission
@@ -13768,6 +13853,28 @@ def _held_end_turn_bridge_checkpoint_schema_error(
         if len(points) != len(set(points)):
             return f"checkpoint_{field}_duplicate"
         return None
+
+    replacement_pending = data.get("bigbomb_replacement_pending", False)
+    if type(replacement_pending) is not bool:
+        return "checkpoint_bigbomb_replacement_pending_invalid"
+    replacement_error = _point_list_error(
+        "bigbomb_replacement_snapshot_candidates"
+    )
+    if replacement_error is not None:
+        return replacement_error
+    replacement_candidates = data.get(
+        "bigbomb_replacement_snapshot_candidates",
+        [],
+    )
+    if len(replacement_candidates) > 64:
+        return "checkpoint_bigbomb_replacement_snapshot_candidates_invalid"
+    if replacement_pending:
+        if data["mission_id"] != "Mission_Final_Cave":
+            return "checkpoint_bigbomb_replacement_mission_invalid"
+        if not replacement_candidates:
+            return "checkpoint_bigbomb_replacement_candidates_missing"
+    elif replacement_candidates:
+        return "checkpoint_bigbomb_replacement_candidates_without_pending"
 
     attack_order = data.get("attack_order", [])
     if not isinstance(attack_order, list) or any(
@@ -14117,6 +14224,12 @@ def _held_end_turn_bridge_checkpoint_schema_error(
             for field in logical_segment_fields:
                 if extra.get(field) != primary.get(field):
                     return f"checkpoint_extra_tile_{field}_mismatch"
+
+    if replacement_pending and any(
+        unit["type"] == "BigBomb" and unit["hp"] > 0
+        for unit in units
+    ):
+        return "checkpoint_bigbomb_replacement_live_bomb_invalid"
 
     if any(uid not in primary_unit_uids for uid in attack_order):
         return "checkpoint_attack_order_uid_invalid"

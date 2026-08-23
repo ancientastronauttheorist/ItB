@@ -74,6 +74,10 @@ pub struct JsonInput {
     /// The selected list may be a full crossing path and therefore remains a
     /// bounded Vec rather than a fixed four-point array.
     pub mission_final_cave: Option<JsonMissionFinalCave>,
+    /// Projected-only Final Cave boundary. Source guarantees replacement and
+    /// TurnLimit+2, but the native callback/RNG coordinate is unresolved.
+    pub bigbomb_replacement_pending: Option<bool>,
+    pub bigbomb_replacement_snapshot_candidates: Option<Vec<Vec<i64>>>,
     /// "Kill at least N enemies" target. Generic kill bonuses come from
     /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
     /// Missing / 0 -> no kill target on this mission; evaluator's step-function
@@ -1498,16 +1502,30 @@ pub fn board_from_json(json_str: &str)
     // BigBomb pawn at (live HP > 0). Per mission_final_two.lua:179-188:
     // Health=4, Neutral=true, Corpse=false, IgnoreFire=true, MoveSpeed=0,
     // DefaultTeam=TEAM_PLAYER. Bridge surfaces it with team=Player, mech=false,
-    // so the friendly_npc_killed penalty already fires on death. The
-    // mission source later drops a replacement bomb and adds 2 to TurnLimit
-    // after a loss. The solver does not model that delayed recovery, so the
-    // bigbomb_alive flag layers a much larger conservative current-objective
-    // loss penalty in the evaluator.
+    // so the friendly_npc_killed penalty already fires on death. Full-turn
+    // projection records the source-guaranteed +2 extension as an unresolved
+    // replacement boundary; bigbomb_alive still layers a much larger penalty
+    // on losing the current objective pawn during action selection.
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
         if u.type_name_str() == "BigBomb" && u.hp > 0 {
             board.bigbomb_alive = true;
             break;
+        }
+    }
+    if board.mission_id == "Mission_Final_Cave"
+        && !board.bigbomb_alive
+        && input.bigbomb_replacement_pending == Some(true)
+    {
+        if let Some(candidates) =
+            strict_volcano_points(&input.bigbomb_replacement_snapshot_candidates, 64)
+        {
+            if !candidates.is_empty() {
+                board.bigbomb_replacement_pending = true;
+                board.bigbomb_replacement_snapshot_candidates = candidates
+                    .into_iter()
+                    .fold(0u64, |mask, (x, y)| mask | (1u64 << xy_to_idx(x, y)));
+            }
         }
     }
 

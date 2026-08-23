@@ -676,12 +676,12 @@ class Board:
         self.dam_alive: bool = False
         self.dam_primary: tuple[int, int] | None = None
         # Renfield Bomb state — true while the current Mission_Final_Cave
-        # BigBomb has hp > 0. Source respawns a replacement and adds 2 to
-        # TurnLimit after destruction, but the model does not simulate that
-        # delayed recovery. The alive→dead transition therefore pays the
-        # conservative `bigbomb_killed` objective-loss penalty on top of
-        # friendly_npc_killed. Always False on missions without a bomb.
+        # BigBomb has hp > 0. A projected destruction carries the guaranteed
+        # TurnLimit+2 edge separately while its native replacement coordinate
+        # remains unresolved; no synthetic pawn is fabricated.
         self.bigbomb_alive: bool = False
+        self.bigbomb_replacement_pending: bool = False
+        self.bigbomb_replacement_snapshot_candidates: list[tuple[int, int]] = []
         # Teleporter pad pairs (Mission_Teleporter overlay from
         # Board:AddTeleport in mission_teleport.lua). Each entry =
         # (x1, y1, x2, y2). Empty on non-teleporter missions. Rust is
@@ -757,6 +757,10 @@ class Board:
         b.dam_alive = self.dam_alive
         b.dam_primary = self.dam_primary
         b.bigbomb_alive = self.bigbomb_alive
+        b.bigbomb_replacement_pending = self.bigbomb_replacement_pending
+        b.bigbomb_replacement_snapshot_candidates = list(
+            self.bigbomb_replacement_snapshot_candidates
+        )
         b.teleporter_pairs = list(self.teleporter_pairs)
         b.pending_spider_eggs = list(self.pending_spider_eggs)
         return b
@@ -1377,6 +1381,18 @@ class Board:
             if u.type == "BigBomb" and u.hp > 0:
                 board.bigbomb_alive = True
                 break
+        replacement_candidates = _strict_board_points(
+            data.get("bigbomb_replacement_snapshot_candidates"),
+            maximum=64,
+        )
+        if (
+            board.mission_id == "Mission_Final_Cave"
+            and not board.bigbomb_alive
+            and data.get("bigbomb_replacement_pending") is True
+            and replacement_candidates
+        ):
+            board.bigbomb_replacement_pending = True
+            board.bigbomb_replacement_snapshot_candidates = replacement_candidates
 
         # Detect Soldier Psion: alive Jelly_Health1 buffs all Vek +1 HP
         board.soldier_psion_active = any(

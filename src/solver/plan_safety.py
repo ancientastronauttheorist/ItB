@@ -30,6 +30,7 @@ BLOCKING_KINDS = {
     "mech_on_danger",
     "mech_disabled",
     "bigbomb_lost",
+    "bigbomb_replacement_unresolved",
     "protected_objective_unit_lost",
     "protected_objective_unit_degraded",
     "protected_objective_unit_unfrozen",
@@ -48,10 +49,12 @@ NON_OVERRIDABLE_KINDS = {
     "grid_timeline_collapse",
     "pylon_destroyed",
     "pylon_hp_loss",
-    # Mission_Final_Cave source respawns a replacement bomb and adds 2 to
-    # TurnLimit, but the model does not simulate that recovery. Keep loss of
-    # the current objective non-overridable rather than authorizing blind play.
+    # A raw loss lacks even the source-backed replacement boundary.
     "bigbomb_lost",
+    # The +2 extension is exact, but native UpdateMission timing and the
+    # replacement coordinate remain unresolved. Keep this non-overridable
+    # until a fresh live board materializes the replacement.
+    "bigbomb_replacement_unresolved",
     "objective_building_destroyed",
     "objective_building_hp_loss",
     "objective_building_targeted_final",
@@ -149,6 +152,7 @@ LOSS_KINDS = {
     "mech_on_danger": "mechs_on_danger",
     "mech_disabled": "mechs_disabled",
     "bigbomb_lost": "bigbomb_alive",
+    "bigbomb_replacement_unresolved": "bigbomb_alive",
     "protected_objective_unit_lost": "protected_objective_units_alive",
     "protected_objective_unit_degraded": "train_objective_value",
     "protected_objective_unit_unfrozen": "protected_objective_units_frozen",
@@ -806,12 +810,46 @@ def audit_plan_safety(current: dict[str, Any],
     if isinstance(cur_bigbomb, bool) and isinstance(pred_bigbomb, bool):
         compared.append("bigbomb_alive")
         if cur_bigbomb and not pred_bigbomb:
-            violations.append(_violation(
-                "bigbomb_lost",
-                cur_bigbomb,
-                pred_bigbomb,
-                "Predicted outcome destroys the Renfield Bomb.",
-            ))
+            replacement_pending = (
+                predicted.get("bigbomb_replacement_pending") is True
+            )
+            exact_extension = (
+                mission_id == "Mission_Final_Cave"
+                and cur_total_turns is not None
+                and pred_total_turns == cur_total_turns + 2
+            )
+            if replacement_pending and exact_extension:
+                compared.extend([
+                    "bigbomb_replacement_pending",
+                    "bigbomb_replacement_snapshot_candidates",
+                ])
+                violations.append(_violation(
+                    "bigbomb_replacement_unresolved",
+                    cur_bigbomb,
+                    pred_bigbomb,
+                    (
+                        "Predicted outcome destroys the current Renfield Bomb; "
+                        "source guarantees a replacement and two-turn extension, "
+                        "but its native timing and coordinate are unresolved."
+                    ),
+                    {
+                        "turn_extension": 2,
+                        "current_total_turns": cur_total_turns,
+                        "predicted_total_turns": pred_total_turns,
+                        "snapshot_candidates": _list_or_empty(
+                            predicted.get(
+                                "bigbomb_replacement_snapshot_candidates"
+                            )
+                        ),
+                    },
+                ))
+            else:
+                violations.append(_violation(
+                    "bigbomb_lost",
+                    cur_bigbomb,
+                    pred_bigbomb,
+                    "Predicted outcome destroys the Renfield Bomb.",
+                ))
 
     cur_protected = _int_or_none(current.get("protected_objective_units_alive"))
     pred_protected = _int_or_none(predicted.get("protected_objective_units_alive"))
@@ -990,6 +1028,12 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(current.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(current.get("mechs_disabled")),
             "bigbomb_alive": cur_bigbomb if isinstance(cur_bigbomb, bool) else None,
+            "bigbomb_replacement_pending": (
+                current.get("bigbomb_replacement_pending") is True
+            ),
+            "bigbomb_replacement_snapshot_candidates": _list_or_empty(
+                current.get("bigbomb_replacement_snapshot_candidates")
+            ),
             "destroy_objective_units_alive": cur_destroy,
             "protected_objective_units_alive": cur_protected,
             "train_objective_value": cur_train_value,
@@ -1038,6 +1082,12 @@ def audit_plan_safety(current: dict[str, Any],
             "mechs_on_danger": _list_or_empty(predicted.get("mechs_on_danger")),
             "mechs_disabled": _list_or_empty(predicted.get("mechs_disabled")),
             "bigbomb_alive": pred_bigbomb if isinstance(pred_bigbomb, bool) else None,
+            "bigbomb_replacement_pending": (
+                predicted.get("bigbomb_replacement_pending") is True
+            ),
+            "bigbomb_replacement_snapshot_candidates": _list_or_empty(
+                predicted.get("bigbomb_replacement_snapshot_candidates")
+            ),
             "destroy_objective_units_alive": pred_destroy,
             "protected_objective_units_alive": pred_protected,
             "train_objective_value": pred_train_value,
@@ -1419,6 +1469,8 @@ def _profile_label(status: Any,
         return "grid_and_mech_loss"
     if "mech_lost" in kind_set:
         return "mech_loss"
+    if "bigbomb_replacement_unresolved" in kind_set:
+        return "bomb_replacement_unresolved"
     if non_overridable:
         return "objective_loss"
     if "grid_damage" in kind_set:

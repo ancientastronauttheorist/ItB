@@ -643,6 +643,28 @@ def test_lookahead_forecast_gaps_expose_mobile_enemies_and_spawns():
     assert gaps[2]["persisting_spawn_markers"] == []
 
 
+def test_lookahead_forecast_exposes_unresolved_final_cave_bomb_coordinate():
+    gaps = _lookahead_forecast_gaps(
+        {
+            "mission_id": "Mission_Final_Cave",
+            "remaining_spawns": 0,
+            "spawning_tiles": [],
+            "units": [],
+            "bigbomb_replacement_pending": True,
+            "bigbomb_replacement_snapshot_candidates": [[2, 2], [3, 3]],
+        },
+        {},
+        source_spawning_tiles=[],
+    )
+
+    assert gaps == [{
+        "kind": "final_cave_bomb_replacement_coordinate_unmodeled",
+        "reason": "native_UpdateMission_timing_and_random_removal_result_unobserved",
+        "turn_extension": 2,
+        "snapshot_candidates": [[2, 2], [3, 3]],
+    }]
+
+
 def test_lookahead_forecast_fails_closed_for_stationary_enemy_retargeting():
     projected = {
         "remaining_spawns": 0,

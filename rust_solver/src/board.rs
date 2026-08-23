@@ -663,13 +663,19 @@ pub struct Board {
                                 // one WITHOUT the EXTRA_TILE flag). Used to compute
                                 // the 14-tile flood offsets.
     pub bigbomb_alive: bool,    // True while the current Renfield Bomb (BigBomb) is
-                                // on-board with hp > 0. Mission_Final_Cave source
-                                // respawns a replacement and adds 2 to TurnLimit on
-                                // destruction; the model does not simulate that
-                                // delayed recovery, so the alive→dead transition is
-                                // conservatively scored by `bigbomb_killed` on top
-                                // of the standard friendly_npc penalty. False on
-                                // missions without a bomb.
+                                // on-board with hp > 0. False on missions without a
+                                // bomb and while a projected replacement has no
+                                // source-proven native coordinate.
+    /// A projected Mission_Final_Cave turn destroyed the current BigBomb.
+    /// Shipped source guarantees that the next non-busy UpdateMission queues
+    /// another BigBomb and increments TurnLimit by two, but callback timing and
+    /// the random_removal result remain native. Keep that unresolved boundary
+    /// explicit instead of fabricating a pawn.
+    pub bigbomb_replacement_pending: bool,
+    /// Source-reachable AddBomb outcomes for the simulator's stable projected
+    /// snapshot. This is diagnostic evidence, not a claim that native
+    /// UpdateMission samples the identical environment-warning boundary.
+    pub bigbomb_replacement_snapshot_candidates: u64,
     // Teleporter pad pairs for Mission_Teleporter (Detritus disposal missions).
     // Each entry = (x1, y1, x2, y2) — the two paired pads swap any unit that
     // ends movement on one of them. Bridge populates via the Board.AddTeleport
@@ -785,6 +791,8 @@ impl Default for Board {
             dam_alive: false,
             dam_primary: None,
             bigbomb_alive: false,
+            bigbomb_replacement_pending: false,
+            bigbomb_replacement_snapshot_candidates: 0,
             teleporter_pairs: Vec::new(),
             bonus_dont_kill_types: Vec::new(),
             destroy_objective_unit_types: Vec::new(),

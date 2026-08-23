@@ -2414,6 +2414,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v406 - A projected Mission_Final_Cave turn that destroys the live BigBomb
+// now applies the source-guaranteed TurnLimit+2 edge and records an unresolved
+// replacement with every AddBomb-reachable coordinate for that stable board
+// snapshot. It never fabricates the native callback time, pawn, UID, or random
+// coordinate; depth-two beam expansion stops at the boundary and Python safety
+// keeps it non-overridable. Pre-v406 corpus archived as
+// recordings/failure_db_snapshot_sim_v405.jsonl.
 // v405 - Mission_Final_Cave now carries the exact current native Env_Final
 // phase, mode, Ordered/Instant contract, retained LavaPath, and selected
 // Locations/Planned. Both modes apply DAMAGE_DEATH before queued Vek attacks;
@@ -2512,7 +2519,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 405;
+pub const SIMULATOR_VERSION: u32 = 406;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

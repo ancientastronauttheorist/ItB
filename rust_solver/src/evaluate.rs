@@ -841,12 +841,11 @@ pub fn evaluate(
     }
 
     // ── Conservative objective loss: current Renfield Bomb destroyed ──
-    // Mission_Final_Cave source responds by dropping a replacement bomb and
-    // adding 2 to TurnLimit. That delayed respawn is outside the current model,
-    // so the alive→dead edge remains unacceptable and fires this penalty once
-    // per evaluate() call. NOT scaled by future_factor: the penalty must dominate
-    // even on the final-turn floor (ff ≈ 0.05) so the solver never trades the
-    // current bomb for a kill bonus.
+    // Full-turn projection records the source-guaranteed +2 extension and an
+    // unresolved replacement boundary, but action evaluation still strongly
+    // disfavors losing the current pawn. NOT scaled by future_factor: the
+    // penalty must dominate even on the final-turn floor (ff ≈ 0.05) so the
+    // solver never trades the current bomb for a kill bonus.
     if psion_before.bigbomb && !board.bigbomb_alive {
         score += weights.bigbomb_killed;
     }

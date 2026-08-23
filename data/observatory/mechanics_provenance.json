@@ -9034,7 +9034,7 @@
         },
         {
           "classification": "fact",
-          "statement": "Repository anchors expose current BigBomb liveness and known type data, detect a large live terrain swap within Mission_Final, and apply conservative final-cave pylon and bomb safety policy. Those tests validate extracted state and repository policy only: they do not reproduce the source's native boss/spawner RNG, effect queues, NextPhase scheduler, bomb replacement, or mission-end lifecycle."
+          "statement": "Simulator v406 models the source-guaranteed missing-bomb boundary without claiming native RNG: completed-turn projection increments total turns by exactly 2 once, records the replacement as pending, derives every AddBomb-reachable coordinate for the stable projected snapshot, fabricates no pawn or UID, stops depth-two beam expansion, emits an explicit forecast gap, and keeps the transition non-overridable until fresh live state materializes the replacement."
         }
       ],
       "id": "mission-final-surface-and-cave-lifecycle",
@@ -9053,11 +9053,11 @@
         },
         {
           "path": "src/loop/commands.py",
-          "symbols": ["_detect_terrain_stage_change"]
+          "symbols": ["_detect_terrain_stage_change", "_capture_board_summary", "_lookahead_forecast_gaps", "_held_end_turn_bridge_checkpoint_schema_error"]
         },
         {
           "path": "src/model/board.py",
-          "symbols": ["from_bridge_data", "bigbomb_alive", "BigBomb"]
+          "symbols": ["from_bridge_data", "bigbomb_alive", "bigbomb_replacement_pending", "bigbomb_replacement_snapshot_candidates", "BigBomb"]
         },
         {
           "path": "src/model/pawn_stats.py",
@@ -9065,14 +9065,26 @@
         },
         {
           "path": "src/solver/plan_safety.py",
-          "symbols": ["final_cave_emergency_pylon_loss_allowed", "final_cave_resist_gamble_allowed", "bigbomb_alive", "pylons_alive", "pylon_hp_total"]
+          "symbols": ["audit_plan_safety", "bigbomb_replacement_unresolved", "final_cave_emergency_pylon_loss_allowed", "final_cave_resist_gamble_allowed", "bigbomb_alive", "pylons_alive", "pylon_hp_total"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["Board", "bigbomb_replacement_pending", "bigbomb_replacement_snapshot_candidates"]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": ["apply_final_cave_bomb_replacement_boundary", "final_cave_bomb_snapshot_candidates", "board_to_json"]
+        },
+        {
+          "path": "rust_solver/src/beam.rs",
+          "symbols": ["solve_beam"]
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records now cover exact current bridge selections and bounded simulator effects for both stages; this lifecycle record itself claims no future environmental RNG, phase-handoff, bomb replacement, or mission scheduler conformance.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages; this lifecycle record additionally models only the source-guaranteed missing-bomb +2 edge and stable-snapshot candidate partition, not future environmental RNG, phase handoff, replacement timing/coordinate, or mission scheduler conformance.",
         "Mission_Infinite inheritance, native turn and team callback order, NextPhase and IsEndBlocked orchestration, StartMission completion, MissionEnd presentation and travel timing, spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, RNG, boss placement, UID allocation, and map-zone contents remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
-        "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, future bomb candidate, missing-bomb replacement, or repeated TurnLimit+2 extension. IsBomb semantics, native candidate occupancy changes, an exhausted-edge AddBomb choice, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
+        "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
         "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The terrain fingerprint proves that a large live board change is detected, not that Mission_Final:MissionEnd or the native phase handoff executed conformantly."
       ],
       "sources": [
@@ -9094,11 +9106,15 @@
         },
         {
           "path": "tests/test_renfield_bomb.py",
-          "symbols": ["test_known_types_includes_bigbomb_and_final_pawns", "test_bridge_data_sets_bigbomb_alive_when_alive", "test_bridge_data_leaves_bigbomb_alive_false_when_dead"]
+          "symbols": ["test_known_types_includes_bigbomb_and_final_pawns", "test_bridge_data_sets_bigbomb_alive_when_alive", "test_bridge_data_leaves_bigbomb_alive_false_when_dead", "test_projected_replacement_boundary_roundtrips_without_fake_bomb", "test_projected_replacement_boundary_fails_closed_outside_exact_shape", "test_rust_projection_emits_exact_replacement_boundary_without_fake_bomb"]
         },
         {
           "path": "tests/test_plan_safety.py",
-          "symbols": ["test_final_cave_resist_gamble_can_be_dirty_consented_on_last_turn", "test_final_cave_resist_gamble_rejects_before_last_turn", "test_final_cave_resist_gamble_rejects_bomb_loss", "test_final_cave_pylon_loss_is_named", "test_final_cave_emergency_pylon_loss_can_be_dirty_consented", "test_final_cave_emergency_pylon_loss_rejects_mech_hp_debt"]
+          "symbols": ["test_final_cave_resist_gamble_can_be_dirty_consented_on_last_turn", "test_final_cave_resist_gamble_rejects_before_last_turn", "test_final_cave_resist_gamble_rejects_bomb_loss", "test_final_cave_pylon_loss_is_named", "test_final_cave_emergency_pylon_loss_can_be_dirty_consented", "test_final_cave_emergency_pylon_loss_rejects_mech_hp_debt", "test_source_backed_bigbomb_replacement_records_extension_but_stays_blocked", "test_bigbomb_pending_claim_without_exact_plus_two_falls_back_to_raw_loss"]
+        },
+        {
+          "path": "tests/test_board_summary_safety.py",
+          "symbols": ["test_projected_checkpoint_validates_pending_bigbomb_replacement_shape", "test_held_end_turn_artifact_accepts_exact_bomb_replacement_extension"]
         },
         {
           "path": "tests/test_itb_provenance.py",

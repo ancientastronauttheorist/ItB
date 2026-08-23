@@ -1102,6 +1102,61 @@ def test_predicted_bigbomb_loss_blocks_plan():
     assert audit["violations"][0]["kind"] == "bigbomb_lost"
 
 
+def test_source_backed_bigbomb_replacement_records_extension_but_stays_blocked():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=2,
+            total_turns=4,
+            bigbomb_alive=True,
+            bigbomb_replacement_pending=False,
+            bigbomb_replacement_snapshot_candidates=[],
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            turn=3,
+            total_turns=6,
+            bigbomb_alive=False,
+            bigbomb_replacement_pending=True,
+            bigbomb_replacement_snapshot_candidates=[[2, 2], [3, 3]],
+        ),
+    )
+
+    assert audit["status"] == "DIRTY"
+    assert [v["kind"] for v in audit["violations"]] == [
+        "bigbomb_replacement_unresolved"
+    ]
+    details = audit["violations"][0]["details"]
+    assert details == {
+        "turn_extension": 2,
+        "current_total_turns": 4,
+        "predicted_total_turns": 6,
+        "snapshot_candidates": [[2, 2], [3, 3]],
+    }
+    assert safety_loss_profile(audit)["label"] == "bomb_replacement_unresolved"
+    assert safety_loss_profile(audit)["non_overridable"] is True
+    assert plan_requires_safety_block(audit, allow_dirty_plan=True) is True
+
+
+def test_bigbomb_pending_claim_without_exact_plus_two_falls_back_to_raw_loss():
+    audit = audit_plan_safety(
+        _summary(
+            mission_id="Mission_Final_Cave",
+            total_turns=4,
+            bigbomb_alive=True,
+        ),
+        _summary(
+            mission_id="Mission_Final_Cave",
+            total_turns=5,
+            bigbomb_alive=False,
+            bigbomb_replacement_pending=True,
+            bigbomb_replacement_snapshot_candidates=[[2, 2]],
+        ),
+    )
+
+    assert [v["kind"] for v in audit["violations"]] == ["bigbomb_lost"]
+
+
 def test_mech_hp_loss_warns_without_blocking():
     audit = audit_plan_safety(
         _summary(mech_hp_total=7),
