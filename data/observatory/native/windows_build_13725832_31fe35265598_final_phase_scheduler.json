@@ -1,0 +1,493 @@
+{
+  "analysis_kind": "final_phase_scheduler_boundary_map",
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "is_next_phase_callback_result",
+      "instruction_hex": "83ec188bcc8965f0681cf28200e8834ee8ff83ec18c745fc000000008bcc81c6d40f0000c741140f000000c74110000000008379141072048b01eb028bc16aff6a0056c60000e80a51e8ffc745fcffffffffe84e66ecff84c07412b001",
+      "meaning": "Invoke IsNextPhase on the current mission and return true only when the extracted Lua boolean is true.",
+      "region_id": "is_next_phase",
+      "sha256": "0a050eadb9250ab195793c9927f88a9dc28af37fe4f19ae319629dfa8d07d0cc",
+      "size": 93,
+      "start_rva": "0x00182f7b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "end_blocked_false_gate",
+      "instruction_hex": "83ec188bcc8965ec6808f58200e84521e8ff83ec18c745fc010000008bccc741140f000000c74110000000008379141072048b01eb028bc16aff6a0057c60000e8d223e8ffc745fcffffffffe81639ecff84c07571",
+      "meaning": "Invoke IsEndBlocked and branch to the end-readiness false return when the extracted Lua boolean is true.",
+      "region_id": "end_readiness",
+      "sha256": "2f91b2872ee48cd2792c635afbeffeec1e194b12965d4a07a8b8fa24074f161b",
+      "size": 85,
+      "start_rva": "0x00185cb9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "end_readiness_dispatch",
+      "instruction_hex": "83f802752083bee40f000000741d8bcee895a3ffff84c07412c7860019000001000000eb06898600190000",
+      "meaning": "On the ordinary pending-end state, call end_readiness and promote the state only when it returns true; otherwise preserve the incoming state.",
+      "region_id": "mission_end_dispatch",
+      "sha256": "c9ed02b7a1da7a83dbfc4460aff12b521f764b9f66563f1544894d2ff57123dd",
+      "size": 43,
+      "start_rva": "0x0018b816"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end_named_dispatch",
+      "instruction_hex": "8bcee84fabffff84c00f85a9000000e82276ffff84c075248b8690450000b90100000083f80375048bc8eb0b83f801ba020000000f44cae8fa0bf5ff6a028bcee84177ffff84c075196a038bcee83477ffff84c0750c83ec188bcc68c4f98200eb1383be9045000003751783ec188bcc68f4f98200e89cc4e7ffe8c7fbf4ff83c41883ec188bcc89650868e8f98200e882c4e7ff83ec18c745fc000000008d86d40f00008bcc50e86af2ebffc745fcffffffffe84edf0000",
+      "meaning": "On the reviewed completion branch, evaluate IsNextPhase for presentation selection before constructing and executing the MissionEnd callback.",
+      "region_id": "mission_end_dispatch",
+      "sha256": "c3d31a7f4bd5f56c6f77c71d0c39c843f202b3f7c3653e137e0148294cc4e0e5",
+      "size": 184,
+      "start_rva": "0x0018b8fa"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "primary_mission_end_dispatch",
+      "instruction_hex": "83be041900000274096a008bcee802070000",
+      "meaning": "Call mission_end_dispatch when the sampled end state is no longer the waiting value.",
+      "region_id": "primary_orchestrator",
+      "sha256": "cdaf86b2f70a75e76af49fe2dd1763a8d6903ce135939e9b88ff5dd42d524599",
+      "size": 18,
+      "start_rva": "0x0018b06c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "primary_next_phase_handoff",
+      "instruction_hex": "8b068bce8b4040ffd084c0755a8b86c80f000083f80475046a03eb4483f80575468a86a81a000084c0753c3886c845000075348d8e54200000e8d873060084c075258bcee8cd7dffff84c074098bcee862e0ffffeb118b4e04e8c831feff6a068bcee83ff1ffff",
+      "meaning": "On the completed-mission path, evaluate IsNextPhase and call phase_transition only for a true result; the false branch takes the ordinary mission-exit transition.",
+      "region_id": "primary_orchestrator",
+      "sha256": "ea19e5e80efa6a4e13a64343df0650b239cabfacd3cff90a0e9221bbfe23afc1",
+      "size": 103,
+      "start_rva": "0x0018b11a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "phase_create_next_dispatch",
+      "instruction_hex": "83ec18c645fc058bcc896598c741140f000000c74110000000008379141072048b01eb028bc16a0f68dcf78200c60000e826ebe7ff83ec18c645fc068bccc741140f000000c74110000000008379141072048b01eb028bc16a046824f88200c60000e8f4eae7ffc645fc01e83bdb0000",
+      "meaning": "Construct CreateNextPhase and GAME arguments and pass them to the reviewed phase named invoker.",
+      "region_id": "phase_transition",
+      "sha256": "b1a075e70b5387af20c5e3d442c09f1ecf2f1d2e7a6ffb8f379af72803a49d17",
+      "size": 112,
+      "start_rva": "0x00189475"
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b826",
+      "id": "mission_dispatch_to_end_readiness",
+      "instruction_hex": "e895a3ffff",
+      "source_region": "mission_end_dispatch",
+      "target_region": "end_readiness",
+      "target_rva": "0x00185bc0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b909",
+      "id": "mission_dispatch_to_is_next_phase",
+      "instruction_hex": "e82276ffff",
+      "source_region": "mission_end_dispatch",
+      "target_region": "is_next_phase",
+      "target_rva": "0x00182f30"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b9ad",
+      "id": "mission_dispatch_to_named_invoker",
+      "instruction_hex": "e84edf0000",
+      "source_region": "mission_end_dispatch",
+      "target_region": "mission_named_invoker",
+      "target_rva": "0x00199900"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b079",
+      "id": "primary_to_mission_dispatch",
+      "instruction_hex": "e802070000",
+      "source_region": "primary_orchestrator",
+      "target_region": "mission_end_dispatch",
+      "target_rva": "0x0018b780"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b15e",
+      "id": "primary_to_is_next_phase",
+      "instruction_hex": "e8cd7dffff",
+      "source_region": "primary_orchestrator",
+      "target_region": "is_next_phase",
+      "target_rva": "0x00182f30"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b169",
+      "id": "primary_to_phase_transition",
+      "instruction_hex": "e862e0ffff",
+      "source_region": "primary_orchestrator",
+      "target_region": "phase_transition",
+      "target_rva": "0x001891d0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001894e0",
+      "id": "phase_transition_to_named_invoker",
+      "instruction_hex": "e83bdb0000",
+      "source_region": "phase_transition",
+      "target_region": "phase_named_invoker",
+      "target_rva": "0x00197020"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The reviewed normal readiness path obtains GetTurnLimit, invokes IsEndBlocked, and returns false when the extracted IsEndBlocked result is true.",
+      "evidence_class": "inference",
+      "id": "normal_end_readiness_veto",
+      "limitations": [
+        "The native state machine also accepts externally advanced end states; this finding does not identify that trigger."
+      ],
+      "supports": [
+        "end_readiness",
+        "get_turn_limit",
+        "is_end_blocked",
+        "end_blocked_false_gate"
+      ]
+    },
+    {
+      "claim": "On the reviewed completion branch, mission_end_dispatch evaluates IsNextPhase for presentation selection before it constructs and executes the MissionEnd callback.",
+      "evidence_class": "inference",
+      "id": "mission_end_callback_order",
+      "limitations": [
+        "A preceding native guard can skip the callback branch, and queued effects may settle later."
+      ],
+      "supports": [
+        "mission_end_dispatch",
+        "is_next_phase",
+        "mission_end",
+        "mission_end_named_dispatch",
+        "mission_named_invoker"
+      ]
+    },
+    {
+      "claim": "The primary orchestrator calls mission_end_dispatch first, then on its completed-mission path evaluates IsNextPhase and calls phase_transition only when that predicate is true.",
+      "evidence_class": "inference",
+      "id": "native_phase_handoff_order",
+      "limitations": [
+        "This is relative control-flow order, not a timestamped runtime trace."
+      ],
+      "supports": [
+        "primary_orchestrator",
+        "primary_mission_end_dispatch",
+        "primary_next_phase_handoff",
+        "primary_to_mission_dispatch",
+        "primary_to_is_next_phase",
+        "primary_to_phase_transition"
+      ]
+    },
+    {
+      "claim": "phase_transition constructs CreateNextPhase and GAME arguments and passes them to the reviewed phase named invoker.",
+      "evidence_class": "inference",
+      "id": "create_next_phase_dispatch",
+      "limitations": [
+        "The exact post-call board/map initialization sequence remains outside the named dispatch boundary."
+      ],
+      "supports": [
+        "phase_transition",
+        "create_next_phase",
+        "game_object",
+        "phase_create_next_dispatch",
+        "phase_named_invoker"
+      ]
+    },
+    {
+      "claim": "The exact Lua sources define IsNextPhase as a nonempty NextPhase test, define GameObject:CreateNextPhase to replace the current mission slot with CreateMission(next_phase), and set Mission_Final.NextPhase to Mission_Final_Cave.",
+      "evidence_class": "fact",
+      "id": "final_surface_target",
+      "limitations": [
+        "Source semantics do not by themselves prove the native trigger or effect-settlement timing."
+      ],
+      "supports": [
+        "scripts/game.lua",
+        "scripts/missions/missions.lua",
+        "scripts/missions/final/mission_final.lua"
+      ]
+    },
+    {
+      "claim": "No current-turn combat simulation change follows from this map. The safe boundary remains to detect the live stage change, refresh bridge state, and never fabricate cave setup RNG or queued MissionEnd settlement.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "limitations": [
+        "A future exact cave-start scheduler map or controlled trace may justify additional modeling."
+      ],
+      "supports": [
+        "native_phase_handoff_order",
+        "create_next_phase_dispatch",
+        "final_surface_target"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Capstone 5.0.7 disassembly and a Ghidra 12.1.3 function/reference/call-graph cross-check joined the named Lua callbacks to the native mission-completion and phase-transition paths.",
+    "limitations": [
+      "Every native address and conclusion applies only to the pinned Windows executable.",
+      "Semantic role names are bounded analyst inferences over exact strings, bytes, branches, and direct calls.",
+      "Static order does not prove runtime branch frequency or identify the external event that advances an always-blocked Final mission.",
+      "Queued SkillEffect settlement, presentation timing, cave startup callback order, and cave startup RNG remain outside this map.",
+      "macOS and other executable builds require independent maps."
+    ],
+    "source_review": "Only normalized semantic conclusions and exact source hashes are published; no proprietary source or decompiler output is stored."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00182ffa",
+      "evidence_class": "fact",
+      "id": "is_next_phase",
+      "section": ".text",
+      "sha256": "e8f4a1233b90831e3a17c0496f71bfa3de8ead5bfbb170236763bb3d21d2d432",
+      "size": 202,
+      "start_rva": "0x00182f30"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00185d92",
+      "evidence_class": "fact",
+      "id": "end_readiness",
+      "section": ".text",
+      "sha256": "a3fcc9c4e1f4561c46f1b371f515090001578c02bebc718029dc5939f17fae16",
+      "size": 466,
+      "start_rva": "0x00185bc0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0018964d",
+      "evidence_class": "fact",
+      "id": "phase_transition",
+      "section": ".text",
+      "sha256": "3a5b364d9af48610bb07f8e44d5cb9ddb4051f4cb4a5fa0ad0db8eb51522073f",
+      "size": 1149,
+      "start_rva": "0x001891d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0018b36f",
+      "evidence_class": "fact",
+      "id": "primary_orchestrator",
+      "section": ".text",
+      "sha256": "8a5e7744c920a70f30f8056271d452335be6d601625f8b8d935d5457b77ebf82",
+      "size": 1247,
+      "start_rva": "0x0018ae90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x0018b9ff",
+      "evidence_class": "fact",
+      "id": "mission_end_dispatch",
+      "section": ".text",
+      "sha256": "00e1f495aa53d2a439c4eeb6e41e1d5ac5b304e0c050e4343bd0433f9ff74ee9",
+      "size": 639,
+      "start_rva": "0x0018b780"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x001970e5",
+      "evidence_class": "fact",
+      "id": "phase_named_invoker",
+      "section": ".text",
+      "sha256": "8bef18ab0d4307aaf94a837b8780bf81c7d21d4456839ccecf1ddbef141b5b5d",
+      "size": 197,
+      "start_rva": "0x00197020"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function body corroborated by complete Capstone 5.0.7 decoding from the reviewed entry.",
+      "end_rva_exclusive": "0x00199998",
+      "evidence_class": "fact",
+      "id": "mission_named_invoker",
+      "section": ".text",
+      "sha256": "f104b8d01a7d8904631d4481f8c46efca50e906ff1ba29e34f980df21dde3ac6",
+      "size": 152,
+      "start_rva": "0x00199900"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/game.lua",
+        "sha256": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
+        "size": 9747,
+        "symbols": [
+          "GameObject:GetMissionId",
+          "GameObject:GetMission",
+          "GameObject:CreateNextPhase"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/missions.lua",
+        "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+        "size": 29573,
+        "symbols": [
+          "Mission.NextPhase",
+          "Mission:IsEndBlocked",
+          "Mission:IsNextPhase",
+          "Mission:MissionEnd"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final.lua",
+        "sha256": "f92875ba570871b7b3184adb168105c8f29150398b8b14e87a863f67d6c61e29",
+        "size": 3318,
+        "symbols": [
+          "Mission_Final",
+          "Mission_Final.NextPhase",
+          "Mission_Final:MissionEnd",
+          "Mission_Final:IsEndBlocked"
+        ]
+      },
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave",
+          "Mission_Final_Cave:StartMission",
+          "Mission_Final_Cave:MissionEnd",
+          "Mission_Final_Cave:IsEndBlocked"
+        ]
+      }
+    ]
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "is_next_phase",
+      "instruction_hex": "681cf28200",
+      "reference_rva": "0x00182f83",
+      "region_id": "is_next_phase",
+      "role": "next-phase predicate callback",
+      "string_rva": "0x0042f21c",
+      "text": "IsNextPhase"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_turn_limit",
+      "instruction_hex": "6858f38200",
+      "reference_rva": "0x00185c24",
+      "region_id": "end_readiness",
+      "role": "normal mission-end readiness input",
+      "string_rva": "0x0042f358",
+      "text": "GetTurnLimit"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "is_end_blocked",
+      "instruction_hex": "6808f58200",
+      "reference_rva": "0x00185cc1",
+      "region_id": "end_readiness",
+      "role": "normal mission-end readiness veto",
+      "string_rva": "0x0042f508",
+      "text": "IsEndBlocked"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "is_environment_effect",
+      "instruction_hex": "683cf58200",
+      "reference_rva": "0x00185d2a",
+      "region_id": "end_readiness",
+      "role": "normal mission-end environment guard",
+      "string_rva": "0x0042f53c",
+      "text": "IsEnvironmentEffect"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "create_next_phase",
+      "instruction_hex": "68dcf78200",
+      "reference_rva": "0x0018949d",
+      "region_id": "phase_transition",
+      "role": "phase-construction callback",
+      "string_rva": "0x0042f7dc",
+      "text": "CreateNextPhase"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "game_object",
+      "instruction_hex": "6824f88200",
+      "reference_rva": "0x001894cf",
+      "region_id": "phase_transition",
+      "role": "phase-construction receiver",
+      "string_rva": "0x0042f824",
+      "text": "GAME"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end",
+      "instruction_hex": "68e8f98200",
+      "reference_rva": "0x0018b984",
+      "region_id": "mission_end_dispatch",
+      "role": "mission-end callback",
+      "string_rva": "0x0042f9e8",
+      "text": "MissionEnd"
+    }
+  ],
+  "summary": {
+    "control_window_count": 7,
+    "direct_edge_count": 7,
+    "final_end_state_trigger_proven": false,
+    "final_surface_target_proven": true,
+    "finding_count": 6,
+    "lua_source_count": 4,
+    "mission_effect_settlement_proven": false,
+    "region_count": 7,
+    "relative_handoff_order_proven": true,
+    "remaining_runtime_proof": [
+      "Final end-state trigger",
+      "MissionEnd queued-effect settlement",
+      "cave startup callback and RNG order",
+      "cave countdown outcome settlement",
+      "non-Windows build equivalence"
+    ],
+    "simulator_change_required": false,
+    "string_anchor_count": 7,
+    "unresolved_count": 4
+  },
+  "unresolved": [
+    {
+      "id": "final_end_state_trigger",
+      "next_evidence": "Map writes to the reviewed end-state field or capture a build-keyed Final countdown transition.",
+      "question": "Which native event advances Mission_Final and Mission_Final_Cave despite their always-true IsEndBlocked?",
+      "static_status": "The ordinary readiness veto and later relative handoff order are mapped, but the external state transition is not."
+    },
+    {
+      "id": "mission_end_effect_settlement",
+      "next_evidence": "Trace the effect queue and stage identity across one surface handoff without changing gameplay semantics.",
+      "question": "When do Mission_Final's queued fall, bounce, and Board:Slide effects settle relative to CreateNextPhase?",
+      "static_status": "Callback dispatch order is mapped; the SkillEffect scheduler and presentation queue are not."
+    },
+    {
+      "id": "cave_start_order",
+      "next_evidence": "Continue static review from phase_named_invoker and join it to StartMission and map-construction anchors.",
+      "question": "What is the exact native order for CreateMission, map swap, Mission_Final_Cave:StartMission, spawns, and opening RNG?",
+      "static_status": "The named CreateNextPhase boundary is mapped, but subsequent native initialization is not classified."
+    },
+    {
+      "id": "cave_countdown_outcome",
+      "next_evidence": "Map the cave end-state writer or retain a controlled exact-build final-turn capture.",
+      "question": "Which native transition ends Mission_Final_Cave, and how are bomb survival, objectives, and victory settled?",
+      "static_status": "MissionEnd is named, but the final countdown trigger and outcome settlement remain untraced."
+    }
+  ]
+}

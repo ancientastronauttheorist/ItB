@@ -5811,6 +5811,28 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert record["coverage"] == "partial"
     assert record["sources"] == [
         {
+            "path": "scripts/game.lua",
+            "sha256": (
+                "8fc587a6d341f43cf521ae2c95e91e57"
+                "39355cb929581a18f9c374fba2c88db7"
+            ),
+            "symbols": [
+                "GameObject:GetMissionId", "GameObject:GetMission",
+                "GameObject:CreateNextPhase",
+            ],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81"
+                "c6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": [
+                "Mission.NextPhase", "Mission:IsEndBlocked",
+                "Mission:IsNextPhase", "Mission:MissionEnd",
+            ],
+        },
+        {
             "path": "scripts/missions/final/mission_final.lua",
             "sha256": (
                 "f92875ba570871b7b3184adb168105c8"
@@ -5851,6 +5873,14 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert implementations["src/bridge/terrain_fingerprint.py"] == {
         "fingerprint_from_bridge_tiles", "is_stage_change",
     }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_phase_scheduler.json"
+    ] == {
+        "normal_end_readiness_veto", "mission_end_callback_order",
+        "native_phase_handoff_order", "create_next_phase_dispatch",
+        "final_surface_target", "solver_boundary",
+    }
     assert implementations["src/loop/commands.py"] == {
         "_detect_terrain_stage_change", "_capture_board_summary",
         "_lookahead_forecast_gaps",
@@ -5859,6 +5889,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert implementations["src/model/board.py"] == {
         "from_bridge_data", "bigbomb_alive", "bigbomb_replacement_pending",
         "bigbomb_replacement_snapshot_candidates", "BigBomb",
+    }
+    assert implementations["src/observatory/final_phase_scheduler.py"] == {
+        "build_final_phase_scheduler_map",
+        "validate_final_phase_scheduler_map",
+        "validate_final_phase_scheduler_map_binding",
     }
     assert implementations["src/solver/plan_safety.py"] == {
         "audit_plan_safety", "bigbomb_replacement_unresolved",
@@ -5875,6 +5910,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
         "final_cave_bomb_snapshot_candidates", "board_to_json",
     }
     assert implementations["rust_solver/src/beam.rs"] == {"solve_beam"}
+    assert implementations[
+        "scripts/itb_observatory_final_phase_scheduler.py"
+    ] == {"_parser", "main"}
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
     assert "does not explicitly reset iDamage" in facts
@@ -5885,8 +5923,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "does not state that bomb loss is terminal" in facts
     assert "Simulator v406 models the source-guaranteed" in facts
     assert "fabricates no pawn or UID" in facts
+    assert "relative native path" in facts
+    assert "IsNextPhase before dispatching MissionEnd" in facts
+    assert "source-selected handoff target is exact" in facts
     gaps = " ".join(record["known_gaps"])
     assert "Env_Final records cover exact current bridge selections" in gaps
+    assert "exact-build native map now closes relative" in gaps
+    assert "external state change that advances both Final missions" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated native replacement cycles" in gaps
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps

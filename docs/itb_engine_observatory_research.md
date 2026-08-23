@@ -462,7 +462,11 @@ Ghidra review plus the PE byte/call verifier now map and pin:
 - the native reachability/path API bindings, path-profile constants, Board
   search vtable, Road Runner profile-4 transit/destination split, unit costs,
   direction/priority comparators, result/reconstruction order, ordinary pawn
-  occupancy, and Massive-Water path edge.
+  occupancy, and Massive-Water path edge; and
+- the Final mission's relative native completion order from the
+  `IsEndBlocked` readiness veto through `MissionEnd`, the later `IsNextPhase`
+  branch, and `GAME.CreateNextPhase`, joined to the exact Lua selection of
+  `Mission_Final_Cave`.
 
 The durable artifact contains reviewed region hashes and call edges decoded at
 instruction boundaries relative to the declared starts, rather than executable
@@ -484,7 +488,10 @@ The remaining native priorities are now narrower:
    needs a runtime match. Static unit costs, tie ordering, endpoint shape,
    ordinary team handling, Road Runner, and Massive Water are complete; corpse
    classification and `AddMove` step/scheduler effects remain open.
-3. Resolve turn-phase ordering, queued effect execution, and hidden state.
+3. Resolve the externally advanced Final end-state trigger, queued
+   `MissionEnd` effect settlement, cave startup callback/RNG order, and final
+   countdown outcome. The relative surface-to-cave handoff and target are now
+   statically pinned for the exact Windows build.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot

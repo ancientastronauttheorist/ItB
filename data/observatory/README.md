@@ -498,3 +498,38 @@ closes both new campaign receipts' pending save/install fields. It binds a
 689/689 accepted-install match, the restored 33-file owner-save tree, the exact
 baseline loader, zero active Observatory files, and the preserved recoverable
 staging area.
+
+## Final phase-scheduler boundary
+
+`native/windows_build_13725832_31fe35265598_final_phase_scheduler.json`
+joins four exact shipped Lua files to seven reviewed native functions, seven
+named-string anchors, seven instruction-start control windows, and seven direct
+call edges. It proves the relative Windows-build handoff boundary without
+storing function bodies, proprietary source, or decompiler output:
+
+- the ordinary readiness path queries `IsEndBlocked`, and a true result vetoes
+  that path;
+- the reviewed completion branch evaluates `IsNextPhase` before dispatching
+  `MissionEnd`;
+- the primary orchestrator later evaluates `IsNextPhase` again and calls the
+  phase-transition routine only for a true result;
+- that routine dispatches `GAME.CreateNextPhase`; and
+- shipped Lua replaces the current mission slot with
+  `CreateMission(Mission_Final_Cave)` for `Mission_Final`.
+
+Verify the exact executable, source hashes, region hashes, callback strings,
+control windows, and call edges with:
+
+```powershell
+python scripts/itb_observatory_final_phase_scheduler.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --scheduler-map data/observatory/native/windows_build_13725832_31fe35265598_final_phase_scheduler.json
+```
+
+This is a relative static order proof, not a runtime timestamp. The native
+event that advances either always-blocked Final mission, queued `MissionEnd`
+effect settlement, cave startup callback/RNG order, the cave countdown outcome,
+and non-Windows equivalence remain explicit gaps. No current-turn Rust simulator
+change follows from this map; the safe boundary remains a fresh bridge read
+after the live stage change.
