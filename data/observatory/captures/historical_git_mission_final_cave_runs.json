@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "kind": "historical_git_mission_final_cave_corroboration",
+  "evidence_scope": {
+    "live_recording_build_identity": "not recorded by the historical board schema",
+    "source_build": {
+      "platform": "windows",
+      "build_id": "13725832",
+      "env_final_sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+      "env_attack_sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+      "mission_final_two_sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c"
+    },
+    "interpretation": "Mode and phase labels are inferred by joining the exact Env_Final and Env_Attack source contracts to the observed warning and terrain aftermath. The historical bridge did not export Mode, Phase, Instant, LavaPath, or ordered Locations and mislabeled the live environment as cataclysm_or_seismic. Warning arrays are therefore sets, not proof of native order."
+  },
+  "runs": [
+    {
+      "git_commit": "8ef97924c9f6702bfabcbf025b5da125f992625c",
+      "run_id": "20260430_230740_117",
+      "mission_index": 5,
+      "surface_bridge_master_seed": 125574395,
+      "cave_bridge_master_seed": 1788762246,
+      "records": [
+        {
+          "turn": 1,
+          "phase": 1,
+          "mode": "rocks",
+          "instant": false,
+          "warning": [[4, 1], [2, 2], [1, 4], [4, 5]],
+          "next_turn_terrain": {
+            "road_or_ground": [[4, 1], [2, 2], [1, 4], [4, 5]]
+          },
+          "path": "recordings/20260430_230740_117/m05_turn_01_board.json",
+          "git_blob_oid": "99c8ff7f2ae32d3cf3133da732efb03685fc9d6d"
+        },
+        {
+          "turn": 2,
+          "phase": 2,
+          "mode": "tentacles_to_lava",
+          "instant": false,
+          "warning": [[5, 1], [4, 2], [4, 4]],
+          "turn_entry_mech_positions": [[4, 2], [4, 4], [5, 1]],
+          "next_turn_terrain_id_3_additions": [[5, 1], [4, 2], [4, 4]],
+          "path": "recordings/20260430_230740_117/m05_turn_02_board.json",
+          "git_blob_oid": "0c877c505eb22f579df496469fe6746b19ecd0fe"
+        },
+        {
+          "turn": 3,
+          "phase": 3,
+          "mode": "rocks",
+          "instant": true,
+          "warning": [[4, 1], [5, 1], [3, 2], [4, 2], [3, 3], [4, 3]],
+          "next_turn_terrain": {
+            "road_or_ground": [[4, 1], [5, 1], [3, 2], [4, 2], [3, 3], [4, 3]],
+            "prior_terrain_id_3_converted_to_road_or_ground": [[5, 1], [4, 2]]
+          },
+          "path": "recordings/20260430_230740_117/m05_turn_03_board.json",
+          "git_blob_oid": "605b9ccc613bd9282acbe0d6c1d2822c22b38215"
+        },
+        {
+          "turn": 4,
+          "phase": 4,
+          "mode": "tentacles_to_lava",
+          "instant": true,
+          "warning": [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2]],
+          "shape": "complete cardinal crossing row",
+          "aftermath": "no later same-stage board in this historical run",
+          "path": "recordings/20260430_230740_117/m05_turn_04_board.json",
+          "git_blob_oid": "fbd1e7735ece10182f461b095403d3e1ba372b09"
+        }
+      ]
+    },
+    {
+      "git_commit": "8ef97924c9f6702bfabcbf025b5da125f992625c",
+      "run_id": "20260506_114649_974",
+      "mission_index": 26,
+      "cave_bridge_master_seed": 979832553,
+      "records": [
+        {
+          "turn": 1,
+          "phase": 1,
+          "mode": "rocks",
+          "instant": false,
+          "warning": [[1, 1], [5, 2], [1, 6], [5, 6]],
+          "next_turn_terrain": {
+            "road_or_ground": [[1, 1], [5, 2], [1, 6], [5, 6]],
+            "mountain_converted_to_road_or_ground": [[1, 6]]
+          },
+          "path": "recordings/20260506_114649_974/m26_turn_01_board.json",
+          "git_blob_oid": "da924cc35795753d5e75ab1426272d6336fa78c1"
+        },
+        {
+          "turn": 2,
+          "phase": 2,
+          "mode": "tentacles_to_lava",
+          "instant": false,
+          "warning": [[5, 3], [0, 4], [4, 6]],
+          "turn_entry_mech_positions": [[5, 3], [0, 4], [4, 6]],
+          "next_turn_terrain_id_3_additions": [[5, 3], [0, 4], [4, 6]],
+          "path": "recordings/20260506_114649_974/m26_turn_02_board.json",
+          "git_blob_oid": "079b5ca4004ca61fa2bcdea375b29ea04c6e526b"
+        },
+        {
+          "turn": 3,
+          "phase": 3,
+          "mode": "rocks",
+          "instant": true,
+          "warning": [[4, 2], [6, 2], [5, 3], [6, 3], [4, 4], [6, 4]],
+          "next_sample": {
+            "road_or_ground": [[4, 2], [6, 2], [4, 4], [6, 4]],
+            "still_terrain_id_3": [[5, 3], [6, 3]],
+            "interpretation": "The old separately sampled Instant warning and next board do not prove a complete atomic apply; retain this as ambiguity rather than negative source evidence."
+          },
+          "path": "recordings/20260506_114649_974/m26_turn_03_board.json",
+          "git_blob_oid": "084548697b1bc5dd29113ca6bcf6828b2b05cce2"
+        },
+        {
+          "turn": 4,
+          "phase": 4,
+          "mode": "tentacles_to_lava",
+          "instant": true,
+          "warning": [],
+          "interpretation": "The old non-atomic bridge sampled no warning during the Instant phase and cannot establish that native selection was empty.",
+          "path": "recordings/20260506_114649_974/m26_turn_04_board.json",
+          "git_blob_oid": "65ba9e3372473a33781341da7a9e462f19c4ecf2"
+        }
+      ]
+    }
+  ],
+  "conclusions": [
+    "Both independent live runs expose Rocks then tentacles-to-Lava over phases one and two; each phase-two warning set exactly matches the three turn-entry Mech positions.",
+    "Both phase-two warning sets become persistent terrain-id-3 tiles on the following board; the historical bridge serialized final-island Lava as water.",
+    "Run 20260430_230740_117 exposes the source-constrained six-tile phase-three cluster, converts all six to Road/Ground including two prior Lava tiles, and exposes a complete cardinal phase-four crossing row.",
+    "Run 20260506_114649_974 proves a phase-one falling rock converts a Mountain to Road/Ground, while its non-atomic phase-three and phase-four samples remain explicit timing ambiguities."
+  ],
+  "limitations": [
+    "The historical recording schema does not attest executable, depot, scripts-revision, map-revision, environment object identity, or scheduler callback identity, so these runs corroborate but do not build-key the current Windows source inventory.",
+    "The old bridge scanned Board:IsEnvironmentDanger separately from the environment object. Its warning order is not proof of native Locations order, and Instant phases can be sampled at ambiguous boundaries.",
+    "The recordings do not prove BigBomb exclusion, future RNG call order, Env_Final:Start's unused LavaPath, exact native Plan/ApplyEffect callback timing, or enemy Board:SetDangerous behavior.",
+    "No historical selected tile contains a live Massive, flying, Shielded, or Frozen pawn at resolution. Those lethal rules remain exact-source/general-DAMAGE_DEATH contracts covered by focused simulator tests.",
+    "Phase-four aftermath and the surface-to-cave or mission-end handoff are not captured by a later same-stage atomic checkpoint."
+  ]
+}

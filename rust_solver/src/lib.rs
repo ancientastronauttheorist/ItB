@@ -2414,6 +2414,12 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v405 - Mission_Final_Cave now carries the exact current native Env_Final
+// phase, mode, Ordered/Instant contract, retained LavaPath, and selected
+// Locations/Planned. Both modes apply DAMAGE_DEATH before queued Vek attacks;
+// Rocks assign Road and tentacles assign Lava. Projection consumes the current
+// selection without inventing future quarter/cluster/crossing or BigBomb RNG.
+// Pre-v405 corpus archived as recordings/failure_db_snapshot_sim_v404.jsonl.
 // v404 - Mission_Final now carries the native Env_Volcano phase, mode,
 // ordered Locations/Planned, and remaining LavaStart pool. Rocks resolve as
 // ordered DAMAGE_DEATH plus fire; Lava permanently converts terrain, drowns
@@ -2506,7 +2512,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 404;
+pub const SIMULATOR_VERSION: u32 = 405;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

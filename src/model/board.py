@@ -49,6 +49,8 @@ MISSION_PISTON_FRONT_OFFSETS = {
 VOLCANO_ROCKS = 1
 VOLCANO_LAVA = 2
 VOLCANO_STARTS = ((2, 1), (1, 2))
+FINAL_CAVE_ROCKS = 1
+FINAL_CAVE_LAVA = 2
 
 
 def _strict_board_points(
@@ -141,6 +143,111 @@ def validate_mission_final_volcano_payload(data: dict) -> dict | None:
         "mode": mode,
         "phase": phase,
         "lava_start": lava_start,
+        "locations": locations,
+        "planned": planned,
+    }
+
+
+def validate_mission_final_cave_payload(data: dict) -> dict | None:
+    """Return canonical, source-reachable live ``Env_Final`` state.
+
+    The current selected list is authoritative after native RNG has run.  We
+    validate the four-phase mode/Instant contract and the source-bounded shape
+    of each selection, but deliberately do not fabricate a future selection.
+    ``LavaPath`` is retained because ``Start`` consumes RNG to build it even
+    though the shipped cave selector never reads it again.
+    """
+    if not isinstance(data, dict) or data.get("mission_id") != "Mission_Final_Cave":
+        return None
+    payload = data.get("mission_final_cave")
+    if not isinstance(payload, dict) or payload.get("complete") is not True:
+        return None
+
+    mode = payload.get("mode")
+    phase = payload.get("phase")
+    if (
+        type(mode) is not int
+        or mode not in {FINAL_CAVE_ROCKS, FINAL_CAVE_LAVA}
+        or type(phase) is not int
+        or phase not in {1, 2, 3, 4}
+        or mode != (FINAL_CAVE_ROCKS if phase in {1, 3} else FINAL_CAVE_LAVA)
+    ):
+        return None
+
+    expected_instant = phase in {3, 4}
+    if (
+        payload.get("ordered") is not True
+        or payload.get("instant") is not expected_instant
+        or payload.get("water_target") is not (mode == FINAL_CAVE_ROCKS)
+    ):
+        return None
+
+    lava_path = _strict_board_points(payload.get("lava_path"), maximum=64)
+    locations = _strict_board_points(payload.get("locations"), maximum=64)
+    planned = _strict_board_points(payload.get("planned"), maximum=64)
+    if (
+        lava_path is None
+        or not lava_path
+        or locations is None
+        or planned is None
+        or not locations
+        or locations != planned
+    ):
+        return None
+
+    if phase == 1:
+        if not 3 <= len(locations) <= 4:
+            return None
+        quarters = [
+            (2 if x >= 4 else 0) + (1 if y >= 4 else 0)
+            for x, y in locations
+        ]
+        if (
+            any(not (1 <= x <= 6 and 1 <= y <= 6) for x, y in locations)
+            or quarters != sorted(set(quarters))
+        ):
+            return None
+    elif phase == 2:
+        # Board:GetPawns(TEAM_MECH) contributes one selected location per
+        # surviving Mech; historical cave runs contain two or three.
+        if not 1 <= len(locations) <= 3:
+            return None
+    elif phase == 3:
+        # The first point is the selected interior Lava center; every later
+        # point comes from its eight-tile ring. Bomb exclusion cannot remove
+        # the center because the protected bomb stands on Road, not Lava.
+        center_x, center_y = locations[0]
+        if (
+            len(locations) > 6
+            or not (2 <= center_x <= 5 and 2 <= center_y <= 5)
+            or any(
+                max(abs(x - center_x), abs(y - center_y)) != 1
+                for x, y in locations[1:]
+            )
+        ):
+            return None
+    else:
+        # GetCrossingPath is cardinal and simple. Removing the protected bomb
+        # can create at most one Manhattan-distance-two gap in the retained
+        # ordered path.
+        gap_count = 0
+        for previous, current in zip(locations, locations[1:]):
+            distance = abs(current[0] - previous[0]) + abs(current[1] - previous[1])
+            if distance == 2:
+                gap_count += 1
+            elif distance != 1:
+                return None
+        if gap_count > 1:
+            return None
+
+    return {
+        "complete": True,
+        "mode": mode,
+        "phase": phase,
+        "ordered": True,
+        "instant": expected_instant,
+        "water_target": mode == FINAL_CAVE_ROCKS,
+        "lava_path": lava_path,
         "locations": locations,
         "planned": planned,
     }
@@ -490,6 +597,13 @@ class Board:
         self.environment_volcano_phase: int = 0
         self.environment_volcano_lava_start: list[tuple[int, int]] = []
         self.environment_volcano_locations: list[tuple[int, int]] = []
+        # Exact current Mission_Final_Cave Env_Final selection. Future
+        # selector RNG remains native and is never projected speculatively.
+        self.environment_final_cave_known: bool = False
+        self.environment_final_cave_mode: int = 0
+        self.environment_final_cave_phase: int = 0
+        self.environment_final_cave_instant: bool = False
+        self.environment_final_cave_locations: list[tuple[int, int]] = []
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
@@ -607,6 +721,13 @@ class Board:
         b.environment_volcano_phase = self.environment_volcano_phase
         b.environment_volcano_lava_start = list(self.environment_volcano_lava_start)
         b.environment_volcano_locations = list(self.environment_volcano_locations)
+        b.environment_final_cave_known = self.environment_final_cave_known
+        b.environment_final_cave_mode = self.environment_final_cave_mode
+        b.environment_final_cave_phase = self.environment_final_cave_phase
+        b.environment_final_cave_instant = self.environment_final_cave_instant
+        b.environment_final_cave_locations = list(
+            self.environment_final_cave_locations
+        )
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
@@ -821,10 +942,16 @@ class Board:
             if 0 <= x < 8 and 0 <= y < 8:
                 bt = board.tile(x, y)
                 terrain_id = td.get("terrain_id")
-                bt.terrain = BRIDGE_TERRAIN_ID_MAP.get(
-                    terrain_id,
-                    td.get("terrain", "ground"),
-                )
+                # Final-island Lava can share an old numeric terrain encoding
+                # with Water. The runtime Board:IsTerrain probe is the exact
+                # discriminator; absent that proof, retain numeric precedence.
+                if td.get("lava") is True:
+                    bt.terrain = "lava"
+                else:
+                    bt.terrain = BRIDGE_TERRAIN_ID_MAP.get(
+                        terrain_id,
+                        td.get("terrain", "ground"),
+                    )
                 bt.on_fire = td.get("fire", False)
                 bt.smoke = td.get("smoke", False)
                 bt.acid = td.get("acid", False)
@@ -948,6 +1075,22 @@ class Board:
                 for pos in volcano["locations"]:
                     board.environment_danger.add(pos)
                     board.environment_danger_v2[pos] = (1, True)
+
+        final_cave = validate_mission_final_cave_payload(data)
+        if final_cave is not None:
+            board.environment_final_cave_known = True
+            board.environment_final_cave_mode = final_cave["mode"]
+            board.environment_final_cave_phase = final_cave["phase"]
+            board.environment_final_cave_instant = final_cave["instant"]
+            board.environment_final_cave_locations = list(final_cave["locations"])
+            # The atomic Env_Final list supersedes the independently sampled
+            # generic masks. Harden Python exactly like Rust so stale legacy
+            # flying-immunity metadata can never make a cave tile look safe.
+            board.environment_danger = set(final_cave["locations"])
+            board.environment_danger_v2 = {
+                pos: (1, True) for pos in final_cave["locations"]
+            }
+            board.environment_danger_flying_immune.clear()
 
         # Units
         for ud in data.get("units", []):

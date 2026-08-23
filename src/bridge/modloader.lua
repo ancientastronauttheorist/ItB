@@ -771,6 +771,114 @@ local function mission_final_volcano(mission_id, live_environment)
     }
 end
 
+-- Mission_Final_Cave's Env_Final also consumes native RNG before player
+-- control. Preserve the already-selected ordered list, including the Instant
+-- phase contract, and never try to rebuild the future selector in Rust.
+local function mission_final_cave_points(points, maximum)
+    return mission_final_volcano_points(points, maximum)
+end
+
+local function mission_final_cave(mission_id, live_environment)
+    if mission_id ~= "Mission_Final_Cave" then return nil end
+    local incomplete = {
+        complete = false,
+        mode = 0,
+        phase = 0,
+        ordered = false,
+        instant = false,
+        water_target = false,
+        lava_path = {},
+        locations = {},
+        planned = {},
+    }
+    if type(live_environment) ~= "table" then return incomplete end
+
+    local mode = live_environment.Mode
+    local phase = live_environment.Phase
+    if type(mode) ~= "number" or mode ~= math.floor(mode)
+            or (mode ~= 1 and mode ~= 2)
+            or type(phase) ~= "number" or phase ~= math.floor(phase)
+            or phase < 1 or phase > 4 then
+        return incomplete
+    end
+    local expected_mode = (phase == 1 or phase == 3) and 1 or 2
+    local expected_instant = phase == 3 or phase == 4
+    local expected_water_target = expected_mode == 1
+    if mode ~= expected_mode
+            or live_environment.Ordered ~= true
+            or live_environment.Instant ~= expected_instant
+            or live_environment.WaterTarget ~= expected_water_target then
+        return incomplete
+    end
+
+    local lava_path = mission_final_cave_points(live_environment.LavaPath, 64)
+    local locations = mission_final_cave_points(live_environment.Locations, 64)
+    local planned = mission_final_cave_points(live_environment.Planned, 64)
+    if lava_path == nil or #lava_path == 0
+            or locations == nil or #locations == 0
+            or planned == nil or #locations ~= #planned then
+        return incomplete
+    end
+    for i = 1, #locations do
+        if locations[i][1] ~= planned[i][1]
+                or locations[i][2] ~= planned[i][2] then
+            return incomplete
+        end
+    end
+
+    if phase == 1 then
+        if #locations < 3 or #locations > 4 then return incomplete end
+        local last_quarter = -1
+        for _, point in ipairs(locations) do
+            local x, y = point[1], point[2]
+            if x < 1 or x > 6 or y < 1 or y > 6 then return incomplete end
+            local quarter = (x >= 4 and 2 or 0) + (y >= 4 and 1 or 0)
+            if quarter <= last_quarter then return incomplete end
+            last_quarter = quarter
+        end
+    elseif phase == 2 then
+        if #locations < 1 or #locations > 3 then return incomplete end
+    elseif phase == 3 then
+        if #locations > 6 then return incomplete end
+        local center = locations[1]
+        if center[1] < 2 or center[1] > 5
+                or center[2] < 2 or center[2] > 5 then
+            return incomplete
+        end
+        for i = 2, #locations do
+            local point = locations[i]
+            if math.max(math.abs(point[1] - center[1]),
+                    math.abs(point[2] - center[2])) ~= 1 then
+                return incomplete
+            end
+        end
+    else
+        local gaps = 0
+        for i = 2, #locations do
+            local distance = math.abs(locations[i][1] - locations[i - 1][1])
+                + math.abs(locations[i][2] - locations[i - 1][2])
+            if distance == 2 then
+                gaps = gaps + 1
+            elseif distance ~= 1 then
+                return incomplete
+            end
+        end
+        if gaps > 1 then return incomplete end
+    end
+
+    return {
+        complete = true,
+        mode = mode,
+        phase = phase,
+        ordered = true,
+        instant = expected_instant,
+        water_target = expected_water_target,
+        lava_path = lava_path,
+        locations = locations,
+        planned = planned,
+    }
+end
+
 -- Mission_Terraform completes only when no point in Board:GetZone("grass")
 -- retains the exact custom grass sprite. Save map_data also contains
 -- decorative ground_grass.png markers outside that objective zone, so export
@@ -1051,6 +1159,16 @@ local function dump_state()
                 terrain = TERRAIN_NAMES[terrain_id] or "ground",
                 terrain_id = terrain_id,
             }
+            -- TERRAIN_LAVA may not have existed yet when the static numeric
+            -- name table was initialized. Probe it at dump time so final-
+            -- island Lava cannot be serialized as ordinary Water.
+            local ok_lava, is_lava = pcall(function()
+                return Board:IsTerrain(pt, TERRAIN_LAVA)
+            end)
+            if ok_lava and is_lava then
+                tile.lava = true
+                tile.terrain = "lava"
+            end
             if terraform_grass_lookup[x .. "," .. y] then
                 tile.grass = true
             end
@@ -1574,6 +1692,18 @@ local function dump_state()
         end
     end)
 
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if not mission or not mission.LiveEnvironment then return end
+        local final_cave = mission_final_cave(
+            mission_id,
+            mission.LiveEnvironment
+        )
+        if final_cave ~= nil then
+            state.mission_final_cave = final_cave
+        end
+    end)
+
     -- Default all env_danger tiles to lethal (kill=1). Most hazards ARE
     -- lethal to ground units: Air Strike, Lightning, Cataclysm→chasm,
     -- Seismic→chasm, Tidal Waves→water. Non-lethal hazards (Wind Storm,
@@ -1805,6 +1935,21 @@ local function dump_state()
                     add_danger(x, y)
                 end
             end
+        end
+    end
+
+    -- Exact final-island payloads are more authoritative than a separately
+    -- sampled Board:IsEnvironmentDanger scan, especially for Env_Final's
+    -- Instant phases. Rebuild both warning channels from the same atomic list.
+    local exact_final = state.mission_final_volcano
+    if not (exact_final and exact_final.complete) then
+        exact_final = state.mission_final_cave
+    end
+    if exact_final and exact_final.complete then
+        state.environment_danger = {}
+        state.environment_danger_v2 = {}
+        for _, point in ipairs(exact_final.locations) do
+            add_danger(point[1], point[2], env_kill_default, false)
         end
     end
 

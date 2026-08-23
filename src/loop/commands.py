@@ -40,6 +40,7 @@ from src.capture.save_parser import (
 from src.model.board import (
     Board,
     Unit,
+    validate_mission_final_cave_payload,
     VOLCANO_LAVA,
     VOLCANO_ROCKS,
     validate_mission_final_volcano_payload,
@@ -4312,6 +4313,7 @@ def _projected_post_player_board_data(
             "environment_danger_v2",
             "environment_danger",
             "mission_final_volcano",
+            "mission_final_cave",
             "teleporter_pairs",
         ):
             if key in bridge_data:
@@ -9795,6 +9797,146 @@ def _mission_final_volcano_payload_block(
     }
 
 
+def _mission_final_cave_payload_block(
+    board,
+    bridge_data: dict | None,
+) -> dict | None:
+    """Fail closed unless the current Final Cave hazard payload is exact."""
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    if mission_id != "Mission_Final_Cave":
+        return None
+    if (
+        isinstance(bridge_data, dict)
+        and bridge_data.get("phase") != "combat_player"
+    ):
+        return None
+
+    gaps: list[dict] = []
+    observed: dict = {}
+    if not isinstance(bridge_data, dict):
+        gaps.append({"kind": "mission_final_cave_live_payload_missing"})
+        bridge_data = {}
+
+    env_type = bridge_data.get("env_type")
+    observed["env_type"] = env_type
+    if env_type != "final_cave":
+        gaps.append({
+            "kind": "mission_final_cave_environment_identity_invalid",
+            "observed_env_type": env_type,
+            "required_env_type": "final_cave",
+        })
+
+    final_cave = validate_mission_final_cave_payload(bridge_data)
+    raw_final_cave = bridge_data.get("mission_final_cave")
+    observed["mission_final_cave"] = raw_final_cave
+    if final_cave is None:
+        gaps.append({
+            "kind": "mission_final_cave_state_invalid",
+            "required": (
+                "complete phase/mode/Instant/WaterTarget contract, nonempty "
+                "LavaPath, matching ordered Locations/Planned, and "
+                "source-bounded phase geometry"
+            ),
+        })
+    else:
+        turn = bridge_data.get("turn")
+        observed["turn"] = turn
+        expected_phase = ((turn - 1) % 4) + 1 if type(turn) is int and turn > 0 else None
+        if expected_phase != final_cave["phase"]:
+            gaps.append({
+                "kind": "mission_final_cave_turn_phase_mismatch",
+                "observed_turn": turn,
+                "observed_phase": final_cave["phase"],
+                "required": "Env_Final.Phase equals ((combat turn - 1) mod 4) + 1",
+            })
+
+        expected_positions = set(final_cave["locations"])
+        masks: dict[str, set[tuple[int, int]]] = {}
+        for field in ("environment_danger", "environment_danger_v2"):
+            raw_mask = bridge_data.get(field)
+            observed[f"{field}_count"] = (
+                len(raw_mask) if isinstance(raw_mask, list) else None
+            )
+            if not isinstance(raw_mask, list):
+                gaps.append({
+                    "kind": "mission_final_cave_warning_mask_missing",
+                    "field": field,
+                })
+                continue
+            positions: list[tuple[int, int]] = []
+            malformed: list[int] = []
+            invalid_encoding: list[int] = []
+            for index, entry in enumerate(raw_mask):
+                exact_length = 2 if field == "environment_danger" else 5
+                if not (
+                    isinstance(entry, (list, tuple))
+                    and len(entry) == exact_length
+                    and type(entry[0]) is int
+                    and type(entry[1]) is int
+                    and 0 <= entry[0] < 8
+                    and 0 <= entry[1] < 8
+                ):
+                    malformed.append(index)
+                    continue
+                positions.append((entry[0], entry[1]))
+                if field == "environment_danger_v2" and not (
+                    all(type(value) is int for value in entry[2:])
+                    and list(entry[2:]) == [1, 1, 0]
+                ):
+                    invalid_encoding.append(index)
+
+            position_set = set(positions)
+            if (
+                malformed
+                or invalid_encoding
+                or len(positions) != len(position_set)
+                or position_set != expected_positions
+            ):
+                gaps.append({
+                    "kind": "mission_final_cave_warning_mask_invalid",
+                    "field": field,
+                    "malformed_entry_indexes": malformed,
+                    "invalid_encoding_entry_indexes": invalid_encoding,
+                    "duplicate_count": len(positions) - len(position_set),
+                    "observed_positions": [list(point) for point in sorted(position_set)],
+                    "required_positions": [list(point) for point in sorted(expected_positions)],
+                    "required_v2_encoding": "[x,y,1,1,0]",
+                })
+            masks[field] = position_set
+
+        if (
+            "environment_danger" in masks
+            and "environment_danger_v2" in masks
+            and masks["environment_danger"] != masks["environment_danger_v2"]
+        ):
+            gaps.append({
+                "kind": "mission_final_cave_warning_masks_disagree",
+            })
+
+    if not gaps:
+        return None
+    return {
+        "error": "RESEARCH_REQUIRED",
+        "requires_research": True,
+        "blocking": True,
+        "non_overridable": True,
+        "reason": "mission_final_cave_payload_incomplete",
+        "mission_id": mission_id,
+        "forecast_complete": False,
+        "forecast_gaps": gaps,
+        "observed_final_cave_payload": observed,
+        "next": (
+            "Refresh the live bridge and require exact Mission_Final_Cave "
+            "Env_Final phase/mode/Instant state, ordered selected locations, "
+            "matching warning masks, and lethal v2 encoding before solving "
+            "or delivering End Turn."
+        ),
+    }
+
+
 def _mission_native_forecast_block(board, bridge_data: dict | None) -> dict | None:
     """Fail closed for exact missions whose native phases lack a forecast.
 
@@ -10014,6 +10156,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     if volcano_payload_gate is not None:
         _print_result(volcano_payload_gate)
         return volcano_payload_gate
+
+    final_cave_payload_gate = _mission_final_cave_payload_block(
+        board,
+        bridge_data,
+    )
+    if final_cave_payload_gate is not None:
+        _print_result(final_cave_payload_gate)
+        return final_cave_payload_gate
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)
     if piston_gate is not None:
@@ -13672,9 +13822,16 @@ def _held_end_turn_bridge_checkpoint_schema_error(
         return "checkpoint_environment_danger_v2_duplicate"
     if (
         data.get("mission_id") == "Mission_Final"
+        and data.get("mission_final_volcano") is not None
         and validate_mission_final_volcano_payload(data) is None
     ):
         return "checkpoint_mission_final_volcano_invalid"
+    if (
+        data.get("mission_id") == "Mission_Final_Cave"
+        and data.get("mission_final_cave") is not None
+        and validate_mission_final_cave_payload(data) is None
+    ):
+        return "checkpoint_mission_final_cave_invalid"
 
     teleporter_pairs = data.get("teleporter_pairs", [])
     if not isinstance(teleporter_pairs, list):
@@ -14471,6 +14628,7 @@ def _held_end_turn_post_player_parity_error(
         "env_type",
         "environment_wind_dir",
         "mission_final_volcano",
+        "mission_final_cave",
         "is_infinite_spawn",
         "remaining_spawns",
         "total_turns",
@@ -14749,6 +14907,26 @@ def _held_end_turn_safety_block_result(
             ),
             mission_final_volcano_payload=volcano_payload_gate,
             next_step=volcano_payload_gate["next"],
+        )
+
+    final_cave_payload_gate = _mission_final_cave_payload_block(
+        board,
+        bridge_data,
+    )
+    if final_cave_payload_gate is not None:
+        return _blocked(
+            "held_end_turn_mission_final_cave_payload_incomplete",
+            error=final_cave_payload_gate["error"],
+            requires_research=final_cave_payload_gate["requires_research"],
+            non_overridable=final_cave_payload_gate["non_overridable"],
+            mission_id=final_cave_payload_gate["mission_id"],
+            forecast_complete=final_cave_payload_gate["forecast_complete"],
+            forecast_gaps=final_cave_payload_gate["forecast_gaps"],
+            observed_final_cave_payload=(
+                final_cave_payload_gate["observed_final_cave_payload"]
+            ),
+            mission_final_cave_payload=final_cave_payload_gate,
+            next_step=final_cave_payload_gate["next"],
         )
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)

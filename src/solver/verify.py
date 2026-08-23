@@ -1805,6 +1805,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v405: Mission_Final_Cave carries exact current native Env_Final phase/mode,
+# Ordered/Instant state, retained LavaPath, and selected Locations/Planned.
+# Both modes apply DAMAGE_DEATH before queued Vek attacks; Rocks assign Road
+# and tentacles assign Lava. Projection consumes the current selection without
+# inventing future quarter/cluster/crossing or BigBomb RNG. Pre-v405 corpus is
+# archived as recordings/failure_db_snapshot_sim_v404.jsonl.
 # v404: Mission_Final carries exact native Env_Volcano phase/mode, ordered
 # selected locations, and remaining LavaStart state. Rust applies ordered
 # Rocks death/fire and permanent Lava conversion with grounded/Massive/flight
@@ -1892,7 +1898,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 404
+SIMULATOR_VERSION = 405
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

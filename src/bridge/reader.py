@@ -13,6 +13,7 @@ from collections import Counter
 from src.capture.save_parser import Point, parse_save_file
 from src.model.board import (
     Board,
+    validate_mission_final_cave_payload,
     validate_mission_final_volcano_payload,
     validate_mission_piston_payload,
 )
@@ -1512,6 +1513,25 @@ def _normalize_mission_final_volcano(data: dict) -> None:
     }
 
 
+def _normalize_mission_final_cave(data: dict) -> None:
+    """Keep only canonical, source-reachable ordered cave-environment state."""
+    payload = validate_mission_final_cave_payload(data)
+    if payload is None:
+        data.pop("mission_final_cave", None)
+        return
+    data["mission_final_cave"] = {
+        "complete": True,
+        "mode": payload["mode"],
+        "phase": payload["phase"],
+        "ordered": True,
+        "instant": payload["instant"],
+        "water_target": payload["water_target"],
+        "lava_path": [list(point) for point in payload["lava_path"]],
+        "locations": [list(point) for point in payload["locations"]],
+        "planned": [list(point) for point in payload["planned"]],
+    }
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -1548,6 +1568,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     _normalize_mission_hacking_ids(data)
     _normalize_mission_pistons(data)
     _normalize_mission_final_volcano(data)
+    _normalize_mission_final_cave(data)
     live_terraform_grass = _normalize_live_terraform_grass(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.

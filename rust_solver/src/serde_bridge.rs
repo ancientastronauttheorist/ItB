@@ -70,6 +70,10 @@ pub struct JsonInput {
     /// Locations/Planned retain source order; LavaStart is the remaining
     /// two-point selection pool.
     pub mission_final_volcano: Option<JsonMissionFinalVolcano>,
+    /// Exact Mission_Final_Cave Env_Final state after native selection.
+    /// The selected list may be a full crossing path and therefore remains a
+    /// bounded Vec rather than a fixed four-point array.
+    pub mission_final_cave: Option<JsonMissionFinalCave>,
     /// "Kill at least N enemies" target. Generic kill bonuses come from
     /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
     /// Missing / 0 -> no kill target on this mission; evaluator's step-function
@@ -257,6 +261,9 @@ pub struct JsonTile {
     pub y: u8,
     pub terrain_id: Option<u8>,
     pub terrain: Option<String>,
+    /// Runtime Board:IsTerrain(TERRAIN_LAVA) discriminator. Final-island Lava
+    /// may otherwise share an old numeric wire id with ordinary Water.
+    pub lava: Option<bool>,
     pub fire: Option<bool>,
     pub smoke: Option<bool>,
     pub acid: Option<bool>,
@@ -536,6 +543,128 @@ fn exact_mission_final_volcano(
     Some((mode, phase, locations.len() as u8, ordered, lava_start_mask))
 }
 
+#[derive(Deserialize)]
+pub struct JsonMissionFinalCave {
+    pub complete: Option<bool>,
+    pub mode: Option<u8>,
+    pub phase: Option<u8>,
+    pub ordered: Option<bool>,
+    pub instant: Option<bool>,
+    pub water_target: Option<bool>,
+    pub lava_path: Option<Vec<Vec<i64>>>,
+    pub locations: Option<Vec<Vec<i64>>>,
+    pub planned: Option<Vec<Vec<i64>>>,
+}
+
+struct ExactMissionFinalCave {
+    mode: u8,
+    phase: u8,
+    instant: bool,
+    lava_path: u64,
+    locations: Vec<u8>,
+}
+
+fn exact_mission_final_cave(input: &JsonInput) -> Option<ExactMissionFinalCave> {
+    if input.mission_id.as_deref() != Some("Mission_Final_Cave") {
+        return None;
+    }
+    let payload = input.mission_final_cave.as_ref()?;
+    if payload.complete != Some(true) {
+        return None;
+    }
+    let mode = payload.mode?;
+    let phase = payload.phase?;
+    if !matches!(phase, 1..=4)
+        || !matches!(mode, FINAL_CAVE_ROCKS | FINAL_CAVE_LAVA)
+        || mode != if matches!(phase, 1 | 3) {
+            FINAL_CAVE_ROCKS
+        } else {
+            FINAL_CAVE_LAVA
+        }
+    {
+        return None;
+    }
+    let instant = matches!(phase, 3 | 4);
+    if payload.ordered != Some(true)
+        || payload.instant != Some(instant)
+        || payload.water_target != Some(mode == FINAL_CAVE_ROCKS)
+    {
+        return None;
+    }
+
+    let lava_path = strict_volcano_points(&payload.lava_path, 64)?;
+    let locations = strict_volcano_points(&payload.locations, 64)?;
+    let planned = strict_volcano_points(&payload.planned, 64)?;
+    if lava_path.is_empty() || locations.is_empty() || locations != planned {
+        return None;
+    }
+
+    match phase {
+        1 => {
+            if !(3..=4).contains(&locations.len()) {
+                return None;
+            }
+            let mut last_quarter: i8 = -1;
+            for &(x, y) in &locations {
+                if !(1..=6).contains(&x) || !(1..=6).contains(&y) {
+                    return None;
+                }
+                let quarter = (if x >= 4 { 2 } else { 0 })
+                    + if y >= 4 { 1 } else { 0 };
+                if quarter <= last_quarter {
+                    return None;
+                }
+                last_quarter = quarter;
+            }
+        }
+        2 => {
+            if !(1..=3).contains(&locations.len()) {
+                return None;
+            }
+        }
+        3 => {
+            let (center_x, center_y) = locations[0];
+            if locations.len() > 6
+                || !(2..=5).contains(&center_x)
+                || !(2..=5).contains(&center_y)
+                || locations[1..].iter().any(|&(x, y)| {
+                    x.abs_diff(center_x).max(y.abs_diff(center_y)) != 1
+                }) {
+                return None;
+            }
+        }
+        4 => {
+            let mut gaps = 0usize;
+            for pair in locations.windows(2) {
+                let distance = pair[0].0.abs_diff(pair[1].0)
+                    + pair[0].1.abs_diff(pair[1].1);
+                match distance {
+                    1 => {}
+                    2 => gaps += 1,
+                    _ => return None,
+                }
+            }
+            if gaps > 1 {
+                return None;
+            }
+        }
+        _ => return None,
+    }
+
+    Some(ExactMissionFinalCave {
+        mode,
+        phase,
+        instant,
+        lava_path: lava_path.into_iter().fold(0u64, |mask, (x, y)| {
+            mask | (1u64 << xy_to_idx(x, y))
+        }),
+        locations: locations
+            .into_iter()
+            .map(|(x, y)| xy_to_idx(x, y) as u8)
+            .collect(),
+    })
+}
+
 fn known_void_shock_immune_type(type_name: &str) -> bool {
     matches!(
         type_name,
@@ -627,7 +756,11 @@ pub fn board_from_json(json_str: &str)
         for jt in tiles {
             if jt.x >= 8 || jt.y >= 8 { continue; }
             let tile = board.tile_mut(jt.x, jt.y);
-            tile.terrain = Terrain::from_bridge_id(jt.terrain_id, jt.terrain.as_deref());
+            tile.terrain = if jt.lava == Some(true) {
+                Terrain::Lava
+            } else {
+                Terrain::from_bridge_id(jt.terrain_id, jt.terrain.as_deref())
+            };
             // Mountains default to 2 HP if not specified (bridge doesn't send mountain HP)
             let default_hp = if tile.terrain == Terrain::Mountain { 2 } else { 0 };
             tile.building_hp = jt.building_hp.unwrap_or(default_hp);
@@ -894,6 +1027,26 @@ pub fn board_from_json(json_str: &str)
         // dedicated enemy-phase path distinguishes Lava's Massive/flight
         // survivors and permanent terrain conversion.
         board.env_danger_kill = volcano_mask;
+        board.env_danger_flying_immune = 0;
+        board.env_danger_acid = 0;
+        board.env_smoke = 0;
+        board.env_wind = 0;
+        board.env_wind_dir = -1;
+    }
+
+    if let Some(final_cave) = exact_mission_final_cave(&input) {
+        board.env_final_cave_mode = final_cave.mode;
+        board.env_final_cave_phase = final_cave.phase;
+        board.env_final_cave_instant = final_cave.instant;
+        board.env_final_cave_lava_path = final_cave.lava_path;
+        board.env_final_cave_locations = final_cave.locations;
+
+        let mut cave_mask = 0u64;
+        for &tile_idx in &board.env_final_cave_locations {
+            cave_mask |= 1u64 << tile_idx;
+        }
+        board.env_danger = cave_mask;
+        board.env_danger_kill = cave_mask;
         board.env_danger_flying_immune = 0;
         board.env_danger_acid = 0;
         board.env_smoke = 0;
@@ -1999,6 +2152,76 @@ mod tests {
                 .expect("invalid Volcano evidence fails closed without parse failure");
             assert_eq!(board.env_volcano_mode, 0);
             assert_eq!(board.env_volcano_count, 0);
+        }
+    }
+
+    #[test]
+    fn test_mission_final_cave_requires_exact_current_selection_and_lava_probe() {
+        let valid = r#"{
+            "mission_id":"Mission_Final_Cave","env_type":"final_cave",
+            "turn":4,
+            "mission_final_cave":{
+                "complete":true,"mode":2,"phase":4,"ordered":true,
+                "instant":true,"water_target":false,
+                "lava_path":[[2,0],[2,1],[2,2],[2,3],[2,4],[3,4]],
+                "locations":[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]],
+                "planned":[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]]
+            },
+            "environment_danger":[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]],
+            "environment_danger_v2":[
+                [0,2,1,1,0],[1,2,1,1,0],[2,2,1,1,0],[3,2,1,1,0],
+                [4,2,1,1,0],[5,2,1,1,0],[6,2,1,1,0],[7,2,1,1,0]
+            ],
+            "tiles":[
+                {"x":1,"y":1,"terrain_id":3,"terrain":"water","lava":true},
+                {"x":1,"y":2,"terrain_id":3,"terrain":"lava"}
+            ],
+            "units":[],"spawning_tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(valid).expect("valid Env_Final state parses");
+        assert_eq!(board.env_final_cave_mode, FINAL_CAVE_LAVA);
+        assert_eq!(board.env_final_cave_phase, 4);
+        assert!(board.env_final_cave_instant);
+        assert_eq!(board.env_final_cave_lava_path, [16usize, 17, 18, 19, 20, 28]
+            .into_iter().fold(0u64, |mask, idx| mask | (1u64 << idx)));
+        assert_eq!(
+            board.env_final_cave_locations,
+            (0u8..8).map(|x| xy_to_idx(x, 2) as u8).collect::<Vec<_>>(),
+        );
+        assert_eq!(board.env_danger.count_ones(), 8);
+        assert_eq!(board.env_danger_kill, board.env_danger);
+        assert_eq!(board.env_danger_flying_immune, 0);
+        assert_eq!(board.tile(1, 1).terrain, Terrain::Lava);
+        assert_eq!(
+            board.tile(1, 2).terrain,
+            Terrain::Water,
+            "without the runtime lava proof, numeric terrain identity wins",
+        );
+
+        let invalid = [
+            valid.replace("Mission_Final_Cave", "Mission_Battle"),
+            valid.replace("\"complete\":true", "\"complete\":false"),
+            valid.replace("\"mode\":2", "\"mode\":1"),
+            valid.replace("\"instant\":true", "\"instant\":false"),
+            valid.replace("\"water_target\":false", "\"water_target\":true"),
+            valid.replace(
+                "\"lava_path\":[[2,0],[2,1],[2,2],[2,3],[2,4],[3,4]]",
+                "\"lava_path\":[]",
+            ),
+            valid.replace(
+                "\"planned\":[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]]",
+                "\"planned\":[[0,2]]",
+            ),
+            valid.replace(
+                "\"locations\":[[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]]",
+                "\"locations\":[[0,2],[1,2],[4,2]]",
+            ),
+        ];
+        for payload in invalid {
+            let (board, ..) = board_from_json(&payload)
+                .expect("invalid cave evidence fails closed without parse failure");
+            assert_eq!(board.env_final_cave_mode, 0);
+            assert!(board.env_final_cave_locations.is_empty());
         }
     }
 

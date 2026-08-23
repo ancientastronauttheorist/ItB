@@ -821,15 +821,28 @@ quarter, RNG, setup, scheduler, and effect-order behavior is not reproduced or
 independently traced, and live extraction/status/collision coverage is not
 exhaustive.
 
-The third mission-environment slice, `environment-final-cave-danger`, pins the
-exact Final Cave `env_final.lua` source to Rust's marked-tile lethal-danger
-ingestion and its live-derived stale-flying-immunity regression. It remains
-`partial`: Rust consumes the selected mask without reproducing the four-phase
-selector, modes, RNG, scheduling, BigBomb exclusion, or enemy avoidance, and
-does not apply the source's road/lava terrain aftermath. The preceding
-`env_volcano.lua` stage now has the bounded v404 current-selection model
-described separately below; future selector RNG and full scheduler conformance
-remain independent gaps.
+The third mission-environment slice, `environment-final-cave-danger`, now pins
+both Final Cave `env_final.lua` and inherited `Env_Attack` scheduling to a
+bounded v405 current-selection model. The bridge atomically exports Mode,
+Phase, Ordered, Instant, WaterTarget, the otherwise-unused LavaPath, and exact
+matching Locations/Planned; Python and Rust reject source-unreachable state,
+turn disagreement, warning-mask drift, or nonlethal/flying-immune encodings
+before solve or End Turn. Rust resolves the selected list before queued Vek
+attacks: both Rocks and tentacles use `DAMAGE_DEATH` against grounded, flying,
+Massive, Shielded, and Frozen pawns, then assign Road or Lava respectively.
+Projection consumes the current payload without inventing the next selector.
+
+Two git-preserved Final Cave runs corroborate phase-one Rocks, phase-two
+Mech-position tentacles, Mountain-to-Road and Ground-to-Lava aftermath, one
+complete six-tile Instant Rocks conversion, and one complete cardinal crossing
+row. Their immutable ledger is
+`data/observatory/captures/historical_git_mission_final_cave_runs.json`; it also
+records where the old non-atomic bridge sampled ambiguous Instant boundaries.
+The record remains `partial`: future quarter/cluster/crossing selection RNG,
+unused `GetCrossPath` call order, BigBomb exclusion, native scheduler tracing,
+and `Board:SetDangerous` enemy planning are not reproduced. Bomb replacement
+and the surface/cave lifecycle remain in their separate record. The preceding
+`env_volcano.lua` stage retains the bounded v404 model described below.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and

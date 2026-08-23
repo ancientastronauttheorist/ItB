@@ -8,6 +8,8 @@ use crate::types::*;
 
 pub const VOLCANO_ROCKS: u8 = 1;
 pub const VOLCANO_LAVA: u8 = 2;
+pub const FINAL_CAVE_ROCKS: u8 = 1;
+pub const FINAL_CAVE_LAVA: u8 = 2;
 use std::collections::{BTreeMap, BTreeSet};
 
 // ── Tile Flags ───────────────────────────────────────────────────────────────
@@ -537,6 +539,16 @@ pub struct Board {
     pub env_volcano_count: u8,
     pub env_volcano_locations: [u8; 4],
     pub env_volcano_lava_start: u8,
+    /// Exact current Env_Final selection in Mission_Final_Cave. Locations use
+    /// the one cave-only Vec because source-defined GetCrossingPath can span
+    /// the full board. The otherwise-unused LavaPath needs only its complete
+    /// point set, so a bitset avoids a second heap allocation per solver clone.
+    /// Mode 0 means unavailable; 1=Rocks-to-Road and 2=Tentacles-to-Lava.
+    pub env_final_cave_mode: u8,
+    pub env_final_cave_phase: u8,
+    pub env_final_cave_instant: bool,
+    pub env_final_cave_lava_path: u64,
+    pub env_final_cave_locations: Vec<u8>,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles and freezes live
@@ -719,6 +731,11 @@ impl Default for Board {
             env_volcano_count: 0,
             env_volcano_locations: [0; 4],
             env_volcano_lava_start: 0,
+            env_final_cave_mode: 0,
+            env_final_cave_phase: 0,
+            env_final_cave_instant: false,
+            env_final_cave_lava_path: 0,
+            env_final_cave_locations: Vec::new(),
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
@@ -1399,11 +1416,12 @@ mod tests {
         // a memcpy on the common path; only missions with populated
         // objective/projection lists pay heap-clone costs (1× per branch).
         // Sim v32+ added grid-defense expectation, unit-objective Vecs, and
-        // the Spider Psion egg queue. Sim v404 adds eight compact bytes for
-        // ordered Env_Volcano state; ~1.7kB remains comfortably cheap.
+        // the Spider Psion egg queue. Sim v404 adds compact ordered
+        // Env_Volcano state; v405 adds one cave-only Vec for paths that can
+        // span the board. ~1.8kB remains comfortably cheap.
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1712, "Board too large: {} bytes", size);
+        assert!(size <= 1760, "Board too large: {} bytes", size);
     }
 
     #[test]

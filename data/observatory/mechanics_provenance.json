@@ -2401,37 +2401,55 @@
       "evidence": [
         {
           "classification": "fact",
-          "statement": "The exact inventoried Final Cave Lua source alternates rock and tentacle modes across a four-phase selector, removes a selected BigBomb tile, marks selected tiles dangerous, and emits deadly rock-to-road or tentacle-to-lava effects."
+          "statement": "The exact inventoried Env_Final and Env_Attack sources establish the current four-phase contract: Rocks, tentacles-to-Lava, Rocks, tentacles-to-Lava; phases one and two are sequential while phases three and four are Instant; every selected tile is marked dangerous, a selected BigBomb tile is removed, and Ordered application emits DAMAGE_DEATH plus TERRAIN_ROAD or TERRAIN_LAVA."
         },
         {
           "classification": "fact",
-          "statement": "For Mission_Final_Cave, Rust consumes bridge-supplied danger tiles, overrides stale flying-immunity metadata, and applies marked lethal danger to flyers as well as grounded units; a focused live-derived regression proves that boundary."
+          "statement": "The v405 bridge atomically exports complete Mode, Phase, Ordered, Instant, WaterTarget, the otherwise-unused LavaPath, and identical selected Locations/Planned. Python and Rust reject source-unreachable phase geometry, mode or scheduling parity, duplicate or mismatched lists, turn disagreement, warning masks, and nonlethal or flying-immune wire encodings before solve or End Turn."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v405 consumes the already-selected native list instead of reproducing RNG. Both modes apply source-defined lethal damage before queued Vek attacks, including against flying, Massive, Shielded, and Frozen pawns; Rocks leave Road/Ground and tentacles leave Lava. Projection clears the resolved payload rather than inventing the next selection. Two git-preserved live runs corroborate phase shapes, Mech-position targeting, Mountain-to-Road, Lava creation, and one complete Instant Rocks conversion, subject to their recorded non-atomic limitations."
         }
       ],
       "id": "environment-final-cave-danger",
       "implementations": [
         {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["mission_final_cave_points", "mission_final_cave", "env_type", "environment_danger", "environment_danger_v2"]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": ["_normalize_mission_final_cave", "read_bridge_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["validate_mission_final_cave_payload", "environment_final_cave_known", "environment_final_cave_locations", "from_bridge_data"]
+        },
+        {
           "path": "rust_solver/src/serde_bridge.rs",
-          "symbols": [
-            "board_from_json",
-            "final_cave_env"
-          ]
+          "symbols": ["JsonMissionFinalCave", "exact_mission_final_cave", "board_from_json"]
         },
         {
           "path": "rust_solver/src/enemy.rs",
-          "symbols": [
-            "apply_env_danger",
-            "apply_env_danger_board",
-            "simulate_enemy_attacks"
-          ]
+          "symbols": ["apply_mission_final_cave", "apply_env_danger", "apply_env_danger_board", "simulate_enemy_attacks"]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": ["advance_environment_warning", "board_to_json", "project_plan"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_mission_final_cave_payload_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
         }
       ],
       "known_gaps": [
-        "Rust consumes bridge-supplied danger tiles and does not reproduce Env_Final:Start, the four-phase selector, mode alternation, RNG, quarter or lava-cluster selection, crossing-path planning, Instant or Ordered scheduling, water targeting, BigBomb exclusion, or Board:SetDangerous enemy avoidance.",
-        "Rust does not implement Env_Final terrain mutations to TERRAIN_ROAD or TERRAIN_LAVA, mode identity, crack, shake, dropper, animation, or sound effects.",
-        "The focused proof covers one flying mech and stale-v2 correction, not grounded units, buildings, pods, shield or frozen behavior, terrain aftermath, selection, exact timing, legacy-v1 behavior, or exhaustive bridge extraction.",
-        "Native Env_Attack, GetQuarters, GetCrossingPath, RNG, SpaceDamage, and scheduler semantics have not been independently traced for this build.",
-        "This record covers Env_Final in Mission_Final_Cave and does not cover Env_Volcano or the preceding Mission_Final stage."
+        "The solver consumes current native Locations but does not reproduce GetQuarters, GetCrossingPath, random_element, random_removal, Lava-cluster choice, Env_Final:Start's unused GetCrossPath RNG, upstream RNG call order, or future BigBomb exclusion. Projection therefore cannot forecast a second future turn until the next live bridge read.",
+        "Env_Attack Plan/ApplyEffect cadence, sequential versus Instant batching, BlockSpawn duration, StartEffect/EndEffect state, ENV_EFFECT ownership, Board:IsBusy interaction, and ordering before queued Vek attacks are source-derived plus historically corroborated rather than independently native-traced on current Windows build 13725832.",
+        "Rust models lethal damage and final Road/Lava terrain identity but does not claim exhaustive native SpaceDamage overlay cleanup, corpse, Psion, resistance, building-grid, pod, cracked-tile, simultaneous-effect, crack, shake, dropper, animation, or sound behavior for Env_Final.",
+        "Board:SetDangerous enemy avoidance is consumed upstream in native enemy planning and is not reproduced; the solver receives already-selected enemy actions. Bomb replacement RNG, TurnLimit extension, and the surface-to-cave or mission-end phase handoff remain in the separate mission lifecycle record.",
+        "The two historical runs lack build identity and atomically exported environment state. Their Instant phase-three and phase-four samples include an explicit non-atomic ambiguity, so they corroborate but do not independently prove every scheduler boundary.",
+        "This record covers bounded current-turn Env_Final behavior in Mission_Final_Cave and does not replace the separate Env_Volcano or final-mission lifecycle records."
       ],
       "sources": [
         {
@@ -2447,9 +2465,30 @@
             "Env_Final:GetAttackEffect",
             "IsBomb"
           ]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": ["Env_Attack", "Env_Attack:Start", "Env_Attack:IsEffect", "Env_Attack:BlockSpawn", "Env_Attack:Plan", "Env_Attack:ApplyEffect", "Env_Attack:MarkBoard"]
         }
       ],
       "tests": [
+        {
+          "path": "tests/test_mission_final_cave_environment.py",
+          "symbols": ["test_lua_helper_exports_each_source_phase_atomically", "test_python_board_copy_and_lava_probe_preserve_exact_cave_state", "test_complete_current_cave_payload_passes_strict_gate", "test_partial_stale_or_source_unreachable_payloads_fail_closed", "test_public_end_turn_paths_block_incomplete_cave_before_dispatch"]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["test_mission_final_cave_requires_exact_current_selection_and_lava_probe"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_mission_final_cave_rocks_kill_flyer_before_attack_and_make_road", "test_mission_final_cave_tentacles_kill_all_mech_traits_and_make_lava"]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": ["test_mission_final_cave_roundtrip_resolves_current_path_then_clears_rng_state"]
+        },
         {
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
@@ -9030,7 +9069,7 @@
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua record now covers exact current stage-one bridge state and bounded simulator effects; this lifecycle record itself claims no future environmental RNG, phase-handoff, or mission scheduler conformance. Env_Final cave danger remains bounded by its own separate partial record.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records now cover exact current bridge selections and bounded simulator effects for both stages; this lifecycle record itself claims no future environmental RNG, phase-handoff, bomb replacement, or mission scheduler conformance.",
         "Mission_Infinite inheritance, native turn and team callback order, NextPhase and IsEndBlocked orchestration, StartMission completion, MissionEnd presentation and travel timing, spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, RNG, boss placement, UID allocation, and map-zone contents remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
         "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, future bomb candidate, missing-bomb replacement, or repeated TurnLimit+2 extension. IsBomb semantics, native candidate occupancy changes, an exhausted-edge AddBomb choice, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",

@@ -1333,7 +1333,7 @@ def test_real_mission_terratide_record_tracks_inherited_smoke_semantics():
     assert "live-derived" in gaps
 
 
-def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
+def test_real_final_cave_record_pins_exact_current_payload_and_bounded_model():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -1368,32 +1368,77 @@ def test_real_final_cave_record_is_limited_to_marked_lethal_danger():
                 "Env_Final:GetAttackEffect",
                 "IsBomb",
             ],
-        }
+        },
+        {
+            "path": "scripts/environments.lua",
+            "sha256": (
+                "5f8a7d74f537abb33bc88c1f9669f3f"
+                "6fabdd5c8c51aad3486d2e965e4fb80ec"
+            ),
+            "symbols": [
+                "Env_Attack", "Env_Attack:Start", "Env_Attack:IsEffect",
+                "Env_Attack:BlockSpawn", "Env_Attack:Plan",
+                "Env_Attack:ApplyEffect", "Env_Attack:MarkBoard",
+            ],
+        },
     ]
     implementations = {
         reference["path"]: set(reference["symbols"])
         for reference in record["implementations"]
     }
-    assert {"board_from_json", "final_cave_env"} <= implementations[
-        "rust_solver/src/serde_bridge.rs"
-    ]
-    assert {
-        "apply_env_danger",
-        "apply_env_danger_board",
-        "simulate_enemy_attacks",
-    } <= implementations["rust_solver/src/enemy.rs"]
-    assert record["tests"] == [
-        {
-            "path": "rust_solver/src/simulate.rs",
-            "symbols": [
-                "test_final_cave_env_ignores_stale_flying_immune_field"
-            ],
-        }
-    ]
+    assert implementations["src/bridge/modloader.lua"] == {
+        "mission_final_cave_points", "mission_final_cave", "env_type",
+        "environment_danger", "environment_danger_v2",
+    }
+    assert implementations["src/model/board.py"] == {
+        "validate_mission_final_cave_payload", "environment_final_cave_known",
+        "environment_final_cave_locations", "from_bridge_data",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "JsonMissionFinalCave", "exact_mission_final_cave", "board_from_json",
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_mission_final_cave", "apply_env_danger",
+        "apply_env_danger_board", "simulate_enemy_attacks",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_mission_final_cave_payload_block", "cmd_solve",
+        "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "Rocks, tentacles-to-Lava, Rocks, tentacles-to-Lava" in facts
+    assert "Ordered application emits DAMAGE_DEATH" in facts
+    assert "otherwise-unused LavaPath" in facts
+    assert "before queued Vek attacks" in facts
+    assert "flying, Massive, Shielded, and Frozen" in facts
+    assert "Two git-preserved live runs" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "does not reproduce Env_Final:Start" in gaps
-    assert "does not implement Env_Final terrain mutations" in gaps
-    assert "does not cover Env_Volcano" in gaps
+    assert "does not reproduce GetQuarters, GetCrossingPath" in gaps
+    assert "cannot forecast a second future turn" in gaps
+    assert "source-derived plus historically corroborated" in gaps
+    assert "Bomb replacement RNG" in gaps
+    assert "lack build identity" in gaps
+    assert "does not replace the separate Env_Volcano" in gaps
+
+    historical = json.loads((
+        repo_root
+        / "data/observatory/captures/historical_git_mission_final_cave_runs.json"
+    ).read_text(encoding="utf-8"))
+    assert historical["kind"] == (
+        "historical_git_mission_final_cave_corroboration"
+    )
+    assert [record["mode"] for record in historical["runs"][0]["records"]] == [
+        "rocks", "tentacles_to_lava", "rocks", "tentacles_to_lava",
+    ]
+    assert historical["runs"][0]["records"][1][
+        "turn_entry_mech_positions"
+    ] == [[4, 2], [4, 4], [5, 1]]
+    assert historical["runs"][0]["records"][3]["shape"] == (
+        "complete cardinal crossing row"
+    )
+    assert historical["runs"][1]["records"][2]["next_sample"][
+        "still_terrain_id_3"
+    ] == [[5, 3], [6, 3]]
 
 
 def test_real_control_shot_record_pins_v390_source_predicate_and_bridge_validation():
@@ -5826,7 +5871,7 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "increments TurnLimit by 2" in facts
     assert "does not state that bomb loss is terminal" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "separately indexed partial scripts/missions/final/env_volcano.lua" in gaps
+    assert "Env_Final records now cover exact current bridge selections" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated TurnLimit+2 extension" in gaps
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps

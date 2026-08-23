@@ -484,7 +484,7 @@ Pushing is one of the most critical mechanics. Many weapons push targets.
 - **Unique terrain**: Lava tiles, mountains/stalagmites, Power Pylons.
 - **Two phases**:
   - **Phase 1 (Surface)**: 5 turns. Power Pylons act as buildings. Super Volcano alternates between Lava Flow and Volcanic Projectiles (instant kill).
-  - **Phase 2 (Underground)**: 5 turns. Protect the Renfield Bomb (4 HP) until it detonates. Caverns alternate between Falling Rocks (lava to ground) and Tentacles (ground to lava). Both deal instant-kill damage.
+  - **Phase 2 (Underground)**: Protect the Renfield Bomb (4 HP) until it detonates. The repeating source cycle is Falling Rocks, Mech-position Tentacles, clustered Falling Rocks, and crossing-path Tentacles. Both effects use `DAMAGE_DEATH` against flying, Massive, Shielded, and Frozen units before assigning Road or Lava terrain.
 - **Between phases**: Disabled mechs restored. Dead pilots stay dead (replaced with AI). Limited-use items restored.
 - **Renfield Bomb**: 4 HP, does NOT explode if destroyed. If destroyed, replacement deploys and timer extends by 2 turns.
 - **Allowed Vek**: Firefly, Hornet, Scarab, Scorpion, Crab, Beetle, Digger, Blobber. No Advanced Edition Vek spawn here.

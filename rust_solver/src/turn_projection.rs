@@ -29,6 +29,8 @@ use crate::board::{
     Board,
     Unit,
     UnitFlags,
+    FINAL_CAVE_LAVA,
+    FINAL_CAVE_ROCKS,
     VOLCANO_LAVA,
     VOLCANO_ROCKS,
 };
@@ -716,6 +718,11 @@ pub(crate) fn advance_environment_warning(board: &mut Board) {
     board.env_volcano_count = 0;
     board.env_volcano_locations = [0; 4];
     board.env_volcano_lava_start = 0;
+    board.env_final_cave_mode = 0;
+    board.env_final_cave_phase = 0;
+    board.env_final_cave_instant = false;
+    board.env_final_cave_lava_path = 0;
+    board.env_final_cave_locations.clear();
 }
 
 /// Recover Env_Tides.Index from a legacy visible warning mask.
@@ -1070,6 +1077,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             Terrain::Fire     => "fire",
         };
         let mut t = json!({ "x": x, "y": y, "terrain": terrain_str });
+        if tile.terrain == Terrain::Lava {
+            t["lava"] = json!(true);
+        }
         if tile.terrain == Terrain::Building {
             t["building_hp"] = json!(tile.building_hp);
         } else if tile.building_hp > 0 {
@@ -1241,8 +1251,36 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             volcano_locations.push(vec![x, y]);
         }
     }
+    let exact_final_cave = board.mission_id == "Mission_Final_Cave"
+        && matches!(
+            board.env_final_cave_mode,
+            FINAL_CAVE_ROCKS | FINAL_CAVE_LAVA
+        )
+        && board.env_final_cave_lava_path != 0
+        && !board.env_final_cave_locations.is_empty();
+    let mut final_cave_locations: Vec<Vec<u8>> = Vec::new();
+    if exact_final_cave {
+        for &idx in &board.env_final_cave_locations {
+            let (x, y) = idx_to_xy(idx as usize);
+            final_cave_locations.push(vec![x, y]);
+        }
+    }
+    let mut final_cave_lava_path: Vec<Vec<u8>> = Vec::new();
+    if exact_final_cave {
+        let mut lava_path = board.env_final_cave_lava_path;
+        while lava_path != 0 {
+            let idx = lava_path.trailing_zeros() as usize;
+            lava_path &= lava_path - 1;
+            let (x, y) = idx_to_xy(idx);
+            final_cave_lava_path.push(vec![x, y]);
+        }
+    }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
-    if exact_volcano {
+    if exact_final_cave {
+        for point in &final_cave_locations {
+            env_danger_v2.push(vec![point[0], point[1], 1, 1, 0]);
+        }
+    } else if exact_volcano {
         let (damage, kill_int) = if board.env_volcano_mode == VOLCANO_ROCKS {
             (1, 1)
         } else {
@@ -1289,7 +1327,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "environment_tides_index": board.env_tides_index,
         "environment_tides_planned": board.env_tides_planned,
         "environment_danger_v2": env_danger_v2,
-        "env_type":              if exact_volcano {
+        "env_type":              if exact_final_cave {
+            "final_cave"
+        } else if exact_volcano {
             "volcano"
         } else if board.env_danger_acid != 0 || board.mission_id == "Mission_NanoStorm" {
             "nanostorm"
@@ -1344,6 +1384,20 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
             "lava_start": lava_start,
             "locations": volcano_locations.clone(),
             "planned": volcano_locations,
+        });
+    }
+    if exact_final_cave {
+        out["environment_danger"] = json!(final_cave_locations.clone());
+        out["mission_final_cave"] = json!({
+            "complete": true,
+            "mode": board.env_final_cave_mode,
+            "phase": board.env_final_cave_phase,
+            "ordered": true,
+            "instant": board.env_final_cave_instant,
+            "water_target": board.env_final_cave_mode == FINAL_CAVE_ROCKS,
+            "lava_path": final_cave_lava_path,
+            "locations": final_cave_locations.clone(),
+            "planned": final_cave_locations,
         });
     }
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
@@ -1843,6 +1897,82 @@ mod tests {
             &board_to_json(&projected, &[]),
         ).unwrap();
         assert!(projected_json["mission_final_volcano"].is_null());
+        assert!(projected_json["environment_danger_v2"]
+            .as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_mission_final_cave_roundtrip_resolves_current_path_then_clears_rng_state() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Final_Cave".to_string();
+        b.current_turn = 4;
+        b.env_final_cave_mode = FINAL_CAVE_LAVA;
+        b.env_final_cave_phase = 4;
+        b.env_final_cave_instant = true;
+        b.env_final_cave_lava_path = [
+            xy_to_idx(2, 0),
+            xy_to_idx(2, 1),
+            xy_to_idx(2, 2),
+            xy_to_idx(2, 3),
+        ].into_iter().fold(0u64, |mask, idx| mask | (1u64 << idx));
+        b.env_final_cave_locations = (0u8..8)
+            .map(|x| xy_to_idx(x, 2) as u8)
+            .collect();
+        for x in 0u8..8 {
+            let bit = 1u64 << xy_to_idx(x, 2);
+            b.env_danger |= bit;
+            b.env_danger_kill |= bit;
+        }
+
+        let current_json = board_to_json(&b, &[]);
+        let current: serde_json::Value = serde_json::from_str(&current_json).unwrap();
+        let row = serde_json::json!([
+            [0, 2], [1, 2], [2, 2], [3, 2],
+            [4, 2], [5, 2], [6, 2], [7, 2]
+        ]);
+        assert_eq!(current["env_type"], "final_cave");
+        assert_eq!(current["environment_danger"], row);
+        assert_eq!(current["environment_danger_v2"], serde_json::json!([
+            [0,2,1,1,0],[1,2,1,1,0],[2,2,1,1,0],[3,2,1,1,0],
+            [4,2,1,1,0],[5,2,1,1,0],[6,2,1,1,0],[7,2,1,1,0]
+        ]));
+        assert_eq!(current["mission_final_cave"], serde_json::json!({
+            "complete": true,
+            "mode": FINAL_CAVE_LAVA,
+            "phase": 4,
+            "ordered": true,
+            "instant": true,
+            "water_target": false,
+            "lava_path": [[2,0],[2,1],[2,2],[2,3]],
+            "locations": [[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]],
+            "planned": [[0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2]],
+        }));
+
+        let (roundtrip, ..) = board_from_json(&current_json)
+            .expect("exact ordered cave state must round-trip");
+        assert_eq!(roundtrip.env_final_cave_mode, FINAL_CAVE_LAVA);
+        assert_eq!(roundtrip.env_final_cave_phase, 4);
+        assert!(roundtrip.env_final_cave_instant);
+        assert_eq!(roundtrip.env_final_cave_locations, b.env_final_cave_locations);
+        assert_eq!(roundtrip.env_final_cave_lava_path, b.env_final_cave_lava_path);
+
+        let (projected, _) = project_plan(&roundtrip, &[], &[], &WEAPONS);
+        for x in 0u8..8 {
+            assert_eq!(projected.tile(x, 2).terrain, Terrain::Lava);
+        }
+        assert_eq!(projected.current_turn, 5);
+        assert_eq!(projected.env_danger, 0);
+        assert_eq!(projected.env_danger_kill, 0);
+        assert_eq!(projected.env_final_cave_mode, 0);
+        assert_eq!(projected.env_final_cave_phase, 0);
+        assert!(!projected.env_final_cave_instant);
+        assert_eq!(projected.env_final_cave_lava_path, 0);
+        assert!(projected.env_final_cave_locations.is_empty());
+
+        let projected_json: serde_json::Value = serde_json::from_str(
+            &board_to_json(&projected, &[]),
+        ).unwrap();
+        assert!(projected_json["mission_final_cave"].is_null());
         assert!(projected_json["environment_danger_v2"]
             .as_array().unwrap().is_empty());
     }

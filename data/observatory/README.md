@@ -96,7 +96,7 @@ at
 `callbacks/windows_build_13725832_31fe35265598_callback_index.json`. It contains
 757 definitions across 108 selected source files (410 indexed by provenance and
 347 explicitly unindexed) and has SHA-256
-`1f207101f8826c1c131f432ca0670e45dcec8ef74b04a4f3395b55b16a2757fd`.
+`eb73977455203cb50e26c3ee16033aa37677aad4c68c1344dfafc48181829952`.
 It contains only normalized symbols, source locations/hashes, categories, and
 indexing status—not Lua source text—and must be regenerated for any changed
 inventory identity.

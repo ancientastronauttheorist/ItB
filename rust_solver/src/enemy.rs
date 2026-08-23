@@ -679,6 +679,17 @@ fn apply_void_shocker_after_attack(
 }
 
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
+    if board.mission_id == "Mission_Final_Cave"
+        && matches!(
+            board.env_final_cave_mode,
+            FINAL_CAVE_ROCKS | FINAL_CAVE_LAVA
+        )
+        && !board.env_final_cave_locations.is_empty()
+    {
+        apply_mission_final_cave(board, result);
+        return;
+    }
+
     if board.mission_id == "Mission_Final"
         && matches!(board.env_volcano_mode, VOLCANO_ROCKS | VOLCANO_LAVA)
         && board.env_volcano_count > 0
@@ -856,6 +867,41 @@ fn apply_mission_final_volcano(board: &mut Board, result: &mut ActionResult) {
             apply_volcano_lava(board, x, y, result);
         } else {
             apply_volcano_rock(board, x, y, result);
+        }
+    }
+}
+
+/// Apply the exact current Mission_Final_Cave Env_Final selection. Both modes
+/// use DAMAGE_DEATH and therefore kill effectively-flying, Massive, Shielded,
+/// and Frozen pawns. Rocks replace the tile with Road; tentacles replace it
+/// with Lava. Selection RNG remains native and is never generated here.
+fn apply_mission_final_cave(board: &mut Board, result: &mut ActionResult) {
+    let locations = board.env_final_cave_locations.clone();
+    let mode = board.env_final_cave_mode;
+    for tile_idx in locations {
+        if tile_idx >= 64 {
+            continue;
+        }
+        let (x, y) = idx_to_xy(tile_idx as usize);
+        apply_env_danger(board, x, y, true, false, false, 0, false, result);
+
+        let tile = board.tile_mut(x, y);
+        tile.terrain = if mode == FINAL_CAVE_ROCKS {
+            Terrain::Ground
+        } else {
+            Terrain::Lava
+        };
+        tile.building_hp = 0;
+        tile.population = 0;
+        tile.set_cracked(false);
+        tile.set_has_pod(false);
+        tile.set_grass(false);
+        tile.set_freeze_mine(false);
+        tile.set_old_earth_mine(false);
+        tile.set_repair_platform(false);
+        tile.conveyor_dir = -1;
+        if tile.terrain == Terrain::Lava {
+            tile.set_on_fire(false);
         }
     }
 }
@@ -4888,6 +4934,94 @@ mod tests {
         assert!(board.tile(4, 2).on_fire());
         assert_eq!(board.tile(4, 5).terrain, Terrain::Lava);
         assert!(!board.tile(4, 5).on_fire(), "Lava cannot host a separate Fire tile");
+    }
+
+    #[test]
+    fn test_mission_final_cave_rocks_kill_flyer_before_attack_and_make_road() {
+        let input = r#"{
+            "mission_id":"Mission_Final_Cave","env_type":"final_cave","turn":1,
+            "mission_final_cave":{
+                "complete":true,"mode":1,"phase":1,"ordered":true,
+                "instant":false,"water_target":true,
+                "lava_path":[[2,0],[2,1],[2,2],[2,3]],
+                "locations":[[2,2],[2,5],[5,2],[5,5]],
+                "planned":[[2,2],[2,5],[5,2],[5,5]]
+            },
+            "tiles":[
+                {"x":2,"y":1,"terrain":"building","building_hp":2},
+                {"x":2,"y":2,"terrain":"water"},
+                {"x":2,"y":5,"terrain":"mountain","building_hp":2},
+                {"x":5,"y":2,"terrain":"chasm"},
+                {"x":5,"y":5,"terrain":"forest"}
+            ],
+            "units":[
+                {"uid":20,"type":"Hornet1","x":2,"y":2,"hp":2,"max_hp":2,
+                 "team":6,"flying":true,"shield":true,"frozen":true,
+                 "has_queued_attack":true,"queued_target":[2,1],
+                 "weapons":["HornetAtk1"]}
+            ],
+            "attack_order":[20],
+            "environment_danger":[[2,2],[2,5],[5,2],[5,5]],
+            "environment_danger_v2":[
+                [2,2,1,1,0],[2,5,1,1,0],[5,2,1,1,0],[5,5,1,1,0]
+            ],
+            "spawning_tiles":[]
+        }"#;
+        let (mut board, ..) = board_from_json(input).expect("exact Rocks payload parses");
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[0].hp, 0, "DAMAGE_DEATH kills a frozen Shielded flyer");
+        assert_eq!(board.tile(2, 1).building_hp, 2, "dead Vek never fires");
+        for &(x, y) in &[(2u8, 2u8), (2, 5), (5, 2), (5, 5)] {
+            assert_eq!(board.tile(x, y).terrain, Terrain::Ground);
+            assert_eq!(board.tile(x, y).building_hp, 0);
+        }
+    }
+
+    #[test]
+    fn test_mission_final_cave_tentacles_kill_all_mech_traits_and_make_lava() {
+        let input = r#"{
+            "mission_id":"Mission_Final_Cave","env_type":"final_cave","turn":2,
+            "mission_final_cave":{
+                "complete":true,"mode":2,"phase":2,"ordered":true,
+                "instant":false,"water_target":false,
+                "lava_path":[[2,0],[2,1],[2,2],[2,3]],
+                "locations":[[5,1],[4,2],[4,4]],
+                "planned":[[5,1],[4,2],[4,4]]
+            },
+            "tiles":[
+                {"x":5,"y":1,"terrain":"ground","smoke":true},
+                {"x":4,"y":2,"terrain":"water","acid":true},
+                {"x":4,"y":4,"terrain":"forest"}
+            ],
+            "units":[
+                {"uid":0,"type":"PunchMech","x":5,"y":1,"hp":4,"max_hp":4,
+                 "team":1,"mech":true,"massive":true,"shield":true},
+                {"uid":1,"type":"JetMech","x":4,"y":2,"hp":3,"max_hp":3,
+                 "team":1,"mech":true,"flying":true},
+                {"uid":2,"type":"IceMech","x":4,"y":4,"hp":3,"max_hp":3,
+                 "team":1,"mech":true,"massive":true,"frozen":true}
+            ],
+            "environment_danger":[[5,1],[4,2],[4,4]],
+            "environment_danger_v2":[
+                [5,1,1,1,0],[4,2,1,1,0],[4,4,1,1,0]
+            ],
+            "spawning_tiles":[]
+        }"#;
+        let (mut board, ..) = board_from_json(input).expect("exact Lava payload parses");
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(result.mechs_killed, 3);
+        assert!(board.units[..3].iter().all(|unit| unit.hp == 0));
+        assert!(!board.units[0].shield());
+        assert!(!board.units[2].frozen());
+        for &(x, y) in &[(5u8, 1u8), (4, 2), (4, 4)] {
+            assert_eq!(board.tile(x, y).terrain, Terrain::Lava);
+            assert_eq!(board.tile(x, y).building_hp, 0);
+        }
     }
 
     #[test]

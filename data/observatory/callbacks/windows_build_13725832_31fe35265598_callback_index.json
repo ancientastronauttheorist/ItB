@@ -2742,6 +2742,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-ice-storm",
         "environment-sand-terrain-hazards"
@@ -2759,6 +2760,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-ice-storm",
         "environment-sand-terrain-hazards"
@@ -2776,6 +2778,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-ice-storm",
         "environment-sand-terrain-hazards"
@@ -2793,6 +2796,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-airstrike",
         "environment-mission-ice-storm",
@@ -2837,6 +2841,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-airstrike",
         "environment-sand-terrain-hazards"
@@ -2854,6 +2859,7 @@
       ],
       "column": 10,
       "indexed_by": [
+        "environment-final-cave-danger",
         "environment-final-volcano-cycle",
         "environment-mission-airstrike",
         "environment-mission-ice-storm",
@@ -12927,22 +12933,97 @@
       "id": "environment-final-cave-danger",
       "implementations": [
         {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "mission_final_cave_points",
+            "mission_final_cave",
+            "env_type",
+            "environment_danger",
+            "environment_danger_v2"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_normalize_mission_final_cave",
+            "read_bridge_state"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "validate_mission_final_cave_payload",
+            "environment_final_cave_known",
+            "environment_final_cave_locations",
+            "from_bridge_data"
+          ]
+        },
+        {
           "path": "rust_solver/src/serde_bridge.rs",
           "symbols": [
-            "board_from_json",
-            "final_cave_env"
+            "JsonMissionFinalCave",
+            "exact_mission_final_cave",
+            "board_from_json"
           ]
         },
         {
           "path": "rust_solver/src/enemy.rs",
           "symbols": [
+            "apply_mission_final_cave",
             "apply_env_danger",
             "apply_env_danger_board",
             "simulate_enemy_attacks"
           ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_environment_warning",
+            "board_to_json",
+            "project_plan"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "_mission_final_cave_payload_block",
+            "cmd_solve",
+            "cmd_click_end_turn",
+            "cmd_dispatch_end_turn",
+            "cmd_end_turn"
+          ]
         }
       ],
       "tests": [
+        {
+          "path": "tests/test_mission_final_cave_environment.py",
+          "symbols": [
+            "test_lua_helper_exports_each_source_phase_atomically",
+            "test_python_board_copy_and_lava_probe_preserve_exact_cave_state",
+            "test_complete_current_cave_payload_passes_strict_gate",
+            "test_partial_stale_or_source_unreachable_payloads_fail_closed",
+            "test_public_end_turn_paths_block_incomplete_cave_before_dispatch"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "test_mission_final_cave_requires_exact_current_selection_and_lava_probe"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_mission_final_cave_rocks_kill_flyer_before_attack_and_make_road",
+            "test_mission_final_cave_tentacles_kill_all_mech_traits_and_make_lava"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_mission_final_cave_roundtrip_resolves_current_path_then_clears_rng_state"
+          ]
+        },
         {
           "path": "rust_solver/src/simulate.rs",
           "symbols": [
