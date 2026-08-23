@@ -1,4 +1,4 @@
-"""Renfield Bomb (BigBomb) — Mission_Final_Cave win-condition NPC.
+"""Renfield Bomb (BigBomb) — Mission_Final_Cave lifecycle NPC.
 
 Per `scripts/missions/final/mission_final_two.lua:179-188`:
     BigBomb = { Health=4, Neutral=true, Corpse=false, IgnoreFire=true,
@@ -9,7 +9,9 @@ clearing all enemies. If it is destroyed, mission source drops a replacement
 and adds 2 to TurnLimit. Simulator v406 applies that exact extension, records
 the replacement as pending, and retains source-reachable candidates for its
 stable projected snapshot. It deliberately does not fabricate the native
-callback timing or random coordinate. The model wires this in three places:
+callback timing or random coordinate. The exact Windows outcome map proves
+that bomb loss delays the countdown rather than directly losing the mission.
+The model wires this in three places:
 
 1. `data/known_types.json` lists "BigBomb" so the research-gate doesn't
    block the final mission.

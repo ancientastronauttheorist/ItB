@@ -1,0 +1,791 @@
+{
+  "analysis_kind": "final_cave_outcome_boundary_map",
+  "contracts": {
+    "campaign_consumption": {
+      "every_other_committed_outcome": "campaign result 1",
+      "outcome_code_3": "campaign result 2",
+      "outcome_getter_offset": "0x4c",
+      "result_1_route": "campaign victory"
+    },
+    "forced_no_mech_failure": {
+      "forced_evaluation": true,
+      "nonzero_result": "primary outcome remains pending",
+      "only_when_primary_still_pending": true,
+      "query": "Board:GetPawnCount(TEAM_MECH)",
+      "team_constant": 4,
+      "transition_state": 0,
+      "zero_result": "primary outcome code 3"
+    },
+    "missing_bomb_lifecycle": {
+      "countdown_uses_extended_limit": true,
+      "direct_terminal_bomb_check_in_ready_to_victory_path": false,
+      "replacement_timing_or_coordinate_predicted": false,
+      "source_effect": "queue AddBomb and add 2 to TurnLimit",
+      "source_trigger": "not IsBomb() after Board:IsBusy() is false"
+    },
+    "ordinary_final_cave_countdown": {
+      "bomb_or_objective_query_between_ready_and_write": false,
+      "forced_evaluation": false,
+      "inputs": [
+        "primary and secondary outcome codes are pending (2)",
+        "ordinary mission-owner/tutorial guards admit classification",
+        "active Board pointer is nonzero",
+        "current turn equals the current Mission:GetTurnLimit()",
+        "BoardPlayer state equals 2"
+      ],
+      "is_end_blocked_invoked_on_ready_branch": false,
+      "next_steps": [
+        "Final victory presentation",
+        "MissionEnd callback",
+        "BoardPlayer completion state 5"
+      ],
+      "result": "primary outcome code 1",
+      "transition_state": 2
+    },
+    "outcome_codes": {
+      "failure": 3,
+      "initial_primary": 2,
+      "initial_secondary": 2,
+      "pending": 2,
+      "secondary_offset": "0x1904",
+      "storage_offset": "0x1900",
+      "victory": 1
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "pending_codes_initialized",
+      "instruction_hex": "c7860019000002000000c7860419000002000000",
+      "meaning": "Initialize primary outcome +0x1900 and secondary outcome +0x1904 to pending code 2.",
+      "region_id": "outcome_initialization_window",
+      "sha256": "e48625343b837dcd01faa323ed59cbe525b27b311b258081ef809e72d48ba3f4",
+      "size": 20,
+      "start_rva": "0x0017fe04"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_count_candidate_filter",
+      "instruction_hex": "8b4f3c8d44241c50be0b0000008b0c91e83b150d008bc8837914108d591072028b098b1b8bc683fb0bba58ea82000f42c350e879aaefff8bf083c40485f6751583fb0b730583ceffeb0bb80b0000003bc31bf6f7de8b44243083f81072106a014050ff742424e89560e9ff83c40c8b4424108b4f3c8d1c8500000000ff75088b0c19e8d9c00c0084c0741c8b473c8b0c038b018b4010ffd084c0750b85f67407b801000000eb0233c08b4f3cff750801442418",
+      "meaning": "Build the primary team-matched, non-BonusDebris pawn count used by the function's zero/nonzero result contract.",
+      "region_id": "get_pawn_count",
+      "sha256": "54c11eacdb6cd0fddb833571b2e3b4558f033e1ff8a9627dcdb58b500cdd1ce5",
+      "size": 179,
+      "start_rva": "0x00171700"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_count_zero_contract",
+      "instruction_hex": "85db743a660f6ec60f5bc0660f6ecbf30f5e0508cc83000f5bc9f30f5cc8f30f5f0d74cb8300f30f2cc15f5e5b8b4c242833cce85b5c1e008be55dc204008b4c24348bc35f5e5b33cce8455c1e008be55dc20400",
+      "meaning": "Return zero exactly when the primary count is zero; any nonzero primary count is clamped to a result of at least one.",
+      "region_id": "get_pawn_count",
+      "sha256": "6ff8c2d51113b0673e62575e165392ff172291478cfbdef2f48275f072101f78",
+      "size": 84,
+      "start_rva": "0x00171837"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_pawn_count_binding",
+      "instruction_hex": "ff75f0c745e8c0165700ff75f0c745ec00000000518d4de851689c8783008bc8e8f2e70000",
+      "meaning": "Register native handler VA 0x005716c0 under the Lua Board method name GetPawnCount.",
+      "region_id": "get_pawn_count_registration_window",
+      "sha256": "7741af697793add35e3c4a455e28fb35257031f78e6fffe8cb6004f27ea6e130",
+      "size": 37,
+      "start_rva": "0x0027a469"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "team_mech_constant",
+      "instruction_hex": "68a09783008d8d20f8ffff518bc8e8931fddff8bd88b4b08ff710468f0d8ffffff33ff15c0647d00ff73048b3b57ff15e4647d006a04ff33ff158c647d00",
+      "meaning": "Register Lua constant TEAM_MECH with exact integer value 4.",
+      "region_id": "team_mech_registration_window",
+      "sha256": "d0d4a0fd0b014a6725c97a7fcd7ec1c174fc2a7b97b9aec9bf0a1d4a4fd327e9",
+      "size": 62,
+      "start_rva": "0x0027e8aa"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_limit_short_circuit",
+      "instruction_hex": "e84a38ecff83bee40f0000007424398654010000752283bec80f0000027513b0018b4df464890d00000000595f5e8be55dc3",
+      "meaning": "After GetTurnLimit, return ready when an active Board exists, turn equals that limit, and BoardPlayer state is 2, before the later IsEndBlocked fallback.",
+      "region_id": "end_readiness",
+      "sha256": "51f88c212d52938160e3430d776c5f7aba3e9546ec816ff876bb08addc6125ec",
+      "size": 50,
+      "start_rva": "0x00185c71"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "turn_state_store_and_dispatch",
+      "instruction_hex": "8b4f048d8564ffffff50e8fabaf6ffc745fc000000008b9d64ffffff89b7c80f000083fe050f878a050000ff24b558a95800",
+      "meaning": "Store the requested state at +0xfc8 and dispatch through the six-entry state jump table.",
+      "region_id": "state_transition",
+      "sha256": "cf0ea79bb40205c05cc7e53f32d4b473a3dd5e4254745dd9091e9cd0a534b027",
+      "size": 50,
+      "start_rva": "0x0018a367"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "state_two_nonforced_outcome_dispatch",
+      "instruction_hex": "6a008bcfe8d0130000",
+      "meaning": "State case 2 calls the outcome dispatcher with forced=false.",
+      "region_id": "state_transition",
+      "sha256": "d8ae8781d65f1a33a4d1f1ff70679e76c5950a81a173cb069d0322d7386a116f",
+      "size": 9,
+      "start_rva": "0x0018a3a7"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "state_zero_forced_outcome_dispatch",
+      "instruction_hex": "6a018bcfe8e3120000",
+      "meaning": "State case 0 calls the outcome dispatcher with forced=true.",
+      "region_id": "state_transition",
+      "sha256": "818cbef570739b4a01be28780887312953f86de437f4c8126eb6e00ac4d565f5",
+      "size": 9,
+      "start_rva": "0x0018a494"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "outcome_entry_guards",
+      "instruction_hex": "83be00190000020f853a0200008b8e941c00008d86981c00003bc8741885c9741483790400750e8a860d17000084c00f841202000080be0e170000000f8505020000",
+      "meaning": "Only a pending primary outcome reaches classification, subject to the reviewed mission-owner and tutorial/reentry guards.",
+      "region_id": "outcome_dispatch",
+      "sha256": "ce80654e0d0041288cece92dc5158639b5a9c9a3c56c1de8b0ec56a2ccccb2fa",
+      "size": 66,
+      "start_rva": "0x0018b7a6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "state_three_pending_suppression",
+      "instruction_hex": "83bec80f000003751583be0419000002750cc7860019000002000000eb3b",
+      "meaning": "State 3 preserves pending code 2 when the secondary code is 2.",
+      "region_id": "outcome_dispatch",
+      "sha256": "390ed23ae62a192ea38241d7f3208f409909fab020c9071bdbe258cca47cfe93",
+      "size": 30,
+      "start_rva": "0x0018b7e8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ordinary_ready_writes_success",
+      "instruction_hex": "8a860c17000084c08b8604190000752583f802752083bee40f000000741d8bcee895a3ffff84c07412c7860019000001000000eb06898600190000",
+      "meaning": "With ordinary flags, secondary code 2, an active Board, and true end readiness, write primary outcome code 1.",
+      "region_id": "outcome_dispatch",
+      "sha256": "81fcfe10291a21819e25afc97d104781f2d3b1c0f171f3b6a46459311b5e7b1d",
+      "size": 59,
+      "start_rva": "0x0018b806"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "forced_zero_mechs_writes_failure",
+      "instruction_hex": "83be00190000027535807d080074228b4e046a04e8665efeff85c075148a860d17000084c0750ac7860019000003000000",
+      "meaning": "If the result is still pending and forced evaluation is true, call GetPawnCount(4) and write code 3 only when it returns zero.",
+      "region_id": "outcome_dispatch",
+      "sha256": "4e6667c8633157763f7a8936c869ab231236350864eb27a17d8960715cf8a152",
+      "size": 49,
+      "start_rva": "0x0018b841"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "committed_result_gate",
+      "instruction_hex": "83be00190000020f846e010000",
+      "meaning": "Return while outcome remains pending; continue only for a result.",
+      "region_id": "outcome_dispatch",
+      "sha256": "26eb129077c451025b8bfa6e81de4d8263de941f2166d042ce281e21d4c317f0",
+      "size": 13,
+      "start_rva": "0x0018b872"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "failure_presentation_route",
+      "instruction_hex": "83be0019000003752568a4f982008d8e701a0000e8ecc6e7ff68dcdf80008d8e881a0000e8dcc6e7ffe9f9000000",
+      "meaning": "Outcome code 3 selects the disabled/failure presentation route.",
+      "region_id": "outcome_dispatch",
+      "sha256": "f67e6286961a33c350d970fa6d23386a0d4686ff568bf9f4d4838c930706370e",
+      "size": 46,
+      "start_rva": "0x0018b88b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_victory_route",
+      "instruction_hex": "6a028bcee84177ffff84c075196a038bcee83477ffff84c0750c83ec188bcc68c4f98200eb1383be9045000003751783ec188bcc68f4f98200e89cc4e7ffe8c7fbf4ff",
+      "meaning": "A committed non-failure result in Final mode 3 selects /ui/battle/final_victory.",
+      "region_id": "outcome_dispatch",
+      "sha256": "7cc7a8e2eb889bde7aa23569933a52521c58adffeed80261b1879911d8d00bfc",
+      "size": 67,
+      "start_rva": "0x0018b936"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end_then_state_five",
+      "instruction_hex": "83ec188bcc89650868e8f98200e882c4e7ff83ec18c745fc000000008d86d40f00008bcc50e86af2ebffc745fcffffffffe84edf00008bcee8370200006a058bcee8fee8ffff",
+      "meaning": "Dispatch MissionEnd, perform completion bookkeeping, then request BoardPlayer state 5.",
+      "region_id": "outcome_dispatch",
+      "sha256": "444933b004206bd7fa9dd86c8c02f3b56f465a7f474cee8d0e2a9b099b933f24",
+      "size": 70,
+      "start_rva": "0x0018b97c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "outcome_getter_body",
+      "instruction_hex": "8b8100190000c3",
+      "meaning": "Return the primary outcome stored at BoardPlayer+0x1900.",
+      "region_id": "outcome_getter",
+      "sha256": "705bd97156f230addc79eb9489880df1d2a025762435056cf5a33937b8508e79",
+      "size": 7,
+      "start_rva": "0x001937c0"
+    }
+  ],
+  "data_pointers": [
+    {
+      "data_rva": "0x0018a958",
+      "evidence_class": "fact",
+      "id": "state_case_zero",
+      "role": "state-transition jump-table entry 0",
+      "section": ".text",
+      "target_region": "state_transition",
+      "target_rva": "0x0018a48f",
+      "target_va": "0x0058a48f"
+    },
+    {
+      "data_rva": "0x0018a95c",
+      "evidence_class": "fact",
+      "id": "state_case_one",
+      "role": "state-transition jump-table entry 1",
+      "section": ".text",
+      "target_region": "state_transition",
+      "target_rva": "0x0018a770",
+      "target_va": "0x0058a770"
+    },
+    {
+      "data_rva": "0x0018a960",
+      "evidence_class": "fact",
+      "id": "state_case_two",
+      "role": "state-transition jump-table entry 2",
+      "section": ".text",
+      "target_region": "state_transition",
+      "target_rva": "0x0018a399",
+      "target_va": "0x0058a399"
+    },
+    {
+      "data_rva": "0x00430194",
+      "evidence_class": "fact",
+      "id": "outcome_getter_vtable_slot",
+      "role": "BoardPlayer vtable VA 0x00830148 slot +0x4c",
+      "section": ".rdata",
+      "target_region": "outcome_getter",
+      "target_rva": "0x001937c0",
+      "target_va": "0x005937c0"
+    }
+  ],
+  "dependencies": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json",
+      "artifact_sha256": "541237f7e723c1ec56b0328cb1f137f2a6725bda55c588d0a7ebc74adc55be0c",
+      "role": "Pins the current-limit state-2 readiness short circuit and MissionEnd activity-clear handoff."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json",
+      "artifact_sha256": "cb3d8105929e0a428a6627760919302360ee7a0eb181dbb2e3b04531138a81a7",
+      "role": "Pins downstream consumption of outcome code 3 as campaign result 2 and every other committed code as result 1."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018a3ab",
+      "id": "state_two_to_outcome_dispatch",
+      "instruction_hex": "e8d0130000",
+      "kind": "direct_rel32",
+      "meaning": "State case 2 invokes nonforced outcome classification.",
+      "source_region": "state_transition",
+      "target": {
+        "region": "outcome_dispatch",
+        "rva": "0x0018b780",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018a498",
+      "id": "state_zero_to_outcome_dispatch",
+      "instruction_hex": "e8e3120000",
+      "kind": "direct_rel32",
+      "meaning": "State case 0 invokes forced outcome classification.",
+      "source_region": "state_transition",
+      "target": {
+        "region": "outcome_dispatch",
+        "rva": "0x0018b780",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b826",
+      "id": "outcome_to_end_readiness",
+      "instruction_hex": "e895a3ffff",
+      "kind": "direct_rel32",
+      "meaning": "Ordinary outcome classification queries end readiness.",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "end_readiness",
+        "rva": "0x00185bc0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b855",
+      "id": "outcome_to_get_pawn_count",
+      "instruction_hex": "e8665efeff",
+      "kind": "direct_rel32",
+      "meaning": "Forced pending classification queries GetPawnCount(4).",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "get_pawn_count",
+        "rva": "0x001716c0",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b93a",
+      "id": "outcome_to_final_mode_predicate_two",
+      "instruction_hex": "e84177ffff",
+      "kind": "direct_rel32",
+      "meaning": "Presentation tests mission mode 2.",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "final_mode_predicate",
+        "rva": "0x00183080",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b947",
+      "id": "outcome_to_final_mode_predicate_three",
+      "instruction_hex": "e83477ffff",
+      "kind": "direct_rel32",
+      "meaning": "Presentation tests mission mode 3 before the Final route.",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "final_mode_predicate",
+        "rva": "0x00183080",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b9ad",
+      "id": "outcome_to_mission_named_invoker",
+      "instruction_hex": "e84edf0000",
+      "kind": "direct_rel32",
+      "meaning": "Invoke the prepared MissionEnd callback name.",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "mission_named_invoker",
+        "rva": "0x00199900",
+        "type": "region"
+      }
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b9bd",
+      "id": "outcome_to_state_transition",
+      "instruction_hex": "e8fee8ffff",
+      "kind": "direct_rel32",
+      "meaning": "Request completion state 5 after MissionEnd dispatch.",
+      "source_region": "outcome_dispatch",
+      "target": {
+        "region": "state_transition",
+        "rva": "0x0018a2c0",
+        "type": "region"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "claim": "BoardPlayer initializes primary +0x1900 and secondary +0x1904 to pending code 2. The state jump table maps state 2 to a nonforced outcome-dispatch call and state 0 to a forced call.",
+      "evidence_class": "inference",
+      "id": "outcome_storage_and_callers_are_exact",
+      "limitations": [
+        "Debug/cheat writers of the secondary result are outside ordinary reachability."
+      ],
+      "supports": [
+        "pending_codes_initialized",
+        "state_case_zero",
+        "state_case_two",
+        "turn_state_store_and_dispatch",
+        "state_two_nonforced_outcome_dispatch",
+        "state_zero_forced_outcome_dispatch"
+      ]
+    },
+    {
+      "claim": "On the ordinary Final Cave state-2 boundary, current turn equal to the current GetTurnLimit makes end readiness true and the outcome dispatcher writes code 1. It then selects the Final victory route, dispatches MissionEnd, and requests completion state 5.",
+      "evidence_class": "inference",
+      "id": "final_cave_limit_writes_victory",
+      "limitations": [
+        "The precise runtime frame on which each presentation step appears is not claimed."
+      ],
+      "supports": [
+        "state_two_nonforced_outcome_dispatch",
+        "outcome_to_end_readiness",
+        "final_limit_short_circuit",
+        "ordinary_ready_writes_success",
+        "final_victory_route",
+        "mission_end_then_state_five"
+      ]
+    },
+    {
+      "claim": "The closed ordinary path from the state-2 caller through the ready return and code-1 write contains no bomb, objective, or IsEndBlocked query. Final Cave's always-true IsEndBlocked and zero-reputation objective callback do not veto that reached countdown boundary.",
+      "evidence_class": "inference",
+      "id": "countdown_does_not_recheck_bomb_or_objectives",
+      "limitations": [
+        "Earlier UpdateMission work can change when the boundary is reached."
+      ],
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "final_limit_short_circuit",
+        "ordinary_ready_writes_success",
+        "ordinary_final_cave_countdown"
+      ]
+    },
+    {
+      "claim": "A missing BigBomb is handled in shipped Lua by queuing a replacement and adding two to TurnLimit. Native readiness queries that current value, and the reached limit writes victory without a second bomb check. Bomb destruction is therefore a delay/replacement boundary, not a direct terminal loss predicate in the reviewed path.",
+      "evidence_class": "inference",
+      "id": "missing_bomb_delays_instead_of_directly_losing",
+      "limitations": [
+        "Replacement uncertainty can still make a projected plan unsafe to execute blindly."
+      ],
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "get_turn_limit",
+        "missing_bomb_lifecycle",
+        "final_cave_limit_writes_victory"
+      ]
+    },
+    {
+      "claim": "Only while the primary result remains pending does a forced state-0 evaluation call the exact Board:GetPawnCount binding with TEAM_MECH value 4. A zero result writes failure code 3; the ordinary state-2 limit victory has already committed code 1 and does not enter this branch.",
+      "evidence_class": "inference",
+      "id": "forced_zero_mech_failure_is_separate",
+      "limitations": [
+        "The map uses only the exact zero/nonzero contract needed by the outcome writer."
+      ],
+      "supports": [
+        "get_pawn_count_binding",
+        "team_mech_constant",
+        "pawn_count_zero_contract",
+        "forced_zero_mechs_writes_failure",
+        "state_zero_forced_outcome_dispatch"
+      ]
+    },
+    {
+      "claim": "The pinned BoardPlayer vtable getter returns +0x1900. The downstream campaign artifact maps code 3 to result 2 and other committed results, including code 1, to result 1; result 1 is the campaign-victory settlement route.",
+      "evidence_class": "inference",
+      "id": "campaign_result_join_is_exact",
+      "limitations": [
+        "Runtime filesystem success and a concrete run's written bytes remain separate evidence."
+      ],
+      "supports": [
+        "outcome_getter_vtable_slot",
+        "outcome_getter_body",
+        "campaign_consumption",
+        "data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json"
+      ]
+    },
+    {
+      "claim": "No Rust simulator semantic change follows. Simulator v406 already applies the source-guaranteed +2 missing-bomb edge and stops at unresolved replacement materialization. The combat solver should continue to treat current-bomb loss as strategically severe and require a fresh live board before forecasting from the replacement.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "limitations": [
+        "This proof does not resolve native replacement timing or coordinates."
+      ],
+      "supports": [
+        "missing_bomb_delays_instead_of_directly_losing",
+        "final_cave_limit_writes_victory"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Ghidra 12.1.3 constructor, registration, jump-table, call-graph, instruction, and decompiler review joined the state-2 and state-0 callers to the outcome writer and its downstream UI.",
+    "byte_verification": "Capstone 5.0.7 redecodes every published executable region from its declared start; the verifier rechecks exact control windows, direct calls, strings, and jump/vtable pointers.",
+    "limitations": [
+      "Every native address and conclusion applies only to the pinned Windows executable.",
+      "Static control flow proves relative outcome order, not wall-clock callback timing.",
+      "Replacement-bomb timing, coordinate selection, and repeated cycles remain unresolved.",
+      "macOS and other executable builds require independent maps."
+    ],
+    "negative_boundary": "The no-bomb/objective conclusion is limited to the closed state-2 readiness-to-code-1 instruction path. It is not a claim about arbitrary modified callbacks or every earlier scheduler step."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Instruction-aligned outcome-field initialization window inside the Ghidra 12.1.3 BoardPlayer constructor.",
+      "end_rva_exclusive": "0x0017fe22",
+      "evidence_class": "fact",
+      "id": "outcome_initialization_window",
+      "section": ".text",
+      "sha256": "7403d51f5d2f6916f2c2bde7c22fc6398ef7dd194bfc91a37b150a0d78b024eb",
+      "size": 30,
+      "start_rva": "0x0017fe04"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board GetPawnCount function body.",
+      "end_rva_exclusive": "0x0017188b",
+      "evidence_class": "fact",
+      "id": "get_pawn_count",
+      "section": ".text",
+      "sha256": "692c77c25d30bc26468f48881677077e352705224888c70b6ecf8d32ed9c90c6",
+      "size": 459,
+      "start_rva": "0x001716c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 mission-mode predicate body.",
+      "end_rva_exclusive": "0x001830c5",
+      "evidence_class": "fact",
+      "id": "final_mode_predicate",
+      "section": ".text",
+      "sha256": "0d0782d0f859541aa7eae0a0b33ca195305672cc6fbbc2c5626ca68e96ccd70f",
+      "size": 69,
+      "start_rva": "0x00183080"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x00185d92",
+      "evidence_class": "fact",
+      "id": "end_readiness",
+      "section": ".text",
+      "sha256": "a3fcc9c4e1f4561c46f1b371f515090001578c02bebc718029dc5939f17fae16",
+      "size": 466,
+      "start_rva": "0x00185bc0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer state-transition body.",
+      "end_rva_exclusive": "0x0018a955",
+      "evidence_class": "fact",
+      "id": "state_transition",
+      "section": ".text",
+      "sha256": "903ca7d14ba5317753901f70ec24acfb31ea44e947d3ebce3246651897bc2b90",
+      "size": 1685,
+      "start_rva": "0x0018a2c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 mission-outcome dispatcher body.",
+      "end_rva_exclusive": "0x0018b9ff",
+      "evidence_class": "fact",
+      "id": "outcome_dispatch",
+      "section": ".text",
+      "sha256": "00e1f495aa53d2a439c4eeb6e41e1d5ac5b304e0c050e4343bd0433f9ff74ee9",
+      "size": 639,
+      "start_rva": "0x0018b780"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer outcome getter body.",
+      "end_rva_exclusive": "0x001937c7",
+      "evidence_class": "fact",
+      "id": "outcome_getter",
+      "section": ".text",
+      "sha256": "705bd97156f230addc79eb9489880df1d2a025762435056cf5a33937b8508e79",
+      "size": 7,
+      "start_rva": "0x001937c0"
+    },
+    {
+      "boundary_basis": "Previously reviewed exact-build function body.",
+      "end_rva_exclusive": "0x00199998",
+      "evidence_class": "fact",
+      "id": "mission_named_invoker",
+      "section": ".text",
+      "sha256": "f104b8d01a7d8904631d4481f8c46efca50e906ff1ba29e34f980df21dde3ac6",
+      "size": 152,
+      "start_rva": "0x00199900"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Luabind registration window inside the reviewed registration function; this is not a function boundary.",
+      "end_rva_exclusive": "0x0027a48e",
+      "evidence_class": "fact",
+      "id": "get_pawn_count_registration_window",
+      "section": ".text",
+      "sha256": "7741af697793add35e3c4a455e28fb35257031f78e6fffe8cb6004f27ea6e130",
+      "size": 37,
+      "start_rva": "0x0027a469"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Lua constant-registration window inside the reviewed registration function; this is not a function boundary.",
+      "end_rva_exclusive": "0x0027e8e8",
+      "evidence_class": "fact",
+      "id": "team_mech_registration_window",
+      "section": ".text",
+      "sha256": "d0d4a0fd0b014a6725c97a7fcd7ec1c174fc2a7b97b9aec9bf0a1d4a4fd327e9",
+      "size": 62,
+      "start_rva": "0x0027e8aa"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "reviewed_lines": [
+          [
+            3,
+            13
+          ],
+          [
+            25,
+            33
+          ],
+          [
+            116,
+            188
+          ]
+        ],
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave",
+          "Mission_Final_Cave:MissionEnd",
+          "Mission_Final_Cave:UpdateMission",
+          "Mission_Final_Cave:UpdateObjectives",
+          "Mission_Final_Cave:AddBomb",
+          "Mission_Final_Cave:IsEndBlocked",
+          "BigBomb"
+        ]
+      }
+    ]
+  },
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "bonus_debris",
+      "instruction_hex": "ba58ea8200",
+      "reference_rva": "0x00171729",
+      "region_id": "get_pawn_count",
+      "role": "special pawn-type prefix excluded from the primary count",
+      "string_rva": "0x0042ea58",
+      "text": "BonusDebris"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_turn_limit",
+      "instruction_hex": "6858f38200",
+      "reference_rva": "0x00185c24",
+      "region_id": "end_readiness",
+      "role": "current mission turn-limit callback",
+      "string_rva": "0x0042f358",
+      "text": "GetTurnLimit"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "is_end_blocked",
+      "instruction_hex": "6808f58200",
+      "reference_rva": "0x00185cc1",
+      "region_id": "end_readiness",
+      "role": "fallback mission-end veto callback",
+      "string_rva": "0x0042f508",
+      "text": "IsEndBlocked"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "state_disabled",
+      "instruction_hex": "68a4f98200",
+      "reference_rva": "0x0018b894",
+      "region_id": "outcome_dispatch",
+      "role": "outcome-code-3 failure presentation state",
+      "string_rva": "0x0042f9a4",
+      "text": "State_Disabled"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "final_victory",
+      "instruction_hex": "68f4f98200",
+      "reference_rva": "0x0018b96a",
+      "region_id": "outcome_dispatch",
+      "role": "Final mission victory presentation route",
+      "string_rva": "0x0042f9f4",
+      "text": "/ui/battle/final_victory"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mission_end",
+      "instruction_hex": "68e8f98200",
+      "reference_rva": "0x0018b984",
+      "region_id": "outcome_dispatch",
+      "role": "mission completion callback",
+      "string_rva": "0x0042f9e8",
+      "text": "MissionEnd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_pawn_count_name",
+      "instruction_hex": "689c878300",
+      "reference_rva": "0x0027a482",
+      "region_id": "get_pawn_count_registration_window",
+      "role": "Lua Board method mapped to native VA 0x005716c0",
+      "string_rva": "0x0043879c",
+      "text": "GetPawnCount"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "team_mech_name",
+      "instruction_hex": "68a0978300",
+      "reference_rva": "0x0027e8aa",
+      "region_id": "team_mech_registration_window",
+      "role": "Lua team constant registered with integer value 4",
+      "string_rva": "0x004397a0",
+      "text": "TEAM_MECH"
+    }
+  ],
+  "summary": {
+    "bomb_is_direct_terminal_loss": false,
+    "campaign_result_join_proven": true,
+    "cave_countdown_outcome_proven": true,
+    "control_window_count": 18,
+    "data_pointer_count": 4,
+    "direct_edge_count": 8,
+    "finding_count": 7,
+    "forced_zero_mech_failure_proven": true,
+    "lua_source_count": 1,
+    "region_count": 10,
+    "simulator_change_required": false,
+    "string_anchor_count": 8,
+    "unresolved_count": 3
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json",
+    "artifact_sha256": "541237f7e723c1ec56b0328cb1f137f2a6725bda55c588d0a7ebc74adc55be0c",
+    "continuation": "The earlier immutable map proves readiness and narrows the countdown result. This map continues through exact outcome storage, failure classification, presentation, and campaign result consumption.",
+    "resolved_gap_ids": [
+      "cave_countdown_outcome"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "replacement_materialization",
+      "next_evidence": "Use a bounded live replacement capture only if a solver mismatch requires concrete timing or coordinates.",
+      "question": "On which runtime update and coordinate does a replacement BigBomb materialize after each loss?",
+      "static_status": "Lua guarantees AddBomb and +2 turns; concrete native callback timing and random_removal output are not predicted."
+    },
+    {
+      "id": "modified_outcome_paths",
+      "next_evidence": "Treat modified paths as out of scope unless observed.",
+      "question": "Can debug, cheat, or modified callbacks write another secondary outcome or alter the reviewed guards?",
+      "static_status": "Ordinary shipped Final Cave reachability is pinned; modified outcome writers are outside this artifact."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the focused map against an exact macOS binary.",
+      "question": "Do macOS/native builds implement the same outcome boundary?",
+      "static_status": "Only Windows build 13725832 is mapped."
+    }
+  ]
+}

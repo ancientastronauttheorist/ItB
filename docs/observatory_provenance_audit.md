@@ -863,8 +863,12 @@ edge, derives every AddBomb-reachable coordinate for the stable projected
 snapshot, and records the replacement as pending without fabricating a pawn,
 UID, callback time, or random result. Depth-two search stops there and the
 safety gate stays non-overridable until a fresh live board materializes the
-replacement. Native RNG, effect timing, repeated live replacement cycles,
-collisions, phase handoff, and mission-end settlement remain untraced.
+replacement. Native RNG, effect timing, repeated live replacement cycles, and
+collisions remain untraced. Exact-build continuations separately pin the phase
+handoff, current-limit readiness, countdown code-1 victory write without a
+bomb/objective/`IsEndBlocked` recheck, forced zero-Mech code-3 failure, and
+downstream campaign settlement. The safety gate remains because replacement
+materialization is unknown, not because bomb loss directly ends the mission.
 
 The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
 the then-selected mechanical source index at 96/96. The later runtime-driven

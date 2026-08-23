@@ -495,17 +495,19 @@ The remaining native priorities are now narrower:
    needs a runtime match. Static unit costs, tie ordering, endpoint shape,
    ordinary team handling, Road Runner, and Massive Water are complete; corpse
    classification and `AddMove` step/scheduler effects remain open.
-3. Resolve the pre-map-draw CRT state, concrete later cave startup draws and
-   queued startup-effect settlement, bomb replacement timing/coordinate, the
-   final countdown outcome, and the post-`StartMechTravel` campaign-victory
-   path. The ordinary Final end trigger and `MissionEnd` effect activity gate
-   are now exact: current turn-limit equality in state 2 returns before
-   `IsEndBlocked`, and the phase/exit handoff waits for comprehensive Board
-   activity to clear. Exact shipped `RandomMap`, unsorted Win32 registration
-   order, all nine remainder-to-map outcomes, `random_int(1)` advancement, and
-   the ordinary two-draw map boundary are also pinned for the current exact
-   Windows installation. A copied or reinstalled map directory must revalidate
-   its filesystem order even when all content hashes match.
+3. Resolve the pre-map-draw CRT state, concrete later cave startup draws,
+   queued startup-effect settlement, and bomb replacement timing/coordinate.
+   The ordinary Final end trigger, countdown outcome, `MissionEnd` activity
+   gate, and post-`StartMechTravel` campaign-victory path are now exact.
+   Current turn-limit equality in state 2 writes outcome code 1 before any
+   `IsEndBlocked`, bomb, or objective recheck; only the separate forced state-0
+   branch can write code 3 for zero Mechs. The phase/exit handoff waits for
+   comprehensive Board activity to clear. Exact shipped `RandomMap`, unsorted
+   Win32 registration order, all nine remainder-to-map outcomes,
+   `random_int(1)` advancement, and the ordinary two-draw map boundary are
+   also pinned for the current exact Windows installation. A copied or
+   reinstalled map directory must revalidate its filesystem order even when
+   all content hashes match.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
@@ -667,12 +669,14 @@ adds a focused Firefly queue-direction conformance regression. The final
 closure receipts prove the baseline 33-file save tree, Mod Loader, and
 689-entry installation were restored and the active bridge/install contain no
 Observatory diagnostic file.
-The Final boundary continuation additionally proves that both shipped Final
+The Final boundary continuations additionally prove that both shipped Final
 stages end through the current turn-limit/state-2 readiness branch before
-`IsEndBlocked`, and that queued `MissionEnd` effects hold the later handoff
-closed until comprehensive Board activity clears. The post-travel campaign
-path and concrete cave startup/countdown outcomes remain deliberately
-unmodeled.
+`IsEndBlocked`, that Final Cave writes outcome code 1 there without rechecking
+the bomb or objectives, and that queued `MissionEnd` effects hold the later
+handoff closed until comprehensive Board activity clears. The post-travel
+campaign settlement is pinned through the result-1 victory presentation.
+Concrete cave startup draws and replacement-bomb materialization remain
+deliberately unmodeled.
 
 ### Milestone 1: Provenance inventory
 

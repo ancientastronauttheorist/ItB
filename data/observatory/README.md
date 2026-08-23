@@ -529,10 +529,11 @@ python scripts/itb_observatory_final_phase_scheduler.py verify `
 
 This is a relative static order proof, not a runtime timestamp. Its conservative
 `final_end_state_trigger` and `mission_end_effect_settlement` gaps are resolved
-by the follow-up below. Cave initialization outputs, the final post-travel
-campaign path, the countdown outcome, and non-Windows equivalence remain
-explicit gaps. No current-turn Rust simulator change follows; the safe boundary
-remains a fresh bridge read after the live stage change.
+by the follow-up below. Later immutable continuations also resolve the Final
+Cave countdown result and post-travel campaign path. Cave initialization
+outputs and non-Windows equivalence remain explicit gaps. No current-turn Rust
+simulator change follows; the safe boundary remains a fresh bridge read after
+the live stage change.
 
 ## Final end and MissionEnd settlement boundary
 
@@ -567,9 +568,49 @@ python scripts/itb_observatory_final_end_settlement.py verify `
 ```
 
 The map proves ordinary queue-empty/activity-clear ordering, not wall-clock
-timing or arbitrary modified-effect cancellation. Its post-`StartMechTravel`
-gap is resolved by the continuation below. It requires no Rust simulator
-change.
+timing or arbitrary modified-effect cancellation. Its narrowed countdown gap
+is resolved by the outcome continuation below, and its post-`StartMechTravel`
+gap is resolved by the campaign continuation after that. It requires no Rust
+simulator change.
+
+## Final Cave countdown outcome boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_outcome.json`
+resolves the earlier `cave_countdown_outcome` gap. It joins the exact shipped
+Final Cave source to ten reviewed native regions, eight string anchors, four
+jump/vtable pointers, 18 instruction-start control windows, and eight direct
+call edges. For the pinned Windows build it establishes that:
+
+- BoardPlayer initializes primary outcome `+0x1900` and secondary outcome
+  `+0x1904` to pending code 2;
+- the state jump table sends state 2 through nonforced classification and state
+  0 through forced classification;
+- on the ordinary state-2 path, current turn equal to the current
+  `GetTurnLimit` writes outcome code 1, selects the Final victory route,
+  dispatches `MissionEnd`, and requests completion state 5;
+- the closed ready-to-code-1 path contains no bomb, objective, or
+  `IsEndBlocked` query;
+- a missing bomb instead queues `AddBomb` and adds two to `TurnLimit`, so bomb
+  destruction delays the reached countdown boundary rather than directly
+  selecting terminal failure; and
+- only a still-pending forced state-0 evaluation calls the exact registered
+  `Board:GetPawnCount(TEAM_MECH)` path (`TEAM_MECH == 4`), writing failure code
+  3 when that result is zero.
+
+The downstream campaign artifact maps code 3 to campaign result 2 and other
+committed results, including code 1, to result 1. Verify the executable, exact
+source, regions, strings, jump/vtable pointers, control windows, and calls with:
+
+```powershell
+python scripts/itb_observatory_final_cave_outcome.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --outcome-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_outcome.json
+```
+
+This does not predict replacement-bomb timing or coordinates. Simulator v406
+already models the exact `+2` boundary and stops before replacement
+materialization, so no Rust semantic change follows.
 
 ## Final campaign settlement boundary
 

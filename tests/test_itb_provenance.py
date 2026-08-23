@@ -5925,6 +5925,18 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_final_cave_outcome.json"
+    ] == {
+        "outcome_storage_and_callers_are_exact",
+        "final_cave_limit_writes_victory",
+        "countdown_does_not_recheck_bomb_or_objectives",
+        "missing_bomb_delays_instead_of_directly_losing",
+        "forced_zero_mech_failure_is_separate",
+        "campaign_result_join_is_exact",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_campaign_settlement.json"
     ] == {
         "start_mech_travel_initializes_native_queue",
@@ -5975,6 +5987,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_end_settlement_map",
         "validate_final_end_settlement_map_binding",
     }
+    assert implementations["src/observatory/final_cave_outcome.py"] == {
+        "build_final_cave_outcome_map",
+        "validate_final_cave_outcome_map",
+        "validate_final_cave_outcome_map_binding",
+    }
     assert implementations["src/observatory/final_campaign_settlement.py"] == {
         "build_final_campaign_settlement_map",
         "validate_final_campaign_settlement_map",
@@ -6012,6 +6029,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_end_settlement.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_outcome.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_campaign_settlement.py"
     ] == {"_parser", "main"}
     assert implementations[
@@ -6020,6 +6040,15 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert implementations[
         "scripts/itb_observatory_final_cave_map_choice.py"
     ] == {"_parser", "main"}
+    tests = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["tests"]
+    }
+    assert tests["tests/test_observatory_final_cave_outcome.py"] == {
+        "test_committed_map_closes_final_cave_countdown_outcome_boundary",
+        "test_binding_rejects_pointer_source_or_prose_drift",
+        "test_exact_local_executable_and_source_reproduce_map_when_available",
+    }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
     assert "does not explicitly reset iDamage" in facts
@@ -6036,6 +6065,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "before constructing or invoking IsEndBlocked" in facts
     assert "Board activity reason 6" in facts
     assert "cannot reach the later IsNextPhase" in facts
+    assert "current-limit readiness writes primary outcome code 1" in facts
+    assert "without a bomb, objective, or IsEndBlocked query" in facts
+    assert "TEAM_MECH value 4" in facts
+    assert (
+        "delays the queried boundary by two turns rather than directly losing"
+        in facts
+    )
     assert "resolves that post-StartMechTravel gap" in facts
     assert "4.5-second state value" in facts
     assert "common completed-battle state" in facts
@@ -6059,7 +6095,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "live campaign-settlement timing and file contents" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" in gaps
     assert "repeated native replacement cycles" in gaps
-    assert "not source proof that bomb destruction is a terminal mission loss" in gaps
+    assert "actual end-of-countdown outcome" not in gaps
+    assert "replacement materialization is unresolved" in gaps
+    assert "not because bomb destruction is a direct terminal mission loss" in gaps
 
 
 def test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model():

@@ -413,10 +413,18 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    absence of an Advanced Edition filter, the empty cave veto set, ordinary
    first-transition used-map noncollision, and two exact pre-environment RNG
    draws: `random_int(1)` advances and returns zero, then `random_int(9)` maps
-   its remainder to the nine ordered candidates. The incoming CRT state,
-   concrete later draws, nested spawn RNG, queued startup-effect settlement,
-   bomb replacement result, countdown outcome, post-`StartMechTravel` campaign
-   path, and non-Windows equivalence remain open; no speculative Rust forecast
+   its remainder to the nine ordered candidates. A third continuation resolves
+   the countdown outcome: state 2 performs nonforced classification, exact
+   current-limit readiness writes outcome code 1 without a bomb, objective, or
+   `IsEndBlocked` recheck, and only forced state 0 can write code 3 when the
+   exact registered `Board:GetPawnCount(TEAM_MECH)` result is zero. Missing-bomb
+   source handling therefore delays the reached boundary by replacing the bomb
+   and adding two turns rather than directly selecting failure. The campaign
+   continuation maps code 3 to result 2 and other committed outcomes to the
+   result-1 victory/save/profile/final-presentation route. The incoming CRT
+   state, concrete later draws, nested spawn RNG, queued startup-effect
+   settlement, replacement timing/coordinate, live campaign-settlement timing,
+   and non-Windows equivalence remain open; no speculative Rust forecast
    follows.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed

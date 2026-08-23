@@ -9050,6 +9050,10 @@
         },
         {
           "classification": "inference",
+          "statement": "The exact-build outcome continuation closes the countdown result. BoardPlayer initializes primary +0x1900 and secondary +0x1904 to pending code 2; state 2 calls nonforced classification, and current-limit readiness writes primary outcome code 1 without a bomb, objective, or IsEndBlocked query. State 0 instead calls forced classification, where the exact registered Board:GetPawnCount(TEAM_MECH) binding, with TEAM_MECH value 4, writes code 3 only for zero Mechs while the primary result remains pending. Missing-bomb Lua handling therefore delays the queried boundary by two turns rather than directly losing, while the campaign consumer maps code 3 to result 2 and committed code 1 to the result-1 victory route."
+        },
+        {
+          "classification": "inference",
           "statement": "The exact-build campaign-settlement continuation resolves that post-StartMechTravel gap. The shipped cave MissionEnd string maps to a pinned native handler that enables Board travel mode, initializes the +0x2cc0 travel vector with a 4.5-second state value, and in ordinary mode locates BigBomb and stores its coordinates. The Board update drains +0x2c50 effects before +0x2cc0 travel; once ordinary travel is empty, it constructs Board:LockBomb() followed by Board:Fade(FADE_EXPLODE)."
         },
         {
@@ -9112,6 +9116,10 @@
           "symbols": ["final_limit_bypasses_end_block", "both_final_stages_use_current_limit", "mission_end_queues_native_effect", "queued_effect_is_board_activity", "phase_handoff_waits_for_activity_clear", "final_mission_end_effects_precede_exit", "solver_boundary"]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_outcome.json",
+          "symbols": ["outcome_storage_and_callers_are_exact", "final_cave_limit_writes_victory", "countdown_does_not_recheck_bomb_or_objectives", "missing_bomb_delays_instead_of_directly_losing", "forced_zero_mech_failure_is_separate", "campaign_result_join_is_exact", "solver_boundary"]
+        },
+        {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json",
           "symbols": ["start_mech_travel_initializes_native_queue", "travel_queue_finishes_with_bomb_lock_and_fade", "campaign_terminal_predicate_is_exact", "final_campaign_bypasses_ordinary_cleanup", "campaign_manager_settles_in_order", "completed_run_saves_are_removed", "victory_profile_and_achievement_path", "profile_write_path_is_pinned", "final_victory_renderer_handoff", "solver_boundary"]
         },
@@ -9152,6 +9160,10 @@
           "symbols": ["build_final_end_settlement_map", "validate_final_end_settlement_map", "validate_final_end_settlement_map_binding"]
         },
         {
+          "path": "src/observatory/final_cave_outcome.py",
+          "symbols": ["build_final_cave_outcome_map", "validate_final_cave_outcome_map", "validate_final_cave_outcome_map_binding"]
+        },
+        {
           "path": "src/observatory/final_campaign_settlement.py",
           "symbols": ["build_final_campaign_settlement_map", "validate_final_campaign_settlement_map", "validate_final_campaign_settlement_map_binding"]
         },
@@ -9188,6 +9200,10 @@
           "symbols": ["_parser", "main"]
         },
         {
+          "path": "scripts/itb_observatory_final_cave_outcome.py",
+          "symbols": ["_parser", "main"]
+        },
+        {
           "path": "scripts/itb_observatory_final_campaign_settlement.py",
           "symbols": ["_parser", "main"]
         },
@@ -9201,11 +9217,11 @@
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, replacement timing/coordinate, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, the countdown outcome-code write and forced zero-Mech failure distinction, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, replacement timing/coordinate, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
         "Mission_Infinite inheritance, native turn and team callback order outside the pinned completion branch, native spawner construction, SpawnPawns/NextPawn behavior, concrete difficulty lookup semantics, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
-        "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
-        "Current bomb/pylon safety penalties are conservative implementation policy and are not source proof that bomb destruction is a terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, Mission_Final and Mission_Final_Cave MissionEnd effect-vector activity gating, relative callback/control-flow order, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, installed map/zone candidates, and the post-travel campaign classification/save/profile/final-victory handoff. They do not prove concrete cave initialization results, queued startup effects executing conformantly, arbitrary modified-effect cancellation, live campaign-settlement timing, OS file-operation success, or a particular completed run's bytes."
+        "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, native replacement callback time, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, repeated native replacement cycles, and BigBomb drop resolution remain untraced.",
+        "Current bomb/pylon safety penalties remain conservative because replacement materialization is unresolved, not because bomb destruction is a direct terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, outcome code 1 at the reached limit without a bomb/objective/IsEndBlocked recheck, the distinct forced zero-Mech code-3 failure, Mission_Final and Mission_Final_Cave MissionEnd effect-vector activity gating, relative callback/control-flow order, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, installed map/zone candidates, and the post-travel campaign classification/save/profile/final-victory handoff. They do not prove concrete cave initialization results, replacement timing or coordinates, queued startup effects executing conformantly, arbitrary modified-effect cancellation, live campaign-settlement timing, OS file-operation success, or a particular completed run's bytes."
       ],
       "sources": [
         {
@@ -9272,6 +9288,10 @@
         {
           "path": "tests/test_observatory_final_end_settlement.py",
           "symbols": ["test_committed_map_closes_final_end_and_effect_settlement_boundaries", "test_binding_rejects_pointer_source_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_cave_outcome.py",
+          "symbols": ["test_committed_map_closes_final_cave_countdown_outcome_boundary", "test_binding_rejects_pointer_source_or_prose_drift", "test_exact_local_executable_and_source_reproduce_map_when_available"]
         },
         {
           "path": "tests/test_observatory_final_campaign_settlement.py",
