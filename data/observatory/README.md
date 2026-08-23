@@ -778,8 +778,9 @@ python scripts/itb_observatory_final_cave_startup.py verify `
 This immutable first artifact does not select a concrete map, replay native
 RNG, prove whether `random_int(1)` advances state, resolve nested `NextPawn` or
 spawn-coordinate draws, or establish when the queued startup effect settles.
-The following artifact supersedes its first two map-choice questions; the
-remaining startup boundaries stay explicit.
+The following map-choice artifact supersedes its first two map-choice
+questions. The startup spawn-order continuation after it resolves the native
+spawn path and logical-admission facet without rewriting this first artifact.
 
 ## Final Cave map-choice boundary
 
@@ -818,3 +819,44 @@ the file hashes, so copying or reinstalling the same bytes requires
 reverification. The incoming CRT state is still absent from ordinary bridge
 state; therefore the concrete map is not forecast and the solver still takes
 a fresh settled bridge read after the stage change.
+
+## Final Cave startup spawn-order boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_startup_spawn_order.json`
+joins the immutable startup map to the exact native `SpawnPawn` overloads,
+the standard coordinate-selector map, and the effect/materialization maps. It
+binds two exact shipped Lua files, 12 reviewed native regions, two registration
+name anchors, nine instruction-start control windows, and 11 direct call
+edges. For the pinned Windows build it establishes that:
+
+- native registration maps the same `SpawnPawn` name to an explicit-point
+  wrapper and a no-point wrapper; the latter supplies `(-1,-1)`, while the
+  former preserves its parsed Point;
+- the implicit enemy path calls the exact standard coordinate selector, then
+  synchronously writes its returned Point to the pawn's logical space before
+  `Board:SpawnPawn` returns;
+- cave mountain and pylon `BlockSpawn` calls synchronously write the tile's
+  block field while `StartMission` is still constructing the effect, so those
+  writes finish before the later boss and ordinary implicit spawn calls;
+- the primary orchestrator performs its only Board master update before the
+  phase transition that dispatches `BaseStart`, with no second Board update
+  later in that pass; and
+- `StartMission` queues the combined effect and then admits the boss, while
+  `BaseStart` subsequently admits ordinary starting pawns. Boss and ordinary
+  identities and logical spaces therefore commit before the queued Mech
+  `SetSpace` scripts or rock, pylon, and bomb droppers can dispatch.
+
+Verify the executable, exact sources, region/data hashes, control windows,
+call edges, lexical source order, and primary-orchestrator call inventory with:
+
+```powershell
+python scripts/itb_observatory_final_cave_startup_spawn_order.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --spawn-order-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_spawn_order.json
+```
+
+This closes logical startup admission order, not concrete `NextPawn` results,
+selector candidates/outputs, UIDs, visual animation overlap, or wall-clock
+presentation timing. Those values still arrive through the fresh settled
+bridge read, so no Rust simulator semantic change follows.

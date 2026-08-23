@@ -9089,6 +9089,10 @@
           "statement": "Exact shipped Lua pins the startup sequence: BaseStart constructs and starts Env_Final, whose Start builds LavaPath through FindEndpoints/GetCrossPath before cave StartMission; StartMission draws the bomb tile, optional pre-bomb enemy branch, every mountain dropper, three Mech placements, every pylon dropper, and boss choice; BaseStart then runs SetupDiffMod and ordinary SpawnPawns. The immutable first startup artifact records that conditional source-level random_int/random_bool skeleton and deliberately leaves map-choice implementation, concrete outputs, random_int(1) advancement, nested NextPawn draws, and effect settlement timing to follow-up evidence."
         },
         {
+          "classification": "inference",
+          "statement": "The exact-build startup spawn-order continuation closes the logical-admission part of those spawn and settlement gaps. Native registration binds explicit-point and no-point Board:SpawnPawn overloads; the no-point wrapper supplies (-1,-1), and enemy pawn admission synchronously calls the exact standard coordinate selector before SetSpace writes the selected logical x/y. BlockSpawn synchronously writes tile+0x18 while StartMission constructs the effect. The primary orchestrator completed its only Board master update before phase transition, so the boss and later ordinary starting pawns are admitted after AddEffect queue insertion but before any queued Mech SetSpace script or rock, pylon, or bomb dropper can dispatch. This proves logical order, not concrete identities/coordinates/UIDs, visual animation overlap, or wall-clock timing, and the fresh settled bridge-read boundary remains correct without a Rust change."
+        },
+        {
           "classification": "fact",
           "statement": "The exact maps/maphelper.lua defines MAP_LIST insertion order and RandomMap directly: AddMap appends each defined name only once; RandomMap preserves that order, ignores only matt and justin, requires both the requested tag and either the requested sector or any_sector, returns an empty string for no candidates, and otherwise returns ret[random_int(#ret)+1]. It contains no Advanced Edition filter, so all five cave and four caveAE maps are eligible."
         },
@@ -9144,6 +9148,10 @@
           "symbols": ["native_startup_order", "final_cave_map_pool", "base_start_source_order", "startup_rng_skeleton", "center_assignment", "solver_boundary"]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_spawn_order.json",
+          "symbols": ["spawn_overloads_are_exact", "implicit_enemy_spawn_selects_and_commits_space", "spawn_blocks_precede_implicit_selection", "logical_spawns_precede_startup_effect_dispatch", "startup_rng_order_is_narrower", "solver_boundary"]
+        },
+        {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_map_choice.json",
           "symbols": ["random_map_is_shipped_lua", "installation_order", "all_nine_cave_maps_are_eligible", "ordinary_first_transition_has_one_attempt", "random_int_one_advances", "two_draw_map_boundary", "solver_boundary"]
         },
@@ -9196,6 +9204,10 @@
           "symbols": ["build_final_cave_startup_map", "validate_final_cave_startup_map", "validate_final_cave_startup_map_binding"]
         },
         {
+          "path": "src/observatory/final_cave_startup_spawn_order.py",
+          "symbols": ["build_final_cave_startup_spawn_order_map", "validate_final_cave_startup_spawn_order_map", "validate_final_cave_startup_spawn_order_map_binding"]
+        },
+        {
           "path": "src/observatory/final_cave_map_choice.py",
           "symbols": ["build_final_cave_map_choice_map", "validate_final_cave_map_choice_map", "validate_final_cave_map_choice_map_binding"]
         },
@@ -9244,14 +9256,18 @@
           "symbols": ["_parser", "main"]
         },
         {
+          "path": "scripts/itb_observatory_final_cave_startup_spawn_order.py",
+          "symbols": ["_parser", "main"]
+        },
+        {
           "path": "scripts/itb_observatory_final_cave_map_choice.py",
           "symbols": ["_parser", "main"]
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, the countdown outcome-code write and forced zero-Mech failure distinction, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, generic replacement callback-to-AddPawn materialization, active-animation registration, busy-until-impact ordering, semantic replacement repeat cadence, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, the replacement callback's incoming RNG state, selected coordinate/UID, wall-clock presentation duration, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
-        "Mission_Infinite inheritance, native turn and team callback order outside the pinned completion branch, native spawner construction, SpawnPawns/NextPawn behavior, concrete difficulty lookup semantics, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
-        "AddDropper's immediate complete SpaceDamage copy and AddEffect's queue insertion are exact. AddScript ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and concrete startup queue settlement still require narrower evidence. For Mission_Final's reused SpaceDamage, each earlier AddDropper record is insulated from later mutation, but every later call snapshots whatever retained iDamage Lua currently holds.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, the countdown outcome-code write and forced zero-Mech failure distinction, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, startup explicit/implicit SpawnPawn binding, synchronous BlockSpawn and logical enemy admission before queued startup-effect dispatch, generic replacement callback-to-AddPawn materialization, active-animation registration, busy-until-impact ordering, semantic replacement repeat cadence, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup identities and coordinates, startup visual animation interleave, the replacement callback's incoming RNG state, selected coordinate/UID, wall-clock presentation duration, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
+        "Mission_Infinite inheritance, native turn and team callback order outside the pinned completion branch, native spawner construction, concrete NextPawn results and candidate vectors, concrete difficulty lookup semantics, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
+        "AddDropper's immediate complete SpaceDamage copy, AddEffect's queue insertion, synchronous BlockSpawn writes, and enemy logical admission before queued startup-effect dispatch are exact. Intra-effect AddScript execution, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and visual startup presentation interleave still require narrower evidence. For Mission_Final's reused SpaceDamage, each earlier AddDropper record is insulated from later mutation, but every later call snapshots whatever retained iDamage Lua currently holds.",
         "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, callback-time replacement candidate set, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, and wall-clock drop presentation remain untraced. BigBomb drop resolution and semantic repeat ordering are now statically pinned: PylonAnimation is in the Board activity vector, remains busy before impact, and another native replacement cycle requires a later bomb loss plus a new idle callback.",
         "Current bomb/pylon safety penalties remain conservative because the concrete replacement coordinate, UID, and settled wall-clock timing are unavailable, not because materialization or repeat mechanics are unresolved or bomb destruction is a direct terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, outcome code 1 at the reached limit without a bomb/objective/IsEndBlocked recheck, the distinct forced zero-Mech code-3 failure, Mission_Final and Mission_Final_Cave effect-vector activity gating, replacement callback-to-queue order, immediate AddDropper copying, kind-4 dropper construction, active-list registration, busy-until-impact ordering, impact-time BigBomb AddPawn resolution, semantic repeat cadence, relative phase control flow, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, installed map/zone candidates, and the post-travel campaign classification/save/profile/final-victory handoff. They do not prove concrete cave initialization results, the replacement callback's incoming RNG state, selected coordinate/UID, wall-clock presentation duration, queued startup effects executing conformantly, arbitrary modified-effect cancellation, live campaign-settlement timing, OS file-operation success, or a particular completed run's bytes."
       ],
@@ -9340,6 +9356,10 @@
         {
           "path": "tests/test_observatory_final_cave_startup.py",
           "symbols": ["test_committed_map_pins_startup_pool_and_rng_skeleton_without_outputs", "test_binding_rejects_native_map_rng_or_prose_drift", "test_exact_local_build_sources_and_maps_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_cave_startup_spawn_order.py",
+          "symbols": ["test_committed_map_closes_logical_startup_spawn_order_without_rng_overclaim", "test_binding_rejects_wrapper_order_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
         },
         {
           "path": "tests/test_observatory_final_cave_map_choice.py",

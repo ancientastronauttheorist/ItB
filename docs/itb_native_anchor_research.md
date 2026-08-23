@@ -433,11 +433,18 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    its fall field is negative, and the landing update synchronously impacts
    before that busy predicate can clear. A duplicate replacement cannot be
    queued before impact, and another `+2` cycle requires a later bomb loss plus
-   a new idle callback. The incoming CRT state, concrete later draws, nested
-   spawn RNG, queued startup-effect settlement, callback-time replacement
-   candidate set, selected coordinate, UID, wall-clock presentation duration,
-   live campaign-settlement timing, and non-Windows equivalence remain open; no
-   speculative Rust forecast follows.
+   a new idle callback. A sixth continuation closes the startup's logical
+   spawn-admission seam: exact native registration distinguishes explicit and
+   implicit `SpawnPawn`; the implicit enemy path synchronously calls the
+   standard coordinate selector and commits its result through `SetSpace`;
+   `BlockSpawn` writes are synchronous; and the only Board update in that
+   orchestrator pass precedes phase transition. The boss and ordinary enemy
+   identities/spaces therefore commit before queued Mech scripts and
+   rock/pylon/bomb droppers can dispatch. The incoming CRT state, concrete
+   later identities and coordinates, visual animation interleave,
+   callback-time replacement candidate set, selected coordinate, UID,
+   wall-clock presentation duration, live campaign-settlement timing, and
+   non-Windows equivalence remain open; no speculative Rust forecast follows.
 8. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

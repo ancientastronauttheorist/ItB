@@ -5986,6 +5986,18 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "final_cave_startup_spawn_order.json"
+    ] == {
+        "spawn_overloads_are_exact",
+        "implicit_enemy_spawn_selects_and_commits_space",
+        "spawn_blocks_precede_implicit_selection",
+        "logical_spawns_precede_startup_effect_dispatch",
+        "startup_rng_order_is_narrower",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_map_choice.json"
     ] == {
         "random_map_is_shipped_lua", "installation_order",
@@ -6040,6 +6052,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_startup_map",
         "validate_final_cave_startup_map_binding",
     }
+    assert implementations[
+        "src/observatory/final_cave_startup_spawn_order.py"
+    ] == {
+        "build_final_cave_startup_spawn_order_map",
+        "validate_final_cave_startup_spawn_order_map",
+        "validate_final_cave_startup_spawn_order_map_binding",
+    }
     assert implementations["src/observatory/final_cave_map_choice.py"] == {
         "build_final_cave_map_choice_map",
         "validate_final_cave_map_choice_map",
@@ -6082,6 +6101,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_startup.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_startup_spawn_order.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_map_choice.py"
     ] == {"_parser", "main"}
     tests = {
@@ -6104,6 +6126,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "test_committed_map_closes_semantic_repeat_cadence_without_rng_overclaim",
         "test_binding_rejects_vtable_source_or_prose_drift",
         "test_exact_local_executable_and_source_reproduce_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_final_cave_startup_spawn_order.py"
+    ] == {
+        "test_committed_map_closes_logical_startup_spawn_order_without_rng_overclaim",
+        "test_binding_rejects_wrapper_order_or_prose_drift",
+        "test_exact_local_executable_and_sources_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
@@ -6144,6 +6173,10 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "map selection, map loading/AddMap" in facts
     assert "exactly nine final_cave-tagged maps" in facts
     assert "24 source-reachable center assignments" in facts
+    assert "binds explicit-point and no-point Board:SpawnPawn overloads" in facts
+    assert "synchronously calls the exact standard coordinate selector" in facts
+    assert "before any queued Mech SetSpace script" in facts
+    assert "fresh settled bridge-read boundary remains correct" in facts
     assert "contains no Advanced Edition filter" in facts
     assert "FindFirstFileA and FindNextFileA" in facts
     assert "exactly one RandomMap attempt" in facts
@@ -6153,6 +6186,10 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "Env_Final records cover exact current bridge selections" in gaps
     assert "exact-build native maps now close the ordinary turn-limit" in gaps
     assert "Incoming pre-map-draw CRT state" in gaps
+    assert "startup explicit/implicit SpawnPawn binding" in gaps
+    assert "startup visual animation interleave" in gaps
+    assert "SpawnPawns/NextPawn behavior" not in gaps
+    assert "enemy logical admission before queued startup-effect dispatch" in gaps
     assert "concrete selected map" in gaps
     assert "post-StartMechTravel campaign settlement" not in gaps
     assert "live campaign-settlement timing and file contents" in gaps

@@ -474,6 +474,10 @@ Ghidra review plus the PE byte/call verifier now map and pin:
 - the continuation from `CreateNextPhase` through map selection/loading and
   `BaseStart`, joined to the exact nine-map cave pool and shipped Lua startup
   RNG-call skeleton; and
+- the cave startup's native admission order: explicit versus implicit
+  `SpawnPawn` registration, implicit standard-selector entry, synchronous
+  logical `SetSpace`, synchronous `BlockSpawn`, and boss/ordinary admission
+  before the queued Mech/dropper effect can dispatch; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -506,7 +510,7 @@ The remaining native priorities are now narrower:
    ordinary team handling, Road Runner, and Massive Water are complete; corpse
    classification and `AddMove` step/scheduler effects remain open.
 3. Resolve the pre-map-draw CRT state, concrete later cave startup draws,
-   queued startup-effect settlement, and the replacement callback's incoming
+   startup presentation interleave, and the replacement callback's incoming
    RNG state, selected coordinate/UID, and wall-clock presentation duration.
    The ordinary Final end trigger, countdown outcome, `MissionEnd` activity
    gate, and post-`StartMechTravel` campaign-victory path are now exact.
@@ -523,6 +527,11 @@ The remaining native priorities are now narrower:
    synchronous impact constructs and adds `BigBomb`, and cannot duplicate
    before impact. A copied or reinstalled map directory must revalidate its
    filesystem order even when all content hashes match.
+   Startup logical order itself is now exact: synchronous spawn-block writes
+   precede the boss/ordinary implicit selectors, each selected point is
+   committed before its Lua call returns, and queued Mech/dropper records
+   cannot dispatch until a later Board pass. Only concrete outputs and visual
+   timing remain, not the native admission path.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
@@ -693,8 +702,11 @@ campaign settlement is pinned through the result-1 victory presentation.
 Replacement-bomb construction and impact-time `BigBomb` materialization are
 now pinned, as is semantic repeat cadence: the active Pylon holds `IsBusy`
 until synchronous impact, so another replacement cycle requires a later bomb
-loss. Concrete cave startup draws and the replacement callback's incoming RNG
-state, selected coordinate/UID, and wall-clock presentation duration remain
+loss. Cave startup logical admission is also pinned: block masks are written
+synchronously, then boss and ordinary enemy identities/spaces commit before
+the queued Mech moves and dropper effects can dispatch. Concrete cave startup
+draws, visual presentation interleave, and the replacement callback's incoming
+RNG state, selected coordinate/UID, and wall-clock presentation duration remain
 deliberately unmodeled; simulator v406 still stops for a fresh settled bridge
 read.
 
