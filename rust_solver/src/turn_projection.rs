@@ -29,6 +29,8 @@ use crate::board::{
     Board,
     Unit,
     UnitFlags,
+    VOLCANO_LAVA,
+    VOLCANO_ROCKS,
 };
 use crate::enemy::{
     apply_spawn_blocking,
@@ -706,6 +708,14 @@ pub(crate) fn advance_environment_warning(board: &mut Board) {
     board.env_danger_kill = 0;
     board.env_danger_flying_immune = 0;
     board.env_danger_acid = 0;
+    // Env_Volcano's next selection consumes native random_removal calls. The
+    // current ordered payload is exact, but must not masquerade as a forecast
+    // for the next turn after it has resolved.
+    board.env_volcano_mode = 0;
+    board.env_volcano_phase = 0;
+    board.env_volcano_count = 0;
+    board.env_volcano_locations = [0; 4];
+    board.env_volcano_lava_start = 0;
 }
 
 /// Recover Env_Tides.Index from a legacy visible warning mask.
@@ -1217,24 +1227,49 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         let (x, y) = idx_to_xy(bit_idx);
         mission_mountain_tiles.push(vec![x, y]);
     }
+    let exact_volcano = board.mission_id == "Mission_Final"
+        && matches!(board.env_volcano_mode, VOLCANO_ROCKS | VOLCANO_LAVA)
+        && board.env_volcano_count > 0;
+    let mut volcano_locations: Vec<Vec<u8>> = Vec::new();
+    if exact_volcano {
+        for &idx in board
+            .env_volcano_locations
+            .iter()
+            .take(board.env_volcano_count.min(4) as usize)
+        {
+            let (x, y) = idx_to_xy(idx as usize);
+            volcano_locations.push(vec![x, y]);
+        }
+    }
     let mut env_danger_v2: Vec<Vec<u8>> = Vec::new();
-    for idx in 0..64usize {
-        let bit = 1u64 << idx;
-        if (board.env_danger | board.env_smoke) & bit != 0 {
-            let (x, y) = idx_to_xy(idx);
-            let kill_int: u8 = if board.env_smoke & bit != 0 {
-                0
-            } else if board.env_danger_kill & bit != 0 {
-                1
-            } else {
-                0
-            };
-            // 5th field: flying_immune (sim v19+). 1 = Tidal/Cataclysm/Seismic
-            // (effectively-flying spared); 0 = Air Strike / Lightning / non-
-            // lethal hazard. Always 0 unless the lethal bit is set.
-            let flying_immune: u8 = if kill_int != 0
-                && (board.env_danger_flying_immune & bit != 0) { 1 } else { 0 };
-            env_danger_v2.push(vec![x, y, 1, kill_int, flying_immune]);
+    if exact_volcano {
+        let (damage, kill_int) = if board.env_volcano_mode == VOLCANO_ROCKS {
+            (1, 1)
+        } else {
+            (0, 0)
+        };
+        for point in &volcano_locations {
+            env_danger_v2.push(vec![point[0], point[1], damage, kill_int, 0]);
+        }
+    } else {
+        for idx in 0..64usize {
+            let bit = 1u64 << idx;
+            if (board.env_danger | board.env_smoke) & bit != 0 {
+                let (x, y) = idx_to_xy(idx);
+                let kill_int: u8 = if board.env_smoke & bit != 0 {
+                    0
+                } else if board.env_danger_kill & bit != 0 {
+                    1
+                } else {
+                    0
+                };
+                // 5th field: flying_immune (sim v19+). 1 = Tidal/Cataclysm/Seismic
+                // (effectively-flying spared); 0 = Air Strike / Lightning / non-
+                // lethal hazard. Always 0 unless the lethal bit is set.
+                let flying_immune: u8 = if kill_int != 0
+                    && (board.env_danger_flying_immune & bit != 0) { 1 } else { 0 };
+                env_danger_v2.push(vec![x, y, 1, kill_int, flying_immune]);
+            }
         }
     }
     // Option C: enable pseudo_threat_eval on the projected board so the
@@ -1254,7 +1289,9 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         "environment_tides_index": board.env_tides_index,
         "environment_tides_planned": board.env_tides_planned,
         "environment_danger_v2": env_danger_v2,
-        "env_type":              if board.env_danger_acid != 0 || board.mission_id == "Mission_NanoStorm" {
+        "env_type":              if exact_volcano {
+            "volcano"
+        } else if board.env_danger_acid != 0 || board.mission_id == "Mission_NanoStorm" {
             "nanostorm"
         } else if board.env_smoke != 0 || board.mission_id == "Mission_Sandstorm" {
             "sandstorm"
@@ -1289,6 +1326,24 @@ pub fn board_to_json(board: &Board, spawn_points: &[(u8, u8)]) -> String {
         out["mission_pistons"] = json!({
             "complete": true,
             "actions": actions,
+        });
+    }
+    if exact_volcano {
+        let mut lava_start: Vec<Vec<u8>> = Vec::new();
+        if board.env_volcano_lava_start & 1 != 0 {
+            lava_start.push(vec![2, 1]);
+        }
+        if board.env_volcano_lava_start & 2 != 0 {
+            lava_start.push(vec![1, 2]);
+        }
+        out["environment_danger"] = json!(volcano_locations.clone());
+        out["mission_final_volcano"] = json!({
+            "complete": true,
+            "mode": board.env_volcano_mode,
+            "phase": board.env_volcano_phase,
+            "lava_start": lava_start,
+            "locations": volcano_locations.clone(),
+            "planned": volcano_locations,
         });
     }
     serde_json::to_string(&out).unwrap_or_else(|_| "{}".to_string())
@@ -1724,6 +1779,72 @@ mod tests {
             .as_array()
             .unwrap()
             .is_empty());
+    }
+
+    #[test]
+    fn test_mission_final_volcano_roundtrip_resolves_current_path_then_clears_rng_state() {
+        let mut b = Board::default();
+        b.mission_id = "Mission_Final".to_string();
+        b.current_turn = 1;
+        b.env_volcano_mode = VOLCANO_LAVA;
+        b.env_volcano_phase = 1;
+        b.env_volcano_count = 3;
+        b.env_volcano_locations = [
+            xy_to_idx(2, 1) as u8,
+            xy_to_idx(3, 1) as u8,
+            xy_to_idx(3, 2) as u8,
+            0,
+        ];
+        b.env_volcano_lava_start = 2;
+        for &(x, y) in &[(2u8, 1u8), (3, 1), (3, 2)] {
+            let bit = 1u64 << xy_to_idx(x, y);
+            b.env_danger |= bit;
+            b.env_danger_kill |= bit;
+        }
+
+        let current_json = board_to_json(&b, &[]);
+        let current: serde_json::Value = serde_json::from_str(&current_json).unwrap();
+        assert_eq!(current["env_type"], "volcano");
+        assert_eq!(current["environment_danger"], serde_json::json!([
+            [2, 1], [3, 1], [3, 2]
+        ]));
+        assert_eq!(current["environment_danger_v2"], serde_json::json!([
+            [2, 1, 0, 0, 0], [3, 1, 0, 0, 0], [3, 2, 0, 0, 0]
+        ]));
+        assert_eq!(current["mission_final_volcano"], serde_json::json!({
+            "complete": true,
+            "mode": VOLCANO_LAVA,
+            "phase": 1,
+            "lava_start": [[1, 2]],
+            "locations": [[2, 1], [3, 1], [3, 2]],
+            "planned": [[2, 1], [3, 1], [3, 2]],
+        }));
+
+        let (roundtrip, ..) = board_from_json(&current_json)
+            .expect("exact ordered Volcano state must round-trip");
+        assert_eq!(roundtrip.env_volcano_mode, VOLCANO_LAVA);
+        assert_eq!(roundtrip.env_volcano_phase, 1);
+        assert_eq!(roundtrip.env_volcano_count, 3);
+        assert_eq!(roundtrip.env_volcano_locations, b.env_volcano_locations);
+        assert_eq!(roundtrip.env_volcano_lava_start, 2);
+
+        let (projected, _) = project_plan(&roundtrip, &[], &[], &WEAPONS);
+        for &(x, y) in &[(2u8, 1u8), (3, 1), (3, 2)] {
+            assert_eq!(projected.tile(x, y).terrain, Terrain::Lava);
+        }
+        assert_eq!(projected.current_turn, 2);
+        assert_eq!(projected.env_danger, 0);
+        assert_eq!(projected.env_danger_kill, 0);
+        assert_eq!(projected.env_volcano_mode, 0);
+        assert_eq!(projected.env_volcano_phase, 0);
+        assert_eq!(projected.env_volcano_count, 0);
+
+        let projected_json: serde_json::Value = serde_json::from_str(
+            &board_to_json(&projected, &[]),
+        ).unwrap();
+        assert!(projected_json["mission_final_volcano"].is_null());
+        assert!(projected_json["environment_danger_v2"]
+            .as_array().unwrap().is_empty());
     }
 
     #[test]

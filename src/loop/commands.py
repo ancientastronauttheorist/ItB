@@ -37,7 +37,13 @@ from src.capture.save_parser import (
     parse_lua_table,
     SAVE_DIR,
 )
-from src.model.board import Board, Unit
+from src.model.board import (
+    Board,
+    Unit,
+    VOLCANO_LAVA,
+    VOLCANO_ROCKS,
+    validate_mission_final_volcano_payload,
+)
 from src.model.pawn_stats import get_pawn_stats
 from src.model.weapons import get_weapon_name
 from src.solver.solver import MechAction, Solution, replay_solution
@@ -4305,6 +4311,7 @@ def _projected_post_player_board_data(
             "environment_freeze",
             "environment_danger_v2",
             "environment_danger",
+            "mission_final_volcano",
             "teleporter_pairs",
         ):
             if key in bridge_data:
@@ -9460,7 +9467,6 @@ _MISSION_PISTON_TYPES = frozenset({
 _MISSION_NATIVE_FORECAST_GAPS = {
     "Mission_BlobBoss": "mission_blob_boss_five_death_counter_unmodeled",
     "Mission_Fence": "mission_fence_edge_walls_unmodeled",
-    "Mission_Final": "mission_final_volcano_mode_and_lava_conversion_unmodeled",
     "Mission_Laser": "mission_laser_queued_beam_unmodeled",
     "Mission_Respawn": "mission_respawn_resurrection_unmodeled",
     "Mission_SpiderBoss": "mission_spider_boss_recurring_egg_spawns_unmodeled",
@@ -9639,6 +9645,152 @@ def _mission_wind_payload_block(board, bridge_data: dict | None) -> dict | None:
             "masks containing two complete columns selected from 1..5, and "
             "exact nonlethal v2 entries [x,y,1,0,0] before solving or "
             "delivering End Turn."
+        ),
+    }
+
+
+def _mission_final_volcano_payload_block(
+    board,
+    bridge_data: dict | None,
+) -> dict | None:
+    """Fail closed unless the current surface-final Volcano payload is exact."""
+    mission_id = ""
+    if isinstance(bridge_data, dict):
+        mission_id = str(bridge_data.get("mission_id") or "")
+    mission_id = mission_id or str(getattr(board, "mission_id", "") or "")
+    if mission_id != "Mission_Final":
+        return None
+    if (
+        isinstance(bridge_data, dict)
+        and bridge_data.get("phase") != "combat_player"
+    ):
+        return None
+
+    gaps: list[dict] = []
+    observed: dict = {}
+    if not isinstance(bridge_data, dict):
+        gaps.append({"kind": "mission_final_volcano_live_payload_missing"})
+        bridge_data = {}
+
+    env_type = bridge_data.get("env_type")
+    observed["env_type"] = env_type
+    if env_type != "volcano":
+        gaps.append({
+            "kind": "mission_final_volcano_environment_identity_invalid",
+            "observed_env_type": env_type,
+            "required_env_type": "volcano",
+        })
+
+    volcano = validate_mission_final_volcano_payload(bridge_data)
+    raw_volcano = bridge_data.get("mission_final_volcano")
+    observed["mission_final_volcano"] = raw_volcano
+    if volcano is None:
+        gaps.append({
+            "kind": "mission_final_volcano_state_invalid",
+            "required": (
+                "complete phase/mode, exact LavaStart remainder, matching "
+                "ordered Locations/Planned, and source-reachable geometry"
+            ),
+        })
+    else:
+        turn = bridge_data.get("turn")
+        observed["turn"] = turn
+        if type(turn) is not int or turn != volcano["phase"]:
+            gaps.append({
+                "kind": "mission_final_volcano_turn_phase_mismatch",
+                "observed_turn": turn,
+                "observed_phase": volcano["phase"],
+                "required": "combat turn equals Env_Volcano.Phase (1..4)",
+            })
+
+        expected_positions = set(volcano["locations"])
+        expected_encoding = (
+            [1, 1, 0]
+            if volcano["mode"] == VOLCANO_ROCKS
+            else [0, 0, 0]
+        )
+        masks: dict[str, set[tuple[int, int]]] = {}
+        for field in ("environment_danger", "environment_danger_v2"):
+            raw_mask = bridge_data.get(field)
+            observed[f"{field}_count"] = (
+                len(raw_mask) if isinstance(raw_mask, list) else None
+            )
+            if not isinstance(raw_mask, list):
+                gaps.append({
+                    "kind": "mission_final_volcano_warning_mask_missing",
+                    "field": field,
+                })
+                continue
+            positions: list[tuple[int, int]] = []
+            malformed: list[int] = []
+            invalid_encoding: list[int] = []
+            for index, entry in enumerate(raw_mask):
+                exact_length = 2 if field == "environment_danger" else 5
+                if not (
+                    isinstance(entry, (list, tuple))
+                    and len(entry) == exact_length
+                    and type(entry[0]) is int
+                    and type(entry[1]) is int
+                    and 0 <= entry[0] < 8
+                    and 0 <= entry[1] < 8
+                ):
+                    malformed.append(index)
+                    continue
+                positions.append((entry[0], entry[1]))
+                if field == "environment_danger_v2" and not (
+                    all(type(value) is int for value in entry[2:])
+                    and list(entry[2:]) == expected_encoding
+                ):
+                    invalid_encoding.append(index)
+
+            position_set = set(positions)
+            if (
+                malformed
+                or invalid_encoding
+                or len(positions) != len(position_set)
+                or position_set != expected_positions
+            ):
+                gaps.append({
+                    "kind": "mission_final_volcano_warning_mask_invalid",
+                    "field": field,
+                    "malformed_entry_indexes": malformed,
+                    "invalid_encoding_entry_indexes": invalid_encoding,
+                    "duplicate_count": len(positions) - len(position_set),
+                    "observed_positions": [list(point) for point in sorted(position_set)],
+                    "required_positions": [list(point) for point in sorted(expected_positions)],
+                    "required_v2_encoding": (
+                        "[x,y,1,1,0]" if volcano["mode"] == VOLCANO_ROCKS
+                        else "[x,y,0,0,0]"
+                    ),
+                })
+            masks[field] = position_set
+
+        if (
+            "environment_danger" in masks
+            and "environment_danger_v2" in masks
+            and masks["environment_danger"] != masks["environment_danger_v2"]
+        ):
+            gaps.append({
+                "kind": "mission_final_volcano_warning_masks_disagree",
+            })
+
+    if not gaps:
+        return None
+    return {
+        "error": "RESEARCH_REQUIRED",
+        "requires_research": True,
+        "blocking": True,
+        "non_overridable": True,
+        "reason": "mission_final_volcano_payload_incomplete",
+        "mission_id": mission_id,
+        "forecast_complete": False,
+        "forecast_gaps": gaps,
+        "observed_volcano_payload": observed,
+        "next": (
+            "Refresh the live bridge and require exact Mission_Final "
+            "Env_Volcano phase/mode, LavaStart remainder, ordered selected "
+            "locations, matching warning masks, and mode-specific v2 encoding "
+            "before solving or delivering End Turn."
         ),
     }
 
@@ -9854,6 +10006,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     if wind_payload_gate is not None:
         _print_result(wind_payload_gate)
         return wind_payload_gate
+
+    volcano_payload_gate = _mission_final_volcano_payload_block(
+        board,
+        bridge_data,
+    )
+    if volcano_payload_gate is not None:
+        _print_result(volcano_payload_gate)
+        return volcano_payload_gate
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)
     if piston_gate is not None:
@@ -13510,6 +13670,11 @@ def _held_end_turn_bridge_checkpoint_schema_error(
         danger_v2_positions.append(point)
     if len(danger_v2_positions) != len(set(danger_v2_positions)):
         return "checkpoint_environment_danger_v2_duplicate"
+    if (
+        data.get("mission_id") == "Mission_Final"
+        and validate_mission_final_volcano_payload(data) is None
+    ):
+        return "checkpoint_mission_final_volcano_invalid"
 
     teleporter_pairs = data.get("teleporter_pairs", [])
     if not isinstance(teleporter_pairs, list):
@@ -14305,6 +14470,7 @@ def _held_end_turn_post_player_parity_error(
         "grid_power_max",
         "env_type",
         "environment_wind_dir",
+        "mission_final_volcano",
         "is_infinite_spawn",
         "remaining_spawns",
         "total_turns",
@@ -14563,6 +14729,26 @@ def _held_end_turn_safety_block_result(
             observed_wind_payload=wind_payload_gate["observed_wind_payload"],
             mission_wind_payload=wind_payload_gate,
             next_step=wind_payload_gate["next"],
+        )
+
+    volcano_payload_gate = _mission_final_volcano_payload_block(
+        board,
+        bridge_data,
+    )
+    if volcano_payload_gate is not None:
+        return _blocked(
+            "held_end_turn_mission_final_volcano_payload_incomplete",
+            error=volcano_payload_gate["error"],
+            requires_research=volcano_payload_gate["requires_research"],
+            non_overridable=volcano_payload_gate["non_overridable"],
+            mission_id=volcano_payload_gate["mission_id"],
+            forecast_complete=volcano_payload_gate["forecast_complete"],
+            forecast_gaps=volcano_payload_gate["forecast_gaps"],
+            observed_volcano_payload=(
+                volcano_payload_gate["observed_volcano_payload"]
+            ),
+            mission_final_volcano_payload=volcano_payload_gate,
+            next_step=volcano_payload_gate["next"],
         )
 
     piston_gate = _mission_piston_forecast_block(board, bridge_data)

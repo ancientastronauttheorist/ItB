@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "kind": "historical_git_mission_final_volcano_corroboration",
+  "evidence_scope": {
+    "live_recording_build_identity": "not recorded by the historical board schema",
+    "source_build": {
+      "platform": "windows",
+      "build_id": "13725832",
+      "env_volcano_sha256": "e3499feaaf71d01a78bd649915165ec1c6713d20baa39bb2ac12db7bb787ea16",
+      "env_attack_sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec"
+    },
+    "interpretation": "Mode labels are inferred by joining the exact four-phase source contract to the observed warning aftermath. The historical bridge did not export Mode, Phase, LavaStart, or ordered Locations and mislabeled the live environment as cataclysm_or_seismic."
+  },
+  "runs": [
+    {
+      "git_commit": "0fcc0c663e505b1fd269c0eca95a2a6792fc7607",
+      "run_id": "20260430_230740_117",
+      "mission_index": 4,
+      "master_seed": 125574395,
+      "records": [
+        {
+          "turn": 1,
+          "mode": "lava",
+          "warning": [[1, 2], [2, 2], [2, 3], [2, 4]],
+          "next_turn_terrain_id_3_additions": [[1, 2], [2, 2], [2, 3], [2, 4]],
+          "path": "recordings/20260430_230740_117/m04_turn_01_board.json",
+          "git_blob_oid": "6ff3808d9c03d33b387241f109c34e9dccfe670d"
+        },
+        {
+          "turn": 2,
+          "mode": "rocks",
+          "warning": [[3, 2], [6, 3], [3, 4], [4, 4]],
+          "next_turn_fire_tiles_include": [[3, 2], [6, 3], [3, 4], [4, 4]],
+          "path": "recordings/20260430_230740_117/m04_turn_02_board.json",
+          "git_blob_oid": "f33af5b3439ea95bc69db57b1ec601bd67d2c726"
+        },
+        {
+          "turn": 3,
+          "mode": "lava",
+          "warning": [[2, 1], [3, 1], [3, 2], [4, 2]],
+          "next_turn_terrain_id_3_additions": [[2, 1], [3, 1], [3, 2], [4, 2]],
+          "path": "recordings/20260430_230740_117/m04_turn_03_board.json",
+          "git_blob_oid": "400170a23a43ba0f80f223b45eaa624bae44f8e8"
+        },
+        {
+          "turn": 4,
+          "mode": "rocks",
+          "warning": [[4, 1], [3, 3], [1, 4], [4, 5]],
+          "aftermath": "mission phase handoff; no same-stage next-turn board",
+          "path": "recordings/20260430_230740_117/m04_turn_04_board.json",
+          "git_blob_oid": "6ea1ee57164f1051ffb3f0b4ae42bee7b71c70de"
+        }
+      ]
+    },
+    {
+      "git_commit": "8ef97924c9f6702bfabcbf025b5da125f992625c",
+      "run_id": "20260506_114649_974",
+      "mission_index": 25,
+      "master_seed": 979832553,
+      "records": [
+        {
+          "turn": 1,
+          "mode": "lava",
+          "warning": [[2, 1], [3, 1], [3, 2], [3, 3]],
+          "next_turn_terrain_id_3_additions": [[2, 1], [3, 1], [3, 2], [3, 3]],
+          "path": "recordings/20260506_114649_974/m25_turn_01_board.json",
+          "git_blob_oid": "fddbac087c556cd75c675b267029ac2397cde603"
+        },
+        {
+          "turn": 2,
+          "mode": "rocks",
+          "warning": [[2, 3], [6, 3], [3, 5], [6, 5]],
+          "next_turn_fire_tiles_include": [[2, 3], [6, 3], [3, 5], [6, 5]],
+          "queued_enemy_killed_before_attack": {
+            "uid": 751,
+            "type": "Scarab2",
+            "tile": [6, 5],
+            "player_plan_left_alive": true,
+            "next_turn_present": false
+          },
+          "path": "recordings/20260506_114649_974/m25_turn_02_board.json",
+          "git_blob_oid": "2a6a7cec854393854a237f74c3c0c12db9954fd5",
+          "solve_path": "recordings/20260506_114649_974/m25_turn_02_solve.json",
+          "solve_git_blob_oid": "114c922d55218492f9295440a97d1e0ed6c99b2d"
+        },
+        {
+          "turn": 3,
+          "mode": "lava",
+          "warning": [[1, 2], [1, 3], [2, 3], [2, 4]],
+          "next_turn_terrain_id_3_additions": [[1, 2], [1, 3], [2, 3], [2, 4]],
+          "path": "recordings/20260506_114649_974/m25_turn_03_board.json",
+          "git_blob_oid": "34ed9dc0e6e708b31b2b114ca17054120c666954"
+        },
+        {
+          "turn": 4,
+          "mode": "rocks",
+          "warning": [[5, 1], [2, 2], [1, 4], [4, 5]],
+          "aftermath": "mission phase handoff; no same-stage next-turn board",
+          "path": "recordings/20260506_114649_974/m25_turn_04_board.json",
+          "git_blob_oid": "e3361f2b4fdcd8d6e77eba22057409544d8a1404"
+        }
+      ]
+    }
+  ],
+  "conclusions": [
+    "Both independent live runs expose the source-constrained Lava, Rocks, Lava, Rocks warning cycle.",
+    "All four observed Lava warning paths become persistent terrain-id-3 tiles on the following board; the historical bridge serialized that final-island terrain as water.",
+    "Both observed Rocks warning sets become Fire tiles on the following board.",
+    "In the second run, the turn-two Rock on (6,5) destroys queued Scarab2 uid 751 before its attack; the recorded player plan leaves that pawn alive before End Turn."
+  ],
+  "limitations": [
+    "The historical recording schema does not attest executable, depot, scripts-revision, or map-revision identity, so these runs corroborate but do not build-key the current Windows source inventory.",
+    "The old bridge warning order is not treated as proof of native Locations order because it did not export the environment list atomically.",
+    "No historical warning placed a Massive, flying, Shielded, Frozen, Building, Mountain, Pod, or corpse edge case on Lava; those rules remain source/general-terrain-derived simulator contracts with focused tests.",
+    "The phase-four aftermath is the stage handoff, so neither run observes a fifth selection or an empty LavaStart call."
+  ]
+}

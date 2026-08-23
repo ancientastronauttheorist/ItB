@@ -66,6 +66,10 @@ pub struct JsonInput {
     /// tiles are retained for safety/projection, but no native scheduler slot
     /// is inferred from them.
     pub mission_pistons: Option<JsonMissionPistons>,
+    /// Exact Mission_Final surface Env_Volcano state after native selection.
+    /// Locations/Planned retain source order; LavaStart is the remaining
+    /// two-point selection pool.
+    pub mission_final_volcano: Option<JsonMissionFinalVolcano>,
     /// "Kill at least N enemies" target. Generic kill bonuses come from
     /// mission:GetKillBonus(); Mission_AcidTank is fixed at 4 acid kills.
     /// Missing / 0 -> no kill target on this mission; evaluator's step-function
@@ -421,6 +425,117 @@ pub struct JsonPistonAction {
     pub front: Option<Vec<i64>>,
 }
 
+#[derive(Deserialize)]
+pub struct JsonMissionFinalVolcano {
+    pub complete: Option<bool>,
+    pub mode: Option<u8>,
+    pub phase: Option<u8>,
+    pub lava_start: Option<Vec<Vec<i64>>>,
+    pub locations: Option<Vec<Vec<i64>>>,
+    pub planned: Option<Vec<Vec<i64>>>,
+}
+
+fn strict_volcano_points(
+    raw: &Option<Vec<Vec<i64>>>,
+    maximum: usize,
+) -> Option<Vec<(u8, u8)>> {
+    let raw = raw.as_ref()?;
+    if raw.len() > maximum {
+        return None;
+    }
+    let mut points = Vec::with_capacity(raw.len());
+    for point in raw {
+        if point.len() != 2 || !(0..8).contains(&point[0]) || !(0..8).contains(&point[1]) {
+            return None;
+        }
+        let point = (point[0] as u8, point[1] as u8);
+        if points.contains(&point) {
+            return None;
+        }
+        points.push(point);
+    }
+    Some(points)
+}
+
+fn exact_mission_final_volcano(
+    input: &JsonInput,
+) -> Option<(u8, u8, u8, [u8; 4], u8)> {
+    if input.mission_id.as_deref() != Some("Mission_Final") {
+        return None;
+    }
+    let payload = input.mission_final_volcano.as_ref()?;
+    if payload.complete != Some(true) {
+        return None;
+    }
+    let mode = payload.mode?;
+    let phase = payload.phase?;
+    if !matches!(phase, 1..=4)
+        || !matches!(mode, VOLCANO_ROCKS | VOLCANO_LAVA)
+        || mode != if matches!(phase, 1 | 3) { VOLCANO_LAVA } else { VOLCANO_ROCKS }
+    {
+        return None;
+    }
+
+    let lava_start = strict_volcano_points(&payload.lava_start, 2)?;
+    let locations = strict_volcano_points(&payload.locations, 4)?;
+    let planned = strict_volcano_points(&payload.planned, 4)?;
+    if locations.is_empty() || locations != planned {
+        return None;
+    }
+
+    let starts = [(2u8, 1u8), (1u8, 2u8)];
+    if lava_start.iter().any(|point| !starts.contains(point))
+        || lava_start.len() != if matches!(phase, 1 | 2) { 1 } else { 0 }
+    {
+        return None;
+    }
+
+    if mode == VOLCANO_LAVA {
+        if !starts.contains(&locations[0]) {
+            return None;
+        }
+        if phase == 1 {
+            let mut used_and_remaining = lava_start.clone();
+            used_and_remaining.push(locations[0]);
+            used_and_remaining.sort_unstable();
+            let mut expected = starts.to_vec();
+            expected.sort_unstable();
+            if used_and_remaining != expected {
+                return None;
+            }
+        }
+        if locations.windows(2).any(|pair| {
+            let dx = pair[1].0 as i8 - pair[0].0 as i8;
+            let dy = pair[1].1 as i8 - pair[0].1 as i8;
+            !matches!((dx, dy), (1, 0) | (0, 1))
+        }) {
+            return None;
+        }
+    } else {
+        let mut last_quarter: i8 = -1;
+        for &(x, y) in &locations {
+            if !(1..=6).contains(&x) || !(1..=6).contains(&y) || (x, y) == (1, 1) {
+                return None;
+            }
+            let quarter = (if x >= 4 { 2 } else { 0 }) + if y >= 4 { 1 } else { 0 };
+            if quarter <= last_quarter {
+                return None;
+            }
+            last_quarter = quarter;
+        }
+    }
+
+    let mut ordered = [0u8; 4];
+    for (index, &(x, y)) in locations.iter().enumerate() {
+        ordered[index] = xy_to_idx(x, y) as u8;
+    }
+    let mut lava_start_mask = 0u8;
+    for point in lava_start {
+        lava_start_mask |= if point == starts[0] { 1 } else { 2 };
+    }
+    Some((mode, phase, locations.len() as u8, ordered, lava_start_mask))
+}
+
 fn known_void_shock_immune_type(type_name: &str) -> bool {
     matches!(
         type_name,
@@ -760,6 +875,31 @@ pub fn board_from_json(json_str: &str)
     } else {
         -1
     };
+
+    if let Some((mode, phase, count, locations, lava_start)) =
+        exact_mission_final_volcano(&input)
+    {
+        board.env_volcano_mode = mode;
+        board.env_volcano_phase = phase;
+        board.env_volcano_count = count;
+        board.env_volcano_locations = locations;
+        board.env_volcano_lava_start = lava_start;
+
+        let mut volcano_mask = 0u64;
+        for &tile_idx in locations.iter().take(count as usize) {
+            volcano_mask |= 1u64 << tile_idx;
+        }
+        board.env_danger = volcano_mask;
+        // Both Rocks and Lava are lethal for ordinary grounded units. The
+        // dedicated enemy-phase path distinguishes Lava's Massive/flight
+        // survivors and permanent terrain conversion.
+        board.env_danger_kill = volcano_mask;
+        board.env_danger_flying_immune = 0;
+        board.env_danger_acid = 0;
+        board.env_smoke = 0;
+        board.env_wind = 0;
+        board.env_wind_dir = -1;
+    }
 
     // Ice Storm freeze tiles. Separate channel from env_danger — these tiles
     // apply Frozen=true to units at start of enemy turn, no HP damage.
@@ -1821,6 +1961,45 @@ mod tests {
         let (board, ..) = board_from_json(empty).expect("complete empty state parses");
         assert!(board.mission_pistons_known);
         assert!(board.mission_piston_actions.is_empty());
+    }
+
+    #[test]
+    fn test_mission_final_volcano_requires_source_reachable_complete_state() {
+        let valid = r#"{
+            "mission_id":"Mission_Final","env_type":"volcano",
+            "mission_final_volcano":{
+                "complete":true,"mode":2,"phase":1,
+                "lava_start":[[1,2]],
+                "locations":[[2,1],[3,1],[3,2]],
+                "planned":[[2,1],[3,1],[3,2]]
+            },
+            "environment_danger":[[2,1],[3,1],[3,2]],
+            "environment_danger_v2":[[2,1,0,0,0],[3,1,0,0,0],[3,2,0,0,0]],
+            "tiles":[],"units":[],"spawning_tiles":[]
+        }"#;
+        let (board, ..) = board_from_json(valid).expect("valid Volcano state parses");
+        assert_eq!(board.env_volcano_mode, VOLCANO_LAVA);
+        assert_eq!(board.env_volcano_phase, 1);
+        assert_eq!(board.env_volcano_count, 3);
+        assert_eq!(board.env_volcano_locations, [17, 25, 26, 0]);
+        assert_eq!(board.env_volcano_lava_start, 2);
+        assert_eq!(board.env_danger.count_ones(), 3);
+        assert_eq!(board.env_danger_kill, board.env_danger);
+
+        let invalid = [
+            valid.replace("Mission_Final", "Mission_Battle"),
+            valid.replace("\"complete\":true", "\"complete\":false"),
+            valid.replace("\"mode\":2", "\"mode\":1"),
+            valid.replace("[3,2]", "[4,2]"),
+            valid.replace("\"planned\":[[2,1],[3,1],[3,2]]", "\"planned\":[[2,1]]"),
+            valid.replace("\"lava_start\":[[1,2]]", "\"lava_start\":[]"),
+        ];
+        for payload in invalid {
+            let (board, ..) = board_from_json(&payload)
+                .expect("invalid Volcano evidence fails closed without parse failure");
+            assert_eq!(board.env_volcano_mode, 0);
+            assert_eq!(board.env_volcano_count, 0);
+        }
     }
 
     #[test]

@@ -39,7 +39,7 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 | Forest | Yes | Yes | No | Catches fire when the tile takes weapon damage |
 | Sand | Yes | Yes | No | Creates smoke when hit by weapon damage (not push/fire) |
 | Ice | Yes | Yes | No | 2-step destruction: Intact -> Cracked -> Water. Fire skips to Water instantly |
-| Lava | No (kills non-massive) | Yes | No | Like water but also sets surviving massive units on fire |
+| Lava | No (kills non-massive) | Yes | No | Like water but sets every surviving unit on fire |
 | Chasm | No (kills ALL non-flying) | Yes | No | Instant death for ALL non-flying units, including massive |
 | Conveyor Belt | Yes | Yes | No | Pushes any unit 1 tile in belt direction during environment step |
 | A.C.I.D. Pool | Yes | Yes | No | Applies A.C.I.D. status to any unit stopping on it; consumed after one use |
@@ -104,7 +104,8 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 - Behaves like water for drowning purposes -- kills non-flying non-massive ground units instantly.
 - NOT simply "traversable with fire damage." It drowns non-massive ground units.
 - Surviving units (massive/mechs) are submerged AND set on fire.
-- Flying units hover over lava safely.
+- Flying units survive above lava but still catch Fire unless Shielded or immune;
+  unlike massive ground units, they are not submerged.
 - Falling Rocks environmental effect converts lava to normal ground.
 - Appears on the Volcanic Hive (final mission).
 

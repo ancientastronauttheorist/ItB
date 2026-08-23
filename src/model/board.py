@@ -46,6 +46,106 @@ MISSION_PISTON_FRONT_OFFSETS = {
 }
 
 
+VOLCANO_ROCKS = 1
+VOLCANO_LAVA = 2
+VOLCANO_STARTS = ((2, 1), (1, 2))
+
+
+def _strict_board_points(
+    value: object,
+    *,
+    maximum: int,
+) -> list[tuple[int, int]] | None:
+    """Return a unique, in-bounds point list without coercing wire values."""
+    if not isinstance(value, list) or len(value) > maximum:
+        return None
+    points: list[tuple[int, int]] = []
+    for raw in value:
+        if (
+            not isinstance(raw, (list, tuple))
+            or len(raw) != 2
+            or any(type(coord) is not int or not 0 <= coord < 8 for coord in raw)
+        ):
+            return None
+        points.append((raw[0], raw[1]))
+    if len(points) != len(set(points)):
+        return None
+    return points
+
+
+def validate_mission_final_volcano_payload(data: dict) -> dict | None:
+    """Return canonical, source-reachable live ``Env_Volcano`` state.
+
+    The native environment has already consumed the only RNG that matters for
+    the current enemy phase. We retain its ordered ``Locations`` rather than
+    attempting to reproduce ``random_removal``. Phase/mode, remaining
+    LavaStart state, path geometry, quarter order, and the duplicate
+    ``Planned`` list must all agree before the payload is considered complete.
+    """
+    if not isinstance(data, dict) or data.get("mission_id") != "Mission_Final":
+        return None
+    payload = data.get("mission_final_volcano")
+    if not isinstance(payload, dict) or payload.get("complete") is not True:
+        return None
+
+    mode = payload.get("mode")
+    phase = payload.get("phase")
+    if (
+        type(mode) is not int
+        or mode not in {VOLCANO_ROCKS, VOLCANO_LAVA}
+        or type(phase) is not int
+        or phase not in {1, 2, 3, 4}
+        or mode != (VOLCANO_LAVA if phase in {1, 3} else VOLCANO_ROCKS)
+    ):
+        return None
+
+    lava_start = _strict_board_points(payload.get("lava_start"), maximum=2)
+    locations = _strict_board_points(payload.get("locations"), maximum=4)
+    planned = _strict_board_points(payload.get("planned"), maximum=4)
+    if (
+        lava_start is None
+        or locations is None
+        or planned is None
+        or not locations
+        or locations != planned
+        or any(point not in VOLCANO_STARTS for point in lava_start)
+    ):
+        return None
+
+    expected_lava_start_count = 1 if phase in {1, 2} else 0
+    if len(lava_start) != expected_lava_start_count:
+        return None
+
+    if mode == VOLCANO_LAVA:
+        if locations[0] not in VOLCANO_STARTS:
+            return None
+        if phase == 1 and set(lava_start + [locations[0]]) != set(VOLCANO_STARTS):
+            return None
+        for previous, current in zip(locations, locations[1:]):
+            if (current[0] - previous[0], current[1] - previous[1]) not in {
+                (1, 0),
+                (0, 1),
+            }:
+                return None
+    else:
+        quarter_order: list[int] = []
+        for x, y in locations:
+            if not (1 <= x <= 6 and 1 <= y <= 6) or (x, y) == (1, 1):
+                return None
+            quarter_order.append((2 if x >= 4 else 0) + (1 if y >= 4 else 0))
+        if quarter_order != sorted(set(quarter_order)):
+            return None
+
+    return {
+        "complete": True,
+        "mode": mode,
+        "phase": phase,
+        "lava_start": lava_start,
+        "locations": locations,
+        "planned": planned,
+    }
+
+
 def validate_mission_piston_payload(
     data: dict,
 ) -> list[tuple[int, int, int]] | None:
@@ -382,6 +482,14 @@ class Board:
         self.environment_freeze: set[tuple[int, int]] = set()
         self.env_type: str = "unknown"
         self.environment_wind_dir: int | None = None
+        # Exact Mission_Final surface environment state. Mode 1 is ordered
+        # falling rocks; mode 2 is ordered permanent Lava conversion. The
+        # selected coordinates come from the native environment after RNG.
+        self.environment_volcano_known: bool = False
+        self.environment_volcano_mode: int = 0
+        self.environment_volcano_phase: int = 0
+        self.environment_volcano_lava_start: list[tuple[int, int]] = []
+        self.environment_volcano_locations: list[tuple[int, int]] = []
         self.blast_psion_active: bool = False
         self.armor_psion_active: bool = False
         self.soldier_psion_active: bool = False
@@ -494,6 +602,11 @@ class Board:
         b.environment_freeze = set(self.environment_freeze)
         b.env_type = self.env_type
         b.environment_wind_dir = self.environment_wind_dir
+        b.environment_volcano_known = self.environment_volcano_known
+        b.environment_volcano_mode = self.environment_volcano_mode
+        b.environment_volcano_phase = self.environment_volcano_phase
+        b.environment_volcano_lava_start = list(self.environment_volcano_lava_start)
+        b.environment_volcano_locations = list(self.environment_volcano_locations)
         b.blast_psion_active = self.blast_psion_active
         b.armor_psion_active = self.armor_psion_active
         b.soldier_psion_active = self.soldier_psion_active
@@ -820,6 +933,21 @@ class Board:
         for ft in data.get("environment_freeze", []):
             if isinstance(ft, (list, tuple)) and len(ft) >= 2 and ft[0] < 8 and ft[1] < 8:
                 board.environment_freeze.add((ft[0], ft[1]))
+
+        volcano = validate_mission_final_volcano_payload(data)
+        if volcano is not None:
+            board.environment_volcano_known = True
+            board.environment_volcano_mode = volcano["mode"]
+            board.environment_volcano_phase = volcano["phase"]
+            board.environment_volcano_lava_start = list(volcano["lava_start"])
+            board.environment_volcano_locations = list(volcano["locations"])
+            # Lava's zero-damage wire encoding represents terrain conversion,
+            # not a harmless generic hit. Rust consumes the exact payload.
+            # Rocks remain ordinary lethal danger for Python safety summaries.
+            if volcano["mode"] == VOLCANO_ROCKS:
+                for pos in volcano["locations"]:
+                    board.environment_danger.add(pos)
+                    board.environment_danger_v2[pos] = (1, True)
 
         # Units
         for ud in data.get("units", []):

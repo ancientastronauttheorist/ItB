@@ -1006,8 +1006,18 @@ pub fn evaluate(
             let on_kill_tile = board.is_env_danger_kill(u.x, u.y);
             let on_flying_immune_kill = on_kill_tile
                 && board.is_env_danger_flying_immune(u.x, u.y);
+            let surviving_volcano_lava = board.mission_id == "Mission_Final"
+                && board.env_volcano_mode == VOLCANO_LAVA
+                && (u.massive() || u.effectively_flying());
 
             if u.is_player() && on_kill_tile {
+                // Surface-final Lava is encoded as lethal so ordinary ground
+                // units receive the forward-looking death signal. Massive and
+                // effectively-flying survivors are handled by the exact
+                // conversion path and ordinary Fire-status scoring instead.
+                if surviving_volcano_lava {
+                    continue;
+                }
                 // Flying mech on Tidal/Cataclysm/Seismic tile survives —
                 // skip the defensive death penalty (the simulator agrees).
                 // Final Cave falling rocks do not set this bit.
@@ -1031,7 +1041,7 @@ pub fn evaluate(
                 continue;
             }
 
-            if u.flying() { continue; }
+            if u.flying() || surviving_volcano_lava { continue; }
 
             if u.is_enemy() {
                 score += scaled(weights.enemy_on_danger, ff, 0.20, 1.60);

@@ -9030,7 +9030,7 @@
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua record covers exact stage-one source and the fail-closed gate; this lifecycle record itself claims no environmental selection, phase, fire, terrain-conversion, or scheduler conformance. Env_Final cave danger remains bounded by its own separate partial record.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua record now covers exact current stage-one bridge state and bounded simulator effects; this lifecycle record itself claims no future environmental RNG, phase-handoff, or mission scheduler conformance. Env_Final cave danger remains bounded by its own separate partial record.",
         "Mission_Infinite inheritance, native turn and team callback order, NextPhase and IsEndBlocked orchestration, StartMission completion, MissionEnd presentation and travel timing, spawner construction, SpawnPawns/NextPawn behavior, difficulty lookup, RNG, boss placement, UID allocation, and map-zone contents remain native dependencies.",
         "SkillEffect/AddDropper/AddScript/AddEffect ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and whether reused SpaceDamage objects are copied immediately or retain later mutations require controlled native traces.",
         "The repository does not forecast the cave's random opening pawn, ordinary spawn schedule, boss choice/location, future bomb candidate, missing-bomb replacement, or repeated TurnLimit+2 extension. IsBomb semantics, native candidate occupancy changes, an exhausted-edge AddBomb choice, BigBomb drop resolution, and the actual end-of-countdown outcome are untraced.",
@@ -9092,34 +9092,62 @@
         },
         {
           "classification": "fact",
-          "statement": "The current bridge has no Env_Volcano or Mission_Final identity override: because the live inherited StartEffect field is non-nil, its field-signature fallback classifies this environment as cataclysm_or_seismic before reaching the generic Locations branch. It exports one default damage encoding for the visible mask and does not expose Mode, Phase, LavaStart, or selected-path order, so it cannot distinguish the source's lethal fireballs from nonlethal Lava conversion."
+          "statement": "Two git-preserved live Mission_Final runs with independent master seeds corroborate the complete Lava, Rocks, Lava, Rocks cycle: every observed Lava warning path becomes persistent terrain-id-3 tiles on the next board, both observed Rocks sets become Fire, and one queued Scarab2 left alive by the player plan is destroyed on a Rock tile before its attack. The immutable commit, blob, warning, aftermath, and limitation ledger is data/observatory/captures/historical_git_mission_final_volcano_runs.json."
         },
         {
           "classification": "fact",
-          "statement": "The exact Mission_Final forecast gate now returns mission_final_volcano_mode_and_lava_conversion_unmodeled and blocks solve, auto-turn, and public End Turn delivery; the picker also penalizes and route-vetoes that exact mission ID. Those are conservative safety anchors, not Rust terrain, fire, selection, or scheduler conformance, and no controlled live Env_Volcano trace is claimed."
+          "statement": "The v404 bridge now identifies Mission_Final as volcano and atomically exports complete Mode, Phase, remaining LavaStart, and ordered matching Locations/Planned. Python and Rust reject source-unreachable mode parity, pool counts, Lava paths, Rocks quarter order, duplicate or mismatched lists, turn/phase disagreement, warning masks, and mode-specific wire encodings before solve or End Turn."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v404 consumes the already-selected native order instead of reproducing random_removal. Rocks apply lethal damage plus Fire before queued Vek attacks; Lava permanently converts terrain, kills ordinary grounded units, ignites surviving Massive or flying units, and leaves grounded Massive survivors unable to attack or repair until they move dry. Projection clears the resolved payload rather than inventing the next native selection."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Final is removed from the broad native-forecast gate and picker veto only when its dedicated live payload contract passes. Missing, partial, stale, malformed, or source-unreachable Volcano state still produces a non-overridable research block on solve and every public End Turn path."
         }
       ],
       "id": "environment-final-volcano-cycle",
       "implementations": [
         {
           "path": "src/bridge/modloader.lua",
-          "symbols": ["env_type", "env_kill_default", "env_flying_immune_default", "environment_danger", "environment_danger_v2", "StartEffect", "Locations"]
+          "symbols": ["mission_final_volcano_points", "mission_final_volcano", "env_type", "environment_danger", "environment_danger_v2"]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": ["_normalize_mission_final_volcano", "read_bridge_state"]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": ["validate_mission_final_volcano_payload", "environment_volcano_known", "environment_volcano_locations", "from_bridge_data"]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["JsonMissionFinalVolcano", "exact_mission_final_volcano", "board_from_json"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["apply_mission_final_volcano", "apply_volcano_lava", "apply_volcano_rock", "simulate_enemy_attacks"]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": ["advance_environment_warning", "board_to_json", "project_plan"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["enumerate_actions"]
         },
         {
           "path": "src/loop/commands.py",
-          "symbols": ["_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block", "mission_final_volcano_mode_and_lava_conversion_unmodeled", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
-        },
-        {
-          "path": "src/strategy/mission_picker.py",
-          "symbols": ["NATIVE_FORECAST_GATED_MISSION_IDS", "Mission_Final"]
+          "symbols": ["_mission_final_volcano_payload_block", "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn"]
         }
       ],
       "known_gaps": [
-        "No Rust/Python simulator path reproduces Env_Volcano Mode or Phase, the LavaStart pool, Lava path selection, Rocks quarter selection, temporary spawn blocks, ordered effect consumption, lethal fireball plus Fire, or Lava terrain conversion. The current bridge classification and single danger encoding are source-incompatible, so the exact Mission_Final gate must remain fail-closed.",
-        "Native Environment/Mission_Infinite planning and application cadence, Start/Plan/ApplyEffect/MarkBoard call order, Board:IsBusy interaction, BlockSpawn duration, StartEffect/EndEffect hooks, ENV_EFFECT ownership, sound and animation timing, and phase relation to Vek attacks are not traced for this build.",
-        "GetQuarters geometry/order, random_removal state and call order, Board terrain queries, path early termination, target occupancy, buildings/grid/pods, shields, frozen/fire/status ordering, flying behavior, pawn death/corpse handling, Lava replacement, and simultaneous native effects require controlled build-keyed traces.",
-        "The source's Phase counter wraps after four while LavaStart is consumed by the two Lava phases and is not explicitly reset. No behavior beyond the mission's exact four-turn sequence is inferred, and no native trace establishes what a later empty-pool random_removal would do.",
-        "The forecast gate and mission-picker veto prevent unsupported autonomous progression; they do not prove any environment result. This record remains partial with no live trace and no Rust terrain, fire, selector, or scheduler conformance test."
+        "The solver consumes the current native Locations selection but does not reproduce GetQuarters, random_removal, future Lava-path RNG, or upstream RNG call order. Turn projection therefore clears the resolved payload and cannot forecast a second future turn until the next live bridge read.",
+        "Native Environment/Mission_Infinite planning and application cadence, Board:IsBusy interaction, BlockSpawn duration, StartEffect/EndEffect hooks, ENV_EFFECT ownership, and animation or sound timing are source-derived or presentation-only rather than independently traced on current Windows build 13725832.",
+        "The historical live runs do not record their executable/depot/scripts build identity. They cover ordinary Lava conversion, Rocks fire, and one queued enemy death, but not Massive, flying, Shielded, Frozen, Building, Mountain, Pod, corpse, resistance, or simultaneous-effect edges under the new atomic bridge payload.",
+        "The source's Phase counter wraps after four while LavaStart is consumed by the two Lava phases and is not explicitly reset. Mission_Final hands off after the exact four-turn sequence, so no fifth selection or empty-pool random_removal behavior is modeled or claimed.",
+        "This record remains partial: the dedicated payload gate proves current-turn state completeness and v404 tests prove repository behavior, but future native selector RNG, temporary spawn-block observability, and full scheduler conformance remain native dependencies."
       ],
       "sources": [
         {
@@ -9135,16 +9163,32 @@
       ],
       "tests": [
         {
-          "path": "tests/test_mission_native_forecast_gates.py",
-          "symbols": ["test_cmd_solve_returns_exact_non_overridable_native_forecast_gate", "test_auto_turn_preserves_native_forecast_gate_metadata", "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch", "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone"]
+          "path": "tests/test_mission_final_volcano.py",
+          "symbols": ["test_lua_helper_exports_each_source_reachable_phase_atomically", "test_python_board_and_copy_preserve_exact_ordered_volcano_state", "test_complete_current_volcano_payload_passes_strict_gate", "test_partial_stale_or_source_unreachable_payloads_fail_closed", "test_public_end_turn_paths_block_incomplete_volcano_before_dispatch"]
         },
         {
-          "path": "tests/test_mission_picker.py",
-          "symbols": ["test_native_forecast_gated_mission_loses_to_safe_default_pick", "test_native_forecast_gate_is_exact_id_only", "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"]
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["test_mission_final_volcano_requires_source_reachable_complete_state"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_mission_final_volcano_lava_converts_in_order_and_applies_survivor_rules", "test_mission_final_volcano_rocks_kill_before_queued_attacks_and_leave_fire"]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": ["test_mission_final_volcano_roundtrip_resolves_current_path_then_clears_rng_state"]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": ["submerged_massive_mech_can_only_skip_until_it_reaches_dry_ground"]
+        },
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": ["test_native_forecast_gate_catalogs_match_and_modeled_finals_remain_ungated"]
         },
         {
           "path": "tests/test_itb_provenance.py",
-          "symbols": ["test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate"]
+          "symbols": ["test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model"]
         }
       ]
     }

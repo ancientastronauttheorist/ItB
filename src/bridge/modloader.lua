@@ -646,6 +646,131 @@ local function mission_tides_planned(mission_id, live_environment)
     return live_environment.Planned
 end
 
+-- Mission_Final's Env_Volcano consumes native RNG while Plan builds its
+-- ordered Locations list. Export that already-selected list plus the compact
+-- phase/mode state instead of guessing random_removal in the solver.
+local function mission_final_volcano_points(points, maximum)
+    if type(points) ~= "table" or #points > maximum then return nil end
+    local result = {}
+    local seen = {}
+    for i = 1, #points do
+        local point = points[i]
+        local x = point and point.x
+        local y = point and point.y
+        if type(x) ~= "number" or x ~= math.floor(x) or x < 0 or x > 7
+                or type(y) ~= "number" or y ~= math.floor(y) or y < 0 or y > 7 then
+            return nil
+        end
+        local key = x .. "," .. y
+        if seen[key] then return nil end
+        seen[key] = true
+        result[#result + 1] = {x, y}
+    end
+    return result
+end
+
+local function mission_final_volcano(mission_id, live_environment)
+    if mission_id ~= "Mission_Final" then return nil end
+    local incomplete = {
+        complete = false,
+        mode = 0,
+        phase = 0,
+        lava_start = {},
+        locations = {},
+        planned = {},
+    }
+    if type(live_environment) ~= "table" then return incomplete end
+
+    local mode = live_environment.Mode
+    local phase = live_environment.Phase
+    if type(mode) ~= "number" or mode ~= math.floor(mode)
+            or (mode ~= 1 and mode ~= 2)
+            or type(phase) ~= "number" or phase ~= math.floor(phase)
+            or phase < 0 or phase > 4 then
+        return incomplete
+    end
+    if (phase == 0 and mode ~= 1)
+            or ((phase == 1 or phase == 3) and mode ~= 2)
+            or ((phase == 2 or phase == 4) and mode ~= 1) then
+        return incomplete
+    end
+
+    local lava_start = mission_final_volcano_points(
+        live_environment.LavaStart,
+        2
+    )
+    local locations = mission_final_volcano_points(
+        live_environment.Locations,
+        4
+    )
+    local planned = mission_final_volcano_points(
+        live_environment.Planned,
+        4
+    )
+    if lava_start == nil or locations == nil or planned == nil
+            or #locations ~= #planned
+            or (phase > 0 and #locations == 0) then
+        return incomplete
+    end
+    for i = 1, #locations do
+        if locations[i][1] ~= planned[i][1]
+                or locations[i][2] ~= planned[i][2] then
+            return incomplete
+        end
+    end
+
+    local start_seen = {}
+    for _, point in ipairs(lava_start) do
+        if not ((point[1] == 2 and point[2] == 1)
+                or (point[1] == 1 and point[2] == 2)) then
+            return incomplete
+        end
+        start_seen[point[1] .. "," .. point[2]] = true
+    end
+    local expected_start_count = phase == 0 and 2
+        or ((phase == 1 or phase == 2) and 1 or 0)
+    if #lava_start ~= expected_start_count then return incomplete end
+
+    if mode == 2 then
+        local first = locations[1]
+        if first == nil or not ((first[1] == 2 and first[2] == 1)
+                or (first[1] == 1 and first[2] == 2)) then
+            return incomplete
+        end
+        if phase == 1 and start_seen[first[1] .. "," .. first[2]] then
+            return incomplete
+        end
+        for i = 2, #locations do
+            local dx = locations[i][1] - locations[i - 1][1]
+            local dy = locations[i][2] - locations[i - 1][2]
+            if not ((dx == 1 and dy == 0) or (dx == 0 and dy == 1)) then
+                return incomplete
+            end
+        end
+    elseif phase > 0 then
+        local last_quarter = -1
+        for _, point in ipairs(locations) do
+            local x, y = point[1], point[2]
+            if x < 1 or x > 6 or y < 1 or y > 6
+                    or (x == 1 and y == 1) then
+                return incomplete
+            end
+            local quarter = (x >= 4 and 2 or 0) + (y >= 4 and 1 or 0)
+            if quarter <= last_quarter then return incomplete end
+            last_quarter = quarter
+        end
+    end
+
+    return {
+        complete = true,
+        mode = mode,
+        phase = phase,
+        lava_start = lava_start,
+        locations = locations,
+        planned = planned,
+    }
+end
+
 -- Mission_Terraform completes only when no point in Board:GetZone("grass")
 -- retains the exact custom grass sprite. Save map_data also contains
 -- decorative ground_grass.png markers outside that objective zone, so export
@@ -1437,6 +1562,18 @@ local function dump_state()
     state.environment_danger_v2 = {}
     state.environment_freeze = {}
 
+    pcall(function()
+        local mission = _ITB_CURRENT_MISSION
+        if not mission or not mission.LiveEnvironment then return end
+        local volcano = mission_final_volcano(
+            mission_id,
+            mission.LiveEnvironment
+        )
+        if volcano ~= nil then
+            state.mission_final_volcano = volcano
+        end
+    end)
+
     -- Default all env_danger tiles to lethal (kill=1). Most hazards ARE
     -- lethal to ground units: Air Strike, Lightning, Cataclysm→chasm,
     -- Seismic→chasm, Tidal Waves→water. Non-lethal hazards (Wind Storm,
@@ -1473,6 +1610,25 @@ local function dump_state()
             env_type = "final_cave"
             env_kill_default = true
             env_flying_immune_default = false
+            return
+        end
+
+        -- Surface Volcanic Hive alternates source-defined ordered Rocks and
+        -- Lava modes. Lava carries zero direct damage on the wire because its
+        -- lethality comes from the permanent TERRAIN_LAVA conversion; Rust
+        -- consumes the ordered mission_final_volcano payload for exact unit
+        -- and terrain semantics.
+        if mission_id == "Mission_Final" then
+            env_type = "volcano"
+            env_flying_immune_default = false
+            local volcano = state.mission_final_volcano
+            if volcano and volcano.complete and volcano.mode == 2 then
+                env_damage = 0
+                env_kill_default = false
+            else
+                env_damage = 1
+                env_kill_default = true
+            end
             return
         end
 

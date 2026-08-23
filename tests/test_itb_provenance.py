@@ -5832,7 +5832,7 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_without_termi
     assert "not source proof that bomb destruction is a terminal mission loss" in gaps
 
 
-def test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate():
+def test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model():
     record = _mission_provenance_record("environment-final-volcano-cycle")
     assert record["coverage"] == "partial"
     assert record["sources"] == [
@@ -5865,14 +5865,21 @@ def test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate():
         reference["path"]: set(reference["symbols"])
         for reference in record["implementations"]
     }
-    assert implementations["src/loop/commands.py"] == {
-        "_MISSION_NATIVE_FORECAST_GAPS", "_mission_native_forecast_block",
-        "mission_final_volcano_mode_and_lava_conversion_unmodeled",
-        "cmd_solve", "cmd_click_end_turn", "cmd_dispatch_end_turn",
-        "cmd_end_turn",
+    assert implementations["src/bridge/modloader.lua"] == {
+        "mission_final_volcano_points", "mission_final_volcano", "env_type",
+        "environment_danger", "environment_danger_v2",
     }
-    assert implementations["src/strategy/mission_picker.py"] == {
-        "NATIVE_FORECAST_GATED_MISSION_IDS", "Mission_Final",
+    assert implementations["src/model/board.py"] == {
+        "validate_mission_final_volcano_payload", "environment_volcano_known",
+        "environment_volcano_locations", "from_bridge_data",
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_mission_final_volcano", "apply_volcano_lava",
+        "apply_volcano_rock", "simulate_enemy_attacks",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_mission_final_volcano_payload_block", "cmd_solve",
+        "cmd_click_end_turn", "cmd_dispatch_end_turn", "cmd_end_turn",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "phase 1 Lava, phase 2 Rocks, phase 3 Lava, and phase 4 Rocks" in facts
@@ -5880,13 +5887,42 @@ def test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate():
     assert "at most one randomly removed point per returned quarter" in facts
     assert "DAMAGE_DEATH, iFire=1" in facts
     assert "temporarily spawn-blocks every selected point" in facts
-    assert "classifies this environment as cataclysm_or_seismic" in facts
-    assert "mission_final_volcano_mode_and_lava_conversion_unmodeled" in facts
+    assert "Two git-preserved live Mission_Final runs" in facts
+    assert "remaining LavaStart" in facts
+    assert "Projection clears the resolved payload" in facts
+    assert "removed from the broad native-forecast gate" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "No Rust/Python simulator path reproduces Env_Volcano" in gaps
-    assert "LavaStart is consumed by the two Lava phases" in gaps
-    assert "no live trace" in gaps
-    assert "must remain fail-closed" in gaps
+    assert "does not reproduce GetQuarters, random_removal" in gaps
+    assert "cannot forecast a second future turn" in gaps
+    assert "do not record their executable/depot/scripts build identity" in gaps
+    assert "no fifth selection" in gaps
+    assert "full scheduler conformance remain native dependencies" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    historical = json.loads((
+        repo_root
+        / "data/observatory/captures/historical_git_mission_final_volcano_runs.json"
+    ).read_text(encoding="utf-8"))
+    assert historical["kind"] == (
+        "historical_git_mission_final_volcano_corroboration"
+    )
+    assert [run["master_seed"] for run in historical["runs"]] == [
+        125574395, 979832553,
+    ]
+    assert [record["mode"] for record in historical["runs"][0]["records"]] == [
+        "lava", "rocks", "lava", "rocks",
+    ]
+    second_rocks = historical["runs"][1]["records"][1]
+    assert second_rocks["queued_enemy_killed_before_attack"] == {
+        "uid": 751,
+        "type": "Scarab2",
+        "tile": [6, 5],
+        "player_plan_left_alive": True,
+        "next_turn_present": False,
+    }
+    assert second_rocks["solve_git_blob_oid"] == (
+        "114c922d55218492f9295440a97d1e0ed6c99b2d"
+    )
 
 
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():

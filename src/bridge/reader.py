@@ -11,7 +11,11 @@ import re
 from collections import Counter
 
 from src.capture.save_parser import Point, parse_save_file
-from src.model.board import Board, validate_mission_piston_payload
+from src.model.board import (
+    Board,
+    validate_mission_final_volcano_payload,
+    validate_mission_piston_payload,
+)
 from src.bridge.protocol import read_state
 from src.itb_paths import get_profile_dir, get_save_file
 
@@ -1492,6 +1496,22 @@ def _normalize_mission_pistons(data: dict) -> None:
     }
 
 
+def _normalize_mission_final_volcano(data: dict) -> None:
+    """Keep only canonical, source-reachable ordered surface-final state."""
+    payload = validate_mission_final_volcano_payload(data)
+    if payload is None:
+        data.pop("mission_final_volcano", None)
+        return
+    data["mission_final_volcano"] = {
+        "complete": True,
+        "mode": payload["mode"],
+        "phase": payload["phase"],
+        "lava_start": [list(point) for point in payload["lava_start"]],
+        "locations": [list(point) for point in payload["locations"]],
+        "planned": [list(point) for point in payload["planned"]],
+    }
+
+
 def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     """Read bridge state and return (Board, raw_data) or (None, None).
 
@@ -1527,6 +1547,7 @@ def read_bridge_state() -> tuple[Board, dict] | tuple[None, None]:
     _reconcile_victory_turns_with_live_turn(data)
     _normalize_mission_hacking_ids(data)
     _normalize_mission_pistons(data)
+    _normalize_mission_final_volcano(data)
     live_terraform_grass = _normalize_live_terraform_grass(data)
 
     # Rewrite queued_target on each unit using piOrigin from the save file.

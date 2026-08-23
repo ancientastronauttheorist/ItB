@@ -1805,6 +1805,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v404: Mission_Final carries exact native Env_Volcano phase/mode, ordered
+# selected locations, and remaining LavaStart state. Rust applies ordered
+# Rocks death/fire and permanent Lava conversion with grounded/Massive/flight
+# semantics, then consumes the resolved marker without inventing future RNG.
+# Grounded Massive survivors cannot attack/repair while submerged. Pre-v404
+# corpus is archived as recordings/failure_db_snapshot_sim_v403.jsonl.
 # v403: Exact Windows lifecycle/path analysis proves mode-1 occupancy counts
 # live pawns plus persistent corpses, but skips retained transient dead
 # non-corpses. Ordinary movement blocks persistent corpses; Road Runner may
@@ -1886,7 +1892,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 403
+SIMULATOR_VERSION = 404
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

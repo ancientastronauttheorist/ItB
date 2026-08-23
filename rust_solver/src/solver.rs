@@ -1501,6 +1501,13 @@ fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> V
         // Smoke blocks most pawn actions (attack + repair). These mission
         // pawns have IgnoreSmoke=true in their Lua definitions.
         let tile = action_board.tile(attack_pos.0, attack_pos.1);
+        // Massive ground units can survive Water/Lava but are submerged and
+        // cannot attack or repair until they move back onto dry terrain.
+        if !action_unit.flying()
+            && matches!(tile.terrain, Terrain::Water | Terrain::Lava)
+        {
+            continue;
+        }
         let ignores_smoke = action_unit.type_name_str() == "Trapped_Building"
             || action_unit.type_name_str() == "Disposal_Unit"
             || action_unit.type_name_str() == "Missile_Unit"
@@ -3042,6 +3049,62 @@ mod top_k_tests {
         assert!(actions.iter().any(|action| {
             action.1 == WId::ScienceRainingFire && action.2 == (3, 4)
         }));
+    }
+
+    #[test]
+    fn submerged_massive_mech_can_only_skip_until_it_reaches_dry_ground() {
+        let mut board = Board::default();
+        board.tile_mut(3, 3).terrain = Terrain::Lava;
+        let mech = board.add_unit(Unit {
+            uid: 1,
+            x: 3,
+            y: 3,
+            hp: 3,
+            max_hp: 3,
+            team: Team::Player,
+            weapon: WeaponId(WId::PrimePunchmechA as u16),
+            flags: UnitFlags::ACTIVE
+                | UnitFlags::CAN_MOVE
+                | UnitFlags::IS_MECH
+                | UnitFlags::MASSIVE
+                | UnitFlags::PUSHABLE,
+            move_speed: 1,
+            base_move: 1,
+            ..Default::default()
+        });
+        board.add_unit(Unit {
+            uid: 2,
+            x: 3,
+            y: 1,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let actions = enumerate_actions(&board, mech, &WEAPONS);
+        assert!(actions.iter().any(|action| {
+            action.0 == (3, 3) && action.1 == WId::None
+        }));
+        assert!(actions.iter().all(|action| {
+            action.0 != (3, 3) || action.1 == WId::None
+        }));
+        assert!(actions.iter().any(|action| {
+            action.0 == (3, 2)
+                && action.1 == WId::PrimePunchmechA
+                && action.2 == (3, 1)
+        }));
+
+        let result = simulate_attack_with_target2(
+            &mut board,
+            mech,
+            WId::PrimePunchmechA,
+            (3, 2),
+            None,
+            &WEAPONS,
+        );
+        assert_eq!(result.events, vec!["illegal_action_submerged:3:3"]);
     }
 
     #[test]

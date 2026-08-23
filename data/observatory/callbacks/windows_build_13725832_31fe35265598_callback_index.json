@@ -12958,57 +12958,117 @@
         {
           "path": "src/bridge/modloader.lua",
           "symbols": [
+            "mission_final_volcano_points",
+            "mission_final_volcano",
             "env_type",
-            "env_kill_default",
-            "env_flying_immune_default",
             "environment_danger",
-            "environment_danger_v2",
-            "StartEffect",
-            "Locations"
+            "environment_danger_v2"
+          ]
+        },
+        {
+          "path": "src/bridge/reader.py",
+          "symbols": [
+            "_normalize_mission_final_volcano",
+            "read_bridge_state"
+          ]
+        },
+        {
+          "path": "src/model/board.py",
+          "symbols": [
+            "validate_mission_final_volcano_payload",
+            "environment_volcano_known",
+            "environment_volcano_locations",
+            "from_bridge_data"
+          ]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": [
+            "JsonMissionFinalVolcano",
+            "exact_mission_final_volcano",
+            "board_from_json"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "apply_mission_final_volcano",
+            "apply_volcano_lava",
+            "apply_volcano_rock",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "advance_environment_warning",
+            "board_to_json",
+            "project_plan"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "enumerate_actions"
           ]
         },
         {
           "path": "src/loop/commands.py",
           "symbols": [
-            "_MISSION_NATIVE_FORECAST_GAPS",
-            "_mission_native_forecast_block",
-            "mission_final_volcano_mode_and_lava_conversion_unmodeled",
+            "_mission_final_volcano_payload_block",
             "cmd_solve",
             "cmd_click_end_turn",
             "cmd_dispatch_end_turn",
             "cmd_end_turn"
           ]
-        },
-        {
-          "path": "src/strategy/mission_picker.py",
-          "symbols": [
-            "NATIVE_FORECAST_GATED_MISSION_IDS",
-            "Mission_Final"
-          ]
         }
       ],
       "tests": [
         {
-          "path": "tests/test_mission_native_forecast_gates.py",
+          "path": "tests/test_mission_final_volcano.py",
           "symbols": [
-            "test_cmd_solve_returns_exact_non_overridable_native_forecast_gate",
-            "test_auto_turn_preserves_native_forecast_gate_metadata",
-            "test_public_end_turn_paths_block_native_forecast_before_plan_or_dispatch",
-            "test_lightning_route_veto_recognizes_native_forecast_gate_from_id_alone"
+            "test_lua_helper_exports_each_source_reachable_phase_atomically",
+            "test_python_board_and_copy_preserve_exact_ordered_volcano_state",
+            "test_complete_current_volcano_payload_passes_strict_gate",
+            "test_partial_stale_or_source_unreachable_payloads_fail_closed",
+            "test_public_end_turn_paths_block_incomplete_volcano_before_dispatch"
           ]
         },
         {
-          "path": "tests/test_mission_picker.py",
+          "path": "rust_solver/src/serde_bridge.rs",
           "symbols": [
-            "test_native_forecast_gated_mission_loses_to_safe_default_pick",
-            "test_native_forecast_gate_is_exact_id_only",
-            "test_lightning_routes_auto_start_veto_native_forecast_gated_missions"
+            "test_mission_final_volcano_requires_source_reachable_complete_state"
+          ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_mission_final_volcano_lava_converts_in_order_and_applies_survivor_rules",
+            "test_mission_final_volcano_rocks_kill_before_queued_attacks_and_leave_fire"
+          ]
+        },
+        {
+          "path": "rust_solver/src/turn_projection.rs",
+          "symbols": [
+            "test_mission_final_volcano_roundtrip_resolves_current_path_then_clears_rng_state"
+          ]
+        },
+        {
+          "path": "rust_solver/src/solver.rs",
+          "symbols": [
+            "submerged_massive_mech_can_only_skip_until_it_reaches_dry_ground"
+          ]
+        },
+        {
+          "path": "tests/test_mission_native_forecast_gates.py",
+          "symbols": [
+            "test_native_forecast_gate_catalogs_match_and_modeled_finals_remain_ungated"
           ]
         },
         {
           "path": "tests/test_itb_provenance.py",
           "symbols": [
-            "test_real_environment_final_volcano_record_pins_four_phase_cycle_and_gate"
+            "test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model"
           ]
         }
       ]
@@ -17924,13 +17984,61 @@
             "project_plan_scenarios",
             "project_plan_with_spawns"
           ]
+        },
+        {
+          "path": "src/observatory/msvc_rng_replay.py",
+          "symbols": [
+            "recover_observable_pre_state",
+            "replay_results"
+          ]
+        },
+        {
+          "path": "src/observatory/spawn_replay_ledger.py",
+          "symbols": [
+            "analyze_spawn_replay",
+            "validate_spawn_replay_ledger"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_native_boundary_campaign.py",
+          "symbols": [
+            "test_committed_spawn_replay_campaign_recovers_exact_native_choices"
+          ]
         }
       ],
       "tests": [
         {
           "path": "rust_solver/src/turn_projection.rs",
           "symbols": [
-            "test_projection_consumes_unblocked_spawn_markers"
+            "test_projection_consumes_unblocked_spawn_markers",
+            "test_projection_never_fabricates_unresolved_native_spawn_selection"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_campaign_receipt.json",
+          "symbols": [
+            "\"classification\":\"return_preserving_but_not_whole_game_neutral\"",
+            "\"direct_boundary_matches\":6",
+            "\"whole_game_mismatches\":4",
+            "\"mismatch_scope\":[\"/spawning_tiles/0/1\"]"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_rng_core_atomic_receipt.json",
+          "symbols": [
+            "\"kind\":\"observatory_native_rng_atomic_campaign_receipt\"",
+            "\"complete_restored_checkpoints\":2",
+            "\"first_seeded_result\":24356",
+            "\"exact_result_stream_common_prefix\":104",
+            "\"stable_reviewed_result_sequences\":[19,29,30,31]"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json",
+          "symbols": [
+            "\"callback_families\":{\"enemy_target_score\":1,\"get_skill_effect\":2,\"get_target_area\":1,\"score_positioning\":1}",
+            "\"complete_restored_pairs\":5",
+            "\"whole_game_mismatches\":2"
           ]
         }
       ]

@@ -1526,7 +1526,7 @@ fn retarget_pending_spider_egg(board: &mut Board, from_x: u8, from_y: u8, to_x: 
 /// Old Earth Mine. This mirrors apply_damage_core's bookkeeping plus the
 /// caller-side Blast Psion / Volatile Vek explosions that instant-kill paths
 /// must dispatch themselves.
-fn finish_instant_unit_death(
+pub(crate) fn finish_instant_unit_death(
     board: &mut Board,
     unit_idx: usize,
     result: &mut ActionResult,
@@ -7172,6 +7172,12 @@ pub fn simulate_attack_with_target2(
                 || unit.type_name_str().starts_with("Snowmine");
             (unit.x, unit.y, ignores_smoke)
         };
+        if !board.units[mech_idx].flying()
+            && matches!(board.tile(sx, sy).terrain, Terrain::Water | Terrain::Lava)
+        {
+            result.events.push(format!("illegal_action_submerged:{}:{}", sx, sy));
+            return result;
+        }
         if board.tile(sx, sy).smoke() && !ignores_smoke {
             result.events.push(format!("illegal_attack_smoke:{}:{}", sx, sy));
             return result;

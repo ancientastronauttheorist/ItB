@@ -5,6 +5,9 @@
 
 use bitflags::bitflags;
 use crate::types::*;
+
+pub const VOLCANO_ROCKS: u8 = 1;
+pub const VOLCANO_LAVA: u8 = 2;
 use std::collections::{BTreeMap, BTreeSet};
 
 // ── Tile Flags ───────────────────────────────────────────────────────────────
@@ -524,6 +527,16 @@ pub struct Board {
     /// persists after ApplyEffect, so only explicit true proves that a fully
     /// markerless Terratide lane is pending.
     pub env_tides_planned: Option<bool>,
+    /// Exact native Env_Volcano state for the current Mission_Final surface
+    /// enemy phase. Mode 0 means unavailable; 1=Rocks and 2=Lava. Locations
+    /// retain source order because Env_Volcano sets Ordered=true and death
+    /// side effects can make order observable. LavaStart is a two-bit mask:
+    /// bit 0=(2,1), bit 1=(1,2).
+    pub env_volcano_mode: u8,
+    pub env_volcano_phase: u8,
+    pub env_volcano_count: u8,
+    pub env_volcano_locations: [u8; 4],
+    pub env_volcano_lava_start: u8,
     /// Bitset: bit i = tile i is an Ice Storm freeze tile (vanilla
     /// Env_SnowStorm). At start of enemy turn the simulator applies
     /// Frozen=true to any alive unit standing on these tiles and freezes live
@@ -701,6 +714,11 @@ impl Default for Board {
             env_wind_dir: -1,
             env_tides_index: None,
             env_tides_planned: None,
+            env_volcano_mode: 0,
+            env_volcano_phase: 0,
+            env_volcano_count: 0,
+            env_volcano_locations: [0; 4],
+            env_volcano_lava_start: 0,
             env_freeze: 0,
             unique_buildings: 0,
             grid_reward_buildings: 0,
@@ -1381,10 +1399,11 @@ mod tests {
         // a memcpy on the common path; only missions with populated
         // objective/projection lists pay heap-clone costs (1× per branch).
         // Sim v32+ added grid-defense expectation, unit-objective Vecs, and
-        // the Spider Psion egg queue; 1.6kB is still comfortably cheap.
+        // the Spider Psion egg queue. Sim v404 adds eight compact bytes for
+        // ordered Env_Volcano state; ~1.7kB remains comfortably cheap.
         let size = std::mem::size_of::<Board>();
         println!("Board size: {} bytes", size);
-        assert!(size <= 1700, "Board too large: {} bytes", size);
+        assert!(size <= 1712, "Board too large: {} bytes", size);
     }
 
     #[test]

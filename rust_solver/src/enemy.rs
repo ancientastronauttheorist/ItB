@@ -679,6 +679,14 @@ fn apply_void_shocker_after_attack(
 }
 
 fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
+    if board.mission_id == "Mission_Final"
+        && matches!(board.env_volcano_mode, VOLCANO_ROCKS | VOLCANO_LAVA)
+        && board.env_volcano_count > 0
+    {
+        apply_mission_final_volcano(board, result);
+        return;
+    }
+
     let flying_immune_damage = if board.mission_id == "Mission_Tides" { 1 } else { 0 };
     // Legacy Mission_Satellite markers have enough timing/displacement nuance
     // that they are not reliable enemy-kill evidence. Exact v377 payloads also
@@ -712,6 +720,143 @@ fn apply_env_danger_board(board: &mut Board, result: &mut ActionResult) {
             skip_enemy_units,
             result,
         );
+    }
+}
+
+/// Ignite a unit that survives newly-created Lava. Terrain fire is blocked by
+/// Shield without consuming it, unfreezes a surviving target, and honors the
+/// same intrinsic/passive immunities as ordinary Lava landing.
+fn apply_volcano_lava_fire(board: &mut Board, unit_idx: usize) {
+    let unit = &board.units[unit_idx];
+    let target_is_immune_vek = board.fire_psion
+        && unit.receives_psion_aura()
+        && unit.type_name_str() != "Jelly_Fire1";
+    let flame_shielded_mech = board.flame_shielding
+        && unit.is_player()
+        && unit.is_mech();
+    if unit.hp <= 0
+        || unit.shield()
+        || !unit.can_catch_fire()
+        || target_is_immune_vek
+        || flame_shielded_mech
+    {
+        return;
+    }
+    let unit = &mut board.units[unit_idx];
+    unit.set_frozen(false);
+    unit.set_fire(true);
+}
+
+/// Apply one zero-damage `iTerrain=TERRAIN_LAVA` effect from Env_Volcano.
+/// Ordinary grounded units drown; Massive and effectively-flying units
+/// survive and acquire Lava's fire status. The terrain assignment itself is
+/// permanent and bypasses Shield/Frozen just like other deadly terrain.
+fn apply_volcano_lava(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+) {
+    {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Lava;
+        tile.building_hp = 0;
+        tile.population = 0;
+        tile.set_on_fire(false);
+        tile.set_smoke(false);
+        tile.set_acid(false);
+        tile.set_frozen(false);
+        tile.set_cracked(false);
+        tile.set_has_pod(false);
+        tile.set_freeze_mine(false);
+        tile.set_old_earth_mine(false);
+        tile.set_repair_platform(false);
+        tile.set_shield(false);
+        tile.set_grass(false);
+        tile.conveyor_dir = -1;
+    }
+
+    let Some(unit_idx) = board.unit_at(x, y) else {
+        return;
+    };
+    let effectively_flying = board.units[unit_idx].effectively_flying();
+    let massive = board.units[unit_idx].massive();
+    if !effectively_flying && !massive {
+        let hp_before = board.units[unit_idx].hp.max(0) as i32;
+        if board.units[unit_idx].is_enemy() {
+            result.enemy_damage_dealt += hp_before;
+        } else if board.units[unit_idx].is_player() {
+            result.mech_damage_taken += hp_before;
+        }
+        crate::simulate::finish_instant_unit_death(
+            board,
+            unit_idx,
+            result,
+            x,
+            y,
+        );
+    } else {
+        apply_volcano_lava_fire(board, unit_idx);
+    }
+}
+
+/// Apply one `DAMAGE_DEATH + iFire=1` volcanic projectile. Rocks use the
+/// generic deadly-threat bookkeeping, then settle the source-defined fire and
+/// full-mountain destruction on the resulting tile.
+fn apply_volcano_rock(
+    board: &mut Board,
+    x: u8,
+    y: u8,
+    result: &mut ActionResult,
+) {
+    let was_mountain = board.tile(x, y).terrain == Terrain::Mountain;
+    apply_env_danger(board, x, y, true, false, false, 0, false, result);
+
+    if was_mountain {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Rubble;
+        tile.building_hp = 0;
+        tile.set_cracked(false);
+        result.events.push(format!(
+            "achievement_miner_inconvenience:mountain_damage:{}:{}:1",
+            x, y
+        ));
+    }
+
+    let terrain = board.tile(x, y).terrain;
+    if terrain == Terrain::Ice {
+        let tile = board.tile_mut(x, y);
+        tile.terrain = Terrain::Water;
+        tile.set_on_fire(false);
+        tile.set_smoke(false);
+        tile.set_cracked(false);
+    } else if matches!(
+        terrain,
+        Terrain::Ground | Terrain::Sand | Terrain::Forest | Terrain::Rubble | Terrain::Fire
+    ) {
+        let tile = board.tile_mut(x, y);
+        if matches!(tile.terrain, Terrain::Sand | Terrain::Forest | Terrain::Fire) {
+            tile.terrain = Terrain::Ground;
+        }
+        tile.set_smoke(false);
+        tile.set_on_fire(true);
+    }
+}
+
+fn apply_mission_final_volcano(board: &mut Board, result: &mut ActionResult) {
+    let count = board.env_volcano_count.min(4) as usize;
+    // Copy the tiny order array because death effects can mutably borrow Board.
+    let locations = board.env_volcano_locations;
+    for &tile_idx in locations.iter().take(count) {
+        if tile_idx >= 64 {
+            continue;
+        }
+        let (x, y) = idx_to_xy(tile_idx as usize);
+        if board.env_volcano_mode == VOLCANO_LAVA {
+            apply_volcano_lava(board, x, y, result);
+        } else {
+            apply_volcano_rock(board, x, y, result);
+        }
     }
 }
 
@@ -4642,6 +4787,107 @@ mod tests {
         simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
 
         assert!((0u8..8).all(|x| !board.tile(x, 4).smoke()));
+    }
+
+    #[test]
+    fn test_mission_final_volcano_lava_converts_in_order_and_applies_survivor_rules() {
+        let input = r#"{
+            "mission_id":"Mission_Final",
+            "env_type":"volcano",
+            "mission_final_volcano":{
+                "complete":true,"mode":2,"phase":1,
+                "lava_start":[[1,2]],
+                "locations":[[2,1],[3,1],[3,2],[3,3]],
+                "planned":[[2,1],[3,1],[3,2],[3,3]]
+            },
+            "tiles":[
+                {"x":2,"y":1,"terrain":"ground","smoke":true,"acid":true},
+                {"x":3,"y":1,"terrain":"ground","fire":true},
+                {"x":3,"y":2,"terrain":"ground"},
+                {"x":3,"y":3,"terrain":"ground"}
+            ],
+            "units":[
+                {"uid":10,"type":"Scorpion1","x":2,"y":1,"hp":3,"max_hp":3,
+                 "team":6,"shield":true},
+                {"uid":1,"type":"PunchMech","x":3,"y":1,"hp":3,"max_hp":3,
+                 "team":1,"mech":true,"massive":true},
+                {"uid":11,"type":"Hornet1","x":3,"y":2,"hp":2,"max_hp":2,
+                 "team":6,"flying":true},
+                {"uid":2,"type":"ShieldMech","x":3,"y":3,"hp":3,"max_hp":3,
+                 "team":1,"mech":true,"massive":true,"shield":true}
+            ],
+            "environment_danger":[[2,1],[3,1],[3,2],[3,3]],
+            "environment_danger_v2":[
+                [2,1,0,0,0],[3,1,0,0,0],[3,2,0,0,0],[3,3,0,0,0]
+            ],
+            "spawning_tiles":[]
+        }"#;
+        let (mut board, ..) = board_from_json(input).expect("exact Lava payload parses");
+        assert_eq!(board.env_volcano_mode, VOLCANO_LAVA);
+        assert_eq!(board.env_volcano_locations, [17, 25, 26, 27]);
+
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        for &(x, y) in &[(2, 1), (3, 1), (3, 2), (3, 3)] {
+            assert_eq!(board.tile(x, y).terrain, Terrain::Lava);
+            assert!(!board.tile(x, y).smoke());
+            assert!(!board.tile(x, y).acid());
+            assert!(!board.tile(x, y).on_fire());
+        }
+        assert_eq!(board.units[0].hp, 0, "ordinary grounded Vek drowns through Shield");
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.units[1].hp, 3, "Massive mech survives new Lava");
+        assert!(board.units[1].fire(), "Massive survivor catches Fire");
+        assert_eq!(board.units[2].hp, 2, "flying Vek survives new Lava");
+        assert!(board.units[2].fire(), "flying survivor catches Fire");
+        assert_eq!(board.units[3].hp, 3);
+        assert!(board.units[3].shield());
+        assert!(!board.units[3].fire(), "Shield blocks terrain Fire status");
+    }
+
+    #[test]
+    fn test_mission_final_volcano_rocks_kill_before_queued_attacks_and_leave_fire() {
+        let input = r#"{
+            "mission_id":"Mission_Final",
+            "env_type":"volcano",
+            "mission_final_volcano":{
+                "complete":true,"mode":1,"phase":2,
+                "lava_start":[[1,2]],
+                "locations":[[2,3],[2,4],[4,2],[4,5]],
+                "planned":[[2,3],[2,4],[4,2],[4,5]]
+            },
+            "tiles":[
+                {"x":2,"y":3,"terrain":"ground"},
+                {"x":2,"y":4,"terrain":"mountain","building_hp":2},
+                {"x":4,"y":2,"terrain":"ground"},
+                {"x":4,"y":5,"terrain":"lava"},
+                {"x":2,"y":2,"terrain":"building","building_hp":2}
+            ],
+            "units":[
+                {"uid":20,"type":"Hornet1","x":2,"y":3,"hp":2,"max_hp":2,
+                 "team":6,"flying":true,"has_queued_attack":true,
+                 "queued_target":[2,2],"weapons":["HornetAtk1"]}
+            ],
+            "attack_order":[20],
+            "environment_danger":[[2,3],[2,4],[4,2],[4,5]],
+            "environment_danger_v2":[
+                [2,3,1,1,0],[2,4,1,1,0],[4,2,1,1,0],[4,5,1,1,0]
+            ],
+            "spawning_tiles":[]
+        }"#;
+        let (mut board, ..) = board_from_json(input).expect("exact Rocks payload parses");
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 1);
+        assert_eq!(board.tile(2, 2).building_hp, 2, "Rocks resolve before Vek attacks");
+        assert!(board.tile(2, 3).on_fire());
+        assert_eq!(board.tile(2, 4).terrain, Terrain::Rubble);
+        assert!(board.tile(2, 4).on_fire(), "destroyed mountain rubble burns");
+        assert!(board.tile(4, 2).on_fire());
+        assert_eq!(board.tile(4, 5).terrain, Terrain::Lava);
+        assert!(!board.tile(4, 5).on_fire(), "Lava cannot host a separate Fire tile");
     }
 
     #[test]

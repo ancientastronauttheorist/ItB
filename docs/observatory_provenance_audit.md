@@ -827,8 +827,9 @@ ingestion and its live-derived stale-flying-immunity regression. It remains
 `partial`: Rust consumes the selected mask without reproducing the four-phase
 selector, modes, RNG, scheduling, BigBomb exclusion, or enemy avoidance, and
 does not apply the source's road/lava terrain aftermath. The preceding
-`env_volcano.lua` stage is now indexed separately below without claiming the
-still-absent Rust mode, terrain, fire, phase, or selection conformance.
+`env_volcano.lua` stage now has the bounded v404 current-selection model
+described separately below; future selector RNG and full scheduler conformance
+remain independent gaps.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
@@ -849,24 +850,31 @@ native RNG, effects, collisions, scheduling, phase handoff, or mission-end
 settlement.
 
 The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
-the then-selected mechanical source index at 96/96 without upgrading behavioral
-coverage. The later runtime-driven Advanced boss expansion raised the current
-scope to 108 files, of which 100 are provenance-indexed; the eight newly visible
-unindexed boss files remain explicit backlog.
-Its selector toggles before choosing, yielding exactly Lava, Rocks, Lava,
-Rocks over phases one through four. Lava consumes one of two starting points
-and extends up to three right/down non-Lava, non-Mountain, non-Building steps;
-Rocks chooses at most one non-sentinel point from each inherited quarter. The
-effects are respectively zero-damage Lava terrain conversion and lethal
-fire-setting artillery. Inherited `Env_Attack:Plan` temporarily spawn-blocks
-the whole selected set, while `Ordered=true` makes application consume the
-queued locations from the front. The bridge currently falls through the
-non-nil `StartEffect` signature as `cataclysm_or_seismic`, exports neither mode
-nor phase, and cannot encode both effect kinds correctly. The exact
-`Mission_Final` native-forecast gate therefore blocks solve, auto-turn, and End
-Turn, with picker and route vetoes as conservative anchors. No live trace or
-Rust selector, terrain, fire, spawn-block, ordering, or scheduler conformance
-is claimed.
+the then-selected mechanical source index at 96/96. The later runtime-driven
+Advanced boss expansion raised the current scope to 108 files, of which 100 are
+provenance-indexed; the eight newly visible unindexed boss files remain explicit
+backlog. Its selector toggles before choosing, yielding exactly Lava, Rocks,
+Lava, Rocks over phases one through four. Lava consumes one of two starting
+points and extends up to three right/down non-Lava, non-Mountain, non-Building
+steps; Rocks chooses at most one non-sentinel point from each inherited quarter.
+The effects are respectively Lava terrain conversion and lethal fire-setting
+artillery, while `Ordered=true` consumes selected locations from the front.
+
+Simulator v404 upgrades the bounded current-turn behavior without pretending to
+predict native RNG. The bridge exports `Mode`, `Phase`, remaining `LavaStart`,
+and the exact ordered `Locations`/`Planned` selection atomically. Python and
+Rust reject source-unreachable state, turn disagreement, warning masks, and
+mode-specific encodings before solve or End Turn. Rust then applies Rocks before
+queued Vek attacks or permanently converts Lava, including drowning and Fire
+status rules, and clears the resolved payload rather than inventing the next
+selection. Two git-preserved live runs corroborate Lava/Rocks/Lava/Rocks,
+terrain conversion, Rocks Fire, and one pre-attack Rock kill; their immutable
+ledger is
+`data/observatory/captures/historical_git_mission_final_volcano_runs.json`.
+Because those historical recordings lack a build identity and future selector
+RNG plus exact scheduler edges remain native dependencies, provenance stays
+`partial`. `Mission_Final` is no longer broadly picker-vetoed, but its dedicated
+payload gate remains non-overridable whenever current evidence is incomplete.
 
 The neutral mission-hazard slice, `mission-piston-trash-compactors`, adds the
 previously unindexed `mission_piston.lua` source and all three active callbacks.
@@ -935,8 +943,9 @@ cross-turn `Limited=1` state remain partial gaps.
 2. Add mission records only when a static callback, Rust transition, and
    regression fixture can be named precisely; do not bulk-index files merely to
    improve the count.
-3. Keep the indexed `env_volcano.lua` record partial until exact mode,
-   phase-order, terrain, fire, selection, and scheduler conformance tests exist.
+3. Keep the indexed `env_volcano.lua` record partial until future selector RNG,
+   build-keyed runtime edge capture, and full scheduler conformance exist; the
+   exact current phase, mode, selected order, terrain, and Fire contract is v404.
 4. Keep native-dependent target selection and RNG records non-verified until a
    build-keyed trace supplies the missing boundary evidence.
 

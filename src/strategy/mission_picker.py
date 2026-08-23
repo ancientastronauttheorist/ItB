@@ -247,7 +247,6 @@ MISSION_ID_TAGS: dict[str, list[str]] = {
 NATIVE_FORECAST_GATED_MISSION_IDS = frozenset({
     "Mission_BlobBoss",
     "Mission_Fence",
-    "Mission_Final",
     "Mission_Laser",
     "Mission_Respawn",
     "Mission_SpiderBoss",

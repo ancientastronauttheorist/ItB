@@ -2414,6 +2414,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v404 - Mission_Final now carries the native Env_Volcano phase, mode,
+// ordered Locations/Planned, and remaining LavaStart pool. Rocks resolve as
+// ordered DAMAGE_DEATH plus fire; Lava permanently converts terrain, drowns
+// ordinary grounded units, and ignites surviving Massive/flying units. The
+// resolved marker is consumed rather than inventing future native RNG, and
+// surviving grounded Massive units cannot attack/repair while submerged.
+// Pre-v404 corpus archived as recordings/failure_db_snapshot_sim_v403.jsonl.
 // v403 - Exact Windows lifecycle/path analysis proves mode-1 occupancy counts
 // live pawns plus persistent corpses, but skips retained transient dead
 // non-corpses. Ordinary movement blocks persistent corpses; Road Runner may
@@ -2499,7 +2506,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 403;
+pub const SIMULATOR_VERSION: u32 = 404;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
