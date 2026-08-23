@@ -5819,6 +5819,7 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
             "symbols": [
                 "GameObject:GetMissionId", "GameObject:GetMission",
                 "GameObject:CreateNextPhase",
+                "Values.pod_z", "Values.pod_velocity",
             ],
         },
         {
@@ -5952,6 +5953,16 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "final_cave_replacement_cadence.json"
+    ] == {
+        "dispatcher_result_enters_busy_vector",
+        "pylon_is_busy_until_impact",
+        "replacement_repeat_cadence_is_exact",
+        "solver_boundary",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_campaign_settlement.json"
     ] == {
         "start_mech_travel_initializes_native_queue",
@@ -6012,6 +6023,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_replacement_map",
         "validate_final_cave_replacement_map_binding",
     }
+    assert implementations[
+        "src/observatory/final_cave_replacement_cadence.py"
+    ] == {
+        "build_final_cave_replacement_cadence_map",
+        "validate_final_cave_replacement_cadence_map",
+        "validate_final_cave_replacement_cadence_map_binding",
+    }
     assert implementations["src/observatory/final_campaign_settlement.py"] == {
         "build_final_campaign_settlement_map",
         "validate_final_campaign_settlement_map",
@@ -6055,6 +6073,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_replacement.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_replacement_cadence.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_campaign_settlement.py"
     ] == {"_parser", "main"}
     assert implementations[
@@ -6076,6 +6097,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "test_committed_map_closes_replacement_materialization_path_without_rng_overclaim",
         "test_binding_rejects_pointer_source_or_prose_drift",
         "test_exact_local_executable_and_sources_reproduce_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_final_cave_replacement_cadence.py"
+    ] == {
+        "test_committed_map_closes_semantic_repeat_cadence_without_rng_overclaim",
+        "test_binding_rejects_vtable_source_or_prose_drift",
+        "test_exact_local_executable_and_source_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
@@ -6104,6 +6132,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "independent full 0x134-byte SpaceDamage copies" in facts
     assert "landing applies the preserved sPawn=BigBomb record" in facts
     assert "fresh settled bridge-read gate remain exact" in facts
+    assert "closes semantic repeated-cycle ordering" in facts
+    assert "primary Board's +0x2d20 active-animation vector" in facts
+    assert "no duplicate replacement can queue" in facts
     assert "resolves that post-StartMechTravel gap" in facts
     assert "4.5-second state value" in facts
     assert "common completed-battle state" in facts
@@ -6127,13 +6158,21 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "live campaign-settlement timing and file contents" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" not in gaps
     assert "each earlier AddDropper record is insulated" in gaps
-    assert "repeated native replacement cycles" in gaps
+    assert "repeated native replacement cycles remain untraced" not in gaps
+    assert "semantic repeat ordering are now statically pinned" in gaps
     assert "actual end-of-countdown outcome" not in gaps
     assert "replacement materialization is unresolved" not in gaps
-    assert "BigBomb drop resolution itself is now statically pinned" in gaps
-    assert "concrete replacement coordinate, UID, and settled cadence" in gaps
     assert (
-        "not because materialization mechanics are unresolved or bomb "
+        "BigBomb drop resolution and semantic repeat ordering are now "
+        "statically pinned"
+        in gaps
+    )
+    assert (
+        "concrete replacement coordinate, UID, and settled wall-clock timing"
+        in gaps
+    )
+    assert (
+        "not because materialization or repeat mechanics are unresolved or bomb "
         "destruction is a direct terminal mission loss"
         in gaps
     )

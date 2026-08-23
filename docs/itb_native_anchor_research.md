@@ -427,9 +427,15 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    `SpaceDamage`; `AddEffect` queues it for a later eligible Board update; kind
    4 constructs `PylonAnimation`; and landing applies the preserved
    `sPawn="BigBomb"` record through the pawn factory and exact `Board:AddPawn`
-   body at the selected point. The incoming CRT state, concrete later draws,
-   nested spawn RNG, queued startup-effect settlement, callback-time replacement
-   candidate set, selected coordinate, UID, complete repeated-cycle cadence,
+   body at the selected point. A fifth continuation closes semantic repeat
+   cadence: the secondary-`this` dispatcher appends the Pylon to primary
+   Board's active-animation vector, `IsBusy` sees it as activity reason 8 while
+   its fall field is negative, and the landing update synchronously impacts
+   before that busy predicate can clear. A duplicate replacement cannot be
+   queued before impact, and another `+2` cycle requires a later bomb loss plus
+   a new idle callback. The incoming CRT state, concrete later draws, nested
+   spawn RNG, queued startup-effect settlement, callback-time replacement
+   candidate set, selected coordinate, UID, wall-clock presentation duration,
    live campaign-settlement timing, and non-Windows equivalence remain open; no
    speculative Rust forecast follows.
 8. Add native candidate records only if a solver mismatch needs more than the

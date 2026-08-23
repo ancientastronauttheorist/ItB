@@ -9054,7 +9054,11 @@
         },
         {
           "classification": "inference",
-          "statement": "The exact-build replacement continuation closes the broad native materialization path. The Board effect update precedes BaseUpdate, so UpdateMission's newly queued replacement cannot dispatch in that already-completed Board-update pass. The exact IsBusy binding returns true while the +0x2c50 queue yields Board activity reason 6. AddDropper immediately makes independent full 0x134-byte SpaceDamage copies; AddEffect queues the copied batch; a later eligible update sends kind 4 through PylonAnimation; and landing applies the preserved sPawn=BigBomb record through the pawn factory and exact Board:AddPawn body at the selected point. This proves construction and impact-time materialization, not the callback-time candidate set, incoming CRT state, variable draw count, selected coordinate, new UID, wall-clock delay, or complete repeated-cycle cadence. Simulator v406's pending marker and fresh settled bridge-read gate remain exact and require no Rust semantic change."
+          "statement": "The exact-build replacement continuation closes the broad native materialization path. The Board effect update precedes BaseUpdate, so UpdateMission's newly queued replacement cannot dispatch in that already-completed Board-update pass. The exact IsBusy binding returns true while the +0x2c50 queue yields Board activity reason 6. AddDropper immediately makes independent full 0x134-byte SpaceDamage copies; AddEffect queues the copied batch; a later eligible update sends kind 4 through PylonAnimation; and landing applies the preserved sPawn=BigBomb record through the pawn factory and exact Board:AddPawn body at the selected point. This proves construction and impact-time materialization, not the callback-time candidate set, incoming CRT state, variable draw count, selected coordinate, new UID, or wall-clock delay. Simulator v406's pending marker and fresh settled bridge-read gate remain exact and require no Rust semantic change."
+        },
+        {
+          "classification": "inference",
+          "statement": "The exact-build cadence continuation closes semantic repeated-cycle ordering. The Board effect update dispatches through a secondary this pointer at primary Board+0x0c, so the dispatcher's relative +0x2d14 vector is primary Board's +0x2d20 active-animation vector. The kind-4 Pylon enters that vector; Board activity calls its +0x0c predicate and returns reason 8 while the constructor's pod_z-derived fall field remains negative. The active loop keeps and updates it, and landing clamps that field nonnegative before synchronously calling impact. UpdateMission therefore cannot observe a nonbusy, still-missing bomb between dispatch and impact: no duplicate replacement can queue, and another +2 cycle requires a later bomb loss plus another idle callback. Coordinate/RNG state, UID allocation, and wall-clock presentation duration remain unknown, so simulator v406 still requires a fresh settled bridge read."
         },
         {
           "classification": "inference",
@@ -9128,6 +9132,10 @@
           "symbols": ["source_callback_and_selection_are_exact", "board_update_precedes_replacement_callback", "is_busy_blocks_queued_repeat", "add_dropper_copy_semantics_are_exact", "add_effect_queues_for_later_dispatch", "dropper_preserves_space_damage_to_impact", "bigbomb_drop_resolution_path_is_exact", "replacement_rng_boundary_is_narrow", "solver_boundary"]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement_cadence.json",
+          "symbols": ["dispatcher_result_enters_busy_vector", "pylon_is_busy_until_impact", "replacement_repeat_cadence_is_exact", "solver_boundary"]
+        },
+        {
           "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_campaign_settlement.json",
           "symbols": ["start_mech_travel_initializes_native_queue", "travel_queue_finishes_with_bomb_lock_and_fade", "campaign_terminal_predicate_is_exact", "final_campaign_bypasses_ordinary_cleanup", "campaign_manager_settles_in_order", "completed_run_saves_are_removed", "victory_profile_and_achievement_path", "profile_write_path_is_pinned", "final_victory_renderer_handoff", "solver_boundary"]
         },
@@ -9176,6 +9184,10 @@
           "symbols": ["build_final_cave_replacement_map", "validate_final_cave_replacement_map", "validate_final_cave_replacement_map_binding"]
         },
         {
+          "path": "src/observatory/final_cave_replacement_cadence.py",
+          "symbols": ["build_final_cave_replacement_cadence_map", "validate_final_cave_replacement_cadence_map", "validate_final_cave_replacement_cadence_map_binding"]
+        },
+        {
           "path": "src/observatory/final_campaign_settlement.py",
           "symbols": ["build_final_campaign_settlement_map", "validate_final_campaign_settlement_map", "validate_final_campaign_settlement_map_binding"]
         },
@@ -9220,6 +9232,10 @@
           "symbols": ["_parser", "main"]
         },
         {
+          "path": "scripts/itb_observatory_final_cave_replacement_cadence.py",
+          "symbols": ["_parser", "main"]
+        },
+        {
           "path": "scripts/itb_observatory_final_campaign_settlement.py",
           "symbols": ["_parser", "main"]
         },
@@ -9233,17 +9249,17 @@
         }
       ],
       "known_gaps": [
-        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, the countdown outcome-code write and forced zero-Mech failure distinction, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, generic replacement callback-to-AddPawn materialization, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, the replacement callback's incoming RNG state, selected coordinate/UID, complete repeat cadence, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
+        "The separately indexed partial scripts/missions/final/env_volcano.lua and Env_Final records cover exact current bridge selections and bounded simulator effects for both stages. The exact-build native maps now close the ordinary turn-limit/state-2 Final end trigger before IsEndBlocked, the countdown outcome-code write and forced zero-Mech failure distinction, MissionEnd effect enqueueing and the activity-clear handoff gate, relative MissionEnd-to-IsNextPhase-to-CreateNextPhase order, the source-selected cave target, map selection/loading-to-BaseStart order, RandomMap filtering and edition behavior, the current installation's nine-map order, random_int(1) advancement, the ordinary two-draw map boundary, generic replacement callback-to-AddPawn materialization, active-animation registration, busy-until-impact ordering, semantic replacement repeat cadence, and the post-StartMechTravel campaign classification/save/profile/final-victory handoff. Incoming pre-map-draw CRT state, concrete later environmental/startup RNG, queued startup-effect settlement, the replacement callback's incoming RNG state, selected coordinate/UID, wall-clock presentation duration, live campaign-settlement timing and file contents, and full runtime scheduler conformance remain open.",
         "Mission_Infinite inheritance, native turn and team callback order outside the pinned completion branch, native spawner construction, SpawnPawns/NextPawn behavior, concrete difficulty lookup semantics, concrete RNG state, boss placement, and UID allocation remain native dependencies.",
         "AddDropper's immediate complete SpaceDamage copy and AddEffect's queue insertion are exact. AddScript ordering, temporary and permanent spawn-block lifetime, occupied rock/pylon/bomb collisions, terrain replacement, duplicated droppers, release-versus-debug delays, and concrete startup queue settlement still require narrower evidence. For Mission_Final's reused SpaceDamage, each earlier AddDropper record is insulated from later mutation, but every later call snapshots whatever retained iDamage Lua currently holds.",
-        "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, callback-time replacement candidate set, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, post-dequeue animation cadence, and repeated native replacement cycles remain untraced. BigBomb drop resolution itself is now statically pinned through PylonAnimation impact, the pawn factory, and Board:AddPawn.",
-        "Current bomb/pylon safety penalties remain conservative because the concrete replacement coordinate, UID, and settled cadence are unavailable, not because materialization mechanics are unresolved or bomb destruction is a direct terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, outcome code 1 at the reached limit without a bomb/objective/IsEndBlocked recheck, the distinct forced zero-Mech code-3 failure, Mission_Final and Mission_Final_Cave effect-vector activity gating, replacement callback-to-queue order, immediate AddDropper copying, kind-4 dropper construction, impact-time BigBomb AddPawn resolution, relative phase control flow, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, installed map/zone candidates, and the post-travel campaign classification/save/profile/final-victory handoff. They do not prove concrete cave initialization results, the replacement callback's incoming RNG state, selected coordinate/UID, full repeated-cycle cadence, queued startup effects executing conformantly, arbitrary modified-effect cancellation, live campaign-settlement timing, OS file-operation success, or a particular completed run's bytes."
+        "The repository does not forecast the cave's concrete selected map, LavaPath, random opening pawn, bomb/Mech assignment, mountain/pylon queue order, ordinary spawn schedule, boss choice/location, callback-time replacement candidate set, chosen replacement-bomb coordinate, or UID. IsBomb semantics, candidate occupancy changes between the projected boundary and AddBomb execution, a live exhausted-edge/fallback choice, and wall-clock drop presentation remain untraced. BigBomb drop resolution and semantic repeat ordering are now statically pinned: PylonAnimation is in the Board activity vector, remains busy before impact, and another native replacement cycle requires a later bomb loss plus a new idle callback.",
+        "Current bomb/pylon safety penalties remain conservative because the concrete replacement coordinate, UID, and settled wall-clock timing are unavailable, not because materialization or repeat mechanics are unresolved or bomb destruction is a direct terminal mission loss. The build-keyed static maps prove the live ordinary end-readiness boundary, outcome code 1 at the reached limit without a bomb/objective/IsEndBlocked recheck, the distinct forced zero-Mech code-3 failure, Mission_Final and Mission_Final_Cave effect-vector activity gating, replacement callback-to-queue order, immediate AddDropper copying, kind-4 dropper construction, active-list registration, busy-until-impact ordering, impact-time BigBomb AddPawn resolution, semantic repeat cadence, relative phase control flow, the source-selected cave target, startup call skeleton, current installation map ordering, two pre-environment map draws, installed map/zone candidates, and the post-travel campaign classification/save/profile/final-victory handoff. They do not prove concrete cave initialization results, the replacement callback's incoming RNG state, selected coordinate/UID, wall-clock presentation duration, queued startup effects executing conformantly, arbitrary modified-effect cancellation, live campaign-settlement timing, OS file-operation success, or a particular completed run's bytes."
       ],
       "sources": [
         {
           "path": "scripts/game.lua",
           "sha256": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
-          "symbols": ["GameObject:GetMissionId", "GameObject:GetMission", "GameObject:CreateNextPhase"]
+          "symbols": ["GameObject:GetMissionId", "GameObject:GetMission", "GameObject:CreateNextPhase", "Values.pod_z", "Values.pod_velocity"]
         },
         {
           "path": "scripts/global.lua",
@@ -9312,6 +9328,10 @@
         {
           "path": "tests/test_observatory_final_cave_replacement.py",
           "symbols": ["test_committed_map_closes_replacement_materialization_path_without_rng_overclaim", "test_binding_rejects_pointer_source_or_prose_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_observatory_final_cave_replacement_cadence.py",
+          "symbols": ["test_committed_map_closes_semantic_repeat_cadence_without_rng_overclaim", "test_binding_rejects_vtable_source_or_prose_drift", "test_exact_local_executable_and_source_reproduce_map_when_available"]
         },
         {
           "path": "tests/test_observatory_final_campaign_settlement.py",

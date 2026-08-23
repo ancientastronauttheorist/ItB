@@ -653,12 +653,49 @@ python scripts/itb_observatory_final_cave_replacement.py verify `
 
 The candidate enumeration and interior preference are exact, but the
 callback-time occupancy/environment set, variable `random_removal` draw count,
-incoming shared CRT state, concrete coordinate, new pawn UID, wall-clock delay,
-and complete repeated-cycle cadence are not ordinary solver inputs. Simulator
-v406 already records the exact `+2` extension and every snapshot-reachable
-candidate without fabricating a pawn or UID, then stops for a fresh settled
-bridge read. The native proof validates that boundary; no Rust semantic change
-follows.
+incoming shared CRT state, concrete coordinate, new pawn UID, and wall-clock
+delay are not ordinary solver inputs. The cadence continuation below closes
+the semantic repeated-cycle gap without making those concrete values
+predictable. Simulator v406 already records the exact `+2` extension and every
+snapshot-reachable candidate without fabricating a pawn or UID, then stops for
+a fresh settled bridge read. The native proof validates that boundary; no Rust
+semantic change follows.
+
+## Final Cave replacement cadence boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_replacement_cadence.json`
+continues the materialization map through the active-animation scheduler. It
+binds one exact shipped Lua file, eight reviewed native regions, three data
+anchors, six vtable pointers, eight instruction-start control windows, and one
+direct call edge. For the pinned Windows build it establishes that:
+
+- the Board effect update calls the effect dispatcher with `this` adjusted to
+  primary Board `+0x0c`; the dispatcher's vector at relative `+0x2d14` is
+  therefore the primary Board active-animation vector at `+0x2d20`;
+- the kind-4 factory result enters that vector, which the activity routine
+  checks through animation slot `+0x0c` and reports as activity reason 8;
+- exact `game.lua` values make the dropper's `+0x1d4` fall field start
+  strictly negative; both the lifetime and activity predicates remain true
+  while it is negative;
+- the active loop keeps and updates the Pylon until its landing update clamps
+  that field nonnegative and synchronously invokes impact; and
+- no `UpdateMission` callback can observe a nonbusy, still-missing bomb between
+  dispatch and impact. Each later `+2`/replacement cycle therefore requires a
+  later loss of the materialized bomb and another idle callback.
+
+Verify the executable, exact source values, region/data hashes, vtable
+pointers, control windows, and direct edge with:
+
+```powershell
+python scripts/itb_observatory_final_cave_replacement_cadence.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --cadence-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement_cadence.json
+```
+
+This proves semantic repeat ordering, not the selected coordinate, RNG state,
+new UID, or wall-clock presentation duration. The mandatory fresh settled
+bridge read therefore remains unchanged.
 
 ## Final campaign settlement boundary
 

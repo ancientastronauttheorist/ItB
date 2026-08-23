@@ -477,7 +477,13 @@ Ghidra review plus the PE byte/call verifier now map and pin:
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
-  and exact `Board:AddPawn` materialization of `BigBomb` at the selected point.
+  and exact `Board:AddPawn` materialization of `BigBomb` at the selected point;
+  and
+- the replacement's semantic repeat cadence: secondary-`this` normalization
+  places the Pylon in primary Board's active-animation vector, activity reason
+  8 holds while its fall field is negative, and landing synchronously impacts
+  before the busy predicate can clear, excluding a duplicate pre-impact
+  replacement.
 
 The durable artifact contains reviewed region hashes and call edges decoded at
 instruction boundaries relative to the declared starts, rather than executable
@@ -501,7 +507,7 @@ The remaining native priorities are now narrower:
    classification and `AddMove` step/scheduler effects remain open.
 3. Resolve the pre-map-draw CRT state, concrete later cave startup draws,
    queued startup-effect settlement, and the replacement callback's incoming
-   RNG state, selected coordinate/UID, and complete repeated-cycle cadence.
+   RNG state, selected coordinate/UID, and wall-clock presentation duration.
    The ordinary Final end trigger, countdown outcome, `MissionEnd` activity
    gate, and post-`StartMechTravel` campaign-victory path are now exact.
    Current turn-limit equality in state 2 writes outcome code 1 before any
@@ -513,9 +519,10 @@ The remaining native priorities are now narrower:
    also pinned for the current exact Windows installation. The generic
    replacement path is also exact: Board effects update before the Lua
    callback, `AddDropper` immediately copies its record, and the later kind-4
-   dropper impact constructs and adds `BigBomb` at the selected point. A copied or
-   reinstalled map directory must revalidate its filesystem order even when
-   all content hashes match.
+   dropper is registered in the Board activity vector, stays busy until its
+   synchronous impact constructs and adds `BigBomb`, and cannot duplicate
+   before impact. A copied or reinstalled map directory must revalidate its
+   filesystem order even when all content hashes match.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
@@ -684,10 +691,12 @@ the bomb or objectives, and that queued `MissionEnd` effects hold the later
 handoff closed until comprehensive Board activity clears. The post-travel
 campaign settlement is pinned through the result-1 victory presentation.
 Replacement-bomb construction and impact-time `BigBomb` materialization are
-now pinned. Concrete cave startup draws and the replacement callback's incoming
-RNG state, selected coordinate/UID, wall-clock delay, and full repeat cadence
-remain deliberately unmodeled; simulator v406 still stops for a fresh settled
-bridge read.
+now pinned, as is semantic repeat cadence: the active Pylon holds `IsBusy`
+until synchronous impact, so another replacement cycle requires a later bomb
+loss. Concrete cave startup draws and the replacement callback's incoming RNG
+state, selected coordinate/UID, and wall-clock presentation duration remain
+deliberately unmodeled; simulator v406 still stops for a fresh settled bridge
+read.
 
 ### Milestone 1: Provenance inventory
 

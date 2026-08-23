@@ -1,0 +1,492 @@
+{
+  "analysis_kind": "final_cave_replacement_cadence_boundary_map",
+  "contracts": {
+    "board_layout_alias": {
+      "dispatcher_vector_begin": "this+0x2d14",
+      "dispatcher_vector_end": "this+0x2d18",
+      "effect_dispatch_this": "primary Board+0x0c",
+      "primary_vector_begin": "Board+0x2d20",
+      "primary_vector_end": "Board+0x2d24",
+      "same_vector_proven": true
+    },
+    "busy_and_impact": {
+      "activity_virtual_slot": "PylonAnimation+0x0c",
+      "board_activity_reason": 8,
+      "busy_while_fall_field_negative": true,
+      "callback_can_observe_nonbusy_missing_bomb_before_impact": false,
+      "impact_runs_on_nonnegative_crossing": true,
+      "impact_virtual_slot": "PylonAnimation+0x20",
+      "lifetime_kept_while_fall_field_negative": true,
+      "lifetime_virtual_slot": "PylonAnimation+0x04",
+      "update_virtual_slot": "PylonAnimation+0x14"
+    },
+    "initial_fall": {
+      "constructor_operation": "flip IEEE-754 sign bit",
+      "fall_field": "object+0x1d4",
+      "fall_field_source": "positive board coordinate plus pod_z",
+      "initial_fall_field_strictly_negative": true,
+      "lua_pod_velocity": 0.7,
+      "lua_pod_z": 300
+    },
+    "native_relative_order": {
+      "active_animation_update_before_effect_dispatch": true,
+      "effect_dispatch_before_lua_replacement_callback": true,
+      "impact_applies_bigbomb_synchronously": true,
+      "new_dropper_first_updates_on_later_board_pass": true
+    },
+    "repeat_cadence": {
+      "duplicate_replacement_before_impact_possible": false,
+      "next_replacement_requires_later_bomb_loss": true,
+      "replacement_effects_per_idle_missing_bomb_callback": 1,
+      "semantic_repeat_cadence_proven": true,
+      "turn_limit_increment_per_idle_missing_bomb_callback": 2,
+      "wall_clock_duration_known": false
+    },
+    "solver_handoff": {
+      "current_policy": "Keep simulator v406's +2-turn pending marker, candidate set, depth stop, and mandatory fresh settled bridge read.",
+      "reason": "Cadence is now closed, but coordinate selection and UID allocation still cannot be forecast from a projected snapshot.",
+      "simulator_change_required": false
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "constructor_start_height_sign",
+      "instruction_hex": "660f6e4b0c83ec180f5bc98bcc6a0c68b0df8200f30f58c8f30f118ed4010000c741140f000000c7411000000000c60100e8beaaeaffe85904effff30f108ec0010000f30f1096bc010000f30f5c8eb8010000f30f5c96b4010000f30f1145ecf30f114de00f28c1f30f1155e4f30f59c10f28caf30f59caf30f58c1e8631deefff30f1055e40f28d80f57c90f2ed99ff6c4447a050f28c1eb10f30f1045e00f28caf30f5ecbf30f5ec3f30f594decf30f5945ecf30f114de8f30f108ed40100008b45e8f30f1145ec0f28c18986c4010000f30f5986c40100008b45ec8986c8010000f30f5ec2e8881ceeff0f570dc0d783008b4b28f30f1186d8010000f30f118ed4010000",
+      "meaning": "Look up pod_z and pod_velocity, derive the fall trajectory, XOR the positive pod_z-derived start-height sign bit, and store the negative fall field at object+0x1d4.",
+      "region_id": "pod_animation_constructor",
+      "sha256": "5992f62fd4954cdd24b9a1726ca4e4506bf8560c4d2202044e2c9d2b9af2a8f6",
+      "size": 262,
+      "start_rva": "0x0015d4dc"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_secondary_this",
+      "instruction_hex": "8b460c8d4e0cff500c",
+      "meaning": "Dispatch through Board's secondary vtable with this adjusted to primary Board+0x0c.",
+      "region_id": "board_effect_update",
+      "sha256": "cc639631e060f99727a0f404b3b7b0a0c8077353eaaece204417d97cc1f74964",
+      "size": 9,
+      "start_rva": "0x00169dd9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_active_append",
+      "instruction_hex": "e851840f008bf88db3142d00008d8574fdffff89bd74fdffff3b460473338b068d8d74fdffff3bc177278bf92bf88b4604c1ff023b46087508518bcee8e5a1f3ff8b4e048b0685c974208b04b88901eb198b46043b46087508518bcee8c5a1f3ff8b460485c07402893883460404",
+      "meaning": "Append the factory result to dispatcher-this+0x2d14..+0x2d18, which normalizes to primary Board+0x2d20..+0x2d24.",
+      "region_id": "effect_dispatcher",
+      "sha256": "56f3e38ec8a8298430b897a1b34227a016c5c082b969a49d5bf6e23b7db124a6",
+      "size": 110,
+      "start_rva": "0x0016154a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "activity_active_loop",
+      "instruction_hex": "8b86202d00003b86242d000074458b86242d000033ff2b86202d0000c1f80285c074300f1f40008b86202d00008b0cb88b018b400cffd084c00f85b10000008b86242d0000472b86202d0000c1f8023bf872d4",
+      "meaning": "Iterate primary Board+0x2d20..+0x2d24 and branch when an animation's vtable slot +0x0c reports active.",
+      "region_id": "board_activity_reason",
+      "sha256": "4a5ce82b8eb98c493269b95c8c7df7e2fad7044c1e9074085415707609dd452d",
+      "size": 83,
+      "start_rva": "0x001698f9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "activity_reason_eight_return",
+      "instruction_hex": "b8080000005f5e5b8be55dc3",
+      "meaning": "Return Board activity reason 8 for an active animation.",
+      "region_id": "board_activity_reason",
+      "sha256": "eb4d4283a59ab16f6158483cf46f854e6b089bea0f827c7b1c3e3f86f627e401",
+      "size": 12,
+      "start_rva": "0x001699e9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "master_active_loop",
+      "instruction_hex": "8b83242d000033f62b83202d0000c1f80285c0746c0f1f008b83202d00008b0cb08b018b4004ffd084c08b83202d00008b0cb0753385c974068b016a01ff108b83202d00008b93242d00008d04b08d48042bd1525150e87d3b20008383242d0000fc83c40c4eeb058b01ff50148b83242d0000462b83202d0000c1f8023bf07297",
+      "meaning": "Call each active animation's lifetime slot +0x04; destroy and erase it when false, otherwise call its update slot +0x14.",
+      "region_id": "board_master_update",
+      "sha256": "ea9127beeaa478b25660dc8527559f419735d8770e59bcc584b783b5b8845125",
+      "size": 129,
+      "start_rva": "0x0016a9a8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "master_effect_update_call",
+      "instruction_hex": "8b4d808b4340412b433cc1f802894d803bc80f82c9fdffff8bcbe870e7ffff",
+      "meaning": "Call the Board effect-queue update after the earlier active-animation loop in this same master update.",
+      "region_id": "board_master_update",
+      "sha256": "d5e0a318822e590ed935eda8149923d4e6958107e72a257f700a7041c35c89f2",
+      "size": 31,
+      "start_rva": "0x0016b461"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pylon_fall_to_impact",
+      "instruction_hex": "f30f1087dc0100000f57e40f2fc40f8744010000f30f1087d40100008d8fd40100000f2fc40f832d010000f30f101dd0c88b008d45f0f30f108fc4010000f30f1087b4010000f30f1097c8010000f30f59cbc745f000000000f30f59d3f30f58c1f30f1187b4010000f30f1087b8010000f30f58c2f30f1187b8010000f30f1087d8010000f30f59c3f30f58010f2fe0f30f11010f47c1f30f10000f2fc4f30f11010f82b0000000c745e4000000008b45e48987c401000051c745e8000000008d8fe00100008b45e88987c8010000e8a396f2ff8b87fc0100008d4dec48c745ec0400000083f8048945f08d55f0c745e8000000000f4dd18d45e88d8f24010000833a000f4fc28b0089878c020000c687ac02000001e8cc0700008b078bcfff5020",
+      "meaning": "While object+0x1d4 is negative, integrate the fall; on crossing zero clamp it nonnegative and synchronously call impact slot +0x20.",
+      "region_id": "pylon_update",
+      "sha256": "a7b36609765d25f0d0748f64d88464827ce5c1fa373dcd3d937f16640ab4dbf3",
+      "size": 290,
+      "start_rva": "0x0015dd39"
+    }
+  ],
+  "data_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "pod_z_name",
+      "meaning": "Native value lookup key used for the dropper's start height.",
+      "rva": "0x0042df88",
+      "section": ".rdata",
+      "sha256": "8a810d4afbb82f94300c9ea5cac81b0f74c15dd96a26c59300ec11077a159ab0",
+      "size": 6
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pod_velocity_name",
+      "meaning": "Native value lookup key used by the PodAnimation constructor.",
+      "rva": "0x0042dfb0",
+      "section": ".rdata",
+      "sha256": "12300b3723d86bce25802515bc59264c2ff283a40e15126d0f7d50558bf23915",
+      "size": 13
+    },
+    {
+      "evidence_class": "fact",
+      "id": "float_sign_mask",
+      "meaning": "Four IEEE-754 sign bits used by XORPS to negate the pod_z-derived start height.",
+      "rva": "0x0043d7c0",
+      "section": ".rdata",
+      "sha256": "df141773470ba96aff5d6e9264a0bd638c9c6f3bb7ad30881cf4db943b5dd021",
+      "size": 16
+    }
+  ],
+  "dependencies": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+      "artifact_sha256": "b08b6d96d4d4ba0f53c024b301b17a039c8deb944632bbc6b8b4000a6e20af50",
+      "id": "final_cave_replacement",
+      "role": "Pins Lua callback guards, effect queueing, Pylon impact, BigBomb construction, and Board:AddPawn materialization."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016b47b",
+      "id": "master_to_effect_update",
+      "instruction_hex": "e870e7ffff",
+      "source_region": "board_master_update",
+      "target_region": "board_effect_update",
+      "target_rva": "0x00169bf0"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The effect update calls the dispatcher with this adjusted to Board+0x0c. The dispatcher's +0x2d14 vector therefore aliases primary Board+0x2d20, so its PylonAnimation factory result is immediately visible to the Board activity and update loops.",
+      "evidence_class": "inference",
+      "id": "dispatcher_result_enters_busy_vector",
+      "limitations": [
+        "The field names are analyst labels; the offsets and pointer adjustment are exact."
+      ],
+      "supports": [
+        "dispatcher_secondary_this",
+        "board_effect_dispatch_slot",
+        "dispatcher_active_append",
+        "activity_active_loop",
+        "master_active_loop"
+      ]
+    },
+    {
+      "claim": "The exact game.lua pod_z value 300 makes the constructor's start-height field positive before its IEEE-754 sign bit is flipped, so object+0x1d4 starts strictly negative; pod_velocity 0.7 controls the derived trajectory. Both Pylon lifetime and activity predicates stay true while the fall field is negative. The Pylon update clamps it nonnegative only on landing and then synchronously calls impact, leaving no callback-visible nonbusy/no-bomb gap.",
+      "evidence_class": "inference",
+      "id": "pylon_is_busy_until_impact",
+      "limitations": [
+        "Wall-clock animation duration and rendering cadence are not derived."
+      ],
+      "supports": [
+        "scripts/game.lua",
+        "pod_z_name",
+        "pod_velocity_name",
+        "float_sign_mask",
+        "constructor_start_height_sign",
+        "pylon_lifetime_slot",
+        "pylon_busy_slot",
+        "pylon_update_slot",
+        "pylon_impact_slot",
+        "pylon_fall_to_impact"
+      ]
+    },
+    {
+      "claim": "A newly queued replacement first blocks IsBusy through the effect vector, then through the active PylonAnimation until impact materializes BigBomb. Subsequent UpdateMission calls therefore cannot queue a duplicate; another +2/replacement cycle requires that materialized bomb to be lost later and the Board to become idle again.",
+      "evidence_class": "inference",
+      "id": "replacement_repeat_cadence_is_exact",
+      "limitations": [
+        "The selected coordinate, new UID, and elapsed presentation time remain unknown."
+      ],
+      "supports": [
+        "final_cave_replacement",
+        "dispatcher_result_enters_busy_vector",
+        "pylon_is_busy_until_impact",
+        "master_active_loop",
+        "master_effect_update_call"
+      ]
+    },
+    {
+      "claim": "No Rust simulator semantic change is justified. Simulator v406 already applies one +2 edge, stops projection before fabricating the replacement pawn, and requires a fresh settled bridge read; cadence proof removes a native ambiguity without making coordinate or UID prediction possible.",
+      "evidence_class": "inference",
+      "id": "solver_boundary",
+      "limitations": [
+        "A future proven RNG-state boundary could justify a narrower handoff."
+      ],
+      "supports": [
+        "replacement_repeat_cadence_is_exact",
+        "final_cave_replacement"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method": {
+    "boundary_review": "Focused Ghidra 12.1.3 vtable, multiple-inheritance this-adjustment, field-use, instruction, and decompiler review.",
+    "limitations": [
+      "Every native address and conclusion applies only to the pinned Windows executable.",
+      "Relative order does not supply a wall-clock duration.",
+      "Incoming CRT state, concrete coordinate, and UID allocator state remain unknown.",
+      "macOS and other builds require independent maps."
+    ],
+    "source_review": "The exact game.lua hash plus pod_z and pod_velocity values are validated without publishing proprietary source bodies."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 PodAnimation activity-predicate body.",
+      "end_rva_exclusive": "0x0015d1e6",
+      "evidence_class": "fact",
+      "id": "pylon_busy_predicate",
+      "section": ".text",
+      "sha256": "26ed8d4d519db8c0047488ff70b7732cf7e8ab78e98463a9f294c681703ff19d",
+      "size": 54,
+      "start_rva": "0x0015d1b0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 PodAnimation constructor body.",
+      "end_rva_exclusive": "0x0015d615",
+      "evidence_class": "fact",
+      "id": "pod_animation_constructor",
+      "section": ".text",
+      "sha256": "1396b7e9834300dd6699dc61b800bbf62bd73c0383b50d0fcb8902926f999fd2",
+      "size": 1061,
+      "start_rva": "0x0015d1f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 PodAnimation lifetime-predicate body.",
+      "end_rva_exclusive": "0x0015d71a",
+      "evidence_class": "fact",
+      "id": "pylon_lifetime_predicate",
+      "section": ".text",
+      "sha256": "955e292a8c64ea5348747dd668dfb2536be5f6baa83cf0ffbebbff1aba73afd3",
+      "size": 90,
+      "start_rva": "0x0015d6c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 PylonAnimation update body.",
+      "end_rva_exclusive": "0x0015dea3",
+      "evidence_class": "fact",
+      "id": "pylon_update",
+      "section": ".text",
+      "sha256": "aa9e95b94cd0c0f1fd1e1942371c0c4fd88450951deb7f0024b731b5bb43c4ce",
+      "size": 451,
+      "start_rva": "0x0015dce0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect record-dispatcher body.",
+      "end_rva_exclusive": "0x00161c6f",
+      "evidence_class": "fact",
+      "id": "effect_dispatcher",
+      "section": ".text",
+      "sha256": "ccbecc70505f546c2d068ad7c95121f0c631aa27dd197127904de3faaff307c2",
+      "size": 2975,
+      "start_rva": "0x001610d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board activity-reason body.",
+      "end_rva_exclusive": "0x00169b22",
+      "evidence_class": "fact",
+      "id": "board_activity_reason",
+      "section": ".text",
+      "sha256": "dc9eced8706681fbaa20781c972724170efe9653c37d277e6b8eaaacc5b61a13",
+      "size": 562,
+      "start_rva": "0x001698f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board effect-queue update body.",
+      "end_rva_exclusive": "0x0016a1f5",
+      "evidence_class": "fact",
+      "id": "board_effect_update",
+      "section": ".text",
+      "sha256": "c047a08e5f274e629b6fec7151c94c89f5576ec3bbf11b0535546fb65d7c7877",
+      "size": 1541,
+      "start_rva": "0x00169bf0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board master-update body.",
+      "end_rva_exclusive": "0x0016bf62",
+      "evidence_class": "fact",
+      "id": "board_master_update",
+      "section": ".text",
+      "sha256": "6d32a302492920ae4353af4505e792776a18c4f9d8c26bd6cf1f9861a6f9129d",
+      "size": 5778,
+      "start_rva": "0x0016a8d0"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/game.lua",
+        "semantic_values": {
+          "pod_velocity": 0.7,
+          "pod_z": 300
+        },
+        "sha256": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
+        "size": 9747,
+        "symbols": [
+          "Values.pod_z",
+          "Values.pod_velocity"
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "active_registration_proven": true,
+    "busy_until_impact_proven": true,
+    "concrete_coordinate_proven": false,
+    "concrete_uid_proven": false,
+    "control_window_count": 8,
+    "data_anchor_count": 3,
+    "direct_edge_count": 1,
+    "duplicate_before_impact_excluded": true,
+    "finding_count": 4,
+    "lua_source_count": 1,
+    "region_count": 8,
+    "semantic_repeat_cadence_proven": true,
+    "simulator_change_required": false,
+    "unresolved_count": 4,
+    "vtable_pointer_count": 6,
+    "wall_clock_duration_proven": false
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+    "remaining_gap_ids": [
+      "replacement_coordinate_and_draw_count",
+      "replacement_uid_allocation",
+      "replacement_wall_clock_duration"
+    ],
+    "resolved_facets": [
+      "active_animation_registration",
+      "busy_until_dropper_impact",
+      "semantic_replacement_repeat_cadence"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "replacement_coordinate_and_draw_count",
+      "next_evidence": "Use a settled build-keyed runtime read or prove the incoming RNG state.",
+      "question": "Which eligible tile and random-removal draw count occur on a concrete callback?",
+      "static_status": "Candidate semantics are exact, but callback-time occupancy and incoming CRT state are not."
+    },
+    {
+      "id": "replacement_uid_allocation",
+      "next_evidence": "Read the settled bridge state after impact.",
+      "question": "Which UID is assigned to the materialized BigBomb?",
+      "static_status": "Pawn construction and Board:AddPawn are proven; the live allocator state is not."
+    },
+    {
+      "id": "replacement_wall_clock_duration",
+      "next_evidence": "Capture timestamped exact-build presentation telemetry only if UI timing matters.",
+      "question": "How long does queueing, falling, and presentation take in wall-clock time?",
+      "static_status": "Semantic ordering is exact; frame delta, rendering, and machine timing are intentionally not converted to seconds."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Produce independent build-keyed boundary maps.",
+      "question": "Do macOS and other Windows builds use the same cadence implementation?",
+      "static_status": "This map is keyed only to Windows build 13725832."
+    }
+  ],
+  "vtable_pointers": [
+    {
+      "data_rva": "0x0042e264",
+      "evidence_class": "fact",
+      "id": "board_effect_dispatch_slot",
+      "role": "Board secondary vtable slot +0x0c",
+      "section": ".rdata",
+      "slot": "0x0c",
+      "target_rva": "0x001610d0",
+      "target_va": "0x005610d0",
+      "vtable_va": "0x0082e258"
+    },
+    {
+      "data_rva": "0x0042e2c0",
+      "evidence_class": "fact",
+      "id": "board_activity_slot",
+      "role": "Board secondary vtable slot +0x68",
+      "section": ".rdata",
+      "slot": "0x68",
+      "target_rva": "0x001698e0",
+      "target_va": "0x005698e0",
+      "vtable_va": "0x0082e258"
+    },
+    {
+      "data_rva": "0x0042e0a4",
+      "evidence_class": "fact",
+      "id": "pylon_lifetime_slot",
+      "role": "PylonAnimation vtable slot +0x04",
+      "section": ".rdata",
+      "slot": "0x04",
+      "target_rva": "0x0015d6c0",
+      "target_va": "0x0055d6c0",
+      "vtable_va": "0x0082e0a0"
+    },
+    {
+      "data_rva": "0x0042e0ac",
+      "evidence_class": "fact",
+      "id": "pylon_busy_slot",
+      "role": "PylonAnimation vtable slot +0x0c",
+      "section": ".rdata",
+      "slot": "0x0c",
+      "target_rva": "0x0015d1b0",
+      "target_va": "0x0055d1b0",
+      "vtable_va": "0x0082e0a0"
+    },
+    {
+      "data_rva": "0x0042e0b4",
+      "evidence_class": "fact",
+      "id": "pylon_update_slot",
+      "role": "PylonAnimation vtable slot +0x14",
+      "section": ".rdata",
+      "slot": "0x14",
+      "target_rva": "0x0015dce0",
+      "target_va": "0x0055dce0",
+      "vtable_va": "0x0082e0a0"
+    },
+    {
+      "data_rva": "0x0042e0c0",
+      "evidence_class": "fact",
+      "id": "pylon_impact_slot",
+      "role": "PylonAnimation vtable slot +0x20",
+      "section": ".rdata",
+      "slot": "0x20",
+      "target_rva": "0x0015e410",
+      "target_va": "0x0055e410",
+      "vtable_va": "0x0082e0a0"
+    }
+  ]
+}
