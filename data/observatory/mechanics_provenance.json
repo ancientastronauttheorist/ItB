@@ -5759,7 +5759,19 @@
         },
         {
           "classification": "fact",
-          "statement": "Piston_U_Atk queues a local hide/animation effect and then queues SpaceDamage on the single forward tile with zero damage and its fixed direction, producing a forward push; the R, L, and D skills inherit that callback. Simulator v386 strictly captures and corroborates the complete live Piston action set, preserves neutral identity and source-static traits through projected JSON, and hard-blocks solving or End Turn while native Mission_Auto scheduling or runtime corpse/action lifetime remains unproven."
+          "statement": "Piston_U_Atk queues a local hide/animation effect and then queues SpaceDamage on the single forward tile with zero damage and its fixed direction, producing a forward push; the R, L, and D skills inherit that callback. The bridge now captures and corroborates the complete live action set in native Board pawn-vector order rather than UID order."
+        },
+        {
+          "classification": "fact",
+          "statement": "Exact Windows build 13725832 binds Board:GetPawns to the Board pawn vector, proves AI planning stably retains team-6 or Neutral pawns, and proves enemy execution repeatedly selects the first still-queued pawn from that same vector. Mission_Piston declares no Environment override and therefore inherits no-op Env_Null, so living Trash Compactor pushes and queued Vek interleave exactly by Board-vector order."
+        },
+        {
+          "classification": "fact",
+          "statement": "Explicit Pawn:Kill and the tail of every shared Pawn update clear queued target coordinates and action index. The executor refuses to select another pawn while Board activity is nonzero, so a Piston killed before its vector slot cannot dispatch its old push; Corpse=true retains the wreck as occupancy only. Simulator v408 implements that interleave/cancellation and the safety gate now blocks only incomplete or malformed ordered payloads."
+        },
+        {
+          "classification": "fact",
+          "statement": "The v408 modloader is admitted by predecessor scripts-tree verifiers as an exact hash-pinned post-publication bridge-only overlay. Their published evidence bodies and original overlay inventories remain unchanged, while all 304 analysis-relevant non-overlay scripts entries still require exact baseline identity."
         }
       ],
       "id": "mission-piston-trash-compactors",
@@ -5811,6 +5823,32 @@
           ]
         },
         {
+          "path": "src/observatory/piston_scheduler_boundary.py",
+          "symbols": [
+            "build_piston_scheduler_boundary_map",
+            "validate_piston_scheduler_boundary_map",
+            "validate_piston_scheduler_boundary_map_binding"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_piston_scheduler.py",
+          "symbols": [
+            "main"
+          ]
+        },
+        {
+          "path": "src/observatory/death_event_credit_boundary.py",
+          "symbols": [
+            "POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS"
+          ]
+        },
+        {
+          "path": "src/observatory/final_cave_block_spawn_lifetime.py",
+          "symbols": [
+            "POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS"
+          ]
+        },
+        {
           "path": "rust_solver/src/board.rs",
           "symbols": [
             "PistonAction",
@@ -5831,13 +5869,32 @@
           "symbols": [
             "board_to_json"
           ]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "QueuedPawnAction",
+            "simulate_mission_piston_action",
+            "simulate_enemy_attacks"
+          ]
+        },
+        {
+          "path": "rust_solver/src/lib.rs",
+          "symbols": [
+            "SIMULATOR_VERSION"
+          ]
+        },
+        {
+          "path": "src/solver/verify.py",
+          "symbols": [
+            "SIMULATOR_VERSION"
+          ]
         }
       ],
       "known_gaps": [
-        "The source proves each queued forward push but not where Mission_Auto invokes neutral Piston skills relative to environment effects, queued Vek attacks, or other Pistons. Simulator v386 therefore retains state and blocks rather than inventing an order; no push replay is claimed.",
         "Mission setup consumes the native pistons zone, Board validity/edge/occupancy/terrain helpers, Board:ClearSpace, random_removal, and random_element. Rust does not reproduce setup RNG, rejected-candidate consumption, exact tile clearing, or placement order.",
-        "Corpse=true is source-proven, and exact Windows static evidence now proves mode-1 live-or-persistent-corpse path occupancy plus one common IsCorpse predicate covering all four Piston bodies. Piston lifecycle-state transitions, corpse removal/blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
-        "Native SkillEffect queue boundaries, animation/hide timing, SpaceDamage push/collision ordering, attack-order integration, and target-score scheduling are not exhaustively traced. No fresh controlled live capture was taken during the protected achievement session."
+        "The exact scheduler map is static evidence for Windows build 13725832 and the shipped Lua tree. macOS, other depots, and mods that add an Environment or alternate scheduler require their own build/content-keyed proof.",
+        "Presentation-only hide/animation timing is not simulated. Exact queued-pawn selection, fixed zero-damage push/collision behavior, death cancellation, and Corpse=true occupancy are covered; revisit animation timing only if it produces a concrete board-state mismatch."
       ],
       "sources": [
         {
@@ -5857,17 +5914,35 @@
             "Piston_D_Atk",
             "Piston_L_Atk"
           ]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": [
+            "Mission",
+            "Mission_Auto",
+            "Mission:BaseUpdate"
+          ]
+        },
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": [
+            "Environment:IsEffect",
+            "Environment:ApplyEffect",
+            "Env_Null"
+          ]
         }
       ],
       "tests": [
         {
           "path": "tests/test_mission_piston_payload.py",
           "symbols": [
-            "test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state",
+            "test_lua_helper_preserves_native_unit_order_and_complete_empty_state",
             "test_reader_drops_partial_stale_or_uncorroborated_payloads",
             "test_python_board_preserves_state_and_forces_exact_neutral_static_traits",
-            "test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty",
-            "test_lookahead_surfaces_piston_state_and_scheduler_gaps"
+            "test_hard_forecast_gate_requires_exact_payload_then_accepts_living_and_corpses",
+            "test_lookahead_only_surfaces_missing_ordered_piston_state"
           ]
         },
         {
@@ -5883,9 +5958,27 @@
           ]
         },
         {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": [
+            "test_mission_piston_pushes_front_occupant",
+            "test_mission_piston_interleaves_after_earlier_vek_in_board_order",
+            "test_dead_mission_piston_keeps_corpse_but_cancels_queued_push"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_piston_scheduler_boundary.py",
+          "symbols": [
+            "test_committed_map_closes_stock_piston_order_and_cancellation_gate",
+            "test_binding_rejects_order_cancellation_environment_or_version_drift",
+            "test_bridge_rust_gate_version_and_archive_conform_to_native_map",
+            "test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts",
+            "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available"
+          ]
+        },
+        {
           "path": "tests/test_itb_provenance.py",
           "symbols": [
-            "test_real_mission_piston_record_pins_state_gate_and_native_gaps"
+            "test_real_mission_piston_record_pins_native_order_and_remaining_gaps"
           ]
         }
       ]
@@ -10194,11 +10287,11 @@
         },
         {
           "classification": "fact",
-          "statement": "The accepted tree has exactly ten explicit Corpse=true definitions and six inherited directional Laser/Piston bodies, for 16 effective corpse types. The bridge exports current IsCorpse and source-static Corpse state; Python PawnStats and Rust known_corpse_on_death_type already cover exactly those 16 types. No simulator contradiction or version change follows, so simulator v407 remains current."
+          "statement": "The accepted tree has exactly ten explicit Corpse=true definitions and six inherited directional Laser/Piston bodies, for 16 effective corpse types. The bridge exports current IsCorpse and source-static Corpse state; Python PawnStats and Rust known_corpse_on_death_type already cover exactly those 16 types. No simulator contradiction or version change followed from this artifact, so simulator v407 remained current at its publication; the later Mission_Piston scheduler boundary independently advances the simulator to v408."
         },
         {
           "classification": "inference",
-          "statement": "Static corpse class and field reachability are closed for this build and shipped tree, but the action/frame transitions into lifecycle states 2/3/4 and Mission_Auto ordering of Piston effects, corpse state, and Board cleanup are not. The existing Mission_Piston End Turn safety gate must remain until controlled timeline evidence resolves them."
+          "statement": "Static corpse class and field reachability are closed for this build and shipped tree. This artifact did not resolve action/frame transitions into lifecycle states 2/3/4 or Mission_Auto ordering of Piston effects, corpse state, and Board cleanup; the later build-keyed Piston scheduler boundary closes that mission-specific order and cancellation question without generalizing every lifecycle state."
         }
       ],
       "id": "native-corpse-classification-boundary",
@@ -10225,7 +10318,7 @@
         },
         {
           "path": "src/loop/commands.py",
-          "symbols": ["_mission_piston_forecast_block", "mission_piston_corpse_lifecycle_unknown"]
+          "symbols": ["_mission_piston_forecast_block", "mission_piston_state_unknown"]
         },
         {
           "path": "rust_solver/src/lib.rs",
@@ -10238,7 +10331,6 @@
       ],
       "known_gaps": [
         "The static map does not prove the action/frame boundaries at which a killed Pawn enters or leaves internal lifecycle states 2, 3, and 4, nor the exact damage-relative Board-removal sweep.",
-        "Native Mission_Auto ordering for Mission_Piston relative to damage, corpse state, queued enemies, and Board cleanup remains untraced; the current End Turn safety gate remains required.",
         "Mods or direct native calls may activate mutation 12, register alternate passive state, or alter the shipped corpse inventory and require their own content-keyed analysis.",
         "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
       ],

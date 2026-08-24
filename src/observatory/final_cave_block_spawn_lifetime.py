@@ -64,6 +64,19 @@ BASE_SCRIPTS_INVENTORY_SPEC = {
         },
     ],
 }
+
+# Preserve the published artifact's original overlay inventory while allowing
+# later hash-reviewed project bridge revisions during exact-tree verification.
+# This exception never weakens the other 304 scripts-entry comparisons.
+POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
+    {
+        "id": "mission_piston_v408_project_bridge",
+        "size": 315_686,
+        "sha256": (
+            "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d"
+        ),
+    },
+)
 STARTUP_SPAWN_ORDER_ARTIFACT_SHA256 = (
     "b798a97c582be31ffba3d173e00b24eefae32a9725d03fe7a2260ca1403214f4"
 )
@@ -1173,7 +1186,10 @@ def _verify_scripts_identity(content_root: Path) -> None:
     actual_overlay = actual_files[overlay_path]
     accepted_overlays = {
         (item["size"], item["sha256"])
-        for item in BASE_SCRIPTS_INVENTORY_SPEC["accepted_overlay_files"]
+        for item in (
+            *BASE_SCRIPTS_INVENTORY_SPEC["accepted_overlay_files"],
+            *POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS,
+        )
     }
     if (actual_overlay["size"], actual_overlay["sha256"]) not in accepted_overlays:
         raise FinalCaveBlockSpawnLifetimeError(

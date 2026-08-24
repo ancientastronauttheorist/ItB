@@ -1287,9 +1287,63 @@ fn simulate_snowmine_attack(
     simulate_snowmine_setup(board, enemy_idx, (qtx as u8, qty as u8), result);
 }
 
+#[derive(Clone, Copy, Debug)]
+enum QueuedPawnAction {
+    Enemy(usize),
+    Piston(PistonAction),
+}
+
+/// Apply one Mission_Piston compactor action.
+///
+/// The shipped skill queues a presentation-only self hit followed by a
+/// zero-damage forward push. Its source pawn cannot move or be pushed, so the
+/// bridge-authored front tile remains exact throughout the player turn. A
+/// dead, frozen, or pre-phase-smoked Piston has no executable action.
+fn simulate_mission_piston_action(
+    board: &mut Board,
+    action: PistonAction,
+    smoke_cancelled_at_attack_start: &[bool; 16],
+    result: &mut ActionResult,
+) {
+    let Some(piston_idx) = (0..board.unit_count as usize)
+        .find(|&idx| board.units[idx].uid == action.uid)
+    else {
+        return;
+    };
+    let piston = &board.units[piston_idx];
+    if piston.hp <= 0
+        || piston.frozen()
+        || smoke_cancelled_at_attack_start[piston_idx]
+        || !matches!(
+            piston.type_name_str(),
+            "Pawn_Piston_U" | "Pawn_Piston_R" | "Pawn_Piston_D" | "Pawn_Piston_L"
+        )
+    {
+        return;
+    }
+
+    let dx = action.front_x as i8 - piston.x as i8;
+    let dy = action.front_y as i8 - piston.y as i8;
+    let Some(direction) = DIRS
+        .iter()
+        .position(|&(candidate_x, candidate_y)| candidate_x == dx && candidate_y == dy)
+    else {
+        return;
+    };
+    apply_push(
+        board,
+        action.front_x,
+        action.front_y,
+        direction,
+        result,
+    );
+}
+
 /// Simulate all enemy attacks on the post-mech-action board.
-/// Processes in UID order and returns the accumulated outcome from fire,
-/// environment, enemy attacks, and other enemy-phase effects.
+/// Uses live bridge attack order when available, with UID order only as a
+/// legacy fallback. Mission_Piston additionally merges neutral compactors at
+/// their exact Board-vector slots. Returns the accumulated outcome from fire,
+/// environment, queued pawn actions, and other enemy-phase effects.
 ///
 /// `original_positions`: maps unit index -> (orig_x, orig_y) for direction/range checks.
 pub fn simulate_enemy_attacks(
@@ -1669,13 +1723,13 @@ pub fn simulate_enemy_attacks(
         }
     }
 
-    // Smoke created by an earlier enemy attack does not retroactively cancel
-    // a later enemy's already-queued attack. Latch which attackers are already
-    // standing in smoke after all pre-attack enemy-phase effects have resolved.
+    // Smoke created by an earlier queued pawn action does not retroactively
+    // cancel a later actor's already-queued attack. Latch all possible actors
+    // after pre-attack effects so neutral Pistons share the same rule as Vek.
     let mut smoke_cancelled_at_attack_start = [false; 16];
     for i in 0..board.unit_count as usize {
         let u = &board.units[i];
-        if u.hp > 0 && u.is_enemy() && !u.burrowed() {
+        if u.hp > 0 && !u.burrowed() && u.x < 8 && u.y < 8 {
             smoke_cancelled_at_attack_start[i] = board.tile(u.x, u.y).smoke();
         }
     }
@@ -1711,10 +1765,48 @@ pub fn simulate_enemy_attacks(
         enemy_indices = ordered;
     }
 
-    for &ei in &enemy_indices {
+    // Exact Mission_Piston payloads and attack_order are both filtered from
+    // the bridge's unsorted Board pawn vector. Merge them through unit order
+    // so compactors and Vek resolve in the native interleave. Any legacy enemy
+    // omitted from attack_order retains the old fallback order afterward.
+    let mut queued_pawn_actions: Vec<QueuedPawnAction> = Vec::new();
+    let mut ordered_enemy = [false; 16];
+    if board.mission_id == "Mission_Piston" && board.mission_pistons_known {
+        for idx in 0..board.unit_count as usize {
+            let unit = &board.units[idx];
+            if let Some(action) = board
+                .mission_piston_actions
+                .iter()
+                .copied()
+                .find(|action| action.uid == unit.uid)
+            {
+                queued_pawn_actions.push(QueuedPawnAction::Piston(action));
+                continue;
+            }
+            if !unit.is_enemy() || unit.burrowed() {
+                continue;
+            }
+            let is_native_queued = if board.attack_order.is_empty() {
+                unit.has_queued_attack()
+            } else {
+                board.attack_order.contains(&unit.uid)
+            };
+            if is_native_queued {
+                queued_pawn_actions.push(QueuedPawnAction::Enemy(idx));
+                ordered_enemy[idx] = true;
+            }
+        }
+    }
+    for &enemy_idx in &enemy_indices {
+        if !ordered_enemy[enemy_idx] {
+            queued_pawn_actions.push(QueuedPawnAction::Enemy(enemy_idx));
+        }
+    }
+
+    for queued_action in queued_pawn_actions {
         // A dead Vek remains pushable only for the rest of the queued action
-        // that killed it. Once the next attack-order entry begins, live has
-        // removed that corpse and later recoil/push effects may enter its tile.
+        // that killed it. Once the next queued pawn begins, live has removed
+        // that corpse and later recoil/push effects may enter its tile.
         // Keep this at the action boundary so Moth artillery can still push a
         // lethally hit target into an occupied destination within one attack.
         clear_pre_attack_dead_enemy_wrecks(board);
@@ -1724,6 +1816,19 @@ pub fn simulate_enemy_attacks(
         // actions, so materialize that replacement before the next enemy can
         // act on the same tiles.
         transition_destroyed_supply_train(board);
+
+        let ei = match queued_action {
+            QueuedPawnAction::Piston(action) => {
+                simulate_mission_piston_action(
+                    board,
+                    action,
+                    &smoke_cancelled_at_attack_start,
+                    &mut result,
+                );
+                continue;
+            }
+            QueuedPawnAction::Enemy(enemy_idx) => enemy_idx,
+        };
 
         let enemy = &board.units[ei];
         if enemy.hp <= 0 { continue; }
@@ -3499,6 +3604,121 @@ mod tests {
             pos[i] = (board.units[i].x, board.units[i].y);
         }
         pos
+    }
+
+    fn add_piston(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {
+        let mut piston = Unit {
+            uid,
+            x,
+            y,
+            hp,
+            max_hp: 1,
+            team: Team::Neutral,
+            ..Default::default()
+        };
+        piston.set_type_name("Pawn_Piston_R");
+        board.add_unit(piston)
+    }
+
+    #[test]
+    fn test_mission_piston_pushes_front_occupant() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Piston".to_string();
+        board.mission_pistons_known = true;
+        add_piston(&mut board, 41, 3, 2, 1);
+        board.mission_piston_actions = vec![PistonAction {
+            uid: 41,
+            front_x: 3,
+            front_y: 3,
+        }];
+        let player_idx = board.add_unit(Unit {
+            uid: 7,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[player_idx].x, board.units[player_idx].y), (3, 3));
+        assert_eq!(board.units[player_idx].hp, 1);
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+    }
+
+    #[test]
+    fn test_mission_piston_interleaves_after_earlier_vek_in_board_order() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Piston".to_string();
+        board.mission_pistons_known = true;
+        let firefly_idx =
+            add_enemy_with_type(&mut board, 12, 3, 5, 2, "Firefly1", 3, 4);
+        board.units[firefly_idx].weapon_damage = 1;
+        board.units[firefly_idx]
+            .flags
+            .insert(UnitFlags::HAS_QUEUED_ATTACK);
+        board.attack_order = vec![12];
+        add_piston(&mut board, 41, 3, 2, 1);
+        board.mission_piston_actions = vec![PistonAction {
+            uid: 41,
+            front_x: 3,
+            front_y: 3,
+        }];
+        let player_idx = board.add_unit(Unit {
+            uid: 7,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board.tile_mut(3, 4).terrain = Terrain::Building;
+        board.tile_mut(3, 4).building_hp = 1;
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(board.tile(3, 4).building_hp, 0);
+        assert_eq!((board.units[player_idx].x, board.units[player_idx].y), (3, 4));
+        assert_eq!(board.units[player_idx].hp, 2);
+    }
+
+    #[test]
+    fn test_dead_mission_piston_keeps_corpse_but_cancels_queued_push() {
+        let mut board = Board::default();
+        board.mission_id = "Mission_Piston".to_string();
+        board.mission_pistons_known = true;
+        let piston_idx = add_piston(&mut board, 41, 3, 2, 0);
+        board.mission_piston_actions = vec![PistonAction {
+            uid: 41,
+            front_x: 3,
+            front_y: 3,
+        }];
+        let player_idx = board.add_unit(Unit {
+            uid: 7,
+            x: 3,
+            y: 3,
+            hp: 2,
+            max_hp: 2,
+            team: Team::Player,
+            flags: UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+
+        let orig = default_orig_pos(&board);
+        simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!((board.units[player_idx].x, board.units[player_idx].y), (3, 3));
+        assert_eq!((board.units[piston_idx].x, board.units[piston_idx].y), (3, 2));
+        assert_eq!(board.units[piston_idx].hp, 0);
     }
 
     #[test]

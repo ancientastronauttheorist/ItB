@@ -953,10 +953,12 @@ local function mission_hacking_ids(mission_id, mission)
 end
 
 -- Mission_Piston creates up to four neutral Trash Compactors whose exact pawn
--- type fixes the tile they push. Export the entire live action set atomically:
--- complete=true with an empty list is distinct from an older/malformed bridge
--- that could not inspect the mission. The simulator intentionally does not
--- guess the native Mission_Auto scheduling slot from this state alone.
+-- type fixes the tile they push. Export the entire live action set atomically
+-- in state.units / native Board pawn-vector order. Native build 13725832 plans
+-- and dispatches neutral Pistons from that same vector; sorting by UID would
+-- destroy their exact interleave with queued Vek. complete=true with an empty
+-- list is distinct from an older/malformed bridge that could not inspect the
+-- mission.
 local function mission_pistons(mission_id, units)
     if mission_id ~= "Mission_Piston" or type(units) ~= "table" then
         return nil
@@ -1002,7 +1004,6 @@ local function mission_pistons(mission_id, units)
             end
         end
     end
-    table.sort(actions, function(a, b) return a.uid < b.uid end)
     return { complete = true, actions = actions }
 end
 

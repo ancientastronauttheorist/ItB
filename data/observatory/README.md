@@ -1271,8 +1271,8 @@ predecessor artifacts. For Windows build `13725832` it establishes that:
   inheriting Laser/Piston directional bodies, for 16 effective types; and
 - the bridge already exports current `IsCorpse()` plus source-static
   `corpse_on_death`, while Python and Rust already cover all 16 types. No
-  simulator contradiction or version change follows; simulator v407 remains
-  current.
+  simulator contradiction or version change followed from this artifact;
+  simulator v407 remained current at its publication.
 
 Verify both predecessor maps, the executable, exact sources and accepted tree,
 region/control hashes, data anchors, call inventories, classification, and
@@ -1285,9 +1285,54 @@ python scripts/itb_observatory_corpse_classification.py verify `
   --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json
 ```
 
-This is exact static classification, not a frame scheduler trace. The action
-boundaries that enter or leave lifecycle states 2/3/4 and the exact
-`Mission_Auto` ordering of Piston damage, corpse state, and Board cleanup
-remain open. Keep the existing `Mission_Piston` End Turn gate until controlled
-timeline evidence closes those questions. Modded/direct-native mutation-12
-activation and non-Windows depots also remain outside this result.
+This is exact static classification, not a frame scheduler trace. At this
+artifact stage, the action boundaries that enter or leave lifecycle states
+2/3/4 and the exact `Mission_Auto` ordering of Piston damage, corpse state, and
+Board cleanup remained open. The successor below closes the stock
+Mission_Piston scheduler question without generalizing every lifecycle state.
+Modded/direct-native mutation-12 activation and non-Windows depots also remain
+outside this result.
+
+## Native Mission_Piston scheduler boundary
+
+`native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json`
+joins the corpse-classification and event-frame maps to the exact shipped
+Piston, mission-base, and environment sources. It binds 21 native regions, 15
+instruction-start control windows, 13 direct call edges, three vtable pointers,
+and the `Board:GetPawns` binding anchor. For Windows build `13725832` it
+establishes that:
+
+- `Board:GetPawns` filters the Board pawn vector without sorting it;
+- AI planning copies that vector and stably retains team-6 or Neutral pawns,
+  while queued-pawn execution scans the same vector and returns the first
+  still-queued pawn;
+- the queued predicate requires a skill manager, valid target coordinates, and
+  a nonnegative action index, with Board activity required to clear before the
+  next selection;
+- explicit `Pawn:Kill`, standalone reset, and the tail of shared Pawn update
+  clear the target/action fields. A Piston killed before its vector slot loses
+  its push while `Corpse=true` preserves the wreck as occupancy; and
+- `Mission_Piston` declares no Environment override and inherits no-op
+  `Env_Null`, so no environment action changes the Piston/Vek interleave.
+
+Verify the executable, both predecessor maps, exact selected sources,
+region/control hashes, direct edges, pointers, and solver binding with:
+
+```powershell
+python scripts/itb_observatory_piston_scheduler.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json
+```
+
+Simulator v408 preserves native Board-vector order in the bridge, interleaves
+each living Piston push with queued Vek in Rust, and cancels dead-Piston actions
+without deleting their corpse occupancy. Complete known active, corpse-only,
+and empty payloads are forecastable; missing, partial, duplicated,
+orientation-mismatched, or reordered evidence still fails closed. The pre-v408
+corpus is archived as `recordings/failure_db_snapshot_sim_v407.jsonl`. Setup RNG
+and rejected-placement draw order, general non-Piston lifecycle states 2/3/4,
+presentation-only timing, mods, and non-Windows depots remain separate gaps.
+The deployed v408 bridge is admitted as a separately hash-pinned
+post-publication overlay by predecessor source-tree verifiers; their published
+evidence bodies and original overlay inventories remain byte-immutable.

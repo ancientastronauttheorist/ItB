@@ -3870,7 +3870,7 @@ def test_real_shaman_totem_record_pins_spawn_chain_and_native_gaps():
     assert "protected achievement session" in gaps
 
 
-def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
+def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
     repo_root = Path(__file__).resolve().parents[1]
     provenance = load_json_object(
         repo_root / "data/observatory/mechanics_provenance.json"
@@ -3888,7 +3888,9 @@ def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
         if item["id"] == "mission-piston-trash-compactors"
     )
     assert record["coverage"] == "partial"
-    assert record["sources"] == [{
+    source_by_path = {source["path"]: source for source in record["sources"]}
+    assert len(source_by_path) == 3
+    assert source_by_path["scripts/missions/acid/mission_piston.lua"] == {
         "path": "scripts/missions/acid/mission_piston.lua",
         "sha256": (
             "1f426bad3b4149f0088831680264f716a"
@@ -3908,7 +3910,17 @@ def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
             "Piston_D_Atk",
             "Piston_L_Atk",
         ],
-    }]
+    }
+    assert source_by_path["scripts/missions/missions.lua"]["symbols"] == [
+        "Mission",
+        "Mission_Auto",
+        "Mission:BaseUpdate",
+    ]
+    assert source_by_path["scripts/environments.lua"]["symbols"] == [
+        "Environment:IsEffect",
+        "Environment:ApplyEffect",
+        "Env_Null",
+    ]
 
     implementations = {
         reference["path"]: set(reference["symbols"])
@@ -3929,6 +3941,25 @@ def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
         "mission_piston_front",
         "board_from_json",
     }
+    assert implementations["src/observatory/piston_scheduler_boundary.py"] == {
+        "build_piston_scheduler_boundary_map",
+        "validate_piston_scheduler_boundary_map",
+        "validate_piston_scheduler_boundary_map_binding",
+    }
+    assert implementations["scripts/itb_observatory_piston_scheduler.py"] == {
+        "main"
+    }
+    assert implementations["src/observatory/death_event_credit_boundary.py"] == {
+        "POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS"
+    }
+    assert implementations[
+        "src/observatory/final_cave_block_spawn_lifetime.py"
+    ] == {"POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS"}
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "QueuedPawnAction",
+        "simulate_mission_piston_action",
+        "simulate_enemy_attacks",
+    }
 
     tests = {
         reference["path"]: set(reference["symbols"])
@@ -3941,23 +3972,52 @@ def test_real_mission_piston_record_pins_state_gate_and_native_gaps():
         "test_board_to_json_roundtrip_preserves_known_piston_state"
     }
     assert {
-        "test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state",
+        "test_lua_helper_preserves_native_unit_order_and_complete_empty_state",
         "test_reader_drops_partial_stale_or_uncorroborated_payloads",
         "test_python_board_preserves_state_and_forces_exact_neutral_static_traits",
-        "test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty",
-        "test_lookahead_surfaces_piston_state_and_scheduler_gaps",
+        "test_hard_forecast_gate_requires_exact_payload_then_accepts_living_and_corpses",
+        "test_lookahead_only_surfaces_missing_ordered_piston_state",
     } == tests["tests/test_mission_piston_payload.py"]
+    assert tests["rust_solver/src/enemy.rs"] == {
+        "test_mission_piston_pushes_front_occupant",
+        "test_mission_piston_interleaves_after_earlier_vek_in_board_order",
+        "test_dead_mission_piston_keeps_corpse_but_cancels_queued_push",
+    }
+    assert tests["tests/test_observatory_piston_scheduler_boundary.py"] == {
+        "test_committed_map_closes_stock_piston_order_and_cancellation_gate",
+        "test_binding_rejects_order_cancellation_environment_or_version_drift",
+        "test_bridge_rust_gate_version_and_archive_conform_to_native_map",
+        "test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts",
+        "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available",
+    }
 
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "valid, non-edge, unoccupied" in facts
     assert "zero damage" in facts
-    assert "hard-blocks solving or End Turn" in facts
+    assert "native Board pawn-vector order rather than UID order" in facts
+    assert "team-6 or Neutral pawns" in facts
+    assert "inherits no-op Env_Null" in facts
+    assert "cannot dispatch its old push" in facts
+    assert "Simulator v408" in facts
+    assert "blocks only incomplete or malformed ordered payloads" in facts
+    assert "hash-pinned post-publication bridge-only overlay" in facts
+    assert "304 analysis-relevant non-overlay scripts entries" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "Mission_Auto" in gaps
     assert "Board:ClearSpace" in gaps
-    assert "Corpse=true" in gaps
-    assert "no push replay is claimed" in gaps
-    assert "protected achievement session" in gaps
+    assert "rejected-candidate consumption" in gaps
+    assert "macOS, other depots, and mods" in gaps
+    assert "Presentation-only hide/animation timing" in gaps
+
+    boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_"
+        "piston_scheduler_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert boundary["summary"]["mission_piston_scheduler_gate_closed"] is True
+    assert boundary["summary"]["simulator_version"] == 408
 
 
 def test_real_mission_freeze_buildings_record_pins_exact_predicate_and_rubble_gap():
@@ -7085,7 +7145,7 @@ def test_native_corpse_classification_record_closes_static_inputs_without_timing
     }
     assert implementations["src/loop/commands.py"] == {
         "_mission_piston_forecast_block",
-        "mission_piston_corpse_lifecycle_unknown",
+        "mission_piston_state_unknown",
     }
 
     source_by_path = {source["path"]: source for source in record["sources"]}
@@ -7116,12 +7176,13 @@ def test_native_corpse_classification_record_closes_static_inputs_without_timing
     assert "Jelly_Necro1 and LEADER_NECRO each occur only" in facts
     assert "ten explicit Corpse=true definitions" in facts
     assert "16 effective corpse types" in facts
-    assert "simulator v407 remains current" in facts
-    assert "Mission_Piston End Turn safety gate must remain" in facts
+    assert "simulator v407 remained current at its publication" in facts
+    assert "independently advances the simulator to v408" in facts
+    assert "later build-keyed Piston scheduler boundary closes" in facts
 
     gaps = " ".join(record["known_gaps"])
     assert "internal lifecycle states 2, 3, and 4" in gaps
-    assert "Mission_Auto ordering for Mission_Piston" in gaps
+    assert "Mission_Auto ordering for Mission_Piston" not in gaps
     assert "Mods or direct native calls may activate mutation 12" in gaps
     assert "macOS and other Windows depot equivalence" in gaps
 

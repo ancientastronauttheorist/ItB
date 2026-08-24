@@ -506,11 +506,47 @@ Reverify the executable, both predecessor maps, exact selected sources and
 accepted Lua inventory, region/control windows, data references, call
 inventories, and solver binding with
 `scripts/itb_observatory_corpse_classification.py verify`. This is a static
-classification proof: action/frame transitions into lifecycle states 2/3/4,
-exact dead-pawn removal timing, and `Mission_Piston` action/cleanup order remain
-open. The existing Piston gate must remain until controlled timeline evidence
-closes them. Modded/direct-native mutation paths and other depots are outside
-scope.
+classification proof. At this artifact stage, action/frame transitions into
+lifecycle states 2/3/4, exact dead-pawn removal timing, and `Mission_Piston`
+action/cleanup order remained open. The successor below closes the stock
+Mission_Piston scheduler question without generalizing those lifecycle states.
+Modded/direct-native mutation paths and other depots are outside scope.
+
+## Native Mission_Piston scheduler boundary
+
+The exact-build successor
+`data/observatory/native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json`
+joins the corpse-classification and event-frame maps to the shipped Piston,
+mission-base, and environment sources. Native `Board:GetPawns` returns the
+Board pawn vector in pointer order. Enemy planning copies that same vector and
+stably retains team-6 pawns or pawns with `Neutral` set; execution repeatedly
+selects the first still-queued pawn from the same vector. No UID sort or
+separate Piston phase exists.
+
+The queued predicate requires a skill manager, valid target coordinates, and a
+nonnegative action index. Board activity is checked before every selection, so
+an earlier effect settles before the next pawn is chosen. Both explicit
+`Pawn:Kill` and the tail of the shared Pawn update clear the target and action
+fields before returning. A Piston killed before its slot therefore loses its
+push, while `Corpse=true` keeps the dead body as occupancy. The shipped
+`Mission_Piston` declares no Environment override and inherits `Env_Null`, whose
+`IsEffect` and `ApplyEffect` are both false. Living Piston pushes and queued Vek
+therefore interleave exactly in Board-vector order with no environment action
+inserted between them.
+
+Simulator v408 preserves that native order in the bridge payload, interleaves
+Piston and Vek actions in Rust, cancels dead-Piston pushes without deleting the
+corpse, and replaces the old active/corpse blanket veto with a completeness
+gate. A known active, corpse-only, or empty Piston state can now be projected;
+missing, partial, duplicated, or reordered payloads still fail closed. The
+pre-v408 corpus is archived as
+`recordings/failure_db_snapshot_sim_v407.jsonl`.
+
+Reverify the executable, predecessor maps, selected sources, native regions,
+control windows, calls, pointers, and solver binding with
+`scripts/itb_observatory_piston_scheduler.py verify`. Mission setup RNG and
+rejected-placement draw order, general non-Piston lifecycle states 2/3/4,
+presentation-only timing, mods, and non-Windows depots remain separate gaps.
 
 ## Reproducible analysis workflow
 

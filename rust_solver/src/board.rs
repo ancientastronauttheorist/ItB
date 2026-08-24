@@ -443,9 +443,9 @@ impl Unit {
 // ── Board ────────────────────────────────────────────────────────────────────
 
 /// Exact live Mission_Piston push source and front tile captured by the Lua
-/// bridge.  The native Mission_Auto scheduling slot remains intentionally
-/// unmodeled; retaining this state lets Python fail closed and preserves the
-/// evidence across projected/replay board serialization.
+/// bridge in native Board pawn-vector order. Exact build-keyed analysis proves
+/// that neutral Pistons are planned with Vek and dispatched from that same
+/// vector, so this order is semantically significant.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PistonAction {
     pub uid: u16,

@@ -62,9 +62,9 @@ pub struct JsonInput {
     /// legacy payloads; conversion then fails closed.
     pub mission_hacking_bot_id: Option<i64>,
     pub mission_hacking_hack_id: Option<i64>,
-    /// Complete Mission_Piston live action inventory. The source-proven front
-    /// tiles are retained for safety/projection, but no native scheduler slot
-    /// is inferred from them.
+    /// Complete Mission_Piston live action inventory in native Board pawn-
+    /// vector order. Exact build-keyed analysis proves that queued enemies and
+    /// neutral Pistons dispatch from that same vector.
     pub mission_pistons: Option<JsonMissionPistons>,
     /// Exact Mission_Final surface Env_Volcano state after native selection.
     /// Locations/Planned retain source order; LavaStart is the remaining
@@ -1444,10 +1444,8 @@ pub fn board_from_json(json_str: &str)
                 } else {
                     valid = false;
                 }
-                valid &= parsed.len() == expected.len()
-                    && expected.iter().all(|item| parsed.contains(item));
+                valid &= parsed == expected;
                 if valid {
-                    parsed.sort_by_key(|item| item.uid);
                     board.mission_pistons_known = true;
                     board.mission_piston_actions = parsed;
                     for idx in all_piston_indices {
@@ -2077,8 +2075,8 @@ mod tests {
         let valid = r#"{
             "mission_id":"Mission_Piston",
             "mission_pistons":{"complete":true,"actions":[
-                {"uid":41,"front":[3,3]},
-                {"uid":42,"front":[5,2]}
+                {"uid":42,"front":[5,2]},
+                {"uid":41,"front":[3,3]}
             ]},
             "tiles":[],
             "units":[
@@ -2096,8 +2094,8 @@ mod tests {
         let (board, ..) = board_from_json(valid).expect("valid Piston state parses");
         assert!(board.mission_pistons_known);
         assert_eq!(board.mission_piston_actions, vec![
-            PistonAction { uid: 41, front_x: 3, front_y: 3 },
             PistonAction { uid: 42, front_x: 5, front_y: 2 },
+            PistonAction { uid: 41, front_x: 3, front_y: 3 },
         ]);
         for idx in 0..board.unit_count as usize {
             let unit = &board.units[idx];
@@ -2113,9 +2111,13 @@ mod tests {
         let invalid = [
             valid.replace("Mission_Piston", "Mission_Wind"),
             valid.replace("\"complete\":true", "\"complete\":false"),
-            valid.replace("{\"uid\":41,\"front\":[3,3]},", ""),
+            valid.replace("{\"uid\":42,\"front\":[5,2]},", ""),
             valid.replace("\"front\":[3,3]", "\"front\":[3,2]"),
             valid.replace("\"team\":2", "\"team\":6"),
+            valid.replace(
+                "{\"uid\":42,\"front\":[5,2]},\n                {\"uid\":41,\"front\":[3,3]}",
+                "{\"uid\":41,\"front\":[3,3]},\n                {\"uid\":42,\"front\":[5,2]}",
+            ),
         ];
         for payload in invalid {
             let (board, ..) = board_from_json(&payload)

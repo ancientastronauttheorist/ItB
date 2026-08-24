@@ -40,6 +40,7 @@ from src.capture.save_parser import (
 from src.model.board import (
     Board,
     Unit,
+    validate_mission_piston_payload,
     validate_mission_final_cave_payload,
     VOLCANO_LAVA,
     VOLCANO_ROCKS,
@@ -5286,28 +5287,10 @@ def _lookahead_forecast_gaps(
 
     piston_gaps: list[dict] = []
     if projected_bridge.get("mission_id") == "Mission_Piston":
-        payload = projected_bridge.get("mission_pistons")
-        actions = payload.get("actions") if isinstance(payload, dict) else None
-        if (
-            not isinstance(payload, dict)
-            or payload.get("complete") is not True
-            or not isinstance(actions, list)
-        ):
+        if validate_mission_piston_payload(projected_bridge) is None:
             piston_gaps.append({
                 "kind": "mission_piston_state_unknown",
-                "reason": "complete_projected_payload_missing",
-            })
-        elif actions:
-            piston_gaps.append({
-                "kind": "mission_piston_phase_unknown",
-                "reason": "native_mission_auto_order_not_captured",
-                "piston_uids": sorted({
-                    action.get("uid")
-                    for action in actions
-                    if isinstance(action, dict)
-                    and isinstance(action.get("uid"), int)
-                    and not isinstance(action.get("uid"), bool)
-                }),
+                "reason": "complete_ordered_projected_payload_missing",
             })
 
     mobile_enemy_uids: list[int] = []
@@ -10006,12 +9989,13 @@ def _mission_native_forecast_block(board, bridge_data: dict | None) -> dict | No
 
 
 def _mission_piston_forecast_block(board, bridge_data: dict | None) -> dict | None:
-    """Fail closed while Mission_Piston's native hazard phase is unproven.
+    """Fail closed unless exact ordered Mission_Piston state is available.
 
-    Exact Lua establishes each compactor's forward zero-damage push, but not
-    Mission_Auto's ordering relative to queued Vek/environment effects or the
-    lifecycle of ``Corpse=true`` wrecks. This gate is deliberately
-    non-overridable; dirty-plan consent cannot make an invented phase safe.
+    Exact Windows build 13725832 analysis proves that neutral Pistons are
+    planned with Vek and both dispatch from the unsorted Board pawn vector.
+    It also proves pre-action death clears queued fields while ``Corpse=true``
+    retains occupancy. Rust models those semantics; only missing or malformed
+    bridge evidence remains non-overridable.
     """
     mission_id = ""
     if isinstance(bridge_data, dict):
@@ -10020,35 +10004,12 @@ def _mission_piston_forecast_block(board, bridge_data: dict | None) -> dict | No
     if mission_id != "Mission_Piston":
         return None
 
-    units = [
-        unit for unit in getattr(board, "units", [])
-        if getattr(unit, "type", "") in _MISSION_PISTON_TYPES
-        and not getattr(unit, "is_extra_tile", False)
-    ]
-    actions = list(getattr(board, "mission_piston_actions", []) or [])
-    gaps: list[dict] = []
-    if not getattr(board, "mission_pistons_known", False):
-        gaps.append({
-            "kind": "mission_piston_state_unknown",
-            "reason": "complete_unit_corroborated_bridge_payload_missing",
-        })
-    if actions:
-        gaps.append({
-            "kind": "mission_piston_phase_unknown",
-            "reason": "native_mission_auto_order_not_captured",
-            "piston_uids": sorted(action[0] for action in actions),
-        })
-    dead_uids = sorted({
-        unit.uid for unit in units if getattr(unit, "hp", 0) <= 0
-    })
-    if dead_uids:
-        gaps.append({
-            "kind": "mission_piston_corpse_lifecycle_unknown",
-            "reason": "source_sets_corpse_true_but_native_occupancy_is_untraced",
-            "piston_uids": dead_uids,
-        })
-    if not gaps:
+    if getattr(board, "mission_pistons_known", False):
         return None
+    gaps = [{
+            "kind": "mission_piston_state_unknown",
+            "reason": "complete_unit_corroborated_ordered_bridge_payload_missing",
+        }]
     return {
         "error": "RESEARCH_REQUIRED",
         "requires_research": True,
@@ -10059,8 +10020,8 @@ def _mission_piston_forecast_block(board, bridge_data: dict | None) -> dict | No
         "forecast_complete": False,
         "forecast_gaps": gaps,
         "next": (
-            "Capture native Mission_Auto Piston/Vek/environment ordering and "
-            "Corpse=true occupancy before enabling this forecast."
+            "Refresh the bridge with complete ordered Mission_Piston state "
+            "before enabling this forecast."
         ),
     }
 
@@ -15048,8 +15009,8 @@ def _held_end_turn_safety_block_result(
             "held_end_turn_mission_piston_unproven",
             piston_forecast=piston_gate,
             next_step=(
-                "Do not click End Turn. Capture native Mission_Auto Piston "
-                "ordering/corpse behavior before enabling this mission."
+                "Do not click End Turn. Refresh the bridge until it supplies "
+                "complete ordered Mission_Piston state."
             ),
         )
 

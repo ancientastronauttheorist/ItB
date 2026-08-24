@@ -1805,6 +1805,12 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v408: Exact Windows build 13725832 proves Mission_Piston plans and executes
+# neutral Trash Compactors in the same Board pawn-vector order as queued Vek.
+# Rust interleaves each fixed forward push at that vector slot and cancels a
+# dead Piston's action while retaining its Corpse=true wreck. Bridge payloads
+# preserve native order, and safety now gates only incomplete evidence.
+# Pre-v408 corpus is archived as recordings/failure_db_snapshot_sim_v407.jsonl.
 # v407: Mission kill projection matches native EVENT_ENEMY_KILLED: the
 # ordinary counter requires a non-Mech TEAM_ENEMY pawn and still excludes
 # Minor enemies, which take native event 12. Pre-v407 corpus is archived as
@@ -1909,7 +1915,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 407
+SIMULATOR_VERSION = 408
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

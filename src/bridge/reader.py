@@ -1483,7 +1483,7 @@ def _normalize_mission_hacking_ids(data: dict) -> None:
 
 
 def _normalize_mission_pistons(data: dict) -> None:
-    """Keep only a complete, mission-scoped, unit-corroborated payload."""
+    """Keep only a complete payload in corroborated native Board-vector order."""
     actions = validate_mission_piston_payload(data)
     if actions is None:
         data.pop("mission_pistons", None)

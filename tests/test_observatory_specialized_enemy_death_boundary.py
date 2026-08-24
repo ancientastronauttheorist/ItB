@@ -141,8 +141,8 @@ def test_v407_solver_predicate_bridge_fields_and_archive_are_bound():
     )
 
     assert "!unit.is_enemy() || unit.is_mech() || unit.minor()" in board
-    assert "pub const SIMULATOR_VERSION: u32 = 407;" in rust_lib
-    assert "SIMULATOR_VERSION = 407" in verify
+    assert "pub const SIMULATOR_VERSION: u32 = 408;" in rust_lib
+    assert "SIMULATOR_VERSION = 408" in verify
     assert "team = p:GetTeam()," in bridge
     assert "mech = p:IsMech()," in bridge
     assert "minor = pawn_def and pawn_def.Minor or false," in bridge

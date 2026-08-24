@@ -1,8 +1,8 @@
 # Agent Rule Index
 
-This index maps the historical numbered operational rules to the focused agent docs created during the 2026-05-25 cleanup. Duplicate historical rule numbers are kept and disambiguated by original line number. Use `rg "<rule title>" docs/agent` for the exact entry. The original pre-cleanup file is preserved in `docs/agent/legacy-full-guide.md`.
+This index maps numbered operational rules to the focused agent docs created during the 2026-05-25 cleanup. Duplicate historical rule numbers are kept and disambiguated by original line number; rules added after the split use `—` in that column. Use `rg "<rule title>" docs/agent` for the exact entry. The original pre-cleanup file is preserved in `docs/agent/legacy-full-guide.md`.
 
-Duplicate historical numbers: 152, 203, 219, 220, 221.
+Duplicate numbers: 152, 203, 219, 220, 221, 499.
 
 | Rule | Original line | Title | Focused doc |
 |---:|---:|---|---|
@@ -497,4 +497,22 @@ Duplicate historical numbers: 152, 203, 219, 220, 221.
 | 496 | 889 | A successful Satellite launch is a disappearance, not a death. | `docs/agent/solver-reference.md` |
 | 497 | 891 | Mission Bot Defense Mine Bots use Setup rather than ordinary movement; Snow artillery is range 2–5 with perpendicular side hits. | `docs/agent/solver-reference.md` |
 | 498 | 893 | Passive loadouts are board effects, not clickable weapons. | `docs/agent/solver-reference.md` |
-| 499 | 895 | Mission_Piston needs native phase and corpse evidence before End Turn. | `docs/agent/safety-gates.md` |
+| 499 | 895 | Mission_Piston requires complete ordered native evidence, not an active/corpse blanket veto. | `docs/agent/safety-gates.md` |
+| 499 | — | Clean-plan tracking includes nonlethal player building damage. | `docs/agent/solver-reference.md` |
+| 500 | — | Massive Spinneret grapples before its queued melee/push. | `docs/agent/solver-reference.md` |
+| 501 | — | An explicit bridge no-attack clears stale queued intent. | `docs/agent/solver-reference.md` |
+| 502 | — | Targeted Strike has an all-board grenade target area. | `docs/agent/solver-reference.md` |
+| 503 | — | Henry Kwan routes through live pawns but cannot stop on them. | `docs/agent/solver-reference.md` |
+| 504 | — | Massive and Road Runner paths may cross and stop on Water. | `docs/agent/solver-reference.md` |
+| 505 | — | Path occupancy counts live pawns and persistent corpses, not every dead body. | `docs/agent/solver-reference.md` |
+| 506 | — | Surface-final Volcano uses the exact live selection; never invent its next RNG. | `docs/agent/solver-reference.md` |
+| 507 | — | Final Cave consumes the exact current selection; never retarget phase two after Mechs move. | `docs/agent/solver-reference.md` |
+| 508 | — | Final Cave bomb loss extends the timer; replacement remains a fresh-read boundary. | `docs/agent/solver-reference.md` |
+| 509 | — | Final Cave startup admits enemies and spaces before its construction effect dispatches. | `docs/agent/solver-reference.md` |
+| 510 | — | Final Cave startup-effect record and script order is exact, not presentation timing. | `docs/agent/solver-reference.md` |
+| 511 | — | Final Cave temporary blocks expire at player-turn setup; permanent blocks are Board-scoped. | `docs/agent/solver-reference.md` |
+| 512 | — | Zero HP is reclassified before return; Board removal is a conditional later sweep. | `docs/agent/solver-reference.md` |
+| 513 | — | Board/effect deaths reach Mission:BaseUpdate on the next ordinary outer update. | `docs/agent/solver-reference.md` |
+| 514 | — | Mission kill projection follows the native non-Mech enemy event predicate. | `docs/agent/solver-reference.md` |
+| 515 | — | Pawn:IsCorpse is one common native predicate; static stock classification is exact. | `docs/agent/solver-reference.md` |
+| 516 | — | Mission_Piston interleaves living Trash Compactors and queued Vek in Board-vector order. | `docs/agent/solver-reference.md` |

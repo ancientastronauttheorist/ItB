@@ -95,6 +95,20 @@ BASE_SCRIPTS_INVENTORY_SPEC = {
     ],
 }
 
+# Published artifacts retain the two bridge overlays that were accepted when
+# their evidence bodies were created. Later project-only bridge revisions may
+# be admitted here after exact hash review without rewriting those immutable
+# native artifacts; every non-overlay scripts entry must still match.
+POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
+    {
+        "id": "mission_piston_v408_project_bridge",
+        "size": 315_686,
+        "sha256": (
+            "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d"
+        ),
+    },
+)
+
 
 SOURCE_SPECS = (
     {
@@ -802,7 +816,10 @@ def _verify_scripts_identity(content_root: Path) -> None:
     actual_overlay = actual_files[overlay_path]
     accepted_overlays = {
         (item["size"], item["sha256"])
-        for item in BASE_SCRIPTS_INVENTORY_SPEC["accepted_overlay_files"]
+        for item in (
+            *BASE_SCRIPTS_INVENTORY_SPEC["accepted_overlay_files"],
+            *POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS,
+        )
     }
     if (actual_overlay["size"], actual_overlay["sha256"]) not in accepted_overlays:
         raise DeathEventCreditBoundaryError(

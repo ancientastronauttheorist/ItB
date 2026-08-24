@@ -2414,6 +2414,13 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   Source-consistent single-row legacy masks recover the scalar; ambiguous
 //   masks retain the prior fallback. Pre-v393 corpus archived as
 //   failure_db_snapshot_sim_v392.jsonl.
+// v408 - Exact Windows build 13725832 proves Mission_Piston plans and executes
+//   neutral Trash Compactors in the same Board pawn-vector order as queued
+//   Vek. Rust now interleaves each fixed forward push at that vector slot and
+//   cancels a dead Piston's action while retaining its Corpse=true wreck.
+//   Bridge payloads preserve native order, and the safety gate now requires
+//   completeness instead of blocking proven active/corpse states. Pre-v408
+//   corpus archived as recordings/failure_db_snapshot_sim_v407.jsonl.
 // v407 - Mission kill projection now matches native EVENT_ENEMY_KILLED: the
 //   ordinary counter requires a non-Mech TEAM_ENEMY pawn and still excludes
 //   Minor enemies, which take native event 12. Pre-v407 corpus archived as
@@ -2523,7 +2530,7 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 407;
+pub const SIMULATOR_VERSION: u32 = 408;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

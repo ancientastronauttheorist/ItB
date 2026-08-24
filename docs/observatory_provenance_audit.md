@@ -954,8 +954,24 @@ spawner, factory, other active reference, or `SetMutation` call reaching it.
 The same 153-file inventory finds ten explicit and six inherited effective
 corpse types. The bridge exports current/static lifecycle state and Python plus
 Rust already cover all 16, so v407 remains correct. Exact action/frame
-transitions into states 2/3/4 and `Mission_Piston` action/cleanup order remain
-partial gaps; the Piston safety gate stays in place.
+transitions into states 2/3/4 and `Mission_Piston` action/cleanup order remained
+partial gaps at this artifact stage. The scheduler successor below closes the
+mission-specific question without generalizing all lifecycle states.
+
+The `native-piston-scheduler-boundary` successor joins `Board:GetPawns`, the AI
+planning filter, queued-pawn selection, Board activity, shared Pawn cleanup,
+explicit kill, and the shipped mission/environment sources. All three order
+sources are the same unsorted Board pawn vector: planning stably retains team-6
+or Neutral pawns, and execution selects the first still-queued pawn. Kill and
+shared update cleanup clear queued target/action fields, so a Piston killed
+before its slot loses its push while its `Corpse=true` wreck remains occupancy.
+`Mission_Piston` inherits no-op `Env_Null`, excluding a hidden environment
+action. Simulator v408 now preserves bridge unit order, interleaves living
+Piston pushes and Vek actions at exact vector slots, and accepts complete known
+active, corpse-only, or empty states. Missing, duplicated, partial, or reordered
+payloads remain a non-overridable gate. Setup RNG, general non-Piston lifecycle
+states 2/3/4, presentation-only timing, mods, and other depots remain partial
+gaps.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
@@ -1043,11 +1059,15 @@ nonpushable neutral pawn identities, and their zero-damage one-tile forward
 push construction. Simulator v386 adds a complete mission-scoped bridge
 payload, strict unit/orientation corroboration, neutral/static-trait
 preservation, projected JSON round-tripping, and non-overridable solve plus End
-Turn gates. It remains `partial`: native `Mission_Auto` ordering relative to
-Vek and environment effects, `Corpse=true` blocker/action lifecycle, setup RNG,
-`Board:ClearSpace`, and `SpaceDamage` queue timing are not traced. The bridge
-change is committed but intentionally not installed or exercised during the
-protected live achievement session, so no push replay is claimed.
+Turn gates. The later exact-build scheduler boundary proves that the bridge
+must preserve Board-vector order rather than sort by UID, that living Piston
+pushes and queued Vek interleave at those vector slots, that dead Pistons lose
+their queue while retaining corpse occupancy, and that inherited `Env_Null`
+adds no environment action. Simulator v408 implements those semantics and
+narrows the gate to incomplete or malformed ordered evidence. Coverage remains
+`partial` only for setup RNG/rejected placement calls, `Board:ClearSpace`
+generation details, presentation-only timing, mods, and other depots; no live
+push replay is needed for the now build-keyed static scheduler proof.
 
 The tutorial/trailer slice adds the three exact shipped `Mission_Tutorial`
 sources and their 17 defined callable callbacks: four each from the base and

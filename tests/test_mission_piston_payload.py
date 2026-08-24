@@ -78,7 +78,7 @@ def _lua_units(runtime, units):
     ])
 
 
-def test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state():
+def test_lua_helper_preserves_native_unit_order_and_complete_empty_state():
     helper, runtime = _load_lua_helper()
     units = [
         _piston(42, "Pawn_Piston_L", 6, 2),
@@ -88,10 +88,10 @@ def test_lua_helper_exports_exact_sorted_front_tiles_and_complete_empty_state():
 
     result = helper("Mission_Piston", _lua_units(runtime, units))
     assert result["complete"] is True
-    assert result["actions"][1]["uid"] == 41
-    assert [result["actions"][1]["front"][1], result["actions"][1]["front"][2]] == [3, 3]
-    assert result["actions"][2]["uid"] == 42
-    assert [result["actions"][2]["front"][1], result["actions"][2]["front"][2]] == [5, 2]
+    assert result["actions"][1]["uid"] == 42
+    assert [result["actions"][1]["front"][1], result["actions"][1]["front"][2]] == [5, 2]
+    assert result["actions"][2]["uid"] == 41
+    assert [result["actions"][2]["front"][1], result["actions"][2]["front"][2]] == [3, 3]
 
     empty = helper("Mission_Piston", _lua_units(runtime, []))
     assert empty["complete"] is True
@@ -126,6 +126,16 @@ def test_modloader_serializes_mission_scoped_pistons_atomically():
         _payload(actions=[]),
         _payload(actions=[{"uid": 41, "front": [3, 2]}]),
         _payload(actions=[{"uid": 41, "front": [3, 3]}, {"uid": 41, "front": [3, 3]}]),
+        _payload(
+            units=[
+                _piston(42, "Pawn_Piston_L", 6, 2),
+                _piston(41, "Pawn_Piston_U", 3, 4),
+            ],
+            actions=[
+                {"uid": 41, "front": [3, 3]},
+                {"uid": 42, "front": [5, 2]},
+            ],
+        ),
         _payload(units=[_piston(team=6)]),
         _payload(units=[], actions=[{"uid": 41, "front": [3, 3]}]),
     ],
@@ -151,8 +161,8 @@ def test_reader_canonicalizes_valid_payload_and_accepts_proven_empty_state():
     assert data["mission_pistons"] == {
         "complete": True,
         "actions": [
-            {"uid": 41, "front": [3, 3]},
             {"uid": 42, "front": [5, 2]},
+            {"uid": 41, "front": [3, 3]},
         ],
     }
 
@@ -206,7 +216,7 @@ def test_source_catalog_and_static_defs_cover_all_directional_pistons():
     }
 
 
-def test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty():
+def test_hard_forecast_gate_requires_exact_payload_then_accepts_living_and_corpses():
     unknown = Board.from_bridge_data({
         "mission_id": "Mission_Piston", "tiles": [], "units": [_piston()],
     })
@@ -216,26 +226,18 @@ def test_hard_forecast_gate_distinguishes_unknown_active_corpse_and_empty():
     assert block["forecast_gaps"][0]["kind"] == "mission_piston_state_unknown"
 
     active = Board.from_bridge_data(_payload())
-    block = _mission_piston_forecast_block(active, _payload())
-    assert any(
-        gap["kind"] == "mission_piston_phase_unknown"
-        for gap in block["forecast_gaps"]
-    )
+    assert _mission_piston_forecast_block(active, _payload()) is None
 
     corpse = Board.from_bridge_data(_payload(
         units=[_piston(hp=0)], actions=[],
     ))
-    block = _mission_piston_forecast_block(corpse, None)
-    assert any(
-        gap["kind"] == "mission_piston_corpse_lifecycle_unknown"
-        for gap in block["forecast_gaps"]
-    )
+    assert _mission_piston_forecast_block(corpse, None) is None
 
     empty = Board.from_bridge_data(_payload(units=[], actions=[]))
     assert _mission_piston_forecast_block(empty, None) is None
 
 
-def test_lookahead_surfaces_piston_state_and_scheduler_gaps():
+def test_lookahead_only_surfaces_missing_ordered_piston_state():
     kwargs = {"source_spawning_tiles": []}
     unknown = _lookahead_forecast_gaps(
         {"mission_id": "Mission_Piston", "units": []}, **kwargs,
@@ -243,11 +245,7 @@ def test_lookahead_surfaces_piston_state_and_scheduler_gaps():
     assert unknown[0]["kind"] == "mission_piston_state_unknown"
 
     active = _lookahead_forecast_gaps(_payload(), **kwargs)
-    assert active[0] == {
-        "kind": "mission_piston_phase_unknown",
-        "reason": "native_mission_auto_order_not_captured",
-        "piston_uids": [41],
-    }
+    assert active == []
 
     assert _lookahead_forecast_gaps(
         _payload(units=[], actions=[]), **kwargs,
@@ -262,7 +260,7 @@ def test_auto_turn_preserves_piston_research_gate_metadata(monkeypatch):
         "blocking": True,
         "non_overridable": True,
         "reason": "mission_piston_forecast_unproven",
-        "forecast_gaps": [{"kind": "mission_piston_phase_unknown"}],
+        "forecast_gaps": [{"kind": "mission_piston_state_unknown"}],
     }
     monkeypatch.setattr(commands, "is_bridge_active", lambda: True)
     monkeypatch.setattr(commands, "_load_session", lambda: session)
@@ -294,7 +292,7 @@ def test_auto_turn_preserves_piston_research_gate_metadata(monkeypatch):
 def test_public_end_turn_paths_block_unproven_piston_phase(
     monkeypatch, command_name,
 ):
-    data = _payload()
+    data = _payload(complete=False)
     data.update({
         "phase": "combat_player",
         "in_active_mission": True,
@@ -333,5 +331,5 @@ def test_public_end_turn_paths_block_unproven_piston_phase(
     assert result["reason"] == "held_end_turn_mission_piston_unproven"
     assert result["piston_forecast"]["non_overridable"] is True
     assert result["piston_forecast"]["forecast_gaps"][0]["kind"] == (
-        "mission_piston_phase_unknown"
+        "mission_piston_state_unknown"
     )

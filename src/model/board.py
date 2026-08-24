@@ -259,10 +259,12 @@ def validate_mission_piston_payload(
     """Return canonical ``(uid, front_x, front_y)`` actions or ``None``.
 
     The payload is useful only when it is complete and corroborates every
-    living exact Piston pawn in the generic unit list.  Missing, partial,
-    foreign-mission, duplicate, and orientation-mismatched payloads all fail
-    closed.  A complete empty payload is valid only when no living Piston is
-    present.
+    living exact Piston pawn in the generic unit list in that same order.
+    Native build 13725832 dispatches queued enemies and neutral Pistons from
+    the Board pawn vector, so a reordered payload is unsafe. Missing, partial,
+    foreign-mission, duplicate, orientation-mismatched, and reordered payloads
+    all fail closed. A complete empty payload is valid only when no living
+    Piston is present.
     """
     if not isinstance(data, dict) or data.get("mission_id") != "Mission_Piston":
         return None
@@ -278,6 +280,7 @@ def validate_mission_piston_payload(
         return None
 
     expected: dict[int, tuple[int, int]] = {}
+    expected_order: list[int] = []
     seen_piston_uids: set[int] = set()
     piston_count = 0
     for raw in raw_units:
@@ -313,6 +316,7 @@ def validate_mission_piston_payload(
             if not (0 <= front[0] < 8 and 0 <= front[1] < 8):
                 return None
             expected[uid] = front
+            expected_order.append(uid)
     if piston_count > 4:
         return None
 
@@ -341,7 +345,9 @@ def validate_mission_piston_payload(
         actions.append((uid, front[0], front[1]))
     if seen_action_uids != set(expected):
         return None
-    return sorted(actions)
+    if [uid for uid, _, _ in actions] != expected_order:
+        return None
+    return actions
 
 
 # Pilot value lookup: multiplier on the mech_killed penalty reflecting
@@ -633,8 +639,9 @@ class Board:
         # from an unrelated Snowtank1 of the same type.
         self.mission_hacking_bot_id: int | None = None
         self.mission_hacking_hack_id: int | None = None
-        # Mission_Piston's source proves each neutral compactors' fixed
-        # forward push, but not the native Mission_Auto scheduler slot.  Keep
+        # Mission_Piston's source proves each neutral compactor's fixed
+        # forward push. Exact build-keyed native analysis proves its Board-
+        # vector interleave with queued Vek; preserve the payload order. Keep
         # bridge completeness separate from the actions so legacy/malformed
         # payloads cannot be mistaken for a hazard-free mission.
         self.mission_pistons_known: bool = False

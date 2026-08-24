@@ -205,9 +205,10 @@ def test_solver_inventory_bridge_fields_version_and_piston_gate_conform():
     assert "corpse = current_corpse" in bridge
     assert "pawn_def and pawn_def.Corpse == true or false" in bridge
     assert "corpse_on_death = corpse_on_death" in bridge
-    assert "mission_piston_corpse_lifecycle_unknown" in commands
-    assert "pub const SIMULATOR_VERSION: u32 = 407;" in rust_lib
-    assert "SIMULATOR_VERSION = 407" in verify
+    assert "mission_piston_corpse_lifecycle_unknown" not in commands
+    assert "mission_piston_state_unknown" in commands
+    assert "pub const SIMULATOR_VERSION: u32 = 408;" in rust_lib
+    assert "SIMULATOR_VERSION = 408" in verify
 
 
 def test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available():

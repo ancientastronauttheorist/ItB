@@ -542,8 +542,19 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   12 is `LEADER_NECRO`, not Teleporter. The sole shipped `Jelly_Necro1` table is
   dormant and shipped Lua has no `SetMutation` call. Ten explicit plus six
   inherited corpse definitions exactly match the bridge, Python, and Rust
-  inventories, so simulator v407 needs no change. Lifecycle-state 2/3/4 timing
-  and Mission_Piston action/cleanup ordering remain open; and
+  inventories, so simulator v407 needs no change. At that artifact stage,
+  lifecycle-state 2/3/4 timing and Mission_Piston action/cleanup ordering
+  remained open; and
+- the native Mission_Piston scheduler continuation: `Board:GetPawns`, AI
+  planning, and queued-pawn selection all preserve the same unsorted Board pawn
+  vector. Neutral Pistons and queued Vek therefore interleave at their exact
+  vector slots. Board activity separates selections, explicit kill and shared
+  Pawn-update cleanup clear queued fields, and a dead `Corpse=true` Piston keeps
+  occupancy but cannot execute. The mission inherits no-op `Env_Null`, so no
+  environment action changes that order. Simulator v408 implements the exact
+  interleave and replaces the active/corpse veto with a complete-ordered-payload
+  gate; setup RNG, general lifecycle states, presentation timing, mods, and
+  other depots remain open; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
