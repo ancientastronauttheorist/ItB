@@ -1,0 +1,707 @@
+{
+  "analysis_kind": "lua_enemy_score_list_semantics",
+  "build_identity": {
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "closure": {
+    "base_get_target_score_projection_complete": true,
+    "complete_enemy_phase_forecast": false,
+    "prospective_board_observations_complete": false,
+    "score_list_projection_complete": true,
+    "score_positioning_complete": false,
+    "simulator_change_required": false,
+    "simulator_version": 408
+  },
+  "contracts": {
+    "base_vector_choice": "empty q_effect uses instant; nonempty q_effect uses queued",
+    "branch_order": [
+      "movement_position",
+      "non_grid_structure",
+      "friendly_damage",
+      "enemy",
+      "powered_building_damage",
+      "instant_pod_veto",
+      "nothing"
+    ],
+    "enemy_helper": "both teams differ and neither equals the projected TEAM_NONE",
+    "future_board_state_is_not_fabricated": true,
+    "instant_catastrophe_gate": "instant_score < -20 => -100",
+    "integer_scope": "inputs and accumulated outputs must remain signed 32-bit",
+    "movement_position_override": "sum < -5",
+    "outer_gate": "Board:IsValid(loc) or movement starts at Pawn:GetSpace()",
+    "record_order": "input vector order",
+    "score_positioning_is_projected_input": true
+  },
+  "dependencies": [
+    {
+      "canonical_sha256": "c0eeed00ebb646371d3ca33cac9d1c52224bb67025d1b6e6fa41a74115a7a457",
+      "file_sha256": "c94f87833efafec1217eefd0b5aeef61dd79e46fb3c1255c558259af64596ad0",
+      "id": "enemy_candidate_score_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json",
+      "role": "Pins native extraction and adjustment of the Lua integer result."
+    },
+    {
+      "canonical_sha256": "720f721d71869bcba25479410e124e666626d2b570c0dd3e5fb00acc50a86887",
+      "file_sha256": "517c6fe435bc4a5cd6d50acad1693ba6241bb97c41171ab4823e3c87d8b0a179",
+      "id": "enemy_score_effect_ancestry",
+      "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json",
+      "role": "Pins base-score dispatch, all active override routes, and the separation from the native Skill cache materializer."
+    },
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "id": "accepted_local_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins the exact global.lua bytes and scripts revision."
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Each valid or source-moving record checks movement, non-grid structure, friendly damage, enemy, powered building, instant Pod, then ScoreNothing in that order.",
+      "classification": "fact",
+      "id": "score_list_branch_order_is_exact"
+    },
+    {
+      "claim": "A hostile dead or temporary Pawn assigns score=ScoreNothing; it does not add ScoreNothing and can erase prior accumulated score.",
+      "classification": "fact",
+      "id": "dead_or_temp_enemy_resets_score"
+    },
+    {
+      "claim": "Positive damage to a same-team Frozen target that is not already targeted adds ScoreEnemy instead of ScoreFriendlyDamage.",
+      "classification": "fact",
+      "id": "frozen_friend_can_score_as_enemy"
+    },
+    {
+      "claim": "An otherwise unmatched Pod record returns -100 immediately only for the instant vector and positive damage or nonempty sPawn.",
+      "classification": "fact",
+      "id": "instant_pod_veto_is_ordered_and_queued_exempt"
+    },
+    {
+      "claim": "Movement ScorePositioning values accumulate separately; a final total below -5 replaces the ordinary list score.",
+      "classification": "fact",
+      "id": "movement_position_below_minus_five_overrides_score"
+    },
+    {
+      "claim": "Base GetTargetScore scores q_effect first and effect second, returns -100 when instant score is below -20, otherwise returns instant only for an empty q_effect and queued score for every nonempty q_effect.",
+      "classification": "fact",
+      "id": "base_target_score_evaluates_queue_then_instant"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "early_return": null,
+        "kind": "lua_enemy_score_list_projection_replay",
+        "ordinary_score": 0,
+        "position_override": false,
+        "position_score": 0,
+        "queued": false,
+        "record_count": 1,
+        "result": 0,
+        "schema_version": 1,
+        "trace": [
+          {
+            "branch": "invalid_skip",
+            "index": 0,
+            "loc": [
+              2,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": false,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": 0,
+            "score_before": 0
+          }
+        ]
+      },
+      "id": "invalid_record_is_skipped",
+      "input": {
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "queued": false,
+        "records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": false,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 0
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -2,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "score_list"
+    },
+    {
+      "expected": {
+        "early_return": null,
+        "kind": "lua_enemy_score_list_projection_replay",
+        "ordinary_score": 5,
+        "position_override": false,
+        "position_score": 0,
+        "queued": false,
+        "record_count": 1,
+        "result": 5,
+        "schema_version": 1,
+        "trace": [
+          {
+            "branch": "friendly_frozen_untargeted",
+            "index": 0,
+            "loc": [
+              2,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": true,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": 5,
+            "score_before": 0
+          }
+        ]
+      },
+      "id": "frozen_untargeted_friend_scores_as_enemy",
+      "input": {
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "queued": false,
+        "records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": true,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 6
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -2,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "score_list"
+    },
+    {
+      "expected": {
+        "early_return": null,
+        "kind": "lua_enemy_score_list_projection_replay",
+        "ordinary_score": 0,
+        "position_override": false,
+        "position_score": 0,
+        "queued": false,
+        "record_count": 2,
+        "result": 0,
+        "schema_version": 1,
+        "trace": [
+          {
+            "branch": "enemy_live",
+            "index": 0,
+            "loc": [
+              2,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": true,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": 5,
+            "score_before": 0
+          },
+          {
+            "branch": "enemy_dead_or_temp_reset",
+            "index": 1,
+            "loc": [
+              3,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": true,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": 0,
+            "score_before": 5
+          }
+        ]
+      },
+      "id": "dead_enemy_resets_accumulated_score",
+      "input": {
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "queued": false,
+        "records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 1
+          },
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              3,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": true,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 1
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -2,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "score_list"
+    },
+    {
+      "expected": {
+        "early_return": "instant_pod_veto",
+        "kind": "lua_enemy_score_list_projection_replay",
+        "ordinary_score": 0,
+        "position_override": false,
+        "position_score": 0,
+        "queued": false,
+        "record_count": 1,
+        "result": -100,
+        "schema_version": 1,
+        "trace": [
+          {
+            "branch": "instant_pod_veto",
+            "index": 0,
+            "loc": [
+              2,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": true,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": -100,
+            "score_before": 0
+          }
+        ]
+      },
+      "id": "instant_pod_veto",
+      "input": {
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "queued": false,
+        "records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": true,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 0
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -2,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "score_list"
+    },
+    {
+      "expected": {
+        "early_return": null,
+        "kind": "lua_enemy_score_list_projection_replay",
+        "ordinary_score": 5,
+        "position_override": true,
+        "position_score": -6,
+        "queued": false,
+        "record_count": 2,
+        "result": -6,
+        "schema_version": 1,
+        "trace": [
+          {
+            "branch": "enemy_live",
+            "index": 0,
+            "loc": [
+              2,
+              3
+            ],
+            "moving_from_pawn": false,
+            "outer_gate": true,
+            "position_score_after": 0,
+            "position_score_before": 0,
+            "score_after": 5,
+            "score_before": 0
+          },
+          {
+            "branch": "movement_position",
+            "index": 1,
+            "loc": [
+              5,
+              5
+            ],
+            "moving_from_pawn": true,
+            "outer_gate": true,
+            "position_score_after": -6,
+            "position_score_before": 0,
+            "score_after": 5,
+            "score_before": 5
+          }
+        ]
+      },
+      "id": "movement_position_overrides_ordinary_score",
+      "input": {
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "queued": false,
+        "records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 1
+          },
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": false,
+            "iDamage": 1,
+            "is_movement": true,
+            "loc": [
+              5,
+              5
+            ],
+            "move_end": [
+              5,
+              5
+            ],
+            "move_start": [
+              4,
+              5
+            ],
+            "positioning_score": -6,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 0
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -2,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "score_list"
+    },
+    {
+      "expected": {
+        "effect": {
+          "early_return": null,
+          "kind": "lua_enemy_score_list_projection_replay",
+          "ordinary_score": -30,
+          "position_override": false,
+          "position_score": 0,
+          "queued": false,
+          "record_count": 1,
+          "result": -30,
+          "schema_version": 1,
+          "trace": [
+            {
+              "branch": "friendly_damage",
+              "index": 0,
+              "loc": [
+                2,
+                3
+              ],
+              "moving_from_pawn": false,
+              "outer_gate": true,
+              "position_score_after": 0,
+              "position_score_before": 0,
+              "score_after": -30,
+              "score_before": 0
+            }
+          ]
+        },
+        "evaluation_order": [
+          "q_effect",
+          "effect"
+        ],
+        "kind": "lua_enemy_base_target_score_projection_replay",
+        "q_effect": {
+          "early_return": null,
+          "kind": "lua_enemy_score_list_projection_replay",
+          "ordinary_score": 5,
+          "position_override": false,
+          "position_score": 0,
+          "queued": true,
+          "record_count": 1,
+          "result": 5,
+          "schema_version": 1,
+          "trace": [
+            {
+              "branch": "enemy_live",
+              "index": 0,
+              "loc": [
+                2,
+                3
+              ],
+              "moving_from_pawn": false,
+              "outer_gate": true,
+              "position_score_after": 0,
+              "position_score_before": 0,
+              "score_after": 5,
+              "score_before": 0
+            }
+          ]
+        },
+        "q_effect_empty": false,
+        "result": -100,
+        "schema_version": 1,
+        "selected_branch": "instant_below_minus_twenty"
+      },
+      "id": "instant_catastrophe_overrides_nonempty_queue",
+      "input": {
+        "effect_records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 6
+          }
+        ],
+        "pawn_space": [
+          4,
+          5
+        ],
+        "pawn_team": 6,
+        "q_effect_records": [
+          {
+            "board_is_building": false,
+            "board_is_pawn_space": false,
+            "board_is_pod": false,
+            "board_is_powered": false,
+            "board_is_valid": true,
+            "iDamage": 1,
+            "is_movement": false,
+            "loc": [
+              2,
+              3
+            ],
+            "move_end": null,
+            "move_start": null,
+            "positioning_score": null,
+            "sPawn": "",
+            "target_is_dead": false,
+            "target_is_frozen": false,
+            "target_is_non_grid_structure": false,
+            "target_is_targeted": false,
+            "target_is_temp_unit": false,
+            "target_team": 1
+          }
+        ],
+        "score_building": 5,
+        "score_enemy": 5,
+        "score_friendly_damage": -30,
+        "score_nothing": 0,
+        "team_none": 0
+      },
+      "replay": "base_target_score"
+    }
+  ],
+  "schema_version": 1,
+  "source_regions": [
+    {
+      "body_sha256": "85b370b2d3d9d4284ce94f03844a5047da731a6f4c06a4198a0604561df6d5f4",
+      "body_size": 422,
+      "id": "base_get_target_score",
+      "line": 378,
+      "source_path": "scripts/global.lua",
+      "symbol": "Skill:GetTargetScore"
+    },
+    {
+      "body_sha256": "5d6a6d3148dd983676164d6c2cc633b1f126ee3d7bd56952ead4c1bd31c7a59d",
+      "body_size": 126,
+      "id": "is_enemy_helper",
+      "line": 395,
+      "source_path": "scripts/global.lua",
+      "symbol": "isEnemy"
+    },
+    {
+      "body_sha256": "1876b72aa057f9575b53d745725b7372f9f3dc92ce1a0f4614ae71aebe7a223d",
+      "body_size": 1541,
+      "id": "score_list",
+      "line": 400,
+      "source_path": "scripts/global.lua",
+      "symbol": "Skill:ScoreList"
+    }
+  ],
+  "summary": {
+    "base_get_target_score_projection_complete": true,
+    "complete_enemy_phase_forecast": false,
+    "dependency_count": 3,
+    "finding_count": 6,
+    "replay_vector_count": 6,
+    "score_list_projection_complete": true,
+    "score_positioning_complete": false,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "source_region_count": 3,
+    "unresolved_count": 3
+  },
+  "unresolved": [
+    {
+      "id": "score_positioning_body",
+      "question": "How are the projected movement positioning scores computed?",
+      "static_status": "ScoreList call placement and threshold are exact; ScorePositioning remains an explicit resolved input to this replay."
+    },
+    {
+      "id": "prospective_board_observations",
+      "question": "Can all conditional Board/Pawn observations be known prospectively?",
+      "static_status": "The strict replay consumes explicit observations but the ordinary bridge does not serialize a future candidate tournament."
+    },
+    {
+      "id": "custom_score_callbacks",
+      "question": "Are all 19 non-base score definitions pure replayable?",
+      "static_status": "Their ancestry is classified, but their callback-specific Board logic remains separate from this base ScoreList artifact."
+    }
+  ]
+}

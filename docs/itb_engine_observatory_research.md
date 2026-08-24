@@ -879,6 +879,13 @@ bridge-read boundary.
   final-effect method, and all 186 active `GetSkillEffect` bodies contain zero
   direct calls to the four shipped Lua RNG helpers. Native-bound helper RNG and
   prospective callback inputs remain unresolved.
+- **Completed offline through inherited base scoring arithmetic:** the exact
+  shipped `isEnemy`, `Skill:ScoreList`, and base `Skill:GetTargetScore` bodies
+  now have strict projected replays. They preserve branch order, the dead/temp
+  hostile score reset, untargeted-Frozen-friendly scoring, instant Time Pod
+  veto, movement threshold, and queued-versus-instant selection. Resolved
+  Board/Pawn predicates and `ScorePositioning` remain explicit inputs; custom
+  score callbacks and a future tournament are not inferred.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot

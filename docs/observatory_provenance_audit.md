@@ -104,7 +104,13 @@ the 20 active `GetTargetScore` definitions split into four direct actual-effect
 calls, one nested Shaman-to-Totem route, four synthetic local effects, and
 eleven payload-free scorers. No scorer calls a final-effect method, and a full
 186-body `GetSkillEffect` manifest contains no direct shipped Lua RNG-helper
-call. Natural callback pairs exercise the four
+call. A second source-keyed artifact pins the exact inherited base
+`GetTargetScore`, `isEnemy`, and `ScoreList` bodies and replays their arithmetic
+from explicit projected predicates. It preserves the dead/temp hostile score
+reset, untargeted-Frozen-friendly special case, instant Time Pod veto,
+movement-position threshold, and queued-versus-instant choice without claiming
+that `ScorePositioning`, future Board state, or custom score overrides are
+known. Natural callback pairs exercise the four
 Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -117,9 +123,9 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, and concrete Lua callback values/PointLists/SkillEffects plus transitive
-native-bound helper RNG before the now-proven native postprocessing boundaries
-remain unjoined.
+state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
+score predicates/`ScorePositioning`, plus transitive native-bound helper RNG
+before the now-proven native postprocessing boundaries remain unjoined.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers
 only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate

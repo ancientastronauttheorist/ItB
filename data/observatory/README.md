@@ -466,6 +466,44 @@ RNG-free, and future callback Board inputs/effect payloads still are not
 ordinary bridge state. The settled enemy queue remains authoritative and
 simulator v408 remains current.
 
+## Enemy base ScoreList semantics
+
+`callbacks/windows_build_13725832_31fe35265598_enemy_score_list_semantics.json`
+pins the exact shipped `Skill:GetTargetScore`, `isEnemy`, and `Skill:ScoreList`
+bodies and turns their source arithmetic into a strict projected replay. Its
+raw SHA-256 is
+`1b2519a9f5e8e9e58684c3b3c85feee7677c8f1900eb086cc04a9c6da30436bb`;
+its canonical document SHA-256 is
+`101d07ba323fe7948ae04e27e27eaf219f5a2091d2ddb1cfe060184c3efe1342`.
+
+The replay preserves source order rather than replacing it with a simplified
+scoring policy. Movement is handled first and accumulates an explicit
+`ScorePositioning` result. Non-grid structures precede Pawn-team checks. A
+positive hit on a same-team Frozen target scores as an enemy only while that
+target is not already targeted. A dead or temporary hostile Pawn assigns
+`ScoreNothing` to the whole accumulated score instead of adding it. Powered
+building damage follows, then an instant-only Time Pod veto, then the ordinary
+`ScoreNothing` fallback. A final positioning sum strictly below `-5` replaces
+the ordinary score.
+
+Base `Skill:GetTargetScore` scores `q_effect` before `effect`. An instant score
+strictly below `-20` returns `-100`; otherwise an empty queued vector uses the
+instant score and every nonempty queued vector uses the queued score. Build or
+verify the immutable artifact with:
+
+```powershell
+python scripts/itb_observatory_enemy_score_list_semantics.py verify `
+  --content-root "<Into the Breach>" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json `
+  --semantics-map data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_list_semantics.json
+```
+
+The replay consumes already-resolved Board/Pawn predicates and an explicit
+`ScorePositioning` value only where the source calls that function. It does not
+invent future candidate state, evaluate the 19 custom score overrides, or
+forecast a whole enemy phase. The settled queue remains authoritative and
+simulator v408 remains current.
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

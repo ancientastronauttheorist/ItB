@@ -725,6 +725,13 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "bypasses the separate native Skill cache materializer" in evidence
     assert "all 186 active GetSkillEffect definitions" in evidence
     assert "zero direct calls to random_int" in evidence
+    assert "movement, non-grid structure, positive same-team damage" in evidence
+    assert "assigns score=ScoreNothing" in evidence
+    assert "strictly below -5 replaces the ordinary score" in evidence
+    assert "scores q_effect before effect" in evidence
+    assert "strictly below -20 returns -100" in evidence
+    assert "six adversarial replay vectors" in evidence
+    assert "19 custom score callbacks" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -885,6 +892,39 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "four_synthetic_score_effects",
         "skill_effect_bodies_have_no_explicit_lua_rng_calls",
     }
+    assert implementations[
+        "src/observatory/enemy_score_list_semantics.py"
+    ] == {
+        "replay_enemy_score_list",
+        "replay_enemy_base_target_score",
+        "build_enemy_score_list_semantics",
+        "validate_enemy_score_list_semantics",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_score_list_semantics.py"
+    ] == {"build", "verify"}
+    assert implementations[
+        "data/observatory/callbacks/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_score_list_semantics.json"
+    ] == {
+        "score_list_branch_order_is_exact",
+        "dead_or_temp_enemy_resets_score",
+        "frozen_friend_can_score_as_enemy",
+        "instant_pod_veto_is_ordered_and_queued_exempt",
+        "movement_position_below_minus_five_overrides_score",
+        "base_target_score_evaluates_queue_then_instant",
+    }
+
+    tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
+    assert tests["tests/test_observatory_enemy_score_list_semantics.py"] == {
+        "test_non_grid_structure_precedes_friendly_enemy_building_and_pod_tests",
+        "test_frozen_untargeted_friend_uses_enemy_weight_but_targeted_friend_does_not",
+        "test_dead_or_temp_enemy_assigns_score_nothing_and_erases_prior_score",
+        "test_pod_veto_requires_instant_damage_or_spawn",
+        "test_base_target_score_runs_queue_first_but_instant_catastrophe_wins",
+        "test_exact_installed_source_rebuilds_committed_map_when_available",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -900,6 +940,10 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "concrete ordered Lua-produced PointLists and SkillEffects" in gaps
     assert "raw callback values" in gaps
     assert "source-exact score/effect ancestry" in gaps
+    assert "inherited base ScoreList projection" in gaps
+    assert "resolved ScorePositioning/future Board predicates" in gaps
+    assert "base ScoreList projection" in gaps
+    assert "resolved Board predicates and ScorePositioning values" in gaps
     assert "transitive native-helper RNG" in gaps
     assert "score-side callback ancestry" not in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps

@@ -94,6 +94,10 @@ The durable artifacts are:
   for all 20 active shipped `GetTargetScore` bodies, their direct/nested/
   synthetic/no-effect routes, Shaman-to-Totem inheritance, and the zero direct
   Lua RNG-call census across all 186 active `GetSkillEffect` definitions;
+- `data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_list_semantics.json`
+  for the exact shipped base `GetTargetScore`, `isEnemy`, and `ScoreList`
+  bodies, strict branch-order replay, instant/queued selection, and explicit
+  projected Board/Pawn and `ScorePositioning` inputs;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -352,6 +356,24 @@ zero direct calls to `random_int`, `random_bool`, `random_element`, or
 `random_removal`. That does not prove every native-bound constructor or Board/
 effect helper transitively RNG-free, nor provide future Board queries and
 effect payloads before queue commitment.
+
+The next source-keyed artifact closes the arithmetic inside the inherited base
+score route without pretending those future inputs are already observable.
+Its exact `Skill:ScoreList` replay preserves movement-first handling, the
+non-grid-structure branch before Pawn-team scoring, the special untargeted-
+Frozen-friendly `ScoreEnemy` case, powered-building scoring, the instant-only
+Time Pod veto, and the final positioning override strictly below `-5`.
+Notably, a dead or temporary hostile Pawn assigns `score = ScoreNothing`; it
+can erase an earlier positive total instead of merely contributing a neutral
+term.
+
+The joined base `Skill:GetTargetScore` replay scores `q_effect` before
+`effect`, converts an instant result strictly below `-20` to `-100`, then uses
+the instant result only when the queued vector is empty. It consumes explicit
+Board/Pawn predicate observations and an explicit `ScorePositioning` result at
+the exact call sites. `ScorePositioning` itself, prospective Board state, and
+the 19 custom score callbacks remain separate continuations, so this is not a
+future enemy-phase forecast and does not replace the settled queue.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its

@@ -2038,6 +2038,18 @@
           "statement": "None of the 20 active GetTargetScore bodies calls GetFinalEffect or GetFinalEffect_Helper. A complete hash-pinned manifest of all 186 active GetSkillEffect definitions across 45 files contains zero direct calls to random_int, random_bool, random_element, or random_removal. This direct lexical census does not prove native-bound constructors or Board/effect helpers transitively RNG-free."
         },
         {
+          "classification": "fact",
+          "statement": "The exact shipped Skill:ScoreList body evaluates movement, non-grid structure, positive same-team damage, hostile Pawn, positive powered-building damage, instant Time Pod veto, and ScoreNothing in that order. An untargeted Frozen friend uses ScoreEnemy, while a dead or temporary hostile assigns score=ScoreNothing and can erase prior accumulation; a movement-position total strictly below -5 replaces the ordinary score."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact base Skill:GetTargetScore body scores q_effect before effect. An instant result strictly below -20 returns -100; otherwise an empty q_effect uses the instant result and every nonempty q_effect uses the queued result. The strict replay consumes resolved Board/Pawn predicates and ScorePositioning values rather than fabricating future state."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable base-scoring artifact pins the exact Skill:GetTargetScore, isEnemy, and Skill:ScoreList source bodies and six adversarial replay vectors. It closes inherited base score arithmetic from projected inputs while leaving ScorePositioning, prospective Board observations, and 19 custom score callbacks as explicit separate continuations."
+        },
+        {
           "classification": "inference",
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
@@ -2055,7 +2067,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList arithmetic, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, resolved ScorePositioning/future Board predicates, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2214,6 +2226,33 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_score_list_semantics.py",
+          "symbols": [
+            "replay_enemy_score_list",
+            "replay_enemy_base_target_score",
+            "build_enemy_score_list_semantics",
+            "validate_enemy_score_list_semantics"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_score_list_semantics.py",
+          "symbols": [
+            "build",
+            "verify"
+          ]
+        },
+        {
+          "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_list_semantics.json",
+          "symbols": [
+            "score_list_branch_order_is_exact",
+            "dead_or_temp_enemy_resets_score",
+            "frozen_friend_can_score_as_enemy",
+            "instant_pod_veto_is_ordered_and_queued_exempt",
+            "movement_position_below_minus_five_overrides_score",
+            "base_target_score_evaluates_queue_then_instant"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2231,8 +2270,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, resolved ScorePositioning/future Board predicates, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList projection, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, resolved Board predicates and ScorePositioning values, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2371,6 +2410,17 @@
             "test_shaman_is_the_only_nested_route_and_resolves_to_totem_base_score",
             "test_no_score_callback_uses_final_effect_or_explicit_lua_rng",
             "test_exact_installed_sources_rebuild_committed_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_score_list_semantics.py",
+          "symbols": [
+            "test_non_grid_structure_precedes_friendly_enemy_building_and_pod_tests",
+            "test_frozen_untargeted_friend_uses_enemy_weight_but_targeted_friend_does_not",
+            "test_dead_or_temp_enemy_assigns_score_nothing_and_erases_prior_score",
+            "test_pod_veto_requires_instant_damage_or_spawn",
+            "test_base_target_score_runs_queue_first_but_instant_catastrophe_wins",
+            "test_exact_installed_source_rebuilds_committed_map_when_available"
           ]
         },
         {
