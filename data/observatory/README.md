@@ -472,9 +472,9 @@ simulator v408 remains current.
 pins the exact shipped `Skill:GetTargetScore`, `isEnemy`, and `Skill:ScoreList`
 bodies and turns their source arithmetic into a strict projected replay. Its
 raw SHA-256 is
-`1b2519a9f5e8e9e58684c3b3c85feee7677c8f1900eb086cc04a9c6da30436bb`;
+`a990c1ae3648618651c65096339a8a5f24d44407c422324c8cf43ac30dab11a6`;
 its canonical document SHA-256 is
-`101d07ba323fe7948ae04e27e27eaf219f5a2091d2ddb1cfe060184c3efe1342`.
+`4871a8f128211e258f6737b2c221e5f73789a021a95ecd995e5d5a3a86566d60`.
 
 The replay preserves source order rather than replacing it with a simplified
 scoring policy. Movement is handled first and accumulates an explicit
@@ -499,9 +499,53 @@ python scripts/itb_observatory_enemy_score_list_semantics.py verify `
 ```
 
 The replay consumes already-resolved Board/Pawn predicates and an explicit
-`ScorePositioning` value only where the source calls that function. It does not
-invent future candidate state, evaluate the 19 custom score overrides, or
-forecast a whole enemy phase. The settled queue remains authoritative and
+`ScorePositioning` Lua number only where the source calls that function;
+half-points from melee distance scoring remain fractional in this direct Lua
+route. It does not invent future candidate state, evaluate the 19 custom score
+overrides, or forecast a whole enemy phase. The settled queue remains
+authoritative and simulator v408 remains current.
+
+## Enemy ScorePositioning semantics
+
+`callbacks/windows_build_13725832_31fe35265598_enemy_score_positioning_semantics.json`
+continues the base score replay through the exact shipped global
+`ScorePositioning` body. It also joins the exact `Breach.exe` callback wrapper
+and named integer invoker to the installed `lua5.1.dll` `lua_tointeger` body.
+Its raw SHA-256 is
+`178a097eb9bf5432a306ebe5a28c0c3ddeb070e904dd35950b3023a8cc5255ff`;
+its canonical document SHA-256 is
+`71c32732d7d28488a1086bf44d2e2abb2d01f3aec1fd5d4098f14fbbf91ff763`.
+
+The projected replay preserves the complete source order: Pod, grounded Hole,
+targeted danger score, Smoke, new Fire, spawning, generic mission danger,
+avoided dangerous item, grounded Water, custom Pawn score, stock corner/edge,
+then melee or ranged positioning. The ACID penalty line is commented out.
+Custom score precedes the hard-coded `0`/`7` edge policy. A player Pawn selects
+`TEAM_ENEMY`; every other team selects `TEAM_PLAYER`, exactly matching the
+source's binary-team caveat.
+
+Melee scoring checks four `DIR_START=0` through `DIR_END=3` slots in order,
+testing the selected-team Pawn before a Building at each slot. With no adjacent
+match it returns
+`max(0,(10-min(distance-to-Pawn,distance-to-Building))/2)`, preserving
+half-points for direct Lua consumers. Ranged interior positions return five.
+
+The native callback route is deliberately separate. The pinned
+`lua_tointeger` body loads the Lua double and executes x87 `FISTP`; its result
+therefore depends on the active thread rounding-control mode. The artifact
+replays all four x87 modes exactly but does not claim which mode is active at a
+future callback. Build or verify it with:
+
+```powershell
+python scripts/itb_observatory_enemy_score_positioning.py verify `
+  --content-root "<Into the Breach>" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json `
+  --semantics-map data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_positioning_semantics.json
+```
+
+`GetDangerScore`, `GetCustomPositionScore`, future Board predicates/distances,
+and the callback-time x87 control word remain explicit inputs. This local
+replay does not forecast the enemy tournament or replace the settled queue;
 simulator v408 remains current.
 
 ## Native path and reachability boundaries

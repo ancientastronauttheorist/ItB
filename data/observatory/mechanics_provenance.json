@@ -2039,7 +2039,7 @@
         },
         {
           "classification": "fact",
-          "statement": "The exact shipped Skill:ScoreList body evaluates movement, non-grid structure, positive same-team damage, hostile Pawn, positive powered-building damage, instant Time Pod veto, and ScoreNothing in that order. An untargeted Frozen friend uses ScoreEnemy, while a dead or temporary hostile assigns score=ScoreNothing and can erase prior accumulation; a movement-position total strictly below -5 replaces the ordinary score."
+          "statement": "The exact shipped Skill:ScoreList body evaluates movement, non-grid structure, positive same-team damage, hostile Pawn, positive powered-building damage, instant Time Pod veto, and ScoreNothing in that order. An untargeted Frozen friend uses ScoreEnemy, while a dead or temporary hostile assigns score=ScoreNothing and can erase prior accumulation; fractional Lua movement-position values remain unrounded and a total strictly below -5 replaces the ordinary score."
         },
         {
           "classification": "fact",
@@ -2047,7 +2047,23 @@
         },
         {
           "classification": "fact",
-          "statement": "The immutable base-scoring artifact pins the exact Skill:GetTargetScore, isEnemy, and Skill:ScoreList source bodies and six adversarial replay vectors. It closes inherited base score arithmetic from projected inputs while leaving ScorePositioning, prospective Board observations, and 19 custom score callbacks as explicit separate continuations."
+          "statement": "The immutable base-scoring artifact pins the exact Skill:GetTargetScore, isEnemy, and Skill:ScoreList source bodies and seven adversarial replay vectors, including a half-point accumulation case. It closes inherited base score arithmetic from projected inputs while leaving ScorePositioning, prospective Board observations, and 19 custom score callbacks as explicit separate continuations."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact shipped global ScorePositioning body short-circuits Pod, grounded Hole, targeted danger score, Smoke, new Fire, spawning, generic danger, avoided dangerous item, grounded Water, custom Pawn score, hard-coded stock corner/edge, then melee or ranged logic. The ACID penalty is commented out; custom score precedes coordinates 0/7; TEAM_PLAYER selects TEAM_ENEMY and every other Pawn team selects TEAM_PLAYER."
+        },
+        {
+          "classification": "fact",
+          "statement": "Melee positioning checks four exact DIR_START=0 through DIR_END=3 slots, selected-team Pawn before Building at each slot, and otherwise returns max(0,(10-min(Pawn distance,Building distance))/2) as a Lua number. Odd differences therefore remain half-points for direct Lua ScoreList consumers; a ranged interior position returns 5."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact native ScorePositioning wrapper calls the named integer invoker, and the exact installed lua5.1.dll lua_tointeger body loads the Lua double then uses x87 FISTP. Integer conversion is replayable for nearest-even, down, up, and toward-zero modes, while the active callback-thread rounding mode remains runtime state rather than a static image constant."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, five hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations while leaving GetDangerScore, GetCustomPositionScore, future Board predicates/distances, and callback-time x87 control explicit."
         },
         {
           "classification": "inference",
@@ -2067,7 +2083,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList arithmetic, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, resolved ScorePositioning/future Board predicates, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, resolved Pawn-helper/future Board observations, callback-time x87 control, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2253,6 +2269,34 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_score_positioning_semantics.py",
+          "symbols": [
+            "replay_enemy_score_positioning",
+            "replay_score_positioning_native_integer",
+            "build_enemy_score_positioning_semantics",
+            "validate_enemy_score_positioning_semantics"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_score_positioning.py",
+          "symbols": [
+            "build",
+            "verify"
+          ]
+        },
+        {
+          "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_positioning_semantics.json",
+          "symbols": [
+            "hazard_short_circuit_order_is_exact",
+            "acid_penalty_is_inactive",
+            "custom_score_precedes_stock_edges",
+            "enemy_team_selection_is_binary",
+            "melee_adjacency_order_is_exact",
+            "melee_distance_preserves_half_points",
+            "native_integer_rounding_depends_on_x87_control"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2270,8 +2314,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, resolved ScorePositioning/future Board predicates, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList projection, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, resolved Board predicates and ScorePositioning values, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, resolved native Pawn-helper/future Board observations, callback-time x87 control, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, resolved Board/Pawn helper observations and callback-time x87 mode, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2421,6 +2465,17 @@
             "test_pod_veto_requires_instant_damage_or_spawn",
             "test_base_target_score_runs_queue_first_but_instant_catastrophe_wins",
             "test_exact_installed_source_rebuilds_committed_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_score_positioning_semantics.py",
+          "symbols": [
+            "test_hazard_precedence_starts_with_pod_hole_and_targeted_danger",
+            "test_custom_score_precedes_hardcoded_stock_corner_and_edge",
+            "test_melee_checks_each_direction_pawn_before_building_and_short_circuits",
+            "test_melee_distance_formula_preserves_exact_half_points",
+            "test_x87_integer_conversion_replay_distinguishes_all_rounding_modes",
+            "test_exact_install_rebuilds_source_executable_and_lua_dll_join_when_available"
           ]
         },
         {

@@ -730,8 +730,20 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "strictly below -5 replaces the ordinary score" in evidence
     assert "scores q_effect before effect" in evidence
     assert "strictly below -20 returns -100" in evidence
-    assert "six adversarial replay vectors" in evidence
+    assert "seven adversarial replay vectors" in evidence
+    assert "fractional Lua movement-position values remain unrounded" in evidence
+    assert "including a half-point accumulation case" in evidence
     assert "19 custom score callbacks" in evidence
+    assert "global ScorePositioning body short-circuits Pod" in evidence
+    assert "The ACID penalty is commented out" in evidence
+    assert "TEAM_PLAYER selects TEAM_ENEMY" in evidence
+    assert "DIR_START=0 through DIR_END=3" in evidence
+    assert "Odd differences therefore remain half-points" in evidence
+    assert "lua5.1.dll lua_tointeger body" in evidence
+    assert "uses x87 FISTP" in evidence
+    assert "active callback-thread rounding mode remains runtime state" in evidence
+    assert "one exact 2,075-byte source body" in evidence
+    assert "14 adversarial replay vectors" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -915,6 +927,30 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "movement_position_below_minus_five_overrides_score",
         "base_target_score_evaluates_queue_then_instant",
     }
+    assert implementations[
+        "src/observatory/enemy_score_positioning_semantics.py"
+    ] == {
+        "replay_enemy_score_positioning",
+        "replay_score_positioning_native_integer",
+        "build_enemy_score_positioning_semantics",
+        "validate_enemy_score_positioning_semantics",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_score_positioning.py"
+    ] == {"build", "verify"}
+    assert implementations[
+        "data/observatory/callbacks/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_score_positioning_semantics.json"
+    ] == {
+        "hazard_short_circuit_order_is_exact",
+        "acid_penalty_is_inactive",
+        "custom_score_precedes_stock_edges",
+        "enemy_team_selection_is_binary",
+        "melee_adjacency_order_is_exact",
+        "melee_distance_preserves_half_points",
+        "native_integer_rounding_depends_on_x87_control",
+    }
 
     tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
     assert tests["tests/test_observatory_enemy_score_list_semantics.py"] == {
@@ -924,6 +960,16 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "test_pod_veto_requires_instant_damage_or_spawn",
         "test_base_target_score_runs_queue_first_but_instant_catastrophe_wins",
         "test_exact_installed_source_rebuilds_committed_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_enemy_score_positioning_semantics.py"
+    ] == {
+        "test_hazard_precedence_starts_with_pod_hole_and_targeted_danger",
+        "test_custom_score_precedes_hardcoded_stock_corner_and_edge",
+        "test_melee_checks_each_direction_pawn_before_building_and_short_circuits",
+        "test_melee_distance_formula_preserves_exact_half_points",
+        "test_x87_integer_conversion_replay_distinguishes_all_rounding_modes",
+        "test_exact_install_rebuilds_source_executable_and_lua_dll_join_when_available",
     }
 
     gaps = " ".join(record["known_gaps"])
@@ -941,9 +987,12 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "raw callback values" in gaps
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps
-    assert "resolved ScorePositioning/future Board predicates" in gaps
+    assert "global ScorePositioning projection" in gaps
+    assert "resolved native Pawn-helper/future Board observations" in gaps
+    assert "callback-time x87 control" in gaps
     assert "base ScoreList projection" in gaps
-    assert "resolved Board predicates and ScorePositioning values" in gaps
+    assert "global ScorePositioning projections" in gaps
+    assert "resolved Board/Pawn helper observations and callback-time x87 mode" in gaps
     assert "transitive native-helper RNG" in gaps
     assert "score-side callback ancestry" not in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps

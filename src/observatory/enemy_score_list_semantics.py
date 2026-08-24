@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping, Sequence
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -48,6 +49,7 @@ SIGNED_MIN = -(1 << 31)
 SIGNED_MAX = (1 << 31) - 1
 MAX_RECORDS = 4096
 MAX_STRING_BYTES = 1 << 20
+MAX_EXACT_LUA_NUMBER = 1 << 53
 
 
 class EnemyScoreListSemanticsError(RuntimeError):
@@ -191,8 +193,23 @@ def _normalize_optional_point(value: Any, label: str) -> list[int] | None:
     return None if value is None else _normalize_point(value, label)
 
 
-def _normalize_optional_i32(value: Any, label: str) -> int | None:
-    return None if value is None else _require_i32(value, label)
+def _require_lua_number(value: Any, label: str) -> int | float:
+    if type(value) not in (int, float) or not math.isfinite(value):
+        raise EnemyScoreListSemanticsError(
+            f"{label} must be a finite Lua number"
+        )
+    if abs(value) > MAX_EXACT_LUA_NUMBER:
+        raise EnemyScoreListSemanticsError(
+            f"{label} leaves the exact Lua-number projection domain"
+        )
+    return value
+
+
+def _normalize_optional_lua_number(
+    value: Any,
+    label: str,
+) -> int | float | None:
+    return None if value is None else _require_lua_number(value, label)
 
 
 def _normalize_record(value: Any, label: str) -> dict[str, Any]:
@@ -247,7 +264,7 @@ def _normalize_record(value: Any, label: str) -> dict[str, Any]:
         "board_is_pod": _require_bool(
             value["board_is_pod"], f"{label}.board_is_pod"
         ),
-        "positioning_score": _normalize_optional_i32(
+        "positioning_score": _normalize_optional_lua_number(
             value["positioning_score"], f"{label}.positioning_score"
         ),
     }
@@ -276,11 +293,15 @@ def _normalize_records(value: Any, label: str) -> list[dict[str, Any]]:
     ]
 
 
-def _checked_add(left: int, right: int, label: str) -> int:
+def _checked_add(
+    left: int | float,
+    right: int | float,
+    label: str,
+) -> int | float:
     result = left + right
-    if not SIGNED_MIN <= result <= SIGNED_MAX:
+    if not math.isfinite(result) or abs(result) > MAX_EXACT_LUA_NUMBER:
         raise EnemyScoreListSemanticsError(
-            f"{label} leaves the native integer projection domain"
+            f"{label} leaves the exact Lua-number projection domain"
         )
     return result
 
@@ -500,7 +521,7 @@ def _record(
     building: bool = False,
     powered: bool = False,
     pod: bool = False,
-    positioning: int | None = None,
+    positioning: int | float | None = None,
 ) -> dict[str, Any]:
     return {
         "loc": list(loc),
@@ -574,6 +595,26 @@ def _replay_vectors() -> list[dict[str, Any]]:
                         move_end=(5, 5),
                         valid=False,
                         positioning=-6,
+                    ),
+                ]
+            ),
+        ),
+        (
+            "fractional_movement_sum_preserves_lua_number",
+            _score_input(
+                [
+                    _record(
+                        movement=True,
+                        move_start=(4, 5),
+                        move_end=(3, 5),
+                        positioning=-10,
+                    ),
+                    _record(
+                        loc=(5, 5),
+                        movement=True,
+                        move_start=(4, 5),
+                        move_end=(5, 5),
+                        positioning=4.5,
                     ),
                 ]
             ),
@@ -664,8 +705,9 @@ def _findings() -> list[dict[str, str]]:
             "id": "movement_position_below_minus_five_overrides_score",
             "classification": "fact",
             "claim": (
-                "Movement ScorePositioning values accumulate separately; a final "
-                "total below -5 replaces the ordinary list score."
+                "Movement ScorePositioning Lua numbers, including half-points, "
+                "accumulate separately; a final total below -5 replaces the "
+                "ordinary list score."
             ),
         },
         {
@@ -755,8 +797,9 @@ def _expected_shape() -> dict[str, Any]:
             "base_vector_choice": (
                 "empty q_effect uses instant; nonempty q_effect uses queued"
             ),
-            "integer_scope": (
-                "inputs and accumulated outputs must remain signed 32-bit"
+            "numeric_scope": (
+                "damage, teams, and score weights are signed 32-bit; positioning "
+                "values and accumulators are exact finite Lua numbers within 2^53"
             ),
             "score_positioning_is_projected_input": True,
             "future_board_state_is_not_fabricated": True,

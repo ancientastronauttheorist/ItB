@@ -883,9 +883,17 @@ bridge-read boundary.
   shipped `isEnemy`, `Skill:ScoreList`, and base `Skill:GetTargetScore` bodies
   now have strict projected replays. They preserve branch order, the dead/temp
   hostile score reset, untargeted-Frozen-friendly scoring, instant Time Pod
-  veto, movement threshold, and queued-versus-instant selection. Resolved
+  veto, fractional movement accumulation and threshold, and queued-versus-
+  instant selection. Resolved
   Board/Pawn predicates and `ScorePositioning` remain explicit inputs; custom
   score callbacks and a future tournament are not inferred.
+- **Completed offline through global `ScorePositioning`:** every shipped hazard,
+  custom-score, stock-edge, team-selection, adjacency, distance, and ranged
+  branch is replayable from projected observations. Direct Lua consumers keep
+  melee half-points. The separate native named-integer route reaches a pinned
+  x87 `FISTP`; all four rounding modes are replayable, but the callback-time
+  thread control word plus native Pawn helper/Board results remain runtime
+  inputs.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot

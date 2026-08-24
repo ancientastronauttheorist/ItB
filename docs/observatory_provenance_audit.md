@@ -108,9 +108,15 @@ call. A second source-keyed artifact pins the exact inherited base
 `GetTargetScore`, `isEnemy`, and `ScoreList` bodies and replays their arithmetic
 from explicit projected predicates. It preserves the dead/temp hostile score
 reset, untargeted-Frozen-friendly special case, instant Time Pod veto,
-movement-position threshold, and queued-versus-instant choice without claiming
-that `ScorePositioning`, future Board state, or custom score overrides are
-known. Natural callback pairs exercise the four
+fractional movement-position accumulation/threshold, and queued-versus-instant
+choice without claiming that `ScorePositioning`, future Board state, or custom
+score overrides are known. Its successor closes the global `ScorePositioning`
+body from projected observations, including the inactive commented ACID check,
+hard-coded stock edges, asymmetric team choice, ordered adjacency checks, and
+fractional melee distance result. The native integer route is joined through
+the exact installed `lua_tointeger` x87 `FISTP`, with the active thread rounding
+mode kept as runtime state rather than silently assumed. Natural callback pairs
+exercise the four
 Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -124,7 +130,8 @@ Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
 state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score predicates/`ScorePositioning`, plus transitive native-bound helper RNG
+score Board/Pawn predicates and Pawn helper values, callback-time x87 control,
+plus transitive native-bound helper RNG
 before the now-proven native postprocessing boundaries remain unjoined.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers

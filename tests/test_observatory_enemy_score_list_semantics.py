@@ -8,6 +8,7 @@ import pytest
 
 from src.observatory.enemy_score_list_semantics import (
     ANALYSIS_KIND,
+    MAX_EXACT_LUA_NUMBER,
     SIGNED_MAX,
     EnemyScoreListSemanticsError,
     build_enemy_score_list_semantics,
@@ -107,8 +108,8 @@ def test_committed_map_binds_complete_base_projection_without_overclaim():
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "101d07ba323fe7948ae04e27e27eaf219"
-            "f5a2091d2ddb1cfe060184c3efe1342"
+            "4871a8f128211e258f6737b2c221e5f7"
+            "3789a021a95ecd995e5d5a3a86566d60"
         ),
         "score_list_projection_complete": True,
         "base_get_target_score_projection_complete": True,
@@ -120,7 +121,7 @@ def test_committed_map_binds_complete_base_projection_without_overclaim():
     assert value["summary"] == {
         "dependency_count": 3,
         "source_region_count": 3,
-        "replay_vector_count": 6,
+        "replay_vector_count": 7,
         "finding_count": 6,
         "unresolved_count": 3,
         "score_list_projection_complete": True,
@@ -184,6 +185,31 @@ def test_movement_position_threshold_is_strictly_below_minus_five(
     assert result["trace"][0]["branch"] == "movement_position"
     assert result["position_override"] is override
     assert result["result"] == expected
+
+
+def test_fractional_lua_position_scores_survive_and_can_cross_threshold():
+    result = _score(
+        [
+            _record(
+                is_movement=True,
+                move_start=[4, 5],
+                move_end=[3, 5],
+                positioning_score=-10,
+            ),
+            _record(
+                loc=[5, 5],
+                is_movement=True,
+                move_start=[4, 5],
+                move_end=[5, 5],
+                positioning_score=4.5,
+            ),
+        ],
+        score_nothing=0,
+    )
+
+    assert result["position_score"] == -5.5
+    assert result["position_override"] is True
+    assert result["result"] == -5.5
 
 
 def test_invalid_movement_not_from_pawn_is_skipped_without_position_call():
@@ -380,10 +406,23 @@ def test_replay_rejects_schema_type_movement_and_accumulation_drift():
     with pytest.raises(EnemyScoreListSemanticsError, match="signed 32-bit"):
         _score([], score_enemy=SIGNED_MAX + 1)
 
-    with pytest.raises(EnemyScoreListSemanticsError, match="leaves the native"):
+    with pytest.raises(EnemyScoreListSemanticsError, match="exact Lua-number"):
         _score(
-            [_record(target_team=1), _record(loc=[3, 3], target_team=1)],
-            score_enemy=SIGNED_MAX,
+            [
+                _record(
+                    is_movement=True,
+                    move_start=[4, 5],
+                    move_end=[3, 5],
+                    positioning_score=MAX_EXACT_LUA_NUMBER,
+                ),
+                _record(
+                    loc=[5, 5],
+                    is_movement=True,
+                    move_start=[4, 5],
+                    move_end=[5, 5],
+                    positioning_score=MAX_EXACT_LUA_NUMBER,
+                ),
+            ],
         )
 
 

@@ -1,0 +1,1581 @@
+{
+  "analysis_kind": "lua_enemy_score_positioning_semantics",
+  "build_identity": {
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua5_1_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "closure": {
+    "complete_enemy_phase_forecast": false,
+    "lua_fractional_result_complete": true,
+    "native_integer_conversion_parametric_complete": true,
+    "native_pawn_score_helpers_complete": false,
+    "prospective_board_observations_complete": false,
+    "score_positioning_projection_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "x87_rounding_mode_observed": false
+  },
+  "contracts": {
+    "direct_lua_consumer_preserves_fraction": true,
+    "future_board_state_is_not_fabricated": true,
+    "inactive_source_branch": "commented Board:IsAcid penalty",
+    "melee_direction_slots": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "melee_distance_expression": "max(0,(10-min(distance_to_selected_enemy_pawn,distance_to_building))/2)",
+    "melee_per_direction_call_order": [
+      "Board:IsPawnTeam",
+      "Board:IsBuilding"
+    ],
+    "native_conversion_instruction": "x87 FISTP dword",
+    "native_integer_api": "lua_tointeger",
+    "native_integer_rounding_mode_is_runtime_input": true,
+    "native_integer_rounding_modes": [
+      "nearest_even",
+      "down",
+      "up",
+      "toward_zero"
+    ],
+    "source_branch_order": [
+      "pod",
+      "grounded_hole",
+      "targeted_danger_score",
+      "smoke",
+      "new_fire",
+      "spawning",
+      "dangerous",
+      "dangerous_item_avoided",
+      "grounded_water",
+      "custom_nonzero",
+      "stock_corner",
+      "stock_edge",
+      "melee_or_ranged_tail"
+    ],
+    "stock_edge_coordinates": [
+      0,
+      7
+    ]
+  },
+  "dependencies": [
+    {
+      "canonical_sha256": "4871a8f128211e258f6737b2c221e5f73789a021a95ecd995e5d5a3a86566d60",
+      "file_sha256": "a990c1ae3648618651c65096339a8a5f24d44407c422324c8cf43ac30dab11a6",
+      "id": "enemy_score_list_semantics",
+      "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_list_semantics.json",
+      "role": "Pins the exact Lua-to-Lua consumer, including fractional movement accumulation and the strict below-minus-five cutoff."
+    },
+    {
+      "canonical_sha256": "c0eeed00ebb646371d3ca33cac9d1c52224bb67025d1b6e6fa41a74115a7a457",
+      "file_sha256": "c94f87833efafec1217eefd0b5aeef61dd79e46fb3c1255c558259af64596ad0",
+      "id": "enemy_candidate_score_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json",
+      "role": "Pins the native post-ScorePositioning clamp and integer input."
+    },
+    {
+      "canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+      "file_sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3",
+      "id": "reviewed_pe_boundaries",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json",
+      "role": "Pins the ScorePositioning wrapper, named integer invoker, and their direct call edge."
+    },
+    {
+      "canonical_sha256": "0368d923cef97c4bb500c287a355ae43b24c0d59bf81529731f2956a8fd7717f",
+      "file_sha256": "dfd1ab705beee79f06a609865930f918b937745c22393f516c5f84720a69b230",
+      "id": "piston_setup_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json",
+      "role": "Pins DIR_START=0 and DIR_END=3 for the exact build."
+    },
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "id": "accepted_local_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins exact source, executable, and Lua DLL bytes."
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Pod, grounded Hole, targeted danger, Smoke, new Fire, spawning, generic danger, avoided dangerous item, and grounded Water short-circuit in that order.",
+      "classification": "fact",
+      "id": "hazard_short_circuit_order_is_exact"
+    },
+    {
+      "claim": "The only Board:IsAcid positioning line is commented out, so the shipped function deliberately applies no ACID penalty.",
+      "classification": "fact",
+      "id": "acid_penalty_is_inactive"
+    },
+    {
+      "claim": "A nonzero Pawn custom score returns before the hard-coded x/y zero-or-seven corner and edge policy.",
+      "classification": "fact",
+      "id": "custom_score_precedes_stock_edges"
+    },
+    {
+      "claim": "TEAM_PLAYER selects TEAM_ENEMY; every other Pawn team selects TEAM_PLAYER, matching the source's explicit black/white caveat.",
+      "classification": "fact",
+      "id": "enemy_team_selection_is_binary"
+    },
+    {
+      "claim": "For each of four DIR_START-through-DIR_END slots, melee scoring checks selected-team Pawn first and Building second, returning five at the first match.",
+      "classification": "fact",
+      "id": "melee_adjacency_order_is_exact"
+    },
+    {
+      "claim": "Without adjacency, melee scoring returns max(0,(10-min(Pawn distance,Building distance))/2) as a Lua number, so odd differences remain half-points in direct Lua callers.",
+      "classification": "fact",
+      "id": "melee_distance_preserves_half_points"
+    },
+    {
+      "claim": "A ranged Pawn that reaches the interior tail returns five.",
+      "classification": "fact",
+      "id": "ranged_interior_returns_five"
+    },
+    {
+      "claim": "The native named integer route reaches lua_tointeger, whose exact pinned DLL body converts the double with x87 FISTP; the four-mode replay therefore requires the active thread rounding mode.",
+      "classification": "fact",
+      "id": "native_integer_rounding_depends_on_x87_control"
+    }
+  ],
+  "native_regions": [
+    {
+      "id": "score_positioning_wrapper",
+      "image": "Breach.exe",
+      "meaning": "Calls the named integer invoker for ScorePositioning after its separate native eligibility checks.",
+      "sha256": "9794db437203d18af0ce5245bc178f537e20f715b192c671cc7ecde7d279a42a",
+      "size": 124,
+      "start_rva": "0x000f7870"
+    },
+    {
+      "id": "named_integer_invoker",
+      "image": "Breach.exe",
+      "meaning": "Looks up the actual callback and extracts a Lua integer.",
+      "sha256": "59607f3c4741577e11c570b31aeb3dfaadec00d85ec8a69e024a7f06760e584e",
+      "size": 259,
+      "start_rva": "0x000f8770"
+    },
+    {
+      "conversion_instruction_hex": "dd45f0db5de4",
+      "conversion_instructions": [
+        "fld qword ptr [ebp-0x10]",
+        "fistp dword ptr [ebp-0x1c]"
+      ],
+      "id": "lua_tointeger",
+      "image": "lua5.1.dll",
+      "meaning": "Loads the Lua double and converts it with x87 FISTP under the thread's active rounding-control mode.",
+      "sha256": "2d935d28eefdd86c2035f20567820a17c7bc0b9941b5343bf3475fcf7c30b2ab",
+      "size": 125,
+      "start_rva": "0x000016d0"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -100,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -100,
+          "value": -100
+        },
+        "native_integer_by_x87_mode": {
+          "down": -100,
+          "nearest_even": -100,
+          "toward_zero": -100,
+          "up": -100
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "pod",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": true
+          }
+        ]
+      },
+      "id": "pod_precedes_everything",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": true,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -10,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -10,
+          "value": -10
+        },
+        "native_integer_by_x87_mode": {
+          "down": -10,
+          "nearest_even": -10,
+          "toward_zero": -10,
+          "up": -10
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "grounded_hole",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": true
+          }
+        ]
+      },
+      "id": "grounded_hole",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": true,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -7,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -7,
+          "value": -7
+        },
+        "native_integer_by_x87_mode": {
+          "down": -7,
+          "nearest_even": -7,
+          "toward_zero": -7,
+          "up": -7
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "targeted_danger_score",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": true
+          },
+          {
+            "call": "Pawn:GetDangerScore",
+            "result": -7
+          }
+        ]
+      },
+      "id": "targeted_uses_danger_score",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": true,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": -7,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -2,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -2,
+          "value": -2
+        },
+        "native_integer_by_x87_mode": {
+          "down": -2,
+          "nearest_even": -2,
+          "toward_zero": -2,
+          "up": -2
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "smoke",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": true
+          }
+        ]
+      },
+      "id": "smoke_precedes_fire",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": true,
+        "board_is_pod": false,
+        "board_is_smoke": true,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -10,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -10,
+          "value": -10
+        },
+        "native_integer_by_x87_mode": {
+          "down": -10,
+          "nearest_even": -10,
+          "toward_zero": -10,
+          "up": -10
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "new_fire",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": true
+          }
+        ]
+      },
+      "id": "new_fire",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": true,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -10,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -10,
+          "value": -10
+        },
+        "native_integer_by_x87_mode": {
+          "down": -10,
+          "nearest_even": -10,
+          "toward_zero": -10,
+          "up": -10
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "dangerous_item_avoided",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": true
+          }
+        ]
+      },
+      "id": "dangerous_item_requires_avoidance",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": true,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": true,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -5,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -5,
+          "value": -5
+        },
+        "native_integer_by_x87_mode": {
+          "down": -5,
+          "nearest_even": -5,
+          "toward_zero": -5,
+          "up": -5
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "grounded_water",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": true
+          }
+        ]
+      },
+      "id": "grounded_water_is_minus_five",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": null,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": true
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 8,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": 8,
+          "value": 8
+        },
+        "native_integer_by_x87_mode": {
+          "down": 8,
+          "nearest_even": 8,
+          "toward_zero": 8,
+          "up": 8
+        },
+        "point": [
+          0,
+          0
+        ],
+        "schema_version": 1,
+        "selected_branch": "custom_nonzero",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 8
+          }
+        ]
+      },
+      "id": "custom_precedes_edge",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 8,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          0,
+          0
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": -2,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": -2,
+          "value": -2
+        },
+        "native_integer_by_x87_mode": {
+          "down": -2,
+          "nearest_even": -2,
+          "toward_zero": -2,
+          "up": -2
+        },
+        "point": [
+          0,
+          7
+        ],
+        "schema_version": 1,
+        "selected_branch": "stock_corner",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": true,
+            "edge_y": true,
+            "operation": "hardcoded_edge_test"
+          }
+        ]
+      },
+      "id": "stock_corner",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          0,
+          7
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 0,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": 0,
+          "value": 0
+        },
+        "native_integer_by_x87_mode": {
+          "down": 0,
+          "nearest_even": 0,
+          "toward_zero": 0,
+          "up": 0
+        },
+        "point": [
+          0,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "stock_edge",
+        "selected_enemy_team": null,
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": true,
+            "edge_y": false,
+            "operation": "hardcoded_edge_test"
+          }
+        ]
+      },
+      "id": "stock_edge",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": null,
+        "pawn_team_is_player": null,
+        "point": [
+          0,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 5,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": 5,
+          "value": 5
+        },
+        "native_integer_by_x87_mode": {
+          "down": 5,
+          "nearest_even": 5,
+          "toward_zero": 5,
+          "up": 5
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "ranged_interior",
+        "selected_enemy_team": "TEAM_PLAYER",
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": false,
+            "edge_y": false,
+            "operation": "hardcoded_edge_test"
+          },
+          {
+            "call": "Pawn:GetTeam",
+            "pawn_team_is_player": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Pawn:IsRanged",
+            "result": true
+          }
+        ]
+      },
+      "id": "ranged_interior",
+      "input": {
+        "adjacent_building": null,
+        "adjacent_selected_enemy_pawn": null,
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": true,
+        "pawn_team_is_player": false,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 5,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": 5,
+          "value": 5
+        },
+        "native_integer_by_x87_mode": {
+          "down": 5,
+          "nearest_even": 5,
+          "toward_zero": 5,
+          "up": 5
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "melee_adjacent_enemy_pawn",
+        "selected_enemy_team": "TEAM_PLAYER",
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": false,
+            "edge_y": false,
+            "operation": "hardcoded_edge_test"
+          },
+          {
+            "call": "Pawn:GetTeam",
+            "pawn_team_is_player": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Pawn:IsRanged",
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 0,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 0,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 1,
+            "result": true,
+            "selected_enemy_team": "TEAM_PLAYER"
+          }
+        ]
+      },
+      "id": "nonplayer_melee_adjacent_pawn_selects_player_team",
+      "input": {
+        "adjacent_building": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "adjacent_selected_enemy_pawn": [
+          false,
+          true,
+          false,
+          false
+        ],
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": false,
+        "pawn_team_is_player": false,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 5,
+        "lua_result_exact": {
+          "denominator": 1,
+          "numerator": 5,
+          "value": 5
+        },
+        "native_integer_by_x87_mode": {
+          "down": 5,
+          "nearest_even": 5,
+          "toward_zero": 5,
+          "up": 5
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "melee_adjacent_building",
+        "selected_enemy_team": "TEAM_PLAYER",
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": false,
+            "edge_y": false,
+            "operation": "hardcoded_edge_test"
+          },
+          {
+            "call": "Pawn:GetTeam",
+            "pawn_team_is_player": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Pawn:IsRanged",
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 0,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 0,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 1,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 1,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 2,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 2,
+            "result": true
+          }
+        ]
+      },
+      "id": "melee_adjacent_building",
+      "input": {
+        "adjacent_building": [
+          false,
+          false,
+          true,
+          false
+        ],
+        "adjacent_selected_enemy_pawn": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": null,
+        "distance_to_selected_enemy_pawn": null,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": false,
+        "pawn_team_is_player": false,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    },
+    {
+      "expected": {
+        "kind": "lua_enemy_score_positioning_projection_replay",
+        "lua_result": 3.5,
+        "lua_result_exact": {
+          "denominator": 2,
+          "numerator": 7,
+          "value": 3.5
+        },
+        "native_integer_by_x87_mode": {
+          "down": 3,
+          "nearest_even": 4,
+          "toward_zero": 3,
+          "up": 4
+        },
+        "point": [
+          3,
+          3
+        ],
+        "schema_version": 1,
+        "selected_branch": "melee_distance",
+        "selected_enemy_team": "TEAM_PLAYER",
+        "trace": [
+          {
+            "call": "Board:IsPod",
+            "result": false
+          },
+          {
+            "call": "Board:GetTerrain==TERRAIN_HOLE",
+            "result": false
+          },
+          {
+            "call": "Board:IsTargeted",
+            "result": false
+          },
+          {
+            "call": "Board:IsSmoke",
+            "result": false
+          },
+          {
+            "call": "Board:IsFire AND NOT Pawn:IsFire",
+            "result": false
+          },
+          {
+            "call": "Board:IsSpawning",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerous",
+            "result": false
+          },
+          {
+            "call": "Board:IsDangerousItem AND Pawn:IsAvoidingMines",
+            "result": false
+          },
+          {
+            "call": "terrain==TERRAIN_WATER AND NOT Pawn:IsFlying",
+            "result": false
+          },
+          {
+            "call": "Pawn:GetCustomPositionScore",
+            "result": 0
+          },
+          {
+            "edge_x": false,
+            "edge_y": false,
+            "operation": "hardcoded_edge_test"
+          },
+          {
+            "call": "Pawn:GetTeam",
+            "pawn_team_is_player": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Pawn:IsRanged",
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 0,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 0,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 1,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 1,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 2,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 2,
+            "result": false
+          },
+          {
+            "call": "Board:IsPawnTeam",
+            "direction_offset": 3,
+            "result": false,
+            "selected_enemy_team": "TEAM_PLAYER"
+          },
+          {
+            "call": "Board:IsBuilding",
+            "direction_offset": 3,
+            "result": false
+          },
+          {
+            "call": "Board:GetDistanceToPawn",
+            "result": 3
+          },
+          {
+            "call": "Board:GetDistanceToBuilding",
+            "result": 8
+          },
+          {
+            "closest": 3,
+            "denominator": 2,
+            "numerator": 7,
+            "operation": "math.max(0,(10-min(distance_pawn,distance_building))/2)"
+          }
+        ]
+      },
+      "id": "melee_odd_distance_returns_half_point",
+      "input": {
+        "adjacent_building": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "adjacent_selected_enemy_pawn": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "board_is_dangerous": false,
+        "board_is_dangerous_item": false,
+        "board_is_fire": false,
+        "board_is_pod": false,
+        "board_is_smoke": false,
+        "board_is_spawning": false,
+        "board_is_targeted": false,
+        "distance_to_building": 8,
+        "distance_to_selected_enemy_pawn": 3,
+        "pawn_custom_position_score": 0,
+        "pawn_danger_score": null,
+        "pawn_is_avoiding_mines": false,
+        "pawn_is_fire": false,
+        "pawn_is_flying": false,
+        "pawn_is_ranged": false,
+        "pawn_team_is_player": false,
+        "point": [
+          3,
+          3
+        ],
+        "terrain_is_hole": false,
+        "terrain_is_water": false
+      }
+    }
+  ],
+  "schema_version": 1,
+  "source_regions": [
+    {
+      "body_sha256": "320210ee36aaf90a77e661e33e5c162bd9734066479f5b4052ec23276f9dfff5",
+      "body_size": 2075,
+      "id": "score_positioning",
+      "line": 446,
+      "source_path": "scripts/global.lua",
+      "symbol": "ScorePositioning"
+    }
+  ],
+  "summary": {
+    "complete_enemy_phase_forecast": false,
+    "dependency_count": 5,
+    "finding_count": 8,
+    "native_integer_conversion_parametric_complete": true,
+    "native_region_count": 3,
+    "replay_vector_count": 14,
+    "score_positioning_projection_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "source_region_count": 1,
+    "unresolved_count": 4,
+    "x87_rounding_mode_observed": false
+  },
+  "unresolved": [
+    {
+      "id": "x87_rounding_mode_at_callback",
+      "question": "Which x87 rounding-control mode is active at each native callback?",
+      "static_status": "The call-local wrapper and lua_tointeger bodies are exact, but the thread control word is runtime state rather than an image constant."
+    },
+    {
+      "id": "native_pawn_score_helpers",
+      "question": "How do GetDangerScore and GetCustomPositionScore compute their values?",
+      "static_status": "Their source call sites are exact; returned integers remain explicit projected inputs."
+    },
+    {
+      "id": "prospective_board_observations",
+      "question": "Can every candidate Board predicate and distance be known prospectively?",
+      "static_status": "The replay consumes an exact observation packet, but ordinary bridge state does not serialize a future native candidate tournament."
+    },
+    {
+      "id": "complete_enemy_phase_forecast",
+      "question": "Can this local replay replace the authoritative settled queue?",
+      "static_status": "No; target/effect construction, custom score callbacks, movement candidates, shared RNG, and complete records remain external."
+    }
+  ]
+}

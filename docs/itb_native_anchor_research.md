@@ -98,6 +98,10 @@ The durable artifacts are:
   for the exact shipped base `GetTargetScore`, `isEnemy`, and `ScoreList`
   bodies, strict branch-order replay, instant/queued selection, and explicit
   projected Board/Pawn and `ScorePositioning` inputs;
+- `data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_positioning_semantics.json`
+  for every shipped global `ScorePositioning` branch, exact half-point melee
+  arithmetic, the native named-integer join, and conversion replay under an
+  explicit callback-time x87 rounding mode;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -365,7 +369,8 @@ Frozen-friendly `ScoreEnemy` case, powered-building scoring, the instant-only
 Time Pod veto, and the final positioning override strictly below `-5`.
 Notably, a dead or temporary hostile Pawn assigns `score = ScoreNothing`; it
 can erase an earlier positive total instead of merely contributing a neutral
-term.
+term. This Lua-to-Lua route preserves fractional `ScorePositioning` values,
+including the melee-distance branch's half-points, before applying that cutoff.
 
 The joined base `Skill:GetTargetScore` replay scores `q_effect` before
 `effect`, converts an instant result strictly below `-20` to `-100`, then uses
@@ -374,6 +379,25 @@ Board/Pawn predicate observations and an explicit `ScorePositioning` result at
 the exact call sites. `ScorePositioning` itself, prospective Board state, and
 the 19 custom score callbacks remain separate continuations, so this is not a
 future enemy-phase forecast and does not replace the settled queue.
+
+The `ScorePositioning` successor closes that remaining global source body from
+projected observations. Its exact short-circuit order is Pod, grounded Hole,
+targeted danger score, Smoke, new Fire, spawning, generic danger, avoided
+dangerous item, grounded Water, custom Pawn score, stock corner/edge, then the
+melee/ranged tail. The ACID check is inactive commented source. Custom score
+precedes the hard-coded `0`/`7` edges, and the binary team expression selects
+`TEAM_ENEMY` only for a player Pawn and `TEAM_PLAYER` for every other team.
+
+Melee scoring checks the four exact direction slots in order, testing a Pawn
+of the selected team before a Building, and otherwise returns the half-point-
+preserving Lua expression based on the smaller Pawn/Building distance. The
+direct Lua `ScoreList` route retains that fraction. The separate native
+candidate route enters the pinned named integer invoker and installed
+`lua5.1.dll` `lua_tointeger`; its exact body uses x87 `FISTP`. Conversion is
+therefore replayable for each of the four x87 rounding modes, while the active
+thread control word remains runtime evidence. Native `GetDangerScore`/
+`GetCustomPositionScore` values and prospective Board predicates/distances also
+remain explicit inputs, so the future tournament is still not fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
