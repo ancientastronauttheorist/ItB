@@ -275,6 +275,60 @@ The positioning payload contains exactly `raw_score`, `injured`, `moved`,
 `weapon_index`, `weapon_count`, nullable `callback_score`, `target`,
 `target_history`, and `priority_target`.
 
+## Native enemy target-area gate
+
+`native/windows_build_13725832_31fe35265598_enemy_target_area_boundary.json`
+continues immediately before the Lua `GetTargetArea` callback. It binds 26
+exact code regions, 18 instruction windows, 13 direct calls, three complete
+raw-call inventories, 16 string/data anchors, five Lua method bindings, and 17
+adversarial replay vectors. Its raw SHA-256 is
+`5ccb768da7e11df3e07dc5fca7fac55398bec51dde0c3f3d5f4b0df54d3ec08b`;
+its canonical document SHA-256 is
+`80b8f425daacfc82e5a320e9922bcd60d7c3ff676e400ea7e21d72e230d5f009`.
+
+For ordinary mode zero, the exact gate is `IsActive`, not disabled by Smoke,
+not a grounded nonflying Pawn in Water, `iBonusShift <= 0`, and either a usable
+vector Skill or `IsMech`. Debugai mode one bypasses an ordinary failure. Smoke
+requires an attached Board smoke tile and `not IsBusy`, then is suppressed by
+either `IgnoreSmoke` or `Disable_Immunity`. Water is registered as terrain
+value 3 and blocks only when `not IsBusy` and `not IsFlying`.
+
+The usable-skill scan excludes exact IDs `Move` and `Move_Power`; every other
+Skill is usable when `Limited == 0` or remaining uses at `+0x158` are positive.
+Literal weapon index 50 is now named exactly: the resolver checks it before
+vector bounds and returns a separately owned `Skill_Repair` shared pointer at
+SkillManager `+0x68`, constructed from the shipped Lua symbol of the same name.
+It is not vector slot 51. The candidate loop still rewrites selected index 50
+to zero when the actual vector count is at most 50.
+
+The exact 152-file shipped `.lua` census finds 206 visually matching one-line
+`SkillList={...}` forms, but eight are inside block comments. The active result
+is 198 assignments with arities 0/1/2 distributed 26/161/11 and maximum active
+literal arity two. That source maximum supplies no stock literal route to a
+vector count above 50, but it is deliberately not promoted to a universal
+runtime bound across native equipment, save overlays, or mods.
+
+Verify the immutable artifact and replay either the usable scan or the whole
+pre-callback gate with:
+
+```powershell
+python scripts/itb_observatory_enemy_target_area.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_boundary.json
+
+python scripts/itb_observatory_enemy_target_area.py replay-usable `
+  --payload usable-skills.json
+
+python scripts/itb_observatory_enemy_target_area.py replay-gate `
+  --payload target-area-gate.json
+```
+
+The replay stops at whether native code invokes Lua. The ordered target points
+returned by each concrete `GetTargetArea`, the later callback scores/effects,
+and prospective enemy-phase state remain explicit runtime inputs. Rust still
+uses the settled live queue, so simulator v408 remains current.
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

@@ -1,0 +1,1579 @@
+{
+  "analysis_kind": "native_enemy_target_area_boundary_map",
+  "call_inventories": [
+    {
+      "complete_for_exact_executable": true,
+      "evidence_class": "fact",
+      "id": "repair_factory_callers",
+      "raw_rel32_call_sites": [
+        "0x00226ff8"
+      ],
+      "target_rva": "0x0022a240"
+    },
+    {
+      "complete_for_exact_executable": true,
+      "evidence_class": "fact",
+      "id": "target_area_callers",
+      "raw_rel32_call_sites": [
+        "0x000f7a14",
+        "0x00183164",
+        "0x00193aff"
+      ],
+      "target_rva": "0x00229230"
+    },
+    {
+      "complete_for_exact_executable": true,
+      "evidence_class": "fact",
+      "id": "usable_skill_scan_callers",
+      "raw_rel32_call_sites": [
+        "0x000f79c3",
+        "0x0018654f",
+        "0x00186a4f",
+        "0x0018f10b",
+        "0x00234e6d"
+      ],
+      "target_rva": "0x00229020"
+    }
+  ],
+  "contracts": {
+    "candidate_route": {
+      "debugai_mode": 1,
+      "mode_one_bypasses_ordinary_gate_failure": true,
+      "normal_mode": 0,
+      "ordinary_gate": "IsActive AND NOT smoke_disabled AND NOT grounded_nonflying_in_water AND iBonusShift <= 0 AND (has_usable_skill OR IsMech)"
+    },
+    "field_bindings": {
+      "bonus_shift": {
+        "archive_name": "iBonusShift",
+        "pawn_offset": "+0xa64",
+        "positive_value_blocks_ordinary_gate": true,
+        "state_names": {
+          "1": "shifty",
+          "other": "postmove"
+        }
+      },
+      "is_mech": {
+        "native_method": "IsMech",
+        "pawn_offset": "+0x9e4"
+      },
+      "limited": {
+        "lua_name": "Limited",
+        "skill_offset": "+0x160"
+      },
+      "remaining_uses": {
+        "skill_offset": "+0x158"
+      },
+      "repair_shared_pointer": {
+        "resolver_index": 50,
+        "skill_id": "Skill_Repair",
+        "skill_manager_control_offset": "+0x6c",
+        "skill_manager_object_offset": "+0x68",
+        "stored_outside_weapon_vector": true
+      }
+    },
+    "smoke_predicate": {
+      "attack_disabled": "smoke_present AND NOT IgnoreSmoke AND NOT Disable_Immunity",
+      "smoke_present": "board_attached AND smoke_on_tile AND NOT IsBusy"
+    },
+    "solver_conformance": {
+      "authoritative_current_enemy_action": "settled live bridge queue",
+      "future_target_area_forecast_added": false,
+      "rust_change_required": false,
+      "simulator_version": 408
+    },
+    "source_static_bound": {
+      "active_literal_skill_list_assignment_count": 198,
+      "block_commented_literal_match_count": 8,
+      "exact_core_lua_file_count": 152,
+      "maximum_literal_skill_list_arity": 2,
+      "raw_non_line_comment_literal_match_count": 206,
+      "runtime_vector_count_universally_bounded": false
+    },
+    "target_area_dispatch": {
+      "callback_result_replayed": false,
+      "lua_callback": "GetTargetArea",
+      "resolver_order": [
+        "literal_50_repair",
+        "in_range_vector",
+        "null"
+      ],
+      "selected_weapon_normalization": "if selected != -1 and selected >= vector_count, write zero"
+    },
+    "usable_skill_scan": {
+      "excluded_exact_ids": [
+        "Move",
+        "Move_Power"
+      ],
+      "scan_order": "weapon vector order",
+      "short_circuits_scan": false,
+      "usable": "Limited == 0 OR remaining_uses > 0"
+    },
+    "water_predicate": {
+      "grounded_nonflying_in_water": "board_attached AND IsTerrain(tile, TERRAIN_WATER) AND NOT IsBusy AND NOT IsFlying",
+      "terrain_constant_name": "TERRAIN_WATER",
+      "terrain_constant_value": 3
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "candidate_gate_and_dispatch",
+      "instruction_hex": "8b77288bcee8126f140084c074348bcee8975f140084c075298bcee86c60140084c0751e83be640a0000007f158bcee85816130084c075108a86e409000084c07506807d080074618b4f288b914809000083faff74178b41082b4104c1f8033bd07c0ac7814809000000000000ff75108d45d0ff750cffb1480900008b4f2850e817181300",
+      "meaning": "Require IsActive, no smoke disable, no grounded Water, iBonusShift <= 0, and a usable skill or IsMech; mode one bypasses failure, then selected-weapon normalization precedes target-area dispatch.",
+      "region_id": "candidate_loop",
+      "size": 133,
+      "start_rva": "0x000f7994"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "usable_skill_predicate",
+      "instruction_hex": "8b34fb837e141072048b0eeb028bce8b5e10b8040000003bd8baa0a782000f42c350e83731e4ff83c40485c0750783fb0472027629ba888083008bcee81d37e5ff84c0751983be6001000000740983be58010000007e07b201",
+      "meaning": "Exclude exact IDs Move and Move_Power, then accept Limited==0 or remaining uses at +0x158 greater than zero.",
+      "region_id": "usable_skill_scan",
+      "size": 89,
+      "start_rva": "0x00229052"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "target_area_resolver_gate",
+      "instruction_hex": "8b550cc745f00000000085d2780d8b41082b4104c1f8033bd07c0583fa327566528d45e850e82f090000c745fc00000000ff75148b08ff7510ff7508e8280a0400",
+      "meaning": "Invoke the resolver/callback only for a vector index or literal 50.",
+      "region_id": "target_area",
+      "size": 65,
+      "start_rva": "0x00229257"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "resolve_repair_before_vector",
+      "instruction_hex": "8b550c5683fa3275148d41688b4d0850e8785fe4ff8b45085e5dc2080085d278248b41082b4104c1f8033bd07d178b41048b4d088d04d050e8505fe4ff8b45085e5dc208008b45085ec70000000000c74004000000005dc20800",
+      "meaning": "Resolve literal 50 from SkillManager +0x68 before testing vector bounds.",
+      "region_id": "resolve_skill",
+      "size": 90,
+      "start_rva": "0x00229bb3"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "manager_owns_repair",
+      "instruction_hex": "c7466800000000c7466c0000000083ec08c645fc028d5508c74508000000008d4de4e84332000083c4088b108b4804c70000000000c74004000000008b7e6c894e6c895668",
+      "meaning": "Construct and store the separate repair shared pointer at +0x68/+0x6c.",
+      "region_id": "skill_manager_ctor",
+      "size": 69,
+      "start_rva": "0x00226fd6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "repair_factory_skill_id",
+      "instruction_hex": "83ec188bcc68f85d8300e848dbddff8b45f08bcb6a01ff30e8dacd0300",
+      "meaning": "Pass native string Skill_Repair into the generic Skill constructor.",
+      "region_id": "repair_factory",
+      "size": 29,
+      "start_rva": "0x0022a2b9"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "limited_load",
+      "instruction_hex": "6a07c741140f000000c7411000000000681c7f8300c60100e8fd0adaff8bcbe8b61ddeff8bce898660010000",
+      "meaning": "Load Lua Limited and store it at Skill +0x160.",
+      "region_id": "skill_ctor",
+      "size": 44,
+      "start_rva": "0x002674b6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "limited_consume",
+      "instruction_hex": "83bf60010000007406ff8f580100008bcfe82d0c0400",
+      "meaning": "Decrement +0x158 only when Limited at +0x160 is nonzero.",
+      "region_id": "consume_skill",
+      "size": 22,
+      "start_rva": "0x00227dad"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "limited_reset_vector",
+      "instruction_hex": "8b43048b3cf083bf6001000000743883ec188bcc6810818300e872e6ddffe85d4f03000fb6c883c4188b876001000003c180bf2902000000898758010000740740898758010000",
+      "meaning": "Rebuild each vector Skill's remaining-use value at +0x158.",
+      "region_id": "reset_skill_uses",
+      "size": 71,
+      "start_rva": "0x00229780"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "limited_reset_repair",
+      "instruction_hex": "8b736883be6001000000743683ec188bcc6810818300e820e6ddffe80b4f03000fb6c083c41803866001000080be2902000000898658010000740740898658010000",
+      "meaning": "Apply the same limited-use reset to the separate repair Skill.",
+      "region_id": "reset_skill_uses",
+      "size": 66,
+      "start_rva": "0x002297d5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "smoke_immunity_gate",
+      "instruction_hex": "e85400000084c0744183ec188bcc689c6a8300e8b1a4dcff8d8e94000000e846bae0ff84c0752383ec188bcc6824068300e893a4dcff8b068bce8b4004ffd084c07507b0015e8be55dc332c05e8be55dc3",
+      "meaning": "Smoke disables only when IgnoreSmoke and Disable_Immunity are both false.",
+      "region_id": "smoke_disabled",
+      "size": 81,
+      "start_rva": "0x0023d947"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "smoke_tile_and_busy",
+      "instruction_hex": "8bf98bb74409000085f674578b87f00800008bceffb7f00800008b9fec080000894424108b06538b4008ffd084c074138b46508d0c5b6974240cbc2b0000033488eb0383c65c80be252b00000074148bcfe8e0f2feff84c07509b0015f5e5b8be55dc3",
+      "meaning": "Require an attached Board, smoke on the current tile, and not IsBusy.",
+      "region_id": "smoke_present",
+      "size": 99,
+      "start_rva": "0x0023d9aa"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "water_busy_flying",
+      "instruction_hex": "8b8e4409000085c9743a8b410c83c10c6a03ffb6f0080000ffb6ec0800008b407cffd084c0741d8bcee888f2feff84c075128bcee82d0a000084c07507b0015e8be55dc3",
+      "meaning": "Require Board IsTerrain(...,3), not IsBusy, and not IsFlying.",
+      "region_id": "grounded_water",
+      "size": 68,
+      "start_rva": "0x0023da2a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "bonus_shift_archive",
+      "instruction_hex": "83bf640a0000007e1c83ec188bcc684c6f8300e88a74dcffffb7640a00008bcee89d83e9ff",
+      "meaning": "Archive positive Pawn +0xa64 under exact field name iBonusShift.",
+      "region_id": "pawn_archive",
+      "size": 37,
+      "start_rva": "0x0024096e"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "bonus_shift_state",
+      "instruction_hex": "558bec83e4f8518b4508568bf183ec1083f8018986640a00008bc40f1005b85d89000f1100750c83ec188bcc68b4638300eb0a83ec188bcc68fc638300e84ed5dcff6a018bcee88545ffffc6861c090000015e8be55dc20400",
+      "meaning": "Store +0xa64 and name value one shifty, otherwise postmove.",
+      "region_id": "action_state",
+      "size": 89,
+      "start_rva": "0x0023a880"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "is_mech_field_getter",
+      "instruction_hex": "8a81e4090000c3",
+      "meaning": "Return the byte at Pawn +0x9e4.",
+      "region_id": "is_mech_getter",
+      "size": 7,
+      "start_rva": "0x0023c8d0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "terrain_water_constant",
+      "instruction_hex": "68549883008d8d90f7ffff518bc8e89718ddff8bd88b4b08ff710468f0d8ffffff33ff15c0647d00ff73048b3b57ff15e4647d006a03ff33ff158c647d00",
+      "meaning": "Register TERRAIN_WATER with exact integer value three.",
+      "region_id": "terrain_water_constant_binding",
+      "size": 62,
+      "start_rva": "0x0027efa6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "terrain_thunk",
+      "instruction_hex": "8b01ff607c",
+      "meaning": "Dispatch Board IsTerrain through vtable slot +0x7c.",
+      "region_id": "terrain_vtable_thunk",
+      "size": 5,
+      "start_rva": "0x002e399d"
+    }
+  ],
+  "data_anchors": [
+    {
+      "data_hex": "4d6f766500",
+      "evidence_class": "fact",
+      "id": "move_skill_id",
+      "rva": "0x0042a7a0",
+      "size": 5,
+      "text": "Move"
+    },
+    {
+      "data_hex": "44697361626c655f496d6d756e69747900",
+      "evidence_class": "fact",
+      "id": "disable_immunity_name",
+      "rva": "0x00430624",
+      "size": 17,
+      "text": "Disable_Immunity"
+    },
+    {
+      "data_hex": "536b696c6c5f52657061697200",
+      "evidence_class": "fact",
+      "id": "repair_skill_id",
+      "rva": "0x00435df8",
+      "size": 13,
+      "text": "Skill_Repair"
+    },
+    {
+      "data_hex": "73686966747900",
+      "evidence_class": "fact",
+      "id": "shifty_state_name",
+      "rva": "0x004363b4",
+      "size": 7,
+      "text": "shifty"
+    },
+    {
+      "data_hex": "706f73746d6f766500",
+      "evidence_class": "fact",
+      "id": "postmove_state_name",
+      "rva": "0x004363fc",
+      "size": 9,
+      "text": "postmove"
+    },
+    {
+      "data_hex": "49676e6f7265536d6f6b6500",
+      "evidence_class": "fact",
+      "id": "ignore_smoke_name",
+      "rva": "0x00436a9c",
+      "size": 12,
+      "text": "IgnoreSmoke"
+    },
+    {
+      "data_hex": "69426f6e7573536869667400",
+      "evidence_class": "fact",
+      "id": "bonus_shift_name",
+      "rva": "0x00436f4c",
+      "size": 12,
+      "text": "iBonusShift"
+    },
+    {
+      "data_hex": "4c696d6974656400",
+      "evidence_class": "fact",
+      "id": "limited_name",
+      "rva": "0x00437f1c",
+      "size": 8,
+      "text": "Limited"
+    },
+    {
+      "data_hex": "4d6f76655f506f77657200",
+      "evidence_class": "fact",
+      "id": "move_power_skill_id",
+      "rva": "0x00438088",
+      "size": 11,
+      "text": "Move_Power"
+    },
+    {
+      "data_hex": "4765745461726765744172656100",
+      "evidence_class": "fact",
+      "id": "get_target_area_name",
+      "rva": "0x004380a4",
+      "size": 14,
+      "text": "GetTargetArea"
+    },
+    {
+      "data_hex": "49734275737900",
+      "evidence_class": "fact",
+      "id": "is_busy_name",
+      "rva": "0x00438578",
+      "size": 7,
+      "text": "IsBusy"
+    },
+    {
+      "data_hex": "49735465727261696e00",
+      "evidence_class": "fact",
+      "id": "is_terrain_name",
+      "rva": "0x004386cc",
+      "size": 10,
+      "text": "IsTerrain"
+    },
+    {
+      "data_hex": "49734d65636800",
+      "evidence_class": "fact",
+      "id": "is_mech_name",
+      "rva": "0x00439098",
+      "size": 7,
+      "text": "IsMech"
+    },
+    {
+      "data_hex": "497341637469766500",
+      "evidence_class": "fact",
+      "id": "is_active_name",
+      "rva": "0x00439130",
+      "size": 9,
+      "text": "IsActive"
+    },
+    {
+      "data_hex": "4973466c79696e6700",
+      "evidence_class": "fact",
+      "id": "is_flying_name",
+      "rva": "0x004391a0",
+      "size": 9,
+      "text": "IsFlying"
+    },
+    {
+      "data_hex": "5445525241494e5f574154455200",
+      "evidence_class": "fact",
+      "id": "terrain_water_name",
+      "rva": "0x00439854",
+      "size": 14,
+      "text": "TERRAIN_WATER"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "file_sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f",
+      "id": "identity_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins the executable and the exact installed scripts inventory used for the source-static SkillList census."
+    },
+    {
+      "canonical_sha256": "c0eeed00ebb646371d3ca33cac9d1c52224bb67025d1b6e6fa41a74115a7a457",
+      "file_sha256": "c94f87833efafec1217eefd0b5aeef61dd79e46fb3c1255c558259af64596ad0",
+      "id": "enemy_candidate_score",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json",
+      "role": "Pins normal/debug candidate modes and the selected-weapon normalization immediately adjacent to this gate."
+    }
+  ],
+  "direct_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7999",
+      "id": "candidate_to_is_active",
+      "instruction_hex": "e8126f1400",
+      "source_region": "candidate_loop",
+      "target_rva": "0x0023e8b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f79a4",
+      "id": "candidate_to_smoke_disabled",
+      "instruction_hex": "e8975f1400",
+      "source_region": "candidate_loop",
+      "target_rva": "0x0023d940"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f79af",
+      "id": "candidate_to_grounded_water",
+      "instruction_hex": "e86c601400",
+      "source_region": "candidate_loop",
+      "target_rva": "0x0023da20"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f79c3",
+      "id": "candidate_to_usable_scan",
+      "instruction_hex": "e858161300",
+      "source_region": "candidate_loop",
+      "target_rva": "0x00229020"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7a14",
+      "id": "candidate_to_target_area",
+      "instruction_hex": "e817181300",
+      "source_region": "candidate_loop",
+      "target_rva": "0x00229230"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0022927c",
+      "id": "target_area_to_resolver",
+      "instruction_hex": "e82f090000",
+      "source_region": "target_area",
+      "target_rva": "0x00229bb0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00229293",
+      "id": "target_area_to_lua_callback",
+      "instruction_hex": "e8280a0400",
+      "source_region": "target_area",
+      "target_rva": "0x00269cc0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00226ff8",
+      "id": "manager_ctor_to_repair_factory",
+      "instruction_hex": "e843320000",
+      "source_region": "skill_manager_ctor",
+      "target_rva": "0x0022a240"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0022a2d1",
+      "id": "repair_factory_to_skill_ctor",
+      "instruction_hex": "e8dacd0300",
+      "source_region": "repair_factory",
+      "target_rva": "0x002670b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0023d947",
+      "id": "smoke_disabled_to_smoke_present",
+      "instruction_hex": "e854000000",
+      "source_region": "smoke_disabled",
+      "target_rva": "0x0023d9a0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0023d9fb",
+      "id": "smoke_present_to_is_busy",
+      "instruction_hex": "e8e0f2feff",
+      "source_region": "smoke_present",
+      "target_rva": "0x0022cce0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0023da53",
+      "id": "grounded_water_to_is_busy",
+      "instruction_hex": "e888f2feff",
+      "source_region": "grounded_water",
+      "target_rva": "0x0022cce0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0023da5e",
+      "id": "grounded_water_to_is_flying",
+      "instruction_hex": "e82d0a0000",
+      "source_region": "grounded_water",
+      "target_rva": "0x0023e490"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The exact normal-route predicate is fully parameterized by IsActive, the named smoke and Water helpers, iBonusShift, the usable-skill scan, and IsMech. Debugai mode one bypasses an ordinary failure.",
+      "classification": "inference",
+      "id": "ordinary_target_area_gate_closed"
+    },
+    {
+      "claim": "Smoke disables attacks only on an attached Board smoke tile while not busy and without IgnoreSmoke or Disable_Immunity. Terrain three is the registered TERRAIN_WATER value; it blocks only a not-busy, nonflying Pawn.",
+      "classification": "inference",
+      "id": "smoke_and_water_helpers_named"
+    },
+    {
+      "claim": "The vector scan excludes exact IDs Move and Move_Power and otherwise accepts an unlimited Skill or a limited Skill with positive remaining uses.",
+      "classification": "inference",
+      "id": "usable_skill_rule_closed"
+    },
+    {
+      "claim": "Literal index 50 resolves before vector bounds to the separately owned Skill_Repair shared pointer. It is not vector slot 51.",
+      "classification": "inference",
+      "id": "literal_50_is_repair"
+    },
+    {
+      "claim": "The candidate loop rewrites selected index 50 to zero whenever the vector count is at most 50, before target-area dispatch. The exact shipped one-line SkillList definitions have maximum literal arity two, but that source fact is not promoted to a universal runtime vector-count theorem.",
+      "classification": "inference",
+      "id": "small_vector_normalization"
+    },
+    {
+      "claim": "The Rust solver consumes settled queued actions and lacks the prospective callback payload. No simulator contradiction or version change follows.",
+      "classification": "fact",
+      "id": "no_solver_semantic_change"
+    }
+  ],
+  "generated_from": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "evidence_policy": "Exact bytes and sources are facts; named control-flow semantics are bounded inferences; Lua callback output remains an explicit boundary.",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "method": "exact-build static disassembly plus hash-pinned Lua census",
+    "platform": "windows"
+  },
+  "method_bindings": [
+    {
+      "id": "pawn_is_mech",
+      "implementation_region": "is_mech_getter",
+      "implementation_rva": "0x0023c8d0",
+      "method_name": "IsMech",
+      "name_anchor": "is_mech_name",
+      "pawn_offset": "+0x9e4",
+      "registration_region": "pawn_ismech_binding"
+    },
+    {
+      "id": "pawn_is_busy",
+      "implementation_region": "is_busy",
+      "implementation_rva": "0x0022cce0",
+      "method_name": "IsBusy",
+      "name_anchor": "is_busy_name",
+      "registration_region": "pawn_isbusy_binding"
+    },
+    {
+      "id": "pawn_is_active",
+      "implementation_region": "is_active",
+      "implementation_rva": "0x0023e8b0",
+      "method_name": "IsActive",
+      "name_anchor": "is_active_name",
+      "registration_region": "pawn_isactive_binding"
+    },
+    {
+      "id": "pawn_is_flying",
+      "implementation_region": "is_flying",
+      "implementation_rva": "0x0023e490",
+      "method_name": "IsFlying",
+      "name_anchor": "is_flying_name",
+      "registration_region": "pawn_isflying_binding"
+    },
+    {
+      "id": "board_is_terrain",
+      "implementation_region": "terrain_vtable_thunk",
+      "implementation_rva": "0x002e399d",
+      "method_name": "IsTerrain",
+      "name_anchor": "is_terrain_name",
+      "registration_region": "board_terrain_binding",
+      "vtable_slot": "+0x7c"
+    }
+  ],
+  "notes": [
+    "This is exact-build static evidence and pure replay, not a runtime trace.",
+    "Candidate mode one is the pinned debugai route, not ordinary planning.",
+    "The mutable project modloader overlay is excluded from the shipped Lua census.",
+    "Returned target points and later scores/selection remain outside this artifact."
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Per-destination candidate loop containing the target-area gate.",
+      "end_rva_exclusive": "0x000f7c17",
+      "evidence_class": "fact",
+      "id": "candidate_loop",
+      "section": ".text",
+      "sha256": "a162b5ead3bfcb851bf99f31b204485769570deb38fb6eb8102040214bcfc064",
+      "size": 807,
+      "start_rva": "0x000f78f0"
+    },
+    {
+      "boundary_basis": "Exact native Skill-ID equality helper used for Move_Power.",
+      "end_rva_exclusive": "0x0007c805",
+      "evidence_class": "fact",
+      "id": "lua_string_equal",
+      "section": ".text",
+      "sha256": "c0a0823d4c48882c5b64ac059812e6b1adcb02780effe5e037e1f46cc0aa74ea",
+      "size": 85,
+      "start_rva": "0x0007c7b0"
+    },
+    {
+      "boundary_basis": "SkillManager constructor that owns the separate repair shared pointer.",
+      "end_rva_exclusive": "0x00227084",
+      "evidence_class": "fact",
+      "id": "skill_manager_ctor",
+      "section": ".text",
+      "sha256": "3524ac242335de198252f75161f4499f06d5b8f1be7e845d6eddfe61f9ed8dac",
+      "size": 388,
+      "start_rva": "0x00226f00"
+    },
+    {
+      "boundary_basis": "Skill-consumption path decrementing remaining limited uses.",
+      "end_rva_exclusive": "0x00227e17",
+      "evidence_class": "fact",
+      "id": "consume_skill",
+      "section": ".text",
+      "sha256": "612697e5d8ec51a2bd9fad39587e64aaaa5c99ebcb67ea0a819a578ff1b13078",
+      "size": 551,
+      "start_rva": "0x00227bf0"
+    },
+    {
+      "boundary_basis": "Complete vector scan used by the ordinary candidate gate.",
+      "end_rva_exclusive": "0x002290c5",
+      "evidence_class": "fact",
+      "id": "usable_skill_scan",
+      "section": ".text",
+      "sha256": "8d9a2a5a30f4c1913871ff99d606166376c8f24c8bef2324b52fe63d43b743f0",
+      "size": 165,
+      "start_rva": "0x00229020"
+    },
+    {
+      "boundary_basis": "Target-area wrapper, resolver gate, and Lua callback dispatch.",
+      "end_rva_exclusive": "0x00229307",
+      "evidence_class": "fact",
+      "id": "target_area",
+      "section": ".text",
+      "sha256": "9156f8498c8e6cb817eb0d75123888ebff9331f90745ecb9e857ebe45d3c82b1",
+      "size": 215,
+      "start_rva": "0x00229230"
+    },
+    {
+      "boundary_basis": "Vector and repair-skill limited-use reset path.",
+      "end_rva_exclusive": "0x0022981e",
+      "evidence_class": "fact",
+      "id": "reset_skill_uses",
+      "section": ".text",
+      "sha256": "6a3be562d8e86276a9a585e810a2a5178e47040034d4e95194ac0eac76ae28a1",
+      "size": 190,
+      "start_rva": "0x00229760"
+    },
+    {
+      "boundary_basis": "Skill resolver that checks literal 50 before vector bounds.",
+      "end_rva_exclusive": "0x00229c0d",
+      "evidence_class": "fact",
+      "id": "resolve_skill",
+      "section": ".text",
+      "sha256": "3315ee0d31c687a99829b097af3b67be361be8b59d42d5d0a8bd1f876146d598",
+      "size": 93,
+      "start_rva": "0x00229bb0"
+    },
+    {
+      "boundary_basis": "Factory constructing the separate Skill_Repair object.",
+      "end_rva_exclusive": "0x0022a2ef",
+      "evidence_class": "fact",
+      "id": "repair_factory",
+      "section": ".text",
+      "sha256": "aa2f887477481e5dc5dc20676815d6b4339fcc4e2a9131e65548a75270068fb1",
+      "size": 175,
+      "start_rva": "0x0022a240"
+    },
+    {
+      "boundary_basis": "Pawn IsBusy implementation shared by smoke and Water predicates.",
+      "end_rva_exclusive": "0x0022cdc9",
+      "evidence_class": "fact",
+      "id": "is_busy",
+      "section": ".text",
+      "sha256": "3314bb928c7e662f17ec11fd5f5134256c0259818b74fd01d9e921f6617e2344",
+      "size": 233,
+      "start_rva": "0x0022cce0"
+    },
+    {
+      "boundary_basis": "Setter storing iBonusShift and naming shifty/postmove state.",
+      "end_rva_exclusive": "0x0023a8d9",
+      "evidence_class": "fact",
+      "id": "action_state",
+      "section": ".text",
+      "sha256": "0d95224bcfdac74b4752858fd41556c4d8c7a7dff05bc935772cc761ff8c9c81",
+      "size": 89,
+      "start_rva": "0x0023a880"
+    },
+    {
+      "boundary_basis": "Seven-byte IsMech getter reading Pawn +0x9e4.",
+      "end_rva_exclusive": "0x0023c8d7",
+      "evidence_class": "fact",
+      "id": "is_mech_getter",
+      "section": ".text",
+      "sha256": "93be70843ae650ab49f4da225e76da80df9b55151167e3f8c732eb0a9253fa90",
+      "size": 7,
+      "start_rva": "0x0023c8d0"
+    },
+    {
+      "boundary_basis": "Smoke attack-disable predicate with two immunity checks.",
+      "end_rva_exclusive": "0x0023d998",
+      "evidence_class": "fact",
+      "id": "smoke_disabled",
+      "section": ".text",
+      "sha256": "ae384c65865c9ef578af34774906083e7a4ca10be1cf6da0441bdfe0b4623758",
+      "size": 88,
+      "start_rva": "0x0023d940"
+    },
+    {
+      "boundary_basis": "Board smoke lookup combined with not-IsBusy.",
+      "end_rva_exclusive": "0x0023da16",
+      "evidence_class": "fact",
+      "id": "smoke_present",
+      "section": ".text",
+      "sha256": "42644a702cdef2597de5410e80d06169fae844d1acfebc54e1c8832d369e87f2",
+      "size": 118,
+      "start_rva": "0x0023d9a0"
+    },
+    {
+      "boundary_basis": "Water, not-IsBusy, and not-IsFlying predicate.",
+      "end_rva_exclusive": "0x0023da75",
+      "evidence_class": "fact",
+      "id": "grounded_water",
+      "section": ".text",
+      "sha256": "f23c0bb268bb0c9177aa69ea97c38ab59dd5a81128cd494ca6752db089fe2591",
+      "size": 85,
+      "start_rva": "0x0023da20"
+    },
+    {
+      "boundary_basis": "Pawn IsFlying implementation called by the Water predicate.",
+      "end_rva_exclusive": "0x0023e571",
+      "evidence_class": "fact",
+      "id": "is_flying",
+      "section": ".text",
+      "sha256": "06fe4311381c6f3a5f31db9b53004c771762327a02ef33ced2c3af2bb021fbdb",
+      "size": 225,
+      "start_rva": "0x0023e490"
+    },
+    {
+      "boundary_basis": "Pawn IsActive implementation called first by the candidate gate.",
+      "end_rva_exclusive": "0x0023e939",
+      "evidence_class": "fact",
+      "id": "is_active",
+      "section": ".text",
+      "sha256": "449310a80188de96a31ca52afdd3c1db0784bfd136322352f467c2d770ff41b9",
+      "size": 137,
+      "start_rva": "0x0023e8b0"
+    },
+    {
+      "boundary_basis": "Pawn archive path binding +0xa64 to iBonusShift.",
+      "end_rva_exclusive": "0x00240acf",
+      "evidence_class": "fact",
+      "id": "pawn_archive",
+      "section": ".text",
+      "sha256": "b3475222468769a173264dd29a9bb00d3980f563b0c4bb9243875b844450d270",
+      "size": 3983,
+      "start_rva": "0x0023fb40"
+    },
+    {
+      "boundary_basis": "Generic Skill constructor loading Lua Limited into +0x160.",
+      "end_rva_exclusive": "0x00267639",
+      "evidence_class": "fact",
+      "id": "skill_ctor",
+      "section": ".text",
+      "sha256": "4a0466f114c734bd512c85f5bc0834433380daead50236bf634161f0ea7d965c",
+      "size": 1417,
+      "start_rva": "0x002670b0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Board IsTerrain Lua binding span.",
+      "end_rva_exclusive": "0x00279f9e",
+      "evidence_class": "fact",
+      "id": "board_terrain_binding",
+      "section": ".text",
+      "sha256": "e6d52fbb7e7959e179434dc62c43761734bdad780f39aa67d9157370ce4cadda",
+      "size": 37,
+      "start_rva": "0x00279f79"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Pawn IsMech Lua binding span.",
+      "end_rva_exclusive": "0x0027c298",
+      "evidence_class": "fact",
+      "id": "pawn_ismech_binding",
+      "section": ".text",
+      "sha256": "4e34f6150e313bbc12831d15183d99e29cf486b144503586c9eec85a688531ab",
+      "size": 37,
+      "start_rva": "0x0027c273"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Pawn IsBusy Lua binding span.",
+      "end_rva_exclusive": "0x0027c2bd",
+      "evidence_class": "fact",
+      "id": "pawn_isbusy_binding",
+      "section": ".text",
+      "sha256": "c34469c57e542adc6f71d768df0c5300fc4c1b94e2ad553884ea4f1bad27d76b",
+      "size": 37,
+      "start_rva": "0x0027c298"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Pawn IsActive Lua binding span.",
+      "end_rva_exclusive": "0x0027c450",
+      "evidence_class": "fact",
+      "id": "pawn_isactive_binding",
+      "section": ".text",
+      "sha256": "2ba76e30d7e471e04693f72d31896ecb90f4b23ed070ab59af59d4f5732ffe71",
+      "size": 37,
+      "start_rva": "0x0027c42b"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Pawn IsFlying Lua binding span.",
+      "end_rva_exclusive": "0x0027c644",
+      "evidence_class": "fact",
+      "id": "pawn_isflying_binding",
+      "section": ".text",
+      "sha256": "2ff0a59e9599c8698514a2aff0bd6b000006e38ca7d62440d419dc066a0205b4",
+      "size": 37,
+      "start_rva": "0x0027c61f"
+    },
+    {
+      "boundary_basis": "Global registration span binding TERRAIN_WATER to integer three.",
+      "end_rva_exclusive": "0x0027efe4",
+      "evidence_class": "fact",
+      "id": "terrain_water_constant_binding",
+      "section": ".text",
+      "sha256": "bb4bd0466fea1c52a560f087b275395e303ad512ddca2465754e2a42ed8e13c8",
+      "size": 62,
+      "start_rva": "0x0027efa6"
+    },
+    {
+      "boundary_basis": "Board IsTerrain thunk dispatching vtable slot +0x7c.",
+      "end_rva_exclusive": "0x002e39a2",
+      "evidence_class": "fact",
+      "id": "terrain_vtable_thunk",
+      "section": ".text",
+      "sha256": "7c836e74657fc808255a968c47fe3e344c8eebaa98e5d9c1a709ac32e09b51c8",
+      "size": 5,
+      "start_rva": "0x002e399d"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "has_usable_skill": false,
+        "usable_indices": []
+      },
+      "id": "move_and_exhausted_are_not_usable",
+      "input": {
+        "skills": [
+          {
+            "id": "Move",
+            "limited": 0,
+            "remaining_uses": 0
+          },
+          {
+            "id": "Move_Power",
+            "limited": 0,
+            "remaining_uses": 0
+          },
+          {
+            "id": "BossHeal",
+            "limited": 1,
+            "remaining_uses": 0
+          }
+        ]
+      },
+      "kind": "usable_skill_scan"
+    },
+    {
+      "expected": {
+        "has_usable_skill": true,
+        "usable_indices": [
+          0,
+          1
+        ]
+      },
+      "id": "unlimited_and_remaining_limited_are_usable",
+      "input": {
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          },
+          {
+            "id": "BossHeal",
+            "limited": 2,
+            "remaining_uses": 1
+          }
+        ]
+      },
+      "kind": "usable_skill_scan"
+    },
+    {
+      "expected": {
+        "resolution": "repair",
+        "skill_id": "Skill_Repair"
+      },
+      "id": "literal_50_resolves_repair_before_vector",
+      "input": {
+        "weapon_count": 51,
+        "weapon_index": 50
+      },
+      "kind": "skill_resolution"
+    },
+    {
+      "expected": {
+        "resolution": "vector",
+        "vector_index": 1
+      },
+      "id": "ordinary_vector_resolution",
+      "input": {
+        "weapon_count": 2,
+        "weapon_index": 1
+      },
+      "kind": "skill_resolution"
+    },
+    {
+      "expected": {
+        "resolution": "null",
+        "skill_id": null
+      },
+      "id": "invalid_resolution_is_null",
+      "input": {
+        "weapon_count": 2,
+        "weapon_index": -1
+      },
+      "kind": "skill_resolution"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "ordinary_usable_skill_passes",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": false,
+        "normalized_weapon_index": null,
+        "ordinary_eligible": false,
+        "resolution": null,
+        "target_area_wrapper_invoked": false
+      },
+      "id": "inactive_blocks",
+      "input": {
+        "active": false,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": false,
+        "normalized_weapon_index": null,
+        "ordinary_eligible": false,
+        "resolution": null,
+        "target_area_wrapper_invoked": false
+      },
+      "id": "smoke_blocks",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": true,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "ignore_smoke_bypasses_smoke",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": true,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": true,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "disable_immunity_bypasses_smoke",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": true,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": true,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": false,
+        "normalized_weapon_index": null,
+        "ordinary_eligible": false,
+        "resolution": null,
+        "target_area_wrapper_invoked": false
+      },
+      "id": "grounded_water_blocks",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": true
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "flying_bypasses_water",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": true,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": true
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "busy_suppresses_smoke_and_water_predicates",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": true,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": true,
+        "terrain_is_water": true
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": false,
+        "normalized_weapon_index": null,
+        "ordinary_eligible": false,
+        "resolution": null,
+        "target_area_wrapper_invoked": false
+      },
+      "id": "positive_bonus_shift_blocks",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 1,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 0,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": false,
+        "normalized_weapon_index": -1,
+        "ordinary_eligible": true,
+        "resolution": "null",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "mech_fallback_passes_without_usable_skill",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": true,
+        "selected_weapon": -1,
+        "skills": [
+          {
+            "id": "Move",
+            "limited": 0,
+            "remaining_uses": 0
+          },
+          {
+            "id": "BossHeal",
+            "limited": 1,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": false,
+        "mode_override": true,
+        "normalized_weapon_index": -1,
+        "ordinary_eligible": false,
+        "resolution": "null",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "debugai_mode_bypasses_every_ordinary_failure",
+      "input": {
+        "active": false,
+        "board_attached": false,
+        "bonus_shift": 4,
+        "busy": false,
+        "candidate_mode": 1,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": -1,
+        "skills": [],
+        "smoke_on_tile": true,
+        "terrain_is_water": true
+      },
+      "kind": "target_area_gate"
+    },
+    {
+      "expected": {
+        "lua_get_target_area_invoked": true,
+        "mode_override": false,
+        "normalized_weapon_index": 0,
+        "ordinary_eligible": true,
+        "resolution": "vector",
+        "target_area_wrapper_invoked": true
+      },
+      "id": "literal_50_normalizes_to_zero_for_small_vector",
+      "input": {
+        "active": true,
+        "board_attached": true,
+        "bonus_shift": 0,
+        "busy": false,
+        "candidate_mode": 0,
+        "disable_immunity": false,
+        "flying": false,
+        "ignore_smoke": false,
+        "is_mech": false,
+        "selected_weapon": 50,
+        "skills": [
+          {
+            "id": "FireflyAtk1",
+            "limited": 0,
+            "remaining_uses": 0
+          },
+          {
+            "id": "BossHeal",
+            "limited": 0,
+            "remaining_uses": 0
+          }
+        ],
+        "smoke_on_tile": false,
+        "terrain_is_water": false
+      },
+      "kind": "target_area_gate"
+    }
+  ],
+  "schema_version": 1,
+  "source_inventory": {
+    "active_arity_distribution": {
+      "0": 26,
+      "1": 161,
+      "2": 11
+    },
+    "active_literal_skill_list_assignment_count": 198,
+    "block_commented_literal_match_count": 8,
+    "block_commented_matches": [
+      {
+        "line": 316,
+        "path": "scripts/advanced/ae_pawns.lua"
+      },
+      {
+        "line": 333,
+        "path": "scripts/advanced/ae_pawns.lua"
+      },
+      {
+        "line": 351,
+        "path": "scripts/advanced/ae_pawns.lua"
+      },
+      {
+        "line": 595,
+        "path": "scripts/advanced/ae_pawns.lua"
+      },
+      {
+        "line": 614,
+        "path": "scripts/advanced/ae_pawns.lua"
+      },
+      {
+        "line": 452,
+        "path": "scripts/weapons_deploy.lua"
+      },
+      {
+        "line": 456,
+        "path": "scripts/weapons_deploy.lua"
+      },
+      {
+        "line": 460,
+        "path": "scripts/weapons_deploy.lua"
+      }
+    ],
+    "inventory_dependency": "identity_inventory",
+    "maximum_literal_arity": 2,
+    "maximum_occurrences": [
+      {
+        "line": 489,
+        "path": "scripts/advanced/ae_pawns.lua",
+        "skills": [
+          "Ranged_SmokeFire",
+          "Passive_HealingSmoke"
+        ]
+      },
+      {
+        "line": 563,
+        "path": "scripts/advanced/ae_pawns.lua",
+        "skills": [
+          "Science_RainingFire",
+          "Passive_FireBoost"
+        ]
+      },
+      {
+        "line": 717,
+        "path": "scripts/advanced/ae_pawns.lua",
+        "skills": [
+          "Ranged_SmokeFire",
+          "Passive_HealingSmoke"
+        ]
+      },
+      {
+        "line": 51,
+        "path": "scripts/advanced/missions/acid/mission_missiles.lua",
+        "skills": [
+          "Missiles_Shield",
+          "Missiles_OneDmg"
+        ]
+      },
+      {
+        "line": 49,
+        "path": "scripts/missions/bosses/bot.lua",
+        "skills": [
+          "SnowBossAtk",
+          "BossHeal"
+        ]
+      },
+      {
+        "line": 74,
+        "path": "scripts/missions/bosses/bot.lua",
+        "skills": [
+          "SnowBossAtk2",
+          "BossHeal"
+        ]
+      },
+      {
+        "line": 93,
+        "path": "scripts/pawns.lua",
+        "skills": [
+          "Science_Gravwell",
+          "Passive_FriendlyFire"
+        ]
+      },
+      {
+        "line": 111,
+        "path": "scripts/pawns.lua",
+        "skills": [
+          "Ranged_Rocket",
+          "Passive_Electric"
+        ]
+      },
+      {
+        "line": 165,
+        "path": "scripts/pawns.lua",
+        "skills": [
+          "Prime_Flamethrower",
+          "Passive_FlameImmune"
+        ]
+      },
+      {
+        "line": 246,
+        "path": "scripts/pawns.lua",
+        "skills": [
+          "Science_Pullmech",
+          "Science_Shield"
+        ]
+      },
+      {
+        "line": 393,
+        "path": "scripts/pawns.lua",
+        "skills": [
+          "Science_AcidShot",
+          "Passive_Leech"
+        ]
+      }
+    ],
+    "raw_non_line_comment_literal_match_count": 206,
+    "repair_sources": [
+      {
+        "definition_line": 795,
+        "effect_line": 806,
+        "path": "scripts/weapons_base.lua",
+        "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+        "size": 21524,
+        "symbols": [
+          "Skill_Repair",
+          "Skill_Repair:GetSkillEffect"
+        ]
+      },
+      {
+        "override_line": 4,
+        "path": "scripts/advanced/ae_weapons_base.lua",
+        "sha256": "4444af60a0b4d38894690425a83a4f610cbdc88f20b3fb322db410f257a89742",
+        "size": 1604,
+        "symbols": [
+          "Skill_Repair:GetSkillEffect"
+        ]
+      }
+    ],
+    "scope_note": "The literal-source maximum does not prove a universal runtime vector maximum after native equipment, save overlays, or mods.",
+    "selection": "Every inventory path ending .lua except the mutable project overlay scripts/modloader.lua; backup suffixes do not end .lua.",
+    "verified_lua_file_count": 152
+  },
+  "summary": {
+    "active_literal_skill_list_assignment_count": 198,
+    "block_commented_literal_match_count": 8,
+    "call_inventory_count": 3,
+    "complete_enemy_phase_forecast": false,
+    "control_window_count": 18,
+    "data_anchor_count": 16,
+    "direct_edge_count": 13,
+    "finding_count": 6,
+    "lua_target_area_output_complete": false,
+    "maximum_literal_skill_list_arity": 2,
+    "method_binding_count": 5,
+    "ordinary_target_area_gate_complete": true,
+    "raw_non_line_comment_literal_match_count": 206,
+    "region_count": 26,
+    "repair_sentinel_resolved": true,
+    "replay_vector_count": 17,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "unresolved_count": 4,
+    "verified_core_lua_file_count": 152
+  },
+  "unresolved": [
+    {
+      "boundary": "The ordered PointList returned by each concrete Lua GetTargetArea callback remains a runtime input and is not synthesized by this replay.",
+      "id": "lua_target_points"
+    },
+    {
+      "boundary": "Ordinary solver input does not contain a complete prospective Pawn/Skill snapshot, callback outputs, or shared RNG state for a future enemy phase.",
+      "id": "prospective_runtime_payload"
+    },
+    {
+      "boundary": "The exact literal SkillList census has maximum arity two, but native equipment/save overlays and mods prevent claiming that every possible runtime vector count is at most 50.",
+      "id": "runtime_vector_upper_bound"
+    },
+    {
+      "boundary": "The native byte and call-graph claims bind only Windows build 13725832; macOS and other depots require their own artifacts.",
+      "id": "platform_scope"
+    }
+  ]
+}

@@ -86,7 +86,11 @@ comparator, immediately displaced fallback group, and selector-local caller-ID
 29-through-33 draw grammar. The candidate-score continuation additionally
 names the injured, health, selected-weapon, history, and priority fields and
 closes the ordinary/debug positioning clamp, weapon normalization, target
-modifiers, resolver branch, positive floor, and signed addition. Natural
+modifiers, resolver branch, positive floor, and signed addition. The next
+target-area continuation closes the native active/smoke/Water/`iBonusShift`/
+usable-skill/`IsMech` gate, names literal index 50 as separately owned
+`Skill_Repair`, and separates 198 active literal `SkillList` assignments from
+eight block-commented source matches. Natural
 callback pairs exercise the four Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -99,11 +103,11 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, Lua callback values/target areas/effect-side draws before that boundary
-remain unjoined, the prospective spawn replay capsule/selector-time CRT state
-remains absent, the queue correlation covers only one Firefly1 single-weapon
-shape, and the scheduler/emergency coordinate paths were not naturally
-exercised. Static control-flow evidence is kept distinct from
+state, Lua callback values/returned target points/effect-side draws after the
+now-proven gate remain unjoined, the prospective spawn replay
+capsule/selector-time CRT state remains absent, the queue correlation covers
+only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate
+paths were not naturally exercised. Static control-flow evidence is kept distinct from
 runtime facts, and owner-local-modified Windows evidence is not promoted to a
 pristine-depot or cross-platform claim.
 

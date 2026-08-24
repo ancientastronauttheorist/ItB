@@ -72,6 +72,10 @@ The durable artifacts are:
   for the exact `bInjured`, health, selected-weapon, `targetHistory`, and
   `priorityTarget` field bindings; ordinary/debug route modes; positioning
   clamp; target-score modifiers and floor; and pure callback-boundary replay;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_boundary.json`
+  for the complete ordinary pre-`GetTargetArea` gate, named smoke/Water
+  predicates, usable-skill scan, `iBonusShift`/`IsMech` fields, literal-50
+  `Skill_Repair` resolver, exact active `SkillList` census, and pure gate replay;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -240,7 +244,27 @@ resolved only for an in-range weapon index or literal index 50. An invalid
 index returns the native modifier without a callback. When the modifier is
 negative and a positive callback result is no larger than its magnitude, the
 wrapper returns one; otherwise it uses signed 32-bit addition. The shipped
-meaning of literal 50 remains unnamed.
+meaning of literal 50 is closed by the target-area continuation below.
+
+The target-area continuation resolves the complete native gate before that
+callback. Normal mode zero requires `IsActive`, no effective Smoke, no grounded
+nonflying Water state, `iBonusShift +0xa64 <= 0`, and either a usable Skill or
+`IsMech +0x9e4`; debugai mode one bypasses an ordinary failure. Smoke requires
+an attached Board smoke tile and `not IsBusy`, then is suppressed by
+`IgnoreSmoke` or `Disable_Immunity`. The exact global registration binds
+`TERRAIN_WATER=3`, and that predicate additionally requires `not IsBusy` and
+`not IsFlying`.
+
+The usable-skill scan walks vector order, excludes exact IDs `Move` and
+`Move_Power`, and accepts any other Skill with `Limited +0x160 == 0` or
+remaining uses `+0x158 > 0`. Resolver index 50 is tested before vector bounds
+and returns the SkillManager-owned `+0x68` shared pointer constructed with ID
+`Skill_Repair`; it is not vector slot 51. Candidate normalization nevertheless
+rewrites selected index 50 to zero whenever the vector count is at most 50.
+The hash-pinned 152-file Lua census distinguishes 206 visually matching
+one-line `SkillList` forms from eight inside block comments: 198 are active,
+with arity distribution 26/161/11 for zero/one/two and maximum active literal
+arity two. That source maximum is not a universal runtime or modded bound.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -755,9 +779,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    debug route modes, the injured one-HP positioning clamp, selected-weapon
    normalization, history/priority target modifiers, callback resolver branch,
    positive-score floor, and signed addition are replayable from explicit
-   callback and pawn/skill inputs. Lua callback values, target-area creation,
-   literal weapon index 50's semantic name, and the complete prospective
-   payload remain outside this boundary.
+   callback and pawn/skill inputs.
+   **Completed offline for the native target-area gate:** the active/smoke/
+   Water/bonus-shift/usable-skill/IsMech predicate and literal-50
+   `Skill_Repair` resolver are replayable from explicit inputs. Lua callback
+   target points and the complete prospective payload remain outside this
+   boundary.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit

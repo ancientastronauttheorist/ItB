@@ -355,8 +355,10 @@ that selected it.
   displaced-primary fallback, and local RNG grammar are now closed offline.
   So are the normal/debug route modes, injured one-HP positioning clamp,
   selected-weapon normalization, history/priority target modifiers, callback
-  resolver branch, and post-callback score arithmetic. The missing payload is
-  now specifically the Lua-produced values, ordered target areas/effects, and
+  resolver branch, post-callback score arithmetic, complete pre-target-area
+  active/smoke/Water/bonus-shift/usable-skill/IsMech gate, and literal-50
+  `Skill_Repair` resolver. The missing payload is now specifically the
+  Lua-produced callback values, ordered returned target areas/effects, and
   boundary-entry RNG state rather than unknown native adjustment rules.
   Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse

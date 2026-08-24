@@ -705,6 +705,13 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "priorityTarget contributes +10" in evidence
     assert "literal 50" in evidence
     assert "14 adversarial replay vectors" in evidence
+    assert "iBonusShift +0xa64 <= 0" in evidence
+    assert "TERRAIN_WATER is registered as 3" in evidence
+    assert "separately owned SkillManager +0x68 Skill_Repair" in evidence
+    assert "206 visually matching one-line SkillList forms" in evidence
+    assert "eight block-commented matches" in evidence
+    assert "198 active assignments" in evidence
+    assert "17 adversarial replay vectors" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -770,13 +777,38 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "selected_weapon_normalization",
         "target_score_wrapper",
     }
+    assert implementations[
+        "src/observatory/enemy_target_area_boundary.py"
+    ] == {
+        "replay_usable_skill_scan",
+        "resolve_enemy_skill_index",
+        "replay_enemy_target_area_gate",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_target_area.py"
+    ] == {
+        "build",
+        "verify",
+        "replay-usable",
+        "replay-gate",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_target_area_boundary.json"
+    ] == {
+        "ordinary_target_area_gate",
+        "usable_skill_scan",
+        "literal_50_is_repair",
+        "active_literal_skill_list_assignment_count",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
     assert "no live capture serializes one complete tournament" in gaps
     assert "selector-entry state" in gaps
     assert "one Firefly1 single-weapon shape" in gaps
-    assert "now-proven native score adjustments" in gaps
+    assert "now-proven native target-area eligibility gate" in gaps
     assert "raw callback values" in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
     assert "24-byte record comparator" in gaps
@@ -802,7 +834,26 @@ def test_real_broad_records_keep_symbols_on_their_exact_source_files():
                 "Skill:ScoreList",
                 "ScorePositioning",
             ],
-        }
+        },
+        {
+            "path": "scripts/weapons_base.lua",
+            "sha256": (
+                "bdb55457746d08b46e8b62ad7cfc27f"
+                "0a08bde9fab7397a4780dfe945b5f8f38"
+            ),
+            "symbols": [
+                "Skill_Repair",
+                "Skill_Repair:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons_base.lua",
+            "sha256": (
+                "4444af60a0b4d38894690425a83a4f61"
+                "0cbdc88f20b3fb322db410f257a89742"
+            ),
+            "symbols": ["Skill_Repair:GetSkillEffect"],
+        },
     ]
     mission_sources = {
         source["path"]: source["symbols"]

@@ -1991,6 +1991,18 @@
         },
         {
           "classification": "inference",
+          "statement": "The exact-build target-area continuation closes the native pre-callback gate. Ordinary mode 0 requires IsActive, no effective Smoke, no grounded nonflying Water state, iBonusShift +0xa64 <= 0, and either a usable vector Skill or IsMech +0x9e4; debugai mode 1 bypasses an ordinary failure. Smoke depends on an attached Board smoke tile while not IsBusy and is suppressed by IgnoreSmoke or Disable_Immunity. TERRAIN_WATER is registered as 3 and blocks only while not busy and not flying."
+        },
+        {
+          "classification": "inference",
+          "statement": "The usable-skill scan excludes exact IDs Move and Move_Power, then accepts Limited +0x160 == 0 or remaining uses +0x158 > 0. Resolver index 50 is checked before vector bounds and returns the separately owned SkillManager +0x68 Skill_Repair shared pointer, not vector slot 51. Candidate normalization still rewrites 50 to zero whenever vector count is at most 50."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable target-area artifact binds 26 exact executable regions, 18 semantic instruction windows, 13 direct edges, three complete raw-call inventories, 16 string/data anchors, five Lua method bindings, and 17 adversarial replay vectors. Its hash-pinned 152-file census finds 206 visually matching one-line SkillList forms but excludes eight block-commented matches, leaving 198 active assignments with maximum literal arity two. Returned Lua target points remain an explicit input."
+        },
+        {
+          "classification": "inference",
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
         {
@@ -2067,6 +2079,32 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_target_area_boundary.py",
+          "symbols": [
+            "replay_usable_skill_scan",
+            "resolve_enemy_skill_index",
+            "replay_enemy_target_area_gate"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_target_area.py",
+          "symbols": [
+            "build",
+            "verify",
+            "replay-usable",
+            "replay-gate"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_boundary.json",
+          "symbols": [
+            "ordinary_target_area_gate",
+            "usable_skill_scan",
+            "literal_50_is_repair",
+            "active_literal_skill_list_assignment_count"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2084,8 +2122,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native score adjustments, the now-proven record-level native tournament, per-subclass target construction, callback/effect-side score materialization, and shared-RNG state.",
-        "The exact static destination pipeline, native ScorePositioning clamp, native GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate and score adjustments, the now-proven record-level native tournament, per-subclass Lua target-point construction, callback/effect-side score materialization, and shared-RNG state.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native ScorePositioning clamp, native GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered Lua-returned targets, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2097,6 +2135,21 @@
             "Skill:GetTargetScore",
             "Skill:ScoreList",
             "ScorePositioning"
+          ]
+        },
+        {
+          "path": "scripts/weapons_base.lua",
+          "sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+          "symbols": [
+            "Skill_Repair",
+            "Skill_Repair:GetSkillEffect"
+          ]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons_base.lua",
+          "sha256": "4444af60a0b4d38894690425a83a4f610cbdc88f20b3fb322db410f257a89742",
+          "symbols": [
+            "Skill_Repair:GetSkillEffect"
           ]
         }
       ],
@@ -2169,6 +2222,16 @@
             "test_target_history_penalty_and_positive_floor_boundaries",
             "test_priority_bonus_overrides_history_when_both_points_match",
             "test_exact_local_executable_reproduces_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_target_area_boundary.py",
+          "symbols": [
+            "test_repair_sentinel_is_separate_and_checked_before_vector_bounds",
+            "test_active_source_census_separates_block_comments_from_shipped_assignments",
+            "test_usable_skill_scan_exact_ids_and_limited_use_boundary",
+            "test_each_ordinary_gate_failure_blocks_dispatch",
+            "test_exact_local_executable_and_sources_reproduce_map_when_available"
           ]
         },
         {
