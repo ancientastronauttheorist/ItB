@@ -637,9 +637,11 @@ direct call edges. For the pinned Windows build it establishes that:
   `+0x2dc`; its landing callback invokes the impact slot, which applies that
   retained record through the Board; and
 - a nonempty `sPawn` goes through the pawn factory and exact `Board:AddPawn`
-  body at the original `SpaceDamage` coordinates. Because shipped `AddBomb`
-  set `sPawn="BigBomb"` before the immediate copy, that selected point
-  materializes a `BigBomb` when the drop lands.
+  body at the original `SpaceDamage` coordinates when native blocker admission
+  accepts the point. Because shipped `AddBomb` set `sPawn="BigBomb"` before the
+  immediate copy, an accepted selected point materializes a `BigBomb` when the
+  drop lands. The later drop-resolution continuation pins the preceding
+  kill-and-blocker-recheck gate.
 
 Verify the executable, exact sources, region hashes, strings, vtable pointers,
 control windows, and direct edges with:
@@ -901,7 +903,9 @@ two consecutive droppers prove two record/animation creations rather than
 their eventual visual impact order or overlap. Concrete RNG results,
 coordinates, UIDs, and modified-state error/collision behavior remain outside
 this map. The following lifetime continuation closes the ordinary spawn-block
-facet without changing the fresh settled-read solver boundary.
+facet, and the drop-resolution continuation after it closes the shipped
+terrain/occupant consequences, without changing the fresh settled-read solver
+boundary.
 
 ## Final Cave spawn-block lifetime boundary
 
@@ -949,3 +953,59 @@ identity. The native block map is not exported in ordinary bridge state, and
 arbitrary dropper collisions, visual overlap, concrete RNG outputs,
 coordinates, and UIDs remain outside this map. Settled bridge state already
 contains the actionable terrain and units, so no Rust semantic change follows.
+
+## Final Cave drop-resolution boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_drop_resolution.json`
+joins the startup, effect-order, spawn-block, replacement, and cadence maps to
+the native phase-carried-pawn, `SpaceDamage` field-layout, and apply paths. It
+binds the exact startup Lua/map tree, seven dependency artifact hashes, three
+retained turn-zero boards, 26 reviewed native regions, nine data anchors,
+three field and four method
+registrations, 19 instruction-start control windows, and 17 direct call edges.
+For Windows build `13725832` it establishes that:
+
+- native registration binds `iDamage`, `sPawn`, and `iTerrain` to record
+  offsets `+0x08`, `+0xa4`, and `+0xdc`;
+- core damage and terrain application finishes before the nonempty-`sPawn`
+  branch, so the BigBomb record assigns Road before occupant replacement;
+- after loading the replacement Board, phase transition passes every carried
+  pawn through `SetSpace(-1,-1)` and completes that admission loop before
+  dispatching `BaseStart`; the exact Surface handoff reaches BoardPlayer state
+  five, which skips the only native auto-deployment tail; the exact cave maps
+  have empty spawn lists, while the only source-reachable pre-pylon spawn uses
+  a deployment tile disjoint from every pylon zone;
+- an ordinary pylon's first zero-damage Building record creates a 1/1
+  Building, while its independent duplicate raises the embedded `ValueBar`
+  maximum and current value to 2/2; three retained exact-map turn-zero boards
+  corroborate seven 2-HP pylons each;
+- a nonempty `sPawn` record calls registered `Pawn:Kill(false)` on every tile
+  occupant, clears live-pawn logical coordinates, reruns `IsBlocked`, and only
+  then constructs and adds the named pawn at the original point;
+- the optional startup enemy at `bomb_loc` is on a deployment tile disjoint
+  from temporary mountain and permanent pylon zones, so it is deliberately
+  replaced by BigBomb;
+- a later replacement point occupied by an enemy follows the same
+  kill-then-recheck order, but BigBomb is added only if that blocker recheck
+  passes; a destroyed pylon can retain its permanent spawn block and make the
+  record abort after killing the enemy; and
+- settled bridge state already contains these results, so pending replacement
+  remains non-fabricated until the next settled read and no Rust semantic
+  change follows.
+
+Verify the executable, exact source and dependencies, retained captures,
+region/data hashes, registrations, control windows, and direct edges with:
+
+```powershell
+python scripts/itb_observatory_final_cave_drop_resolution.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --resolution-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_drop_resolution.json
+```
+
+This map does not generalize the ordinary shipped result to arbitrary modified
+Water, Chasm, corpse, multi-space, or unusual-blocker collisions. A later
+destroyed-pylon permanent-block collision is explicitly conditional; its
+concrete selected point and block state remain runtime inputs. The map also
+does not close generic `DAMAGE_DEATH` callbacks/attribution, concrete startup
+RNG outputs, UIDs, visual impact interleave, or non-Windows builds.

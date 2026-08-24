@@ -6118,6 +6118,20 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "final_cave_drop_resolution.json"
+    ] == {
+        "space_damage_layout_is_exact",
+        "terrain_precedes_spawn_resolution",
+        "carried_pawns_are_offboard_before_startmission",
+        "ordinary_pylons_materialize_at_two_hp",
+        "occupied_spawn_records_kill_before_recheck",
+        "startup_optional_enemy_is_replaced_by_bigbomb",
+        "replacement_enemy_collision_is_blocker_conditional",
+        "solver_boundary_remains_settled_read",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_map_choice.json"
     ] == {
         "random_map_is_shipped_lua", "installation_order",
@@ -6193,6 +6207,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_block_spawn_lifetime_map",
         "validate_final_cave_block_spawn_lifetime_map_binding",
     }
+    assert implementations[
+        "src/observatory/final_cave_drop_resolution.py"
+    ] == {
+        "build_final_cave_drop_resolution_map",
+        "validate_final_cave_drop_resolution_map",
+        "validate_final_cave_drop_resolution_map_binding",
+    }
     assert implementations["src/observatory/final_cave_map_choice.py"] == {
         "build_final_cave_map_choice_map",
         "validate_final_cave_map_choice_map",
@@ -6244,6 +6265,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_block_spawn_lifetime.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_drop_resolution.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_map_choice.py"
     ] == {"_parser", "main"}
     tests = {
@@ -6287,6 +6311,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "test_committed_map_closes_ordinary_spawn_block_lifetime_without_overclaim",
         "test_binding_rejects_native_lifetime_contract_or_prose_drift",
         "test_exact_local_executable_and_source_reproduce_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_final_cave_drop_resolution.py"
+    ] == {
+        "test_committed_map_closes_ordinary_drop_resolution_without_rng_overclaim",
+        "test_binding_rejects_layout_collision_or_prose_drift",
+        "test_exact_local_executable_source_dependencies_and_captures_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
@@ -6345,6 +6376,19 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "permanent is Board-scoped rather than immortal storage" in facts
     assert "all 304 analysis-relevant scripts entries" in facts
     assert "all 153 Lua files of either accepted tree" in facts
+    assert "iDamage, sPawn, and iTerrain to SpaceDamage offsets" in facts
+    assert "invokes SetSpace(-1,-1) while re-admitting every carried pawn" in facts
+    assert "before dispatching BaseStart" in facts
+    assert "BoardPlayer state five" in facts
+    assert "skips the only native auto-deployment tail" in facts
+    assert "deployment points disjoint from both pylon and mountain zones" in facts
+    assert "first independent Building record creates current/max 1/1" in facts
+    assert "three retained exact-map turn-zero boards" in facts
+    assert "invokes registered Pawn:Kill(false) on every occupant" in facts
+    assert "optional startup enemy at bomb_loc is deliberately replaced" in facts
+    assert "AddBomb does not exclude the spawn-block map" in facts
+    assert "destroyed pylon can retain BLOCKED_PERM and abort" in facts
+    assert "pending replacement remains non-fabricated" in facts
     assert "contains no Advanced Edition filter" in facts
     assert "FindFirstFileA and FindNextFileA" in facts
     assert "exactly one RandomMap attempt" in facts
@@ -6367,6 +6411,18 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "both duplicated pylon droppers are exact" in gaps
     assert "Temporary and permanent spawn-block lifetime" not in gaps
     assert "Ordinary spawn-block lifetime is exact too" in gaps
+    assert "Ordinary startup drop resolution is now exact" in gaps
+    assert "every phase-carried pawn is set logically offboard before BaseStart" in gaps
+    assert "state-five Surface handoff skips the native auto-deployment tail" in gaps
+    assert "disjoint from both pylon and mountain zones" in gaps
+    assert (
+        "first and second unoccupied pylon records settle at 1/1 then 2/2 HP"
+        in gaps
+    )
+    assert (
+        "adversarial Water/Chasm/corpse/multi-space/unusual-blocker collisions"
+        in gaps
+    )
     assert "Arbitrary modified-script block-map contents" in gaps
     assert "Intra-effect AddScript execution" not in gaps
     assert "release-versus-debug delays" not in gaps
@@ -6381,17 +6437,19 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "actual end-of-countdown outcome" not in gaps
     assert "replacement materialization is unresolved" not in gaps
     assert (
-        "as are BigBomb drop resolution and semantic repeat ordering"
+        "as are startup BigBomb drop resolution, conditional later "
+        "occupied-enemy kill/recheck order"
         in gaps
     )
     assert (
-        "concrete replacement coordinate, UID, and settled wall-clock timing"
+        "concrete replacement coordinate, UID, surviving block state, and "
+        "settled wall-clock timing"
         in gaps
     )
     assert (
-        "not because materialization, repeat mechanics, ordinary spawn-block "
-        "lifetime, or bomb destruction as a direct terminal mission loss are "
-        "unresolved"
+        "not because repeat mechanics, ordinary startup spawn-block lifetime/"
+        "drop resolution, pylon health, accepted-point materialization, or bomb "
+        "destruction as a direct terminal mission loss are unresolved"
         in gaps
     )
 

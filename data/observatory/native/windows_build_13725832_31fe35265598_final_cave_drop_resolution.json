@@ -1,0 +1,1269 @@
+{
+  "analysis_kind": "final_cave_drop_resolution_boundary_map",
+  "contracts": {
+    "final_cave_bomb": {
+      "bigbomb_materializes_only_if_blocker_recheck_passes": true,
+      "destroyed_pylon_permanent_block_can_abort_after_enemy_kill": true,
+      "optional_enemy_is_replaced_when_branch_taken": true,
+      "optional_enemy_spawned_at_same_reserved_point": true,
+      "record_iTerrain": 0,
+      "record_sPawn": "BigBomb",
+      "replacement_candidates_do_not_exclude_enemy": true,
+      "replacement_candidates_do_not_exclude_spawn_block_map": true,
+      "replacement_candidates_exclude_player_building_environment_danger": true,
+      "selected_enemy_killed_before_blocker_recheck": true,
+      "startup_bomb_point_not_spawn_blocked": true
+    },
+    "ordinary_pylons": {
+      "construction_tile_unoccupied": true,
+      "dropper_records_per_pylon": 2,
+      "first_impact_current_hp": 1,
+      "first_impact_max_hp": 1,
+      "later_startup_enemy_admission_rejected_by_permanent_block": true,
+      "pylons_per_map": 7,
+      "retained_capture_count": 3,
+      "second_impact_current_hp": 2,
+      "second_impact_max_hp": 2,
+      "source_i_damage": 0
+    },
+    "pre_start_occupancy": {
+      "bomb_loc_is_deployment_tile": true,
+      "carried_pawn_logical_coordinates_before_base_start": [
+        -1,
+        -1
+      ],
+      "carried_pawn_readd_returns_before_base_start": true,
+      "deployment_and_mountain_zones_disjoint_on_all_maps": true,
+      "deployment_and_pylon_zones_disjoint_on_all_maps": true,
+      "exact_map_spawn_lists_empty": true,
+      "only_source_reachable_pre_pylon_spawn": "optional enemy at bomb_loc",
+      "ordinary_pylon_is_pawn_space_at_construction": false,
+      "state_five_skips_native_auto_deploy_tail": true,
+      "surface_transition_boardplayer_state": 5
+    },
+    "sPawn_collision": {
+      "accepted_path_adds_at_original_coordinates": true,
+      "accepted_path_constructs_named_pawn": true,
+      "blocker_recheck_after_removal": true,
+      "checks_occupancy_before_blocker_recheck": true,
+      "live_pawn_logical_coordinates_cleared_to_minus_one": true,
+      "occupied_tile_action": "Pawn:Kill(false) for every tile occupant",
+      "other_still_blocked_tiles_abort_before_factory": true,
+      "still_blocked_water_or_chasm_allowed": true
+    },
+    "solver_handoff": {
+      "reason": "The solver starts from a fresh settled bridge board, which already contains 2-HP pylons and the resolved replacement result. Replacement projection must keep its pending marker and must not fabricate RNG, a coordinate, a UID, an enemy death, or successful BigBomb materialization before that read.",
+      "simulator_change_required": false
+    },
+    "space_damage_layout": {
+      "iDamage": "+0x08",
+      "iTerrain": "+0xdc",
+      "sPawn": "+0xa4",
+      "sPawn_length": "+0xb4"
+    },
+    "terrain_then_spawn_order": {
+      "building_terrain_value": 1,
+      "building_uses_special_setter": true,
+      "core_damage_and_terrain_before_sPawn": true,
+      "other_explicit_terrain_uses_generic_setter": true,
+      "road_terrain_value": 0,
+      "terrain_none_value": 10
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "phase_collects_carried_pawns",
+      "instruction_hex": "6a048d4d8c33db895d98518b4804c7805c45000001000000e8d3abfeff8d4da4895dfce8b8100d00c645fc0133ff8b45908b4d8c2bc1c1f80285c00f84c20100008b04b98d4da48945988d459850e87d25f1ff",
+      "meaning": "Snapshot the old Board's carried pawn pointers and append every selected pointer to the phase transport.",
+      "region_id": "phase_transition",
+      "sha256": "7ed584a2c6fa2a11d689c4ae557316b91507440e29e40a8617c8a3b5cbd8dfec",
+      "size": 83,
+      "start_rva": "0x00189200"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "phase_readd_before_base_start",
+      "instruction_hex": "83ec4c8d45a48bcc50e89631faff8bcbe81fa7ffff8bcbe8789cffff",
+      "meaning": "Copy and re-admit the carried-pawn transport, then call BaseStart only after that admission returns.",
+      "region_id": "phase_transition",
+      "sha256": "6265bd90577484cfbe259290581886e8cce6623c6d8710ec2075ef581b41603e",
+      "size": 28,
+      "start_rva": "0x0018952c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "phase_transport_dispatch",
+      "instruction_hex": "83ec4cc745fc000000008d45088bcc50e8338afaff8b4e04e8dbf7feff",
+      "meaning": "Copy the incoming transport and synchronously pass it to the new Board's carried-pawn admission loop.",
+      "region_id": "phase_pawn_transport",
+      "sha256": "96c44a15888e5d989790393e887a707632fcce4cbfe01f02b77891f7410f7508",
+      "size": 29,
+      "start_rva": "0x00183c88"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "state_five_skips_auto_deploy",
+      "instruction_hex": "833dd49c8b0001751083bec80f00000574078bcee81d000000",
+      "meaning": "The optional native auto-deployment tail is skipped whenever BoardPlayer state equals five.",
+      "region_id": "phase_pawn_transport",
+      "sha256": "65090185f34e2cd7d5fb0771ac7a89ac2dfd4b3bc4e2db15a6a6197b03343b2e",
+      "size": 25,
+      "start_rva": "0x00183cea"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "carried_pawns_offboard_and_readded",
+      "instruction_hex": "33db8b450c2b4508c1f80285c00f849b0000008d773c8b4d086aff6aff8b0c99e849ce0b008b45088b0c9839b94409000074178bd789b944090000f7da8d470c1bd223d052e8b4520b008b45088d3c988b46043bf873268b0e3bcf77202bf9c1ff023b46087508518bcee84f82f2ff8b4e0485c9741f8b068b04b8eb163b46087508518bcee83482f2ff8b4e0485c974048b0789018b450c432b4508834604048b7df0c1f8023bd80f8268ffffff",
+      "meaning": "For each transported pawn, call SetSpace(-1,-1), attach it to the replacement Board, append it to that Board's pawn vector, and continue through the complete transport.",
+      "region_id": "preserved_pawn_readd",
+      "sha256": "8c71f695b75c8f5c0d1971a614f2fab8a7289c5515074a060c7492308bc05ed2",
+      "size": 174,
+      "start_rva": "0x001734b2"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_space_fields_commit",
+      "instruction_hex": "8b86ec0800008986f40800008b86f00800008986f80800008b45088986ec0800008b450c8986f0080000c686810f000000",
+      "meaning": "SetSpace preserves the prior point, commits the supplied x/y as the pawn's logical coordinates, and clears the pending-space flag.",
+      "region_id": "pawn_set_space",
+      "sha256": "4acc0de8f244d9e029f7bc0dafcff55736da1b8cd4c94ce2c24b534e709303cf",
+      "size": 49,
+      "start_rva": "0x0023029d"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "terrain_field_dispatch",
+      "instruction_hex": "8b85e400000083f80a0f84ac020000",
+      "meaning": "Read iTerrain and skip explicit terrain work only for TERRAIN_NONE (10).",
+      "region_id": "apply_damage_core",
+      "sha256": "950c410f2807c5295dd251a429746c4b642d20d950c518b28d3c297f13210b3b",
+      "size": 15,
+      "start_rva": "0x001ada0d"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "building_or_generic_terrain",
+      "instruction_hex": "83bde4000000018bcb75416a01e8bd22ffff84c0742d6a018bcbe8b022ffff84c0740a8b83a00000008b08eb0233c96a00e839f608006a018bcbe89022ffff84c075d38bcbe8e542ffffeb0bffb5e4000000e8d83effff",
+      "meaning": "Building terrain removes live occupants before its setter; every other explicit terrain uses SetTerrain.",
+      "region_id": "apply_damage_core",
+      "sha256": "9a1e99d7afc82549b093ec2c240136435f02d3b2371ed3da65d0b159d12cbf1f",
+      "size": 87,
+      "start_rva": "0x001adc71"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "building_repeat_full_hp",
+      "instruction_hex": "83bee02a00000175628b46788d7e743b470875338b078bcfff500840c744240c0000000089470833d23b47048d44240c0f9cc28d14950400000003d7833a000f4fc28b008947048b078bcf6a01ff5004",
+      "meaning": "An already-full building raises its ValueBar maximum by one and applies a +1 delta.",
+      "region_id": "set_building_terrain",
+      "sha256": "39ea084fbad316e259bc54722db2ee221c0cf920e65a0b8d38b74497e3dd32d0",
+      "size": 80,
+      "start_rva": "0x001a1fb5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "building_first_application",
+      "instruction_hex": "8d567433c9c74208010000008d44240c837a0401c744240c000000000f9fc16a018d0c8d0400000003ca8339000f4fc18bce8b008942048b4208894204e83efbffff",
+      "meaning": "A non-building tile is initialized to current/max one before SetTerrain(Building).",
+      "region_id": "set_building_terrain",
+      "sha256": "8ba97c8ca0edb8b5aa1b2bb9ba7048d4a9c17233c9dfba33e759e49e359af454",
+      "size": 66,
+      "start_rva": "0x001a2020"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "value_bar_initializer",
+      "instruction_hex": "8d8e94000000c746747c8f8200e83846f4ff",
+      "meaning": "BoardSpace installs the pinned ValueBar vtable at tile+0x74.",
+      "region_id": "tile_value_bar_initializer",
+      "sha256": "e340b59272c198ca70609ccc67dd527915179f9229c6ee68a1eb27cf17ae854b",
+      "size": 18,
+      "start_rva": "0x0019d416"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "value_bar_add_delta",
+      "instruction_hex": "558bec568b7508578bf985f679098b4704f7d83bf0eb088b47082b47043bc60f4cf0c74508000000000177048d4d088b470433d23947088bc60f9cc28d14950400000003d7833a000f4fca8b09894f045f5e5dc20400",
+      "meaning": "ValueBar slot +4 adds and clamps the requested delta.",
+      "region_id": "value_bar_add",
+      "sha256": "bf75206014fdb840f943775fbfdfdd45e68229db122259779e37a5cbb127d7c5",
+      "size": 86,
+      "start_rva": "0x000e0e30"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "value_bar_maximum",
+      "instruction_hex": "8b4108c3",
+      "meaning": "ValueBar slot +8 returns the maximum.",
+      "region_id": "value_bar_get_max",
+      "sha256": "916ae10aa3fd76a4d5b25b2fb66e9df0fd04957c7ab10930268d1ed7808be689",
+      "size": 4,
+      "start_rva": "0x000e10d0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "core_before_spawn",
+      "instruction_hex": "8d4ff4ff750cff7508e8911a00008bc8c645fc00e896c6040083bde40000000175088d4ff4e8f52f0100",
+      "meaning": "Board application completes the core terrain/status body before inspecting sPawn.",
+      "region_id": "apply_space_damage",
+      "sha256": "65880464942ff7522b0925ec7664fed968817efa47bf5291d41ac7fd417bfae0",
+      "size": 42,
+      "start_rva": "0x001602d1"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "spawn_collision_kill",
+      "instruction_hex": "83bdbc000000000f84640100008b078bcfff750cff75088b4050ffd084c07415ff750c8d4ff4ff7508e8471a00008bc8e860010500",
+      "meaning": "A nonempty sPawn checks IsPawnSpace and removes every occupant before blocker admission.",
+      "region_id": "apply_space_damage",
+      "sha256": "0ca2870621c95130c83109be4fe9e8a6b21559fa3edbb8e67cfcfe8db0e48504",
+      "size": 53,
+      "start_rva": "0x001602fb"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "spawn_blocker_recheck",
+      "instruction_hex": "8b47f48d4ff46a00ff750cff75088b400cffd084c0742e8b078bcf6a03ff750cff75088b407cffd084c075198b078bcf6a09ff750cff75088b407cffd084c00f84f7000000",
+      "meaning": "After removal, IsBlocked is rerun; only Water or Chasm may pass a still-blocked result.",
+      "region_id": "apply_space_damage",
+      "sha256": "97c03203a601873400091485304632eb7903d69a0ab4398b2f85ed08794ccd57",
+      "size": 69,
+      "start_rva": "0x00160330"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "spawn_factory_add",
+      "instruction_hex": "8b47f48d4ff46a00ff750cff75088b400cffd0ffb5c40000008845d783ec188bccc741140f000000c74110000000008379141072048b01eb028bc16affc600008d85ac0000006a0050e80d7deaffb9f06b8d00e8234a0e008bd88d4ff4a154d28b008983201300008d45c8ff750cff75085350e8d3e40000",
+      "meaning": "The accepted path constructs the named pawn and calls Board:AddPawn at the original x/y.",
+      "region_id": "apply_space_damage",
+      "sha256": "0cc98da3dfda2c7f39bbea72d6448471442678ba15430d60faa87436b9269fa5",
+      "size": 120,
+      "start_rva": "0x00160375"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "kill_tile_loop",
+      "instruction_hex": "56578bf933f68b87a40000002b87a0000000c1f80285c0742b0f1f80000000008b8fa00000006a008b0cb1e820ce08008b87a4000000462b87a0000000c1f8023bf072dc5f5ec3",
+      "meaning": "Iterate every tile pawn pointer and invoke Pawn:Kill(false).",
+      "region_id": "kill_tile_occupants",
+      "sha256": "b8e27fd5c8b5f4d184172f1bfab883545b8612a9a112a54425225c7dce7cd72c",
+      "size": 71,
+      "start_rva": "0x001b0490"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_kill_logical_clear",
+      "instruction_hex": "8b068b4010ffd084c075326a9c8d8ea4080000c6862109000001c74628ffffffffc74620ffffffffc74624ffffffffe8553beaff6a008bcee85cd7ffff",
+      "meaning": "A live pawn receives the removal flag and current/related coordinates -1 before cleanup.",
+      "region_id": "pawn_kill",
+      "sha256": "f5a551c1c92566ad3c56ad494d89ffcb22ad59103f2fa5835a13a2ad2f82f51b",
+      "size": 61,
+      "start_rva": "0x0023d307"
+    }
+  ],
+  "data_anchors": [
+    {
+      "evidence_class": "fact",
+      "hex": "6944616d61676500",
+      "id": "i_damage_name",
+      "meaning": "Registered SpaceDamage damage field.",
+      "rva": "0x00438a98",
+      "section": ".rdata",
+      "sha256": "0d6e7950d7f73a43124502ce15ce701a920bbcc8ec8b65d99bca5be4d43fefb8",
+      "size": 8
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "735061776e00",
+      "id": "s_pawn_name",
+      "meaning": "Registered SpaceDamage pawn-name field.",
+      "rva": "0x00438ae8",
+      "section": ".rdata",
+      "sha256": "2837146a4d5704cebf68851d84810079a6508e7ff28f57838342ab00cd507107",
+      "size": 6
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "695465727261696e00",
+      "id": "i_terrain_name",
+      "meaning": "Registered SpaceDamage terrain field.",
+      "rva": "0x00438b40",
+      "section": ".rdata",
+      "sha256": "daa2966f9f7904880845f8a726fe763afc47c90f34131a760059fbf8eba68324",
+      "size": 9
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "4973426c6f636b656400",
+      "id": "is_blocked_name",
+      "meaning": "Registered Board method name.",
+      "rva": "0x00438530",
+      "section": ".rdata",
+      "sha256": "9d03f7a4a9f419d9faa2ac65fec23da987937afc8d0b405718c1bec076f5cee7",
+      "size": 10
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "49735061776e537061636500",
+      "id": "is_pawn_space_name",
+      "meaning": "Registered Board method name.",
+      "rva": "0x004385c4",
+      "section": ".rdata",
+      "sha256": "0bc0e498581b7d1baa53fbdfaddf9bc9b1f3f9ffdbb0d7c29f22df95c526445c",
+      "size": 12
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "49735465727261696e00",
+      "id": "is_terrain_name",
+      "meaning": "Registered Board method name.",
+      "rva": "0x004386cc",
+      "section": ".rdata",
+      "sha256": "490bb4d7dbf77820939d0c4fbdedcb91e52584bf26e8e2b9dbabc8c98127f90f",
+      "size": 10
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "4b696c6c00",
+      "id": "pawn_kill_name",
+      "meaning": "Registered Pawn method name.",
+      "rva": "0x0043911c",
+      "section": ".rdata",
+      "sha256": "e141c0c812dac3ed9f621968ea4fea7e02317a5873dd679b595fe30c0ec44dcb",
+      "size": 5
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "d01a4e00300e4e00d0104e00",
+      "id": "value_bar_vtable",
+      "meaning": "BoardSpace embedded ValueBar vtable: destructor, delta, maximum.",
+      "rva": "0x00428f7c",
+      "section": ".rdata",
+      "sha256": "e69c213c083b41c09a760da90c676a0f84d225329d489054c24b9335f54d7d49",
+      "size": 12
+    },
+    {
+      "evidence_class": "fact",
+      "hex": "10015600",
+      "id": "board_apply_space_damage_slot",
+      "meaning": "Board secondary-vtable slot zero points to SpaceDamage application.",
+      "rva": "0x0042e258",
+      "section": ".rdata",
+      "sha256": "ff9903d208440796d7a7216b039834c50376af300eceb150a21f7c64a2af98bc",
+      "size": 4
+    }
+  ],
+  "dependencies": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json",
+      "artifact_sha256": "541237f7e723c1ec56b0328cb1f137f2a6725bda55c588d0a7ebc74adc55be0c",
+      "id": "final_end_settlement",
+      "role": "Pins the activity-clear Surface handoff into phase transition at BoardPlayer state five."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
+      "artifact_sha256": "4cf2f05a267ed87a8cf5b14edbc874343a3969cef2dfb98e849f645ec177f942",
+      "id": "final_cave_startup",
+      "role": "Pins all nine exact map zones and the four reserved deployment points."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_spawn_order.json",
+      "artifact_sha256": "b798a97c582be31ffba3d173e00b24eefae32a9725d03fe7a2260ca1403214f4",
+      "id": "final_cave_startup_spawn_order",
+      "role": "Pins synchronous logical enemy admission before queued drop impacts."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_effect_order.json",
+      "artifact_sha256": "a5290868718a0912c50c1caf914f7a6203d781d7a4b137352c9caf61c2c031df",
+      "id": "final_cave_startup_effect_order",
+      "role": "Pins two independent consecutive dropper records per pylon."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+      "artifact_sha256": "b08b6d96d4d4ba0f53c024b301b17a039c8deb944632bbc6b8b4000a6e20af50",
+      "id": "final_cave_replacement",
+      "role": "Pins the copied BigBomb record, drop impact, pawn factory, and AddPawn path."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement_cadence.json",
+      "artifact_sha256": "578275064f6f55ca170128d954613d846eb9398a239c2462de87356549ca7b4e",
+      "id": "final_cave_replacement_cadence",
+      "role": "Pins each PylonAnimation as busy and retained through synchronous impact."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_block_spawn_lifetime.json",
+      "artifact_sha256": "69d63632fe6585ac02864e09e3106e796e47abadd65991e41e1b76a1e2370889",
+      "id": "final_cave_block_spawn_lifetime",
+      "role": "Pins ordinary pylon occupancy exclusion and permanent spawn blocking."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018953c",
+      "id": "phase_to_pawn_transport",
+      "instruction_hex": "e81fa7ffff",
+      "source_region": "phase_transition",
+      "target_region": "phase_pawn_transport",
+      "target_rva": "0x00183c60"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00189543",
+      "id": "phase_to_base_start_dispatch",
+      "instruction_hex": "e8789cffff",
+      "source_region": "phase_transition",
+      "target_region": "base_start_dispatch",
+      "target_rva": "0x001831c0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00183ca0",
+      "id": "pawn_transport_to_readd",
+      "instruction_hex": "e8dbf7feff",
+      "source_region": "phase_pawn_transport",
+      "target_region": "preserved_pawn_readd",
+      "target_rva": "0x00173480"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00183cfe",
+      "id": "pawn_transport_to_optional_auto_deploy",
+      "instruction_hex": "e81d000000",
+      "source_region": "phase_pawn_transport",
+      "target_region": null,
+      "target_rva": "0x00183d20"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001734d2",
+      "id": "readd_to_set_space_entry",
+      "instruction_hex": "e849ce0b00",
+      "source_region": "preserved_pawn_readd",
+      "target_region": "pawn_set_space_entry",
+      "target_rva": "0x00230320"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0023032e",
+      "id": "set_space_entry_to_body",
+      "instruction_hex": "e87dfeffff",
+      "source_region": "pawn_set_space_entry",
+      "target_region": "pawn_set_space",
+      "target_rva": "0x002301b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001602e5",
+      "id": "apply_to_core",
+      "instruction_hex": "e896c60400",
+      "source_region": "apply_space_damage",
+      "target_region": "apply_damage_core",
+      "target_rva": "0x001ac980"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001adc7e",
+      "id": "core_to_occupant_predicate_a",
+      "instruction_hex": "e8bd22ffff",
+      "source_region": "apply_damage_core",
+      "target_region": "tile_has_live_occupant",
+      "target_rva": "0x0019ff40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001adc8b",
+      "id": "core_to_occupant_predicate_b",
+      "instruction_hex": "e8b022ffff",
+      "source_region": "apply_damage_core",
+      "target_region": "tile_has_live_occupant",
+      "target_rva": "0x0019ff40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001adca2",
+      "id": "core_to_pawn_kill",
+      "instruction_hex": "e839f60800",
+      "source_region": "apply_damage_core",
+      "target_region": "pawn_kill",
+      "target_rva": "0x0023d2e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001adcb6",
+      "id": "core_to_set_building",
+      "instruction_hex": "e8e542ffff",
+      "source_region": "apply_damage_core",
+      "target_region": "set_building_terrain",
+      "target_rva": "0x001a1fa0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001adcc3",
+      "id": "core_to_set_terrain",
+      "instruction_hex": "e8d83effff",
+      "source_region": "apply_damage_core",
+      "target_region": "set_terrain",
+      "target_rva": "0x001a1ba0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001a205d",
+      "id": "first_building_to_set_terrain",
+      "instruction_hex": "e83efbffff",
+      "source_region": "set_building_terrain",
+      "target_region": "set_terrain",
+      "target_rva": "0x001a1ba0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016032b",
+      "id": "apply_to_kill_tile_occupants",
+      "instruction_hex": "e860010500",
+      "source_region": "apply_space_damage",
+      "target_region": "kill_tile_occupants",
+      "target_rva": "0x001b0490"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001b04bb",
+      "id": "kill_tile_to_pawn_kill",
+      "instruction_hex": "e820ce0800",
+      "source_region": "kill_tile_occupants",
+      "target_region": "pawn_kill",
+      "target_rva": "0x0023d2e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001603c8",
+      "id": "apply_to_pawn_factory",
+      "instruction_hex": "e8234a0e00",
+      "source_region": "apply_space_damage",
+      "target_region": null,
+      "target_rva": "0x00244df0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001603e8",
+      "id": "apply_to_board_add_pawn",
+      "instruction_hex": "e8d3e40000",
+      "source_region": "apply_space_damage",
+      "target_region": null,
+      "target_rva": "0x0016e8c0"
+    }
+  ],
+  "field_bindings": [
+    {
+      "evidence_class": "fact",
+      "id": "i_damage",
+      "name_anchor": "i_damage_name",
+      "record_offset": "+0x08",
+      "registration_region": "register_i_damage"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "s_pawn",
+      "name_anchor": "s_pawn_name",
+      "record_offset": "+0xa4",
+      "registration_region": "register_s_pawn"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "i_terrain",
+      "name_anchor": "i_terrain_name",
+      "record_offset": "+0xdc",
+      "registration_region": "register_i_terrain"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Exact native registration binds iDamage, sPawn, and iTerrain to SpaceDamage offsets +0x08, +0xa4, and +0xdc.",
+      "evidence_class": "fact",
+      "id": "space_damage_layout_is_exact",
+      "supports": [
+        "i_damage",
+        "s_pawn",
+        "i_terrain"
+      ]
+    },
+    {
+      "claim": "Board application completes the core damage/terrain path before the nonempty-sPawn branch. BigBomb therefore assigns Road before occupied-tile removal and pawn admission.",
+      "evidence_class": "inference",
+      "id": "terrain_precedes_spawn_resolution",
+      "supports": [
+        "core_before_spawn",
+        "terrain_field_dispatch",
+        "building_or_generic_terrain",
+        "apply_to_core",
+        "core_to_set_terrain"
+      ]
+    },
+    {
+      "claim": "Phase transition copies every carried pawn pointer into its transport, loads the replacement Board, and sends the complete transport through SetSpace(-1,-1) plus new-Board admission. That loop returns before BaseStart. The exact Surface handoff reaches transition in BoardPlayer state five, which skips the optional native auto-deployment tail, so no carried surface coordinate can occupy a pylon during its Board:IsPawnSpace construction check.",
+      "evidence_class": "inference",
+      "id": "carried_pawns_are_offboard_before_startmission",
+      "supports": [
+        "final_end_settlement",
+        "phase_collects_carried_pawns",
+        "phase_readd_before_base_start",
+        "phase_transport_dispatch",
+        "state_five_skips_auto_deploy",
+        "carried_pawns_offboard_and_readded",
+        "pawn_space_fields_commit",
+        "phase_to_pawn_transport",
+        "phase_to_base_start_dispatch",
+        "pawn_transport_to_readd",
+        "pawn_transport_to_optional_auto_deploy",
+        "readd_to_set_space_entry",
+        "set_space_entry_to_body"
+      ]
+    },
+    {
+      "claim": "All exact cave maps have empty spawn lists. Carried pawns remain offboard through BaseStart entry; StartMission's only pre-pylon spawn is confined to a deployment tile, and every deployment zone is disjoint from pylons. Each ordinary pylon therefore keeps zero damage: its first independent record creates a 1/1 Building and the identical second record raises the embedded ValueBar maximum to two and applies +1, leaving a 2/2 pylon. Three retained exact-map turn-zero boards corroborate seven 2-HP pylons each.",
+      "evidence_class": "inference",
+      "id": "ordinary_pylons_materialize_at_two_hp",
+      "supports": [
+        "final_cave_startup",
+        "carried_pawns_are_offboard_before_startmission",
+        "final_cave_startup_effect_order",
+        "final_cave_block_spawn_lifetime",
+        "building_first_application",
+        "building_repeat_full_hp",
+        "value_bar_initializer",
+        "value_bar_add_delta",
+        "value_bar_maximum"
+      ]
+    },
+    {
+      "claim": "For nonempty sPawn, native application calls the registered Pawn:Kill(false) on every current tile occupant, which flags a live pawn for removal and clears its logical coordinates, then reruns IsBlocked before factory construction and Board:AddPawn.",
+      "evidence_class": "inference",
+      "id": "occupied_spawn_records_kill_before_recheck",
+      "supports": [
+        "spawn_collision_kill",
+        "kill_tile_loop",
+        "pawn_kill_logical_clear",
+        "spawn_blocker_recheck",
+        "spawn_factory_add",
+        "pawn_kill"
+      ]
+    },
+    {
+      "claim": "When the shipped optional branch places an enemy at bomb_loc, that deployment point is disjoint from both temporary mountain and permanent pylon blocks. The later Road+sPawn BigBomb record therefore removes the enemy with Pawn:Kill(false), passes its blocker recheck, and materializes BigBomb at the same reserved point; it is neither a failed spawn nor a displacement.",
+      "evidence_class": "inference",
+      "id": "startup_optional_enemy_is_replaced_by_bigbomb",
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "final_cave_startup",
+        "final_cave_block_spawn_lifetime",
+        "terrain_precedes_spawn_resolution",
+        "occupied_spawn_records_kill_before_recheck"
+      ]
+    },
+    {
+      "claim": "Later AddBomb selection excludes player occupancy, Buildings, and environment danger, but excludes neither enemies nor the spawn-block map. An enemy at impact is killed before IsBlocked is rerun, and BigBomb is added only if that recheck passes. A destroyed pylon point can retain BLOCKED_PERM, so selecting that point can kill its enemy yet abort before BigBomb construction.",
+      "evidence_class": "inference",
+      "id": "replacement_enemy_collision_is_blocker_conditional",
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "final_cave_replacement",
+        "final_cave_block_spawn_lifetime",
+        "occupied_spawn_records_kill_before_recheck"
+      ]
+    },
+    {
+      "claim": "No Rust semantic change follows: settled bridge input already includes the resolved pylons, terrain, occupants, and whether BigBomb materialized. Pending replacement remains intentionally non-fabricated until a new settled read.",
+      "evidence_class": "inference",
+      "id": "solver_boundary_remains_settled_read",
+      "supports": [
+        "ordinary_pylons_materialize_at_two_hp",
+        "startup_optional_enemy_is_replaced_by_bigbomb",
+        "replacement_enemy_collision_is_blocker_conditional"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "base_scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows"
+  },
+  "method": {
+    "binary_verification": "Capstone 5.0.7 rechecks every region, control window, registration pointer, vtable pointer, and direct E8 edge.",
+    "boundary_review": "Focused Ghidra 12.1.3 phase-carried Pawn SetSpace, SpaceDamage layout, terrain, ValueBar, Board predicate, Pawn Kill, and AddPawn admission review.",
+    "corroboration_review": "Three hash-pinned historical turn-zero boards are joined to exact cave map pylon zones; they corroborate 2-HP settled pylons without asserting executable identity.",
+    "limitations": [
+      "Every native address applies only to the pinned Windows executable.",
+      "Historical board captures are corroboration, not executable identity evidence.",
+      "Concrete RNG results, UIDs, and wall-clock presentation remain runtime inputs.",
+      "A later replacement's concrete point and surviving spawn-block state remain runtime inputs.",
+      "Generic DAMAGE_DEATH callbacks and adversarial modified-state collisions remain separate boundaries."
+    ],
+    "source_review": "The exact startup Lua/map tree, empty cave-map spawn lists, Final Cave source, seven immutable predecessor artifacts, and a fresh accepted-tree spawn-block lifetime reproduction bind source-reachable record order and occupancy."
+  },
+  "method_bindings": [
+    {
+      "evidence_class": "fact",
+      "id": "board_is_blocked",
+      "name_anchor": "is_blocked_name",
+      "registration_region": "register_is_blocked",
+      "target_region": "is_blocked_thunk",
+      "target_rva": "0x002e39df",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_is_pawn_space",
+      "name_anchor": "is_pawn_space_name",
+      "registration_region": "register_is_pawn_space",
+      "target_region": "is_pawn_space_thunk",
+      "target_rva": "0x000e7180",
+      "this_adjustment": 12
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_is_terrain",
+      "name_anchor": "is_terrain_name",
+      "registration_region": "register_is_terrain",
+      "target_region": "is_terrain_thunk",
+      "target_rva": "0x002e399d",
+      "this_adjustment": 12
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_kill",
+      "name_anchor": "pawn_kill_name",
+      "registration_region": "register_pawn_kill",
+      "target_region": "pawn_kill",
+      "target_rva": "0x0023d2e0",
+      "this_adjustment": 0
+    }
+  ],
+  "refines": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+    "finding": "bigbomb_drop_resolution_path_is_exact",
+    "qualification": "The dispatch-to-AddPawn route is exact, but factory construction and AddPawn occur only when the post-occupant blocker recheck accepts the selected point."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 ValueBar clamped-delta method.",
+      "end_rva_exclusive": "0x000e0e86",
+      "evidence_class": "fact",
+      "id": "value_bar_add",
+      "section": ".text",
+      "sha256": "bf75206014fdb840f943775fbfdfdd45e68229db122259779e37a5cbb127d7c5",
+      "size": 86,
+      "start_rva": "0x000e0e30"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 ValueBar maximum getter.",
+      "end_rva_exclusive": "0x000e10d4",
+      "evidence_class": "fact",
+      "id": "value_bar_get_max",
+      "section": ".text",
+      "sha256": "916ae10aa3fd76a4d5b25b2fb66e9df0fd04957c7ab10930268d1ed7808be689",
+      "size": 4,
+      "start_rva": "0x000e10d0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned IsPawnSpace secondary-vtable thunk.",
+      "end_rva_exclusive": "0x000e7185",
+      "evidence_class": "fact",
+      "id": "is_pawn_space_thunk",
+      "section": ".text",
+      "sha256": "35db3b17881aa60eaa25d8781db30c6df0065324b7097613cbe416b3add2e77c",
+      "size": 5,
+      "start_rva": "0x000e7180"
+    },
+    {
+      "boundary_basis": "Previously reviewed Board SpaceDamage application body.",
+      "end_rva_exclusive": "0x001604bc",
+      "evidence_class": "fact",
+      "id": "apply_space_damage",
+      "section": ".text",
+      "sha256": "1597eb6d490f3ae9ee95547a0caa83999502b4ba9c3423bc50b1dca7acc20210",
+      "size": 940,
+      "start_rva": "0x00160110"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 phase-carried pawn admission loop.",
+      "end_rva_exclusive": "0x0017357c",
+      "evidence_class": "fact",
+      "id": "preserved_pawn_readd",
+      "section": ".text",
+      "sha256": "aaeda259965db9a087df7f6593e6515192cbc5a3572dd21fbb28a3c0bbeaf6b6",
+      "size": 252,
+      "start_rva": "0x00173480"
+    },
+    {
+      "boundary_basis": "Previously reviewed BaseStart dispatch body.",
+      "end_rva_exclusive": "0x0018334f",
+      "evidence_class": "fact",
+      "id": "base_start_dispatch",
+      "section": ".text",
+      "sha256": "fe91da3c9574d19e0e017385e9c5dfb1b47c3a9ef22ef009edb5ac92d1e162ec",
+      "size": 399,
+      "start_rva": "0x001831c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 phase-carried pawn transport wrapper.",
+      "end_rva_exclusive": "0x00183d1d",
+      "evidence_class": "fact",
+      "id": "phase_pawn_transport",
+      "section": ".text",
+      "sha256": "aed0bc63dbfabfaf1a8f658c98d694332df4c9713cec4cbd4deff7dd4e639999",
+      "size": 189,
+      "start_rva": "0x00183c60"
+    },
+    {
+      "boundary_basis": "Previously reviewed phase-transition body.",
+      "end_rva_exclusive": "0x0018964d",
+      "evidence_class": "fact",
+      "id": "phase_transition",
+      "section": ".text",
+      "sha256": "3a5b364d9af48610bb07f8e44d5cb9ddb4051f4cb4a5fa0ad0db8eb51522073f",
+      "size": 1149,
+      "start_rva": "0x001891d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardSpace terrain setter body.",
+      "end_rva_exclusive": "0x001a1f93",
+      "evidence_class": "fact",
+      "id": "set_terrain",
+      "section": ".text",
+      "sha256": "cbd9f47a5841c88e21dff5ad5a20144bd10290c8ac627cda9618683987e3df97",
+      "size": 1011,
+      "start_rva": "0x001a1ba0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 building materialization body.",
+      "end_rva_exclusive": "0x001a209d",
+      "evidence_class": "fact",
+      "id": "set_building_terrain",
+      "section": ".text",
+      "sha256": "92a0e16b107b424639a70aed1a8b2f767d8a798f207b1d51724803802795e80c",
+      "size": 253,
+      "start_rva": "0x001a1fa0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned BoardSpace ValueBar initializer window.",
+      "end_rva_exclusive": "0x0019d428",
+      "evidence_class": "fact",
+      "id": "tile_value_bar_initializer",
+      "section": ".text",
+      "sha256": "e340b59272c198ca70609ccc67dd527915179f9229c6ee68a1eb27cf17ae854b",
+      "size": 18,
+      "start_rva": "0x0019d416"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 tile live-occupant predicate.",
+      "end_rva_exclusive": "0x0019ffd3",
+      "evidence_class": "fact",
+      "id": "tile_has_live_occupant",
+      "section": ".text",
+      "sha256": "1e3282851e31b74bfaba10d692ac4c31517d7416d47201c7e2eb5fdf36e4b1f1",
+      "size": 147,
+      "start_rva": "0x0019ff40"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 core SpaceDamage terrain/status body.",
+      "end_rva_exclusive": "0x001ae080",
+      "evidence_class": "fact",
+      "id": "apply_damage_core",
+      "section": ".text",
+      "sha256": "e6c2049faa497fb736263591ce7f102630148360777ac61bf1a5318a95819a28",
+      "size": 5888,
+      "start_rva": "0x001ac980"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 all-tile-occupants removal loop.",
+      "end_rva_exclusive": "0x001b04d7",
+      "evidence_class": "fact",
+      "id": "kill_tile_occupants",
+      "section": ".text",
+      "sha256": "b8e27fd5c8b5f4d184172f1bfab883545b8612a9a112a54425225c7dce7cd72c",
+      "size": 71,
+      "start_rva": "0x001b0490"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn logical-space setter body.",
+      "end_rva_exclusive": "0x00230317",
+      "evidence_class": "fact",
+      "id": "pawn_set_space",
+      "section": ".text",
+      "sha256": "bb2f39cac0a81d266296d890dc52d4755da0b60c5c517dd0ee08b714bf10eb3c",
+      "size": 359,
+      "start_rva": "0x002301b0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn SetSpace public entry wrapper.",
+      "end_rva_exclusive": "0x00230339",
+      "evidence_class": "fact",
+      "id": "pawn_set_space_entry",
+      "section": ".text",
+      "sha256": "a5034f607b779f10498f79683ac5401dd25c6387a3def070de3776488265865c",
+      "size": 25,
+      "start_rva": "0x00230320"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn Kill implementation.",
+      "end_rva_exclusive": "0x0023d34b",
+      "evidence_class": "fact",
+      "id": "pawn_kill",
+      "section": ".text",
+      "sha256": "0a5d113dc0441f670a948a57ee4e3b07593815596b049075d3303ec3a7fd2903",
+      "size": 107,
+      "start_rva": "0x0023d2e0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned SpaceDamage iTerrain field registration.",
+      "end_rva_exclusive": "0x0027ad76",
+      "evidence_class": "fact",
+      "id": "register_i_terrain",
+      "section": ".text",
+      "sha256": "785a2036a6d7ee80d94f61c5eaef856fbbcce937f2bb80fbc31aba9952e6469d",
+      "size": 10,
+      "start_rva": "0x0027ad6c"
+    },
+    {
+      "boundary_basis": "Instruction-aligned SpaceDamage sPawn field registration.",
+      "end_rva_exclusive": "0x0027adb2",
+      "evidence_class": "fact",
+      "id": "register_s_pawn",
+      "section": ".text",
+      "sha256": "1872116caaed5e1253bc2d7725837ba287095059a5a31f95a946ea1311999b18",
+      "size": 10,
+      "start_rva": "0x0027ada8"
+    },
+    {
+      "boundary_basis": "Instruction-aligned SpaceDamage iDamage field registration.",
+      "end_rva_exclusive": "0x0027adff",
+      "evidence_class": "fact",
+      "id": "register_i_damage",
+      "section": ".text",
+      "sha256": "69def6baaf418ec286ee4cc6b44db912707c6cb95b9328a3173bb9e2eee9b895",
+      "size": 7,
+      "start_rva": "0x0027adf8"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Board IsBlocked method registration.",
+      "end_rva_exclusive": "0x00279ae3",
+      "evidence_class": "fact",
+      "id": "register_is_blocked",
+      "section": ".text",
+      "sha256": "721e51ca77d6c25f19459451ef0866e66465e499dc573ab76e7223b1c46e02ae",
+      "size": 37,
+      "start_rva": "0x00279abe"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Board IsPawnSpace method registration.",
+      "end_rva_exclusive": "0x00279cb8",
+      "evidence_class": "fact",
+      "id": "register_is_pawn_space",
+      "section": ".text",
+      "sha256": "f98b67d10209a99a642d4d71611f9363dabce588f9d5a1fe90778335ff53de1d",
+      "size": 37,
+      "start_rva": "0x00279c93"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Board IsTerrain method registration.",
+      "end_rva_exclusive": "0x00279f9e",
+      "evidence_class": "fact",
+      "id": "register_is_terrain",
+      "section": ".text",
+      "sha256": "e6d52fbb7e7959e179434dc62c43761734bdad780f39aa67d9157370ce4cadda",
+      "size": 37,
+      "start_rva": "0x00279f79"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Pawn Kill method registration.",
+      "end_rva_exclusive": "0x0027c406",
+      "evidence_class": "fact",
+      "id": "register_pawn_kill",
+      "section": ".text",
+      "sha256": "d235cfc28f44928ab6c2024e8cfffc9d77d8083e3543e18bdf9906277ec59ef4",
+      "size": 37,
+      "start_rva": "0x0027c3e1"
+    },
+    {
+      "boundary_basis": "Instruction-aligned IsTerrain secondary-vtable thunk.",
+      "end_rva_exclusive": "0x002e39a2",
+      "evidence_class": "fact",
+      "id": "is_terrain_thunk",
+      "section": ".text",
+      "sha256": "7c836e74657fc808255a968c47fe3e344c8eebaa98e5d9c1a709ac32e09b51c8",
+      "size": 5,
+      "start_rva": "0x002e399d"
+    },
+    {
+      "boundary_basis": "Instruction-aligned IsBlocked primary-vtable thunk.",
+      "end_rva_exclusive": "0x002e39e4",
+      "evidence_class": "fact",
+      "id": "is_blocked_thunk",
+      "section": ".text",
+      "sha256": "36dd204b8c08514e55c5a4541c381d9c6c48ecda338001b0ac93e247ec819e94",
+      "size": 5,
+      "start_rva": "0x002e39df"
+    }
+  ],
+  "runtime_corroboration": [
+    {
+      "bigbomb_point": [
+        3,
+        4
+      ],
+      "evidence_class": "corroboration",
+      "identity_limit": "The retained board did not independently record its executable hash; it corroborates the source/native interpretation but is not build identity.",
+      "matched_map_source": "maps/caveAE4.map",
+      "mission_id": "Mission_Final_Cave",
+      "path": "recordings/20260430_230740_117/m05_turn_00_board.json",
+      "pylon_count": 7,
+      "pylon_hp_values": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "pylon_points": [
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          6
+        ]
+      ],
+      "sha256": "2a9186612e5fd0f655a40d76f777c64b8f65937bb4562bbb35d62172a7bc6b33",
+      "size": 15586,
+      "turn": 0
+    },
+    {
+      "bigbomb_point": [
+        3,
+        4
+      ],
+      "evidence_class": "corroboration",
+      "identity_limit": "The retained board did not independently record its executable hash; it corroborates the source/native interpretation but is not build identity.",
+      "matched_map_source": "maps/cave2.map",
+      "mission_id": "Mission_Final_Cave",
+      "path": "recordings/20260506_114649_974/m26_turn_00_board.json",
+      "pylon_count": 7,
+      "pylon_hp_values": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "pylon_points": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          6
+        ]
+      ],
+      "sha256": "4a2e1604fe4d1a4a74e155be4eb719a6ffba6df5fe9d135d5ab93c454cf08f67",
+      "size": 17310,
+      "turn": 0
+    },
+    {
+      "bigbomb_point": [
+        3,
+        4
+      ],
+      "evidence_class": "corroboration",
+      "identity_limit": "The retained board did not independently record its executable hash; it corroborates the source/native interpretation but is not build identity.",
+      "matched_map_source": "maps/caveAE2.map",
+      "mission_id": "Mission_Final_Cave",
+      "path": "recordings/20260510_213059_819/m22_turn_00_board.json",
+      "pylon_count": 7,
+      "pylon_hp_values": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "pylon_points": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "sha256": "c3d668af9953df0b0635d2208991a689423e7f95f4cfed7c89ae54dd66539d2b",
+      "size": 18920,
+      "turn": 0
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "Mission_Final_Cave:StartMission",
+          "Mission_Final_Cave:AddBomb"
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "control_window_count": 19,
+    "data_anchor_count": 9,
+    "dependency_count": 7,
+    "direct_edge_count": 17,
+    "field_binding_count": 3,
+    "finding_count": 8,
+    "lua_source_count": 1,
+    "method_binding_count": 4,
+    "occupied_sPawn_collision_order_proven": true,
+    "optional_startup_enemy_replacement_proven": true,
+    "ordinary_pylon_two_hp_proven": true,
+    "pre_start_pylon_occupancy_excluded": true,
+    "region_count": 26,
+    "runtime_corroboration_count": 3,
+    "simulator_change_required": false,
+    "terrain_before_spawn_proven": true,
+    "unresolved_count": 6
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_effect_order.json",
+    "remaining_gap_ids": [
+      "death_damage_callbacks_and_attribution",
+      "adversarial_modified_collisions",
+      "concrete_replacement_point_and_block_state",
+      "startup_visual_impact_interleave",
+      "concrete_startup_rng_coordinates_and_uids",
+      "non_windows_equivalence"
+    ],
+    "resolved_facets": [
+      "pre_start_pylon_occupancy",
+      "ordinary_pylon_terrain_and_health",
+      "bigbomb_terrain_before_spawn",
+      "occupied_sPawn_collision_order",
+      "startup_optional_enemy_replacement",
+      "ordinary_startup_drop_collision"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "death_damage_callbacks_and_attribution",
+      "next_evidence": "Trace the generic DAMAGE_DEATH core separately if kill attribution becomes solver-visible.",
+      "question": "What complete callback/corpse/credit sequence follows DAMAGE_DEATH?",
+      "static_status": "This map closes direct Pawn:Kill(false) replacement, not every numeric/death-damage status and callback branch."
+    },
+    {
+      "id": "adversarial_modified_collisions",
+      "next_evidence": "Build a separate controlled-case matrix rather than extending this ordinary-source claim.",
+      "question": "What happens for modified effects on Water, Chasm, corpses, multi-space pawns, or other unusual blockers?",
+      "static_status": "The exact blocker exceptions, shipped startup path, and later permanent-pylon abort are pinned; other adversarial identities are not source-reachable here."
+    },
+    {
+      "id": "concrete_replacement_point_and_block_state",
+      "next_evidence": "Consume the fresh settled bridge board rather than predicting the runtime point or block state.",
+      "question": "Which later replacement point is selected and does a surviving spawn block reject BigBomb?",
+      "static_status": "Selection does not exclude the spawn-block map. A selected enemy is killed before recheck, but BLOCKED_PERM on a destroyed pylon aborts materialization."
+    },
+    {
+      "id": "startup_visual_impact_interleave",
+      "next_evidence": "Capture timestamped presentation telemetry only if UI automation needs it.",
+      "question": "How do simultaneous drop animations overlap on screen?",
+      "static_status": "Both records reach impact and their settled state is exact; wall-clock visual ordering is not."
+    },
+    {
+      "id": "concrete_startup_rng_coordinates_and_uids",
+      "next_evidence": "Consume the fresh settled bridge board.",
+      "question": "Which concrete enemy identities, selector points, and UIDs occur in a future startup?",
+      "static_status": "Collision behavior is exact for any selected occupant; concrete RNG outputs remain runtime inputs."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Produce an independent build-keyed map.",
+      "question": "Do other executable builds resolve drops identically?",
+      "static_status": "Native evidence is keyed only to Windows build 13725832."
+    }
+  ]
+}

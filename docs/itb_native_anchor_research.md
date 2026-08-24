@@ -427,8 +427,10 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    `SpaceDamage`; `AddEffect` queues it for a later eligible Board update; kind
    4 constructs `PylonAnimation`; and landing applies the preserved
    `sPawn="BigBomb"` record through the pawn factory and exact `Board:AddPawn`
-   body at the selected point. A fifth continuation closes semantic repeat
-   cadence: the secondary-`this` dispatcher appends the Pylon to primary
+   body when native blocker admission accepts the selected point. The later
+   drop-resolution continuation pins the preceding occupant-kill and blocker
+   recheck, including the possible permanent-block abort. A fifth continuation
+   closes semantic repeat cadence: the secondary-`this` dispatcher appends the Pylon to primary
    Board's active-animation vector, `IsBusy` sees it as activity reason 8 while
    its fall field is negative, and the landing update synchronously impacts
    before that busy predicate can clear. A duplicate replacement cannot be

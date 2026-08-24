@@ -482,11 +482,21 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   both block kinds by spawn validity, temp-only `ClearBlockSpawns`, player-turn
   cleanup before player-turn UI, permanent survival across that cleanup, and
   full-Board reset of every block value; and
+- the Final Cave drop-resolution boundary: exact `SpaceDamage` field offsets,
+  phase-carried pawns passing through `SetSpace(-1,-1)` before `BaseStart`,
+  the state-five Surface handoff skipping the native auto-deployment tail,
+  empty exact-map spawn lists and deployment points disjoint from pylon and
+  mountain zones, terrain application before `sPawn`, duplicate pylon records
+  settling at 2/2 HP, occupied `sPawn` records invoking `Pawn:Kill(false)`
+  before blocker recheck, the optional startup enemy being replaced by BigBomb,
+  and later enemy collisions adding BigBomb only when that blocker recheck
+  passes; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
-  and exact `Board:AddPawn` materialization of `BigBomb` at the selected point;
-  and
+  and exact `Board:AddPawn` materialization of `BigBomb` at an accepted selected
+  point, with the later drop-resolution continuation pinning the preceding
+  kill-and-blocker-recheck gate; and
 - the replacement's semantic repeat cadence: secondary-`this` normalization
   places the Pylon in primary Board's active-animation vector, activity reason
   8 holds while its fall field is negative, and landing synchronously impacts
@@ -537,9 +547,17 @@ The remaining native priorities are now narrower:
    cannot dispatch until a later Board pass. The ordinary block lifetime is
    exact too: temporary mountain marks survive startup settlement and clear at
    player-turn setup, permanent pylon marks survive ordinary cleanup, and full
-   Board reset clears both. Only concrete outputs, arbitrary modified-script
-   block-map state, dropper collisions, and visual timing remain, not the
-   native admission or shipped-lifetime paths.
+   Board reset clears both. Native drop resolution is exact for the shipped
+   path too: phase transition sets every carried pawn logically offboard before
+   `BaseStart`; the exact cave maps add no spawn-list occupants; the sole
+   source-reachable pre-pylon enemy is confined to a disjoint deployment tile;
+   the duplicate pylon records therefore settle at 2/2 HP; and a BigBomb record
+   assigns Road, calls `Pawn:Kill(false)`, then adds BigBomb only if its blocker
+   recheck passes. A destroyed pylon can retain `BLOCKED_PERM` and abort after
+   the enemy kill. Only concrete outputs and later block state, arbitrary
+   modified-script state, generic `DAMAGE_DEATH` callbacks, adversarial
+   collision identities, and visual timing remain, not native admission,
+   shipped lifetime, or ordinary startup pylon/bomb collision behavior.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
@@ -712,11 +730,21 @@ now pinned, as is semantic repeat cadence: the active Pylon holds `IsBusy`
 until synchronous impact, so another replacement cycle requires a later bomb
 loss. Cave startup logical admission is also pinned: block masks are written
 synchronously, then boss and ordinary enemy identities/spaces commit before
-the queued Mech moves and dropper effects can dispatch. Concrete cave startup
-draws, visual presentation interleave, and the replacement callback's incoming
-RNG state, selected coordinate/UID, and wall-clock presentation duration remain
-deliberately unmodeled; simulator v406 still stops for a fresh settled bridge
-read.
+the queued Mech moves and dropper effects can dispatch. The joined
+drop-resolution map further proves that every ordinary duplicate pylon pair
+settles at 2/2 HP: phase transition sets carried pawns to `(-1,-1)` before
+`BaseStart`, the exact state-five handoff skips the native auto-deployment tail,
+the cave maps have empty spawn lists, and the only pre-pylon enemy is confined
+to a deployment tile disjoint from every pylon. That tile is also disjoint from
+temporary mountain blocks, so the optional startup enemy on the BigBomb point
+is killed and replaced after Road assignment. A later
+selected enemy is killed before blocker recheck, but BigBomb is added
+only if the recheck passes; a destroyed pylon's surviving permanent block can
+abort that later materialization. Concrete cave startup draws, visual
+presentation interleave, and the replacement callback's incoming RNG state,
+selected coordinate/UID/block state, and wall-clock presentation duration
+remain deliberately unmodeled; simulator v406 still stops for a fresh settled
+bridge read.
 
 ### Milestone 1: Provenance inventory
 

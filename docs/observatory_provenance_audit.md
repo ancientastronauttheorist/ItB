@@ -894,17 +894,31 @@ replacement materialization/repeat cadence, startup enemy admission, and the
 startup effect's internal record order. The latest continuation also pins
 `BLOCKED_NONE/TEMP/PERM` as 0/1/2, rejection of both blocked values during
 spawn selection, temp-only cleanup at player-turn setup, permanent survival
-across that cleanup, and full-Board reset of both values. The shipped release
-branch creates 44 records on three-mountain maps or 46 on four-mountain maps;
-Mech scripts are
-attempted synchronously in IDs 0, 1, 2 order, and every pylon contributes two
-independent consecutive dropper records. Requested delays, however, do not
+across that cleanup, and full-Board reset of both values. A joined
+drop-resolution continuation pins `iDamage`/`sPawn`/`iTerrain` layout,
+the phase-carried-pawn handoff through `SetSpace(-1,-1)` before `BaseStart`,
+the state-five Surface handoff skipping the native auto-deployment tail, empty
+cave-map spawn lists, and deployment points disjoint from pylon and mountain
+zones, terrain-before-spawn application, ordinary duplicate pylons settling at
+2/2 HP, and occupied `sPawn` records killing occupants before blocker recheck
+and pawn construction. Consequently no carried surface pawn can make an
+ordinary pylon lethal at construction, while the optional startup enemy at
+`bomb_loc` is replaced by BigBomb rather than displaced or causing the drop to
+fail. An enemy occupying a later selected point is killed before blocker
+recheck, but BigBomb is added only if that recheck passes; a destroyed pylon's
+surviving permanent block can abort after the enemy kill. The
+shipped release branch creates 44 records on three-mountain maps or 46 on
+four-mountain maps; Mech scripts are attempted synchronously in IDs 0, 1, 2
+order, and every pylon contributes two independent consecutive dropper records.
+Requested delays, however, do not
 prove wall-clock presentation or impact overlap. Concrete RNG results,
-coordinates/UIDs, modified-state collisions/errors, arbitrary modified-script
-block-map contents, and live campaign-settlement timing remain open. The safety
-gate remains because the replacement's concrete result is unknown, not because
-materialization/repeat mechanics, ordinary spawn-block lifetime, or bomb-loss
-terminal semantics are unresolved.
+coordinates/UIDs, later replacement block state, generic `DAMAGE_DEATH`
+callbacks, adversarial modified-state collisions/errors, arbitrary
+modified-script block-map contents, and live campaign-settlement timing remain
+open. The safety gate remains because the replacement's concrete result is
+unknown, not because materialization/repeat mechanics, ordinary startup
+spawn-block lifetime/drop resolution, pylon health, or bomb-loss terminal
+semantics are unresolved.
 
 The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
 the then-selected mechanical source index at 96/96. The later runtime-driven
