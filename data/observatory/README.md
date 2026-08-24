@@ -329,6 +329,54 @@ returned by each concrete `GetTargetArea`, the later callback scores/effects,
 and prospective enemy-phase state remain explicit runtime inputs. Rust still
 uses the settled live queue, so simulator v408 remains current.
 
+## Native enemy target-area callback wrapper
+
+`native/windows_build_13725832_31fe35265598_enemy_target_area_callback_boundary.json`
+continues through the native wrapper after the preceding eligibility gate. It
+binds nine complete functions, 15 instruction windows, 13 direct calls, one
+tail jump, both complete six-site direct-caller inventories, four data anchors,
+one additional instruction anchor, and 12 adversarial replay vectors. Its raw
+SHA-256 is
+`dc45fc0a32b52cff2e6fb400857fadeca85737f8329e9d32f5e6196e77ec6289`;
+its canonical document SHA-256 is
+`bcac4ea3c6a6e5cec73d95ea27f0edab5ef592de09d135200ea5efb8b66c405f`.
+
+`Skill +0x110` is now joined to the Board `+0x0c` secondary/path-manager
+interface. `Board:AddPawn` passes that adjusted pointer to the SkillManager,
+which writes it to every vector Skill and the separately owned repair Skill;
+vtable slot `+0x14` is an exact `this -= 0x0c` thunk to `Board:IsValid`.
+
+The wrapper stores the origin before testing it. An invalid origin invokes no
+Lua callback, move-assigns an empty PointList over the old Skill target cache,
+and returns empty. For a valid origin it invokes `GetSecondTargetArea` only
+when `TwoClick` is true and neither stored second-target coordinate equals
+`-1`; otherwise it invokes `GetTargetArea`. Values below `-1` do not fail that
+second-target sentinel test.
+
+After the selected callback returns, native code replaces the cache and erases
+only points with negative x or y. Encounter order and duplicates survive, as
+do nonnegative coordinates beyond the current Board dimensions. The replay
+therefore accepts the selected callback's already-materialized ordered
+PointList explicitly; Lua point construction remains unresolved.
+
+Verify or replay the immutable boundary with:
+
+```powershell
+python scripts/itb_observatory_enemy_target_area_callback.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_callback_boundary.json
+
+python scripts/itb_observatory_enemy_target_area_callback.py replay `
+  --payload target-area-callback.json
+```
+
+The payload contains exactly `board_width`, `board_height`, `origin`,
+`cached_points`, `two_click`, `second_target`, `get_target_area_points`, and
+`get_second_target_area_points`. Supply only the callback output selected by
+the branch, or `null` for both outputs when the origin is invalid. The adjacent
+native SkillEffect materialization body remains a separate continuation; no
+Rust semantic or simulator-version change follows from this wrapper alone.
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

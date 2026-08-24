@@ -520,3 +520,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 518 | — | Enemy record selection replay starts only after callbacks materialize every ordered record. | `docs/agent/solver-reference.md` |
 | 519 | — | Native enemy score adjustments are exact, but callback outputs remain boundary inputs. | `docs/agent/solver-reference.md` |
 | 520 | — | Native target-area eligibility is exact; resolver index 50 is the separate repair Skill. | `docs/agent/solver-reference.md` |
+| 521 | — | Native target-area callback selection/cache/filtering is exact from materialized Lua points. | `docs/agent/solver-reference.md` |

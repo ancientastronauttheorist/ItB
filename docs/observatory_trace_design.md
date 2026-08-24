@@ -357,9 +357,11 @@ that selected it.
   selected-weapon normalization, history/priority target modifiers, callback
   resolver branch, post-callback score arithmetic, complete pre-target-area
   active/smoke/Water/bonus-shift/usable-skill/IsMech gate, and literal-50
-  `Skill_Repair` resolver. The missing payload is now specifically the
-  Lua-produced callback values, ordered returned target areas/effects, and
-  boundary-entry RNG state rather than unknown native adjustment rules.
+  `Skill_Repair` resolver. Target-area Board validity, `TwoClick` dispatch,
+  cache replacement, and stable negative-coordinate filtering are closed too.
+  The missing payload is now specifically the Lua-produced callback values and
+  ordered PointLists/effects before native postprocessing, plus boundary-entry
+  RNG state, rather than unknown native adjustment rules.
   Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
   pathing and the structural dead-noncorpse Board-vector erase are already

@@ -90,8 +90,11 @@ modifiers, resolver branch, positive floor, and signed addition. The next
 target-area continuation closes the native active/smoke/Water/`iBonusShift`/
 usable-skill/`IsMech` gate, names literal index 50 as separately owned
 `Skill_Repair`, and separates 198 active literal `SkillList` assignments from
-eight block-commented source matches. Natural
-callback pairs exercise the four Lua-visible families; three Firefly triplets
+eight block-commented source matches. The callback-wrapper continuation joins
+`Skill +0x110` to `Board:IsValid`, proves invalid-origin cache clearing,
+selects `GetTargetArea` versus `GetSecondTargetArea`, and stably filters only
+negative returned coordinates. Natural callback pairs exercise the four
+Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
 and `candidates[raw_rng % 5]`. Separate exact-build review identifies caller 59
@@ -103,13 +106,14 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, Lua callback values/returned target points/effect-side draws after the
-now-proven gate remain unjoined, the prospective spawn replay
+state, and concrete Lua callback values/PointLists/effects plus effect-side
+draws before the now-proven native postprocessing boundaries remain unjoined.
+The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers
 only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate
-paths were not naturally exercised. Static control-flow evidence is kept distinct from
-runtime facts, and owner-local-modified Windows evidence is not promoted to a
-pristine-depot or cross-platform claim.
+paths were not naturally exercised. Static control-flow evidence is kept
+distinct from runtime facts, and owner-local-modified Windows evidence is not
+promoted to a pristine-depot or cross-platform claim.
 
 The base Battle/Survive/Volatile slice adds three exact shipped mission paths
 in three bounded `partial` records. `mission_battle.lua` is exactly two CRLF

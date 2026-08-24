@@ -43,6 +43,11 @@ injured/health/weapon/history/priority fields and closes the positioning clamp
 and target-score modifier arithmetic. The post-callback record tournament is
 also no longer an offline unknown: another exact-build continuation closes its
 24-byte layout, comparator, displaced-primary fallback, and local draw grammar.
+The native target-area callback wrapper is now closed as a parameterized
+boundary too: `Skill +0x110` is joined to `Board +0x0c` and `Board:IsValid`,
+invalid origins clear the cache, `TwoClick` selects the callback, and only
+negative returned coordinates are filtered. Concrete Lua-produced points
+remain explicit inputs.
 The scheduler/fallback *control flow* is no longer unknown: exact
 offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
@@ -76,6 +81,10 @@ The durable artifacts are:
   for the complete ordinary pre-`GetTargetArea` gate, named smoke/Water
   predicates, usable-skill scan, `iBonusShift`/`IsMech` fields, literal-50
   `Skill_Repair` resolver, exact active `SkillList` census, and pure gate replay;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_callback_boundary.json`
+  for the joined Board context/validity guard, `TwoClick` dispatch, invalid-
+  origin cache clear, stable negative-coordinate filter, complete direct-caller
+  inventories, and pure replay from an already-materialized callback PointList;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -265,6 +274,23 @@ The hash-pinned 152-file Lua census distinguishes 206 visually matching
 one-line `SkillList` forms from eight inside block comments: 198 are active,
 with arity distribution 26/161/11 for zero/one/two and maximum active literal
 arity two. That source maximum is not a universal runtime or modded bound.
+
+The callback-wrapper continuation closes the next native layer. `Board:AddPawn`
+passes `Board +0x0c` to the SkillManager context writer, which stores it at
+`+0x110` on every vector Skill and the separate repair Skill. That secondary
+vtable's slot `+0x14` is a `this -= 0x0c` thunk to the exact `Board:IsValid`
+bounds body. The wrapper stores its origin, invokes no Lua callback when that
+origin is invalid, move-assigns a fresh empty PointList over the old target
+cache, and returns empty.
+
+For a valid origin, `GetSecondTargetArea(origin, second_target)` is selected
+only when `TwoClick` is true and both second-target coordinates differ from
+literal `-1`; otherwise the wrapper invokes `GetTargetArea(origin)`. After Lua
+result conversion, native code replaces the cache and stably erases points
+whose x or y is negative. It does not reapply `Board:IsValid` to returned
+points, so duplicates, encounter order, and positive out-of-board coordinates
+survive. The pure replay starts with that already-materialized ordered
+PointList and therefore does not claim the concrete Lua construction itself.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -782,9 +808,13 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    callback and pawn/skill inputs.
    **Completed offline for the native target-area gate:** the active/smoke/
    Water/bonus-shift/usable-skill/IsMech predicate and literal-50
-   `Skill_Repair` resolver are replayable from explicit inputs. Lua callback
-   target points and the complete prospective payload remain outside this
-   boundary.
+   `Skill_Repair` resolver are replayable from explicit inputs.
+   **Completed offline for the target-area callback wrapper:** Board validity,
+   invalid-origin cache clearing, `TwoClick` callback selection, cache
+   replacement, stable negative-coordinate filtering, and return copying are
+   replayable from an already-materialized callback PointList. Concrete Lua
+   target-point construction and the complete prospective payload remain
+   outside this boundary.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit

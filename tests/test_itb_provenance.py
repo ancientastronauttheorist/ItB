@@ -712,6 +712,13 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "eight block-commented matches" in evidence
     assert "198 active assignments" in evidence
     assert "17 adversarial replay vectors" in evidence
+    assert "Skill +0x110" in evidence
+    assert "Board +0x0c secondary/path-manager interface" in evidence
+    assert "move-assigns a fresh empty PointList" in evidence
+    assert "selects GetSecondTargetArea" in evidence
+    assert "nonnegative out-of-board coordinates survive" in evidence
+    assert "nine exact functions" in evidence
+    assert "12 adversarial replay vectors" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -802,6 +809,29 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "literal_50_is_repair",
         "active_literal_skill_list_assignment_count",
     }
+    assert implementations[
+        "src/observatory/enemy_target_area_callback_boundary.py"
+    ] == {
+        "replay_enemy_target_area_callback",
+        "validate_enemy_target_area_callback_boundary_map",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_target_area_callback.py"
+    ] == {
+        "build",
+        "verify",
+        "replay",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_target_area_callback_boundary.json"
+    ] == {
+        "skill_context_is_board_secondary_interface",
+        "invalid_origin_clears_cache",
+        "two_click_callback_selection",
+        "native_post_callback_filter",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -809,6 +839,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "selector-entry state" in gaps
     assert "one Firefly1 single-weapon shape" in gaps
     assert "now-proven native target-area eligibility gate" in gaps
+    assert "callback/cache/filter wrapper" in gaps
+    assert "native target-area wrapper" in gaps
+    assert "concrete ordered Lua-produced PointLists" in gaps
     assert "raw callback values" in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
     assert "24-byte record comparator" in gaps

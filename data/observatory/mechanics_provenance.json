@@ -2003,6 +2003,18 @@
         },
         {
           "classification": "inference",
+          "statement": "The exact-build callback-wrapper continuation joins Skill +0x110 to the Board +0x0c secondary/path-manager interface and its slot-+0x14 Board:IsValid thunk. The wrapper stores the origin first; an invalid origin invokes no Lua callback, move-assigns a fresh empty PointList over the prior target cache, and returns empty."
+        },
+        {
+          "classification": "inference",
+          "statement": "For a valid origin, native code selects GetSecondTargetArea only when TwoClick is true and neither stored second-target coordinate equals -1; otherwise it selects GetTargetArea. The materialized callback PointList replaces the cache, then points with negative x or y are stably erased while duplicates, encounter order, and nonnegative out-of-board coordinates survive."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable target-area callback artifact binds nine exact functions, 15 semantic instruction windows, 13 direct edges, one tail jump, two complete six-site raw-call inventories, four data anchors, one instruction anchor, and 12 adversarial replay vectors. It closes the parameterized native wrapper while leaving concrete Lua point construction and SkillEffect materialization explicit."
+        },
+        {
+          "classification": "inference",
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
         {
@@ -2105,6 +2117,30 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_target_area_callback_boundary.py",
+          "symbols": [
+            "replay_enemy_target_area_callback",
+            "validate_enemy_target_area_callback_boundary_map"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_target_area_callback.py",
+          "symbols": [
+            "build",
+            "verify",
+            "replay"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_callback_boundary.json",
+          "symbols": [
+            "skill_context_is_board_secondary_interface",
+            "invalid_origin_clears_cache",
+            "two_click_callback_selection",
+            "native_post_callback_filter"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2122,8 +2158,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate and score adjustments, the now-proven record-level native tournament, per-subclass Lua target-point construction, callback/effect-side score materialization, and shared-RNG state.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native ScorePositioning clamp, native GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered Lua-returned targets, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, and score adjustments, the now-proven record-level native tournament, per-subclass Lua target-point construction, callback/effect-side score materialization, and shared-RNG state.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2232,6 +2268,16 @@
             "test_usable_skill_scan_exact_ids_and_limited_use_boundary",
             "test_each_ordinary_gate_failure_blocks_dispatch",
             "test_exact_local_executable_and_sources_reproduce_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_target_area_callback_boundary.py",
+          "symbols": [
+            "test_board_context_chain_names_exact_adjustment_slot_and_target",
+            "test_invalid_origin_clears_nonempty_cache_and_invokes_no_callback",
+            "test_regular_callback_filter_is_negative_only_and_stable",
+            "test_two_click_dispatches_second_callback_with_two_point_arguments",
+            "test_exact_installed_executable_rebuilds_committed_map_when_available"
           ]
         },
         {

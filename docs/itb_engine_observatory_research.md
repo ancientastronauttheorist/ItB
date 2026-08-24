@@ -20,6 +20,9 @@ positioning clamp and target-score adjustments independently replayable.
 The next continuation closes the complete native pre-`GetTargetArea` gate,
 names literal index 50 as the separately owned `Skill_Repair`, and distinguishes
 198 active literal `SkillList` assignments from eight block-commented matches.
+A further continuation joins `Skill +0x110` to `Board:IsValid` and makes the
+native target-area callback selection, cache mutation, negative-coordinate
+filter, and returned PointList pure replayable from materialized Lua points.
 Two atomic live captures further bind 2,982 native RNG records to the exact
 build and exercise reviewed RNG leaves, candidate tie-breaking, record
 selection, and seed advance with clean byte restoration. Five natural callback
@@ -216,11 +219,12 @@ live-or-persistent-corpse, including Road Runner corpse transit but no corpse
 stop; simulator v403 carries that rule. A later exact-build continuation closes
 the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
 effective shipped source corpse types. Transient lifecycle/removal timing,
-Lua callback target-point materialization, selector-entry state delivery, and
-broader queue paths remain to be validated. The native positioning clamp,
+concrete Lua target-point/effect construction, selector-entry state delivery,
+and broader queue paths remain to be validated. The native positioning clamp,
 selected-weapon normalization, history/priority modifiers, positive-score
-floor, active/smoke/Water/bonus-shift/usable-skill/IsMech target-area gate, and
-literal-50 repair resolver are exact-build replayable from explicit inputs. The higher-level record
+floor, active/smoke/Water/bonus-shift/usable-skill/IsMech target-area gate,
+literal-50 repair resolver, and target-area callback/cache/filter wrapper are
+exact-build replayable from explicit inputs. The higher-level record
 selector itself is now exact-build replayable: it consumes six-integer records,
 applies the native positioning/target comparator, retains only the immediately
 displaced primary group, spends a primary draw even for a singleton, and gates
@@ -846,8 +850,12 @@ bridge-read boundary.
   queue commit without modifying executable bytes.
 - **Completed offline before `GetTargetArea`:** the exact normal/debug gate,
   smoke/Water helpers, usable-skill scan, `iBonusShift`, `IsMech`, and literal-50
-  `Skill_Repair` resolver are pure replayable. Concrete Lua target points remain
-  runtime inputs.
+  `Skill_Repair` resolver are pure replayable.
+- **Completed offline through the target-area callback wrapper:** Board validity,
+  invalid-origin cache clearing, `TwoClick` callback selection, cache
+  replacement, stable negative-coordinate filtering, and return copying are
+  replayable from already-materialized Lua points. Concrete Lua point
+  construction remains a runtime input.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
@@ -879,8 +887,8 @@ bridge-read boundary.
 
 - **Offline Windows tranche complete:** named RNG bindings, the shared RNG,
   enemy candidate/score callbacks, the complete pre-target-area gate and repair
-  sentinel, tie-breaking, and the selected record are build-keyed and
-  independently verifiable.
+  sentinel, the target-area callback/cache/filter wrapper, tie-breaking, and
+  the selected record are build-keyed and independently verifiable.
 - **Road Runner boundary complete:** the path API bindings, profile constants,
   Board search vtable, and profile-4 transit/stop split are build-keyed and
   independently verifiable; simulator v401 carries the proven rule.
