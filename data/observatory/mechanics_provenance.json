@@ -9848,6 +9848,111 @@
           "symbols": ["test_native_zero_hp_cleanup_record_pins_structural_erase_without_tail_overclaim"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed native artifact data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9, scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155, and the accepted 305-file scripts tree. It hash-pins 24 reviewed regions, 37 instruction-aligned control windows, 15 direct edges, 13 absolute-reference anchors with 27 references, six source files, and the prior zero-HP cleanup dependency."
+        },
+        {
+          "classification": "fact",
+          "statement": "All seven OnKill occurrences in the exact accepted Lua tree are one empty Skill default plus six localization-key strings. Each nonempty key is present in Weapons_ae.csv, Skill_OnKill is the localized UI label 'On Kill:', no accepted Lua file defines a matching function, and each of the six mechanics is implemented in its weapon's GetSkillEffect body. This resolves the shipped Lua-callback hypothesis without claiming exhaustive native-only field-offset consumers."
+        },
+        {
+          "classification": "fact",
+          "statement": "Luabind maps SkillEffect.iOwner to record offset +0x5c. Board:AddEffect copies the 0x7c-byte record into Board's queued effect vector, both exact copy paths preserve +0x5c, and the dispatcher passes the by-value record's [ebp+0x64] owner into a native context whose first field is installed at current-owner address 0x008bd254."
+        },
+        {
+          "classification": "fact",
+          "statement": "Both shipped Env_Attack:ApplyEffect branches assign effect.iOwner=ENV_EFFECT before Board:AddEffect, and exact registration publishes ENV_EFFECT as integer -10. Registered Pawn IsMech and GetTeam read +0x9e4 and +0xb0, TEAM_ENEMY is integer 6, and Lua Pawn.Minor loads into +0x10d0."
+        },
+        {
+          "classification": "fact",
+          "statement": "The ordinary non-Mech TEAM_ENEMY death path records event 2 with INT_MAX payload for a non-Minor Pawn and event 12 for a Minor Pawn; EVENT_ENEMY_KILLED is exactly event 2. The generic recorder increments pending counts, the sole direct publisher copies pending to the readable array and resets pending, registered Game:GetEventCount reads that array, and Mission:BaseUpdate adds EVENT_ENEMY_KILLED to KilledVek for Kill Five and Pacifist objectives. Exact same-update versus next-update visibility remains unproven."
+        },
+        {
+          "classification": "fact",
+          "statement": "For non-Minor, XP-eligible deaths, owners 0 through 2 add victim XP to xp_<owner> and one to kill_<owner>, while other owners add victim XP to env_xp; the reviewed path also writes any_kill_<owner>. The per-Pawn consumer reads and clears its three ID-keyed buckets, applies Extra_XP as two per kill, adds XP to iKillCount +0xa60, and adds any-kill count to Mech iKills +0x98c. iMissionDamage +0x1170 is a separate health-delta accumulator."
+        },
+        {
+          "classification": "inference",
+          "statement": "ENV_EFFECT owner -10 takes the env_xp branch and names its unconditional bucket any_kill_-10, so it does not create the xp_<0..2>, kill_<0..2>, or any_kill_<0..2> entries consumed by those Mech owners. The independent non-Minor EVENT_ENEMY_KILLED still fires. Rust apply_env_danger already records lethal enemy deaths through unit_counts_for_mission_kill, whose ordinary rule excludes Minor enemies; a focused Final Cave environment regression now locks that conformance. No simulator semantic change or version bump is required."
+        }
+      ],
+      "id": "native-death-event-credit-boundary",
+      "implementations": [
+        {
+          "path": "src/observatory/death_event_credit_boundary.py",
+          "symbols": ["build_death_event_credit_boundary_map", "validate_death_event_credit_boundary_map", "validate_death_event_credit_boundary_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_death_event_credit.py",
+          "symbols": ["main"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["apply_env_danger", "apply_mission_final_volcano", "apply_mission_final_cave"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["unit_counts_for_mission_kill", "record_enemy_kill"]
+        }
+      ],
+      "known_gaps": [
+        "The accepted shipped Lua tree has no OnKill callback function to trace, but native-only consumers that address the Skill field by offset are not exhaustively inventoried.",
+        "The writer, sole publisher, reader, and Mission:BaseUpdate consumer are structurally joined, but exact visibility for a death raised in a particular Board/effect pass—same outer update versus the next—remains unproven.",
+        "Achievement-specific event and persistent profile counter tails, specialized Pawn subclasses or nonstandard teams, and all consumers of any_kill_-10 remain outside this ordinary TEAM_ENEMY/Minor path.",
+        "The xp_/kill_/env_xp split includes the exact non-Minor and victim +0x1175 eligibility gates. The semantic name and every writer of +0x1175 are not reconstructed because they do not alter the proven ENV_EFFECT branch or mission event.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/environments.lua",
+          "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+          "symbols": ["Env_Attack:ApplyEffect", "ENV_EFFECT", "Board:AddEffect"]
+        },
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": ["Skill", "Skill.OnKill"]
+        },
+        {
+          "path": "scripts/advanced/ae_weapons.lua",
+          "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+          "symbols": ["Prime_KO_Crack:GetSkillEffect", "Brute_KO_Combo:GetSkillEffect", "Ranged_Arachnoid:GetSkillEffect", "Ranged_KO_Combo:GetSkillEffect", "Science_KO_Crack:GetSkillEffect", "Support_KO_GridCharger:GetSkillEffect"]
+        },
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": ["Mission:BaseUpdate", "Mission.KilledVek", "EVENT_ENEMY_KILLED"]
+        },
+        {
+          "path": "scripts/localization/Global_ae.csv",
+          "sha256": "b07fc5c5e2ffc0a167d538ae5f52c69c26e3560d949cb7837038a2252db3b01d",
+          "symbols": ["Skill_OnKill"]
+        },
+        {
+          "path": "scripts/localization/Weapons_ae.csv",
+          "sha256": "1b61022ce01ba36400056d6f871c9c6e0bfebb68f7911d52141ba76cc0fd76e2",
+          "symbols": ["Prime_KO_Crack_OnKill", "Brute_KO_Combo_OnKill", "Ranged_Arachnoid_OnKill", "Ranged_KO_Combo_OnKill", "Science_KO_Crack_OnKill", "Support_KO_GridCharger_OnKill"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_death_event_credit_boundary.py",
+          "symbols": ["test_committed_map_proves_environment_mission_credit_split_without_overclaim", "test_binding_rejects_owner_event_credit_or_scope_drift", "test_exact_local_executable_sources_and_dependency_reproduce_map_when_available"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_mission_final_cave_environment_kill_credit_excludes_minor_enemy"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_death_event_credit_record_pins_environment_split_without_onkill_overclaim"]
+        }
+      ]
     }
   ],
   "schema_version": 1

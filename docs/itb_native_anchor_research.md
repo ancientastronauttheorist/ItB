@@ -354,8 +354,54 @@ proof.
 Reverify it with `scripts/itb_observatory_zero_hp_cleanup.py verify`. Exact
 damage-relative sweep timing, concrete subclass corpse results, Lua callback
 dispatch, source/team/owner and counter attribution, death-effect presentation,
-and non-Windows equivalence remain open. No Rust change follows from the
-structural continuation.
+and non-Windows equivalence remain open at this structural boundary. The
+ordinary enemy event and credit path continues below. No Rust change follows
+from the structural continuation.
+
+## Enemy-death event and credit boundary
+
+The exact-build continuation
+`data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json`
+joins the queued `SkillEffect.iOwner` field to the ordinary enemy-death event
+and credit writers. Luabind maps `iOwner` to `+0x5c`; `Board:AddEffect` copies
+the complete 0x7c-byte record, both reviewed copy paths preserve the field, and
+the dispatcher installs it as its current owner context. Both shipped
+`Env_Attack:ApplyEffect` branches set `iOwner=ENV_EFFECT`, whose exact native
+registration is integer `-10`.
+
+For a non-Mech `TEAM_ENEMY` death, the native path records event 2 with
+`INT_MAX` payload when `Minor` is false and event 12 when it is true. Event 2
+is the exact `EVENT_ENEMY_KILLED` registration. Its generic recorder increments
+the pending array, the sole direct publisher copies pending to the readable
+array and resets pending, `Game:GetEventCount` reads that array, and
+`Mission:BaseUpdate` adds the value to `KilledVek`. The artifact does not claim
+whether a death raised in a particular Board/effect pass becomes readable in
+that same outer update or the next.
+
+The ordinary credit branch is independent. For non-Minor, XP-eligible victims,
+owners 0 through 2 write `xp_<owner>` and `kill_<owner>`; every other owner
+writes `env_xp`. The reviewed path also writes `any_kill_<owner>`. Each Pawn
+consumer reads and clears only the three buckets for its own ID, adds the
+`Extra_XP` bonus, then updates `iKillCount` and Mech `iKills`.
+`iMissionDamage` is a separate health-delta accumulator. Environment owner
+`-10` therefore cannot create any Mech owner's XP, kill, or any-kill entry,
+while the independent non-Minor enemy-killed mission event still fires.
+
+The source-side `OnKill` hypothesis is also narrower now. Across the accepted
+305-file scripts tree, all seven occurrences are one empty `Skill` default plus
+six localization keys; no matching Lua callback function exists, and each
+weapon implements its mechanic inline in `GetSkillEffect`. This does not
+exhaust native-only consumers that address a Skill field by offset.
+
+Reverify the chain with
+`scripts/itb_observatory_death_event_credit.py verify`. Rust's lethal
+environment path already records the same ordinary mission kill and excludes
+Minor enemies; the focused Final Cave regression locks the behavior, so no
+simulator semantic change or version bump follows. Exact event-frame
+visibility, specialized pawns and teams, achievement/profile tails,
+`any_kill_-10` consumers, the complete meaning/writer set for Pawn byte
+`+0x1175`, native-only `OnKill` consumers, and non-Windows equivalence remain
+open.
 
 ## Reproducible analysis workflow
 
@@ -531,10 +577,16 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    equivalent. A build-keyed continuation now proves the later same-HP-routine
    virtual `IsDead` classification and conditional Board-vector erase for a
    dead non-corpse passing all additional native gates. It also proves that
-   corpses skip that erase path and inventories all absolute `OnKill`, named
-   event, owner, death, and counter references without mistaking metadata or
-   binding sites for runtime dispatch. Exact sweep timing, subclass outcomes,
-   Lua callback dispatch, kill attribution/counters, death presentation, and
+   corpses skip that erase path. A second build-keyed continuation now proves
+   the ordinary environment-owned event and credit chain: queued
+   `SkillEffect.iOwner` reaches the dispatcher, `ENV_EFFECT` is `-10`, non-Minor
+   enemy death raises exact `EVENT_ENEMY_KILLED=2`, Minor raises event 12, and
+   environment credit bypasses all Mech-ID XP/kill/any-kill buckets while the
+   mission event remains independent. The accepted shipped Lua tree has no
+   `OnKill` callback definition; its seven occurrences are one empty default
+   plus six localization keys for inline `GetSkillEffect` mechanics. Exact
+   sweep and event-frame timing, subclass/team outcomes, native-only Skill
+   field-offset consumers, achievement/profile tails, death presentation, and
    non-Windows equivalence remain open.
 9. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed

@@ -1098,3 +1098,53 @@ which sweep follows a particular damage/effect record, concrete subclass
 kill owner/team/counter updates, death-effect presentation, or another depot.
 Those limits are why this tranche requires no Rust semantic or simulator-
 version change.
+
+## Enemy-death event and credit boundary
+
+`native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json`
+continues from the zero-HP artifact through the ordinary native enemy-death
+event and credit paths. It binds 24 native regions, 37 instruction-start
+control windows, 15 direct edges, 13 named absolute-reference anchors with 27
+references, six exact sources, and the accepted 305-file scripts tree. For
+Windows build `13725832` it establishes that:
+
+- the exact shipped Lua tree has seven `OnKill` occurrences: one empty `Skill`
+  default and six localization-key values. It has no matching Lua callback
+  definition, and all six mechanics are inline in their weapons'
+  `GetSkillEffect` bodies;
+- luabind registers `SkillEffect.iOwner` at record offset `+0x5c`;
+  `Board:AddEffect` and both exact copy paths preserve it, and the dispatcher
+  installs the copied owner as its current native owner context;
+- both `Env_Attack:ApplyEffect` branches assign `ENV_EFFECT` before enqueueing,
+  and exact registration gives `ENV_EFFECT` the integer value `-10`;
+- the ordinary non-Mech `TEAM_ENEMY` death path emits event 2 for a non-Minor
+  pawn and event 12 for a Minor pawn. Event 2 is exactly
+  `EVENT_ENEMY_KILLED`; its pending/readable counter path reaches
+  `Mission:BaseUpdate` and the `KilledVek` mission field;
+- non-Minor, XP-eligible victims credit owners 0 through 2 through
+  `xp_<owner>` and `kill_<owner>`, while other owners use `env_xp`. The
+  reviewed path also names `any_kill_<owner>`, and each Mech consumes only its
+  own Pawn-ID buckets; and
+- environment owner `-10` therefore bypasses Mech XP, kill, and any-kill
+  buckets while the independent non-Minor mission event still fires.
+  `iMissionDamage` is instead a health-delta accumulator.
+
+Verify the executable, predecessor map, exact sources and scripts tree, region
+and data hashes, instruction windows, direct edges, owner/event/credit
+contracts, and absolute-reference inventories with:
+
+```powershell
+python scripts/itb_observatory_death_event_credit.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --credit-map data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json
+```
+
+Rust already applies the matching ordinary mission-kill rule to lethal
+environment damage and excludes Minor enemies; the focused Final Cave
+regression locks that conformance, so this tranche requires no semantic or
+simulator-version change. Exact same-outer-update versus next-update event
+visibility, native-only `OnKill` field-offset consumers, specialized pawns and
+teams, achievement/profile tails, the semantic name and complete writer set
+for Pawn byte `+0x1175`, consumers of `any_kill_-10`, and non-Windows depots
+remain open.

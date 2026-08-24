@@ -6704,6 +6704,169 @@ def test_native_zero_hp_cleanup_record_pins_structural_erase_without_tail_overcl
     ] is False
 
 
+def test_native_death_event_credit_record_pins_environment_split_without_onkill_overclaim():
+    record = _mission_provenance_record("native-death-event-credit-boundary")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/environments.lua",
+            "sha256": (
+                "5f8a7d74f537abb33bc88c1f9669f3f6"
+                "fabdd5c8c51aad3486d2e965e4fb80ec"
+            ),
+            "symbols": ["Env_Attack:ApplyEffect", "ENV_EFFECT", "Board:AddEffect"],
+        },
+        {
+            "path": "scripts/global.lua",
+            "sha256": (
+                "96d82d83a1620061e6fd013aa8462883e"
+                "1f3764d03752757ad77fbbbd04bc9b2"
+            ),
+            "symbols": ["Skill", "Skill.OnKill"],
+        },
+        {
+            "path": "scripts/advanced/ae_weapons.lua",
+            "sha256": (
+                "5566b679c696ab489e40a0189d0a63b6"
+                "99d01e9657f79a20e6f119239af1680f"
+            ),
+            "symbols": [
+                "Prime_KO_Crack:GetSkillEffect",
+                "Brute_KO_Combo:GetSkillEffect",
+                "Ranged_Arachnoid:GetSkillEffect",
+                "Ranged_KO_Combo:GetSkillEffect",
+                "Science_KO_Crack:GetSkillEffect",
+                "Support_KO_GridCharger:GetSkillEffect",
+            ],
+        },
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81c"
+                "6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": [
+                "Mission:BaseUpdate",
+                "Mission.KilledVek",
+                "EVENT_ENEMY_KILLED",
+            ],
+        },
+        {
+            "path": "scripts/localization/Global_ae.csv",
+            "sha256": (
+                "b07fc5c5e2ffc0a167d538ae5f52c69c"
+                "26e3560d949cb7837038a2252db3b01d"
+            ),
+            "symbols": ["Skill_OnKill"],
+        },
+        {
+            "path": "scripts/localization/Weapons_ae.csv",
+            "sha256": (
+                "1b61022ce01ba36400056d6f871c9c6e"
+                "0bfebb68f7911d52141ba76cc0fd76e2"
+            ),
+            "symbols": [
+                "Prime_KO_Crack_OnKill",
+                "Brute_KO_Combo_OnKill",
+                "Ranged_Arachnoid_OnKill",
+                "Ranged_KO_Combo_OnKill",
+                "Science_KO_Crack_OnKill",
+                "Support_KO_GridCharger_OnKill",
+            ],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/observatory/death_event_credit_boundary.py"] == {
+        "build_death_event_credit_boundary_map",
+        "validate_death_event_credit_boundary_map",
+        "validate_death_event_credit_boundary_map_binding",
+    }
+    assert implementations["scripts/itb_observatory_death_event_credit.py"] == {
+        "main",
+    }
+    assert implementations["rust_solver/src/board.rs"] == {
+        "record_enemy_kill",
+        "unit_counts_for_mission_kill",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "24 reviewed regions" in facts
+    assert "All seven OnKill occurrences" in facts
+    assert "SkillEffect.iOwner to record offset +0x5c" in facts
+    assert "ENV_EFFECT as integer -10" in facts
+    assert "records event 2" in facts
+    assert "other owners add victim XP to env_xp" in facts
+    assert "iMissionDamage +0x1170 is a separate health-delta accumulator" in facts
+    assert "No simulator semantic change or version bump is required" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "native-only consumers" in gaps
+    assert "same outer update versus the next" in gaps
+    assert "Achievement-specific event" in gaps
+    assert "all consumers of any_kill_-10" in gaps
+    assert "every writer of +0x1175" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_death_event_credit_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert boundary["summary"] == {
+        "absolute_reference_anchor_count": 13,
+        "absolute_reference_count": 27,
+        "control_window_count": 37,
+        "data_anchor_count": 1,
+        "dependency_count": 1,
+        "direct_edge_count": 15,
+        "environment_mech_credit_bypass_proven": True,
+        "environment_owner_pipeline_proven": True,
+        "exact_event_frame_visibility_proven": False,
+        "finding_count": 11,
+        "mission_enemy_killed_event_proven": True,
+        "region_count": 24,
+        "shipped_lua_onkill_callback_proven": False,
+        "simulator_change_required": False,
+        "source_count": 6,
+        "unresolved_count": 6,
+    }
+    assert boundary["contracts"]["owner_pipeline"] == {
+        "board_effect_vector_offset": "+0x2c50",
+        "context_owner_field_offset": "+0x00",
+        "current_owner_address": "0x008bd254",
+        "dispatcher_by_value_iowner_stack_offset": "+0x64",
+        "environment_owner_name": "ENV_EFFECT",
+        "environment_owner_pipeline_proven": True,
+        "environment_owner_value": -10,
+        "queued_copy_preserves_iowner": True,
+        "skill_effect_iowner_offset": "+0x5c",
+        "skill_effect_size_bytes": 124,
+    }
+    assert boundary["contracts"]["mission_event"]["event_enemy_killed_value"] == 2
+    assert boundary["contracts"]["mission_event"][
+        "exact_same_or_next_update_visibility_proven"
+    ] is False
+    assert boundary["contracts"]["credit"][
+        "environment_generates_mech_xp_or_kill_bucket"
+    ] is False
+    assert boundary["contracts"]["credit"][
+        "i_mission_damage_is_health_delta_not_death_credit"
+    ] is True
+    assert boundary["contracts"]["onkill"] == {
+        "all_nonempty_values_are_localization_keys": True,
+        "matching_lua_function_definition_count": 0,
+        "mechanics_implemented_in_get_skill_effect": True,
+        "native_only_offset_consumers_exhausted": False,
+        "shipped_lua_callback_field_proven": False,
+        "shipped_lua_occurrence_count": 7,
+        "shipped_nonempty_value_count": 6,
+    }
+
+
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
     record = _mission_provenance_record(
         "player-sources-dormant-experiment-structure"

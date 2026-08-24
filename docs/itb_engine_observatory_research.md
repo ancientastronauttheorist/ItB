@@ -505,7 +505,19 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   direct sweep callers, four `OnKill` absolute references confined to property-
   access functions, and one named enemy-killed-event binding reference; exact
   damage-relative timing, subclass results, indirect or generic callback
-  dispatch, credit/counters, and presentation remain open; and
+  dispatch, and presentation remain open; and
+- the ordinary enemy-death event and credit continuation: complete
+  `SkillEffect.iOwner +0x5c` preservation from `Board:AddEffect` into the
+  dispatcher, `Env_Attack` ownership by exact `ENV_EFFECT=-10`, non-Minor
+  ordinary enemy event 2 versus Minor event 12, pending-to-readable publication
+  into `Mission:BaseUpdate`, and the independent owner-credit split. Mech owners
+  0 through 2 receive their ID-keyed XP/kill/any-kill buckets; environment owner
+  `-10` instead uses `env_xp` and `any_kill_-10` while still raising the
+  non-Minor mission event. All seven shipped Lua `OnKill` occurrences are an
+  empty default or localization keys with inline `GetSkillEffect` mechanics,
+  not callback definitions. Exact event-frame visibility, native-only field-
+  offset consumers, specialized cases, achievement/profile tails, and other
+  depots remain open; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,

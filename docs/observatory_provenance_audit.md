@@ -886,7 +886,24 @@ callers, four absolute `OnKill` references confined to two property-access
 functions, and one `EVENT_ENEMY_KILLED` binding-table name reference. This
 still does not prove damage-relative sweep timing, concrete subclass outcomes,
 a generic or indirect Lua `OnKill` dispatch, kill attribution or counters,
-death presentation, or non-Windows equivalence.
+death presentation, or non-Windows equivalence at that structural boundary.
+
+The `native-death-event-credit-boundary` successor resolves the ordinary
+environment-owned tail without turning names into semantics. It proves
+`SkillEffect.iOwner +0x5c` survives the complete queued-effect copy and reaches
+the dispatcher; both `Env_Attack` branches set it to exact
+`ENV_EFFECT=-10`. A non-Mech `TEAM_ENEMY` death publishes event 2 for non-Minor
+and event 12 for Minor; the pending/readable counter chain reaches
+`Mission:BaseUpdate`, where event 2 is `EVENT_ENEMY_KILLED`. The separate credit
+path gives eligible, non-Minor victims to `xp_<owner>`/`kill_<owner>` only for
+owners 0 through 2 and otherwise to `env_xp`, while also naming
+`any_kill_<owner>`. Per-Pawn consumers clear only their own ID buckets, so
+environment owner `-10` raises the ordinary mission event without crediting a
+Mech. All seven accepted Lua `OnKill` occurrences are an empty default or
+localization keys backed by inline `GetSkillEffect` mechanics; there is no
+shipped Lua callback definition. Exact same-update visibility, native-only
+field-offset consumers, specialized pawns/teams, achievement/profile tails,
+the remaining `+0x1175` meaning/writers, and non-Windows equivalence stay open.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and

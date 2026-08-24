@@ -1,0 +1,1100 @@
+{
+  "absolute_reference_inventory": [
+    {
+      "absolute_operand_rvas": [
+        "0x0022984f",
+        "0x0022994f",
+        "0x00283916"
+      ],
+      "id": "i_owner_name",
+      "string_hex": "694f776e657200",
+      "string_rva": "0x00435e90"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0027ddea"
+      ],
+      "id": "env_effect_name",
+      "string_hex": "454e565f45464645435400",
+      "string_rva": "0x004396b0"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0027e940"
+      ],
+      "id": "team_enemy_name",
+      "string_hex": "5445414d5f454e454d5900",
+      "string_rva": "0x00439794"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x002805b8"
+      ],
+      "id": "event_enemy_killed_name",
+      "string_hex": "4556454e545f454e454d595f4b494c4c454400",
+      "string_rva": "0x00439aa4"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0028e79b"
+      ],
+      "id": "get_event_count_name",
+      "string_hex": "4765744576656e74436f756e7400",
+      "string_rva": "0x00439428"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0022c4a5"
+      ],
+      "id": "minor_name",
+      "string_hex": "4d696e6f7200",
+      "string_rva": "0x00436058"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0022da33",
+        "0x0023cc74",
+        "0x0023cddd",
+        "0x0023f66a"
+      ],
+      "id": "xp_prefix",
+      "string_hex": "78705f00",
+      "string_rva": "0x00436180"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0022da79",
+        "0x0023cbd8",
+        "0x0023ccb7"
+      ],
+      "id": "kill_prefix",
+      "string_hex": "6b696c6c5f00",
+      "string_rva": "0x00436178"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0022dadd",
+        "0x0023cc26",
+        "0x0023cd4a"
+      ],
+      "id": "any_kill_prefix",
+      "string_hex": "616e795f6b696c6c5f00",
+      "string_rva": "0x00436194"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x0018f20c",
+        "0x0018f228",
+        "0x0022daa7"
+      ],
+      "id": "env_xp_name",
+      "string_hex": "656e765f787000",
+      "string_rva": "0x0042fc7c"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x00240612",
+        "0x0024198b"
+      ],
+      "id": "i_kills_name",
+      "string_hex": "694b696c6c7300",
+      "string_rva": "0x00436e74"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x00240958",
+        "0x00241b98"
+      ],
+      "id": "i_kill_count_name",
+      "string_hex": "694b696c6c436f756e7400",
+      "string_rva": "0x00436f58"
+    },
+    {
+      "absolute_operand_rvas": [
+        "0x00240755",
+        "0x00241f15"
+      ],
+      "id": "i_mission_damage_name",
+      "string_hex": "694d697373696f6e44616d61676500",
+      "string_rva": "0x00436ea4"
+    }
+  ],
+  "analysis_kind": "native_death_event_credit_boundary_map",
+  "base_scripts_inventory": {
+    "accepted_overlay_files": [
+      {
+        "id": "restored_project_bridge",
+        "sha256": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+        "size": 132609
+      },
+      {
+        "id": "current_project_bridge",
+        "sha256": "f94fabbe75aad2463e08ab28bf052e31db95b7724f31adbfc002aa102675f1a2",
+        "size": 315652
+      }
+    ],
+    "base_scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155",
+    "overlay_path": "scripts/modloader.lua",
+    "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_native_boundaries_restore_20260822.json",
+    "scripts_byte_count": 15967494,
+    "scripts_file_count": 305,
+    "sha256": "4be0c9382ab38ec264dd4673180eedc0c20f826569f790219002c1a35dae9355",
+    "size": 125456
+  },
+  "contracts": {
+    "credit": {
+      "all_reviewed_enemy_deaths_bucket": "any_kill_<owner>",
+      "environment_generates_mech_xp_or_kill_bucket": false,
+      "extra_xp_bonus_per_kill": 2,
+      "i_kill_count_offset": "+0x0a60",
+      "i_kills_offset": "+0x098c",
+      "i_mission_damage_is_health_delta_not_death_credit": true,
+      "i_mission_damage_offset": "+0x1170",
+      "mech_owner_inclusive_range": [
+        0,
+        2
+      ],
+      "mech_owner_kill_bucket": "kill_<owner>",
+      "mech_owner_xp_bucket": "xp_<owner>",
+      "nonmech_owner_xp_bucket": "env_xp",
+      "pawn_consumer_clears_buckets": true,
+      "pawn_consumer_id_offset": "+0x09a4",
+      "xp_and_kill_require_minor_false": true,
+      "xp_and_kill_require_victim_eligibility_byte_nonzero": "+0x1175"
+    },
+    "enemy_classification": {
+      "is_mech_offset": "+0x09e4",
+      "minor_offset": "+0x10d0",
+      "ordinary_path_requires_is_mech_false": true,
+      "ordinary_path_requires_team_enemy": true,
+      "team_enemy_value": 6,
+      "team_offset": "+0x00b0"
+    },
+    "mission_event": {
+      "event_enemy_killed_value": 2,
+      "event_payload": "0x7fffffff",
+      "exact_same_or_next_update_visibility_proven": false,
+      "get_event_count_reads_readable": true,
+      "minor_enemy_event": 12,
+      "mission_base_update_consumes_event_enemy_killed": true,
+      "nonminor_enemy_event": 2,
+      "publisher_copies_pending_to_readable": true,
+      "publisher_resets_pending": true,
+      "recorder_increments_pending": true
+    },
+    "onkill": {
+      "all_nonempty_values_are_localization_keys": true,
+      "matching_lua_function_definition_count": 0,
+      "mechanics_implemented_in_get_skill_effect": true,
+      "native_only_offset_consumers_exhausted": false,
+      "shipped_lua_callback_field_proven": false,
+      "shipped_lua_occurrence_count": 7,
+      "shipped_nonempty_value_count": 6
+    },
+    "owner_pipeline": {
+      "board_effect_vector_offset": "+0x2c50",
+      "context_owner_field_offset": "+0x00",
+      "current_owner_address": "0x008bd254",
+      "dispatcher_by_value_iowner_stack_offset": "+0x64",
+      "environment_owner_name": "ENV_EFFECT",
+      "environment_owner_pipeline_proven": true,
+      "environment_owner_value": -10,
+      "queued_copy_preserves_iowner": true,
+      "skill_effect_iowner_offset": "+0x5c",
+      "skill_effect_size_bytes": 124
+    }
+  },
+  "control_windows": [
+    {
+      "id": "iowner_field_binding",
+      "instruction_hex": "c74208905e8300c7420c5c000000c742145c000000",
+      "meaning": "Bind SkillEffect.iOwner to record offset +0x5c.",
+      "region": "iowner_binding",
+      "size": 21,
+      "start_rva": "0x00283913"
+    },
+    {
+      "id": "effect_enqueue_copy_and_queue",
+      "instruction_hex": "8d4508c745fc00000000508d8d74ffffffe85f000000c745f0000080bf8d8574ffffffc645fc01508d8e502c0000e8524f01008d45f0508d8e5c2c0000e8d3520100",
+      "meaning": "Copy the by-value 0x7c-byte SkillEffect, then append it to Board+0x2c50.",
+      "region": "effect_enqueue",
+      "size": 66,
+      "start_rva": "0x001606eb"
+    },
+    {
+      "id": "skill_effect_copy_owner",
+      "instruction_hex": "8d4e608b47488946488b474c89464c8b47508946508b47548946548b47588946588b475c89465c",
+      "meaning": "Copy source +0x5c into destination +0x5c with the adjacent scalar fields.",
+      "region": "skill_effect_copy",
+      "size": 39,
+      "start_rva": "0x00160811"
+    },
+    {
+      "id": "queue_copy_stride",
+      "instruction_hex": "8b4e04894d08894df0c745fc0100000085c9740657e854b0feff8346047c",
+      "meaning": "Invoke the SkillEffect copy constructor and advance the vector by 0x7c.",
+      "region": "effect_queue_insert",
+      "size": 30,
+      "start_rva": "0x001756f2"
+    },
+    {
+      "id": "dispatch_build_owner_context",
+      "instruction_hex": "ff75648d8db0feffffc645fc03e87bb1f3ff",
+      "meaning": "Pass by-value SkillEffect +0x5c ([ebp+0x64]) into the owner-context constructor.",
+      "region": "effect_dispatcher",
+      "size": 18,
+      "start_rva": "0x00161293"
+    },
+    {
+      "id": "dispatch_install_owner_context",
+      "instruction_hex": "8d85b0feffff508d8dfcfcffffe8efaff3ffc645fc068b85fcfcffff83f8ff750a390554d28b00740aeb3a390554d28b007521a190d28b003b8538fdffff75148d9500fdffffb958d28b00e891d0f0ff84c075118d85fcfcffffb954d28b0050e87caef3ff",
+      "meaning": "Copy the context, compare current owner at 0x8bd254, and install the new context when needed.",
+      "region": "effect_dispatcher",
+      "size": 101,
+      "start_rva": "0x0016131f"
+    },
+    {
+      "id": "context_build_owner_field",
+      "instruction_hex": "8b45088d4f04c745fc010000008907",
+      "meaning": "Store the constructor integer argument as context field zero.",
+      "region": "context_build",
+      "size": 15,
+      "start_rva": "0x0009c44f"
+    },
+    {
+      "id": "env_effect_registration",
+      "instruction_hex": "e8f7e5deff68b09683008d8d04f9ffff518bc8e8542addff8bd88b4b08ff710468f0d8ffffff33ff15c0647d00ff73048b3b57ff15e4647d006af6ff33ff158c647d00",
+      "meaning": "Publish ENV_EFFECT through the Lua integer-registration import with value -10.",
+      "region": "binding_table",
+      "size": 67,
+      "start_rva": "0x0027dde4"
+    },
+    {
+      "id": "team_enemy_registration",
+      "instruction_hex": "e8a1dadeff68949783008d8d14f8ffff518bc8e8fe1eddff8bd88b4b08ff710468f0d8ffffff33ff15c0647d00ff73048b3b57ff15e4647d006a06ff33ff158c647d00",
+      "meaning": "Publish TEAM_ENEMY through the same import with value 6.",
+      "region": "binding_table",
+      "size": 67,
+      "start_rva": "0x0027e93a"
+    },
+    {
+      "id": "event_enemy_registration",
+      "instruction_hex": "8b5de48d8df8fcffff8bd3e829bedeff68a49a83008d8dbcf5ffff518bc8e88602ddff68805581008bc8e8ba02ddff",
+      "meaning": "Bind EVENT_ENEMY_KILLED to the exact value object at VA 0x815580.",
+      "region": "binding_table",
+      "size": 47,
+      "start_rva": "0x002805a7"
+    },
+    {
+      "id": "get_event_count_target_binding",
+      "instruction_hex": "c745ec80e76000ff75f0518d4dec51518bc8e8f6140100",
+      "meaning": "Register native target RVA 0x20e780 through the GetEventCount wrapper.",
+      "region": "binding_table",
+      "size": 23,
+      "start_rva": "0x0027d243"
+    },
+    {
+      "id": "get_event_count_name_binding",
+      "instruction_hex": "c70264ba8300c742082894830089420c",
+      "meaning": "Name the registered Game method GetEventCount and retain its target.",
+      "region": "get_event_count_binding",
+      "size": 16,
+      "start_rva": "0x0028e792"
+    },
+    {
+      "id": "minor_field_load",
+      "instruction_hex": "6a056858608300c60000e81fbbddff8bcfe8f8cee1ff83ec188883d0100000",
+      "meaning": "Load Lua Pawn.Minor and store it at Pawn+0x10d0.",
+      "region": "pawn_definition_load",
+      "size": 31,
+      "start_rva": "0x0022c4a2"
+    },
+    {
+      "id": "death_capture_owner_and_mech",
+      "instruction_hex": "8a86e40900008b3d54d28b0089bd18ffffff",
+      "meaning": "Read Pawn IsMech +0x9e4 and capture current context owner 0x8bd254.",
+      "region": "death_processor",
+      "size": 18,
+      "start_rva": "0x0022d63d"
+    },
+    {
+      "id": "enemy_team_gate",
+      "instruction_hex": "8b86b000000083f8060f85e9040000",
+      "meaning": "Require Pawn team +0xb0 to equal TEAM_ENEMY (6).",
+      "region": "death_processor",
+      "size": 15,
+      "start_rva": "0x0022d83c"
+    },
+    {
+      "id": "enemy_event_minor_split",
+      "instruction_hex": "8a86d010000068ffffff7f84c075046a02eb026a0ce838e5e6ff",
+      "meaning": "Record event 2 for non-Minor enemies and event 12 for Minor enemies.",
+      "region": "death_processor",
+      "size": 26,
+      "start_rva": "0x0022d93e"
+    },
+    {
+      "id": "mech_owner_credit",
+      "instruction_hex": "8bbd18ffffff83ff020f87820000008bd78d4dc0e88de8e3ff83ec18c645fc088bcc89a520ffffffba8061830050e80323e2ff83c4048d8ea4080000c645fc098b01ff500850c645fc08e8f7e5e6ff8d4dc0c645fc00e86ba3ddff8bd78d4dc0e841e8e3ff83ec18c645fc0a8bccba7861830050e8bd22e2ff83c4046a01e8c3e5e6ff8d4dc0c645fc00e837a3ddff",
+      "meaning": "For eligible deaths and owners 0..2, add victim XP to xp_<owner> and one to kill_<owner>.",
+      "region": "death_processor",
+      "size": 143,
+      "start_rva": "0x0022da0a"
+    },
+    {
+      "id": "environment_xp_credit",
+      "instruction_hex": "83ec188bcc89a520ffffff687cfc8200e860a3ddff8d8ea4080000c645fc0b8b01ff500850c645fc00e887e5e6ff",
+      "meaning": "For eligible deaths and owners outside 0..2, add victim XP to env_xp.",
+      "region": "death_processor",
+      "size": 46,
+      "start_rva": "0x0022da9b"
+    },
+    {
+      "id": "any_kill_owner_credit",
+      "instruction_hex": "8bd78d4dd8e8dde7e3ff83ec18c645fc0c8bccba9461830050e85922e2ff83c4046a01e85fe5e6ffc645fc00",
+      "meaning": "Add one to any_kill_<owner> after the eligibility-specific branch.",
+      "region": "death_processor",
+      "size": 44,
+      "start_rva": "0x0022dac9"
+    },
+    {
+      "id": "counter_add_or_insert",
+      "instruction_hex": "803d50d28b0000755d837d20108d4d0c8b451c8d550c0f434d0c03c1837d20108d4d0c0f434d0c51525051e87622fdff83c408b938d28b00508d45f050e80441feff8d450cb938d28b0050e826190000837df000740a8d48188b45080101eb068b4d08894818",
+      "meaning": "Insert the supplied string-keyed value or add it to the existing value.",
+      "region": "string_counter_increment",
+      "size": 102,
+      "start_rva": "0x0009c07a"
+    },
+    {
+      "id": "event_record_pending",
+      "instruction_hex": "803d50d28b00005675588b7508b9b0d28b00a1a4d28b00897508ff04b08d4508508d45f850e8a00afeff8b45f88b4d0c894814a100d28b008b0dfcd18b002bc1c1f8023bf07d0e85f6780aff04b1",
+      "meaning": "Increment total and pending event arrays and retain the supplied payload.",
+      "region": "event_recorder",
+      "size": 78,
+      "start_rva": "0x0009be96"
+    },
+    {
+      "id": "event_publish_pending",
+      "instruction_hex": "68fcd18b00b9f0d18b00e83bbafeff8d45fcc745fc00000000506a508d4df0c745f000000000c745f400000000c745f800000000e8711000008d45f0b9fcd18b0050e813bbfeff",
+      "meaning": "Copy pending event counts to the readable array, then reset pending storage.",
+      "region": "event_publisher",
+      "size": 71,
+      "start_rva": "0x0009bf06"
+    },
+    {
+      "id": "event_count_read",
+      "instruction_hex": "a1f4d18b008b15f0d18b002bc28b4d08c1f8023bc87d1485c978108b048a85c00f95c184c974115dc20400",
+      "meaning": "Return the readable event count for a valid event ID.",
+      "region": "get_event_count",
+      "size": 43,
+      "start_rva": "0x0020e783"
+    },
+    {
+      "id": "outer_publish_before_state_update",
+      "instruction_hex": "e87487f9ffe84f69fbffe8ea53ffff8b4f188b01ff5004",
+      "meaning": "Call the event publisher before the following outer-state virtual update.",
+      "region": "outer_main_update",
+      "size": 23,
+      "start_rva": "0x000e55a7"
+    },
+    {
+      "id": "credit_read_three_buckets",
+      "instruction_hex": "8b96a40900008d4dd8e8e5f6e2ff83ec18c745fc000000008bccba7861830050e85e31e1ff83c404e8b6f3e5ffc745fcffffffff8b4dec8945a483f910720f416a0151ff75d8e8f8abdcff83c40c8b96a40900008d4dd8e897f6e2ff83ec18c745fc010000008bccba9461830050e81031e1ff83c404e868f3e5ffc745fcffffffff8b4dec8945ac83f910720f416a0151ff75d8e8aaabdcff83c40c8b96a40900008d4dd8e849f6e2ff83ec18c745fc020000008bccba8061830050e8c230e1ff83c404e81af3e5ffc745fcffffffff8b4dec8945b883f910720f416a0151ff75d8e85cabdcff83c40c",
+      "meaning": "Read kill_<PawnID>, any_kill_<PawnID>, and xp_<PawnID>.",
+      "region": "pawn_credit_consumer",
+      "size": 234,
+      "start_rva": "0x0023cbbd"
+    },
+    {
+      "id": "credit_clear_kill",
+      "instruction_hex": "8d4dc0e8fbf5e2ff50ba78618300c745fc030000008d4dd8e87630e1ff83c404c645fc04b938d28b00837de8007507e8af0ce6ffeb108d45d850e8040de6ffc7401800000000",
+      "meaning": "Clear the consumed kill_<PawnID> map value.",
+      "region": "pawn_credit_consumer",
+      "size": 70,
+      "start_rva": "0x0023ccad"
+    },
+    {
+      "id": "credit_clear_any_kill",
+      "instruction_hex": "8b96a40900008d4dc0e868f5e2ff50ba94618300c745fc050000008d4dd8e8e32fe1ff83c404c645fc06b938d28b00837de8007507e81c0ce6ffeb108d45d850e8710ce6ffc7401800000000",
+      "meaning": "Clear the consumed any_kill_<PawnID> map value.",
+      "region": "pawn_credit_consumer",
+      "size": 76,
+      "start_rva": "0x0023cd3a"
+    },
+    {
+      "id": "credit_clear_xp",
+      "instruction_hex": "8b96a40900008d4dc0e8d5f4e2ff50ba80618300c745fc070000008d4dd8e8502fe1ff83c404c645fc08b938d28b00837de8007507e8890be6ffeb108d45d850e8de0be6ffc7401800000000",
+      "meaning": "Clear the consumed xp_<PawnID> map value.",
+      "region": "pawn_credit_consumer",
+      "size": 76,
+      "start_rva": "0x0023cdcd"
+    },
+    {
+      "id": "credit_apply_xp_and_kills",
+      "instruction_hex": "807dbf008b45b8c745fcffffffff74068b4da48d0448508bcee89f80ffff8b7dac85ff0f84310100008a86e409000084c00f842301000083ec188bcc685c5a8300e8f7aedcff8b068bce8b4004ffd084c0741683ec188bcc68a0a98200e8dbaedcff8b068bceff500c01be8c090000",
+      "meaning": "Apply XP plus Extra_XP's two-per-kill bonus, then add any-kill count to Mech iKills.",
+      "region": "pawn_credit_consumer",
+      "size": 111,
+      "start_rva": "0x0023ced3"
+    },
+    {
+      "id": "xp_add_i_kill_count",
+      "instruction_hex": "83bb80090000000f84b90300008b75088d45c401b3600a0000",
+      "meaning": "When XP tracking is enabled, add the supplied XP to Pawn+0xa60 iKillCount.",
+      "region": "pawn_xp_accumulator",
+      "size": 25,
+      "start_rva": "0x00234fc4"
+    },
+    {
+      "id": "bind_i_kills",
+      "instruction_hex": "6a0668746e8300c60000e83966dcff6a008bcfe81065e4ff578d8ba408000089838c090000",
+      "meaning": "Bind iKills to Pawn+0x98c.",
+      "region": "pawn_definition_store",
+      "size": 37,
+      "start_rva": "0x00241988"
+    },
+    {
+      "id": "bind_i_kill_count",
+      "instruction_hex": "6a0a68586f8300c60000e82c64dcff6a008bcfe80363e4ff83ec188983600a0000",
+      "meaning": "Bind iKillCount to Pawn+0xa60.",
+      "region": "pawn_definition_store",
+      "size": 33,
+      "start_rva": "0x00241b95"
+    },
+    {
+      "id": "bind_i_mission_damage",
+      "instruction_hex": "68a46e8300e8f25edcff6a008bcfe8895fe4ff6aff6aff83ec18898370110000",
+      "meaning": "Bind iMissionDamage to Pawn+0x1170.",
+      "region": "pawn_definition_store",
+      "size": 32,
+      "start_rva": "0x00241f14"
+    },
+    {
+      "id": "mission_damage_health_delta",
+      "instruction_hex": "8b83a80800008bf08b8b080a00002bf101b370110000833d604d89000175060135349d8b00",
+      "meaning": "Add the Pawn health delta to iMissionDamage; this is separate from death-owner credit.",
+      "region": "mission_damage_accumulator",
+      "size": 37,
+      "start_rva": "0x0023debe"
+    },
+    {
+      "id": "mission_damage_caller_edge",
+      "instruction_hex": "8bcfe83ace0a00",
+      "meaning": "Call the separate mission-damage accumulator for the selected Pawn.",
+      "region": "mission_damage_caller",
+      "size": 7,
+      "start_rva": "0x00190fdf"
+    },
+    {
+      "id": "is_mech_thunk",
+      "instruction_hex": "8a81e4090000c3",
+      "meaning": "Read Pawn+0x9e4 as IsMech.",
+      "region": "is_mech_thunk",
+      "size": 7,
+      "start_rva": "0x0023c8d0"
+    },
+    {
+      "id": "get_team_thunk",
+      "instruction_hex": "8b81b0000000c3",
+      "meaning": "Read Pawn+0xb0 as GetTeam.",
+      "region": "get_team_thunk",
+      "size": 7,
+      "start_rva": "0x0023d850"
+    }
+  ],
+  "data_anchors": [
+    {
+      "hex": "02000000",
+      "id": "event_enemy_killed_value",
+      "meaning": "The exact value object passed by EVENT_ENEMY_KILLED registration begins with integer 2.",
+      "rva": "0x00415580",
+      "size": 4
+    }
+  ],
+  "dependency": {
+    "canonical_sha256": "bf9713a2b46c524373599666c5113c0995bd841411d777d3a810895be1a03064",
+    "file_sha256": "f73215a5e7b3d4ef273e85f04841c1f3f5d6f2c73eab8a964f867524bb33aad4",
+    "id": "zero_hp_cleanup_boundary",
+    "path": "data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json",
+    "role": "Pins the DAMAGE_DEATH HP-zero handoff, later IsDead classification, and conditional dead-noncorpse Board cleanup boundary."
+  },
+  "direct_edges": [
+    {
+      "from_rva": "0x001606fc",
+      "id": "enqueue_copies_effect",
+      "instruction_hex": "e85f000000",
+      "source_region": "effect_enqueue",
+      "target_region": "skill_effect_copy",
+      "target_rva": "0x00160760"
+    },
+    {
+      "from_rva": "0x00160719",
+      "id": "enqueue_appends_effect",
+      "instruction_hex": "e8524f0100",
+      "source_region": "effect_enqueue",
+      "target_region": "effect_queue_insert",
+      "target_rva": "0x00175670"
+    },
+    {
+      "from_rva": "0x00175707",
+      "id": "queue_insert_copies_effect",
+      "instruction_hex": "e854b0feff",
+      "source_region": "effect_queue_insert",
+      "target_region": "skill_effect_copy",
+      "target_rva": "0x00160760"
+    },
+    {
+      "from_rva": "0x001612a0",
+      "id": "dispatcher_builds_owner_context",
+      "instruction_hex": "e87bb1f3ff",
+      "source_region": "effect_dispatcher",
+      "target_region": "context_build",
+      "target_rva": "0x0009c420"
+    },
+    {
+      "from_rva": "0x0016132c",
+      "id": "dispatcher_copies_owner_context",
+      "instruction_hex": "e8efaff3ff",
+      "source_region": "effect_dispatcher",
+      "target_region": "context_copy",
+      "target_rva": "0x0009c320"
+    },
+    {
+      "from_rva": "0x0016137f",
+      "id": "dispatcher_sets_owner_context",
+      "instruction_hex": "e87caef3ff",
+      "source_region": "effect_dispatcher",
+      "target_region": "context_set",
+      "target_rva": "0x0009c200"
+    },
+    {
+      "from_rva": "0x0022d953",
+      "id": "enemy_death_records_event",
+      "instruction_hex": "e838e5e6ff",
+      "source_region": "death_processor",
+      "target_region": "event_recorder",
+      "target_rva": "0x0009be90"
+    },
+    {
+      "from_rva": "0x0022da54",
+      "id": "death_adds_xp_bucket",
+      "instruction_hex": "e8f7e5e6ff",
+      "source_region": "death_processor",
+      "target_region": "string_counter_increment",
+      "target_rva": "0x0009c050"
+    },
+    {
+      "from_rva": "0x0022da88",
+      "id": "death_adds_kill_bucket",
+      "instruction_hex": "e8c3e5e6ff",
+      "source_region": "death_processor",
+      "target_region": "string_counter_increment",
+      "target_rva": "0x0009c050"
+    },
+    {
+      "from_rva": "0x0022dac4",
+      "id": "death_adds_env_xp",
+      "instruction_hex": "e887e5e6ff",
+      "source_region": "death_processor",
+      "target_region": "string_counter_increment",
+      "target_rva": "0x0009c050"
+    },
+    {
+      "from_rva": "0x0022daec",
+      "id": "death_adds_any_kill",
+      "instruction_hex": "e85fe5e6ff",
+      "source_region": "death_processor",
+      "target_region": "string_counter_increment",
+      "target_rva": "0x0009c050"
+    },
+    {
+      "from_rva": "0x000e55ac",
+      "id": "outer_update_publishes_events",
+      "instruction_hex": "e84f69fbff",
+      "source_region": "outer_main_update",
+      "target_region": "event_publisher",
+      "target_rva": "0x0009bf00"
+    },
+    {
+      "from_rva": "0x0023ceec",
+      "id": "pawn_consumes_xp",
+      "instruction_hex": "e89f80ffff",
+      "source_region": "pawn_credit_consumer",
+      "target_region": "pawn_xp_accumulator",
+      "target_rva": "0x00234f90"
+    },
+    {
+      "from_rva": "0x00190fe1",
+      "id": "mission_damage_is_separate",
+      "instruction_hex": "e83ace0a00",
+      "source_region": "mission_damage_caller",
+      "target_region": "mission_damage_accumulator",
+      "target_rva": "0x0023de20"
+    },
+    {
+      "from_rva": "0x0027d255",
+      "id": "game_registers_get_event_count",
+      "instruction_hex": "e8f6140100",
+      "source_region": "binding_table",
+      "target_region": "get_event_count_binding",
+      "target_rva": "0x0028e750"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "All seven OnKill occurrences in the exact accepted Lua tree are one empty Skill default plus six localization-key strings. Each key exists in Weapons_ae.csv, Skill_OnKill labels the UI as 'On Kill:', no exact Lua function defines any key, and all six mechanics are implemented inside their weapon GetSkillEffect definitions.",
+      "classification": "fact",
+      "id": "shipped_onkill_is_localized_metadata"
+    },
+    {
+      "claim": "Luabind maps SkillEffect.iOwner to +0x5c. Board:AddEffect copies the 0x7c-byte record into its queue; both copy paths preserve +0x5c.",
+      "classification": "fact",
+      "id": "skill_effect_owner_survives_queue"
+    },
+    {
+      "claim": "The SkillEffect dispatcher passes the by-value record's +0x5c field into a context whose first field is owner, copies it, and conditionally installs it at current-context address 0x8bd254 before effect work.",
+      "classification": "fact",
+      "id": "queued_owner_becomes_death_context"
+    },
+    {
+      "claim": "Both Env_Attack ApplyEffect branches set effect.iOwner=ENV_EFFECT before Board:AddEffect, and exact native registration publishes ENV_EFFECT=-10.",
+      "classification": "fact",
+      "id": "environment_effect_owner_is_minus_ten"
+    },
+    {
+      "claim": "For non-Mech Pawn team 6 (TEAM_ENEMY), the death processor reads Minor at +0x10d0 and records event 2 with INT_MAX payload for non-Minor or event 12 for Minor. EVENT_ENEMY_KILLED is exactly event 2.",
+      "classification": "fact",
+      "id": "ordinary_enemy_death_records_event_two"
+    },
+    {
+      "claim": "The generic recorder increments pending event counts, the sole direct publisher copies pending to the readable array and resets pending, and registered Game:GetEventCount reads that array. Mission:BaseUpdate adds EVENT_ENEMY_KILLED to KilledVek for Kill Five and Pacifist objectives.",
+      "classification": "inference",
+      "id": "mission_kill_event_delivery"
+    },
+    {
+      "claim": "For non-Minor, XP-eligible enemy deaths, owners 0..2 receive xp_<owner> and kill_<owner>; all other owners receive env_xp. Every reviewed enemy death also writes any_kill_<owner>.",
+      "classification": "fact",
+      "id": "owner_specific_credit_split"
+    },
+    {
+      "claim": "ENV_EFFECT owner -10 takes the outside-0..2 env_xp branch and names its unconditional bucket any_kill_-10. It therefore does not create the xp_<0..2>, kill_<0..2>, or any_kill_<0..2> entries consumed by those Mech owners, while the independent non-Minor mission event still fires.",
+      "classification": "inference",
+      "id": "environment_bypasses_mech_xp_and_kill_buckets"
+    },
+    {
+      "claim": "The per-Pawn consumer reads and clears kill_<PawnID>, any_kill_<PawnID>, and xp_<PawnID>; applies Extra_XP as two per kill; routes XP into iKillCount +0xa60; and adds any-kill count to Mech iKills +0x98c.",
+      "classification": "fact",
+      "id": "pawn_credit_consumer_and_named_fields"
+    },
+    {
+      "claim": "iMissionDamage is bound at Pawn+0x1170 and updated by a separate health-delta accumulator. It is not the death-source owner or kill-credit path.",
+      "classification": "fact",
+      "id": "mission_damage_is_separate"
+    },
+    {
+      "claim": "Rust apply_env_danger already records lethal enemy deaths through the shared mission-kill predicate, whose ordinary rule excludes Minor enemy units. No reviewed native rule contradicts the current simulator, so no semantic change or simulator-version bump follows.",
+      "classification": "inference",
+      "id": "rust_environment_kill_model_already_conforms"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "lua_onkill_inventory": {
+    "accepted_tree_lua_file_count": 153,
+    "localization_keys": [
+      "Prime_KO_Crack_OnKill",
+      "Brute_KO_Combo_OnKill",
+      "Ranged_Arachnoid_OnKill",
+      "Ranged_KO_Combo_OnKill",
+      "Science_KO_Crack_OnKill",
+      "Support_KO_GridCharger_OnKill"
+    ],
+    "localized_metadata_proven": true,
+    "matching_lua_function_definitions": [],
+    "occurrence_count": 7,
+    "occurrences": [
+      {
+        "line": 792,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Prime_KO_Crack_OnKill\","
+      },
+      {
+        "line": 1585,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Brute_KO_Combo_OnKill\","
+      },
+      {
+        "line": 2065,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Ranged_Arachnoid_OnKill\","
+      },
+      {
+        "line": 2505,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Ranged_KO_Combo_OnKill\","
+      },
+      {
+        "line": 3610,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Science_KO_Crack_OnKill\","
+      },
+      {
+        "line": 4288,
+        "path": "scripts/advanced/ae_weapons.lua",
+        "source": "OnKill = \"Support_KO_GridCharger_OnKill\","
+      },
+      {
+        "line": 258,
+        "path": "scripts/global.lua",
+        "source": "OnKill = \"\","
+      }
+    ],
+    "shipped_lua_callback_name_proven": false
+  },
+  "notes": [
+    "This is exact-build static evidence, not a runtime trace.",
+    "The source verifier requires the exact accepted scripts tree except for one of two hash-pinned project bridge overlays.",
+    "The ordinary event path is bounded to non-Mech TEAM_ENEMY Pawn death and its Minor split; specialized classes are not generalized.",
+    "The event writer/publisher/reader chain is proven structurally, but exact visibility in a particular Board/effect frame is not.",
+    "The absence of shipped Lua OnKill function definitions does not exhaust native-only consumers that might address the Skill field by offset."
+  ],
+  "refines": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json",
+    "qualification": "The exact shipped OnKill values are now proven localization metadata, and the ordinary environment-owner, TEAM_ENEMY/Minor mission event, and per-Pawn credit split are mapped. Native-only OnKill offset consumers, exact frame timing, specialized classes, and achievements remain outside the closed portion.",
+    "unresolved_ids": [
+      "on_kill_callback_dispatch",
+      "kill_credit_and_owner_attribution"
+    ]
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board SkillEffect enqueue body.",
+      "end_rva_exclusive": "0x00160752",
+      "id": "effect_enqueue",
+      "sha256": "0a07ee9377f4bc3bc13be075ccd2a45a01719c8181e231a4450b56d6dd98f4ae",
+      "size": 146,
+      "start_rva": "0x001606c0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect copy constructor.",
+      "end_rva_exclusive": "0x00160879",
+      "id": "skill_effect_copy",
+      "sha256": "30471eac4d66d47a928438248a7d8f26e2c0a6384bafe7b0c02e42b2250efcd6",
+      "size": 281,
+      "start_rva": "0x00160760"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board SkillEffect record dispatcher.",
+      "end_rva_exclusive": "0x00161c6f",
+      "id": "effect_dispatcher",
+      "sha256": "ccbecc70505f546c2d068ad7c95121f0c631aa27dd197127904de3faaff307c2",
+      "size": 2975,
+      "start_rva": "0x001610d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 0x7c-byte SkillEffect vector insertion.",
+      "end_rva_exclusive": "0x00175723",
+      "id": "effect_queue_insert",
+      "sha256": "ed358e0a1cc8e7f64cc80923066f4e54b7c99c4ea138b0f9917f512f36981a4b",
+      "size": 179,
+      "start_rva": "0x00175670"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Caller of the separate Pawn mission-damage accumulator.",
+      "end_rva_exclusive": "0x001910fb",
+      "id": "mission_damage_caller",
+      "sha256": "e140fc9436709cdbbc08dd910a249f735478fce110305e926bda3032ddb6fb4f",
+      "size": 363,
+      "start_rva": "0x00190f90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Native GameMap event-count reader.",
+      "end_rva_exclusive": "0x0020e7c1",
+      "id": "get_event_count",
+      "sha256": "1914235348cc79735d409cecfb4af66c02d538a9cad2badef3527beff5394e0e",
+      "size": 65,
+      "start_rva": "0x0020e780"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn definition loader containing the Minor field load.",
+      "end_rva_exclusive": "0x0022cbb7",
+      "id": "pawn_definition_load",
+      "sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+      "size": 2759,
+      "start_rva": "0x0022c0f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Native Pawn death event and credit processor.",
+      "end_rva_exclusive": "0x0022e325",
+      "id": "death_processor",
+      "sha256": "69e9121e9272ec2d865777ba0e7d810202df5f05ec380ab66d40f72445a90737",
+      "size": 3381,
+      "start_rva": "0x0022d5f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn XP and iKillCount accumulator.",
+      "end_rva_exclusive": "0x002353a8",
+      "id": "pawn_xp_accumulator",
+      "sha256": "9df1cb97cfac61fbca076b1c2eb0b911cd2f13d1dba5bf4eff60a61c6d206d93",
+      "size": 1048,
+      "start_rva": "0x00234f90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Per-Pawn kill/any-kill/XP bucket consumer.",
+      "end_rva_exclusive": "0x0023d049",
+      "id": "pawn_credit_consumer",
+      "sha256": "be27dbc108924da9c1f4ebffa2bd24a17e7f24dae465081896981f49052f4d06",
+      "size": 1209,
+      "start_rva": "0x0023cb90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Registered Pawn IsMech field thunk.",
+      "end_rva_exclusive": "0x0023c8d7",
+      "id": "is_mech_thunk",
+      "sha256": "93be70843ae650ab49f4da225e76da80df9b55151167e3f8c732eb0a9253fa90",
+      "size": 7,
+      "start_rva": "0x0023c8d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Registered Pawn GetTeam field thunk.",
+      "end_rva_exclusive": "0x0023d857",
+      "id": "get_team_thunk",
+      "sha256": "a33ed4c54f724b1cdd526b3c3e8bfc670f9881db0df0a549f9dd82f82745c8cf",
+      "size": 7,
+      "start_rva": "0x0023d850"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Separate health-delta iMissionDamage accumulator.",
+      "end_rva_exclusive": "0x0023e0e5",
+      "id": "mission_damage_accumulator",
+      "sha256": "1305e6172f10ae534928ba8cf65b5f73122acaa799119aad0260c35522a53c60",
+      "size": 709,
+      "start_rva": "0x0023de20"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn definition writer binding named counter fields.",
+      "end_rva_exclusive": "0x0024209e",
+      "id": "pawn_definition_store",
+      "sha256": "92ad8d746d427511dbd27a845faa17d22240a8fe703d48c10a4b92e85aacd3f9",
+      "size": 5566,
+      "start_rva": "0x00240ae0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Global/Pawn Lua registrations containing environment, team, event, and method bindings.",
+      "end_rva_exclusive": "0x002816b6",
+      "id": "binding_table",
+      "sha256": "51f3a81b7b832098c11f81beb1c85e1fe488434adce745dd8af5cb5af64200c2",
+      "size": 32310,
+      "start_rva": "0x00279880"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect iOwner property registration.",
+      "end_rva_exclusive": "0x00283963",
+      "id": "iowner_binding",
+      "sha256": "d0b1ba039795a65addbdc54ded073f92aacfed4623ef8ad03e0f504afd154733",
+      "size": 147,
+      "start_rva": "0x002838d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Luabind Game:GetEventCount method wrapper.",
+      "end_rva_exclusive": "0x0028e7e3",
+      "id": "get_event_count_binding",
+      "sha256": "eceff826e25e3119a7b2ced1b278183a9556033181b984f016ce6736bd38b38c",
+      "size": 147,
+      "start_rva": "0x0028e750"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Outer update containing the sole direct event-publish call.",
+      "end_rva_exclusive": "0x000e5650",
+      "id": "outer_main_update",
+      "sha256": "b5c2bd4bddb20bbda2dd87e2202c607f9ad9d6e5444a8dd361511e0ed15b81c1",
+      "size": 4208,
+      "start_rva": "0x000e45e0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Generic native event recorder.",
+      "end_rva_exclusive": "0x0009beff",
+      "id": "event_recorder",
+      "sha256": "689f97fb534e0f7e8792e4ed7508a851f42171c34158b044581b5c488c0baaa2",
+      "size": 111,
+      "start_rva": "0x0009be90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pending-to-readable event publisher/reset.",
+      "end_rva_exclusive": "0x0009bf88",
+      "id": "event_publisher",
+      "sha256": "49ceab3bd5073935a21e3df26de48f3b7669318e80dcb569d8f694271fff3ee3",
+      "size": 136,
+      "start_rva": "0x0009bf00"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 String-keyed native counter add-or-insert helper.",
+      "end_rva_exclusive": "0x0009c108",
+      "id": "string_counter_increment",
+      "sha256": "9e086b91246f719c304e40b96ee288e0797fabfbe712a8522886d8d17b989501",
+      "size": 184,
+      "start_rva": "0x0009c050"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Current native owner/context assignment.",
+      "end_rva_exclusive": "0x0009c2e6",
+      "id": "context_set",
+      "sha256": "9c4765daa69e1334667c6c74cbced7501857babb890120d38fcd7d63ee896bc7",
+      "size": 230,
+      "start_rva": "0x0009c200"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Native owner/context copy constructor.",
+      "end_rva_exclusive": "0x0009c415",
+      "id": "context_copy",
+      "sha256": "422b66aed91782b148b2c023349c2fee08d979e8ca9f1c3e027ac9411b5d659e",
+      "size": 245,
+      "start_rva": "0x0009c320"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Native owner/context constructor.",
+      "end_rva_exclusive": "0x0009c57d",
+      "id": "context_build",
+      "sha256": "44c9d62cd979ccd12ad78a344595ca03c6b0a42564bed96333a34d793a369dcb",
+      "size": 349,
+      "start_rva": "0x0009c420"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "conforming_paths": [
+      "rust_solver/src/enemy.rs::apply_env_danger",
+      "rust_solver/src/board.rs::unit_counts_for_mission_kill",
+      "rust_solver/src/board.rs::ActionResult::record_enemy_kill"
+    ],
+    "reason": "The simulator already counts lethal environment deaths for ordinary non-Minor enemies and does not model environment kills as Mech XP/kill credit. The new exact-build evidence contradicts no transition rule.",
+    "simulator_change_required": false,
+    "simulator_contradiction": false,
+    "simulator_version_bump_required": false
+  },
+  "sources": [
+    {
+      "path": "scripts/environments.lua",
+      "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+      "size": 8924,
+      "symbols": [
+        "Env_Attack:ApplyEffect",
+        "ENV_EFFECT",
+        "Board:AddEffect"
+      ]
+    },
+    {
+      "path": "scripts/global.lua",
+      "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "size": 17363,
+      "symbols": [
+        "Skill",
+        "Skill.OnKill"
+      ]
+    },
+    {
+      "path": "scripts/advanced/ae_weapons.lua",
+      "sha256": "5566b679c696ab489e40a0189d0a63b699d01e9657f79a20e6f119239af1680f",
+      "size": 124520,
+      "symbols": [
+        "Prime_KO_Crack:GetSkillEffect",
+        "Brute_KO_Combo:GetSkillEffect",
+        "Ranged_Arachnoid:GetSkillEffect",
+        "Ranged_KO_Combo:GetSkillEffect",
+        "Science_KO_Crack:GetSkillEffect",
+        "Support_KO_GridCharger:GetSkillEffect"
+      ]
+    },
+    {
+      "path": "scripts/missions/missions.lua",
+      "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+      "size": 29573,
+      "symbols": [
+        "Mission:BaseUpdate",
+        "Mission.KilledVek",
+        "EVENT_ENEMY_KILLED"
+      ]
+    },
+    {
+      "path": "scripts/localization/Global_ae.csv",
+      "sha256": "b07fc5c5e2ffc0a167d538ae5f52c69c26e3560d949cb7837038a2252db3b01d",
+      "size": 43128,
+      "symbols": [
+        "Skill_OnKill"
+      ]
+    },
+    {
+      "path": "scripts/localization/Weapons_ae.csv",
+      "sha256": "1b61022ce01ba36400056d6f871c9c6e0bfebb68f7911d52141ba76cc0fd76e2",
+      "size": 158355,
+      "symbols": [
+        "Prime_KO_Crack_OnKill",
+        "Brute_KO_Combo_OnKill",
+        "Ranged_Arachnoid_OnKill",
+        "Ranged_KO_Combo_OnKill",
+        "Science_KO_Crack_OnKill",
+        "Support_KO_GridCharger_OnKill"
+      ]
+    }
+  ],
+  "summary": {
+    "absolute_reference_anchor_count": 13,
+    "absolute_reference_count": 27,
+    "control_window_count": 37,
+    "data_anchor_count": 1,
+    "dependency_count": 1,
+    "direct_edge_count": 15,
+    "environment_mech_credit_bypass_proven": true,
+    "environment_owner_pipeline_proven": true,
+    "exact_event_frame_visibility_proven": false,
+    "finding_count": 11,
+    "mission_enemy_killed_event_proven": true,
+    "region_count": 24,
+    "shipped_lua_onkill_callback_proven": false,
+    "simulator_change_required": false,
+    "source_count": 6,
+    "unresolved_count": 6
+  },
+  "unresolved": [
+    {
+      "id": "native_only_onkill_offset_consumers",
+      "next_evidence": "Exhaustively trace native field-offset consumers only if a concrete solver mismatch depends on them; no shipped Lua callback remains to find.",
+      "question": "Does an unreviewed native-only path consume the Skill OnKill field by offset for any purpose beyond the mapped property/UI paths?"
+    },
+    {
+      "id": "exact_event_frame_visibility",
+      "next_evidence": "Capture or fully map Board/effect dispatch relative to the sole event publisher and Mission:BaseUpdate.",
+      "question": "Does a death raised in a particular Board/effect pass become readable in the same outer update or the next one?"
+    },
+    {
+      "id": "achievement_counter_tail",
+      "next_evidence": "Trace only the named achievement path needed by a future conformance discrepancy.",
+      "question": "Which achievement-specific event and persistent profile counters consume each death category?"
+    },
+    {
+      "id": "specialized_enemy_death_classes",
+      "next_evidence": "Map concrete subclass/vtable cases instead of generalizing this ordinary Pawn path.",
+      "question": "Which specialized subclasses or nonstandard teams alter the ordinary TEAM_ENEMY/Minor event and credit path?"
+    },
+    {
+      "id": "environment_any_kill_bucket_consumers",
+      "next_evidence": "Trace string-map readers for that exact key only if it becomes solver-relevant.",
+      "question": "Can any non-Pawn subsystem consume the generated any_kill_-10 bucket?"
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the build-keyed inventory and boundary map on another exact executable.",
+      "question": "Do macOS and other Windows depots implement the same owner, event, and credit path?"
+    }
+  ]
+}

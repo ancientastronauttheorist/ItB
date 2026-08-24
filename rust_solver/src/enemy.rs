@@ -4983,6 +4983,43 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_final_cave_environment_kill_credit_excludes_minor_enemy() {
+        let input = r#"{
+            "mission_id":"Mission_Final_Cave","env_type":"final_cave","turn":1,
+            "mission_final_cave":{
+                "complete":true,"mode":1,"phase":1,"ordered":true,
+                "instant":false,"water_target":true,
+                "lava_path":[[2,0],[2,1],[2,2],[2,3]],
+                "locations":[[2,2],[2,5]],
+                "planned":[[2,2],[2,5]]
+            },
+            "tiles":[
+                {"x":2,"y":2,"terrain":"ground"},
+                {"x":2,"y":5,"terrain":"ground"}
+            ],
+            "units":[
+                {"uid":20,"type":"Hornet1","x":2,"y":2,"hp":2,"max_hp":2,
+                 "team":6,"flying":true},
+                {"uid":21,"type":"Totem1","x":2,"y":5,"hp":1,"max_hp":1,
+                 "team":6,"minor":true}
+            ],
+            "environment_danger":[[2,2],[2,5]],
+            "environment_danger_v2":[[2,2,1,1,0],[2,5,1,1,0]],
+            "spawning_tiles":[]
+        }"#;
+        let (mut board, ..) = board_from_json(input).expect("exact Rocks payload parses");
+        let orig = default_orig_pos(&board);
+        let result = simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+        assert_eq!(result.enemies_killed, 2, "both enemy-team Pawns die");
+        assert_eq!(
+            result.mission_kills, 1,
+            "native EVENT_ENEMY_KILLED excludes the Minor enemy"
+        );
+        assert!(board.units[..2].iter().all(|unit| unit.hp == 0));
+    }
+
+    #[test]
     fn test_mission_final_cave_tentacles_kill_all_mech_traits_and_make_lava() {
         let input = r#"{
             "mission_id":"Mission_Final_Cave","env_type":"final_cave","turn":2,
