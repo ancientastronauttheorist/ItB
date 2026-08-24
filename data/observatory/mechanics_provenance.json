@@ -1982,6 +1982,10 @@
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
         {
+          "classification": "inference",
+          "statement": "The exact-build enemy-record selector continuation closes the post-callback 24-byte tournament grammar. Native reachability order survives the AI-specific in-place filter before the current tile is appended; records are six signed integers; positioning scores below -10 are rejected; positive positioning has a special advantage over negative positioning; otherwise target score then positioning score rank descending. Strict improvements retain only the immediately displaced primary group, every nonempty primary consumes caller 30 even when singleton, and a caller-31 remainder of zero out of four samples that displaced group without replacement through callers 33 then 32."
+        },
+        {
           "classification": "fact",
           "statement": "Five source-bounded natural callback pairs exercised ScorePositioning, GetTargetArea, GetTargetScore, and GetSkillEffect during complete enemy decision cycles. The three selection/scoring families accepted all 100, 47, and 181 attempts respectively with zero drops and matched their paired whole-game outcomes; every pair restored all 65 installed callback slots."
         },
@@ -1991,7 +1995,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact native tournament order and equal-best tie-breaking are known, but the full runtime candidate payload and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but callback materialization, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2023,11 +2027,27 @@
             "selected_ai_record",
             "dynamic_lua_callbacks"
           ]
+        },
+        {
+          "path": "src/observatory/enemy_record_selector_boundary.py",
+          "symbols": [
+            "replay_enemy_target_tie",
+            "compare_enemy_records",
+            "replay_enemy_record_selector"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_record_selector_boundary.json",
+          "symbols": [
+            "candidate_record_and_target_tie",
+            "record_comparator_and_displaced_group",
+            "selector_rng_grammar"
+          ]
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native tournament, movement/path enumeration, per-subclass target construction, score accumulation, and shared-RNG state.",
-        "The exact static candidate order and equal-best modulo tie-break are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, per-candidate positioning and target scores, the equal-best set, and its tie-break draw remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven record-level native tournament, per-subclass target construction, callback/effect-side score materialization, and shared-RNG state.",
+        "The exact static destination pipeline, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, per-candidate positioning and post-wrapper target scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2092,6 +2112,15 @@
           "path": "tests/test_observatory_selected_queue_hw.py",
           "symbols": [
             "test_complete_pair_validates_and_correlates_to_bridge_queue"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_record_selector_boundary.py",
+          "symbols": [
+            "test_target_tie_preserves_returned_order_for_raw_modulo_choice",
+            "test_displaced_primary_is_not_recomputed_global_second_best",
+            "test_invalid_displaced_group_is_sampled_without_replacement_then_exhausted",
+            "test_exact_installed_executable_rebuilds_committed_map"
           ]
         },
         {

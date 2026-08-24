@@ -11,6 +11,9 @@ native engine. The Lua already exposes weapon effects, targeting areas, spawn
 selection, mission logic, and much of enemy target scoring. Targeted analysis
 of one pinned Windows executable has now also mapped its RNG implementation,
 enemy candidate tournament, native equal-best tie-break, and selected AI record.
+An exact-build continuation now turns the post-callback 24-byte record selector
+into a pure replay from ordered records plus its selector-entry observable CRT
+state, including the native comparator and displaced-primary fallback.
 Two atomic live captures further bind 2,982 native RNG records to the exact
 build and exercise reviewed RNG leaves, candidate tie-breaking, record
 selection, and seed advance with clean byte restoration. Five natural callback
@@ -207,7 +210,12 @@ live-or-persistent-corpse, including Road Runner corpse transit but no corpse
 stop; simulator v403 carries that rule. A later exact-build continuation closes
 the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
 effective shipped source corpse types. Transient lifecycle/removal timing,
-higher-level record selection, and broader queue paths remain to be validated.
+upstream callback-to-record materialization, selector-entry state delivery, and
+broader queue paths remain to be validated. The higher-level record selector
+itself is now exact-build replayable: it consumes six-integer records, applies
+the native positioning/target comparator, retains only the immediately
+displaced primary group, spends a primary draw even for a singleton, and gates
+without-replacement fallback sampling at one remainder out of four.
 One bounded
 `Firefly1` campaign now proves the final selected record's immediate queue
 handoff with exact destination, target/shot, and weapon/skill agreement.

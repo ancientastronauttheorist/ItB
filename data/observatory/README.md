@@ -190,6 +190,44 @@ function extents, hashes, calls, and references for explicitly supplied labeled
 addresses. Treat that output as review input and publish only normalized JSON
 whose identity, bytes, and declared-boundary-relative calls pass the verifier.
 
+## Native enemy record selector boundary
+
+`native/windows_build_13725832_31fe35265598_enemy_record_selector_boundary.json`
+continues the reviewed PE map through the complete post-callback enemy record
+tournament. It binds ten function regions, nine normalized control windows,
+17 direct calls, both default records, and RNG caller IDs 29 through 33. The
+24-byte record is exactly six signed 32-bit integers: destination `(x,y)`,
+target `(x,y)`, target score, and positioning score.
+
+The parameterized replay preserves the native oddities instead of replacing
+them with a cleaner policy. Scores below positioning `-10` are rejected;
+strictly positive positioning beats strictly negative positioning regardless
+of target score; all other comparisons are descending target score then
+positioning score. Each strict improvement replaces the fallback with the
+immediately displaced primary group, so that group is not a recomputed global
+second best. Every nonempty primary spends a shared-CRT draw, including a
+singleton. A nonempty displaced group then spends a 1-in-4 gate draw and, on
+remainder zero, samples without replacement until it finds a positive-target,
+nonnegative-position stock-interior record or exhausts the group.
+
+The target-tie replay begins after callback/effect-side draws for one
+destination. The record-selector replay begins after every complete candidate
+record has been materialized. Neither API claims to reconstruct upstream Lua
+subclass logic or provide an ordinary future-enemy solver input.
+
+Verify the immutable artifact against the pinned executable and replay a
+captured record payload with:
+
+```powershell
+python scripts/itb_observatory_enemy_record_selector.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_record_selector_boundary.json
+
+python scripts/itb_observatory_enemy_record_selector.py replay-selector `
+  --records records.json `
+  --rng-state 0x12345678
+```
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

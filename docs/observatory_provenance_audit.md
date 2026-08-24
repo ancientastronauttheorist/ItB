@@ -79,7 +79,11 @@ The two build-level native-selection records were reconciled on 2026-08-23
 against the later exact maps, matched campaigns, and cleanup receipts. The gap
 audit no longer describes ordinary enemy candidate order, the equal-best modulo
 tie-break, standard spawn-coordinate selection, or its native RNG caller as
-unknown. The pinned PE map establishes the candidate-loop order; natural
+unknown. The pinned PE map establishes the candidate-loop order; the later
+enemy-record selector continuation closes the six-integer record layout,
+movement-vector consumption order, post-wrapper target tie, positioning/score
+comparator, immediately displaced fallback group, and selector-local caller-ID
+29-through-33 draw grammar. Natural
 callback pairs exercise the four Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -91,8 +95,10 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
-provide one complete candidate-score payload or the prospective spawn replay
-capsule/selector-time CRT state, the queue correlation covers only one
+provide one complete post-callback record payload or its selector-entry CRT
+state, callback/effect-side draws before that boundary remain unjoined, the
+prospective spawn replay capsule/selector-time CRT state remains absent, the
+queue correlation covers only one
 Firefly1 single-weapon shape, and the scheduler/emergency coordinate paths were
 not naturally exercised. Static control-flow evidence is kept distinct from
 runtime facts, and owner-local-modified Windows evidence is not promoted to a
@@ -1149,8 +1155,10 @@ cross-turn `Limited=1` state remain partial gaps.
    exact current phase, mode, selected order, terrain, and Fire contract is v404.
 4. Keep native-dependent target selection and RNG records non-verified while
    prospective solver inputs and complete runtime tournaments remain absent;
-   do not relabel the now-proven static tournament order, equal-best tie-break,
-   standard coordinate selector, or coordinate RNG caller as unresolved.
+   do not relabel the now-proven destination order, equal-best tie-break,
+   24-byte record comparator, displaced-primary fallback, selector-local draw
+   grammar, standard coordinate selector, or coordinate RNG caller as
+   unresolved.
 
 The audit should trend toward fewer unindexed files, but the governing metric is
 trustworthy file-to-implementation evidence, not 100% indexing by itself.

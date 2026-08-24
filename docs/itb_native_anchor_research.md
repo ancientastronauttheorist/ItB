@@ -36,8 +36,11 @@ restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
 environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
 observer neutrality, prospective selector-state delivery or complete upstream
 replay, runtime inputs for the special coordinate paths, broader
-selected-action paths, and the complete native candidate tournament remain
-unresolved. The scheduler/fallback *control flow* is no longer unknown: exact
+selected-action paths, and the complete runtime candidate payload plus its
+selector-entry state remain unresolved. The post-callback record tournament is
+no longer an offline unknown: a later exact-build continuation closes its
+24-byte layout, comparator, displaced-primary fallback, and local draw grammar.
+The scheduler/fallback *control flow* is no longer unknown: exact
 offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
 ordinary selector call. A disposable installation is optional for those
@@ -57,6 +60,11 @@ The durable artifacts are:
 - `data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json`
   for reviewed region hashes, mechanically decoded calls, classified findings,
   hook scope, and remaining runtime questions;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_record_selector_boundary.json`
+  for the ordered destination-to-record pipeline, exact six-integer record
+  layout, target-tie draw, record comparator, displaced-primary fallback,
+  caller IDs 29 through 33, and pure selector replay from an observable
+  selector-entry CRT state;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -207,6 +215,33 @@ The candidate loop preserves the returned target vector's order. For each
 candidate it calls `GetTargetScore`; equal-best targets are stored and selected
 with a direct `rand % equal_count` at RVA `0x000f7b62`. A Lua RNG wrapper misses
 that choice.
+
+The exact-build selector continuation resolves the higher-level grammar. The
+movement producer retains native `GetReachable` `(x,y)` order through its
+in-place filter, appends the current pawn tile, and the record driver consumes
+that vector sequentially. Each record stores destination `(x,y)`, target
+`(x,y)`, post-wrapper target score, and positioning score as six signed
+32-bit integers. A positive best target always consumes caller ID 29, even for
+a singleton; no positive best retains target `(-1,-1)` and score zero without a
+tie draw.
+
+At record level, positioning below `-10` is rejected. Strictly positive
+positioning beats strictly negative positioning regardless of target score;
+otherwise comparison is descending target score then positioning score. Ties
+retain encounter order. A strict improvement replaces the fallback with the
+entire displaced primary group, so a later intermediate record does not turn
+that fallback into a recomputed global second-best set. Every nonempty primary
+spends caller ID 30, including singletons. A nonempty displaced group then
+spends caller ID 31; remainder zero modulo four samples without replacement
+through caller ID 33 followed by ID 32. The rare acceptance test requires a
+positive target, nonnegative positioning, and destination coordinates other
+than `0` or the hardcoded stock maximum `7`.
+
+`replay_enemy_target_tie` therefore starts at the local tie boundary after any
+callback/effect-side draws, while `replay_enemy_record_selector` starts after
+all ordered 24-byte records exist. Those two parameterized boundaries are
+complete; upstream callback materialization and a prospective solver payload
+are not.
 
 All named callbacks are looked up on the actual object. Wrapping only the base
 `Skill` method can therefore miss subclass overrides. A runtime hook plan must
@@ -684,6 +719,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    commit on the same thread, with exact destination, target/shot, and
    weapon/skill agreement. Wider pawn types, multi-weapon selection,
    cancellation, and retarget paths remain untested.
+   **Completed offline for the preceding record selector:** the exact 24-byte
+   field layout, movement-vector consumption order, positive-best target draw,
+   positioning/score comparator, displaced-primary fallback, 1-in-4 gate, and
+   without-replacement sampling are replayable from ordered post-callback
+   records plus the selector-entry observable CRT state. Complete callback
+   materialization and that prospective state/payload remain runtime inputs.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit

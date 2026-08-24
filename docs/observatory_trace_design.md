@@ -349,8 +349,11 @@ that selected it.
   neutrality? The coordinate/RNG campaign now explains why a fixed seed is not
   enough: particle, pilot-portrait, and unit-status presentation code consumes
   the same stream at variable counts before gameplay selection.
-- Can the mapped candidate loop be observed without perturbing vector order or
-  dynamic callback lookup? Native path costs, comparators, output/reconstruction
+- Can the mapped candidate loop export its complete post-callback record payload
+  and selector-entry observable state without perturbing vector order or dynamic
+  callback lookup? The record layout, target tie, selector comparator,
+  displaced-primary fallback, and local RNG grammar are now closed offline.
+  Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
   pathing and the structural dead-noncorpse Board-vector erase are already
   closed offline. The common `IsCorpse` implementation, exact static inputs,

@@ -696,6 +696,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "selected 24-byte record immediately" in evidence
     assert "aiDest matched queue origin" in evidence
     assert "live bridge queue remains the authoritative current action" in evidence
+    assert "immediately displaced primary group" in evidence
+    assert "caller-31 remainder of zero out of four" in evidence
+    assert "selector-entry shared state" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -720,12 +723,30 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "validate_selected_queue_snapshot",
         "correlate_selected_queue_snapshot",
     }
+    assert implementations[
+        "src/observatory/enemy_record_selector_boundary.py"
+    ] == {
+        "replay_enemy_target_tie",
+        "compare_enemy_records",
+        "replay_enemy_record_selector",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_record_selector_boundary.json"
+    ] == {
+        "candidate_record_and_target_tie",
+        "record_comparator_and_displaced_group",
+        "selector_rng_grammar",
+    }
 
     gaps = " ".join(record["known_gaps"])
-    assert "now-proven native tournament" in gaps
+    assert "now-proven record-level native tournament" in gaps
     assert "no live capture serializes one complete tournament" in gaps
+    assert "selector-entry state" in gaps
     assert "one Firefly1 single-weapon shape" in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
+    assert "24-byte record comparator" in gaps
 
 
 def test_real_broad_records_keep_symbols_on_their_exact_source_files():
