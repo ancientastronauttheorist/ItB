@@ -107,6 +107,13 @@ POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
             "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d"
         ),
     },
+    {
+        "id": "score_positioning_x87_project_bridge",
+        "size": 338_859,
+        "sha256": (
+            "0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989"
+        ),
+    },
 )
 
 

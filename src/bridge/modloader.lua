@@ -99,6 +99,27 @@ local SELECTED_QUEUE_OBSERVER_EXPORT =
     "luaopen_itb_observatory_selected_queue_hw_observer"
 local SELECTED_QUEUE_HW_PLAN_SHA256 =
     "f99e1ba7b130799f27f6cc4e7a12aa4198bccb624ce994ae6a3fc063c30511b6"
+local SCORE_POSITIONING_X87 = {
+    snapshot_file =
+        BRIDGE_DIR .. "/itb_observatory_score_positioning_x87_snapshot.json",
+    snapshot_tmp =
+        BRIDGE_DIR .. "/itb_observatory_score_positioning_x87_snapshot.json.tmp",
+    observer_sha256 =
+        "515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504",
+    observer_export =
+        "luaopen_itb_observatory_score_positioning_x87_observer",
+    plan_sha256 =
+        "5a104c63de813099febaabe692e2e89e313459d6579dd8808e4c4bb2516013b0",
+    lua_sha256 =
+        "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    inventory_sha256 =
+        "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    boundary_sha256 =
+        "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    observer = nil,
+    capture_id = nil,
+    restored = false,
+}
 local SPAWN_COORDINATE_SNAPSHOT_FILE =
     BRIDGE_DIR .. "/itb_observatory_spawn_coordinate_snapshot.json"
 local SPAWN_COORDINATE_SNAPSHOT_TMP =
@@ -3776,6 +3797,60 @@ local function load_observatory_selected_queue_module(directory)
     return observer
 end
 
+function SCORE_POSITIONING_X87.load(directory)
+    if not is_windows() then
+        return nil, "ScorePositioning x87 observer requires Windows"
+    end
+    if type(directory) ~= "string" then
+        return nil, "ScorePositioning x87 observer directory is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename = "itb_observatory_score_positioning_x87_observer_"
+        .. SCORE_POSITIONING_X87.observer_sha256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        SCORE_POSITIONING_X87.observer_export
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load ScorePositioning x87 observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "ScorePositioning x87 observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-score-positioning-x87-observer/1"
+        or rawget(observer, "BUILD_ID") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "LUA_DLL_SHA256")
+            ~= SCORE_POSITIONING_X87.lua_sha256
+        or rawget(observer, "INVENTORY_SHA256")
+            ~= SCORE_POSITIONING_X87.inventory_sha256
+        or rawget(observer, "BOUNDARY_MAP_SHA256")
+            ~= SCORE_POSITIONING_X87.boundary_sha256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "INTEGER_CALL_RVA") ~= "0x000f8b89"
+        or rawget(observer, "LUA_TOINTEGER_RVA") ~= "0x000016d0"
+        or rawget(observer, "LUA_CONVERSION_RVA") ~= "0x00001729"
+        or rawget(observer, "HARDWARE_BREAKPOINT_PLAN_SHA256")
+            ~= SCORE_POSITIONING_X87.plan_sha256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "ScorePositioning x87 observer contract mismatch"
+    end
+    return observer
+end
+
 local function load_observatory_spawn_coordinate_module(directory)
     if not is_windows() then
         return nil, "spawn-coordinate observer requires Windows"
@@ -4609,6 +4684,110 @@ local function observatory_selected_queue_snapshot_complete(snapshot)
     return true
 end
 
+function SCORE_POSITIONING_X87.mode(bits)
+    if bits == 0 then return "nearest_even" end
+    if bits == 0x0400 then return "down" end
+    if bits == 0x0800 then return "up" end
+    if bits == 0x0c00 then return "toward_zero" end
+    return nil
+end
+
+function SCORE_POSITIONING_X87.validate_snapshot(
+    snapshot, capture_id
+)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_score_positioning_x87_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-score-positioning-x87-observer/1"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "observation")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "ScorePositioning x87 snapshot contract mismatch"
+    end
+    local identity = rawget(snapshot, "identity")
+    local integrity = rawget(snapshot, "integrity")
+    local observation = rawget(snapshot, "observation")
+    local summary = rawget(snapshot, "summary")
+    local control_word = rawget(observation, "control_word")
+    local rounding_bits = rawget(observation, "rounding_control_bits")
+    local rounding_mode = rawget(observation, "rounding_mode")
+    if rawget(identity, "platform") ~= "windows"
+        or rawget(identity, "architecture") ~= "x86"
+        or rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "executable_size") ~= 5530112
+        or rawget(identity, "lua_dll_sha256")
+            ~= SCORE_POSITIONING_X87.lua_sha256
+        or rawget(identity, "lua_dll_size") ~= 419840
+        or rawget(identity, "inventory_sha256")
+            ~= SCORE_POSITIONING_X87.inventory_sha256
+        or rawget(identity, "boundary_map_sha256")
+            ~= SCORE_POSITIONING_X87.boundary_sha256
+        or rawget(identity, "hardware_breakpoint_plan_sha256")
+            ~= SCORE_POSITIONING_X87.plan_sha256
+        or rawget(identity, "integer_call_rva") ~= "0x000f8b89"
+        or rawget(identity, "lua_tointeger_rva") ~= "0x000016d0"
+        or rawget(identity, "lua_conversion_rva") ~= "0x00001729"
+        or type(control_word) ~= "number"
+        or control_word ~= math.floor(control_word)
+        or control_word < 0 or control_word > 0xffff
+        or type(rounding_bits) ~= "number"
+        or rounding_bits ~= math.floor(rounding_bits)
+        or rounding_bits ~= math.floor(control_word / 0x0400) % 4 * 0x0400
+        or SCORE_POSITIONING_X87.mode(rounding_bits)
+            ~= rounding_mode
+        or rawget(observation, "seq") ~= 1
+        or type(rawget(observation, "thread_id")) ~= "number"
+        or rawget(observation, "thread_id") < 1
+        or type(rawget(observation, "context_flags")) ~= "number"
+        or rawget(observation, "context_flags") < 1
+        or rawget(observation, "lua_conversion_rva") ~= 0x00001729
+        or rawget(observation, "integer_helper_return_rva")
+            ~= 0x000f8b8f
+        or rawget(observation, "named_invoker_return_rva")
+            ~= 0x000f87e2
+        or rawget(observation, "score_positioning_return_rva")
+            ~= 0x000f78da
+        or rawget(summary, "record_count") ~= 1
+        or rawget(summary, "thread_count") ~= 1
+        or rawget(summary, "observed_rounding_mode") ~= rounding_mode
+        or type(rawget(integrity, "complete")) ~= "boolean" then
+        return nil, "ScorePositioning x87 snapshot identity or observation mismatch"
+    end
+    return true
+end
+
+function SCORE_POSITIONING_X87.snapshot_complete(snapshot)
+    local integrity = rawget(snapshot, "integrity") or {}
+    if rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "stopped_reason") ~= nil
+        or type(rawget(integrity, "ignored_non_score_count")) ~= "number"
+        or rawget(integrity, "ignored_non_score_count") < 0
+        or rawget(integrity, "pointer_fault_count") ~= 0
+        or rawget(integrity, "context_flag_error_count") ~= 0
+        or rawget(integrity, "transition_mismatch_count") ~= 0
+        or rawget(integrity, "wrong_thread_count") ~= 0
+        or rawget(integrity, "unexpected_breakpoint_count") ~= 0
+        or rawget(integrity, "torn_record_count") ~= 0
+        or rawget(integrity, "debug_registers_armed") ~= false
+        or rawget(integrity, "debug_registers_cleared") ~= true
+        or rawget(integrity, "veh_installed") ~= false
+        or rawget(integrity, "veh_removed") ~= true
+        or rawget(integrity, "executable_file_released") ~= true
+        or rawget(integrity, "lua_file_released") ~= true
+        or rawget(integrity, "executable_bytes_modified") ~= false
+        or rawget(integrity, "seams_unchanged") ~= true then
+        return nil, "ScorePositioning x87 snapshot is incomplete"
+    end
+    return true
+end
+
 local function validate_observatory_spawn_coordinate_snapshot(
     snapshot, capture_id
 )
@@ -4996,6 +5175,289 @@ local function run_observatory_selected_queue_trial(condition, capture_id)
         .. " at=" .. tostring(scenario.x) .. "," .. tostring(scenario.y)
         .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
         .. " records=" .. tostring(record_count)
+        .. " complete=true"
+end
+
+function SCORE_POSITIONING_X87.start(capture_id)
+    local command_name = "OBS_SCORE_POSITIONING_X87_ARM"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if not actor or not active_ok then
+            return nil, command_name .. " cannot verify player actor state"
+        end
+        if active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if SCORE_POSITIONING_X87.observer ~= nil
+        or SCORE_POSITIONING_X87.restored then
+        return nil, "ScorePositioning x87 observer is already consumed"
+    end
+    if observatory_path_exists(SCORE_POSITIONING_X87.snapshot_file)
+        or observatory_path_exists(SCORE_POSITIONING_X87.snapshot_tmp) then
+        return nil, "ScorePositioning x87 snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local observer, observer_error = SCORE_POSITIONING_X87.load(directory)
+    if not observer then return nil, tostring(observer_error) end
+    SCORE_POSITIONING_X87.observer = observer
+    SCORE_POSITIONING_X87.capture_id = capture_id
+    local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+    if not arm_ok or armed ~= true then
+        pcall(rawget(observer, "finish"))
+        SCORE_POSITIONING_X87.observer = nil
+        SCORE_POSITIONING_X87.capture_id = nil
+        return nil, "ScorePositioning x87 arm failed: " .. tostring(armed)
+    end
+    local status_ok, status = pcall(rawget(observer, "status"))
+    if not status_ok or type(status) ~= "table"
+        or rawget(status, "state") ~= "capturing"
+        or rawget(status, "consumed") ~= true
+        or rawget(status, "capture_started") ~= true
+        or rawget(status, "record_count") ~= 0
+        or rawget(status, "debug_registers_armed") ~= true
+        or rawget(status, "debug_registers_cleared") ~= false
+        or rawget(status, "veh_installed") ~= true
+        or rawget(status, "stopped_reason") ~= nil then
+        pcall(rawget(observer, "finish"))
+        SCORE_POSITIONING_X87.observer = nil
+        SCORE_POSITIONING_X87.capture_id = nil
+        return nil, "ScorePositioning x87 arm status mismatch"
+    end
+    return command_name .. " capture=" .. capture_id
+        .. " state=capturing records=0"
+end
+
+function SCORE_POSITIONING_X87.status(capture_id)
+    local command_name = "OBS_SCORE_POSITIONING_X87_STATUS"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    local observer = SCORE_POSITIONING_X87.observer
+    if type(observer) ~= "table"
+        or SCORE_POSITIONING_X87.capture_id ~= capture_id then
+        return nil, "ScorePositioning x87 observer capture mismatch"
+    end
+    local status_ok, status = pcall(rawget(observer, "status"))
+    if not status_ok or type(status) ~= "table" then
+        return nil, "ScorePositioning x87 status failed: " .. tostring(status)
+    end
+    local state = rawget(status, "state")
+    local records = rawget(status, "record_count")
+    local mode = rawget(status, "observed_rounding_mode")
+    local valid_pending = records == 0 and state == "capturing"
+        and rawget(status, "debug_registers_armed") == true
+        and rawget(status, "debug_registers_cleared") == false
+        and mode == nil
+    local valid_observed = records == 1 and state == "draining"
+        and rawget(status, "debug_registers_armed") == false
+        and rawget(status, "debug_registers_cleared") == true
+        and (mode == "nearest_even" or mode == "down"
+            or mode == "up" or mode == "toward_zero")
+    if rawget(status, "consumed") ~= true
+        or rawget(status, "capture_started") ~= true
+        or rawget(status, "veh_installed") ~= true
+        or rawget(status, "stopped_reason") ~= nil
+        or (not valid_pending and not valid_observed) then
+        return nil, "ScorePositioning x87 status contract mismatch"
+    end
+    return command_name .. " capture=" .. capture_id
+        .. " state=" .. tostring(state)
+        .. " records=" .. tostring(records)
+        .. " mode=" .. tostring(mode or "pending")
+end
+
+function SCORE_POSITIONING_X87.finish(capture_id)
+    local command_name = "OBS_SCORE_POSITIONING_X87_FINISH"
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " requires one capture ID"
+    end
+    local observer = SCORE_POSITIONING_X87.observer
+    if type(observer) ~= "table"
+        or SCORE_POSITIONING_X87.capture_id ~= capture_id then
+        return nil, "ScorePositioning x87 observer capture mismatch"
+    end
+    local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+    if not finish_ok or type(snapshot) ~= "table" then
+        return nil, "ScorePositioning x87 finish failed: " .. tostring(snapshot)
+    end
+    local restored = type(rawget(snapshot, "integrity")) == "table"
+        and rawget(snapshot.integrity, "state") == "restored"
+        and rawget(snapshot.integrity, "debug_registers_armed") == false
+        and rawget(snapshot.integrity, "veh_installed") == false
+    if restored then
+        SCORE_POSITIONING_X87.observer = nil
+        SCORE_POSITIONING_X87.capture_id = nil
+        SCORE_POSITIONING_X87.restored = true
+    end
+    local valid, validation_error =
+        SCORE_POSITIONING_X87.validate_snapshot(
+            snapshot, capture_id
+        )
+    if not valid then return nil, tostring(validation_error) end
+    local complete, complete_error =
+        SCORE_POSITIONING_X87.snapshot_complete(snapshot)
+    if not complete then return nil, tostring(complete_error) end
+    local wrote, write_error = write_observatory_create_only_json(
+        SCORE_POSITIONING_X87.snapshot_file,
+        SCORE_POSITIONING_X87.snapshot_tmp,
+        snapshot,
+        64 * 1024
+    )
+    if not wrote then
+        return nil, "ScorePositioning x87 snapshot output failed: "
+            .. tostring(write_error)
+    end
+    return command_name .. " capture=" .. capture_id
+        .. " records=1 mode="
+        .. tostring(rawget(snapshot.observation, "rounding_mode"))
+        .. " control_word="
+        .. tostring(rawget(snapshot.observation, "control_word"))
+        .. " complete=true"
+end
+
+function SCORE_POSITIONING_X87.trial(condition, capture_id)
+    local command_name = "OBS_SCORE_POSITIONING_X87_TRIAL"
+    if condition ~= "control" and condition ~= "dormant"
+        and condition ~= "armed" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " capture ID is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    if SCORE_POSITIONING_X87.observer ~= nil
+        or SCORE_POSITIONING_X87.restored then
+        return nil, "ScorePositioning x87 observer is already consumed"
+    end
+    if observatory_path_exists(SCORE_POSITIONING_X87.snapshot_file)
+        or observatory_path_exists(SCORE_POSITIONING_X87.snapshot_tmp) then
+        return nil, "ScorePositioning x87 snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    if condition == "dormant" then
+        local dormant, dormant_error = SCORE_POSITIONING_X87.load(directory)
+        if not dormant then return nil, tostring(dormant_error) end
+    end
+    local scenario, scenario_error = observatory_selected_queue_scenario()
+    if not scenario then return nil, tostring(scenario_error) end
+    local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, mech_id in ipairs(mech_ids) do
+        local mech = Board:GetPawn(mech_id)
+        if mech and not mech:IsDead() then mech:SetActive(false) end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "ScorePositioning x87 seed failed: " .. tostring(seeded)
+    end
+    if condition == "armed" then
+        local started, start_error = SCORE_POSITIONING_X87.start(capture_id)
+        if not started then return nil, tostring(start_error) end
+    end
+    local start_count = -1
+    pcall(function() start_count = Game:GetTurnCount() end)
+    local end_ok, invoked = pcall(rawget(gameflow, "end_player_turn"))
+    if not end_ok or invoked ~= true then
+        if condition == "armed" then
+            pcall(SCORE_POSITIONING_X87.finish, capture_id)
+        end
+        return nil, "ScorePositioning x87 native End Turn failed: "
+            .. tostring(invoked)
+    end
+    local advanced = wait_until_coro(function()
+        if Board:IsBusy() then return false end
+        local current_count = -1
+        local current_team = -1
+        pcall(function() current_count = Game:GetTurnCount() end)
+        pcall(function() current_team = Game:GetTeamTurn() end)
+        return current_count > start_count and current_team == TEAM_PLAYER
+    end, 60)
+    if not advanced then
+        if condition == "armed" then
+            pcall(SCORE_POSITIONING_X87.finish, capture_id)
+        end
+        return nil, "ScorePositioning x87 turn transition timed out"
+    end
+    local record_count = 0
+    local rounding_mode = "unobserved"
+    local control_word = 0
+    if condition == "armed" then
+        local status, status_error = SCORE_POSITIONING_X87.status(capture_id)
+        if not status
+            or not string.find(
+                status, "state=draining records=1", 1, true
+            ) then
+            pcall(SCORE_POSITIONING_X87.finish, capture_id)
+            return nil, "ScorePositioning x87 observation missing: "
+                .. tostring(status_error or status)
+        end
+        local finished, finish_error = SCORE_POSITIONING_X87.finish(capture_id)
+        if not finished then return nil, tostring(finish_error) end
+        local records_text, mode_text, control_text = string.match(
+            finished,
+            " records=(%d+) mode=([a-z_]+) control_word=(%d+) complete=true$"
+        )
+        record_count = tonumber(records_text)
+        rounding_mode = mode_text
+        control_word = tonumber(control_text)
+        if record_count ~= 1 or rounding_mode == nil
+            or control_word == nil then
+            return nil, "ScorePositioning x87 finish ACK is malformed"
+        end
+    end
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " pawn=" .. tostring(scenario.pawn_id)
+        .. " type=" .. tostring(scenario.pawn_type)
+        .. " at=" .. tostring(scenario.x) .. "," .. tostring(scenario.y)
+        .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
+        .. " records=" .. tostring(record_count)
+        .. " mode=" .. tostring(rounding_mode)
+        .. " control_word=" .. tostring(control_word)
         .. " complete=true"
 end
 
@@ -6206,6 +6668,71 @@ local function execute_command(cmd_str)
             abort_observatory_spawn_coordinate_trial(parts[2])
         if not completed then
             write_ack("ERROR: OBS_SPAWN_COORDINATE_ABORT "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SCORE_POSITIONING_X87_ARM" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SCORE_POSITIONING_X87_ARM requires one capture ID"
+            )
+            return
+        end
+        local started, start_error = SCORE_POSITIONING_X87.start(parts[2])
+        if not started then
+            write_ack("ERROR: OBS_SCORE_POSITIONING_X87_ARM "
+                .. tostring(start_error))
+            return
+        end
+        write_ack("OK " .. started)
+        return
+
+    elseif cmd == "OBS_SCORE_POSITIONING_X87_STATUS" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SCORE_POSITIONING_X87_STATUS requires one capture ID"
+            )
+            return
+        end
+        local status, status_error = SCORE_POSITIONING_X87.status(parts[2])
+        if not status then
+            write_ack("ERROR: OBS_SCORE_POSITIONING_X87_STATUS "
+                .. tostring(status_error))
+            return
+        end
+        write_ack("OK " .. status)
+        return
+
+    elseif cmd == "OBS_SCORE_POSITIONING_X87_FINISH" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SCORE_POSITIONING_X87_FINISH requires one capture ID"
+            )
+            return
+        end
+        local finished, finish_error = SCORE_POSITIONING_X87.finish(parts[2])
+        if not finished then
+            write_ack("ERROR: OBS_SCORE_POSITIONING_X87_FINISH "
+                .. tostring(finish_error))
+            return
+        end
+        write_ack("OK " .. finished)
+        return
+
+    elseif cmd == "OBS_SCORE_POSITIONING_X87_TRIAL" then
+        if #parts ~= 3 then
+            write_ack(
+                "ERROR: OBS_SCORE_POSITIONING_X87_TRIAL requires condition and capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            SCORE_POSITIONING_X87.trial(parts[2], parts[3])
+        if not completed then
+            write_ack("ERROR: OBS_SCORE_POSITIONING_X87_TRIAL "
                 .. tostring(trial_error))
             return
         end

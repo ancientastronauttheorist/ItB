@@ -1,0 +1,39 @@
+{
+  "analysis": null,
+  "boundary": {
+    "control_word": 0,
+    "record_count": 0,
+    "rounding_mode": "unobserved"
+  },
+  "build_receipt_sha256": "82398c3b607a312cbb9debdeb9dafbc802599547da4a2bf5aa9b7e066555b9fb",
+  "capture_id": "score-x87-pair-001-dormant",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_SCORE_POSITIONING_X87_TRIAL condition=dormant capture=score-x87-pair-001-dormant pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 records=0 mode=unobserved control_word=0 complete=true",
+  "condition": "dormant",
+  "created_at": "2026-08-24T21:43:31.589569+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_score_positioning_x87_turn_trial",
+  "module_sha256": "515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_score_positioning_x87\\campaign\\pair001\\dormant\\outcome.json",
+    "sha256": "1c9afeb458c4ab26e147cb7e532fdb32e0900897d42c4831f89d94761f35cf09"
+  },
+  "pair_id": "score-x87-pair-001",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": null,
+  "status": "complete",
+  "valid_trial": true
+}

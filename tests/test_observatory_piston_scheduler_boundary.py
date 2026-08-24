@@ -194,20 +194,29 @@ def test_bridge_rust_gate_version_and_archive_conform_to_native_map():
 
 def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
     bridge = ROOT / "src" / "bridge" / "modloader.lua"
-    expected = {
-        "id": "mission_piston_v408_project_bridge",
-        "size": bridge.stat().st_size,
-        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
-    }
-    assert expected == {
+    v408 = {
         "id": "mission_piston_v408_project_bridge",
         "size": 315_686,
         "sha256": (
             "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d"
         ),
     }
-    assert expected in DEATH_EVENT_BRIDGE_OVERLAYS
-    assert expected in FINAL_CAVE_BRIDGE_OVERLAYS
+    current = {
+        "id": "score_positioning_x87_project_bridge",
+        "size": bridge.stat().st_size,
+        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
+    }
+    assert current == {
+        "id": "score_positioning_x87_project_bridge",
+        "size": 338_859,
+        "sha256": (
+            "0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989"
+        ),
+    }
+    assert v408 in DEATH_EVENT_BRIDGE_OVERLAYS
+    assert v408 in FINAL_CAVE_BRIDGE_OVERLAYS
+    assert current in DEATH_EVENT_BRIDGE_OVERLAYS
+    assert current in FINAL_CAVE_BRIDGE_OVERLAYS
 
 
 def test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available():

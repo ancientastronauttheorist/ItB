@@ -100,6 +100,7 @@ not be relabelled as clean stock.
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
 | Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer, strict selected-to-queue correlator, and exact offline 24-byte record-selector replay | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill. The preceding comparator, displaced-primary fallback, and caller-ID 29–33 draw grammar are exact from ordered post-callback records plus selector-entry state; those prospective inputs are not ordinary bridge data |
+| `ScorePositioning` x87 conversion | Reproducible one-shot x86 observer at the exact `lua_tointeger` `FISTP`, filtered by the four-frame `ScorePositioning` call chain | Three counterbalanced control/dormant/armed triplets record `0x027F`/nearest-even in every armed process, all six control comparisons match semantically, and every debug register, VEH, file handle, and image seam restores cleanly |
 | Native path/death boundary | Four exact-build API/profile/vtable, cost/order, lifecycle-occupancy, and corpse-classification maps with region hashes, control windows, direction/cost tables, comparators, lifecycle bindings, source inventory, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 live/corpse transit-versus-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, Massive Water, live-or-persistent-corpse mode-1 occupancy, the common `IsCorpse` predicate, dormant Necro fallback, and all 16 shipped corpse types. Simulators v401/v402/v403 have focused regressions; classification already conforms at v407. Lifecycle/removal timing, matched vectors, and `AddMove` execution remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
 
@@ -450,6 +451,24 @@ bytes were unchanged, and no executable file bytes changed. This is a bounded
 one-pawn proof, not a universal claim about cancellation, retargeting, or every
 enemy type. The immutable receipt is
 `windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json`.
+
+The later `ScorePositioning` x87 campaign reused that deterministic one-
+`Firefly1` mission shape but observed only the current thread's hardware
+breakpoint immediately before `lua5.1.dll!lua_tointeger` executes `FISTP`.
+The observer accepts the hit only when the three enclosing return addresses
+bind the exact integer helper, named invoker, and `ScorePositioning` wrapper.
+Three fresh-process triplets used different control/dormant/armed orders. Every
+armed snapshot contains exactly one record with control word `639` (`0x027F`),
+so the exact build rounds half-integers to nearest-even at this boundary. All
+six control comparisons have zero semantic differences; every debug register,
+VEH, file handle, and image seam restored before publication. The immutable
+campaign and cleanup receipts are
+`windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_cleanup_receipt.json`.
+The latter binds the restored 32-file pre-experiment owner save, exact prior
+Mod Loader hash, 689-entry post-cleanup inventory, zero active Observatory
+files, and a stopped game process.
 
 The later
 `windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json`

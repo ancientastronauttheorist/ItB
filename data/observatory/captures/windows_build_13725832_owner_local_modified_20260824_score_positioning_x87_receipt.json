@@ -1,0 +1,374 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "5a104c63de813099febaabe692e2e89e313459d6579dd8808e4c4bb2516013b0",
+    "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "lua_dll_size": 419840,
+    "module_sha256": "515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504"
+  },
+  "campaign": {
+    "condition_orders": [
+      [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      [
+        "dormant",
+        "armed",
+        "control"
+      ]
+    ],
+    "conditions": [
+      "control",
+      "dormant",
+      "armed"
+    ],
+    "fixed_seed": 324508639,
+    "pair_count": 3,
+    "save_tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5",
+    "scenario": {
+      "consumed_spawn_count": 0,
+      "pawn_id": 1303,
+      "pawn_type": "Firefly1",
+      "start": [
+        4,
+        4
+      ]
+    }
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "That every future process or non-ScorePositioning Lua integer conversion uses the same x87 control word.",
+      "A complete native enemy tournament replay; this campaign resolves only ScorePositioning's native integer-conversion mode.",
+      "Pristine-depot behavior; this is the attested owner-local-modified Windows build."
+    ],
+    "proven": [
+      "All three exact ScorePositioning lua_tointeger conversions used x87 control word 0x027F, whose rounding-control bits select round-to-nearest-even.",
+      "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets.",
+      "Every one-shot observer cleared its debug register, removed its vectored exception handler, released both pinned files, retained both image seams, and modified no executable bytes."
+    ]
+  },
+  "kind": "observatory_score_positioning_x87_campaign_receipt",
+  "pairs": [
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/armed/analysis.json",
+          "sha256": "3f2d1cdf3b609c237a840368459f9bf005b940b6ef3a7473ef70929ce73b2d58",
+          "size": 2024
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/armed/outcome.json",
+          "sha256": "6608d39d3a88c82c3ea9805a72a5a5b97f2e90acf9b3e09941a19128581c7e92",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/armed/snapshot.json",
+          "sha256": "24952eb9b172d68088d8c4822122ad822f745e90fc78db7ef3983e7030e66822",
+          "size": 1965
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/armed/trial.json",
+          "sha256": "1165926cdb4f1ddd23474fda633c2a8efccb95ccb2ceea60430668d7b0f6bed4",
+          "size": 1973
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/control/outcome.json",
+          "sha256": "386b601ea8b54360e5c6032dff938e133378e63b552597e6ba2b0af4bbb1be52",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/control/trial.json",
+          "sha256": "db58b8575c0ec390b4444abaf48a502e197617c5b91171ad798376e49c11da90",
+          "size": 1347
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/dormant/outcome.json",
+          "sha256": "1c9afeb458c4ab26e147cb7e532fdb32e0900897d42c4831f89d94761f35cf09",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair001/dormant/trial.json",
+          "sha256": "68ff3a8945b89c4d2d9387d79e8d3cfe30416a087bf79ea866f04ae544066db0",
+          "size": 1347
+        }
+      },
+      "condition_order": [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      "observation": {
+        "boundary": "lua5.1.dll!lua_tointeger immediately before FISTP",
+        "control_word": 639,
+        "frame_chain": [
+          "ScorePositioning",
+          "named_integer_invoker",
+          "integer_helper",
+          "lua_tointeger"
+        ],
+        "rounding_control_bits": 0,
+        "rounding_mode": "nearest_even"
+      },
+      "observer_integrity": {
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "lua_file_released": true,
+        "seams_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair001",
+      "pair_id": "score-x87-pair-001",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/armed/analysis.json",
+          "sha256": "1bbdc6f302c23bef28c5621a3318e40e98769bd493d65c13bdb5d8d222cfdbf6",
+          "size": 2024
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/armed/outcome.json",
+          "sha256": "b23bd77a8c575aaaf2d230ce057277a8a669425d02c50daa3b9d0e51e247ba26",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/armed/snapshot.json",
+          "sha256": "6a7eeff91798229bcaccfe7ce3607f9ab8778c77f31f6b796aba8ec6a1ab36e0",
+          "size": 1966
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/armed/trial.json",
+          "sha256": "29328bec83bffea7e02b4cb5102b1bd7d0eb0a8d369c409e46d3c6fa3dac0fbe",
+          "size": 1973
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/control/outcome.json",
+          "sha256": "cb64f9c5f0d4890b5e9014943d7120c3597ba802426b2897c5a5dfee4f395e0c",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/control/trial.json",
+          "sha256": "45012f22166dcce5ae4c74b43dbcac285af615fd7ed9dcc047cb86cdb5c1e213",
+          "size": 1347
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/dormant/outcome.json",
+          "sha256": "9be376bbf3c3c9442bdfaedc369a85b8548ee95fdcf0075f76c8106a4da7fd47",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair002/dormant/trial.json",
+          "sha256": "13ce76578a878ea0bbaba8b813cf900e527daec9657b3843da776d88a68c06c7",
+          "size": 1347
+        }
+      },
+      "condition_order": [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      "observation": {
+        "boundary": "lua5.1.dll!lua_tointeger immediately before FISTP",
+        "control_word": 639,
+        "frame_chain": [
+          "ScorePositioning",
+          "named_integer_invoker",
+          "integer_helper",
+          "lua_tointeger"
+        ],
+        "rounding_control_bits": 0,
+        "rounding_mode": "nearest_even"
+      },
+      "observer_integrity": {
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "lua_file_released": true,
+        "seams_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair002",
+      "pair_id": "score-x87-pair-002",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/armed/analysis.json",
+          "sha256": "e1948760685d94c5b8d65006dd968faf7f97d0027ed72d277b53826b32f238b9",
+          "size": 2024
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/armed/outcome.json",
+          "sha256": "ba6ba412973f449fca3dc0b705b8a092548071f5c8b9ef4873a79c9dbe7b9d5c",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/armed/snapshot.json",
+          "sha256": "f10373c9bfde8986726cf545cf1a3b6efe39911c20d9f47f6fdb4d56827a51a5",
+          "size": 1965
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/armed/trial.json",
+          "sha256": "a43007b763f1341fa24b689df233f50b2f2f0be1d231696a2a4a47cd3b3072a0",
+          "size": 1973
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/control/outcome.json",
+          "sha256": "f3adb53743ce69ad66f1359a75d17f6ebdc041ee259359298ae50a7c69daeb76",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/control/trial.json",
+          "sha256": "8c9a7a98c54cf794e77f883e4c6730914842a15e230b6e73d1007ad0958c1c29",
+          "size": 1347
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/dormant/outcome.json",
+          "sha256": "bb31ab8eede6b7308ec4af8e0b8dea7035f1b6ccae0a4c12d1309d447b26adfb",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/pair003/dormant/trial.json",
+          "sha256": "58c678e06dbe2668774bd0cbc6fa6b21e7145a275a99128056e0b125c1655b1d",
+          "size": 1347
+        }
+      },
+      "condition_order": [
+        "dormant",
+        "armed",
+        "control"
+      ],
+      "observation": {
+        "boundary": "lua5.1.dll!lua_tointeger immediately before FISTP",
+        "control_word": 639,
+        "frame_chain": [
+          "ScorePositioning",
+          "named_integer_invoker",
+          "integer_helper",
+          "lua_tointeger"
+        ],
+        "rounding_control_bits": 0,
+        "rounding_mode": "nearest_even"
+      },
+      "observer_integrity": {
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "lua_file_released": true,
+        "seams_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair003",
+      "pair_id": "score-x87-pair-003",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    }
+  ],
+  "restore": {
+    "install_restoration_pending": true,
+    "save_restoration_pending": true,
+    "save_tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5"
+  },
+  "results": {
+    "all_semantic_outcomes_match": true,
+    "classification": "score_positioning_x87_rounding_mode_resolved",
+    "complete_restored_snapshots": 3,
+    "control_words": [
+      639,
+      639,
+      639
+    ],
+    "records_per_armed_snapshot": [
+      1,
+      1,
+      1
+    ],
+    "rounding_modes": [
+      "nearest_even",
+      "nearest_even",
+      "nearest_even"
+    ],
+    "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+    "stable_control_word": 639,
+    "stable_rounding_mode": "nearest_even"
+  },
+  "schema_version": 1,
+  "solver_conformance": {
+    "capture_backed_test": "test_committed_x87_campaign_selects_nearest_even_replay",
+    "offline_model": "src.observatory.enemy_score_positioning_semantics.replay_score_positioning_native_integer",
+    "reason": "The Rust simulator does not fabricate the unresolved native candidate tournament or execute ScorePositioning; the authoritative settled enemy queue remains its input.",
+    "resolved_rule": "Convert half-integer ScorePositioning results with signed round-to-nearest-even for this exact Windows build",
+    "rust_change_required": false,
+    "simulator_version_bump_required": false
+  },
+  "supporting_artifacts": {
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_score_positioning_x87_observer_515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504.dll.receipt.json",
+      "sha256": "82398c3b607a312cbb9debdeb9dafbc802599547da4a2bf5aa9b7e066555b9fb",
+      "size": 4489
+    }
+  }
+}

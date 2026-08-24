@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_score_positioning_x87_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-24T21:57:54Z",
+  "repository_base_commit": "eec954d9faba102233980adc510ecc7636c5eca9",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json",
+      "size": 15178,
+      "sha256": "57f45a29674a49c90ff71f2f8d3f127ed91eb4e36ea28f82675997509fc6d412"
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_score_positioning_x87_observer_515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504.dll.receipt.json",
+      "size": 4489,
+      "sha256": "82398c3b607a312cbb9debdeb9dafbc802599547da4a2bf5aa9b7e066555b9fb"
+    }
+  },
+  "supersedes_pending_state": {
+    "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json",
+    "fields": [
+      "restore.install_restoration_pending",
+      "restore.save_restoration_pending"
+    ],
+    "prior_value": true,
+    "resolved": true
+  },
+  "install_restore": {
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_score_positioning_x87_restore_20260824.json",
+      "size": 125504,
+      "sha256": "3b915e52dd67e9029c6db9f9eb8d3ef083f064c1eb991151cfa99ef5070a9a2f"
+    },
+    "inventory_summary": {
+      "entry_count": 689,
+      "script_count": 305,
+      "map_count": 377,
+      "native_library_count": 6,
+      "executable_count": 1
+    },
+    "installed_modloader_before_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "installed_modloader_experiment_sha256": "0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989",
+    "installed_modloader_after_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "experimental_dll_count": 3,
+    "experimental_dll_byte_count": 169984,
+    "remaining_experimental_file_count": 0,
+    "experimental_files_preserved_in_recoverable_owner_staging": true
+  },
+  "save_restore": {
+    "trial_start_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821_seeded_rng_start_state_manifest.json",
+      "size": 6821,
+      "sha256": "cca55087ce7b19e37e43d0a36057685627fffe6b8d93db47a1e5d705dfd1658c",
+      "tree_sha256": "ca305830ca471c3d5f1501bb8750a7d076283752bde39a66f637717e7f04eae5"
+    },
+    "pre_experiment_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_pre_experiment_save_manifest.json",
+      "size": 6644,
+      "sha256": "a53c9e797aaba4ddd0c605b9ca8ca676ef6a950478bfd9c6d5b926e02d774650",
+      "file_count": 32,
+      "byte_count": 2434067,
+      "tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+    },
+    "final_live_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "file_set_and_bytes_match_pre_experiment": true
+  },
+  "bridge_cleanup": {
+    "armed_snapshot_count_archived": 3,
+    "armed_snapshot_byte_count": 4984,
+    "remaining_observatory_file_count": 0,
+    "recoverable_owner_staging_preserved": true
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "score_positioning_x87_observer_installed": false,
+    "rng_seed_helper_installed": false,
+    "gameflow_helper_installed": false,
+    "experimental_modloader_installed": false
+  },
+  "claims": {
+    "proven": [
+      "The active owner save file set and bytes match the byte-exact pre-experiment snapshot.",
+      "The prior installed Mod Loader was restored byte-exactly and no Observatory DLL remains in the active installation.",
+      "No Observatory output or request remains in the active bridge and Breach.exe is stopped.",
+      "This receipt closes the campaign receipt's pending save and install restoration fields."
+    ],
+    "not_proven": [
+      "Pristine Steam depot behavior; the campaign remains owner-local-modified.",
+      "That files outside the explicitly inventoried installation and save/bridge roots were unchanged.",
+      "A complete native enemy tournament replay beyond the observed ScorePositioning integer boundary."
+    ]
+  }
+}

@@ -29,6 +29,11 @@ hardware-observer triplets correlate the final selected record to the immediate
 Pawn action queue for a bounded Firefly scenario. Three spawn-replay captures
 also recover the exact observable pre-call state class and reproduce the
 captured pawn choices from their effective ratios and ordered candidates.
+A separate one-shot hardware observer now closes the callback-time x87 seam:
+three counterbalanced fresh-process triplets each hit the exact
+`ScorePositioning -> lua_tointeger` frame chain immediately before `FISTP` and
+record control word `0x027F` (nearest-even). All control/dormant/armed outcomes
+match, and every debug register, VEH, file handle, and image seam is restored.
 A later coordinate hardware observer resolves the standard selector's ordered
 candidates, direct shared-RNG caller, and modulo rule. Three same-process
 coordinate/RNG captures show that the selector ordinal is not stable under a
@@ -102,6 +107,10 @@ The durable artifacts are:
   for every shipped global `ScorePositioning` branch, exact half-point melee
   arithmetic, the native named-integer join, and conversion replay under an
   explicit callback-time x87 rounding mode;
+- `data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json`
+  for three exact-build runtime observations of x87 control word `0x027F`, six
+  matched whole-game neutrality comparisons, complete one-shot observer
+  restoration, and the resulting nearest-even conformance rule;
 - `data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json`
   for the exact `GetDangerScore`/`GetCustomPositionScore` registrations and
   call bodies, their generated Lua getters, and the unmodified shipped
@@ -402,8 +411,11 @@ preserving Lua expression based on the smaller Pawn/Building distance. The
 direct Lua `ScoreList` route retains that fraction. The separate native
 candidate route enters the pinned named integer invoker and installed
 `lua5.1.dll` `lua_tointeger`; its exact body uses x87 `FISTP`. Conversion is
-therefore replayable for each of the four x87 rounding modes, while the active
-thread control word remains runtime evidence for fractional results.
+therefore replayable for each of the four x87 rounding modes. The later runtime
+campaign resolves the observed mode for this exact Windows build to
+nearest-even: every fresh armed process records control word `0x027F` at the
+exact conversion boundary. This remains a build/process-scoped observation,
+not an assumption about other builds or arbitrary Lua integer calls.
 
 The next native/source join resolves both Pawn helpers. The unique
 `GetDangerScore` registration points to a 57-byte body that supplies
@@ -431,9 +443,9 @@ Building distance is Manhattan over a cache rebuilt from every terrain-1 tile.
 The ordinary bridge directly carries or exactly derives most current values.
 It does not directly carry the two dangerous predicates, runtime-exact Ranged
 or AvoidingMines mutations, or the Board snapshot at each later candidate
-callback. Runtime/mod mutations, that candidate-time snapshot, and the x87
-control word remain explicit inputs, so the future tournament is still not
-fabricated.
+callback. Runtime/mod mutations and that candidate-time snapshot remain
+explicit inputs. The callback-time x87 seam is resolved to nearest-even for the
+attested Windows build, but the future tournament is still not fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -956,6 +968,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    matrix is explicit; direct dangerous carriers, live definition mutations,
    and the candidate-time Board snapshot remain unavailable inputs rather than
    unknown native semantics.
+   **Completed at runtime for native integer rounding:** three fresh armed
+   processes record x87 control word `0x027F` immediately before the exact
+   `ScorePositioning` `FISTP`, while all six control comparisons match and every
+   observer restores completely. The offline replay therefore selects
+   nearest-even for this exact build; Rust still consumes the settled queue and
+   needs no simulator-version change.
    **Completed offline for the native target-area gate:** the active/smoke/
    Water/bonus-shift/usable-skill/IsMech predicate and literal-50
    `Skill_Repair` resolver are replayable from explicit inputs.

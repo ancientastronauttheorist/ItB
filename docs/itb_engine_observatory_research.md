@@ -41,7 +41,12 @@ have since been restored exactly, with no active Observatory file remaining.
 Three source-verified `Spawner:NextPawn` spans now resolve the normal
 weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
 triplets also correlate the final selected record to the immediate Pawn queue
-commit for a bounded Firefly scenario. Three later spawn-replay captures recover
+commit for a bounded Firefly scenario. A separate three-triplet, one-shot
+hardware campaign observes the exact `ScorePositioning` integer conversion
+immediately before `lua5.1.dll` executes `FISTP`: every fresh armed process
+records x87 control word `0x027F`, selecting nearest-even, while all
+control/dormant/armed outcomes match and every debug register and VEH is
+restored. Three later spawn-replay captures recover
 the exact observable MSVC pre-call state class and export the effective ratios
 and ordered candidates needed to reproduce `Firefly2`, `Scarab2`, and
 `Firefly2` exactly. A later hardware observer now captures the coordinate
@@ -891,8 +896,11 @@ bridge-read boundary.
   custom-score, stock-edge, team-selection, adjacency, distance, and ranged
   branch is replayable from projected observations. Direct Lua consumers keep
   melee half-points. The separate native named-integer route reaches a pinned
-  x87 `FISTP`; all four rounding modes are replayable, but the callback-time
-  thread control word for fractional results remains a runtime input.
+  x87 `FISTP`; all four rounding modes are replayable. Three counterbalanced
+  runtime triplets now bind the exact Windows build's observed callback mode to
+  nearest-even (`0x027F`) with six semantically identical control comparisons
+  and complete observer restoration. Other processes/builds remain explicitly
+  re-observed rather than inferred.
 - **Completed offline through the native Pawn positioning helpers:** exact
   registrations and call bodies prove `GetDangerScore` dispatches generated
   `GetScoreDanger`, while `GetCustomPositionScore` dispatches generated

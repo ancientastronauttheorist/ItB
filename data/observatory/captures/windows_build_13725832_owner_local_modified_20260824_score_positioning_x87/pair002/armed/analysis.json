@@ -1,0 +1,45 @@
+{
+  "capture_id": "score-x87-pair-002-armed",
+  "claims": {
+    "not_proven": [
+      "That every future process or non-ScorePositioning Lua integer conversion uses the same rounding-control mode.",
+      "A complete native enemy tournament replay; this observation resolves only its ScorePositioning integer-conversion mode."
+    ],
+    "proven": [
+      "The observed ScorePositioning integer conversion used the recorded x87 rounding-control mode at the exact FISTP boundary.",
+      "The one-shot current-thread debug register and VEH were removed, both pinned files were released, and both image seams remained unchanged before publication."
+    ]
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "5a104c63de813099febaabe692e2e89e313459d6579dd8808e4c4bb2516013b0",
+    "integer_call_rva": "0x000f8b89",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "lua_conversion_rva": "0x00001729",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "lua_dll_size": 419840,
+    "lua_tointeger_rva": "0x000016d0",
+    "platform": "windows"
+  },
+  "kind": "score_positioning_x87_observation_analysis",
+  "module_sha256": "515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504",
+  "observation": {
+    "boundary": "lua5.1.dll!lua_tointeger immediately before FISTP",
+    "control_word": 639,
+    "frame_chain": [
+      "ScorePositioning",
+      "named_integer_invoker",
+      "integer_helper",
+      "lua_tointeger"
+    ],
+    "ignored_non_score_count": 3016,
+    "rounding_control_bits": 0,
+    "rounding_mode": "nearest_even"
+  },
+  "schema_version": 1,
+  "snapshot_sha256": "d90cda96e9b7a2b2588b4a51f6080f19db05aaf348ba9c9c7a5923a495994205"
+}

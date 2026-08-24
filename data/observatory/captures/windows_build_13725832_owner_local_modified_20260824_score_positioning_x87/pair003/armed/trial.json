@@ -1,0 +1,49 @@
+{
+  "analysis": {
+    "kind": "score_positioning_x87_observation_analysis",
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_score_positioning_x87\\campaign\\pair003\\armed\\analysis.json",
+    "rounding_mode": "nearest_even",
+    "sha256": "e1948760685d94c5b8d65006dd968faf7f97d0027ed72d277b53826b32f238b9"
+  },
+  "boundary": {
+    "control_word": 639,
+    "record_count": 1,
+    "rounding_mode": "nearest_even"
+  },
+  "build_receipt_sha256": "82398c3b607a312cbb9debdeb9dafbc802599547da4a2bf5aa9b7e066555b9fb",
+  "capture_id": "score-x87-pair-003-armed",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_SCORE_POSITIONING_X87_TRIAL condition=armed capture=score-x87-pair-003-armed pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 records=1 mode=nearest_even control_word=639 complete=true",
+  "condition": "armed",
+  "created_at": "2026-08-24T21:49:32.708199+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_score_positioning_x87_turn_trial",
+  "module_sha256": "515376611fb75ff58ed5323b654eb8dd2402996e5e4dbc237d870d3c5fbab504",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_score_positioning_x87\\campaign\\pair003\\armed\\outcome.json",
+    "sha256": "ba6ba412973f449fca3dc0b705b8a092548071f5c8b9ef4873a79c9dbe7b9d5c"
+  },
+  "pair_id": "score-x87-pair-003",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": {
+    "complete": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_score_positioning_x87\\campaign\\pair003\\armed\\snapshot.json",
+    "record_count": 1,
+    "sha256": "f10373c9bfde8986726cf545cf1a3b6efe39911c20d9f47f6fdb4d56827a51a5"
+  },
+  "status": "complete",
+  "valid_trial": true
+}

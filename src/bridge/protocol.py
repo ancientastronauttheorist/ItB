@@ -73,6 +73,12 @@ SELECTED_QUEUE_SNAPSHOT_FILE = (
 SELECTED_QUEUE_SNAPSHOT_TMP = (
     BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json.tmp"
 )
+SCORE_POSITIONING_X87_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_score_positioning_x87_snapshot.json"
+)
+SCORE_POSITIONING_X87_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_score_positioning_x87_snapshot.json.tmp"
+)
 SPAWN_COORDINATE_SNAPSHOT_FILE = (
     BRIDGE_DIR / "itb_observatory_spawn_coordinate_snapshot.json"
 )
@@ -711,6 +717,255 @@ def finish_observatory_native_rng_spawn_replay(
         return ack, snapshot, ledger
     raise TimeoutError(
         f"Fresh spawn replay ledger timeout after {timeout:.0f}s"
+    )
+
+
+def arm_observatory_score_positioning_x87(
+    capture_id: str,
+    *,
+    timeout: float = 15.0,
+) -> str:
+    """Arm the exact one-shot x87 observer immediately before End Turn."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("ScorePositioning x87 capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "ScorePositioning x87 arm requires an unpaused mission heartbeat"
+        )
+    if (
+        SCORE_POSITIONING_X87_SNAPSHOT_FILE.exists()
+        or SCORE_POSITIONING_X87_SNAPSHOT_TMP.exists()
+    ):
+        raise BridgeError("ScorePositioning x87 snapshot output already exists")
+    command = f"OBS_SCORE_POSITIONING_X87_ARM {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    expected = (
+        f"OK OBS_SCORE_POSITIONING_X87_ARM capture={capture_id} "
+        "state=capturing records=0"
+    )
+    if ack != expected:
+        raise BridgeError(f"unexpected ScorePositioning x87 arm ACK: {ack}")
+    return ack
+
+
+def status_observatory_score_positioning_x87(
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> tuple[str, dict]:
+    """Read the exact x87 observer state without finalizing it."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("ScorePositioning x87 capture ID is invalid")
+    command = f"OBS_SCORE_POSITIONING_X87_STATUS {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SCORE_POSITIONING_X87_STATUS "
+        r"capture=([a-z][a-z0-9_.-]{0,95}) "
+        r"state=(capturing|draining) records=([01]) "
+        r"mode=(pending|nearest_even|down|up|toward_zero)",
+        ack,
+    )
+    if match is None or match.group(1) != capture_id:
+        raise BridgeError(f"unexpected ScorePositioning x87 status ACK: {ack}")
+    state = match.group(2)
+    records = int(match.group(3))
+    mode = match.group(4)
+    if (records, state, mode) not in {
+        (0, "capturing", "pending"),
+        (1, "draining", "nearest_even"),
+        (1, "draining", "down"),
+        (1, "draining", "up"),
+        (1, "draining", "toward_zero"),
+    }:
+        raise BridgeError("ScorePositioning x87 status fields are inconsistent")
+    return ack, {"state": state, "record_count": records, "rounding_mode": mode}
+
+
+def finish_observatory_score_positioning_x87(
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict]:
+    """Clear DR0/VEH, verify restoration, and read one fresh x87 snapshot."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("ScorePositioning x87 capture ID is invalid")
+    before = _file_generation(SCORE_POSITIONING_X87_SNAPSHOT_FILE)
+    command = f"OBS_SCORE_POSITIONING_X87_FINISH {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SCORE_POSITIONING_X87_FINISH "
+        r"capture=([a-z][a-z0-9_.-]{0,95}) records=1 "
+        r"mode=(nearest_even|down|up|toward_zero) "
+        r"control_word=([0-9]{1,5}) complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != capture_id:
+        raise BridgeError(f"unexpected ScorePositioning x87 finish ACK: {ack}")
+    expected_mode = match.group(2)
+    expected_control_word = int(match.group(3))
+    if expected_control_word > 0xFFFF:
+        raise BridgeError("ScorePositioning x87 ACK control word is invalid")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SCORE_POSITIONING_X87_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                SCORE_POSITIONING_X87_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"ScorePositioning x87 snapshot is not valid JSON: {exc}"
+            ) from exc
+        observation = (
+            snapshot.get("observation") if isinstance(snapshot, dict) else None
+        )
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind") != "native_score_positioning_x87_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or snapshot.get("summary", {}).get("record_count") != 1
+            or not isinstance(observation, dict)
+            or observation.get("rounding_mode") != expected_mode
+            or observation.get("control_word") != expected_control_word
+        ):
+            raise BridgeError(
+                "ScorePositioning x87 snapshot does not match its ACK"
+            )
+        return ack, snapshot
+    raise TimeoutError(
+        f"Fresh ScorePositioning x87 snapshot timeout after {timeout:.0f}s"
+    )
+
+
+def run_observatory_score_positioning_x87_trial(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict | None]:
+    """Run one fixed one-enemy x87 control, dormant, or armed trial."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("ScorePositioning x87 trial condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("ScorePositioning x87 capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "ScorePositioning x87 trial requires an unpaused active mission heartbeat"
+        )
+    if (
+        SCORE_POSITIONING_X87_SNAPSHOT_FILE.exists()
+        or SCORE_POSITIONING_X87_SNAPSHOT_TMP.exists()
+    ):
+        raise BridgeError("ScorePositioning x87 snapshot output already exists")
+    before = _file_generation(SCORE_POSITIONING_X87_SNAPSHOT_FILE)
+    command = f"OBS_SCORE_POSITIONING_X87_TRIAL {condition} {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SCORE_POSITIONING_X87_TRIAL "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) pawn=(\d+) type=Firefly1 "
+        r"at=([0-7]),([0-7]) consumed_spawns=(\d+) records=([01]) "
+        r"mode=(unobserved|nearest_even|down|up|toward_zero) "
+        r"control_word=(\d{1,5}) complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != condition or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected ScorePositioning x87 trial ACK: {ack}")
+    expected_records = int(match.group(7))
+    expected_mode = match.group(8)
+    expected_control_word = int(match.group(9))
+    if condition != "armed":
+        if (
+            expected_records != 0
+            or expected_mode != "unobserved"
+            or expected_control_word != 0
+            or _file_generation(SCORE_POSITIONING_X87_SNAPSHOT_FILE) != before
+        ):
+            raise BridgeError(
+                "unarmed ScorePositioning x87 trial published observer output"
+            )
+        return ack, None
+    if (
+        expected_records != 1
+        or expected_mode == "unobserved"
+        or expected_control_word > 0xFFFF
+    ):
+        raise BridgeError("armed ScorePositioning x87 trial fields are inconsistent")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SCORE_POSITIONING_X87_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                SCORE_POSITIONING_X87_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"ScorePositioning x87 snapshot is not valid JSON: {exc}"
+            ) from exc
+        observation = (
+            snapshot.get("observation") if isinstance(snapshot, dict) else None
+        )
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind") != "native_score_positioning_x87_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or snapshot.get("summary", {}).get("record_count") != 1
+            or not isinstance(observation, dict)
+            or observation.get("rounding_mode") != expected_mode
+            or observation.get("control_word") != expected_control_word
+        ):
+            raise BridgeError(
+                "ScorePositioning x87 trial snapshot does not match its ACK"
+            )
+        return ack, snapshot
+    raise TimeoutError(
+        f"Fresh ScorePositioning x87 trial snapshot timeout after {timeout:.0f}s"
     )
 
 

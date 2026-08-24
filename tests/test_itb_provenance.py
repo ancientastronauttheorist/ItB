@@ -742,6 +742,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "lua5.1.dll lua_tointeger body" in evidence
     assert "uses x87 FISTP" in evidence
     assert "active callback-thread rounding mode remains runtime state" in evidence
+    assert "Three fresh-process, counterbalanced control/dormant/armed triplets" in evidence
+    assert "x87 control word 0x027F (639), selecting nearest-even" in evidence
+    assert "all six whole-game control comparisons matched semantically" in evidence
     assert "one exact 2,075-byte source body" in evidence
     assert "14 adversarial replay vectors" in evidence
     assert "unique native GetDangerScore registration" in evidence
@@ -969,6 +972,26 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "native_integer_rounding_depends_on_x87_control",
         "native_observation_boundaries_and_current_carriers_are_exact",
     }
+    assert implementations["src/observatory/score_positioning_x87.py"] == {
+        "validate_score_positioning_x87_snapshot",
+        "analyze_score_positioning_x87_snapshot",
+    }
+    assert implementations[
+        "src/observatory/score_positioning_x87_campaign.py"
+    ] == {
+        "build_score_positioning_x87_campaign_receipt",
+        "publish_score_positioning_x87_campaign_receipt",
+    }
+    assert implementations[
+        "src/native/observatory_score_positioning_x87_observer.c"
+    ] == {
+        "observer_score_positioning_x87_veh",
+        "arm_observer",
+        "finish_observer",
+    }
+    assert implementations[
+        "scripts/itb_observatory_score_positioning_x87_trial.py"
+    ] == {"run"}
     assert implementations[
         "src/observatory/enemy_position_score_helpers_boundary.py"
     ] == {
@@ -1062,6 +1085,32 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "test_carrier_matrix_keeps_native_danger_separate_from_environment_danger",
         "test_exact_install_rebuilds_native_source_and_carrier_join_when_available",
     }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "score_positioning_x87_receipt.json"
+    ] == {
+        '"classification": "score_positioning_x87_rounding_mode_resolved"',
+        '"stable_control_word": 639',
+        '"stable_rounding_mode": "nearest_even"',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "score_positioning_x87_cleanup_receipt.json"
+    ] == {
+        "observatory_score_positioning_x87_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_score_positioning_x87_campaign.py"
+    ] == {
+        "test_committed_x87_campaign_rebuilds_exactly_and_is_neutral",
+        "test_committed_x87_campaign_selects_nearest_even_replay",
+        "test_x87_cleanup_closes_pending_restore_and_binds_artifacts",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -1084,11 +1133,12 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "candidate-time Board snapshots" in gaps
     assert "direct dangerous predicate carriers" in gaps
     assert "ScorePositioning observation semantics/current carrier matrix" in gaps
-    assert "callback-time x87 control" in gaps
+    assert "exact-build nearest-even integer conversion" in gaps
+    assert "callback-time x87 control" not in gaps
     assert "base ScoreList projection" in gaps
     assert "global ScorePositioning projections" in gaps
     assert "native Pawn positioning helper defaults" in gaps
-    assert "runtime-mutated Pawn score values and callback-time x87 mode" in gaps
+    assert "runtime-mutated Pawn score values" in gaps
     assert "transitive native-helper RNG" in gaps
     assert "score-side callback ancestry" not in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps

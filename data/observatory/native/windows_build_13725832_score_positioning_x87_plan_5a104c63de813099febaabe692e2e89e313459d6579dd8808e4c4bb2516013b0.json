@@ -1,0 +1,97 @@
+{
+  "accepted_frame_chain": [
+    {
+      "frame": "lua_tointeger",
+      "return_image": "Breach.exe",
+      "return_rva": "0x000f8b8f"
+    },
+    {
+      "frame": "integer_helper",
+      "return_image": "Breach.exe",
+      "return_rva": "0x000f87e2"
+    },
+    {
+      "frame": "named_integer_invoker",
+      "return_image": "Breach.exe",
+      "return_rva": "0x000f78da"
+    }
+  ],
+  "breakpoint": {
+    "expected_prebytes_hex": "db5de4",
+    "expected_prebytes_sha256": "c43e54b3d5d20373f41569d21be850ecc92f842e96d9706e85080325c7cb9410",
+    "image": "lua5.1.dll",
+    "kind": "x86_execute_length_1_current_thread_only",
+    "observed_field": "CONTEXT.FloatSave.ControlWord",
+    "rva": "0x00001729",
+    "semantic_boundary": "lua_tointeger_immediately_before_fistp",
+    "slot": "DR0"
+  },
+  "capture_contract": {
+    "record_capacity": 1,
+    "rounding_control_mask": "0x0c00",
+    "rounding_modes": {
+      "0x0000": "nearest_even",
+      "0x0400": "down",
+      "0x0800": "up",
+      "0x0c00": "toward_zero"
+    },
+    "thread_capacity": 1
+  },
+  "debug_register_contract": {
+    "accepted_observation_self_clears_dr0_dr1_dr2_dr3_dr6_dr7": true,
+    "arm_rejects_any_nonzero_dr0_dr1_dr2_dr3_or_dr7": true,
+    "dr7_exact": "0x00000001",
+    "finish_requires_exact_owned_state_before_clear": true,
+    "transition": "private_RaiseException_handled_by_VEH"
+  },
+  "hot_contract": {
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false,
+    "windows_api_calls": false,
+    "x87_sse_mmx_avx_instructions": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "lua_dll_size": 419840,
+    "platform": "windows",
+    "source_sha256": "0368a655d74367fffb310eb60355ec67ff9fdf572a5b41c9029cf6b23a740086"
+  },
+  "kind": "observatory_score_positioning_x87_hardware_breakpoint_plan",
+  "mutation_contract": {
+    "detour_installed": false,
+    "executable_bytes_modified": false,
+    "gateway_allocated": false,
+    "lua_bytes_modified": false,
+    "mxcsr_modified": false,
+    "page_protection_changed": false,
+    "x87_control_word_modified": false
+  },
+  "observer_version": "observatory-score-positioning-x87-observer/1",
+  "reviewed_call_chain": [
+    {
+      "call_rva": "0x000f78d5",
+      "callee": "named_integer_invoker",
+      "caller": "ScorePositioning"
+    },
+    {
+      "call_rva": "0x000f87dd",
+      "callee": "integer_helper",
+      "caller": "named_integer_invoker"
+    },
+    {
+      "call_rva": "0x000f8b89",
+      "callee": "lua5.1.dll!lua_tointeger",
+      "caller": "integer_helper"
+    }
+  ],
+  "schema_version": 1
+}

@@ -2063,6 +2063,10 @@
         },
         {
           "classification": "fact",
+          "statement": "Three fresh-process, counterbalanced control/dormant/armed triplets observed the exact ScorePositioning frame chain immediately before lua5.1.dll FISTP. Every armed process recorded x87 control word 0x027F (639), selecting nearest-even; all six whole-game control comparisons matched semantically, and every one-shot observer restored its debug register, VEH, file handles, and image seams before publication."
+        },
+        {
+          "classification": "fact",
           "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, seven hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations and binds both the stock Pawn-helper and native-observation successors while leaving runtime/mod field mutation, candidate-time Board state, and callback-time x87 control for fractional native results explicit."
         },
         {
@@ -2103,7 +2107,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. Concrete Lua callback payloads, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, callback-time x87 control, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. Concrete Lua callback payloads, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2319,6 +2323,34 @@
           ]
         },
         {
+          "path": "src/observatory/score_positioning_x87.py",
+          "symbols": [
+            "validate_score_positioning_x87_snapshot",
+            "analyze_score_positioning_x87_snapshot"
+          ]
+        },
+        {
+          "path": "src/observatory/score_positioning_x87_campaign.py",
+          "symbols": [
+            "build_score_positioning_x87_campaign_receipt",
+            "publish_score_positioning_x87_campaign_receipt"
+          ]
+        },
+        {
+          "path": "src/native/observatory_score_positioning_x87_observer.c",
+          "symbols": [
+            "observer_score_positioning_x87_veh",
+            "arm_observer",
+            "finish_observer"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_score_positioning_x87_trial.py",
+          "symbols": [
+            "run"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_position_score_helpers_boundary.py",
           "symbols": [
             "replay_stock_enemy_position_score_helpers",
@@ -2397,8 +2429,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, callback-time x87 control, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values and callback-time x87 mode, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2467,6 +2499,23 @@
           ]
         },
         {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json",
+          "symbols": [
+            "\"classification\": \"score_positioning_x87_rounding_mode_resolved\"",
+            "\"stable_control_word\": 639",
+            "\"stable_rounding_mode\": \"nearest_even\"",
+            "\"all_semantic_outcomes_match\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_cleanup_receipt.json",
+          "symbols": [
+            "observatory_score_positioning_x87_cleanup_receipt",
+            "\"remaining_experimental_file_count\": 0",
+            "\"file_set_and_bytes_match_pre_experiment\": true"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_native_boundaries_cleanup_receipt.json",
           "symbols": [
             "observatory_native_boundaries_cleanup_receipt",
@@ -2492,6 +2541,14 @@
           "path": "tests/test_observatory_selected_queue_hw.py",
           "symbols": [
             "test_complete_pair_validates_and_correlates_to_bridge_queue"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_score_positioning_x87_campaign.py",
+          "symbols": [
+            "test_committed_x87_campaign_rebuilds_exactly_and_is_neutral",
+            "test_committed_x87_campaign_selects_nearest_even_replay",
+            "test_x87_cleanup_closes_pending_restore_and_binds_artifacts"
           ]
         },
         {

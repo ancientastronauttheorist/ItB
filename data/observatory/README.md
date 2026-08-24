@@ -532,9 +532,30 @@ half-points for direct Lua consumers. Ranged interior positions return five.
 
 The native callback route is deliberately separate. The pinned
 `lua_tointeger` body loads the Lua double and executes x87 `FISTP`; its result
-therefore depends on the active thread rounding-control mode. The artifact
-replays all four x87 modes exactly but does not claim which mode is active at a
-future callback. Build or verify it with:
+therefore depends on the active thread rounding-control mode. The immutable
+static artifact replays all four x87 modes exactly. The later build-keyed
+runtime campaign in
+`captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87/`
+resolves the observed mode for this exact Windows build: three fresh-process,
+counterbalanced control/dormant/armed triplets each captured one
+`ScorePositioning -> named integer invoker -> integer helper -> lua_tointeger`
+conversion immediately before `FISTP`. All three recorded control word
+`0x027F` (`639`), whose rounding-control bits select nearest-even. All six
+control comparisons matched semantically with zero differences, and every
+armed snapshot reports complete debug-register/VEH/file/seam restoration. The
+campaign and cleanup receipts are
+`windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json`
+and
+`windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_cleanup_receipt.json`.
+The capture-time project bridge is separately admitted to predecessor
+source-tree verifiers as the 338,859-byte
+`score_positioning_x87_project_bridge` overlay with SHA-256
+`0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989`;
+the cleanup receipt proves the prior 315,686-byte installed bridge was restored
+without rewriting that historical v408 overlay identity.
+This is an exact-build ordinary-callback observation, not a claim about every
+future process or other Lua integer conversion. Build or verify the static
+replay with:
 
 ```powershell
 python scripts/itb_observatory_enemy_score_positioning.py verify `
@@ -593,10 +614,13 @@ python scripts/itb_observatory_enemy_position_observations.py verify `
 ```
 
 The native observation meanings and current-state carrier matrix are closed.
-Runtime/mod mutations, the candidate-time Board snapshot, and the callback-time
-x87 control word for fractional native `ScorePositioning` results remain
-explicit inputs. This local replay does not forecast the enemy tournament or
-replace the settled queue; simulator v408 remains current.
+Runtime/mod mutations and the candidate-time Board snapshot remain explicit
+inputs. For this exact Windows build, the observed callback-time x87 mode is
+nearest-even; a new process is still re-observed rather than assumed when its
+identity or control state is not bound. This local replay does not forecast the
+enemy tournament or replace the settled queue; the Rust simulator consumes the
+settled queue rather than executing `ScorePositioning`, so simulator v408
+remains current.
 
 ## Native path and reachability boundaries
 
