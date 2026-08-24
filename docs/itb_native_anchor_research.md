@@ -37,8 +37,11 @@ environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
 observer neutrality, prospective selector-state delivery or complete upstream
 replay, runtime inputs for the special coordinate paths, broader
 selected-action paths, and the complete runtime candidate payload plus its
-selector-entry state remain unresolved. The post-callback record tournament is
-no longer an offline unknown: a later exact-build continuation closes its
+selector-entry state remain unresolved. Native score adjustment around that
+payload is no longer anonymous: a later exact-build continuation names the
+injured/health/weapon/history/priority fields and closes the positioning clamp
+and target-score modifier arithmetic. The post-callback record tournament is
+also no longer an offline unknown: another exact-build continuation closes its
 24-byte layout, comparator, displaced-primary fallback, and local draw grammar.
 The scheduler/fallback *control flow* is no longer unknown: exact
 offline review identifies caller 59 as the logged emergency modulo selector
@@ -65,6 +68,10 @@ The durable artifacts are:
   layout, target-tie draw, record comparator, displaced-primary fallback,
   caller IDs 29 through 33, and pure selector replay from an observable
   selector-entry CRT state;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json`
+  for the exact `bInjured`, health, selected-weapon, `targetHistory`, and
+  `priorityTarget` field bindings; ordinary/debug route modes; positioning
+  clamp; target-score modifiers and floor; and pure callback-boundary replay;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -215,6 +222,25 @@ The candidate loop preserves the returned target vector's order. For each
 candidate it calls `GetTargetScore`; equal-best targets are stored and selected
 with a direct `rand % equal_count` at RVA `0x000f7b62`. A Lua RNG wrapper misses
 that choice.
+
+The candidate-score continuation closes the native pre/post-callback
+arithmetic. Pawn `+0x8d6` is the archived `bInjured` byte, `+0x8a8` is current
+`health`, and `+0x948` is `iCurrentWeapon` / Lua `GetSelectedWeapon`. Ordinary
+planning passes candidate mode zero; only `debugai` passes one. After
+`ScorePositioning`, a moved, injured pawn at exactly one HP has a nonnegative
+result replaced with the mode value, so normal planning clamps it to zero;
+negative scores are preserved. Before target-area work and again before each
+target score, a non-minus-one selected weapon at or beyond the vector count is
+rewritten to zero.
+
+The `GetTargetScore` wrapper binds SkillManager point fields `targetHistory`
+at `+0x50/+0x54` and `priorityTarget` at `+0x60/+0x64`. A history match assigns
+`-5`; a priority match assigns `+10` and overrides history. The callback is
+resolved only for an in-range weapon index or literal index 50. An invalid
+index returns the native modifier without a callback. When the modifier is
+negative and a positive callback result is no larger than its magnitude, the
+wrapper returns one; otherwise it uses signed 32-bit addition. The shipped
+meaning of literal 50 remains unnamed.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -725,6 +751,13 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    without-replacement sampling are replayable from ordered post-callback
    records plus the selector-entry observable CRT state. Complete callback
    materialization and that prospective state/payload remain runtime inputs.
+   **Completed offline for native candidate-score adjustments:** ordinary and
+   debug route modes, the injured one-HP positioning clamp, selected-weapon
+   normalization, history/priority target modifiers, callback resolver branch,
+   positive-score floor, and signed addition are replayable from explicit
+   callback and pawn/skill inputs. Lua callback values, target-area creation,
+   literal weapon index 50's semantic name, and the complete prospective
+   payload remain outside this boundary.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit
@@ -829,9 +862,9 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    conform at v407. Exact damage-relative lifecycle/sweep timing, native-only
    Skill field-offset consumers, achievement/profile tails, death presentation,
    and non-Windows equivalence remain open.
-9. Add native candidate records only if a solver mismatch needs more than the
-   observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
-   candidate-loop RNG caller IDs.
+9. Add a complete runtime candidate record only if a solver mismatch needs
+   more than the observed Lua callback streams, exact native score adjustments,
+   and reviewed candidate/selector RNG grammar.
 10. **Completed for all live series:** the callback/native, native-boundaries,
    spawn-replay, and spawn-coordinate cleanup receipts close all seven
    immutable campaign receipts' pending save/install fields. Each

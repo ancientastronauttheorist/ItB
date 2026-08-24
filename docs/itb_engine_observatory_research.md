@@ -14,6 +14,9 @@ enemy candidate tournament, native equal-best tie-break, and selected AI record.
 An exact-build continuation now turns the post-callback 24-byte record selector
 into a pure replay from ordered records plus its selector-entry observable CRT
 state, including the native comparator and displaced-primary fallback.
+Another continuation names the formerly anonymous injured, health, selected-
+weapon, target-history, and priority-target fields and makes the native
+positioning clamp and target-score adjustments independently replayable.
 Two atomic live captures further bind 2,982 native RNG records to the exact
 build and exercise reviewed RNG leaves, candidate tie-breaking, record
 selection, and seed advance with clean byte restoration. Five natural callback
@@ -210,10 +213,12 @@ live-or-persistent-corpse, including Road Runner corpse transit but no corpse
 stop; simulator v403 carries that rule. A later exact-build continuation closes
 the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
 effective shipped source corpse types. Transient lifecycle/removal timing,
-upstream callback-to-record materialization, selector-entry state delivery, and
-broader queue paths remain to be validated. The higher-level record selector
-itself is now exact-build replayable: it consumes six-integer records, applies
-the native positioning/target comparator, retains only the immediately
+Lua callback/target-area materialization, selector-entry state delivery, and
+broader queue paths remain to be validated. The native positioning clamp,
+selected-weapon normalization, history/priority modifiers, and positive-score
+floor are exact-build replayable from explicit inputs. The higher-level record
+selector itself is now exact-build replayable: it consumes six-integer records,
+applies the native positioning/target comparator, retains only the immediately
 displaced primary group, spends a primary draw even for a singleton, and gates
 without-replacement fallback sampling at one remainder out of four.
 One bounded
@@ -635,8 +640,8 @@ The remaining native priorities are now narrower:
    behavior.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
-5. Add native candidate records only when Lua callbacks plus final queues cannot
-   explain a solver mismatch.
+5. Capture a complete runtime candidate payload only when Lua callbacks, exact
+   native score adjustments, and final queues cannot explain a solver mismatch.
 6. Validate every behavior used by Rust with controlled matched captures.
 
 Full executable reconstruction would spend enormous effort on systems irrelevant

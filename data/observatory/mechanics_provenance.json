@@ -1979,6 +1979,18 @@
         },
         {
           "classification": "inference",
+          "statement": "The exact-build candidate-score continuation resolves the native fields and route argument around ScorePositioning. Pawn +0x8d6 is bInjured, +0x8a8 is current health, ordinary planning passes mode 0, and only debugai passes mode 1. When a Pawn moved, is injured, has exactly one HP, and its callback score is nonnegative, native code replaces that score with the route mode; negative callback scores survive unchanged."
+        },
+        {
+          "classification": "inference",
+          "statement": "The same continuation resolves the native GetTargetScore adjustments. targetHistory contributes -5, priorityTarget contributes +10 and overrides a simultaneous history match, an out-of-range non-minus-one selected weapon is normalized to zero before candidate work, and the wrapper invokes the callback only for an in-range index or literal 50. A negative modifier floors a positive callback result to 1 when the result is no larger than the penalty; other results use signed 32-bit addition."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable candidate-score artifact binds 16 exact executable regions, 16 semantic instruction windows, eight direct call edges, 15 string/data anchors, two Lua method bindings, and 14 adversarial replay vectors. Exact executable verification and pure replay tests close the native pre/post adjustments while leaving Lua callback values and target-area construction explicit inputs."
+        },
+        {
+          "classification": "inference",
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
         {
@@ -2029,6 +2041,32 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_candidate_score_boundary.py",
+          "symbols": [
+            "normalize_enemy_selected_weapon",
+            "replay_enemy_positioning_clamp",
+            "replay_enemy_target_score_wrapper",
+            "replay_enemy_candidate_target_score"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_candidate_score.py",
+          "symbols": [
+            "build",
+            "verify",
+            "replay-positioning",
+            "replay-target-score"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json",
+          "symbols": [
+            "positioning_clamp",
+            "selected_weapon_normalization",
+            "target_score_wrapper"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2046,8 +2084,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven record-level native tournament, per-subclass target construction, callback/effect-side score materialization, and shared-RNG state.",
-        "The exact static destination pipeline, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, per-candidate positioning and post-wrapper target scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native score adjustments, the now-proven record-level native tournament, per-subclass target construction, callback/effect-side score materialization, and shared-RNG state.",
+        "The exact static destination pipeline, native ScorePositioning clamp, native GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, ordered targets, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2121,6 +2159,16 @@
             "test_displaced_primary_is_not_recomputed_global_second_best",
             "test_invalid_displaced_group_is_sampled_without_replacement_then_exhausted",
             "test_exact_installed_executable_rebuilds_committed_map"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_candidate_score_boundary.py",
+          "symbols": [
+            "test_field_names_and_offsets_are_exact_not_speculative_aliases",
+            "test_positioning_clamp_truth_table",
+            "test_target_history_penalty_and_positive_floor_boundaries",
+            "test_priority_bonus_overrides_history_when_both_points_match",
+            "test_exact_local_executable_reproduces_map_when_available"
           ]
         },
         {

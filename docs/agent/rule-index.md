@@ -518,3 +518,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 516 | — | Mission_Piston interleaves living Trash Compactors and queued Vek in Board-vector order. | `docs/agent/solver-reference.md` |
 | 517 | — | Mission_Piston setup replay requires the selected map and incoming observable RNG state. | `docs/agent/solver-reference.md` |
 | 518 | — | Enemy record selection replay starts only after callbacks materialize every ordered record. | `docs/agent/solver-reference.md` |
+| 519 | — | Native enemy score adjustments are exact, but callback outputs remain boundary inputs. | `docs/agent/solver-reference.md` |

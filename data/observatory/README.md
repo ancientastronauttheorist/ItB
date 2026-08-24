@@ -228,6 +228,53 @@ python scripts/itb_observatory_enemy_record_selector.py replay-selector `
   --rng-state 0x12345678
 ```
 
+## Native enemy candidate-score boundary
+
+`native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json`
+closes the native arithmetic immediately around `ScorePositioning` and
+`GetTargetScore`. It binds 16 exact code regions, 16 instruction windows,
+eight direct calls, 15 string/data anchors, two Lua method bindings, and 14
+adversarial replay vectors. Its raw SHA-256 is
+`c94f87833efafec1217eefd0b5aeef61dd79e46fb3c1255c558259af64596ad0`;
+its canonical document SHA-256 is
+`c0eeed00ebb646371d3ca33cac9d1c52224bb67025d1b6e6fa41a74115a7a457`.
+
+The prior anonymous positioning fields are `bInjured` at Pawn `+0x8d6` and
+current `health` at `+0x8a8`. Ordinary enemy planning passes mode zero; only
+`debugai` passes one. A moved, injured, one-HP pawn therefore has every
+nonnegative `ScorePositioning` result replaced by zero in normal planning,
+while a negative result survives. The selected weapon at `+0x948` is reset to
+zero when it is non-minus-one and outside the weapon vector.
+
+The native target-score wrapper assigns a `-5` modifier when the target equals
+`targetHistory`, or `+10` when it equals `priorityTarget`; priority wins when
+both points match. It calls Lua only for an in-range selected weapon or the
+separate literal-index-50 resolver path. With a negative modifier, a positive
+callback score no greater than the penalty floors to one; other sums use
+signed 32-bit arithmetic.
+
+These are parameterized inner-boundary replays. They require the Lua callback
+result, target points, pawn state, weapon vector count, and route as inputs;
+they do not construct a target area or forecast a whole enemy phase. Verify
+the immutable artifact and replay JSON payloads with:
+
+```powershell
+python scripts/itb_observatory_enemy_candidate_score.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json
+
+python scripts/itb_observatory_enemy_candidate_score.py replay-positioning `
+  --payload positioning.json
+
+python scripts/itb_observatory_enemy_candidate_score.py replay-target-score `
+  --payload target-score.json
+```
+
+The positioning payload contains exactly `raw_score`, `injured`, `moved`,
+`current_health`, and `mode`. The target-score payload contains exactly
+`weapon_index`, `weapon_count`, nullable `callback_score`, `target`,
+`target_history`, and `priority_target`.
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

@@ -699,6 +699,12 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "immediately displaced primary group" in evidence
     assert "caller-31 remainder of zero out of four" in evidence
     assert "selector-entry shared state" in evidence
+    assert "Pawn +0x8d6 is bInjured" in evidence
+    assert "ordinary planning passes mode 0" in evidence
+    assert "targetHistory contributes -5" in evidence
+    assert "priorityTarget contributes +10" in evidence
+    assert "literal 50" in evidence
+    assert "14 adversarial replay vectors" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -739,12 +745,39 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "record_comparator_and_displaced_group",
         "selector_rng_grammar",
     }
+    assert implementations[
+        "src/observatory/enemy_candidate_score_boundary.py"
+    ] == {
+        "normalize_enemy_selected_weapon",
+        "replay_enemy_positioning_clamp",
+        "replay_enemy_target_score_wrapper",
+        "replay_enemy_candidate_target_score",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_candidate_score.py"
+    ] == {
+        "build",
+        "verify",
+        "replay-positioning",
+        "replay-target-score",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_candidate_score_boundary.json"
+    ] == {
+        "positioning_clamp",
+        "selected_weapon_normalization",
+        "target_score_wrapper",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
     assert "no live capture serializes one complete tournament" in gaps
     assert "selector-entry state" in gaps
     assert "one Firefly1 single-weapon shape" in gaps
+    assert "now-proven native score adjustments" in gaps
+    assert "raw callback values" in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
     assert "24-byte record comparator" in gaps
 

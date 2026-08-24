@@ -94,6 +94,7 @@ not be relabelled as clean stock.
 | Native checkpoint | Reproducible build-keyed RNG-core observer, exact hook/restore manifests, bounded checkpoint schema, one-purpose seed-control helper, and atomic seed-and-arm command | Two accepted checkpoints contain 1,481 and 1,501 records, zero integrity errors, one thread, and exact hook restoration |
 | Callback identities and slots | Inert runtime enumeration, bounded enemy-root discovery, exact lexical join, and raw defining-table resolution | Complete: 81 roots, 324 method records, 65 exact slots; two updated fresh-process slot captures are byte-identical |
 | Callback hook trials | One-family controller/capsule/host/result path for `ScorePositioning`, `GetTargetScore`, `GetTargetArea`, and `GetSkillEffect` | Five natural pairs completed: 622 attempts, 620 bounded events, every slot restored, no serialization/restore errors; three whole outcomes matched and both repeated `GetSkillEffect` pairs differed only at the spawn marker |
+| Candidate score boundary | Exact-build offline replay of native pre/post-callback adjustments | Sixteen regions and instruction windows bind ordinary/debug route modes, the injured one-HP positioning clamp, selected-weapon normalization, history/priority modifiers, callback resolution, the positive-score floor, and signed addition. Lua callback values and target areas remain explicit inputs |
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
 | Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer, strict selected-to-queue correlator, and exact offline 24-byte record-selector replay | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill. The preceding comparator, displaced-primary fallback, and caller-ID 29–33 draw grammar are exact from ordered post-callback records plus selector-entry state; those prospective inputs are not ordinary bridge data |
@@ -550,9 +551,12 @@ exactly. Timing is reported separately; it never excuses output drift.
    snapshot. Correlate `aiDest`, `aiTarget`, and skill only when there is one
    selected record, one immediate queued enemy, and no cancellation or
    retarget.
-9. **Candidate tournament.** Only after the narrower boundaries pass, add
-   candidate order and score evidence while preserving vector order and native
-   equal-best tie breaks.
+9. **Candidate tournament (native scoring and record selection completed
+   offline).** The exact-build replays preserve vector order, native score
+   adjustments, equal-best target draws, record comparison, and selector RNG
+   grammar. Capture one complete runtime payload only when a concrete mismatch
+   requires the still-missing Lua-produced values, target areas, effects, or
+   selector-entry state.
 
 For each family, archive the suite, both receipts, helper/controller/hook
 hashes, raw checkpoint, comparison, and cleanup inventory. A crash, mismatch,

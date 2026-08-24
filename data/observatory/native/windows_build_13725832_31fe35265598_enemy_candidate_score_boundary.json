@@ -1,0 +1,1120 @@
+{
+  "analysis_kind": "native_enemy_candidate_score_boundary_map",
+  "contracts": {
+    "field_bindings": {
+      "current_health": {
+        "component_offset": "+0x04",
+        "native_name": "health",
+        "pawn_offset": "+0x8a8",
+        "setter": "SetHealth"
+      },
+      "injured": {
+        "component_offset": "+0x32",
+        "native_event_name": "injured",
+        "native_state_name": "bInjured",
+        "pawn_offset": "+0x8d6"
+      },
+      "max_health": {
+        "component_offset": "+0x08",
+        "native_name": "max_health",
+        "pawn_offset": "+0x8ac"
+      },
+      "priority_target": {
+        "archive_name": "priorityTarget",
+        "modifier": 10,
+        "overrides_target_history": true,
+        "owner": "Pawn SkillManager base",
+        "x_offset": "+0x60",
+        "y_offset": "+0x64"
+      },
+      "selected_weapon": {
+        "archive_name": "iCurrentWeapon",
+        "load_field": "Weapon",
+        "lua_getter": "GetSelectedWeapon",
+        "pawn_offset": "+0x948"
+      },
+      "target_history": {
+        "archive_name": "targetHistory",
+        "modifier": -5,
+        "owner": "Pawn SkillManager base",
+        "x_offset": "+0x50",
+        "y_offset": "+0x54"
+      }
+    },
+    "positioning_clamp": {
+      "callback": "ScorePositioning",
+      "debugai_route_mode": 1,
+      "debugai_route_nonnegative_replacement": 1,
+      "negative_callback_score_preserved": true,
+      "normal_route_mode": 0,
+      "normal_route_nonnegative_replacement": 0,
+      "predicate": "bInjured AND destination differs from current Pawn point AND health == 1 AND callback_score >= 0",
+      "replacement": "candidate mode integer"
+    },
+    "replay_boundary": {
+      "complete_candidate_materialization": false,
+      "complete_enemy_phase_forecast": false,
+      "inputs": [
+        "post-Lua ScorePositioning integer",
+        "post-Lua GetTargetScore integer when the native resolver invokes it",
+        "native Pawn health, injured, selected-weapon, and target-history fields",
+        "weapon vector count and normal/debug route"
+      ],
+      "lua_callback_implementation_complete": false,
+      "native_pre_post_adjustments_complete": true,
+      "target_area_construction_complete": false
+    },
+    "selected_weapon_normalization": {
+      "negative_values_below_minus_one_preserved": true,
+      "performed_again_before_each_target_score": true,
+      "performed_before_target_area": true,
+      "predicate": "selected_weapon != -1 AND weapon_count <= selected_weapon",
+      "replacement": 0
+    },
+    "target_score_wrapper": {
+      "callback": "GetTargetScore",
+      "callback_resolver_predicate": "0 <= selected_weapon < weapon_count OR selected_weapon == 50",
+      "invalid_weapon_result": "native modifier without callback",
+      "modifier_order": [
+        "start at 0",
+        "targetHistory match assigns -5",
+        "priorityTarget match assigns +10 and overrides history"
+      ],
+      "negative_modifier_positive_floor": "if 0 < callback_score <= abs(modifier), return 1",
+      "otherwise": "signed 32-bit callback_score + modifier",
+      "special_resolver_weapon_index": 50
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "normal_mode_zero",
+      "instruction_hex": "8d4b14ff7304e8031400006a008d4b14e8890f0000",
+      "meaning": "Normal planning passes candidate mode zero to the record seed.",
+      "region_id": "normal_orchestrator",
+      "size": 21,
+      "start_rva": "0x000f6812"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "debugai_mode_one",
+      "instruction_hex": "578bcee833f9ffff8bcfe82c1714006a018bcee8b3f4ffff",
+      "meaning": "The debugai route refreshes Weapon and passes candidate mode one.",
+      "region_id": "debugai_route",
+      "size": 24,
+      "start_rva": "0x000f82e5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "positioning_injured_one_hp_clamp",
+      "instruction_hex": "ff75108bcfff750ce826feffff8b77288bd88b550c895dc08a8ed608000084c98b4d10742a3b55dc75053b4de0742083bea808000001751785dbc74508000000008d45c08d75080f49c68b008945c0",
+      "meaning": "After ScorePositioning, a moved bInjured Pawn at health one replaces every nonnegative result with the incoming mode.",
+      "region_id": "candidate_loop",
+      "size": 79,
+      "start_rva": "0x000f7a3d"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "candidate_selected_weapon_normalization",
+      "instruction_hex": "8b914809000083faff74178b41082b4104c1f8033bd07c0ac7814809000000000000ff7604ff36ffb1480900008b4f28e809181300",
+      "meaning": "Normalize an out-of-range non-minus-one selected weapon to zero before invoking GetTargetScore.",
+      "region_id": "candidate_loop",
+      "size": 53,
+      "start_rva": "0x000f7ad2"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "target_modifier_fields_and_resolver_gate",
+      "instruction_hex": "8b450c33f68b5510394150750b395154bffbffffff0f44f73b4160750b3b5164b80a0000000f44f08b550885d2780d8b41082b4104c1f8033bd07c0983fa320f85ec000000",
+      "meaning": "Apply targetHistory -5, let priorityTarget override with +10, then gate callback resolution by vector bounds or literal index 50.",
+      "region_id": "target_score",
+      "size": 69,
+      "start_rva": "0x00229338"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "negative_modifier_positive_floor",
+      "instruction_hex": "8b4d0885c97e288bc69933c22bc23bc87f1d85f67919b8010000008b4df464890d00000000595f5e5b8be55dc20c008d0431",
+      "meaning": "Floor a positive callback result at one when a negative modifier would otherwise reduce it to zero or below; otherwise add normally.",
+      "region_id": "target_score",
+      "size": 50,
+      "start_rva": "0x00229423"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "skill_archive_priority_history",
+      "instruction_hex": "ff7664ff766083ec188bcc68b45e8300e81ce5ddff8bcfe86547e2ffff7654ff765083ec188bcc68d45e8300e800e5ddff8bcfe84947e2ff",
+      "meaning": "Archive +0x60/+0x64 as priorityTarget and +0x50/+0x54 as targetHistory.",
+      "region_id": "skill_archive",
+      "size": 56,
+      "start_rva": "0x002298df"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "skill_load_priority_history",
+      "instruction_hex": "6a0e68b45e8300c60000e858e5ddff8d4424288bcf50e82cd7ecff6aff6aff83ec188b08894e608bcc8b40048946646a0dc741140f000000c741100000000068d45e8300c60100e81be5ddff8d4424288bcf50e8efd6ecff83ec188b08894e508bcc8b4004894654",
+      "meaning": "Load priorityTarget into +0x60/+0x64 and targetHistory into +0x50/+0x54.",
+      "region_id": "skill_load",
+      "size": 104,
+      "start_rva": "0x00229a69"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "pawn_health_component_copy",
+      "instruction_hex": "e8db47ebff8bf0c645fc038b4e04898ba80800008b4e08898bac080000",
+      "meaning": "Copy health-component +0x04/+0x08 into Pawn +0x8a8/+0x8ac.",
+      "region_id": "pawn_definition_apply",
+      "size": 29,
+      "start_rva": "0x0022c510"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "injured_flag_and_event",
+      "instruction_hex": "558bec51538a5d08568bf184db74318a86d608000084c075270f1005c85d890083ec108bc483ec188bcc68706183000f1100e839a8ddff6a018bcee870180000889ed60800005e5b595dc20400",
+      "meaning": "Use exact event name injured while reading and writing Pawn +0x8d6.",
+      "region_id": "injured_set",
+      "size": 77,
+      "start_rva": "0x0022d5a0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "set_health_current_max_offsets",
+      "instruction_hex": "558bec8d81ac080000568b75088d55083b308975080f4dd05e8b028981a80800005dc20400",
+      "meaning": "Clamp the input to +0x8ac and store current health at +0x8a8.",
+      "region_id": "health_set",
+      "size": 37,
+      "start_rva": "0x0022fef0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "selected_weapon_archive",
+      "instruction_hex": "83ec188bcc68e86e8300e8b875dcffffb7480900008bcee8cb84e9ff",
+      "meaning": "Archive Pawn +0x948 under iCurrentWeapon.",
+      "region_id": "pawn_archive",
+      "size": 28,
+      "start_rva": "0x00240849"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "selected_weapon_definition_load",
+      "instruction_hex": "6a0e68e86e8300c60000e81165dcffffb3480900008bcfe8e463e4ff83ec18898348090000",
+      "meaning": "Load iCurrentWeapon into Pawn +0x948.",
+      "region_id": "pawn_definition",
+      "size": 37,
+      "start_rva": "0x00241ab0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "health_state_named_fields",
+      "instruction_hex": "6a0a6810708300c60000e82648dcffc745fc000000008bcf8b07ff5008508bcbc745fcffffffffe8e946e4ff8947088d770833c9c74508000000003b47048d45080f9cc18d0c8d0400000003cf8339000f4fc183ec188bcc8b008947046a06c741140f000000c7411000000000681c708300c60100e8bb47dcffff77048bcbe89146e4ff8bc88d45083b0e894d080f4dc683ec188bcc8b008947046a08c741140f000000c741100000000068e06f8300",
+      "meaning": "Load max_health, health, and bInjured into the native health component.",
+      "region_id": "health_state_load",
+      "size": 176,
+      "start_rva": "0x0024379b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "set_health_api_binding",
+      "instruction_hex": "c745e8f0fe6200ff75f0c745ec00000000518d4de851684c8a83008bc8e8140b0100",
+      "meaning": "Bind SetHealth to RVA 0x0022fef0.",
+      "region_id": "pawn_method_bindings",
+      "size": 34,
+      "start_rva": "0x0027c0ea"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_selected_weapon_api_binding",
+      "instruction_hex": "c745e8e0986300ff75f0c745ec00000000518d4de85168489083008bc8e8e2010100",
+      "meaning": "Bind GetSelectedWeapon to RVA 0x002398e0.",
+      "region_id": "pawn_method_bindings",
+      "size": 34,
+      "start_rva": "0x0027c19c"
+    }
+  ],
+  "data_anchors": [
+    {
+      "data_hex": "53636f7265506f736974696f6e696e6700",
+      "evidence_class": "fact",
+      "id": "score_positioning_name",
+      "rva": "0x0042a848",
+      "size": 17,
+      "text": "ScorePositioning"
+    },
+    {
+      "data_hex": "6465627567616900",
+      "evidence_class": "fact",
+      "id": "debugai_name",
+      "rva": "0x0042a864",
+      "size": 8,
+      "text": "debugai"
+    },
+    {
+      "data_hex": "576561706f6e00",
+      "evidence_class": "fact",
+      "id": "weapon_field_name",
+      "rva": "0x0042b5ec",
+      "size": 7,
+      "text": "Weapon"
+    },
+    {
+      "data_hex": "4865616c746800",
+      "evidence_class": "fact",
+      "id": "health_definition_name",
+      "rva": "0x00435a28",
+      "size": 7,
+      "text": "Health"
+    },
+    {
+      "data_hex": "7072696f7269747954617267657400",
+      "evidence_class": "fact",
+      "id": "priority_target_name",
+      "rva": "0x00435eb4",
+      "size": 15,
+      "text": "priorityTarget"
+    },
+    {
+      "data_hex": "746172676574486973746f727900",
+      "evidence_class": "fact",
+      "id": "target_history_name",
+      "rva": "0x00435ed4",
+      "size": 14,
+      "text": "targetHistory"
+    },
+    {
+      "data_hex": "696e6a7572656400",
+      "evidence_class": "fact",
+      "id": "injured_event_name",
+      "rva": "0x00436170",
+      "size": 8,
+      "text": "injured"
+    },
+    {
+      "data_hex": "6943757272656e74576561706f6e00",
+      "evidence_class": "fact",
+      "id": "current_weapon_name",
+      "rva": "0x00436ee8",
+      "size": 15,
+      "text": "iCurrentWeapon"
+    },
+    {
+      "data_hex": "62496e6a7572656400",
+      "evidence_class": "fact",
+      "id": "injured_state_name",
+      "rva": "0x00436fe0",
+      "size": 9,
+      "text": "bInjured"
+    },
+    {
+      "data_hex": "6d61785f6865616c746800",
+      "evidence_class": "fact",
+      "id": "max_health_name",
+      "rva": "0x00437010",
+      "size": 11,
+      "text": "max_health"
+    },
+    {
+      "data_hex": "6865616c746800",
+      "evidence_class": "fact",
+      "id": "health_name",
+      "rva": "0x0043701c",
+      "size": 7,
+      "text": "health"
+    },
+    {
+      "data_hex": "47657454617267657453636f726500",
+      "evidence_class": "fact",
+      "id": "get_target_score_name",
+      "rva": "0x004380dc",
+      "size": 15,
+      "text": "GetTargetScore"
+    },
+    {
+      "data_hex": "5365744865616c746800",
+      "evidence_class": "fact",
+      "id": "set_health_name",
+      "rva": "0x00438a4c",
+      "size": 10,
+      "text": "SetHealth"
+    },
+    {
+      "data_hex": "4765744865616c746800",
+      "evidence_class": "fact",
+      "id": "get_health_name",
+      "rva": "0x00438a58",
+      "size": 10,
+      "text": "GetHealth"
+    },
+    {
+      "data_hex": "47657453656c6563746564576561706f6e00",
+      "evidence_class": "fact",
+      "id": "get_selected_weapon_name",
+      "rva": "0x00439048",
+      "size": 18,
+      "text": "GetSelectedWeapon"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "file_sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f",
+      "id": "identity_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins the Steam build and exact executable identity."
+    },
+    {
+      "canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+      "file_sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3",
+      "id": "pe_boundaries",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_pe_boundaries.json",
+      "role": "Pins the candidate loop, callback wrappers, AI orchestrator, and their exact-build call graph."
+    },
+    {
+      "canonical_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+      "file_sha256": "73ccd7972fd25f2f455173673fed19b2310f6039e58b8cf5118236ff4f8b2022",
+      "id": "enemy_record_selector",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_record_selector_boundary.json",
+      "role": "Pins the downstream 24-byte record layout and tournament that consume these post-adjustment scores."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f6822",
+      "id": "normal_orchestrator_to_record_seed",
+      "instruction_hex": "e8890f0000",
+      "source_region": "normal_orchestrator",
+      "target_rva": "0x000f77b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f82f8",
+      "id": "debugai_to_record_seed",
+      "instruction_hex": "e8b3f4ffff",
+      "source_region": "debugai_route",
+      "target_rva": "0x000f77b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7a45",
+      "id": "candidate_to_score_positioning",
+      "instruction_hex": "e826feffff",
+      "source_region": "candidate_loop",
+      "target_rva": "0x000f7870"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000f7b02",
+      "id": "candidate_to_target_score",
+      "instruction_hex": "e809181300",
+      "source_region": "candidate_loop",
+      "target_rva": "0x00229310"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00240a8c",
+      "id": "pawn_archive_to_skill_archive",
+      "instruction_hex": "e88f8dfeff",
+      "source_region": "pawn_archive",
+      "target_rva": "0x00229820"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0024200f",
+      "id": "pawn_definition_to_skill_load",
+      "instruction_hex": "e80c79feff",
+      "source_region": "pawn_definition",
+      "target_rva": "0x00229920"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002419ad",
+      "id": "pawn_definition_to_health_state_first",
+      "instruction_hex": "e83e1c0000",
+      "source_region": "pawn_definition",
+      "target_rva": "0x002435f0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00241a25",
+      "id": "pawn_definition_to_health_state_second",
+      "instruction_hex": "e8c61b0000",
+      "source_region": "pawn_definition",
+      "target_rva": "0x002435f0"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The prior anonymous candidate-clamp fields are the Pawn bInjured byte and current health integer. Normal planning passes zero, so a moved injured one-HP pawn cannot retain a positive positioning score.",
+      "evidence_class": "inference",
+      "id": "positioning_clamp_fields_resolved",
+      "limitations": [
+        "The Lua ScorePositioning callback remains an input to this replay."
+      ]
+    },
+    {
+      "claim": "Only the reviewed debugai route passes mode one; the ordinary enemy orchestrator passes mode zero.",
+      "evidence_class": "fact",
+      "id": "debug_route_is_distinct",
+      "limitations": [
+        "The artifact does not treat debugai observations as ordinary runtime behavior."
+      ]
+    },
+    {
+      "claim": "The GetTargetScore wrapper subtracts five at targetHistory and adds ten at priorityTarget, with priorityTarget winning when both match.",
+      "evidence_class": "inference",
+      "id": "target_history_and_priority_modifiers",
+      "limitations": [
+        "The game-specific code that sets those two points is not replayed here."
+      ]
+    },
+    {
+      "claim": "A negative native modifier never turns a positive callback score into zero or a negative score; results within the penalty magnitude become one.",
+      "evidence_class": "fact",
+      "id": "positive_callback_floor",
+      "limitations": [
+        "Other sums follow native signed 32-bit arithmetic."
+      ]
+    },
+    {
+      "claim": "The candidate loop rewrites an out-of-range selected weapon to zero before target-area and target-score work, while the wrapper itself has a separate literal-index-50 resolver exception.",
+      "evidence_class": "inference",
+      "id": "candidate_weapon_normalization_precedes_wrapper",
+      "limitations": [
+        "The shipped semantic name of literal index 50 remains unresolved."
+      ]
+    },
+    {
+      "claim": "These helpers close native arithmetic around callback results but do not provide future callback outputs or target areas to the solver.",
+      "evidence_class": "fact",
+      "id": "solver_scope_unchanged",
+      "limitations": [
+        "No Rust simulator change or version bump follows from this boundary alone."
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows"
+  },
+  "method": {
+    "limitations": [
+      "No executable bytes or proprietary decompiled source are stored.",
+      "Lua callback results, target areas, and effect-side RNG remain boundary inputs.",
+      "No claim is made for macOS, another Windows build, or modified native code."
+    ],
+    "procedure": [
+      "Validate the pinned inventory, PE boundary map, and downstream record-selector artifact.",
+      "Trace anonymous field offsets through exact archive strings and Lua method bindings.",
+      "Hash complete reviewed functions and retain only normalized machine-code windows and facts.",
+      "Reimplement the native clamp, weapon normalization, and score wrapper as pure signed-32-bit replays."
+    ],
+    "tools": [
+      {
+        "name": "Ghidra",
+        "role": "Read-only function extents, string references, call graph, and bounded decompiler corroboration.",
+        "version": "12.1.3"
+      },
+      {
+        "name": "Capstone",
+        "role": "Independent complete x86 decoding and direct-call validation.",
+        "version": "5.0.7"
+      },
+      {
+        "name": "ITB exact-build verifier",
+        "role": "Dependency, PE identity, region, window, string, edge, binding, and replay-vector validation.",
+        "version": "schema 1"
+      }
+    ]
+  },
+  "method_bindings": [
+    {
+      "current_health_offset": "+0x8a8",
+      "id": "pawn_set_health",
+      "implementation_region": "health_set",
+      "implementation_rva": "0x0022fef0",
+      "max_health_offset": "+0x8ac",
+      "method_name": "SetHealth",
+      "name_anchor": "set_health_name",
+      "registration_window": "set_health_api_binding"
+    },
+    {
+      "id": "pawn_get_selected_weapon",
+      "implementation_region": "selected_weapon_get",
+      "implementation_rva": "0x002398e0",
+      "method_name": "GetSelectedWeapon",
+      "name_anchor": "get_selected_weapon_name",
+      "registration_window": "get_selected_weapon_api_binding",
+      "selected_weapon_offset": "+0x948"
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Normal enemy-planning orchestrator and mode-zero call site.",
+      "end_rva_exclusive": "0x000f6b74",
+      "evidence_class": "fact",
+      "id": "normal_orchestrator",
+      "section": ".text",
+      "sha256": "f788de533a9e841719e4611a646afccb11ac950835e379fa70296c24f98e9bb4",
+      "size": 2020,
+      "start_rva": "0x000f6390"
+    },
+    {
+      "boundary_basis": "Named ScorePositioning integer wrapper.",
+      "end_rva_exclusive": "0x000f78ec",
+      "evidence_class": "fact",
+      "id": "score_positioning",
+      "section": ".text",
+      "sha256": "9794db437203d18af0ce5245bc178f537e20f715b192c671cc7ecde7d279a42a",
+      "size": 124,
+      "start_rva": "0x000f7870"
+    },
+    {
+      "boundary_basis": "Per-destination target enumeration and score materialization.",
+      "end_rva_exclusive": "0x000f7c17",
+      "evidence_class": "fact",
+      "id": "candidate_loop",
+      "section": ".text",
+      "sha256": "a162b5ead3bfcb851bf99f31b204485769570deb38fb6eb8102040214bcfc064",
+      "size": 807,
+      "start_rva": "0x000f78f0"
+    },
+    {
+      "boundary_basis": "Debug-AI route and mode-one call site.",
+      "end_rva_exclusive": "0x000f8445",
+      "evidence_class": "fact",
+      "id": "debugai_route",
+      "section": ".text",
+      "sha256": "38aae33db3275ed5eea690b2f6024af942471b82b31b735359723b7f3fcc9a74",
+      "size": 517,
+      "start_rva": "0x000f8240"
+    },
+    {
+      "boundary_basis": "GetTargetScore resolver plus native pre/post modifiers.",
+      "end_rva_exclusive": "0x0022947f",
+      "evidence_class": "fact",
+      "id": "target_score",
+      "section": ".text",
+      "sha256": "7316bcd20f712aa7232980057b847fcf30e5fe7ded97f96cd236dad0c8805405",
+      "size": 367,
+      "start_rva": "0x00229310"
+    },
+    {
+      "boundary_basis": "SkillManager archive path naming targetHistory and priorityTarget.",
+      "end_rva_exclusive": "0x0022991f",
+      "evidence_class": "fact",
+      "id": "skill_archive",
+      "section": ".text",
+      "sha256": "ed82578b7a5100850869ad88ec99737018446faa7eb6be317bc5f6b8e701b485",
+      "size": 255,
+      "start_rva": "0x00229820"
+    },
+    {
+      "boundary_basis": "SkillManager load path assigning targetHistory and priorityTarget.",
+      "end_rva_exclusive": "0x00229b03",
+      "evidence_class": "fact",
+      "id": "skill_load",
+      "section": ".text",
+      "sha256": "687bb097bfc332c01c8aaf445dc93deed489914dab6da209856f7dfe013da758",
+      "size": 483,
+      "start_rva": "0x00229920"
+    },
+    {
+      "boundary_basis": "Pawn definition application including health-component field copies.",
+      "end_rva_exclusive": "0x0022cbb7",
+      "evidence_class": "fact",
+      "id": "pawn_definition_apply",
+      "section": ".text",
+      "sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+      "size": 2759,
+      "start_rva": "0x0022c0f0"
+    },
+    {
+      "boundary_basis": "Pawn injured-flag transition and exact injured event name.",
+      "end_rva_exclusive": "0x0022d5ed",
+      "evidence_class": "fact",
+      "id": "injured_set",
+      "section": ".text",
+      "sha256": "ce09d50a1f2420db0bdf2210583c50cb2b143c87f7f7a0dabfb1bd4da78aa824",
+      "size": 77,
+      "start_rva": "0x0022d5a0"
+    },
+    {
+      "boundary_basis": "SetHealth implementation clamping current health to maximum health.",
+      "end_rva_exclusive": "0x0022ff15",
+      "evidence_class": "fact",
+      "id": "health_set",
+      "section": ".text",
+      "sha256": "276a0ece1a20befe08726299107dc5b1ca77c99a73e0de8dbfb9a27e3f6264d0",
+      "size": 37,
+      "start_rva": "0x0022fef0"
+    },
+    {
+      "boundary_basis": "GetSelectedWeapon implementation and out-of-range normalization.",
+      "end_rva_exclusive": "0x0023990c",
+      "evidence_class": "fact",
+      "id": "selected_weapon_get",
+      "section": ".text",
+      "sha256": "3da9346e6494082f1008fcad3d91e031910702187ba9ccda1cc9e7ba1ef0ce1a",
+      "size": 44,
+      "start_rva": "0x002398e0"
+    },
+    {
+      "boundary_basis": "Weapon field load into the native selected-weapon slot.",
+      "end_rva_exclusive": "0x00239a5f",
+      "evidence_class": "fact",
+      "id": "selected_weapon_load",
+      "section": ".text",
+      "sha256": "a6f0332464d3c33376267f00d6e527d93ae659a91787dce8c585d82f45c855eb",
+      "size": 63,
+      "start_rva": "0x00239a20"
+    },
+    {
+      "boundary_basis": "Pawn archive path containing iCurrentWeapon.",
+      "end_rva_exclusive": "0x00240acf",
+      "evidence_class": "fact",
+      "id": "pawn_archive",
+      "section": ".text",
+      "sha256": "b3475222468769a173264dd29a9bb00d3980f563b0c4bb9243875b844450d270",
+      "size": 3983,
+      "start_rva": "0x0023fb40"
+    },
+    {
+      "boundary_basis": "Pawn definition loader containing iCurrentWeapon and health state.",
+      "end_rva_exclusive": "0x0024209e",
+      "evidence_class": "fact",
+      "id": "pawn_definition",
+      "section": ".text",
+      "sha256": "92ad8d746d427511dbd27a845faa17d22240a8fe703d48c10a4b92e85aacd3f9",
+      "size": 5566,
+      "start_rva": "0x00240ae0"
+    },
+    {
+      "boundary_basis": "Named health, max_health, and bInjured state loader.",
+      "end_rva_exclusive": "0x002438cf",
+      "evidence_class": "fact",
+      "id": "health_state_load",
+      "section": ".text",
+      "sha256": "df34f791aa3204d9e12f2aa982d94dfd86016ff658d378ce7ae69545c3be9c94",
+      "size": 735,
+      "start_rva": "0x002435f0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned SetHealth and GetSelectedWeapon binding span.",
+      "end_rva_exclusive": "0x0027c1be",
+      "evidence_class": "fact",
+      "id": "pawn_method_bindings",
+      "section": ".text",
+      "sha256": "01afd6c9bd6d58dcda7baa1fe7ecdbbd2bd01e67e667c37d4a94ed267cd46c13",
+      "size": 212,
+      "start_rva": "0x0027c0ea"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "clamp_applied": true,
+        "final_score": 0,
+        "route": "normal_enemy_planning"
+      },
+      "id": "normal_injured_moved_one_hp_positive_to_zero",
+      "input": {
+        "current_health": 1,
+        "injured": true,
+        "mode": 0,
+        "moved": true,
+        "raw_score": 7
+      },
+      "kind": "positioning_clamp"
+    },
+    {
+      "expected": {
+        "clamp_applied": false,
+        "final_score": -3,
+        "route": "normal_enemy_planning"
+      },
+      "id": "normal_injured_negative_preserved",
+      "input": {
+        "current_health": 1,
+        "injured": true,
+        "mode": 0,
+        "moved": true,
+        "raw_score": -3
+      },
+      "kind": "positioning_clamp"
+    },
+    {
+      "expected": {
+        "clamp_applied": true,
+        "final_score": 1,
+        "route": "debugai"
+      },
+      "id": "debugai_injured_moved_one_hp_positive_to_one",
+      "input": {
+        "current_health": 1,
+        "injured": true,
+        "mode": 1,
+        "moved": true,
+        "raw_score": 7
+      },
+      "kind": "positioning_clamp"
+    },
+    {
+      "expected": {
+        "clamp_applied": false,
+        "final_score": 7,
+        "route": "normal_enemy_planning"
+      },
+      "id": "not_moved_no_clamp",
+      "input": {
+        "current_health": 1,
+        "injured": true,
+        "mode": 0,
+        "moved": false,
+        "raw_score": 7
+      },
+      "kind": "positioning_clamp"
+    },
+    {
+      "expected": {
+        "clamp_applied": false,
+        "final_score": 7,
+        "route": "normal_enemy_planning"
+      },
+      "id": "health_two_no_clamp",
+      "input": {
+        "current_health": 2,
+        "injured": true,
+        "mode": 0,
+        "moved": true,
+        "raw_score": 7
+      },
+      "kind": "positioning_clamp"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 7,
+        "native_modifier": 0,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "unmodified_callback",
+      "input": {
+        "callback_score": 7,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          3,
+          3
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 4,
+        "native_modifier": -5,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "history_penalty",
+      "input": {
+        "callback_score": 9,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          1,
+          1
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 1,
+        "native_modifier": -5,
+        "positive_floor_applied": true,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "history_positive_floor",
+      "input": {
+        "callback_score": 5,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          1,
+          1
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 12,
+        "native_modifier": 10,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "priority_bonus",
+      "input": {
+        "callback_score": 2,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          6,
+          6
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 12,
+        "native_modifier": 10,
+        "positive_floor_applied": false,
+        "priority_overrode_history": true,
+        "weapon_index": 0
+      },
+      "id": "priority_overrides_history",
+      "input": {
+        "callback_score": 2,
+        "priority_target": [
+          4,
+          4
+        ],
+        "target": [
+          4,
+          4
+        ],
+        "target_history": [
+          4,
+          4
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": false,
+        "final_score": -5,
+        "native_modifier": -5,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": -1
+      },
+      "id": "invalid_weapon_skips_callback",
+      "input": {
+        "callback_score": null,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          1,
+          1
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": -1
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": 1,
+        "native_modifier": -5,
+        "positive_floor_applied": true,
+        "priority_overrode_history": false,
+        "weapon_index": 50
+      },
+      "id": "literal_50_wrapper_exception",
+      "input": {
+        "callback_score": 4,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          1,
+          1
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 50
+      },
+      "kind": "target_score_wrapper"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "candidate_weapon_normalization": {
+          "changed": true,
+          "normalized_weapon_index": 0,
+          "original_weapon_index": 50,
+          "weapon_count": 2
+        },
+        "final_score": 4,
+        "native_modifier": 0,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "candidate_normalizes_out_of_range_to_zero",
+      "input": {
+        "callback_score": 4,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          3,
+          3
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 50
+      },
+      "kind": "candidate_target_score"
+    },
+    {
+      "expected": {
+        "callback_invoked": true,
+        "final_score": -2147483639,
+        "native_modifier": 10,
+        "positive_floor_applied": false,
+        "priority_overrode_history": false,
+        "weapon_index": 0
+      },
+      "id": "signed_add_wraps",
+      "input": {
+        "callback_score": 2147483647,
+        "priority_target": [
+          6,
+          6
+        ],
+        "target": [
+          6,
+          6
+        ],
+        "target_history": [
+          1,
+          1
+        ],
+        "weapon_count": 2,
+        "weapon_index": 0
+      },
+      "kind": "target_score_wrapper"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "current_simulator_version": 408,
+    "reason": "The solver consumes the settled enemy queue and still lacks future Lua callback outputs, complete candidate records, and selector-entry state.",
+    "simulator_change_required": false
+  },
+  "summary": {
+    "complete_candidate_materialization": false,
+    "complete_enemy_phase_forecast": false,
+    "control_window_count": 16,
+    "data_anchor_count": 15,
+    "dependency_count": 3,
+    "direct_edge_count": 8,
+    "finding_count": 6,
+    "method_binding_count": 2,
+    "native_pre_post_adjustments_complete": true,
+    "region_count": 16,
+    "replay_vector_count": 14,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "id": "lua_callback_materialization",
+      "next_evidence": "Use build-keyed callback identities and bounded result/RNG capture only where settled-queue conformance exposes a real difference.",
+      "question": "What exact values and shared-RNG draws occur inside each shipped ScorePositioning and GetTargetScore implementation?",
+      "static_status": "Native dispatch, field adjustment, and post-callback arithmetic are exact; the Lua callback body remains a boundary input."
+    },
+    {
+      "id": "target_area_eligibility_and_construction",
+      "next_evidence": "Continue offline predicate naming, then retain target-area outputs as inputs unless a behavior-neutral capture is necessary.",
+      "question": "Which exact Pawn predicates admit ordinary GetTargetArea evaluation, and what ordered points does each implementation return?",
+      "static_status": "Mode one forces the native gate, but the ordinary predicate and Lua target-area construction are not parameterized here."
+    },
+    {
+      "id": "literal_weapon_index_50",
+      "next_evidence": "Trace all callers that can pass 50 into the SkillManager resolver.",
+      "question": "What shipped concept owns the GetTargetScore resolver sentinel 50?",
+      "static_status": "The literal branch and resolver behavior are byte-pinned, but no stable archive or Lua name has yet been tied to the number."
+    },
+    {
+      "id": "complete_candidate_records_and_rng_entry",
+      "next_evidence": "Compose only after the remaining GetTargetArea/GetSkillEffect and callback-RNG seams are independently proven.",
+      "question": "Can every ordered 24-byte record and selector-entry CRT state be reconstructed before the settled enemy queue exists?",
+      "static_status": "This artifact closes two native score adjustments but not all callback, effect, and shared-RNG materialization."
+    },
+    {
+      "id": "non_windows_or_modified_builds",
+      "next_evidence": "Repeat inventory and reviewed mapping for each executable.",
+      "question": "Do the same fields and arithmetic hold on other native builds?",
+      "static_status": "Every address, byte, field offset, and name is exact-build scoped."
+    }
+  ]
+}

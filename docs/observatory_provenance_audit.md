@@ -83,7 +83,10 @@ unknown. The pinned PE map establishes the candidate-loop order; the later
 enemy-record selector continuation closes the six-integer record layout,
 movement-vector consumption order, post-wrapper target tie, positioning/score
 comparator, immediately displaced fallback group, and selector-local caller-ID
-29-through-33 draw grammar. Natural
+29-through-33 draw grammar. The candidate-score continuation additionally
+names the injured, health, selected-weapon, history, and priority fields and
+closes the ordinary/debug positioning clamp, weapon normalization, target
+modifiers, resolver branch, positive floor, and signed addition. Natural
 callback pairs exercise the four Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -96,11 +99,11 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, callback/effect-side draws before that boundary remain unjoined, the
-prospective spawn replay capsule/selector-time CRT state remains absent, the
-queue correlation covers only one
-Firefly1 single-weapon shape, and the scheduler/emergency coordinate paths were
-not naturally exercised. Static control-flow evidence is kept distinct from
+state, Lua callback values/target areas/effect-side draws before that boundary
+remain unjoined, the prospective spawn replay capsule/selector-time CRT state
+remains absent, the queue correlation covers only one Firefly1 single-weapon
+shape, and the scheduler/emergency coordinate paths were not naturally
+exercised. Static control-flow evidence is kept distinct from
 runtime facts, and owner-local-modified Windows evidence is not promoted to a
 pristine-depot or cross-platform claim.
 
