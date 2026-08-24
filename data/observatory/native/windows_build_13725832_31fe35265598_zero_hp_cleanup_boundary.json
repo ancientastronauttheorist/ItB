@@ -1,0 +1,665 @@
+{
+  "absolute_reference_inventory": [
+    {
+      "id": "i_owner_name",
+      "meaning": "Three exact iOwner name references; this is not a kill-credit flow.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "iowner_reader_a",
+          "instruction_hex": "68905e8300",
+          "instruction_rva": "0x0022984e"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "iowner_reader_b",
+          "instruction_hex": "68905e8300",
+          "instruction_rva": "0x0022994e"
+        },
+        {
+          "absolute_operand_offset": 3,
+          "containing_region": "iowner_binding",
+          "instruction_hex": "c74208905e8300",
+          "instruction_rva": "0x00283913"
+        }
+      ],
+      "string_hex": "694f776e657200",
+      "string_rva": "0x00435e90"
+    },
+    {
+      "id": "owner_name",
+      "meaning": "Definition load/store name references.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68fc6c8300",
+          "instruction_rva": "0x0023fd78"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68fc6c8300",
+          "instruction_rva": "0x00240ccb"
+        }
+      ],
+      "string_hex": "6f776e657200",
+      "string_rva": "0x00436cfc"
+    },
+    {
+      "id": "death_seed_name",
+      "meaning": "Definition load/store name references.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68146d8300",
+          "instruction_rva": "0x0023fddf"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68146d8300",
+          "instruction_rva": "0x00240d7b"
+        }
+      ],
+      "string_hex": "64656174685f7365656400",
+      "string_rva": "0x00436d14"
+    },
+    {
+      "id": "is_corpse_field_name",
+      "meaning": "Definition load/store name references distinct from Pawn:IsCorpse dispatch.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68686e8300",
+          "instruction_rva": "0x0024065d"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68686e8300",
+          "instruction_rva": "0x00240d19"
+        }
+      ],
+      "string_hex": "69735f636f7270736500",
+      "string_rva": "0x00436e68"
+    },
+    {
+      "id": "i_kills_name",
+      "meaning": "Definition load/store name references, not a proven increment site.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68746e8300",
+          "instruction_rva": "0x00240611"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68746e8300",
+          "instruction_rva": "0x0024198a"
+        }
+      ],
+      "string_hex": "694b696c6c7300",
+      "string_rva": "0x00436e74"
+    },
+    {
+      "id": "i_mission_damage_name",
+      "meaning": "Definition load/store name references, not a proven update site.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68a46e8300",
+          "instruction_rva": "0x00240754"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68a46e8300",
+          "instruction_rva": "0x00241f14"
+        }
+      ],
+      "string_hex": "694d697373696f6e44616d61676500",
+      "string_rva": "0x00436ea4"
+    },
+    {
+      "id": "i_kill_count_name",
+      "meaning": "Definition load/store name references, not a proven update site.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_load",
+          "instruction_hex": "68586f8300",
+          "instruction_rva": "0x00240957"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_definition_store",
+          "instruction_hex": "68586f8300",
+          "instruction_rva": "0x00241b97"
+        }
+      ],
+      "string_hex": "694b696c6c436f756e7400",
+      "string_rva": "0x00436f58"
+    },
+    {
+      "id": "on_kill_name",
+      "meaning": "All four absolute OnKill references are property-name access sites; no runtime dispatch edge is inferred.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "onkill_property_reader",
+          "instruction_hex": "689c818300",
+          "instruction_rva": "0x0026d118"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "onkill_property_reader",
+          "instruction_hex": "689c818300",
+          "instruction_rva": "0x0026d157"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "onkill_property_writer",
+          "instruction_hex": "689c818300",
+          "instruction_rva": "0x00270d2e"
+        },
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "onkill_property_writer",
+          "instruction_hex": "689c818300",
+          "instruction_rva": "0x00270d6d"
+        }
+      ],
+      "string_hex": "4f6e4b696c6c00",
+      "string_rva": "0x0043819c"
+    },
+    {
+      "id": "event_enemy_killed_name",
+      "meaning": "The sole absolute name reference is in the global/Pawn binding table.",
+      "references": [
+        {
+          "absolute_operand_offset": 1,
+          "containing_region": "pawn_binding_table",
+          "instruction_hex": "68a49a8300",
+          "instruction_rva": "0x002805b7"
+        }
+      ],
+      "string_hex": "4556454e545f454e454d595f4b494c4c454400",
+      "string_rva": "0x00439aa4"
+    }
+  ],
+  "analysis_kind": "native_zero_hp_cleanup_boundary_map",
+  "contracts": {
+    "board_cleanup": {
+      "additional_definition_or_state_gate": true,
+      "candidate_state_byte_offsets_required_zero": [
+        "+0x1325",
+        "+0x0922",
+        "+0x0921"
+      ],
+      "direct_is_corpse_call": true,
+      "exact_damage_relative_timing_proven": false,
+      "exact_direct_caller_rvas": [
+        "0x0016ae58",
+        "0x001e9fb5"
+      ],
+      "not_found_sentinel": "0x7fffffff",
+      "pawn_byte_offset_required_zero": "+0x0964",
+      "pawn_vector_begin_offset": "+0x00a0",
+      "pawn_vector_end_offset": "+0x00a4",
+      "pointer_stride_bytes": 4,
+      "required_is_corpse_result": false,
+      "requires_virtual_is_dead": true,
+      "reviewed_sweep_rva": "0x0019e490",
+      "valid_pointer_tail_compacted": true,
+      "vector_end_decrement_bytes": 4
+    },
+    "callback_and_credit": {
+      "absolute_onkill_reference_count": 4,
+      "direct_call_from_reviewed_death_regions_to_onkill_reference_functions": false,
+      "event_enemy_killed_name_reference_count": 1,
+      "kill_credit_or_owner_attribution_proven": false,
+      "lua_onkill_dispatch_proven": false,
+      "mission_or_achievement_counter_update_proven": false,
+      "onkill_reference_function_count": 2
+    },
+    "corpse_join": {
+      "corpse_true_skips_reviewed_erase": true,
+      "is_corpse_is_nontrivial_predicate": true,
+      "retained_corpse_counts_path_occupancy": true,
+      "retained_dead_noncorpse_counts_path_occupancy": false,
+      "subclass_results_exhausted": false
+    },
+    "hp_zero_consumer": {
+      "already_dead_noncorpse_reentry_is_ignored": true,
+      "before_hp_routine_return": true,
+      "direct_pawn_kill_call_in_hp_routine": false,
+      "later_same_routine_virtual_method": "Pawn:IsDead",
+      "vtable_slot": "+0x10"
+    }
+  },
+  "control_windows": [
+    {
+      "id": "hp_existing_dead_noncorpse_guard",
+      "instruction_hex": "8b068b4010ffd084c0740f8bcee86ed5ffff84c00f84ec050000",
+      "meaning": "An already-dead non-corpse exits before another HP delta is applied.",
+      "region": "pawn_hp_delta",
+      "size": 26,
+      "start_rva": "0x0022f860"
+    },
+    {
+      "id": "hp_post_delta_isdead_classification",
+      "instruction_hex": "8b068bce8b4010ffd084c07429",
+      "meaning": "After the HP update, dispatch vtable slot +0x10 and branch on IsDead.",
+      "region": "pawn_hp_delta",
+      "size": 13,
+      "start_rva": "0x0022fdca"
+    },
+    {
+      "id": "pawn_iscorpse_nontrivial_predicate",
+      "instruction_hex": "5180b9e409000000750980b9800f00000074158b81e009000083f803740a83f802740583f804753b83b9e81000000c7423a154568d008b1558568d003bc2741f83380c740b83c0043bc275f432c059c33bc2740b6a0ce86508010084c0750432c059c3b00159c3",
+      "meaning": "IsCorpse uses several Pawn fields plus a constant-12 global/predicate path; it is not a single byte alias.",
+      "region": "pawn_is_corpse",
+      "size": 103,
+      "start_rva": "0x0022cde0"
+    },
+    {
+      "id": "dead_noncorpse_cleanup_predicate",
+      "instruction_hex": "8b86a00000008d3c8d000000008b1c3880bb25130000000f85bc00000080bb22090000000f85af00000080bb21090000000f85a20000008b038bcb8b4010ffd084c00f84910000008b837408000080b89e0600000075188a805c06000084c075788b83c41000003b83c8100000756a8a836409000084c075608bcbe810de080084c07555",
+      "meaning": "Require cleared state gates, virtual IsDead true, definition/state gates, Pawn+0x964 clear, and direct IsCorpse false before erase.",
+      "region": "board_cleanup_sweep",
+      "size": 132,
+      "start_rva": "0x0019ef50"
+    },
+    {
+      "id": "board_pawn_vector_erase",
+      "instruction_hex": "8b86a00000008b0407c686302600000185c0742e508bcee8001100003dffffff7f74268b8ea00000008b96a40000008d04818d48042bd1525150e86df51c0083c40c8386a4000000fc",
+      "meaning": "Mark Board cleanup, find the selected pointer, compact its tail when found, and decrement the pawn-vector end by four bytes.",
+      "region": "board_cleanup_sweep",
+      "size": 73,
+      "start_rva": "0x0019efd4"
+    },
+    {
+      "id": "board_pawn_vector_find_contract",
+      "instruction_hex": "558bec568bf133d2578b86a40000002b86a0000000c1f80285c074248b8ea00000008b7d08393974228b86a4000000422b86a000000083c104c1f8023bd072e55fb8ffffff7f5e5dc204005f8bc25e5dc20400",
+      "meaning": "Search Board+[0xa0,0xa4) for the exact pointer and return its index or INT_MAX.",
+      "region": "board_pawn_vector_find",
+      "size": 83,
+      "start_rva": "0x001a00f0"
+    },
+    {
+      "id": "pawn_isdead_virtual_thunk",
+      "instruction_hex": "8b01ff6010",
+      "meaning": "The registered IsDead thunk dispatches through Pawn vtable slot +0x10.",
+      "region": "pawn_is_dead_thunk",
+      "size": 5,
+      "start_rva": "0x002e39a2"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "e9a1a70eae208851cb62bc2e022c97825a889beffa6322c02dfb7668c0de1af3",
+      "file_sha256": "af4cc9de107ab8e7c739e480ec1efda0a477db9c264bbef3452331a95f242ea1",
+      "id": "damage_death_pawn_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json",
+      "role": "Pins DAMAGE_DEATH status arithmetic and the clamped HP-zero handoff."
+    },
+    {
+      "canonical_sha256": "2960b1ca1f48bb31faf9c684d86e868683ae934609612ded65beb61967f6859c",
+      "file_sha256": "fb0537726b65a506f9548444c90e4e17a1ea2d201f60a04ad7ff728072629805",
+      "id": "path_occupancy_lifecycle",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json",
+      "role": "Pins IsDead/IsCorpse bindings and live-or-persistent-corpse path occupancy."
+    }
+  ],
+  "direct_edges": [
+    {
+      "from_rva": "0x0016ae58",
+      "id": "primary_caller_calls_cleanup_sweep",
+      "instruction_hex": "e833360300",
+      "source_region": "primary_sweep_caller",
+      "target_region": "board_cleanup_sweep",
+      "target_rva": "0x0019e490"
+    },
+    {
+      "from_rva": "0x001e9fb5",
+      "id": "secondary_caller_calls_cleanup_sweep",
+      "instruction_hex": "e8d644fbff",
+      "source_region": "secondary_sweep_caller",
+      "target_region": "board_cleanup_sweep",
+      "target_rva": "0x0019e490"
+    },
+    {
+      "from_rva": "0x0022f86d",
+      "id": "hp_existing_dead_guard_calls_iscorpse",
+      "instruction_hex": "e86ed5ffff",
+      "source_region": "pawn_hp_delta",
+      "target_region": "pawn_is_corpse",
+      "target_rva": "0x0022cde0"
+    },
+    {
+      "from_rva": "0x0019efcb",
+      "id": "cleanup_sweep_calls_iscorpse",
+      "instruction_hex": "e810de0800",
+      "source_region": "board_cleanup_sweep",
+      "target_region": "pawn_is_corpse",
+      "target_rva": "0x0022cde0"
+    },
+    {
+      "from_rva": "0x0019efeb",
+      "id": "cleanup_sweep_finds_vector_index",
+      "instruction_hex": "e800110000",
+      "source_region": "board_cleanup_sweep",
+      "target_region": "board_pawn_vector_find",
+      "target_rva": "0x001a00f0"
+    },
+    {
+      "from_rva": "0x0019f00e",
+      "id": "cleanup_sweep_compacts_pointer_tail",
+      "instruction_hex": "e86df51c00",
+      "source_region": "board_cleanup_sweep",
+      "target_rva": "0x0036e580"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "After applying the HP delta and further same-routine feedback logic, the Pawn HP routine dispatches virtual vtable slot +0x10 and branches on IsDead before returning; it does not directly call Pawn:Kill.",
+      "classification": "fact",
+      "id": "hp_delta_later_reclassifies_isdead_before_return"
+    },
+    {
+      "claim": "The later Board sweep enters its erase path only after three cleared Pawn state bytes, virtual IsDead true, additional definition/state gates, Pawn+0x964 clear, and direct Pawn:IsCorpse false.",
+      "classification": "fact",
+      "id": "cleanup_sweep_requires_dead_noncorpse"
+    },
+    {
+      "claim": "For a still-present eligible pointer, the exact helper finds its index, the sweep compacts the remaining pointer tail, and the Board pawn-vector end moves back four bytes.",
+      "classification": "inference",
+      "id": "eligible_pointer_is_erased_from_board_vector"
+    },
+    {
+      "claim": "IsCorpse true branches around this erase attempt. Joined to the path-lifecycle artifact, a retained dead corpse remains counted occupancy while a dead non-corpse does not.",
+      "classification": "inference",
+      "id": "corpses_escape_this_erase_and_remain_path_relevant"
+    },
+    {
+      "claim": "The exact .text image contains two instruction-aligned direct calls to the sweep. Their existence proves callable update paths, not which pass follows a particular SpaceDamage or whether removal occurs between two specific effect records.",
+      "classification": "inference",
+      "id": "two_static_callers_do_not_prove_damage_relative_timing"
+    },
+    {
+      "claim": "All four absolute OnKill-name references belong to two property-access functions, and none of the reviewed damage, HP, Pawn:Kill, or cleanup regions directly calls those functions. A generic or indirect Lua dispatcher remains open.",
+      "classification": "inference",
+      "id": "onkill_references_are_not_dispatch_evidence"
+    },
+    {
+      "claim": "The exact owner/death/counter strings are confined to the inventoried definition, accessor, or binding sites. Those references do not establish the source/team/owner assigned to an environment kill or any counter increment.",
+      "classification": "inference",
+      "id": "named_credit_fields_do_not_close_attribution"
+    },
+    {
+      "claim": "The current solver already distinguishes persistent corpse path occupancy from transient dead state. Because action-level sweep timing and callback/credit semantics remain unproven, this static continuation supplies no contradictory Rust rule.",
+      "classification": "inference",
+      "id": "no_solver_semantic_change_from_static_cleanup_shape"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "notes": [
+    "This is exact-build static evidence, not a runtime trace.",
+    "Raw absolute-reference completeness is limited to the file-backed .text section and the exact encoded virtual addresses.",
+    "Absence of a direct CALL rel32 does not exclude a generic string lookup, virtual call, function pointer, or Lua dispatcher.",
+    "The two sweep callers do not by themselves identify player-action, effect-record, or presentation timing."
+  ],
+  "refines": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json",
+      "qualification": "The later same-HP-routine IsDead consumer and conditional dead-noncorpse Board-vector erase are now exact. Damage-relative timing, subclass outcomes, callback dispatch, and attribution remain open.",
+      "unresolved_ids": [
+        "zero_hp_corpse_and_removal_timing",
+        "on_kill_callback_dispatch",
+        "kill_credit_and_owner_attribution",
+        "specialized_pawn_subclass_tail"
+      ]
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json",
+      "qualification": "The structural erase predicate is now exact, but its timing between particular actions or effect records is not.",
+      "unresolved_ids": [
+        "transient dead-pawn removal timing between separate player actions"
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete primary caller containing the reviewed sweep edge.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0016bf62",
+      "id": "primary_sweep_caller",
+      "sha256": "6d32a302492920ae4353af4505e792776a18c4f9d8c26bd6cf1f9861a6f9129d",
+      "size": 5778,
+      "start_rva": "0x0016a8d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete Board sweep containing the pawn-vector erase path.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0019f78a",
+      "id": "board_cleanup_sweep",
+      "sha256": "ce761f3b9b4f96239fd5b5eb55a3f8d806d144206c3eac74543ba6f77f683b62",
+      "size": 4858,
+      "start_rva": "0x0019e490"
+    },
+    {
+      "boundary_basis": "Complete Board pawn-vector pointer-to-index search through both returns.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x001a0143",
+      "id": "board_pawn_vector_find",
+      "sha256": "750e2639c3de4cd54e49093e4af9ce0336bcbf5848fe711b445387ffbdbc3252",
+      "size": 83,
+      "start_rva": "0x001a00f0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete secondary iteration caller containing the sweep edge.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x001e9fed",
+      "id": "secondary_sweep_caller",
+      "sha256": "df8834614d7cbe4805e1b15558066807885750372e50b36a1b1e26552be1e5ec",
+      "size": 397,
+      "start_rva": "0x001e9e60"
+    },
+    {
+      "boundary_basis": "Dependency-pinned generic SpaceDamage core searched for direct callback edges.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x001ae080",
+      "id": "damage_core",
+      "sha256": "e6c2049faa497fb736263591ce7f102630148360777ac61bf1a5318a95819a28",
+      "size": 5888,
+      "start_rva": "0x001ac980"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function containing the first iOwner name reference.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x0022991f",
+      "id": "iowner_reader_a",
+      "sha256": "ed82578b7a5100850869ad88ec99737018446faa7eb6be317bc5f6b8e701b485",
+      "size": 255,
+      "start_rva": "0x00229820"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function containing the second iOwner name reference.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x00229b03",
+      "id": "iowner_reader_b",
+      "sha256": "687bb097bfc332c01c8aaf445dc93deed489914dab6da209856f7dfe013da758",
+      "size": 483,
+      "start_rva": "0x00229920"
+    },
+    {
+      "boundary_basis": "Complete native Pawn IsCorpse predicate through RET.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0022ce47",
+      "id": "pawn_is_corpse",
+      "sha256": "806702601f6a75193f6479e0357150d5264c10b7661a434bac7eeb1a807606c7",
+      "size": 103,
+      "start_rva": "0x0022cde0"
+    },
+    {
+      "boundary_basis": "Dependency-pinned Pawn damage receiver searched for direct callback edges.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0022d593",
+      "id": "pawn_receiver",
+      "sha256": "a57d332833c5c936594c510a42cf5074b3e07c4b9941443d7bd3d588b09cd818",
+      "size": 1859,
+      "start_rva": "0x0022ce50"
+    },
+    {
+      "boundary_basis": "Complete Pawn HP-delta routine including pre/post IsDead classification.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0022fe84",
+      "id": "pawn_hp_delta",
+      "sha256": "6c1724c8f74c8f4996451df3a9bd9d4587c6bb0c4a8ff6be9130e72c42c0689b",
+      "size": 1620,
+      "start_rva": "0x0022f830"
+    },
+    {
+      "boundary_basis": "Dependency-pinned explicit Pawn Kill implementation searched for direct callback edges.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x0023d34b",
+      "id": "pawn_kill",
+      "sha256": "0a5d113dc0441f670a948a57ee4e3b07593815596b049075d3303ec3a7fd2903",
+      "size": 107,
+      "start_rva": "0x0023d2e0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 definition-loading function containing named death/counter fields.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x00240acf",
+      "id": "pawn_definition_load",
+      "sha256": "b3475222468769a173264dd29a9bb00d3980f563b0c4bb9243875b844450d270",
+      "size": 3983,
+      "start_rva": "0x0023fb40"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 definition-writing function containing named death/counter fields.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x0024209e",
+      "id": "pawn_definition_store",
+      "sha256": "92ad8d746d427511dbd27a845faa17d22240a8fe703d48c10a4b92e85aacd3f9",
+      "size": 5566,
+      "start_rva": "0x00240ae0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function containing two OnKill property-name references.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x00270608",
+      "id": "onkill_property_reader",
+      "sha256": "99c1dcb0826e4e11689f229c9b3815733b396a7fc70df9c9140d954b40d54162",
+      "size": 14328,
+      "start_rva": "0x0026ce10"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function containing two OnKill property-name references.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x00271c3b",
+      "id": "onkill_property_writer",
+      "sha256": "bd354b437ad4d0ae23eb648350b2a2aee9f11961dcca9bf1a6df15657475675d",
+      "size": 5675,
+      "start_rva": "0x00270610"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Pawn/global binding table containing EVENT_ENEMY_KILLED.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x002816b6",
+      "id": "pawn_binding_table",
+      "sha256": "51f3a81b7b832098c11f81beb1c85e1fe488434adce745dd8af5cb5af64200c2",
+      "size": 32310,
+      "start_rva": "0x00279880"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 function containing the third iOwner name reference.",
+      "decoded_for_direct_edges": false,
+      "end_rva_exclusive": "0x00283963",
+      "id": "iowner_binding",
+      "sha256": "d0b1ba039795a65addbdc54ded073f92aacfed4623ef8ad03e0f504afd154733",
+      "size": 147,
+      "start_rva": "0x002838d0"
+    },
+    {
+      "boundary_basis": "Complete registered Pawn IsDead virtual thunk at vtable slot +0x10.",
+      "decoded_for_direct_edges": true,
+      "end_rva_exclusive": "0x002e39a7",
+      "id": "pawn_is_dead_thunk",
+      "sha256": "2583df412e7df54ae54a5b27baf8262583a3e4de9ed4ddfd2fef4f3209c53670",
+      "size": 5,
+      "start_rva": "0x002e39a2"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "reason": "The path model already distinguishes persistent corpses, and the new static evidence does not prove a different action-level cleanup, callback, or attribution order.",
+    "simulator_change_required": false,
+    "simulator_contradiction": false,
+    "simulator_version_bump_required": false
+  },
+  "summary": {
+    "absolute_reference_anchor_count": 9,
+    "absolute_reference_count": 20,
+    "callback_or_credit_tail_proven": false,
+    "conditional_dead_noncorpse_board_erase_proven": true,
+    "control_window_count": 7,
+    "dependency_count": 2,
+    "direct_edge_count": 6,
+    "exact_cleanup_timing_proven": false,
+    "finding_count": 8,
+    "region_count": 18,
+    "simulator_change_required": false,
+    "unresolved_count": 6
+  },
+  "unresolved": [
+    {
+      "id": "cleanup_scheduler_timing",
+      "next_evidence": "Capture matched effect-record, Board-sweep, and settled-read timing if a solver mismatch requires it.",
+      "question": "Which Board pass removes a particular pawn after a particular damage record?"
+    },
+    {
+      "id": "subclass_death_and_corpse_results",
+      "next_evidence": "Capture or exhaustively map subclass vtables and the nontrivial IsCorpse predicate inputs.",
+      "question": "Which concrete Pawn subclasses return dead/corpse at each lifecycle phase?"
+    },
+    {
+      "id": "on_kill_callback_dispatch",
+      "next_evidence": "Trace the Lua callback dispatcher; static property-name references are insufficient.",
+      "question": "Which generic or indirect runtime edge invokes a Lua OnKill function?"
+    },
+    {
+      "id": "kill_credit_and_owner_attribution",
+      "next_evidence": "Trace runtime attribution objects and counter writes from the settled death event.",
+      "question": "What source/team/owner and mission or achievement credit follow environment DAMAGE_DEATH?"
+    },
+    {
+      "id": "death_effect_and_presentation_tail",
+      "next_evidence": "Map or capture GetDeathEffect/IsDeathEffect and active-effect scheduling only when logically relevant.",
+      "question": "How do death effects, animation, and visual removal interleave with logical cleanup?"
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the build-keyed inventory on another exact executable.",
+      "question": "Do macOS and other Windows depots implement the same cleanup path?"
+    }
+  ]
+}

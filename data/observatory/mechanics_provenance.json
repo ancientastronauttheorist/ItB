@@ -9724,7 +9724,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The one direct Pawn:Kill target in the reviewed damage core is the separately mapped Building-terrain occupant-removal branch at RVA 0x001adca2. Neither the Pawn numeric-damage receiver nor the HP-delta routine directly calls Pawn:Kill; zero-HP settlement must be treated as a later unresolved boundary."
+          "statement": "The one direct Pawn:Kill target in the reviewed damage core is the separately mapped Building-terrain occupant-removal branch at RVA 0x001adca2. Neither the Pawn numeric-damage receiver nor the HP-delta routine directly calls Pawn:Kill; zero-HP settlement continues in native-zero-hp-cleanup-boundary."
         }
       ],
       "id": "native-damage-death-pawn-boundary",
@@ -9743,7 +9743,7 @@
         }
       ],
       "known_gaps": [
-        "The map deliberately stops when the clamped Pawn HP reaches zero. Corpse versus removal timing, logical Board removal, Lua OnKill dispatch, kill credit and owner/team attribution, mission counters, achievement counters, and presentation timing remain untraced.",
+        "This map stops when the clamped Pawn HP reaches zero. The continuation proves a structural dead-noncorpse Board-vector erase; exact damage-relative timing, specialized subclass outcomes, Lua OnKill dispatch, kill credit and owner/team attribution, mission or achievement counters, and presentation timing remain untraced.",
         "Specialized pawn subclass or vtable consumers after HP zero are not exhaustively inventoried. The terminal-state equivalence claim is bounded to stock solver-supported Final Cave and Volcano pawn health, not arbitrary modified pawns with health above the effective sentinel damage.",
         "The reviewed core contains other terrain, spawn, emerge, feedback, scheduler, and callback branches. This record pins the generic Pawn numeric receiver-to-HP path and the separate Building-terrain direct-kill edge; it is not an end-to-end proof of every SpaceDamage field combination.",
         "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
@@ -9772,6 +9772,80 @@
         {
           "path": "tests/test_itb_provenance.py",
           "symbols": ["test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed native artifact data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9 and scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155. It hash-pins 18 reviewed regions, seven control windows, six direct edges, two dependency artifacts, and all 20 absolute references to nine owner, corpse, callback, event, and counter string anchors."
+        },
+        {
+          "classification": "fact",
+          "statement": "Later in the same Pawn HP-delta routine, after the ValueBar update and further feedback logic but before return, native code dispatches virtual vtable slot +0x10 and branches on Pawn:IsDead. The routine contains no direct Pawn:Kill call, and its existing-dead guard ignores a dead non-corpse re-entry."
+        },
+        {
+          "classification": "fact",
+          "statement": "The reviewed Board sweep reaches its erase path only after three cleared Pawn state bytes, virtual IsDead true, an additional definition/state gate, Pawn byte +0x0964 clear, and a direct Pawn:IsCorpse result of false. Its pointer helper returns the exact pawn-vector index or INT_MAX; a found eligible pointer has its tail compacted and Board pawn-vector end decremented by four bytes."
+        },
+        {
+          "classification": "inference",
+          "statement": "Pawn:IsCorpse true skips the reviewed erase. Joined to the exact-build path-occupancy artifact, a retained corpse remains path occupancy while a retained dead non-corpse does not. Specialized subclass results and the nontrivial IsCorpse predicate inputs are not exhausted."
+        },
+        {
+          "classification": "inference",
+          "statement": "The exact .text image has two instruction-aligned direct callers of the Board sweep. They prove callable update paths but do not identify which pass follows a particular SpaceDamage record or whether cleanup occurs between two specific records in one effect."
+        },
+        {
+          "classification": "inference",
+          "statement": "All four exact OnKill string references belong to two property-access functions, the sole EVENT_ENEMY_KILLED string reference belongs to a binding table, and the inventoried owner/death/counter references are definition, accessor, or binding sites. No reviewed damage, HP, Pawn:Kill, or cleanup region directly calls the OnKill property functions, so generic or indirect Lua dispatch, attribution, and counter writes remain open."
+        },
+        {
+          "classification": "inference",
+          "statement": "The current Rust path model already distinguishes persistent corpse occupancy from transient dead state. Because action-level sweep timing, callback dispatch, and attribution remain unproven and no existing solver rule is contradicted, this static continuation requires no simulator semantic change or version bump."
+        }
+      ],
+      "id": "native-zero-hp-cleanup-boundary",
+      "implementations": [
+        {
+          "path": "src/observatory/zero_hp_cleanup_boundary.py",
+          "symbols": ["build_zero_hp_cleanup_boundary_map", "validate_zero_hp_cleanup_boundary_map", "validate_zero_hp_cleanup_boundary_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_zero_hp_cleanup.py",
+          "symbols": ["main"]
+        }
+      ],
+      "known_gaps": [
+        "The two static callers do not prove exact cleanup-sweep timing relative to a particular SpaceDamage, action, effect record, active-effect pass, or settled bridge read.",
+        "Specialized Pawn subclass death and corpse outcomes, including every input to the nontrivial Pawn:IsCorpse predicate, are not exhaustively mapped.",
+        "Generic or indirect Lua OnKill dispatch and EVENT_ENEMY_KILLED delivery remain untraced; absence of a direct rel32 edge into the two property-access functions is not proof that no dispatcher exists.",
+        "Environment-kill source, team, and owner attribution plus iKills, iMissionDamage, iKillCount, mission, and achievement counter writes remain untraced.",
+        "GetDeathEffect, IsDeathEffect, active-effect scheduling, animation, sound, and visual-removal ordering remain outside this logical Board-cleanup proof.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/final/env_final.lua",
+          "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+          "symbols": ["Env_Final:GetAttackEffect"]
+        },
+        {
+          "path": "scripts/missions/final/env_volcano.lua",
+          "sha256": "e3499feaaf71d01a78bd649915165ec1c6713d20baa39bb2ac12db7bb787ea16",
+          "symbols": ["Env_Volcano:GetAttackEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_zero_hp_cleanup_boundary.py",
+          "symbols": ["test_committed_map_proves_conditional_cleanup_without_timing_or_credit_overclaim", "test_binding_rejects_cleanup_reference_or_scope_drift", "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_zero_hp_cleanup_record_pins_structural_erase_without_tail_overclaim"]
         }
       ]
     }

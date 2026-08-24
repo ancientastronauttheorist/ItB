@@ -311,9 +311,9 @@ therefore reach zero HP, matching the existing Rust terminal result.
 The verifier also inventories direct calls to `Pawn:Kill` across the reviewed
 core, Pawn receiver, and HP routine. The sole core call is the separately
 reviewed Building-terrain occupant-removal branch; neither the receiver nor HP
-routine directly calls it. This map deliberately leaves zero-HP corpse/removal
-settlement, Lua `OnKill`, attribution, specialized subclass tails, and other
-platforms open.
+routine directly calls it. The continuation below narrows zero-HP settlement;
+Lua `OnKill`, attribution, concrete subclass results, and other platforms stay
+open.
 
 Reverify it with
 `scripts/itb_observatory_damage_death.py verify` against the exact executable,
@@ -321,6 +321,41 @@ content root, and committed boundary map. The verifier checks exact source and
 executable identity, all region/data hashes, registered field and status
 bindings, instruction-start windows, call targets, and the complete reviewed
 direct-`Pawn:Kill` edge inventory.
+
+## Zero-HP Board cleanup boundary
+
+The exact-build continuation
+`data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json`
+maps the structural seam after HP zero. After applying the HP delta and further
+same-routine feedback logic, the HP routine checks virtual `IsDead` through
+vtable slot `+0x10` before returning. A later Board sweep reaches its erase
+path only for a candidate that passes cleared state and definition gates,
+returns true from virtual `IsDead`, has Pawn byte `+0x964` clear, and returns
+false from direct `Pawn:IsCorpse`. Its exact pointer-index helper searches
+Board vector `[+0xa0,+0xa4)`, the erase path compacts a found tail, and the
+vector end decreases by one pointer. `IsCorpse == true` escapes that path and,
+through the predecessor path artifact, remains counted occupancy while
+retained.
+
+The exact `.text` image has two instruction-aligned direct calls to the sweep,
+but those call sites do not identify which pass follows a particular damage
+record. The artifact therefore closes the conditional erase shape without
+claiming between-effect or between-action timing.
+
+The same verifier scans all file-backed `.text` bytes for exact virtual-address
+operands. `OnKill` has four absolute references in two property-access
+functions, `EVENT_ENEMY_KILLED` has one in the global/Pawn binding table, and
+the selected owner/death/counter names occur only at the inventoried definition,
+accessor, or binding sites. None of the reviewed damage, HP, explicit-Kill, or
+cleanup functions directly calls either `OnKill`-reference function. This is
+useful negative evidence, not a generic/indirect Lua dispatch or kill-credit
+proof.
+
+Reverify it with `scripts/itb_observatory_zero_hp_cleanup.py verify`. Exact
+damage-relative sweep timing, concrete subclass corpse results, Lua callback
+dispatch, source/team/owner and counter attribution, death-effect presentation,
+and non-Windows equivalence remain open. No Rust change follows from the
+structural continuation.
 
 ## Reproducible analysis workflow
 
@@ -493,8 +528,14 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    core does contain one direct `Pawn:Kill` edge, but it is the separately
    mapped Building-terrain occupant-removal branch; neither the numeric Pawn
    receiver nor HP-delta routine calls it. The Rust terminal outcome is already
-   equivalent. Corpse/removal settlement, Lua `OnKill`, kill attribution,
-   specialized zero-HP tails, and non-Windows equivalence remain open.
+   equivalent. A build-keyed continuation now proves the later same-HP-routine
+   virtual `IsDead` classification and conditional Board-vector erase for a
+   dead non-corpse passing all additional native gates. It also proves that
+   corpses skip that erase path and inventories all absolute `OnKill`, named
+   event, owner, death, and counter references without mistaking metadata or
+   binding sites for runtime dispatch. Exact sweep timing, subclass outcomes,
+   Lua callback dispatch, kill attribution/counters, death presentation, and
+   non-Windows equivalence remain open.
 9. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

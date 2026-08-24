@@ -349,8 +349,9 @@ that selected it.
 - Can the mapped candidate loop be observed without perturbing vector order or
   dynamic callback lookup? Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
-  pathing are already closed offline; runtime `IsCorpse()` subclass/removal
-  timing and `AddMove` execution remain separate questions.
+  pathing and the structural dead-noncorpse Board-vector erase are already
+  closed offline; runtime `IsCorpse()` subclass results, damage-relative sweep
+  timing, and `AddMove` execution remain separate questions.
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
   overrides bypass a base wrapper for this build. Which mismatch, if any,
   requires a native candidate-tournament record beyond those Lua slots?

@@ -497,8 +497,15 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   doubling, absence of flying/Massive immunity in the receiver, and the
   clamped negative HP delta reaching zero for stock supported health. The only
   direct `Pawn:Kill` target in the reviewed core is the separate
-  Building-terrain occupant-removal branch; corpse/removal timing, `OnKill`,
-  credit, and specialized zero-HP tails remain open; and
+  Building-terrain occupant-removal branch; and
+- the zero-HP cleanup continuation: later same-HP-routine virtual `IsDead`, a
+  Board-vector erase gated by dead plus non-corpse and additional Pawn or
+  definition state, exact pointer lookup and compaction, and corpse escape
+  joined to persistent-corpse path occupancy. The exact image contains two
+  direct sweep callers, four `OnKill` absolute references confined to property-
+  access functions, and one named enemy-killed-event binding reference; exact
+  damage-relative timing, subclass results, indirect or generic callback
+  dispatch, credit/counters, and presentation remain open; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -563,7 +570,8 @@ The remaining native priorities are now narrower:
    assigns Road, calls `Pawn:Kill(false)`, then adds BigBomb only if its blocker
    recheck passes. A destroyed pylon can retain `BLOCKED_PERM` and abort after
    the enemy kill. Only concrete outputs and later block state, arbitrary
-   modified-script state, the zero-HP corpse/`OnKill`/attribution tail,
+   modified-script state, exact zero-HP cleanup timing and subclass outcomes,
+   the indirect `OnKill`/attribution tail,
    adversarial collision identities, and visual timing remain, not native
    admission, shipped lifetime, or ordinary startup pylon/bomb collision
    behavior.

@@ -1048,6 +1048,53 @@ python scripts/itb_observatory_damage_death.py verify `
 ```
 
 This closes the stock Final Cave/Volcano Pawn HP outcome without requiring a
-Rust semantic change. It deliberately stops at zero HP: corpse/removal timing,
-Lua `OnKill` dispatch, kill credit/ownership, specialized subclass tails, and
-non-Windows equivalence remain separate boundaries.
+Rust semantic change. The zero-HP cleanup continuation below now maps the
+conditional Board erase shape. Exact damage-relative timing, Lua `OnKill`
+dispatch, kill credit/ownership, specialized subclass results, and non-Windows
+equivalence remain separate boundaries.
+
+## Zero-HP Board cleanup boundary
+
+`native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json`
+continues from the exact `DAMAGE_DEATH` HP-zero artifact and joins it to the
+existing live-or-persistent-corpse path artifact. It binds 18 reviewed native
+regions, seven instruction-start control windows, six direct edges, nine
+named data anchors, and all 20 absolute references to those names in the
+file-backed `.text` section. For Windows build `13725832` it establishes that:
+
+- after applying the HP delta and further same-routine feedback logic, the
+  Pawn HP routine dispatches virtual `IsDead` at vtable slot `+0x10` before
+  returning; it does not directly call `Pawn:Kill`;
+- a later Board sweep has exactly two encoded, instruction-aligned direct
+  callers in the exact `.text` image;
+- the sweep reaches its Pawn-vector erase path only after three state bytes
+  are clear, virtual `IsDead` is true, extra definition/state gates pass,
+  Pawn byte `+0x964` is clear, and direct `Pawn:IsCorpse` returns false;
+- for a still-present eligible pointer, the exact helper returns its vector
+  index, the tail is compacted, and the vector end moves back four bytes;
+- `IsCorpse == true` skips this erase path. Joined to the path artifact, a
+  retained corpse remains counted occupancy while a dead non-corpse does not;
+- the exact `OnKill` string has four absolute references, all in two
+  property-access functions. None of the reviewed damage, HP, explicit-Kill,
+  or cleanup regions directly calls those functions; and
+- `EVENT_ENEMY_KILLED` has one absolute binding-table reference, while the
+  inventoried owner/death/counter strings occur in definition, accessor, or
+  binding sites. Those names do not prove runtime dispatch or attribution.
+
+Verify the executable, both predecessor artifacts and sources, every region
+hash, instruction window, direct edge, exact sweep-caller inventory, and all
+absolute-reference inventories with:
+
+```powershell
+python scripts/itb_observatory_zero_hp_cleanup.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --cleanup-map data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json
+```
+
+This is a structural cleanup proof, not a scheduling trace. It does not prove
+which sweep follows a particular damage/effect record, concrete subclass
+`IsDead`/`IsCorpse` results, the generic or indirect Lua `OnKill` dispatcher,
+kill owner/team/counter updates, death-effect presentation, or another depot.
+Those limits are why this tranche requires no Rust semantic or simulator-
+version change.

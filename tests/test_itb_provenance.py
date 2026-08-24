@@ -6590,8 +6590,10 @@ def test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim():
     assert "caps at minus-current HP" in facts
     assert "no flying or Massive predicate" in facts
     assert "separately mapped Building-terrain occupant-removal branch" in facts
+    assert "continues in native-zero-hp-cleanup-boundary" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "Corpse versus removal timing" in gaps
+    assert "structural dead-noncorpse Board-vector erase" in gaps
+    assert "exact damage-relative timing" in gaps
     assert "Lua OnKill dispatch" in gaps
     assert "kill credit and owner/team attribution" in gaps
     assert "Specialized pawn subclass" in gaps
@@ -6615,6 +6617,91 @@ def test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim():
         "lua_on_kill_dispatch_proven": False,
         "specialized_subclass_overrides_exhausted": False,
     }
+
+
+def test_native_zero_hp_cleanup_record_pins_structural_erase_without_tail_overclaim():
+    record = _mission_provenance_record("native-zero-hp-cleanup-boundary")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/final/env_final.lua",
+            "sha256": (
+                "8d9220a9f7c0b6f3887ec8b9ffdd351b"
+                "25cd4c53696d2f401c81dbeb932a6f33"
+            ),
+            "symbols": ["Env_Final:GetAttackEffect"],
+        },
+        {
+            "path": "scripts/missions/final/env_volcano.lua",
+            "sha256": (
+                "e3499feaaf71d01a78bd649915165ec1"
+                "c6713d20baa39bb2ac12db7bb787ea16"
+            ),
+            "symbols": ["Env_Volcano:GetAttackEffect"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/observatory/zero_hp_cleanup_boundary.py"] == {
+        "build_zero_hp_cleanup_boundary_map",
+        "validate_zero_hp_cleanup_boundary_map",
+        "validate_zero_hp_cleanup_boundary_map_binding",
+    }
+    assert implementations["scripts/itb_observatory_zero_hp_cleanup.py"] == {
+        "main",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "18 reviewed regions" in facts
+    assert "Later in the same Pawn HP-delta routine" in facts
+    assert "direct Pawn:IsCorpse result of false" in facts
+    assert "two instruction-aligned direct callers" in facts
+    assert "All four exact OnKill string references" in facts
+    assert "requires no simulator semantic change or version bump" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "exact cleanup-sweep timing" in gaps
+    assert "Specialized Pawn subclass death and corpse outcomes" in gaps
+    assert "Generic or indirect Lua OnKill dispatch" in gaps
+    assert "iKills, iMissionDamage, iKillCount" in gaps
+    assert "GetDeathEffect, IsDeathEffect" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    cleanup = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert cleanup["summary"] == {
+        "absolute_reference_anchor_count": 9,
+        "absolute_reference_count": 20,
+        "callback_or_credit_tail_proven": False,
+        "conditional_dead_noncorpse_board_erase_proven": True,
+        "control_window_count": 7,
+        "dependency_count": 2,
+        "direct_edge_count": 6,
+        "exact_cleanup_timing_proven": False,
+        "finding_count": 8,
+        "region_count": 18,
+        "simulator_change_required": False,
+        "unresolved_count": 6,
+    }
+    assert cleanup["contracts"]["board_cleanup"][
+        "exact_direct_caller_rvas"
+    ] == ["0x0016ae58", "0x001e9fb5"]
+    assert cleanup["contracts"]["corpse_join"] == {
+        "corpse_true_skips_reviewed_erase": True,
+        "is_corpse_is_nontrivial_predicate": True,
+        "retained_corpse_counts_path_occupancy": True,
+        "retained_dead_noncorpse_counts_path_occupancy": False,
+        "subclass_results_exhausted": False,
+    }
+    assert cleanup["contracts"]["callback_and_credit"][
+        "lua_onkill_dispatch_proven"
+    ] is False
 
 
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():

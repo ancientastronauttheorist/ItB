@@ -47,9 +47,12 @@ blocking, and Massive Water; simulator v402 fixes the resulting ordinary Water
 gap. A third exact-build map proves that mode-1 occupancy counts live pawns and
 persistent corpses, skips transient dead non-corpses, and lets Road Runner
 cross—but not stop on—persistent corpses; simulator v403 carries that rule.
-Any future live path campaign should therefore target matched point vectors,
-runtime `IsCorpse()` subclass values/removal timing, or `AddMove`
-step/scheduler behavior rather than repeat these boundaries.
+An exact-build continuation also closes the structural dead-noncorpse erase
+predicate and Board-vector compaction while leaving the particular sweep pass
+and subclass result unresolved. Any future live path/death campaign should
+therefore target matched point vectors, runtime `IsCorpse()` subclass values,
+damage-relative cleanup timing, or `AddMove` step/scheduler behavior rather
+than repeat these boundaries.
 
 There are now two accepted capture tracks:
 

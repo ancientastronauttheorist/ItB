@@ -876,8 +876,17 @@ the remainder, the receiver has no flying or Massive immunity test, and the
 Pawn `ValueBar` clamps the resulting negative delta at zero. The reviewed
 core's direct `Pawn:Kill` call is instead part of the separate Building-terrain
 occupant-removal branch. This supports the current Rust terminal outcome for
-stock health without pretending that corpse/removal timing, Lua `OnKill`, kill
-credit, specialized zero-HP tails, or non-Windows equivalence are proven.
+stock health. The `native-zero-hp-cleanup-boundary` continuation now proves the
+next structural step: after further same-routine feedback logic the HP routine
+rechecks virtual `IsDead` before returning, and a later Board sweep
+conditionally erases a dead non-corpse only after its additional state and
+definition gates pass. `IsCorpse` true skips that erase and remains path-
+relevant under the prior lifecycle map. The exact image has two direct sweep
+callers, four absolute `OnKill` references confined to two property-access
+functions, and one `EVENT_ENEMY_KILLED` binding-table name reference. This
+still does not prove damage-relative sweep timing, concrete subclass outcomes,
+a generic or indirect Lua `OnKill` dispatch, kill attribution or counters,
+death presentation, or non-Windows equivalence.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
