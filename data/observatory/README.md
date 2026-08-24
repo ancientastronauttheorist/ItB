@@ -899,6 +899,53 @@ python scripts/itb_observatory_final_cave_startup_effect_order.py verify `
 The delay values are scheduler inputs, not measured wall-clock seconds, and
 two consecutive droppers prove two record/animation creations rather than
 their eventual visual impact order or overlap. Concrete RNG results,
-coordinates, UIDs, modified-state error/collision behavior, and full spawn-
-block lifetime also remain outside this map. The solver still consumes a fresh
-settled bridge read, so this evidence requires no Rust semantic change.
+coordinates, UIDs, and modified-state error/collision behavior remain outside
+this map. The following lifetime continuation closes the ordinary spawn-block
+facet without changing the fresh settled-read solver boundary.
+
+## Final Cave spawn-block lifetime boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_block_spawn_lifetime.json`
+joins the startup maps to native `BlockSpawn`, spawn validity,
+`ClearBlockSpawns`, the battle phase driver, and Board reset. It binds the
+shipped Final Cave source, 11 reviewed native regions, 11 data anchors, three
+constant and two method registrations, 13 instruction-start control windows,
+11 direct call edges, complete raw `E8` caller catalogs for three key targets,
+and the reviewed `Board+0x7458` field-reference inventory. For Windows build
+`13725832` it establishes that:
+
+- native registration binds `BLOCKED_NONE=0`, `BLOCKED_TEMP=1`, and
+  `BLOCKED_PERM=2`;
+- `BlockSpawn` synchronously writes its supplied integer to the Point-keyed
+  Board map, and native spawn validity rejects both values one and two before
+  its remaining tile rules;
+- `ClearBlockSpawns` changes only value one to zero and preserves value two;
+- the stage-start phase-one and end-turn mode-six paths do not run that
+  cleanup, while the player-turn mode-one path runs it before constructing the
+  player-turn UI;
+- Final Cave mountain temporary blocks therefore constrain startup selection
+  and survive stage-start settlement, then clear before the first actionable
+  player state; permanent pylon blocks constrain startup selection and survive
+  ordinary player-turn cleanup; and
+- permanent is Board-scoped, not immortal: full Board reset writes zero across
+  all 8x8 entries, and an explicit later `BlockSpawn` can overwrite a value.
+
+Verify the executable, exact source, accepted-tree Lua search, region/data hashes,
+registrations, control windows, direct edges, and raw callsite catalogs with:
+
+```powershell
+python scripts/itb_observatory_final_cave_block_spawn_lifetime.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --lifetime-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_block_spawn_lifetime.json
+```
+
+The verifier requires all 304 analysis-relevant scripts entries to match the
+hash-pinned baseline inventory and permits only one of two hash-pinned project
+bridge overlays at `scripts/modloader.lua`; it searches all 153 Lua files in
+either accepted tree for the `ClearBlockSpawns` identifier. Other modified
+scripts can still invoke the registered method and belong to another content
+identity. The native block map is not exported in ordinary bridge state, and
+arbitrary dropper collisions, visual overlap, concrete RNG outputs,
+coordinates, and UIDs remain outside this map. Settled bridge state already
+contains the actionable terrain and units, so no Rust semantic change follows.

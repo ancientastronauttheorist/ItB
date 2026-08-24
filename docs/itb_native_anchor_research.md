@@ -440,8 +440,17 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    `BlockSpawn` writes are synchronous; and the only Board update in that
    orchestrator pass precedes phase transition. The boss and ordinary enemy
    identities/spaces therefore commit before queued Mech scripts and
-   rock/pylon/bomb droppers can dispatch. The incoming CRT state, concrete
-   later identities and coordinates, visual animation interleave,
+   rock/pylon/bomb droppers can dispatch. A seventh continuation closes the
+   ordinary spawn-block lifetime seam: exact registration binds none/temp/perm
+   to 0/1/2; both temporary and permanent values reject native spawn
+   candidates; `ClearBlockSpawns` changes only temporary value 1 to zero; and
+   only player-turn mode 1 invokes that cleanup, before player-turn UI.
+   Stage-start phase 1 and end-turn mode 6 skip it, so cave mountain marks
+   constrain startup selection and survive startup settlement before clearing
+   at the first player turn, while pylon marks survive ordinary turn cleanup.
+   Full Board reset zeros the 8x8 map, bounding permanent to the Board rather
+   than claiming immortal storage. The incoming CRT state, concrete later
+   identities and coordinates, visual animation interleave,
    callback-time replacement candidate set, selected coordinate, UID,
    wall-clock presentation duration, live campaign-settlement timing, and
    non-Windows equivalence remain open; no speculative Rust forecast follows.

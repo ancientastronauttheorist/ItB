@@ -6105,6 +6105,19 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "final_cave_block_spawn_lifetime.json"
+    ] == {
+        "blocked_constants_are_exact",
+        "both_block_values_reject_spawns",
+        "temporary_cleanup_is_exact",
+        "player_turn_is_the_native_cleanup_boundary",
+        "final_cave_startup_lifetime_is_exact",
+        "permanent_is_board_scoped",
+        "solver_boundary_remains_settled_read",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_map_choice.json"
     ] == {
         "random_map_is_shipped_lua", "installation_order",
@@ -6173,6 +6186,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_startup_effect_order_map",
         "validate_final_cave_startup_effect_order_map_binding",
     }
+    assert implementations[
+        "src/observatory/final_cave_block_spawn_lifetime.py"
+    ] == {
+        "build_final_cave_block_spawn_lifetime_map",
+        "validate_final_cave_block_spawn_lifetime_map",
+        "validate_final_cave_block_spawn_lifetime_map_binding",
+    }
     assert implementations["src/observatory/final_cave_map_choice.py"] == {
         "build_final_cave_map_choice_map",
         "validate_final_cave_map_choice_map",
@@ -6221,6 +6241,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_startup_effect_order.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_block_spawn_lifetime.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_map_choice.py"
     ] == {"_parser", "main"}
     tests = {
@@ -6256,6 +6279,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     ] == {
         "test_committed_map_closes_startup_effect_order_without_visual_overclaim",
         "test_binding_rejects_native_source_schedule_or_prose_drift",
+        "test_exact_local_executable_and_source_reproduce_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_final_cave_block_spawn_lifetime.py"
+    ] == {
+        "test_committed_map_closes_ordinary_spawn_block_lifetime_without_overclaim",
+        "test_binding_rejects_native_lifetime_contract_or_prose_drift",
         "test_exact_local_executable_and_source_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
@@ -6306,6 +6336,15 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "valid-startup Mech script order 0, 1, 2" in facts
     assert "44 records with three mountains or 46 with four" in facts
     assert "not wall-clock duration, impact overlap" in facts
+    assert (
+        "binds BLOCKED_NONE, BLOCKED_TEMP, and BLOCKED_PERM to 0, 1, and 2"
+        in facts
+    )
+    assert "ClearBlockSpawns changes only 1 to 0" in facts
+    assert "player-turn mode 1 invokes it before player-turn UI" in facts
+    assert "permanent is Board-scoped rather than immortal storage" in facts
+    assert "all 304 analysis-relevant scripts entries" in facts
+    assert "all 153 Lua files of either accepted tree" in facts
     assert "contains no Advanced Edition filter" in facts
     assert "FindFirstFileA and FindNextFileA" in facts
     assert "exactly one RandomMap attempt" in facts
@@ -6320,8 +6359,15 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "SpawnPawns/NextPawn behavior" not in gaps
     assert "enemy logical admission before queued startup-effect dispatch" in gaps
     assert "release startup record construction/delay partitioning" in gaps
+    assert (
+        "player-turn temporary cleanup and Board-scoped permanent lifetime"
+        in gaps
+    )
     assert "ordered 0x134-byte startup records" in gaps
     assert "both duplicated pylon droppers are exact" in gaps
+    assert "Temporary and permanent spawn-block lifetime" not in gaps
+    assert "Ordinary spawn-block lifetime is exact too" in gaps
+    assert "Arbitrary modified-script block-map contents" in gaps
     assert "Intra-effect AddScript execution" not in gaps
     assert "release-versus-debug delays" not in gaps
     assert "queued startup effects executing conformantly" not in gaps
@@ -6343,8 +6389,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         in gaps
     )
     assert (
-        "not because materialization or repeat mechanics are unresolved or bomb "
-        "destruction is a direct terminal mission loss"
+        "not because materialization, repeat mechanics, ordinary spawn-block "
+        "lifetime, or bomb destruction as a direct terminal mission loss are "
+        "unresolved"
         in gaps
     )
 

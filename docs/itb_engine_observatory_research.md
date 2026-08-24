@@ -478,6 +478,10 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   `SpawnPawn` registration, implicit standard-selector entry, synchronous
   logical `SetSpace`, synchronous `BlockSpawn`, and boss/ordinary admission
   before the queued Mech/dropper effect can dispatch; and
+- the cave startup block lifetime: exact none/temp/perm values, rejection of
+  both block kinds by spawn validity, temp-only `ClearBlockSpawns`, player-turn
+  cleanup before player-turn UI, permanent survival across that cleanup, and
+  full-Board reset of every block value; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -530,8 +534,12 @@ The remaining native priorities are now narrower:
    Startup logical order itself is now exact: synchronous spawn-block writes
    precede the boss/ordinary implicit selectors, each selected point is
    committed before its Lua call returns, and queued Mech/dropper records
-   cannot dispatch until a later Board pass. Only concrete outputs and visual
-   timing remain, not the native admission path.
+   cannot dispatch until a later Board pass. The ordinary block lifetime is
+   exact too: temporary mountain marks survive startup settlement and clear at
+   player-turn setup, permanent pylon marks survive ordinary cleanup, and full
+   Board reset clears both. Only concrete outputs, arbitrary modified-script
+   block-map state, dropper collisions, and visual timing remain, not the
+   native admission or shipped-lifetime paths.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
