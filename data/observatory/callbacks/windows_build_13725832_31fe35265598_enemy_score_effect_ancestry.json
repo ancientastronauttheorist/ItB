@@ -1,0 +1,524 @@
+{
+  "analysis_kind": "lua_enemy_score_effect_ancestry",
+  "build_identity": {
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "class_anchors": [
+    {
+      "body_sha256": "214fce796c535562d79f4cdeef89be1e098b7652b2444c6957702b6a6aed29f9",
+      "body_size": 430,
+      "id": "create_class",
+      "line": 86,
+      "meaning": "new sets the child table metatable to self and writes self.__index=self.",
+      "source_path": "scripts/global.lua"
+    },
+    {
+      "body_sha256": "81b92a105871e9919e5a72df0124ee75a0ce138a2ed65848cabf8032214e196e",
+      "body_size": 20,
+      "id": "create_class_skill",
+      "line": 323,
+      "meaning": "Installs the reviewed inheritance constructor on Skill.",
+      "source_path": "scripts/global.lua"
+    },
+    {
+      "body_sha256": "e45d0f887ade5017c56fc1817e2abba823781870cdb27e9335413e55aea521d2",
+      "body_size": 467,
+      "declared_parent": "Skill",
+      "id": "totem_atk1_constructor",
+      "line": 182,
+      "meaning": "TotemAtk1 has no GetTargetScore override and inherits Skill:GetTargetScore.",
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua"
+    },
+    {
+      "body_sha256": "0943923866e4613565b59c0be69a28a3244022a52d809478418884b3bdf8e865",
+      "body_size": 427,
+      "id": "totem_atk1_effect",
+      "line": 201,
+      "meaning": "The inherited base scorer dynamically dispatches this Totem effect body.",
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua"
+    }
+  ],
+  "closure": {
+    "active_target_score_definition_census_complete": true,
+    "complete_enemy_phase_forecast": false,
+    "explicit_lua_rng_census_complete": true,
+    "prospective_callback_inputs_complete": false,
+    "score_side_effect_ancestry_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "transitive_native_helper_rng_complete": false
+  },
+  "contracts": {
+    "base_lua_route": "Skill:GetTargetScore -> self:GetSkillEffect -> ScoreList",
+    "native_cache_route": "separate Skill cache materializer -> GetSkillEffect or GetFinalEffect_Helper -> annotations/postprocess",
+    "native_to_lua": "native GetTargetScore wrapper -> dynamically resolved Lua GetTargetScore",
+    "score_route_uses_final_effect": false,
+    "score_route_uses_native_cache_materializer": false,
+    "settled_queue_remains_authoritative": true
+  },
+  "dependencies": [
+    {
+      "canonical_sha256": "c0eeed00ebb646371d3ca33cac9d1c52224bb67025d1b6e6fa41a74115a7a457",
+      "file_sha256": "c94f87833efafec1217eefd0b5aeef61dd79e46fb3c1255c558259af64596ad0",
+      "id": "enemy_candidate_score_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_candidate_score_boundary.json",
+      "role": "Pins the native GetTargetScore wrapper, callback boundary, and pre/post-callback score adjustments."
+    },
+    {
+      "canonical_sha256": "d3502ffc37ce5fb0a685e6df3587173f2076f0701e944dbd4888ee0f46711bdd",
+      "file_sha256": "bd8fe003c19d8440569a7a6fb0ba1524481280e4f5dc31afdb5d93a2bc5d9c13",
+      "id": "enemy_skill_effect_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_skill_effect_boundary.json",
+      "role": "Pins the separate native cache materializer so direct Lua score-side effect construction is not conflated with it."
+    },
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "id": "accepted_local_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins all 305 scripts entries and the accepted 153-file Lua tree."
+    },
+    {
+      "canonical_sha256": "56e19cdced8326d1401c7c9ea3baf033c9eb3b5e50825aac922ac90669b4ad71",
+      "id": "lua_callback_index",
+      "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_callback_index.json",
+      "role": "Pins all active callback definition identities and source hashes."
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Skill:GetTargetScore directly calls self:GetSkillEffect once, scores effect and q_effect, rejects instant scores below -20, and otherwise prefers queued score whenever q_effect is nonempty.",
+      "classification": "fact",
+      "id": "base_score_directly_materializes_actual_effect"
+    },
+    {
+      "claim": "The native score wrapper invokes Lua GetTargetScore, whose source directly dispatches GetSkillEffect. That route does not call the separate native Skill cache materializer at RVA 0x00268050.",
+      "classification": "inference",
+      "id": "score_side_effect_bypasses_native_cache_materializer"
+    },
+    {
+      "claim": "Exactly Skill, CentipedeAtk1, CentipedeAtkB, and MosquitoAtkB GetTargetScore definitions directly call self:GetSkillEffect.",
+      "classification": "fact",
+      "id": "four_direct_actual_effect_definitions"
+    },
+    {
+      "claim": "ShamanAtk1 calls TotemAtk1:GetTargetScore in four directions after its gates. TotemAtk1 inherits Skill:GetTargetScore and therefore materializes TotemAtk1:GetSkillEffect on each nested evaluation.",
+      "classification": "fact",
+      "id": "shaman_nested_totem_effect_route"
+    },
+    {
+      "claim": "DungAtk1, ScarabAtkB, StarfishAtkB1, and BlobberAtk1 score a locally constructed synthetic SkillEffect rather than their actual GetSkillEffect payload.",
+      "classification": "fact",
+      "id": "four_synthetic_score_effects"
+    },
+    {
+      "claim": "The remaining eleven active definitions use constants or direct Board/deploy logic without scoring an actual or synthetic effect payload.",
+      "classification": "fact",
+      "id": "eleven_effect_payload_free_scores"
+    },
+    {
+      "claim": "None of the 20 active GetTargetScore bodies calls GetFinalEffect or GetFinalEffect_Helper; the base score route always uses GetSkillEffect.",
+      "classification": "fact",
+      "id": "score_callbacks_never_call_final_effect"
+    },
+    {
+      "claim": "Across all 186 active GetSkillEffect definitions, there are zero direct calls to random_int, random_bool, random_element, or random_removal.",
+      "classification": "fact",
+      "id": "skill_effect_bodies_have_no_explicit_lua_rng_calls"
+    }
+  ],
+  "schema_version": 1,
+  "skill_effect_census": {
+    "active_definition_count": 186,
+    "body_manifest_sha256": "da84da86aaab86046b530547644307dd7159b2589f7a06be20fc0bd122899290",
+    "explicit_rng_call_count": 0,
+    "native_bound_helper_rng_complete": false,
+    "searched_explicit_rng_helpers": [
+      "random_int",
+      "random_bool",
+      "random_element",
+      "random_removal"
+    ],
+    "source_file_count": 45
+  },
+  "source_scope": {
+    "accepted_lua_file_count": 153,
+    "active_get_target_score_definition_count": 20,
+    "active_get_target_score_identifier_count": 21,
+    "active_nondefinition_get_target_score_call_count": 1,
+    "analysis_lua_file_count": 152,
+    "callback_index_definition_count": 757,
+    "excluded_commented_definition": {
+      "line": 895,
+      "source_path": "scripts/weapons_enemy.lua",
+      "symbol": "Garden_Atk:GetTargetScore"
+    },
+    "excluded_project_bridge_overlay": "scripts/modloader.lua",
+    "inventory_script_file_count": 305,
+    "raw_get_target_score_identifier_count": 22
+  },
+  "summary": {
+    "class_anchor_count": 4,
+    "complete_enemy_phase_forecast": false,
+    "dependency_count": 4,
+    "explicit_lua_rng_call_count": 0,
+    "finding_count": 8,
+    "route_counts": {
+      "direct_actual_effect": 4,
+      "nested_actual_effect": 1,
+      "no_effect_payload": 11,
+      "synthetic_local_effect": 4
+    },
+    "score_side_effect_ancestry_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "skill_effect_definition_count": 186,
+    "skill_effect_source_file_count": 45,
+    "target_score_definition_count": 20,
+    "target_score_source_file_count": 15,
+    "unresolved_count": 3
+  },
+  "target_score_callbacks": [
+    {
+      "actual_effect_cardinality": "zero on board edge or negative deploy score; otherwise four TotemAtk1 base-score calls",
+      "body_sha256": "21addce7ee850e5d56be59f85f10b6b46490dc6f58a516e895b0c8b485d52330",
+      "body_size": 400,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 127,
+      "nested_target_score_receivers": [
+        "TotemAtk1"
+      ],
+      "payload_route": "nested_actual_effect",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+      "symbol": "ShamanAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero actual effects; one local fake q_effect is scored",
+      "body_sha256": "91b5927d00e10141b56bf69dacce77ccdce5dc1b5643aae60ad7dcf18b15b223",
+      "body_size": 1005,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 462,
+      "nested_target_score_receivers": [],
+      "payload_route": "synthetic_local_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/advanced/ae_weapons_enemy.lua",
+      "source_sha256": "db757b1afa790fe3f7576930abd0c7e4cf5d8b9dc7308aa15ce9a9736f224d13",
+      "symbol": "DungAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 100",
+      "body_sha256": "49c4dd5866d8311e35b0608c8aac9809e3d799f28577ba134a202a26439beaaa",
+      "body_size": 58,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 103,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/advanced/bosses/blobber.lua",
+      "source_sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c",
+      "symbol": "BlobAtkB:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero when p2 is TEAM_ENEMY; otherwise one self GetSkillEffect q_effect",
+      "body_sha256": "58e7e0e932a8ffcbaa44388ab6523d73ec835e0d7a883abf4be8ca0cc4d16809",
+      "body_size": 452,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 46,
+      "nested_target_score_receivers": [],
+      "payload_route": "direct_actual_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 1,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/advanced/bosses/centipede.lua",
+      "source_sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0",
+      "symbol": "CentipedeAtkB:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero when p2 is a Mech; otherwise one self GetSkillEffect q_effect",
+      "body_sha256": "0b1bf8074d148be8eba929cad6e4a8583ae1fc70481df4f7e4d5e2c70605e926",
+      "body_size": 202,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 38,
+      "nested_target_score_receivers": [],
+      "payload_route": "direct_actual_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 1,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/advanced/bosses/mosquito.lua",
+      "source_sha256": "4c67917a6d7ce4c8f11a3ca7b1f45e6c692d8fd35b6636d38d176f1dfabbfd16",
+      "symbol": "MosquitoAtkB:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero actual effects; one local four-damage q_effect is scored",
+      "body_sha256": "2774030e5b48ab7d754e4eeaffbeb3081d3e0f5c271cf67b3ec6fb1b6ebc15fc",
+      "body_size": 161,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 46,
+      "nested_target_score_receivers": [],
+      "payload_route": "synthetic_local_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/advanced/bosses/scarab.lua",
+      "source_sha256": "0600e298add07db560176c7b6efdfe8b4fca5dfde93c86457dd7ffd3961b6e29",
+      "symbol": "ScarabAtkB:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero actual effects; one local four-diagonal q_effect is scored",
+      "body_sha256": "7b24174c8a010f3799dca8f0ae3b561c164ae635fdae548cc3d56cec8fa657e7",
+      "body_size": 301,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 50,
+      "nested_target_score_receivers": [],
+      "payload_route": "synthetic_local_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/advanced/bosses/starfish.lua",
+      "source_sha256": "6d7d122e7be43abf535bf4295afde222aeb6d61482a97d7787d1f962b585fe94",
+      "symbol": "StarfishAtkB1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns DAMAGE_DEATH",
+      "body_sha256": "92fc9e1e5832c37de77669e6b8a0cba4b443a171af4538b56ee82ee1ef627b8d",
+      "body_size": 77,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 95,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+      "source_sha256": "4c1438bd02ffdcc0d4f975f432168d1d45017126f819995c86873978b67a288a",
+      "symbol": "Armored_Train_Move:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "exactly one dynamic self GetSkillEffect; scores both instant and queued lists",
+      "body_sha256": "85b370b2d3d9d4284ce94f03844a5047da731a6f4c06a4198a0604561df6d5f4",
+      "body_size": 422,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 378,
+      "nested_target_score_receivers": [],
+      "payload_route": "direct_actual_effect",
+      "score_list_calls": 2,
+      "self_effect_calls": 1,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/global.lua",
+      "source_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "symbol": "Skill:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 100",
+      "body_sha256": "c5beff104a2a9ec2c2200a64134266bb0f401eed91cc115e6ce46cc70e4e0afa",
+      "body_size": 61,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 74,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/missions/acid/mission_laser.lua",
+      "source_sha256": "e9195a160fd8a7b971555d767033eb7baea116668462cc0f50d22de01d2b13db",
+      "symbol": "Laser_U_Atk:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 100",
+      "body_sha256": "eb534619214e6bbcd1916c92fa7179614e2dd6b0e36d618969fdb085e1b34eb4",
+      "body_size": 62,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 73,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/missions/acid/mission_piston.lua",
+      "source_sha256": "1f426bad3b4149f0088831680264f716a3f9cc6acebf828306946c55990d51ad",
+      "symbol": "Piston_U_Atk:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 10",
+      "body_sha256": "702ab7285f09ae8999d3978d4c39848a2a128db674998e4dee85589b0e26218f",
+      "body_size": 60,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 114,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/missions/bosses/spider.lua",
+      "source_sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455",
+      "symbol": "SpiderlingHatch1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 100",
+      "body_sha256": "0f892447d559f7c8ff90a9bfc928af66c4cdc3b799ef060995ded08e7b80bc4f",
+      "body_size": 60,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 181,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/missions/mission_train.lua",
+      "source_sha256": "a9ec7ce1ea386e3b82ecd992b6cacd8ca17990cb37f7109e8060140cbb3a5e0b",
+      "symbol": "Train_Move:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 10",
+      "body_sha256": "d8efcacb642913fe46f4f327d8d3f40eb42ca87f36c244bb78e07695528a5e97",
+      "body_size": 58,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 65,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/missions/sand/mission_filler.lua",
+      "source_sha256": "38e00c007476a42c05bbe4968f9b081de4bbdfb3761667b0e3e72c28c39079f9",
+      "symbol": "Filler_Attack:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 10",
+      "body_sha256": "4cc8b8851206b15f7c44cec22184db1f1413e9b952db180fd4ac91e164d2b293",
+      "body_size": 58,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 230,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/weapons_base.lua",
+      "source_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+      "symbol": "SelfTarget:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero when p2 is TEAM_ENEMY; otherwise one self GetSkillEffect q_effect",
+      "body_sha256": "d1c647ad3bb6c323ca5ff13791c46ee8327744cc115370e1c33cedd0d4ab05ce",
+      "body_size": 452,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 312,
+      "nested_target_score_receivers": [],
+      "payload_route": "direct_actual_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 1,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "symbol": "CentipedeAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero actual effects; one local five-record q_effect is scored",
+      "body_sha256": "79205b6ce78c98c730992ac36abe0fd79c4a02a473fe5c89d3413b5aca5562fc",
+      "body_size": 467,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 648,
+      "nested_target_score_receivers": [],
+      "payload_route": "synthetic_local_effect",
+      "score_list_calls": 1,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "symbol": "BlobberAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 100",
+      "body_sha256": "100a77f996a51a8403b559826a46b06972de0165f108c91d7cf25c09dbc4f921",
+      "body_size": 58,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 732,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "symbol": "BlobAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero actual effects; board/deploy scoring only",
+      "body_sha256": "b0fade2b9ec4d6e2c647a43438b70ff265efe252b3a585238fb64699b585956f",
+      "body_size": 620,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 776,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 1,
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "symbol": "SpiderAtk1:GetTargetScore"
+    },
+    {
+      "actual_effect_cardinality": "zero; returns literal 10",
+      "body_sha256": "9f6a5439576366a9bc4bd48c75af992da3d22b094f266a10595ec2200ecffe31",
+      "body_size": 56,
+      "explicit_rng_calls": 0,
+      "get_final_effect_calls": 0,
+      "line": 840,
+      "nested_target_score_receivers": [],
+      "payload_route": "no_effect_payload",
+      "score_list_calls": 0,
+      "self_effect_calls": 0,
+      "skill_effect_constructors": 0,
+      "source_path": "scripts/weapons_enemy.lua",
+      "source_sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "symbol": "WebeggHatch1:GetTargetScore"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "native_bound_helper_rng",
+      "question": "Can a native constructor or Board/effect helper called from a score body consume the shared CRT RNG indirectly?",
+      "static_status": "Explicit shipped Lua RNG calls are absent; transitive native-bound helper call graphs are not exhaustively proven RNG-free."
+    },
+    {
+      "id": "prospective_callback_inputs",
+      "question": "Can every future Board query and concrete effect payload be supplied before the engine commits the enemy queue?",
+      "static_status": "Ancestry and bodies are exact, but prospective Board/callback inputs are not ordinary bridge state."
+    },
+    {
+      "id": "modified_or_other_builds",
+      "question": "Does the same callback ancestry hold on another content tree?",
+      "static_status": "All counts, bodies, inheritance anchors, and conclusions are exact to the accepted build-keyed Windows tree."
+    }
+  ]
+}

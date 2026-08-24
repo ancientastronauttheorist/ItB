@@ -90,6 +90,10 @@ The durable artifacts are:
   dispatch and argument order, cache clear/replace behavior, both record-vector
   annotation passes, Vek Hormones/Boost arithmetic, and pure projected replay
   from an already-materialized Lua SkillEffect;
+- `data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json`
+  for all 20 active shipped `GetTargetScore` bodies, their direct/nested/
+  synthetic/no-effect routes, Shaman-to-Totem inheritance, and the zero direct
+  Lua RNG-call census across all 186 active `GetSkillEffect` definitions;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -323,8 +327,31 @@ Board/SkillManager/Skill cache-refresh paths. That census proves this body is
 a cache materializer, not that it is the candidate scorer's score-side
 `GetSkillEffect` route. The pure replay therefore accepts the concrete Lua
 SkillEffect and resolved Board predicate results as inputs; subclass payloads,
-score-side call ancestry, selector-entry shared state, and a future enemy phase
-remain unresolved.
+selector-entry shared state, and a future enemy phase remain unresolved.
+
+The source-keyed ancestry continuation closes that score-side call question.
+The accepted tree has 22 raw `GetTargetScore` identifier occurrences: one
+commented `Garden_Atk` definition is masked, leaving 20 active definitions and
+one active Shaman-to-Totem call. Exact `CreateClass` semantics install
+`self.__index=self`; `TotemAtk1 = Skill:new{...}` has no score override, so the
+Shaman call resolves to `Skill:GetTargetScore` and dynamically invokes
+`TotemAtk1:GetSkillEffect`.
+
+`Skill:GetTargetScore` itself calls `self:GetSkillEffect` once, scores both
+instant and queued vectors, rejects an instant score below `-20`, and otherwise
+uses the queued score whenever that vector is nonempty. The two Centipede
+scorers and Mosquito boss are the other three direct actual-effect callers.
+Dung, Scarab boss, Starfish boss, and Blobber score synthetic local effects;
+the remaining eleven active definitions score no effect payload. No score body
+calls `GetFinalEffect` or its helper.
+
+This proves that score-time Lua effect construction bypasses the native cache
+materializer at `0x00268050`; the two paths must not be merged. A complete
+body-manifest census of all 186 active `GetSkillEffect` definitions also finds
+zero direct calls to `random_int`, `random_bool`, `random_element`, or
+`random_removal`. That does not prove every native-bound constructor or Board/
+effect helper transitively RNG-free, nor provide future Board queries and
+effect payloads before queue commitment.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its

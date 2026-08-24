@@ -2023,7 +2023,19 @@
         },
         {
           "classification": "fact",
-          "statement": "The immutable SkillEffect artifact binds 16 complete reviewed functions, 14 semantic instruction windows, 13 direct edges, complete eight-site materializer and three-site annotation caller inventories, 16 string/vtable anchors, two instruction anchors, and six adversarial replay vectors. It closes the parameterized native cache materializer from an explicit projected Lua SkillEffect while leaving concrete subclass payloads, score-side call ancestry, and a future enemy phase unresolved."
+          "statement": "The immutable SkillEffect artifact binds 16 complete reviewed functions, 14 semantic instruction windows, 13 direct edges, complete eight-site materializer and three-site annotation caller inventories, 16 string/vtable anchors, two instruction anchors, and six adversarial replay vectors. It closes the parameterized native cache materializer from an explicit projected Lua SkillEffect while leaving concrete subclass payloads and a future enemy phase unresolved; the source successor below separately closes score-side call ancestry."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact accepted Lua tree has 22 raw GetTargetScore identifier occurrences. One Garden_Atk definition is inside a block comment, leaving exactly 20 active definitions across 15 files plus one active ShamanAtk1-to-TotemAtk1 call. Four definitions directly call the actual self:GetSkillEffect, Shaman reaches the actual Totem effect through inherited base scoring, four score synthetic local effects, and eleven score no effect payload."
+        },
+        {
+          "classification": "inference",
+          "statement": "CreateClass installs setmetatable(o,self) and self.__index=self; CreateClass(Skill) activates that chain. TotemAtk1 is constructed from Skill and has no GetTargetScore override, so Shaman's TotemAtk1:GetTargetScore call resolves to Skill:GetTargetScore and dynamically dispatches TotemAtk1:GetSkillEffect. Score-side Lua effect construction therefore bypasses the separate native Skill cache materializer at RVA 0x00268050."
+        },
+        {
+          "classification": "fact",
+          "statement": "None of the 20 active GetTargetScore bodies calls GetFinalEffect or GetFinalEffect_Helper. A complete hash-pinned manifest of all 186 active GetSkillEffect definitions across 45 files contains zero direct calls to random_int, random_bool, random_element, or random_removal. This direct lexical census does not prove native-bound constructors or Board/effect helpers transitively RNG-free."
         },
         {
           "classification": "inference",
@@ -2043,7 +2055,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, score-side SkillEffect ancestry, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2178,6 +2190,30 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_score_effect_ancestry.py",
+          "symbols": [
+            "build_enemy_score_effect_ancestry",
+            "validate_enemy_score_effect_ancestry"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_score_effect_ancestry.py",
+          "symbols": [
+            "build",
+            "verify"
+          ]
+        },
+        {
+          "path": "data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json",
+          "symbols": [
+            "base_score_directly_materializes_actual_effect",
+            "score_side_effect_bypasses_native_cache_materializer",
+            "shaman_nested_totem_effect_route",
+            "four_synthetic_score_effects",
+            "skill_effect_bodies_have_no_explicit_lua_rng_calls"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2195,7 +2231,7 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, score-side callback ancestry, effect-side draws, and shared-RNG state remain external inputs.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
         "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
@@ -2325,6 +2361,16 @@
             "test_annotations_cover_both_vectors_and_default_only_exact_empty_sentinels",
             "test_vek_hormones_precedes_boost_at_special_threshold",
             "test_exact_installed_executable_rebuilds_committed_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_score_effect_ancestry.py",
+          "symbols": [
+            "test_complete_occurrence_census_excludes_only_commented_garden_definition",
+            "test_exact_direct_actual_effect_routes_are_only_four_definitions",
+            "test_shaman_is_the_only_nested_route_and_resolves_to_totem_base_score",
+            "test_no_score_callback_uses_final_effect_or_explicit_lua_rng",
+            "test_exact_installed_sources_rebuild_committed_map_when_available"
           ]
         },
         {

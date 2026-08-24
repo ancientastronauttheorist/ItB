@@ -420,8 +420,51 @@ The replay accepts only the fields this native body reads or writes; the
 concrete Lua-produced `SkillEffect` is an explicit projected input. The exact
 eight direct callers identify this body as a Board/SkillManager/Skill cache
 materializer, not the enemy candidate scorer itself. Per-subclass Lua payloads,
-score-side call ancestry, and a prospective enemy phase therefore remain
-unresolved, and simulator v408 remains current.
+and a prospective enemy phase remain unresolved; the source-keyed successor
+below separately closes score-side call ancestry. Simulator v408 remains
+current.
+
+## Enemy score-to-SkillEffect source ancestry
+
+`callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json`
+joins the native score callback boundary to every active shipped Lua
+`GetTargetScore` definition. It verifies 152 analysis-relevant Lua files while
+deliberately excluding the project-owned `scripts/modloader.lua` overlay. The
+artifact's raw SHA-256 is
+`517c6fe435bc4a5cd6d50acad1693ba6241bb97c41171ab4823e3c87d8b0a179`;
+its canonical document SHA-256 is
+`720f721d71869bcba25479410e124e666626d2b570c0dd3e5fb00acc50a86887`.
+
+The tree contains exactly 20 active `GetTargetScore` definitions across 15
+files. Four—`Skill`, both Centipedes, and the Mosquito boss—directly call the
+actual `self:GetSkillEffect`. Shaman reaches the actual Totem effect indirectly
+through four inherited `TotemAtk1:GetTargetScore` evaluations after its gates.
+Dung, Scarab boss, Starfish boss, and Blobber score deliberately synthetic
+local effects. The remaining eleven use constants or direct Board/deploy
+logic without scoring an effect payload.
+
+This resolves the score-side ancestry: `Skill:GetTargetScore` dispatches
+`self:GetSkillEffect` directly in Lua and does not transit through the native
+Skill cache materializer at RVA `0x00268050`. None of the 20 active score
+bodies calls `GetFinalEffect` or `GetFinalEffect_Helper`. Across all 186 active
+`GetSkillEffect` definitions, there are also zero direct calls to
+`random_int`, `random_bool`, `random_element`, or `random_removal`.
+
+Build or verify the immutable artifact with:
+
+```powershell
+python scripts/itb_observatory_enemy_score_effect_ancestry.py verify `
+  --content-root "<Into the Breach>" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json `
+  --callback-index data/observatory/callbacks/windows_build_13725832_31fe35265598_callback_index.json `
+  --ancestry-map data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json
+```
+
+The zero-RNG result is lexical and direct-call scoped. Native constructors or
+Board/effect helpers reached transitively from those bodies are not yet proven
+RNG-free, and future callback Board inputs/effect payloads still are not
+ordinary bridge state. The settled enemy queue remains authoritative and
+simulator v408 remains current.
 
 ## Native path and reachability boundaries
 

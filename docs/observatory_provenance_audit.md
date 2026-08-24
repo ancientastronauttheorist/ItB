@@ -99,7 +99,12 @@ and ordered arguments, cache clear/replace, annotations across both record
 vectors, and Vek Hormones/Boost arithmetic are independently replayable from
 an explicit projected Lua payload. Its complete eight-caller census places the
 body in Board/SkillManager/Skill cache-refresh paths rather than proving it is
-the score-side callback route. Natural callback pairs exercise the four
+the score-side callback route. The source-keyed successor closes that route:
+the 20 active `GetTargetScore` definitions split into four direct actual-effect
+calls, one nested Shaman-to-Totem route, four synthetic local effects, and
+eleven payload-free scorers. No scorer calls a final-effect method, and a full
+186-body `GetSkillEffect` manifest contains no direct shipped Lua RNG-helper
+call. Natural callback pairs exercise the four
 Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -112,9 +117,9 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, and concrete Lua callback values/PointLists/SkillEffects, score-side
-effect-call ancestry, plus effect-side draws before the now-proven native
-postprocessing boundaries remain unjoined.
+state, and concrete Lua callback values/PointLists/SkillEffects plus transitive
+native-bound helper RNG before the now-proven native postprocessing boundaries
+remain unjoined.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers
 only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate

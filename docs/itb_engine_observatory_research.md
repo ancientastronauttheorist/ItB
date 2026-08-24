@@ -28,6 +28,10 @@ regular/final callback dispatch, cache replacement, both record annotation
 passes, and Vek Hormones/Boost postprocessing pure replayable from a projected
 Lua SkillEffect, while explicitly separating that cache body from score-side
 callback ancestry.
+A source-keyed successor now closes that ancestry: 20 active score definitions
+split into four direct actual-effect routes, one nested Totem route, four
+synthetic effects, and eleven payload-free scores; all 186 active
+`GetSkillEffect` bodies contain zero direct shipped Lua RNG-helper calls.
 Two atomic live captures further bind 2,982 native RNG records to the exact
 build and exercise reviewed RNG leaves, candidate tie-breaking, record
 selection, and seed advance with clean byte restoration. Five natural callback
@@ -224,7 +228,7 @@ live-or-persistent-corpse, including Road Runner corpse transit but no corpse
 stop; simulator v403 carries that rule. A later exact-build continuation closes
 the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
 effective shipped source corpse types. Transient lifecycle/removal timing,
-concrete Lua target-point/effect construction, score-side effect-call ancestry,
+concrete Lua target-point/effect construction, transitive native-helper RNG,
 selector-entry state delivery, and broader queue paths remain to be validated.
 The native positioning clamp,
 selected-weapon normalization, history/priority modifiers, positive-score
@@ -867,8 +871,14 @@ bridge-read boundary.
   target membership, regular/final callback choice and argument order, full
   cache clear/replace, annotations across `effect` and `q_effect`, and native
   Vek Hormones/Boost arithmetic are replayable from a projected Lua
-  SkillEffect. Concrete subclass payloads and score-side call ancestry remain
+  SkillEffect. Concrete subclass payloads and resolved Board predicates remain
   inputs rather than inferred behavior.
+- **Completed offline through score-side source ancestry:** all 20 active
+  `GetTargetScore` definitions are classified as direct actual-effect, nested
+  Totem-effect, synthetic-effect, or payload-free routes. No scorer calls a
+  final-effect method, and all 186 active `GetSkillEffect` bodies contain zero
+  direct calls to the four shipped Lua RNG helpers. Native-bound helper RNG and
+  prospective callback inputs remain unresolved.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
@@ -901,8 +911,9 @@ bridge-read boundary.
 - **Offline Windows tranche complete:** named RNG bindings, the shared RNG,
   enemy candidate/score callbacks, the complete pre-target-area gate and repair
   sentinel, the target-area callback/cache/filter wrapper, the SkillEffect
-  cache materializer/postprocessor, tie-breaking, and the selected record are
-  build-keyed and independently verifiable.
+  cache materializer/postprocessor, score-side Lua effect ancestry,
+  tie-breaking, and the selected record are build-keyed and independently
+  verifiable.
 - **Road Runner boundary complete:** the path API bindings, profile constants,
   Board search vtable, and profile-4 transit/stop split are build-keyed and
   independently verifiable; simulator v401 carries the proven rule.

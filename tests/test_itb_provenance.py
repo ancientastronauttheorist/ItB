@@ -719,6 +719,12 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "nonnegative out-of-board coordinates survive" in evidence
     assert "nine exact functions" in evidence
     assert "12 adversarial replay vectors" in evidence
+    assert "22 raw GetTargetScore identifier occurrences" in evidence
+    assert "20 active definitions across 15 files" in evidence
+    assert "Shaman's TotemAtk1:GetTargetScore call" in evidence
+    assert "bypasses the separate native Skill cache materializer" in evidence
+    assert "all 186 active GetSkillEffect definitions" in evidence
+    assert "zero direct calls to random_int" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -856,6 +862,29 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "vek_hormones_adjustment_is_exact",
         "boost_adjustment_is_exact",
     }
+    assert implementations[
+        "src/observatory/enemy_score_effect_ancestry.py"
+    ] == {
+        "build_enemy_score_effect_ancestry",
+        "validate_enemy_score_effect_ancestry",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_score_effect_ancestry.py"
+    ] == {
+        "build",
+        "verify",
+    }
+    assert implementations[
+        "data/observatory/callbacks/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_score_effect_ancestry.json"
+    ] == {
+        "base_score_directly_materializes_actual_effect",
+        "score_side_effect_bypasses_native_cache_materializer",
+        "shaman_nested_totem_effect_route",
+        "four_synthetic_score_effects",
+        "skill_effect_bodies_have_no_explicit_lua_rng_calls",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -870,7 +899,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "concrete ordered Lua-produced PointLists" in gaps
     assert "concrete ordered Lua-produced PointLists and SkillEffects" in gaps
     assert "raw callback values" in gaps
-    assert "score-side callback ancestry" in gaps
+    assert "source-exact score/effect ancestry" in gaps
+    assert "transitive native-helper RNG" in gaps
+    assert "score-side callback ancestry" not in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
     assert "24-byte record comparator" in gaps
 
