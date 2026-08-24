@@ -1009,3 +1009,45 @@ destroyed-pylon permanent-block collision is explicitly conditional; its
 concrete selected point and block state remain runtime inputs. The map also
 does not close generic `DAMAGE_DEATH` callbacks/attribution, concrete startup
 RNG outputs, UIDs, visual impact interleave, or non-Windows builds.
+
+## DAMAGE_DEATH pawn/HP boundary
+
+`native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json`
+follows the exact registered `DAMAGE_DEATH` value through the shared
+`SpaceDamage` core, Pawn receiver, status setters, HP routine, and embedded
+clamped `ValueBar`. It binds both Final environment sources, 15 reviewed
+native regions, six data anchors, three registered status setters, 16
+instruction-start control windows, and eight direct call edges. For Windows
+build `13725832` it establishes that:
+
+- `DAMAGE_DEATH` is the integer `1000`, stored in `SpaceDamage.iDamage` at
+  record offset `+0x08`; it is special numeric damage, not an unconditional
+  direct `Pawn:Kill` operation;
+- Shield and Frozen recognize the sentinel, run their normal registered clear
+  setters, and do not reduce it to zero;
+- Armor still subtracts one (`1000` to `999`) and ACID still doubles the
+  remaining positive damage; “lethal bypasses all statuses” is therefore an
+  outcome shorthand, not the native arithmetic;
+- the generic Pawn receiver contains no flying or Massive immunity test, then
+  negates the effective damage and sends it to the Pawn HP routine;
+- the embedded `ValueBar` caps a negative delta at minus-current HP, proving
+  zero HP for stock supported pawn health; and
+- the reviewed core's one direct `Pawn:Kill` edge belongs to its separate
+  Building-terrain occupant-removal branch. Neither the Pawn numeric receiver
+  nor the HP-delta routine directly calls `Pawn:Kill`.
+
+Verify the executable, exact Final Cave/Volcano sources, region/data hashes,
+registrations, control windows, complete reviewed direct-`Pawn:Kill` edge
+inventory, and call edges with:
+
+```powershell
+python scripts/itb_observatory_damage_death.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json
+```
+
+This closes the stock Final Cave/Volcano Pawn HP outcome without requiring a
+Rust semantic change. It deliberately stops at zero HP: corpse/removal timing,
+Lua `OnKill` dispatch, kill credit/ownership, specialized subclass tails, and
+non-Windows equivalence remain separate boundaries.

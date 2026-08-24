@@ -6547,6 +6547,76 @@ def test_real_environment_final_volcano_record_pins_exact_current_payload_and_bo
     )
 
 
+def test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim():
+    record = _mission_provenance_record("native-damage-death-pawn-boundary")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/final/env_final.lua",
+            "sha256": (
+                "8d9220a9f7c0b6f3887ec8b9ffdd351b"
+                "25cd4c53696d2f401c81dbeb932a6f33"
+            ),
+            "symbols": ["Env_Final:GetAttackEffect"],
+        },
+        {
+            "path": "scripts/missions/final/env_volcano.lua",
+            "sha256": (
+                "e3499feaaf71d01a78bd649915165ec1"
+                "c6713d20baa39bb2ac12db7bb787ea16"
+            ),
+            "symbols": ["Env_Volcano:GetAttackEffect"],
+        },
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/observatory/damage_death_boundary.py"] == {
+        "build_damage_death_boundary_map",
+        "validate_damage_death_boundary_map",
+        "validate_damage_death_boundary_map_binding",
+    }
+    assert implementations["rust_solver/src/enemy.rs"] == {
+        "apply_env_danger",
+        "apply_mission_final_volcano",
+        "apply_mission_final_cave",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "publishes DAMAGE_DEATH as integer 1000" in facts
+    assert "Shield and Frozen invoke their registered clear setters" in facts
+    assert "Armor subtracts one" in facts
+    assert "ACID doubles the remaining positive damage" in facts
+    assert "caps at minus-current HP" in facts
+    assert "no flying or Massive predicate" in facts
+    assert "separately mapped Building-terrain occupant-removal branch" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "Corpse versus removal timing" in gaps
+    assert "Lua OnKill dispatch" in gaps
+    assert "kill credit and owner/team attribution" in gaps
+    assert "Specialized pawn subclass" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert boundary["contracts"]["sentinel"]["native_integer"] == 1000
+    assert boundary["contracts"]["hp_handoff"][
+        "direct_pawn_kill_call_in_receiver_to_hp_chain"
+    ] is False
+    assert boundary["contracts"]["scope_limit"] == {
+        "corpse_or_removal_timing_proven": False,
+        "kill_credit_or_owner_attribution_proven": False,
+        "lua_on_kill_dispatch_proven": False,
+        "specialized_subclass_overrides_exhausted": False,
+    }
+
+
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
     record = _mission_provenance_record(
         "player-sources-dormant-experiment-structure"

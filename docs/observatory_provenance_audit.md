@@ -868,6 +868,17 @@ bomb-replacement edge and the surface/cave lifecycle remain in their separate
 record. The preceding
 `env_volcano.lua` stage retains the bounded v404 model described below.
 
+The shared `native-damage-death-pawn-boundary` record now closes the generic
+Pawn HP seam used by both Final environments for exact Windows build 13725832.
+It proves that `DAMAGE_DEATH` is numeric damage 1000 at `iDamage +0x08`;
+Shield and Frozen clear without absorbing it, Armor subtracts one, ACID doubles
+the remainder, the receiver has no flying or Massive immunity test, and the
+Pawn `ValueBar` clamps the resulting negative delta at zero. The reviewed
+core's direct `Pawn:Kill` call is instead part of the separate Building-terrain
+occupant-removal branch. This supports the current Rust terminal outcome for
+stock health without pretending that corpse/removal timing, Lua `OnKill`, kill
+credit, specialized zero-HP tails, or non-Windows equivalence are proven.
+
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
 `mission_final_two.lua`, plus the cave source's local `SpawnMechs` helper. The

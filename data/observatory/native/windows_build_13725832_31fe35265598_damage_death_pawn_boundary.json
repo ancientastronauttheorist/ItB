@@ -1,0 +1,542 @@
+{
+  "analysis_kind": "damage_death_pawn_boundary_map",
+  "contracts": {
+    "final_environment_join": {
+      "current_rust_terminal_state_outcome_equivalent": true,
+      "final_cave_source_uses_sentinel": true,
+      "flying_immunity_in_generic_receiver": false,
+      "massive_immunity_in_generic_receiver": false,
+      "shield_or_frozen_survival_for_stock_hp": false,
+      "volcano_rocks_source_uses_sentinel": true
+    },
+    "hp_handoff": {
+      "direct_pawn_kill_call_in_receiver_to_hp_chain": false,
+      "negative_delta_floor": "minus current HP",
+      "proven_terminal_boundary": "HP reaches zero",
+      "receiver_argument": "negative effective damage",
+      "separate_building_terrain_pawn_kill_call": true,
+      "target": "Pawn embedded clamped ValueBar",
+      "zero_hp_when_current_hp_lte_effective_damage": true
+    },
+    "pawn_status_order": {
+      "acid_armored_damage_from_1000": 1998,
+      "armored_damage_from_1000": 999,
+      "flight_test_in_generic_receiver": false,
+      "frozen_zeroes_damage_1000": false,
+      "massive_test_in_generic_receiver": false,
+      "ordered_steps": [
+        "Shield side effect and SetShield(false)",
+        "Frozen side effect and SetFrozen(false)",
+        "Armor predicate and minus one with zero clamp",
+        "Acid doubling",
+        "negative HP delta"
+      ],
+      "shield_zeroes_damage_1000": false
+    },
+    "scope_limit": {
+      "corpse_or_removal_timing_proven": false,
+      "kill_credit_or_owner_attribution_proven": false,
+      "lua_on_kill_dispatch_proven": false,
+      "specialized_subclass_overrides_exhausted": false
+    },
+    "sentinel": {
+      "hex": "0x000003e8",
+      "implementation_kind": "special numeric damage through the Pawn receiver; the core's separate Building-terrain branch can call Pawn:Kill directly",
+      "lua_name": "DAMAGE_DEATH",
+      "native_integer": 1000,
+      "record_offset": "+0x08",
+      "space_damage_field": "iDamage"
+    }
+  },
+  "control_windows": [
+    {
+      "hex": "68d49983008d8d4cf6ffff518bc8e89c09ddff8bd88b4b08ff710468f0d8ffffff33ff15c0647d00ff73048b3b57ff15e4647d0068e8030000ff33ff158c647d00",
+      "id": "damage_death_is_1000",
+      "meaning": "Register the DAMAGE_DEATH name and publish integer 1000 (0x3e8).",
+      "region": "damage_death_registration",
+      "start_rva": "0x0027fea1"
+    },
+    {
+      "hex": "6a0868988a8300",
+      "id": "i_damage_is_record_offset_eight",
+      "meaning": "Bind iDamage to SpaceDamage record offset +0x08.",
+      "region": "register_i_damage",
+      "start_rva": "0x0027adf8"
+    },
+    {
+      "hex": "8b45103df401000074073de8030000743f",
+      "id": "tile_shield_special_values",
+      "meaning": "Recognize 500 and 1000 before the tile-level shield branch.",
+      "region": "damage_core",
+      "start_rva": "0x001acce4"
+    },
+    {
+      "hex": "8b45103df401000074073de80300007407c7451000000000",
+      "id": "tile_shield_preserves_death",
+      "meaning": "Zero ordinary shielded damage but retain the 1000 sentinel.",
+      "region": "damage_core",
+      "start_rva": "0x001acd83"
+    },
+    {
+      "hex": "81fff40100000f84b200000085ff0f8eaa00000081ffe8030000744f",
+      "id": "pawn_shield_special_values",
+      "meaning": "Route positive 1000 around the ordinary shield-zero assignment.",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022cedc"
+    },
+    {
+      "hex": "6a008bcee8309f0000",
+      "id": "pawn_shield_is_cleared",
+      "meaning": "Call Pawn SetShield(false) while retaining DAMAGE_DEATH.",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022cf47"
+    },
+    {
+      "hex": "8a86d108000084c0742b81fff4010000742b85ff7e1f33c08bce81ffe8030000500f45f8897d10e83ad20000",
+      "id": "pawn_frozen_is_cleared_without_zeroing_death",
+      "meaning": "For a Frozen pawn, preserve only 1000 and call SetFrozen(false).",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022cf9a"
+    },
+    {
+      "hex": "85c90f85ba0000008bcec68537ffffff01e88829010084c00f84830000008d4fffc78530ffffff0000000085c9898d38ffffff8d9530ffffff0f57c98d8538ffffff0f4ec28d8e3c1100008b3889bd38ffffff",
+      "id": "armor_reduces_positive_damage_by_one",
+      "meaning": "Query Armor, subtract one from positive damage, and clamp at zero.",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022cff2"
+    },
+    {
+      "hex": "8a86d308000084c0740803ff89bd38ffffff",
+      "id": "acid_doubles_remaining_positive_damage",
+      "meaning": "Read the Acid byte and double the post-Armor damage.",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022d093"
+    },
+    {
+      "hex": "ffb53c0100008bc78bce6a01f7d850e8ac230000",
+      "id": "negative_hp_delta_handoff",
+      "meaning": "Negate effective damage and pass it to the Pawn HP-delta routine.",
+      "region": "pawn_receiver",
+      "start_rva": "0x0022d470"
+    },
+    {
+      "hex": "83bde4000000018bcb75416a01e8bd22ffff84c0742d6a018bcbe8b022ffff84c0740a8b83a00000008b08eb0233c96a00e839f60800",
+      "id": "separate_building_terrain_kill_branch",
+      "meaning": "The core's direct Pawn:Kill call belongs to the separately reviewed Building-terrain occupant-removal branch, not the Pawn numeric-damage receiver-to-HP chain.",
+      "region": "damage_core",
+      "start_rva": "0x001adc71"
+    },
+    {
+      "hex": "807d0c008d8ea408000088854bfdffff577407e8df15ebffeb098b86a4080000ff5004",
+      "id": "hp_delta_uses_value_bar",
+      "meaning": "Apply the incoming delta to the Pawn's embedded ValueBar.",
+      "region": "hp_delta",
+      "start_rva": "0x0022f899"
+    },
+    {
+      "hex": "8bf18b7d088d45f08b5e0485ff79118bd38d4d08f7da3bfa8955f00f4dc1eb108b4e088d55082bcb3bcf894df00f4dc28b3833c9c74508000000008d043b894604",
+      "id": "negative_value_bar_delta_clamps_at_zero",
+      "meaning": "Cap a negative delta at minus-current before committing the new value.",
+      "region": "value_bar_delta",
+      "start_rva": "0x000e0eb8"
+    },
+    {
+      "hex": "83beb000000001c686d408000000",
+      "id": "shield_field_is_setter_owned",
+      "meaning": "The registered SetShield implementation clears Pawn+0x8d4.",
+      "region": "pawn_shield_setter",
+      "start_rva": "0x002372c6"
+    },
+    {
+      "hex": "518bcfe8f2d0e4ff889ed1080000",
+      "id": "frozen_field_is_setter_owned",
+      "meaning": "The registered SetFrozen implementation commits Pawn+0x8d1.",
+      "region": "pawn_frozen_setter",
+      "start_rva": "0x0023a3b6"
+    },
+    {
+      "hex": "84db0f8585000000889ed30800005e5b",
+      "id": "acid_field_is_setter_owned",
+      "meaning": "The registered SetAcid implementation commits Pawn+0x8d3.",
+      "region": "pawn_acid_setter",
+      "start_rva": "0x0023d0c8"
+    }
+  ],
+  "data_anchors": [
+    {
+      "hex": "41726d6f7200",
+      "id": "armor_name",
+      "meaning": "Armor property queried by the predicate.",
+      "rva": "0x00436408"
+    },
+    {
+      "hex": "5365744163696400",
+      "id": "set_acid_name",
+      "meaning": "Registered Pawn method name.",
+      "rva": "0x004389c0"
+    },
+    {
+      "hex": "53657446726f7a656e00",
+      "id": "set_frozen_name",
+      "meaning": "Registered Pawn method name.",
+      "rva": "0x004389c8"
+    },
+    {
+      "hex": "6944616d61676500",
+      "id": "i_damage_name",
+      "meaning": "Registered SpaceDamage field name.",
+      "rva": "0x00438a98"
+    },
+    {
+      "hex": "536574536869656c6400",
+      "id": "set_shield_name",
+      "meaning": "Registered Pawn method name.",
+      "rva": "0x00438fa0"
+    },
+    {
+      "hex": "44414d4147455f444541544800",
+      "id": "damage_death_name",
+      "meaning": "Registered Lua sentinel name.",
+      "rva": "0x004399d4"
+    }
+  ],
+  "direct_edges": [
+    {
+      "from_rva": "0x001602e5",
+      "id": "apply_calls_damage_core",
+      "instruction_hex": "e896c60400",
+      "source_region": "apply_space_damage",
+      "target_region": "damage_core",
+      "target_rva": "0x001ac980"
+    },
+    {
+      "from_rva": "0x001ad07e",
+      "id": "core_calls_pawn_receiver",
+      "instruction_hex": "e8cdfd0700",
+      "source_region": "damage_core",
+      "target_region": "pawn_receiver",
+      "target_rva": "0x0022ce50"
+    },
+    {
+      "from_rva": "0x0022d003",
+      "id": "receiver_queries_armor",
+      "instruction_hex": "e888290100",
+      "source_region": "pawn_receiver",
+      "target_region": "armor_predicate",
+      "target_rva": "0x0023f990"
+    },
+    {
+      "from_rva": "0x0022cf4b",
+      "id": "receiver_clears_shield",
+      "instruction_hex": "e8309f0000",
+      "source_region": "pawn_receiver",
+      "target_region": "pawn_shield_setter",
+      "target_rva": "0x00236e80"
+    },
+    {
+      "from_rva": "0x0022cfc1",
+      "id": "receiver_clears_frozen",
+      "instruction_hex": "e83ad20000",
+      "source_region": "pawn_receiver",
+      "target_region": "pawn_frozen_setter",
+      "target_rva": "0x0023a200"
+    },
+    {
+      "from_rva": "0x0022d47f",
+      "id": "receiver_calls_hp_delta",
+      "instruction_hex": "e8ac230000",
+      "source_region": "pawn_receiver",
+      "target_region": "hp_delta",
+      "target_rva": "0x0022f830"
+    },
+    {
+      "from_rva": "0x0022f8ac",
+      "id": "hp_delta_calls_value_bar",
+      "instruction_hex": "e8df15ebff",
+      "source_region": "hp_delta",
+      "target_region": "value_bar_delta",
+      "target_rva": "0x000e0e90"
+    },
+    {
+      "from_rva": "0x001adca2",
+      "id": "building_terrain_branch_calls_pawn_kill",
+      "instruction_hex": "e839f60800",
+      "source_region": "damage_core",
+      "target_region": "pawn_kill",
+      "target_rva": "0x0023d2e0"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The exact Lua registration publishes DAMAGE_DEATH as 1000, and SpaceDamage registration binds iDamage at record +0x08.",
+      "classification": "fact",
+      "id": "damage_death_is_numeric_sentinel_1000"
+    },
+    {
+      "claim": "The Pawn receiver recognizes 1000 specially, clears Shield and Frozen through their registered setters, and preserves the positive sentinel instead of zeroing it.",
+      "classification": "fact",
+      "id": "shield_and_frozen_do_not_absorb_damage_death"
+    },
+    {
+      "claim": "Armor can reduce 1000 to 999 and Acid can double the remaining value; the native path is arithmetic rather than a literal bypass of those statuses.",
+      "classification": "fact",
+      "id": "armor_and_acid_transform_but_do_not_cancel"
+    },
+    {
+      "claim": "The complete reviewed receiver has no flying or Massive predicate on this path, so those traits do not rescue an ordinary pawn from the sentinel HP delta.",
+      "classification": "inference",
+      "id": "generic_receiver_has_no_flight_or_massive_immunity"
+    },
+    {
+      "claim": "The receiver negates effective damage, hands it to the Pawn HP routine, and the ValueBar clamps a negative delta at minus-current HP; sufficiently large sentinel damage reaches zero HP.",
+      "classification": "fact",
+      "id": "damage_death_reaches_clamped_hp_zero_boundary"
+    },
+    {
+      "claim": "The one direct Pawn:Kill target in the reviewed core is the already-mapped Building-terrain occupant-removal branch. The Pawn numeric-damage receiver and HP-delta routine contain no direct call to Pawn:Kill.",
+      "classification": "inference",
+      "id": "direct_kill_edge_is_a_separate_terrain_branch"
+    },
+    {
+      "claim": "For stock solver-supported Final Cave and Volcano pawn HP, the Rust terminal state is outcome-equivalent. No simulator semantic change follows from this boundary.",
+      "classification": "inference",
+      "id": "current_final_environment_outcome_is_conformant"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "method_bindings": [
+    {
+      "id": "pawn_set_shield",
+      "name_anchor": "set_shield_name",
+      "registration_region": "pawn_shield_registration",
+      "status_field_offset": "+0x8d4",
+      "target_region": "pawn_shield_setter",
+      "target_rva": "0x00236e80"
+    },
+    {
+      "id": "pawn_set_frozen",
+      "name_anchor": "set_frozen_name",
+      "registration_region": "pawn_frozen_registration",
+      "status_field_offset": "+0x8d1",
+      "target_region": "pawn_frozen_setter",
+      "target_rva": "0x0023a200"
+    },
+    {
+      "id": "pawn_set_acid",
+      "name_anchor": "set_acid_name",
+      "registration_region": "pawn_acid_registration",
+      "status_field_offset": "+0x8d3",
+      "target_region": "pawn_acid_setter",
+      "target_rva": "0x0023d050"
+    }
+  ],
+  "notes": [
+    "This is exact-build static evidence, not a runtime trace.",
+    "A conditional emerge/spawn dispatcher at core +0x1526 is not claimed as the generic zero-HP death tail.",
+    "The reviewed core contains one direct PawnKill edge in its separate Building-terrain branch; neither the Pawn receiver nor the HP-delta routine directly calls PawnKill."
+  ],
+  "refines": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_drop_resolution.json",
+    "qualification": "The numeric sentinel, status arithmetic, and HP-zero handoff are now exact; corpse/removal timing, OnKill, and attribution remain open sub-boundaries.",
+    "unresolved_id": "death_damage_callbacks_and_attribution"
+  },
+  "regions": [
+    {
+      "basis": "Ghidra 12.1.3 clamped animated ValueBar delta routine.",
+      "end_rva_exclusive": "0x000e0fd2",
+      "id": "value_bar_delta",
+      "sha256": "f508bbcc78cab592433d1edfdbe4cf49e265c0056c0d287ab6de8abe1d792b8f",
+      "size": 322,
+      "start_rva": "0x000e0e90"
+    },
+    {
+      "basis": "Previously reviewed Board SpaceDamage application body.",
+      "end_rva_exclusive": "0x001604bc",
+      "id": "apply_space_damage",
+      "sha256": "1597eb6d490f3ae9ee95547a0caa83999502b4ba9c3423bc50b1dca7acc20210",
+      "size": 940,
+      "start_rva": "0x00160110"
+    },
+    {
+      "basis": "Ghidra 12.1.3 core tile/status SpaceDamage body.",
+      "end_rva_exclusive": "0x001ae080",
+      "id": "damage_core",
+      "sha256": "e6c2049faa497fb736263591ce7f102630148360777ac61bf1a5318a95819a28",
+      "size": 5888,
+      "start_rva": "0x001ac980"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn SpaceDamage receiver.",
+      "end_rva_exclusive": "0x0022d593",
+      "id": "pawn_receiver",
+      "sha256": "a57d332833c5c936594c510a42cf5074b3e07c4b9941443d7bd3d588b09cd818",
+      "size": 1859,
+      "start_rva": "0x0022ce50"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn HP-delta and damage-feedback routine.",
+      "end_rva_exclusive": "0x0022fe84",
+      "id": "hp_delta",
+      "sha256": "6c1724c8f74c8f4996451df3a9bd9d4587c6bb0c4a8ff6be9130e72c42c0689b",
+      "size": 1620,
+      "start_rva": "0x0022f830"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn SetShield implementation.",
+      "end_rva_exclusive": "0x00237351",
+      "id": "pawn_shield_setter",
+      "sha256": "dbf3f11bce2f185f51f2f5fdcc2ad1859064fc5b90649fc5d465a3b6973f729f",
+      "size": 1233,
+      "start_rva": "0x00236e80"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn SetFrozen implementation.",
+      "end_rva_exclusive": "0x0023a3f8",
+      "id": "pawn_frozen_setter",
+      "sha256": "40c7b221453e47c62a49ab57f89203a11f4598fa7fe7b239f2dd8b2411b1b452",
+      "size": 504,
+      "start_rva": "0x0023a200"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn SetAcid implementation.",
+      "end_rva_exclusive": "0x0023d0de",
+      "id": "pawn_acid_setter",
+      "sha256": "741ccbc17b3481a8c7777215f065274e086ac3302b5202472c5d6ff476d2ad3c",
+      "size": 142,
+      "start_rva": "0x0023d050"
+    },
+    {
+      "basis": "Ghidra 12.1.3 explicit Pawn Kill implementation used for contrast.",
+      "end_rva_exclusive": "0x0023d34b",
+      "id": "pawn_kill",
+      "sha256": "0a5d113dc0441f670a948a57ee4e3b07593815596b049075d3303ec3a7fd2903",
+      "size": 107,
+      "start_rva": "0x0023d2e0"
+    },
+    {
+      "basis": "Ghidra 12.1.3 Pawn Armor predicate.",
+      "end_rva_exclusive": "0x0023fa8c",
+      "id": "armor_predicate",
+      "sha256": "8944d71b556c5b8f6faf7422fbbcfd30ca629c20b6278b0652c3d6e2ec35eb16",
+      "size": 252,
+      "start_rva": "0x0023f990"
+    },
+    {
+      "basis": "Instruction-aligned SpaceDamage iDamage field registration.",
+      "end_rva_exclusive": "0x0027adff",
+      "id": "register_i_damage",
+      "sha256": "69def6baaf418ec286ee4cc6b44db912707c6cb95b9328a3173bb9e2eee9b895",
+      "size": 7,
+      "start_rva": "0x0027adf8"
+    },
+    {
+      "basis": "Instruction-aligned Pawn SetShield registration.",
+      "end_rva_exclusive": "0x0027bffd",
+      "id": "pawn_shield_registration",
+      "sha256": "2132c20fbc74550a0029eca24f0c537e5348d62f4fe2fc1c159252d49d288c7b",
+      "size": 34,
+      "start_rva": "0x0027bfdb"
+    },
+    {
+      "basis": "Instruction-aligned Pawn SetAcid registration.",
+      "end_rva_exclusive": "0x0027c4b8",
+      "id": "pawn_acid_registration",
+      "sha256": "767288c58523a90f4b7d95d16e25d15f2e8d7244f3ac9e488312ef3e7bf8c744",
+      "size": 34,
+      "start_rva": "0x0027c496"
+    },
+    {
+      "basis": "Instruction-aligned Pawn SetFrozen registration.",
+      "end_rva_exclusive": "0x0027c7a6",
+      "id": "pawn_frozen_registration",
+      "sha256": "9eae8b52ff02304cf2f837ce5729c48532fe47f9eccce82fbff21e8d1c6481a2",
+      "size": 34,
+      "start_rva": "0x0027c784"
+    },
+    {
+      "basis": "Instruction-aligned Lua global registration for DAMAGE_DEATH.",
+      "end_rva_exclusive": "0x0027fee2",
+      "id": "damage_death_registration",
+      "sha256": "7cd70dd84bfa445e2c8ac91ddc268b47a6efef5f407268330bccf5bf1137e5bf",
+      "size": 65,
+      "start_rva": "0x0027fea1"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "precision_correction": "Describe native DAMAGE_DEATH as Shield/Frozen cleanup plus Armor/Acid arithmetic and a clamped HP delta, not as a literal bypass of every status.",
+    "reason": "The current direct lethal projection reaches the same stock terminal HP and cleared Shield/Frozen state.",
+    "simulator_change_required": false,
+    "simulator_version_bump_required": false,
+    "terminal_state_contradiction": false
+  },
+  "sources": [
+    {
+      "meaning": "Final Cave Rocks and tentacles construct ordinary SpaceDamage records with DAMAGE_DEATH before assigning Road or Lava.",
+      "path": "scripts/missions/final/env_final.lua",
+      "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+      "size": 4529,
+      "symbols": [
+        "Env_Final:GetAttackEffect"
+      ]
+    },
+    {
+      "meaning": "Surface-Final Rocks construct ordinary SpaceDamage records with DAMAGE_DEATH and Fire.",
+      "path": "scripts/missions/final/env_volcano.lua",
+      "sha256": "e3499feaaf71d01a78bd649915165ec1c6713d20baa39bb2ac12db7bb787ea16",
+      "size": 2783,
+      "symbols": [
+        "Env_Volcano:GetAttackEffect"
+      ]
+    }
+  ],
+  "summary": {
+    "callback_or_credit_tail_proven": false,
+    "control_window_count": 16,
+    "data_anchor_count": 6,
+    "direct_edge_count": 8,
+    "finding_count": 7,
+    "hp_zero_boundary_proven": true,
+    "method_binding_count": 3,
+    "region_count": 15,
+    "simulator_change_required": false,
+    "source_count": 2,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "id": "zero_hp_corpse_and_removal_timing",
+      "next_evidence": "Trace the zero-HP consumer and Corpse predicate for ordinary and specialized pawns.",
+      "question": "When and how does each pawn class settle zero HP into corpse or removal state?"
+    },
+    {
+      "id": "on_kill_callback_dispatch",
+      "next_evidence": "Map the runtime callback dispatcher rather than the existing OnKill binding registrations.",
+      "question": "Which native edge dispatches Lua OnKill after this HP-zero route?"
+    },
+    {
+      "id": "kill_credit_and_owner_attribution",
+      "next_evidence": "Trace copied SpaceDamage attribution fields into mission and achievement counters.",
+      "question": "What source/team/owner credit is assigned to an environment DAMAGE_DEATH?"
+    },
+    {
+      "id": "specialized_pawn_subclass_tail",
+      "next_evidence": "Inventory the zero-HP virtual consumers and corpse/death overrides by vtable.",
+      "question": "Can any specialized pawn subclass alter the zero-HP tail without altering this receiver?"
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat the build-keyed inventory on another exact executable.",
+      "question": "Do macOS and other Windows depots implement the same boundary?"
+    }
+  ]
+}

@@ -412,7 +412,9 @@ fn apply_env_danger(
                 && !mission_tides_mountain
                 && unit.effectively_flying();
             if lethal && !spared_by_flight {
-                // Deadly Threat: bypass shield/frozen/armor/ACID, set HP=0
+                // Outcome-equivalent DAMAGE_DEATH projection. Native clears
+                // Shield/Frozen, applies Armor/ACID arithmetic, then clamps the
+                // HP delta; stock supported health still reaches zero.
                 let prev_hp = unit.hp;
                 unit.hp = 0;
                 unit.set_shield(false);

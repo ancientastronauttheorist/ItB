@@ -9698,6 +9698,82 @@
           "symbols": ["test_real_environment_final_volcano_record_pins_exact_current_payload_and_bounded_model"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed native artifact data/observatory/native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9 and scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155. It hash-pins 15 reviewed code/registration regions, six data anchors, three registered Pawn status setters, 16 instruction-start control windows, and eight direct call edges."
+        },
+        {
+          "classification": "fact",
+          "statement": "Exact Lua registration publishes DAMAGE_DEATH as integer 1000, and SpaceDamage registration binds iDamage to record offset +0x08. Final Cave Env_Final and surface Env_Volcano both construct ordinary SpaceDamage records with that sentinel."
+        },
+        {
+          "classification": "fact",
+          "statement": "The Pawn receiver recognizes 1000 specially: Shield and Frozen invoke their registered clear setters without zeroing the sentinel, Armor subtracts one from positive damage with a zero clamp, and ACID doubles the remaining positive damage. The native implementation is therefore status arithmetic, not a literal bypass of Armor or ACID."
+        },
+        {
+          "classification": "fact",
+          "statement": "The receiver negates effective damage and calls the Pawn HP-delta routine. That routine applies the request to the embedded ValueBar, whose negative-delta path caps at minus-current HP before committing the new value. Any current HP less than or equal to the effective damage therefore reaches the proven terminal boundary HP zero."
+        },
+        {
+          "classification": "inference",
+          "statement": "The complete reviewed generic Pawn receiver contains no flying or Massive predicate on this path, so those traits do not prevent the sentinel HP delta. The current Final Cave and Volcano Rust direct-zero projection is terminal-state equivalent for stock supported health and requires no simulator semantic change."
+        },
+        {
+          "classification": "inference",
+          "statement": "The one direct Pawn:Kill target in the reviewed damage core is the separately mapped Building-terrain occupant-removal branch at RVA 0x001adca2. Neither the Pawn numeric-damage receiver nor the HP-delta routine directly calls Pawn:Kill; zero-HP settlement must be treated as a later unresolved boundary."
+        }
+      ],
+      "id": "native-damage-death-pawn-boundary",
+      "implementations": [
+        {
+          "path": "src/observatory/damage_death_boundary.py",
+          "symbols": ["build_damage_death_boundary_map", "validate_damage_death_boundary_map", "validate_damage_death_boundary_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_damage_death.py",
+          "symbols": ["main"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["apply_env_danger", "apply_mission_final_volcano", "apply_mission_final_cave"]
+        }
+      ],
+      "known_gaps": [
+        "The map deliberately stops when the clamped Pawn HP reaches zero. Corpse versus removal timing, logical Board removal, Lua OnKill dispatch, kill credit and owner/team attribution, mission counters, achievement counters, and presentation timing remain untraced.",
+        "Specialized pawn subclass or vtable consumers after HP zero are not exhaustively inventoried. The terminal-state equivalence claim is bounded to stock solver-supported Final Cave and Volcano pawn health, not arbitrary modified pawns with health above the effective sentinel damage.",
+        "The reviewed core contains other terrain, spawn, emerge, feedback, scheduler, and callback branches. This record pins the generic Pawn numeric receiver-to-HP path and the separate Building-terrain direct-kill edge; it is not an end-to-end proof of every SpaceDamage field combination.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/final/env_final.lua",
+          "sha256": "8d9220a9f7c0b6f3887ec8b9ffdd351b25cd4c53696d2f401c81dbeb932a6f33",
+          "symbols": ["Env_Final:GetAttackEffect"]
+        },
+        {
+          "path": "scripts/missions/final/env_volcano.lua",
+          "sha256": "e3499feaaf71d01a78bd649915165ec1c6713d20baa39bb2ac12db7bb787ea16",
+          "symbols": ["Env_Volcano:GetAttackEffect"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_damage_death_boundary.py",
+          "symbols": ["test_committed_map_proves_hp_zero_boundary_without_callback_overclaim", "test_binding_rejects_native_or_claim_drift", "test_exact_local_executable_and_sources_reproduce_map_when_available"]
+        },
+        {
+          "path": "rust_solver/src/enemy.rs",
+          "symbols": ["test_mission_final_cave_rocks_kill_flyer_before_attack_and_make_road", "test_mission_final_cave_tentacles_kill_all_mech_traits_and_make_lava", "test_mission_final_volcano_rocks_kill_before_queued_attacks_and_leave_fire"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim"]
+        }
+      ]
     }
   ],
   "schema_version": 1

@@ -296,6 +296,32 @@ exact executable identity, all eight region hashes, all ten instruction-start
 control windows, both lifecycle bindings, path-manager slots, mode-1 predicate,
 and ordinary/Road Runner transit-versus-stop conclusions.
 
+## DAMAGE_DEATH Pawn/HP boundary
+
+The exact-build map
+`data/observatory/native/windows_build_13725832_31fe35265598_damage_death_pawn_boundary.json`
+joins the registered integer sentinel to `SpaceDamage.iDamage`, the generic
+Pawn receiver, registered status setters, the HP-delta routine, and its
+embedded clamped `ValueBar`. It proves numeric value 1000 at record offset
+`+0x08`; Shield/Frozen clearing without absorption; Armor subtraction and ACID
+doubling; no flying/Massive immunity test in that receiver; and a negative HP
+delta capped at minus-current HP. Stock supported Final Cave and Volcano pawns
+therefore reach zero HP, matching the existing Rust terminal result.
+
+The verifier also inventories direct calls to `Pawn:Kill` across the reviewed
+core, Pawn receiver, and HP routine. The sole core call is the separately
+reviewed Building-terrain occupant-removal branch; neither the receiver nor HP
+routine directly calls it. This map deliberately leaves zero-HP corpse/removal
+settlement, Lua `OnKill`, attribution, specialized subclass tails, and other
+platforms open.
+
+Reverify it with
+`scripts/itb_observatory_damage_death.py verify` against the exact executable,
+content root, and committed boundary map. The verifier checks exact source and
+executable identity, all region/data hashes, registered field and status
+bindings, instruction-start windows, call targets, and the complete reviewed
+direct-`Pawn:Kill` edge inventory.
+
 ## Reproducible analysis workflow
 
 The reviewed pass used Capstone 5.0.7 plus Ghidra 12.1.3 with JDK 21. The Ghidra
@@ -456,10 +482,23 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    callback-time replacement candidate set, selected coordinate, UID,
    wall-clock presentation duration, live campaign-settlement timing, and
    non-Windows equivalence remain open; no speculative Rust forecast follows.
-8. Add native candidate records only if a solver mismatch needs more than the
+8. **Completed offline for the generic Pawn `DAMAGE_DEATH` HP boundary:** the
+   exact Lua registration publishes integer 1000, and `SpaceDamage.iDamage`
+   is bound at record offset `+0x08`. The core and Pawn receiver preserve that
+   sentinel through Shield and Frozen while calling their normal clear
+   setters, then apply ordinary Armor subtraction and ACID doubling before
+   handing a negative delta to the Pawn's
+   clamped `ValueBar`. The receiver has no flying or Massive immunity test, so
+   stock supported Final Cave and Volcano pawns reach zero HP. The reviewed
+   core does contain one direct `Pawn:Kill` edge, but it is the separately
+   mapped Building-terrain occupant-removal branch; neither the numeric Pawn
+   receiver nor HP-delta routine calls it. The Rust terminal outcome is already
+   equivalent. Corpse/removal settlement, Lua `OnKill`, kill attribution,
+   specialized zero-HP tails, and non-Windows equivalence remain open.
+9. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.
-9. **Completed for all live series:** the callback/native, native-boundaries,
+10. **Completed for all live series:** the callback/native, native-boundaries,
    spawn-replay, and spawn-coordinate cleanup receipts close all seven
    immutable campaign receipts' pending save/install fields. Each
    accepted/post-cleanup comparison matches 689/689, the 33-file save tree is

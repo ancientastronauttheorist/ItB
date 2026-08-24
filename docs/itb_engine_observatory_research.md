@@ -491,6 +491,14 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   before blocker recheck, the optional startup enemy being replaced by BigBomb,
   and later enemy collisions adding BigBomb only when that blocker recheck
   passes; and
+- the generic Pawn `DAMAGE_DEATH` boundary used by Final Cave and Volcano:
+  exact registration of the numeric sentinel as 1000 at `iDamage +0x08`,
+  Shield/Frozen clearing without absorption, Armor subtraction and ACID
+  doubling, absence of flying/Massive immunity in the receiver, and the
+  clamped negative HP delta reaching zero for stock supported health. The only
+  direct `Pawn:Kill` target in the reviewed core is the separate
+  Building-terrain occupant-removal branch; corpse/removal timing, `OnKill`,
+  credit, and specialized zero-HP tails remain open; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -555,9 +563,10 @@ The remaining native priorities are now narrower:
    assigns Road, calls `Pawn:Kill(false)`, then adds BigBomb only if its blocker
    recheck passes. A destroyed pylon can retain `BLOCKED_PERM` and abort after
    the enemy kill. Only concrete outputs and later block state, arbitrary
-   modified-script state, generic `DAMAGE_DEATH` callbacks, adversarial
-   collision identities, and visual timing remain, not native admission,
-   shipped lifetime, or ordinary startup pylon/bomb collision behavior.
+   modified-script state, the zero-HP corpse/`OnKill`/attribution tail,
+   adversarial collision identities, and visual timing remain, not native
+   admission, shipped lifetime, or ordinary startup pylon/bomb collision
+   behavior.
 4. Extend selected-action evidence to other pawn/weapon and retarget paths only
    when a concrete mismatch requires it.
 5. Add native candidate records only when Lua callbacks plus final queues cannot
