@@ -45,8 +45,10 @@ owner-build questions and required only for a pristine stock-depot claim.
 The three exact-build path maps close Henry Kwan's Road Runner occupancy rule,
 weighted cost/priority ordering, ordinary team-agnostic pawn blocking, and
 Massive Water traversal, then prove mode-1 occupancy as live-or-persistent-
-corpse. Matched runtime `IsCorpse()` subclass values, transient removal timing,
-point vectors, and `AddMove` step/scheduler effects remain mismatch-driven.
+corpse. A later exact-build map closes the one common `IsCorpse` predicate,
+its mutation-12 fallback, and all 16 effective shipped corpse definitions.
+Transient lifecycle/removal timing, point vectors, and `AddMove` step/scheduler
+effects remain mismatch-driven.
 
 The durable artifacts are:
 
@@ -80,6 +82,11 @@ The durable artifacts are:
   for eight reviewed regions, ten control windows, the `Pawn:IsDead` and
   `Pawn:IsCorpse` bindings, mode-1 counted occupancy, the concrete Board path-
   manager vtable, and ordinary/Road Runner corpse transit-versus-stop proof.
+- `data/observatory/native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json`
+  for the complete common `Pawn:IsCorpse` body, exact loader/mutation fields,
+  the registered `LEADER_NECRO=12` fallback, complete direct-call inventories,
+  and the accepted shipped tree's ten explicit plus six inherited corpse
+  types.
 - `data/observatory/native/windows_build_13725832_31fe35265598_final_end_settlement.json`
   for the Final turn-limit/state-2 end-readiness short circuit, native
   `Board:AddEffect` enqueue path, Board/BoardPlayer activity vtables, and the
@@ -274,9 +281,10 @@ does neither. `PATH_ROADRUNNER=4` exits before occupancy, so it may cross a
 persistent corpse, but the common destination wrapper still prevents stopping
 there. Simulator v403 carries live/static lifecycle identity through the
 bridge, model, Rust paths, verification, and projected checkpoints while
-leaving general same-effect corpse collision behavior unchanged. Matched live
-subclass values, removal timing, output vectors, and `AddMove` scheduling
-remain unpromoted.
+leaving general same-effect corpse collision behavior unchanged. The later
+corpse-classification continuation closes the common predicate and static
+shipped types; removal/lifecycle timing, output vectors, and `AddMove`
+scheduling remain unpromoted.
 
 Reverify the artifact with
 `scripts/itb_observatory_path_boundaries.py verify` against the exact
@@ -312,8 +320,7 @@ The verifier also inventories direct calls to `Pawn:Kill` across the reviewed
 core, Pawn receiver, and HP routine. The sole core call is the separately
 reviewed Building-terrain occupant-removal branch; neither the receiver nor HP
 routine directly calls it. The continuation below narrows zero-HP settlement;
-Lua `OnKill`, attribution, concrete subclass results, and other platforms stay
-open.
+Lua `OnKill`, attribution, lifecycle timing, and other platforms stay open.
 
 Reverify it with
 `scripts/itb_observatory_damage_death.py verify` against the exact executable,
@@ -352,11 +359,11 @@ useful negative evidence, not a generic/indirect Lua dispatch or kill-credit
 proof.
 
 Reverify it with `scripts/itb_observatory_zero_hp_cleanup.py verify`. Exact
-damage-relative sweep timing, concrete subclass corpse results, Lua callback
-dispatch, source/team/owner and counter attribution, death-effect presentation,
-and non-Windows equivalence remain open at this structural boundary. The
-ordinary enemy event and credit path continues below. No Rust change follows
-from the structural continuation.
+damage-relative sweep timing, Lua callback dispatch, source/team/owner and
+counter attribution, death-effect presentation, and non-Windows equivalence
+remain open at this structural boundary. The ordinary enemy event and credit
+path continues below, and the later corpse-classification map closes static
+predicate/type inputs. No Rust change follows from the structural continuation.
 
 ## Enemy-death event and credit boundary
 
@@ -466,6 +473,45 @@ the Minor and Acid Tank filters, with the pre-v407 corpus archived as
 with `scripts/itb_observatory_specialized_enemy_death.py verify`. Detailed
 alternate Mech-death effects, mods, and non-Windows depots remain separate.
 
+## Native corpse-classification boundary
+
+The exact-build successor
+`data/observatory/native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json`
+joins the prior zero-HP and specialized-death maps to the complete common
+`Pawn:IsCorpse` member. It has exactly 27 raw-rel32 direct callers and contains
+no subclass-vtable dispatch. Outside internal lifecycle states 2, 3, and 4, a
+Mech or a Pawn loaded from `Corpse=true` returns true immediately; the other
+path requires mutation 12 to be current or globally available and accepted by
+the shared eligibility helper.
+
+Exact definition loading maps `Corpse` to Pawn `+0xf80`, `Leader` to `+0x1318`,
+`Minor` to `+0x10d0`, and `DefaultFaction` to `+0x10bc`. The bound
+`SetMutation` implementation writes current mutation at `+0x10e8`. Exact
+global registration maps mutation value 12 to `LEADER_NECRO`; Teleporter's
+source field is separate and is not an `IsCorpse` input. The relevant
+eligibility route admits ordinary default-faction team-6 pawns directly, uses
+`Psion_Leech` for the alternate Mech/team-4 route, and rejects Minor recipients
+plus an already-current Leader.
+
+The accepted 153-file Lua tree defines `Jelly_Necro1` once as a
+`Jelly_Health1` child with `LEADER_NECRO`, but has no mission, spawner, factory,
+other active reference, or `SetMutation` call that reaches mutation 12. The
+same scan finds ten explicit `Corpse=true` definitions and six inheriting
+directional Laser/Piston bodies. All 16 effective types already have Python and
+Rust static fallback coverage, and the bridge already exports both current
+`IsCorpse()` and source-static `Corpse`. Simulator v407 therefore needs no
+change.
+
+Reverify the executable, both predecessor maps, exact selected sources and
+accepted Lua inventory, region/control windows, data references, call
+inventories, and solver binding with
+`scripts/itb_observatory_corpse_classification.py verify`. This is a static
+classification proof: action/frame transitions into lifecycle states 2/3/4,
+exact dead-pawn removal timing, and `Mission_Piston` action/cleanup order remain
+open. The existing Piston gate must remain until controlled timeline evidence
+closes them. Modded/direct-native mutation paths and other depots are outside
+scope.
+
 ## Reproducible analysis workflow
 
 The reviewed pass used Capstone 5.0.7 plus Ghidra 12.1.3 with JDK 21. The Ghidra
@@ -562,9 +608,11 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    third map proves mode-1 live-or-persistent-corpse occupancy and Road Runner's
    corpse transit/no-stop split.
    Simulator v401 implements Road Runner occupancy; v402 implements the proven
-   Water correction; v403 implements corpse lifecycle pathing. Runtime
-   subclass values, removal timing, matched vectors, and `AddMove` execution
-   remain mismatch-driven.
+   Water correction; v403 implements corpse lifecycle pathing. The later
+   classification map proves one common `IsCorpse` body, exact field inputs,
+   dormant mutation-12 reachability, and all 16 shipped corpse types; Rust
+   already conforms at v407. Removal/lifecycle timing, matched vectors, and
+   `AddMove` execution remain mismatch-driven.
 7. **Completed offline for the Final surface-to-cave startup boundary:** the
    initial seven-region map proves the ordinary `IsEndBlocked` veto,
    `IsNextPhase` before `MissionEnd`, and the later `IsNextPhase`-guarded
@@ -650,10 +698,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    plus six localization keys for inline `GetSkillEffect` mechanics. A third
    build-keyed continuation closes event-frame visibility, and a fourth closes
    the shipped specialized class/team outcomes while simulator v407 restores
-   the native non-Mech predicate. Exact damage-relative sweep timing, concrete
-   `IsCorpse` subclass values, native-only Skill field-offset consumers,
-   achievement/profile tails, death presentation, and non-Windows equivalence
-   remain open.
+   the native non-Mech predicate. A fifth continuation closes the one common
+   `IsCorpse` implementation, exact fields, dormant Necro mutation fallback,
+   and every effective shipped corpse definition; bridge/Python/Rust already
+   conform at v407. Exact damage-relative lifecycle/sweep timing, native-only
+   Skill field-offset consumers, achievement/profile tails, death presentation,
+   and non-Windows equivalence remain open.
 9. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

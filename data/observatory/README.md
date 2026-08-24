@@ -258,8 +258,9 @@ python scripts/itb_observatory_path_occupancy_lifecycle.py verify `
   --path-occupancy-map data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json
 ```
 
-Matched runtime `IsCorpse()` values across pawn subclasses, transient-pawn
-removal timing between actions, matched output vectors, and `AddMove`
+The later corpse-classification artifact closes the common predicate and every
+effective shipped `Corpse=true` definition. Multi-frame lifecycle-state and
+transient-pawn removal timing, matched output vectors, and `AddMove`
 step/scheduler effects remain dynamic or mismatch-driven questions.
 
 ## Native RNG return-address IDs
@@ -1050,9 +1051,11 @@ python scripts/itb_observatory_damage_death.py verify `
 This closes the stock Final Cave/Volcano Pawn HP outcome without requiring a
 Rust semantic change. The continuations below map conditional Board erase,
 ordinary event/credit dispatch, same-update visibility, and shipped specialized
-classification. Exact damage-relative timing, concrete `IsCorpse` subclass
-values, native-only `OnKill` field-offset consumers, and non-Windows equivalence
-remain separate boundaries.
+classification. The corpse-classification successor below also closes the
+predicate's static fields, common implementation, mutation-12 fallback, and
+shipped source inventory. Exact damage-relative lifecycle timing, native-only
+`OnKill` field-offset consumers, and non-Windows equivalence remain separate
+boundaries.
 
 ## Zero-HP Board cleanup boundary
 
@@ -1093,12 +1096,13 @@ python scripts/itb_observatory_zero_hp_cleanup.py verify `
   --cleanup-map data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json
 ```
 
-This is a structural cleanup proof, not a scheduling trace. It does not prove
-which sweep follows a particular damage/effect record, concrete subclass
-`IsDead`/`IsCorpse` results, the generic or indirect Lua `OnKill` dispatcher,
-kill owner/team/counter updates, death-effect presentation, or another depot.
-Those limits are why this tranche requires no Rust semantic or simulator-
-version change.
+This is a structural cleanup proof, not a scheduling trace. Its static
+`IsCorpse` inputs and shipped definitions are closed by the later corpse-
+classification successor, but it still does not prove which sweep follows a
+particular damage/effect record, frame-by-frame lifecycle transitions, the
+generic or indirect Lua `OnKill` dispatcher, kill owner/team/counter updates,
+death-effect presentation, or another depot. Those limits are why this tranche
+requires no Rust semantic or simulator-version change.
 
 ## Enemy-death event and credit boundary
 
@@ -1238,3 +1242,52 @@ Simulator v407 now uses `enemy && !is_mech && !minor` before the existing
 `recordings/failure_db_snapshot_sim_v406.jsonl`. Detailed Mech-branch side
 effects, modded factory/mutation paths, and non-Windows equivalence remain
 outside this exact shipped-build result.
+
+## Native corpse-classification boundary
+
+`native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json`
+continues from the zero-HP cleanup and specialized-enemy maps through the
+complete common `Pawn:IsCorpse` predicate and accepted shipped Lua corpse
+inventory. It binds six native regions, ten instruction-start control windows,
+eight data anchors with complete absolute-reference inventories, three
+complete raw-rel32 call inventories, 13 exact selected sources, and both
+predecessor artifacts. For Windows build `13725832` it establishes that:
+
+- `Pawn:IsCorpse` is one common member with exactly 27 direct rel32 callers;
+  the predicate contains no subclass-vtable dispatch;
+- outside internal lifecycle states 2, 3, and 4, a Mech or a pawn loaded from
+  `Corpse=true` returns true directly. Other cases require mutation 12 to be
+  current or globally available and accepted by the common eligibility helper;
+- the exact Pawn loader stores `Corpse` at `+0xf80`, `Leader` at `+0x1318`,
+  `Minor` at `+0x10d0`, and `DefaultFaction` at `+0x10bc`; `SetMutation`
+  writes the current mutation at `+0x10e8`;
+- exact global registration identifies value 12 as `LEADER_NECRO`, not a
+  Teleporter flag. Its alternate-recipient branch uses the `Psion_Leech`
+  passive, and Minor recipients plus an already-current leader are excluded;
+- `Jelly_Necro1` is the accepted tree's sole `LEADER_NECRO` definition, but
+  no shipped mission, spawner, factory, or other active Lua reference reaches
+  it, and shipped Lua never calls `SetMutation`;
+- the 153-file tree has exactly ten explicit `Corpse=true` definitions and six
+  inheriting Laser/Piston directional bodies, for 16 effective types; and
+- the bridge already exports current `IsCorpse()` plus source-static
+  `corpse_on_death`, while Python and Rust already cover all 16 types. No
+  simulator contradiction or version change follows; simulator v407 remains
+  current.
+
+Verify both predecessor maps, the executable, exact sources and accepted tree,
+region/control hashes, data anchors, call inventories, classification, and
+solver binding with:
+
+```powershell
+python scripts/itb_observatory_corpse_classification.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json
+```
+
+This is exact static classification, not a frame scheduler trace. The action
+boundaries that enter or leave lifecycle states 2/3/4 and the exact
+`Mission_Auto` ordering of Piston damage, corpse state, and Board cleanup
+remain open. Keep the existing `Mission_Piston` End Turn gate until controlled
+timeline evidence closes those questions. Modded/direct-native mutation-12
+activation and non-Windows depots also remain outside this result.

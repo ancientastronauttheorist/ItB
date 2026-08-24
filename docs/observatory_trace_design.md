@@ -63,9 +63,12 @@ and Massive Water. Simulator v402 consumes the Water correction. A third
 read-only map joins `Pawn:IsDead`/`Pawn:IsCorpse` to mode-1 traversal and
 destination filtering; simulator v403 consumes the persistent-corpse versus
 transient-dead distinction and Road Runner corpse transit/no-stop rule. None of
-the maps required a trace hook or broadens controller v1; future path tracing
-is reserved for matched point vectors, runtime subclass/removal timing, or
-`AddMove` execution when a concrete mismatch needs them.
+the maps required a trace hook or broadens controller v1. A later exact-build
+map proves that `IsCorpse` is one common predicate, closes its fields and
+mutation-12 fallback, and inventories all 16 effective shipped corpse types.
+Future path/death tracing is reserved for matched point vectors, multi-frame
+lifecycle/removal timing, or `AddMove` execution when a concrete mismatch
+needs them.
 
 For these v1 RNG records, the on-wire `context.call_site` field is the exact
 configured hook target (`_G.random_int` or `_G.random_bool`). It is not the Lua
@@ -350,8 +353,10 @@ that selected it.
   dynamic callback lookup? Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
   pathing and the structural dead-noncorpse Board-vector erase are already
-  closed offline; runtime `IsCorpse()` subclass results, damage-relative sweep
-  timing, and `AddMove` execution remain separate questions.
+  closed offline. The common `IsCorpse` implementation, exact static inputs,
+  dormant Necro fallback, and all effective shipped corpse definitions are now
+  closed too; damage-relative lifecycle/sweep timing and `AddMove` execution
+  remain separate questions.
 - Runtime defining-slot enumeration answers which subclass `GetTargetScore`
   overrides bypass a base wrapper for this build. Which mismatch, if any,
   requires a native candidate-tournament record beyond those Lua slots?

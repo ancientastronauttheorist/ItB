@@ -6593,10 +6593,11 @@ def test_native_damage_death_record_pins_hp_boundary_without_tail_overclaim():
     assert "continues in native-zero-hp-cleanup-boundary" in facts
     gaps = " ".join(record["known_gaps"])
     assert "structural dead-noncorpse Board-vector erase" in gaps
-    assert "exact damage-relative timing" in gaps
+    assert "exact damage-relative lifecycle timing" in gaps
+    assert "no subclass-specific IsCorpse implementation" in gaps
     assert "Lua OnKill dispatch" in gaps
     assert "kill credit and owner/team attribution" in gaps
-    assert "Specialized pawn subclass" in gaps
+    assert "other specialized post-zero vtable" in gaps
     assert "macOS and other Windows depot equivalence" in gaps
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -6661,7 +6662,8 @@ def test_native_zero_hp_cleanup_record_pins_structural_erase_without_tail_overcl
     assert "requires no simulator semantic change or version bump" in facts
     gaps = " ".join(record["known_gaps"])
     assert "exact cleanup-sweep timing" in gaps
-    assert "Specialized Pawn subclass death and corpse outcomes" in gaps
+    assert "corpse-classification successor closes the common Pawn:IsCorpse" in gaps
+    assert "lifecycle states 2/3/4" in gaps
     assert "Generic or indirect Lua OnKill dispatch" in gaps
     assert "iKills, iMissionDamage, iKillCount" in gaps
     assert "GetDeathEffect, IsDeathEffect" in gaps
@@ -7050,6 +7052,120 @@ def test_native_specialized_enemy_death_record_closes_classification_and_binds_v
     assert boundary["contracts"]["solver_conformance"][
         "fixed_in_simulator_version"
     ] == 407
+
+
+def test_native_corpse_classification_record_closes_static_inputs_without_timing_overclaim():
+    record = _mission_provenance_record(
+        "native-corpse-classification-boundary"
+    )
+    assert record["coverage"] == "partial"
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations[
+        "src/observatory/corpse_classification_boundary.py"
+    ] == {
+        "build_corpse_classification_boundary_map",
+        "validate_corpse_classification_boundary_map",
+        "validate_corpse_classification_boundary_map_binding",
+    }
+    assert implementations[
+        "scripts/itb_observatory_corpse_classification.py"
+    ] == {"main"}
+    assert implementations["src/bridge/modloader.lua"] == {
+        "p:IsCorpse",
+        "pawn_def.Corpse",
+        "corpse_on_death",
+    }
+    assert implementations["rust_solver/src/serde_bridge.rs"] == {
+        "known_corpse_on_death_type",
+        "corpse_on_death",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        "_mission_piston_forecast_block",
+        "mission_piston_corpse_lifecycle_unknown",
+    }
+
+    source_by_path = {source["path"]: source for source in record["sources"]}
+    assert len(source_by_path) == 13
+    assert source_by_path["scripts/global.lua"]["sha256"] == (
+        "96d82d83a1620061e6fd013aa8462883e"
+        "1f3764d03752757ad77fbbbd04bc9b2"
+    )
+    assert source_by_path["scripts/advanced/ae_pawns.lua"]["symbols"] == [
+        "Jelly_Necro1",
+        "LEADER_NECRO",
+    ]
+    assert source_by_path[
+        "scripts/missions/acid/mission_piston.lua"
+    ]["symbols"] == [
+        "Pawn_Piston_U",
+        "Pawn_Piston_R",
+        "Pawn_Piston_L",
+        "Pawn_Piston_D",
+    ]
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "six native regions" in facts
+    assert "27 raw-rel32 direct callers" in facts
+    assert "no subclass-vtable dispatch" in facts
+    assert "stores Corpse at +0xf80" in facts
+    assert "maps value 12 to LEADER_NECRO" in facts
+    assert "Jelly_Necro1 and LEADER_NECRO each occur only" in facts
+    assert "ten explicit Corpse=true definitions" in facts
+    assert "16 effective corpse types" in facts
+    assert "simulator v407 remains current" in facts
+    assert "Mission_Piston End Turn safety gate must remain" in facts
+
+    gaps = " ".join(record["known_gaps"])
+    assert "internal lifecycle states 2, 3, and 4" in gaps
+    assert "Mission_Auto ordering for Mission_Piston" in gaps
+    assert "Mods or direct native calls may activate mutation 12" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_"
+        "corpse_classification_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert boundary["summary"] == {
+        "call_inventory_count": 3,
+        "common_predicate_proven": True,
+        "control_window_count": 10,
+        "data_anchor_count": 8,
+        "dependency_count": 2,
+        "direct_edge_count": 1,
+        "effective_corpse_type_count": 16,
+        "explicit_corpse_type_count": 10,
+        "finding_count": 6,
+        "inherited_corpse_type_count": 6,
+        "mutation_12_identity_proven": True,
+        "region_count": 6,
+        "shipped_mutation_12_reachable": False,
+        "simulator_change_required": False,
+        "simulator_contradiction_found": False,
+        "simulator_version": 407,
+        "source_count": 13,
+        "unresolved_count": 2,
+    }
+    assert boundary["contracts"]["mutation_12_eligibility"][
+        "registered_name"
+    ] == "LEADER_NECRO"
+    assert boundary["contracts"]["mutation_12_eligibility"][
+        "teleporter_is_an_input"
+    ] is False
+    assert boundary["contracts"]["shipped_reachability"][
+        "mutation_12_reachable_from_accepted_shipped_lua"
+    ] is False
+    assert boundary["contracts"]["solver_conformance"][
+        "simulator_change_required"
+    ] is False
 
 
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():

@@ -1,0 +1,710 @@
+{
+  "analysis_kind": "native_corpse_classification_boundary_map",
+  "call_inventories": [
+    {
+      "complete_raw_rel32_inventory": true,
+      "direct_call_sites": [
+        "0x0016b2ae",
+        "0x0016c79a",
+        "0x0016c86d",
+        "0x00173e7e",
+        "0x0019d668",
+        "0x0019d74a",
+        "0x0019efcb",
+        "0x0019ffa4",
+        "0x001a2e73",
+        "0x001ade48",
+        "0x0022bef7",
+        "0x0022cda5",
+        "0x0022ec58",
+        "0x0022f86d",
+        "0x002303e8",
+        "0x00230ffd",
+        "0x0023281b",
+        "0x002328f3",
+        "0x00232ef9",
+        "0x00234731",
+        "0x00234b33",
+        "0x00234ea9",
+        "0x002367cf",
+        "0x00239caf",
+        "0x0023bcaf",
+        "0x00240670",
+        "0x00240d2f"
+      ],
+      "id": "pawn_is_corpse_direct_calls",
+      "target_rva": "0x0022cde0"
+    },
+    {
+      "complete_raw_rel32_inventory": true,
+      "direct_call_sites": [
+        "0x0016b2e9",
+        "0x0016c003",
+        "0x0022ce36",
+        "0x0022e58d",
+        "0x0022e84c",
+        "0x0022f49f",
+        "0x0023bd85",
+        "0x0023c537",
+        "0x0023f9f4"
+      ],
+      "id": "mutation_eligibility_direct_calls",
+      "target_rva": "0x0023d6a0"
+    },
+    {
+      "complete_raw_rel32_inventory": true,
+      "direct_call_sites": [
+        "0x0016b307",
+        "0x0016c018"
+      ],
+      "id": "pawn_set_mutation_direct_calls",
+      "target_rva": "0x0023ac60"
+    }
+  ],
+  "contracts": {
+    "common_predicate": {
+      "complete_direct_call_count": 27,
+      "internal_lifecycle_state_offset": "0x09e0",
+      "is_mech_field_offset": "0x09e4",
+      "mutation_field_offset": "0x10e8",
+      "native_rva": "0x0022cde0",
+      "plain_language": "Outside internal lifecycle states 2/3/4, a Mech or a Corpse=true pawn returns true. Other cases require mutation 12 to be current or globally available and eligible.",
+      "required_mutation_id_for_special_states": 12,
+      "single_common_member": true,
+      "source_corpse_field_offset": "0x0f80",
+      "special_lifecycle_states": [
+        2,
+        3,
+        4
+      ],
+      "subclass_vtable_dispatch_inside_predicate": false
+    },
+    "mutation_12_eligibility": {
+      "alternate_recipient_passive": "Psion_Leech",
+      "alternate_team_value": 4,
+      "current_leader_self_excluded": true,
+      "current_mutation_setter_name": "SetMutation",
+      "current_mutation_setter_rva": "0x0023ac60",
+      "default_faction_field_offset": "0x10bc",
+      "helper_rva": "0x0023d6a0",
+      "is_mech_field_offset": "0x09e4",
+      "leader_field_offset": "0x1318",
+      "minor_field_offset": "0x10d0",
+      "minor_recipient_excluded": true,
+      "ordinary_enemy_default_faction_value": 0,
+      "ordinary_enemy_team_value": 6,
+      "registered_name": "LEADER_NECRO",
+      "registered_value": 12,
+      "team_field_offset": "0x00b0",
+      "teleporter_is_an_input": false
+    },
+    "shipped_reachability": {
+      "jelly_necro_add_pawn_calls": 0,
+      "jelly_necro_factory_calls": 0,
+      "jelly_necro_leader": "LEADER_NECRO",
+      "jelly_necro_other_active_lua_references": 0,
+      "jelly_necro_parent": "Jelly_Health1",
+      "jelly_necro_spawner_entries": 0,
+      "jelly_necro_table_defined": true,
+      "modded_or_direct_native_mutation_12_outside_scope": true,
+      "mutation_12_reachable_from_accepted_shipped_lua": false,
+      "shipped_lua_set_mutation_calls": 0
+    },
+    "solver_conformance": {
+      "all_effective_source_types_already_covered": true,
+      "bridge_current_field": "corpse",
+      "bridge_static_field": "corpse_on_death",
+      "current_bridge_value_remains_authoritative": true,
+      "python_static_type_count": 16,
+      "rust_static_type_count": 16,
+      "simulator_change_required": false,
+      "simulator_contradiction_found": false,
+      "simulator_version": 407
+    }
+  },
+  "control_windows": [
+    {
+      "id": "load_corpse_property",
+      "instruction_hex": "6a06681c608300c60000e874bdddff8bcfe84dd1e1ff83ec188883800f0000",
+      "meaning": "Load Lua Corpse and store its boolean at Pawn+0xf80.",
+      "region": "pawn_definition_load",
+      "size": 31,
+      "start_rva": "0x0022c24d"
+    },
+    {
+      "id": "load_leader_property",
+      "instruction_hex": "6a066824608300c60000e899bcddff8bcfe852cfe1ff83ec18898318130000",
+      "meaning": "Load Lua Leader and store its integer at Pawn+0x1318.",
+      "region": "pawn_definition_load",
+      "size": 31,
+      "start_rva": "0x0022c328"
+    },
+    {
+      "id": "load_minor_property",
+      "instruction_hex": "6a056858608300c60000e81fbbddff8bcfe8f8cee1ff83ec188883d0100000",
+      "meaning": "Load Lua Minor and store its boolean at Pawn+0x10d0.",
+      "region": "pawn_definition_load",
+      "size": 31,
+      "start_rva": "0x0022c4a2"
+    },
+    {
+      "id": "load_default_faction_property",
+      "instruction_hex": "6a0e688c608300c60000e8e1b7ddff8bcfe89acae1ff83ec188983bc100000",
+      "meaning": "Load Lua DefaultFaction and store its integer at Pawn+0x10bc.",
+      "region": "pawn_definition_load",
+      "size": 31,
+      "start_rva": "0x0022c7e0"
+    },
+    {
+      "id": "complete_is_corpse_predicate",
+      "instruction_hex": "5180b9e409000000750980b9800f00000074158b81e009000083f803740a83f802740583f804753b83b9e81000000c7423a154568d008b1558568d003bc2741f83380c740b83c0043bc275f432c059c33bc2740b6a0ce86508010084c0750432c059c3b00159c3",
+      "meaning": "Common IsCorpse source/Mech and lifecycle-state gate, mutation-12 availability lookup, eligibility call, and both returns.",
+      "region": "pawn_is_corpse",
+      "size": 103,
+      "start_rva": "0x0022cde0"
+    },
+    {
+      "id": "set_mutation_field_write",
+      "instruction_hex": "39b7e81000000f84a40100008b078b4010ffd084c0741e8b87e810000083f806741383f807740e83f80a740983f8090f857b0100008b078bcf8b4010ffd08844241385f675220f1005b85d890083ec108bcc83ec180f1101548bcfe87e47ffff568bcfe86641ffff89b7e8100000",
+      "meaning": "SetMutation compares and then writes the selected integer at Pawn+0x10e8.",
+      "region": "pawn_set_mutation",
+      "size": 110,
+      "start_rva": "0x0023ac82"
+    },
+    {
+      "id": "mutation_12_team_and_passive_gate",
+      "instruction_hex": "83f806750983bebc10000000742e80bee409000000750a83f8040f94c084c0743583ec188bcc68b46b8300e8fea5dcffe8e90e020083c41884c0741a",
+      "meaning": "For non-mode-8 mutations, ordinary TEAM_ENEMY/default-faction pawns pass directly; other recipients require Mech/team-4 status and the Psion_Leech passive.",
+      "region": "mutation_eligibility",
+      "size": 60,
+      "start_rva": "0x0023d7e2"
+    },
+    {
+      "id": "mutation_12_leader_and_minor_exclusions",
+      "instruction_hex": "83be1813000000740839bee8100000740980bed01000000074918b4c242c33c05f5e5b33cce8829c11008be55dc20400",
+      "meaning": "A nonzero Leader with current mutation equal to the requested id, or any Minor pawn, fails eligibility.",
+      "region": "mutation_eligibility",
+      "size": 48,
+      "start_rva": "0x0023d81e"
+    },
+    {
+      "id": "set_mutation_luabind_registration",
+      "instruction_hex": "c745e860ac6300c745ec00000000ff75f0ff75f0518d4de85168049283008bc8e806050100",
+      "meaning": "Bind the SetMutation name to native RVA 0x0023ac60.",
+      "region": "set_mutation_binding",
+      "size": 37,
+      "start_rva": "0x0027c6f5"
+    },
+    {
+      "id": "leader_necro_value_registration",
+      "instruction_hex": "68e49a83008d8d14f5ffff518bc8e8fafedcff68505681008bc8e82effdcff8d8d14f5ffffe873ecdcff8d8d88fcffffe848badeff8bd38d8d80fcffffe85bbadeff",
+      "meaning": "Register LEADER_NECRO using the data object whose first integer is 12.",
+      "region": "leader_necro_registration",
+      "size": 66,
+      "start_rva": "0x00280943"
+    }
+  ],
+  "data_anchors": [
+    {
+      "absolute_reference_rvas": [
+        "0x0022c250"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "436f7270736500",
+      "id": "corpse_name",
+      "rva": "0x0043601c",
+      "size": 7
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x0022c32b"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "4c656164657200",
+      "id": "leader_name",
+      "rva": "0x00436024",
+      "size": 7
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x0022c4a5"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "4d696e6f7200",
+      "id": "minor_name",
+      "rva": "0x00436058",
+      "size": 6
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x0022c7e3"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "44656661756c7446616374696f6e00",
+      "id": "default_faction_name",
+      "rva": "0x0043608c",
+      "size": 15
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x0023d7b4",
+        "0x0023d809"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "5073696f6e5f4c6565636800",
+      "id": "psion_leech_name",
+      "rva": "0x00436bb4",
+      "size": 12
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x0027c70f"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "5365744d75746174696f6e00",
+      "id": "set_mutation_name",
+      "rva": "0x00439204",
+      "size": 12
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x00280944"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "4c45414445525f4e4543524f00",
+      "id": "leader_necro_name",
+      "rva": "0x00439ae4",
+      "size": 13
+    },
+    {
+      "absolute_reference_rvas": [
+        "0x00280957"
+      ],
+      "complete_absolute_reference_inventory": true,
+      "hex": "0c000000",
+      "id": "leader_necro_value",
+      "rva": "0x00415650",
+      "size": 4
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "bf9713a2b46c524373599666c5113c0995bd841411d777d3a810895be1a03064",
+      "file_sha256": "f73215a5e7b3d4ef273e85f04841c1f3f5d6f2c73eab8a964f867524bb33aad4",
+      "id": "zero_hp_cleanup_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json",
+      "role": "Pins the later dead-noncorpse Board erase and the complete IsCorpse consumer boundary."
+    },
+    {
+      "canonical_sha256": "14c7459e04ba7781a6a3cf4889ed5b8847da42c1c41ca20d9f0bbc8eecb23731",
+      "file_sha256": "704589f76307dc28b43e7db4ad18713750fdeb15b1a7d8851f48f9827edb9c21",
+      "id": "specialized_enemy_death_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json",
+      "role": "Pins the common Pawn constructor plus IsMech, team, Minor, and shipped-source classification context."
+    }
+  ],
+  "direct_edges": [
+    {
+      "from_rva": "0x0022ce36",
+      "id": "is_corpse_calls_mutation_eligibility",
+      "instruction_hex": "e865080100",
+      "source_region": "pawn_is_corpse",
+      "target_region": "mutation_eligibility",
+      "target_rva": "0x0023d6a0"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Pawn:IsCorpse is one direct common member with 27 complete raw-rel32 call sites; it performs no subclass vtable dispatch.",
+      "classification": "fact",
+      "id": "iscorpse_is_one_common_member"
+    },
+    {
+      "claim": "The exact definition loader maps Corpse to +0xf80, Leader to +0x1318, Minor to +0x10d0, and DefaultFaction to +0x10bc.",
+      "classification": "fact",
+      "id": "definition_fields_are_exact"
+    },
+    {
+      "claim": "The predicate's constant-12 fallback is the registered LEADER_NECRO mutation, not a Teleporter or subclass flag.",
+      "classification": "fact",
+      "id": "fallback_is_necro_mutation"
+    },
+    {
+      "claim": "Jelly_Necro1 is defined once but has no shipped AddPawn, factory, spawner, mission, or other source reference; shipped Lua also never calls SetMutation.",
+      "classification": "fact",
+      "id": "necro_is_dormant_in_shipped_lua"
+    },
+    {
+      "claim": "The accepted 153-file Lua tree has ten explicit Corpse=true types and six inheriting directional bodies, for exactly 16 effective source corpse types.",
+      "classification": "fact",
+      "id": "sixteen_effective_source_corpse_types"
+    },
+    {
+      "claim": "Python and Rust already cover all 16 effective source types, and the bridge exports both current IsCorpse and static Corpse=true state, so no simulator change follows.",
+      "classification": "fact",
+      "id": "solver_static_inventory_conforms"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "notes": [
+    "This is exact-build static evidence, not a runtime frame trace.",
+    "Internal lifecycle state +0x9e0 is conservatively named by role only.",
+    "Mission_Piston remains safety-gated until its action/cleanup order is proven.",
+    "Modded or direct-native mutation-12 activation is outside shipped-source scope."
+  ],
+  "qualification": "Static class and field reachability is exact for build 13725832 and the accepted shipped Lua tree. The action/frame transitions into internal lifecycle states 2/3/4 and the exact removal frame remain outside this artifact.",
+  "refines": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_zero_hp_cleanup_boundary.json",
+      "narrowed_unresolved_id": "subclass_death_and_corpse_results",
+      "remaining_scope": "The action/frame transitions into lifecycle states 2/3/4 and the resulting removal frame remain unproven.",
+      "resolved_scope": "There is no subclass-specific IsCorpse implementation on this build; its common static inputs and all effective shipped Corpse=true definitions are exact."
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete Pawn definition-loading function.",
+      "end_rva_exclusive": "0x0022cbb7",
+      "id": "pawn_definition_load",
+      "sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+      "size": 2759,
+      "start_rva": "0x0022c0f0"
+    },
+    {
+      "boundary_basis": "Complete common Pawn IsCorpse member through RET.",
+      "end_rva_exclusive": "0x0022ce47",
+      "id": "pawn_is_corpse",
+      "sha256": "806702601f6a75193f6479e0357150d5264c10b7661a434bac7eeb1a807606c7",
+      "size": 103,
+      "start_rva": "0x0022cde0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete SetMutation implementation.",
+      "end_rva_exclusive": "0x0023ae46",
+      "id": "pawn_set_mutation",
+      "sha256": "78573b62ffc8222b2d76b08fc27f17601cba8798433cfe1f7b50a777a60dd579",
+      "size": 486,
+      "start_rva": "0x0023ac60"
+    },
+    {
+      "boundary_basis": "Complete common mutation-eligibility predicate through RET 0x04.",
+      "end_rva_exclusive": "0x0023d84e",
+      "id": "mutation_eligibility",
+      "sha256": "9bc34a54ae7162e7dcdb636d199b1a3b7aaeae86631d15543ed4c70152e113b0",
+      "size": 430,
+      "start_rva": "0x0023d6a0"
+    },
+    {
+      "boundary_basis": "Complete Luabind SetMutation registration block.",
+      "end_rva_exclusive": "0x0027c71a",
+      "id": "set_mutation_binding",
+      "sha256": "efbc6cd42ab38d9707fd889242656822f61075e43dba9e7f71220989720446a6",
+      "size": 37,
+      "start_rva": "0x0027c6f5"
+    },
+    {
+      "boundary_basis": "Complete LEADER_NECRO name/value registration block.",
+      "end_rva_exclusive": "0x00280985",
+      "id": "leader_necro_registration",
+      "sha256": "0199a8bd15b7e9486a0b769ac3a2b1b59688a6351d4ecf127da5cc54a3afe52c",
+      "size": 66,
+      "start_rva": "0x00280943"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "reason": "The bridge exports current and static corpse state, and Python plus Rust already cover every effective shipped corpse type.",
+    "simulator_change_required": false,
+    "simulator_contradiction_found": false,
+    "simulator_version": 407,
+    "simulator_version_bump_required": false
+  },
+  "source_inventory": {
+    "directional_laser_types": [
+      "Pawn_Laser_U",
+      "Pawn_Laser_R",
+      "Pawn_Laser_D",
+      "Pawn_Laser_L"
+    ],
+    "directional_piston_types": [
+      "Pawn_Piston_U",
+      "Pawn_Piston_R",
+      "Pawn_Piston_D",
+      "Pawn_Piston_L"
+    ],
+    "effective_corpse_types": [
+      "ArchiveArtillery",
+      "Dam_Pawn",
+      "Filler_Pawn",
+      "Pawn_Laser_D",
+      "Pawn_Laser_L",
+      "Pawn_Laser_R",
+      "Pawn_Laser_U",
+      "Pawn_Piston_D",
+      "Pawn_Piston_L",
+      "Pawn_Piston_R",
+      "Pawn_Piston_U",
+      "SatelliteRocket",
+      "Train_Armored",
+      "Train_Armored_Damaged",
+      "Train_Damaged",
+      "Train_Pawn"
+    ],
+    "effective_type_count": 16,
+    "explicit_corpse_true_occurrences": [
+      {
+        "line": 21,
+        "path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+        "pawn_type": "Train_Armored_Damaged"
+      },
+      {
+        "line": 46,
+        "path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+        "pawn_type": "Train_Armored"
+      },
+      {
+        "line": 47,
+        "path": "scripts/missions/acid/mission_laser.lua",
+        "pawn_type": "Pawn_Laser_U"
+      },
+      {
+        "line": 53,
+        "path": "scripts/missions/acid/mission_piston.lua",
+        "pawn_type": "Pawn_Piston_U"
+      },
+      {
+        "line": 75,
+        "path": "scripts/missions/grass/mission_artillery.lua",
+        "pawn_type": "ArchiveArtillery"
+      },
+      {
+        "line": 75,
+        "path": "scripts/missions/grass/mission_dam.lua",
+        "pawn_type": "Dam_Pawn"
+      },
+      {
+        "line": 143,
+        "path": "scripts/missions/grass/mission_satellites.lua",
+        "pawn_type": "SatelliteRocket"
+      },
+      {
+        "line": 109,
+        "path": "scripts/missions/mission_train.lua",
+        "pawn_type": "Train_Pawn"
+      },
+      {
+        "line": 123,
+        "path": "scripts/missions/mission_train.lua",
+        "pawn_type": "Train_Damaged"
+      },
+      {
+        "line": 43,
+        "path": "scripts/missions/sand/mission_filler.lua",
+        "pawn_type": "Filler_Pawn"
+      }
+    ],
+    "explicit_corpse_true_types": [
+      "Train_Armored_Damaged",
+      "Train_Armored",
+      "Pawn_Laser_U",
+      "Pawn_Piston_U",
+      "ArchiveArtillery",
+      "Dam_Pawn",
+      "SatelliteRocket",
+      "Train_Pawn",
+      "Train_Damaged",
+      "Filler_Pawn"
+    ],
+    "explicit_type_count": 10,
+    "global_corpse_default": false,
+    "inherited_corpse_types": [
+      {
+        "parent_type": "Pawn_Laser_U",
+        "pawn_type": "Pawn_Laser_R"
+      },
+      {
+        "parent_type": "Pawn_Laser_U",
+        "pawn_type": "Pawn_Laser_L"
+      },
+      {
+        "parent_type": "Pawn_Laser_U",
+        "pawn_type": "Pawn_Laser_D"
+      },
+      {
+        "parent_type": "Pawn_Piston_U",
+        "pawn_type": "Pawn_Piston_R"
+      },
+      {
+        "parent_type": "Pawn_Piston_U",
+        "pawn_type": "Pawn_Piston_L"
+      },
+      {
+        "parent_type": "Pawn_Piston_U",
+        "pawn_type": "Pawn_Piston_D"
+      }
+    ],
+    "inherited_type_count": 6
+  },
+  "sources": [
+    {
+      "path": "scripts/global.lua",
+      "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "size": 17363,
+      "symbols": [
+        "Pawn",
+        "Corpse = false",
+        "Minor = false"
+      ]
+    },
+    {
+      "path": "scripts/pawns.lua",
+      "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+      "size": 27397,
+      "symbols": [
+        "Jelly_Health1",
+        "Leader = LEADER_HEALTH"
+      ]
+    },
+    {
+      "path": "scripts/advanced/ae_pawns.lua",
+      "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+      "size": 18501,
+      "symbols": [
+        "Jelly_Necro1",
+        "Leader = LEADER_NECRO"
+      ]
+    },
+    {
+      "path": "scripts/weapons_passive.lua",
+      "sha256": "ba3555413140f1eb33c9cc94e0645d980950411524d96b96716f82dbb2512a47",
+      "size": 8429,
+      "symbols": [
+        "Passive_Psions",
+        "Psion_Leech"
+      ]
+    },
+    {
+      "path": "scripts/spawner_backend.lua",
+      "sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
+      "size": 8827,
+      "symbols": [
+        "EnemyLists",
+        "WeakPawns",
+        "Spawner"
+      ]
+    },
+    {
+      "path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+      "sha256": "4c1438bd02ffdcc0d4f975f432168d1d45017126f819995c86873978b67a288a",
+      "size": 2126,
+      "symbols": [
+        "Train_Armored_Damaged",
+        "Train_Armored"
+      ]
+    },
+    {
+      "path": "scripts/missions/acid/mission_laser.lua",
+      "sha256": "e9195a160fd8a7b971555d767033eb7baea116668462cc0f50d22de01d2b13db",
+      "size": 2111,
+      "symbols": [
+        "Pawn_Laser_U",
+        "Pawn_Laser_R",
+        "Mission_Laser"
+      ]
+    },
+    {
+      "path": "scripts/missions/acid/mission_piston.lua",
+      "sha256": "1f426bad3b4149f0088831680264f716a3f9cc6acebf828306946c55990d51ad",
+      "size": 2420,
+      "symbols": [
+        "Pawn_Piston_U",
+        "Pawn_Piston_R",
+        "Mission_Piston"
+      ]
+    },
+    {
+      "path": "scripts/missions/grass/mission_artillery.lua",
+      "sha256": "fe78f546038a8a83a3db277ddd47a32c9be117db14f04ff51145dd880f8418f9",
+      "size": 2777,
+      "symbols": [
+        "ArchiveArtillery"
+      ]
+    },
+    {
+      "path": "scripts/missions/grass/mission_dam.lua",
+      "sha256": "bc677d4ea6f0dfc80b43b6711d1f20e3ea2d75fb87c869d59956c745830c7f08",
+      "size": 1922,
+      "symbols": [
+        "Dam_Pawn"
+      ]
+    },
+    {
+      "path": "scripts/missions/grass/mission_satellites.lua",
+      "sha256": "ad88320a25a411db2fb7de188b658e2705b2e6552a737f387d2ab9c982285301",
+      "size": 5949,
+      "symbols": [
+        "SatelliteRocket"
+      ]
+    },
+    {
+      "path": "scripts/missions/mission_train.lua",
+      "sha256": "a9ec7ce1ea386e3b82ecd992b6cacd8ca17990cb37f7109e8060140cbb3a5e0b",
+      "size": 4193,
+      "symbols": [
+        "Train_Pawn",
+        "Train_Damaged"
+      ]
+    },
+    {
+      "path": "scripts/missions/sand/mission_filler.lua",
+      "sha256": "38e00c007476a42c05bbe4968f9b081de4bbdfb3761667b0e3e72c28c39079f9",
+      "size": 2406,
+      "symbols": [
+        "Filler_Pawn"
+      ]
+    }
+  ],
+  "summary": {
+    "call_inventory_count": 3,
+    "common_predicate_proven": true,
+    "control_window_count": 10,
+    "data_anchor_count": 8,
+    "dependency_count": 2,
+    "direct_edge_count": 1,
+    "effective_corpse_type_count": 16,
+    "explicit_corpse_type_count": 10,
+    "finding_count": 6,
+    "inherited_corpse_type_count": 6,
+    "mutation_12_identity_proven": true,
+    "region_count": 6,
+    "shipped_mutation_12_reachable": false,
+    "simulator_change_required": false,
+    "simulator_contradiction_found": false,
+    "simulator_version": 407,
+    "source_count": 13,
+    "unresolved_count": 2
+  },
+  "unresolved": [
+    {
+      "id": "lifecycle_state_transition_timing",
+      "next_evidence": "Map the state-transition callers or run a bounded multi-frame IsDead/IsCorpse capture on a disposable mission state.",
+      "question": "At which action/frame boundaries do killed pawns enter and leave internal lifecycle states 2/3/4?"
+    },
+    {
+      "id": "mission_piston_action_order",
+      "next_evidence": "Capture a controlled Mission_Piston action/corpse timeline; do not remove the existing safety gate from this static map.",
+      "question": "How does native Mission_Auto schedule live Piston actions relative to damage, corpse state, and Board cleanup?"
+    }
+  ]
+}

@@ -204,9 +204,11 @@ unit reachability costs, direction and priority comparators, `(x,y)` output,
 weighted GetPath reconstruction, identity-based ordinary occupancy, and
 Massive Water. A third exact-build map now proves native mode-1 occupancy as
 live-or-persistent-corpse, including Road Runner corpse transit but no corpse
-stop; simulator v403 carries that rule. Runtime `IsCorpse()` subclass values,
-transient removal timing, higher-level record selection, and broader queue
-paths remain to be validated. One bounded
+stop; simulator v403 carries that rule. A later exact-build continuation closes
+the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
+effective shipped source corpse types. Transient lifecycle/removal timing,
+higher-level record selection, and broader queue paths remain to be validated.
+One bounded
 `Firefly1` campaign now proves the final selected record's immediate queue
 handoff with exact destination, target/shot, and weapon/skill agreement.
 
@@ -504,8 +506,8 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   joined to persistent-corpse path occupancy. The exact image contains two
   direct sweep callers, four `OnKill` absolute references confined to property-
   access functions, and one named enemy-killed-event binding reference; exact
-  damage-relative timing, subclass results, indirect or generic callback
-  dispatch, and presentation remain open; and
+  damage-relative timing, indirect or generic callback dispatch, and
+  presentation remain open; and
 - the ordinary enemy-death event and credit continuation: complete
   `SkillEffect.iOwner +0x5c` preservation from `Board:AddEffect` into the
   dispatcher, `Env_Attack` ownership by exact `ENV_EFFECT=-10`, non-Minor
@@ -533,6 +535,15 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   17 active Minor types, 21 non-Minor boss objectives, and four Minor boss
   auxiliaries. Rust's missing `!is_mech` filter is corrected in simulator v407
   with the v406 corpus archived; and
+- the native corpse-classification continuation: `Pawn:IsCorpse` is one common
+  member with 27 direct rel32 callers and no subclass-vtable dispatch. Exact
+  loader fields map `Corpse +0xf80`, `Leader +0x1318`, `Minor +0x10d0`,
+  `DefaultFaction +0x10bc`, and current mutation `+0x10e8`; registered mutation
+  12 is `LEADER_NECRO`, not Teleporter. The sole shipped `Jelly_Necro1` table is
+  dormant and shipped Lua has no `SetMutation` call. Ten explicit plus six
+  inherited corpse definitions exactly match the bridge, Python, and Rust
+  inventories, so simulator v407 needs no change. Lifecycle-state 2/3/4 timing
+  and Mission_Piston action/cleanup ordering remain open; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -563,8 +574,9 @@ The remaining native priorities are now narrower:
    concrete solver need arises.
 2. Capture native `GetReachable`/`GetPath` point vectors only when a mismatch
    needs a runtime match. Static unit costs, tie ordering, endpoint shape,
-   ordinary team handling, Road Runner, and Massive Water are complete; corpse
-   classification and `AddMove` step/scheduler effects remain open.
+   ordinary team handling, Road Runner, Massive Water, and shipped corpse
+   classification are complete; lifecycle/removal timing and `AddMove`
+   step/scheduler effects remain open.
 3. Resolve the pre-map-draw CRT state, concrete later cave startup draws,
    startup presentation interleave, and the replacement callback's incoming
    RNG state, selected coordinate/UID, and wall-clock presentation duration.
@@ -597,8 +609,8 @@ The remaining native priorities are now narrower:
    assigns Road, calls `Pawn:Kill(false)`, then adds BigBomb only if its blocker
    recheck passes. A destroyed pylon can retain `BLOCKED_PERM` and abort after
    the enemy kill. Only concrete outputs and later block state, arbitrary
-   modified-script state, exact zero-HP cleanup timing and subclass outcomes,
-   the indirect `OnKill`/attribution tail,
+   modified-script state, exact zero-HP cleanup/lifecycle timing, the indirect
+   `OnKill`/attribution tail,
    adversarial collision identities, and visual timing remain, not native
    admission, shipped lifetime, or ordinary startup pylon/bomb collision
    behavior.
@@ -847,9 +859,13 @@ bridge-read boundary.
   control windows join `Pawn:IsDead`/`Pawn:IsCorpse` to mode-1 traversal and
   destination filtering. Simulator v403 distinguishes persistent corpses from
   transient dead non-corpses and preserves Road Runner's transit/no-stop split.
-- Keep runtime subclass values, transient removal timing, matched point
-  vectors, `AddMove` execution, and serialization analysis mismatch-driven
-  rather than attempting broad reconstruction.
+- **Corpse classification continuation complete:** one common predicate, exact
+  source/lifecycle/mutation fields, `LEADER_NECRO=12`, dormant shipped mutation
+  reachability, and all 16 effective shipped corpse types are build-keyed and
+  independently verifiable; Rust already conforms at simulator v407.
+- Keep transient lifecycle/removal timing, matched point vectors, `AddMove`
+  execution, and serialization analysis mismatch-driven rather than attempting
+  broad reconstruction.
 - Validate the mapped interpretations and hook neutrality dynamically before
   promoting trace-derived behavior into Rust.
 

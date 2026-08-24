@@ -468,9 +468,11 @@ costs, direction and tie comparators, output/reconstruction order, ordinary
 identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-
 persistent-corpse occupancy. Simulator v403 preserves the corpse distinction
 through bridge/model/checkpoints. The record remains `partial`: extra-tile
-identity, runtime `IsCorpse()` subclass/removal timing, no-op destinations,
-native `AddMove` sequencing, visible UI, and achievement credit still need
-controlled evidence.
+identity, lifecycle/removal timing, no-op destinations, native `AddMove`
+sequencing, visible UI, and achievement credit still need controlled evidence.
+The later native corpse-classification record independently closes the common
+predicate and effective shipped source types; it does not close those timing
+questions.
 
 The sixth slice, `player-weapon-needle-shot`, adds the previously unindexed
 `weapons_technovek.lua` source plus inherited Spear targeting. It pins all four
@@ -562,9 +564,10 @@ Snow-family definitions, and queued-artillery side-hit threat coverage. The
 record remains `partial`: exact Windows static evidence now pins basic native
 path costs, directions, tie comparators, result/reconstruction order, ordinary
 identity-based occupancy, Road Runner, Massive Water, and persistent-corpse
-mode-1 occupancy. `AvoidingMines`, matched Mine-Bot path vectors, runtime corpse
-subclass/removal timing, movement/item scheduling, setup placement, and enemy
-AI/RNG remain outside the proven contract.
+mode-1 occupancy. The later corpse-classification map also closes the common
+predicate and shipped static types. `AvoidingMines`, matched Mine-Bot path
+vectors, multi-frame corpse lifecycle/removal timing, movement/item scheduling,
+setup placement, and enemy AI/RNG remain outside the proven contract.
 
 The tenth player-weapon slice, `player-weapon-passive-board-effects`, adds the
 previously unindexed `weapons_passive.lua`, `advanced/ae_weapons_base.lua`, and
@@ -884,9 +887,11 @@ definition gates pass. `IsCorpse` true skips that erase and remains path-
 relevant under the prior lifecycle map. The exact image has two direct sweep
 callers, four absolute `OnKill` references confined to two property-access
 functions, and one `EVENT_ENEMY_KILLED` binding-table name reference. This
-still does not prove damage-relative sweep timing, concrete subclass outcomes,
-a generic or indirect Lua `OnKill` dispatch, kill attribution or counters,
-death presentation, or non-Windows equivalence at that structural boundary.
+still does not prove damage-relative sweep timing, a generic or indirect Lua
+`OnKill` dispatch, kill attribution or counters, death presentation, or non-
+Windows equivalence at that structural boundary. The later corpse-
+classification successor closes static predicate inputs and shipped type
+outcomes without overclaiming frame timing.
 
 The `native-death-event-credit-boundary` successor resolves the ordinary
 environment-owned tail without turning names into semantics. It proves
@@ -935,6 +940,22 @@ Rust nevertheless omitted the exact IsMech exclusion, so simulator v407 adds
 it, archives the v406 corpus, and locks boss/Minor/Mech plus broad replay
 conformance. Detailed Mech-branch effects, mods, and other depots remain
 partial gaps.
+
+The `native-corpse-classification-boundary` successor closes the static
+`IsCorpse` class/input question. Exact Windows build 13725832 contains one
+common member with 27 direct rel32 callers and no subclass-vtable dispatch.
+Outside internal lifecycle states 2/3/4, a Mech or a source `Corpse=true` pawn
+returns true; the remaining path requires mutation 12 to be available/current
+and eligible. Exact loader fields bind `Corpse +0xf80`, `Leader +0x1318`,
+`Minor +0x10d0`, `DefaultFaction +0x10bc`, and current mutation `+0x10e8`.
+Registration identifies 12 as `LEADER_NECRO`, not Teleporter. Its only shipped
+definition, `Jelly_Necro1`, is dormant: the accepted tree has no mission,
+spawner, factory, other active reference, or `SetMutation` call reaching it.
+The same 153-file inventory finds ten explicit and six inherited effective
+corpse types. The bridge exports current/static lifecycle state and Python plus
+Rust already cover all 16, so v407 remains correct. Exact action/frame
+transitions into states 2/3/4 and `Mission_Piston` action/cleanup order remain
+partial gaps; the Piston safety gate stays in place.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and

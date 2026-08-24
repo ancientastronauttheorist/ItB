@@ -2744,7 +2744,7 @@
       ],
       "known_gaps": [
         "Lua has no explicit extra-tile predicate: Rust's alive/non-extra representation protects duplicate multi-tile entries, but native Board:IsPawnSpace behavior on every ExtraSpace coordinate has not been established.",
-        "Exact Windows static evidence now pins Board:GetReachable/GetPath costs, direction and tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-persistent-corpse occupancy. Board:IsPawnSpace extra-tile identity, runtime IsCorpse subclass/removal timing, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow remain incomplete across status, collision, per-step effects, and scheduling.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath costs, direction and tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, mode-1 live-or-persistent-corpse occupancy, the common IsCorpse predicate, and effective shipped corpse types. Board:IsPawnSpace extra-tile identity, multi-frame corpse lifecycle/removal timing, IsPowered, IsGuarding, IsGrappled, GetBaseMove, AddMove, AddLeap, and AddBurrow remain incomplete across status, collision, per-step effects, and scheduling.",
         "Lua does not textually reject choosing the origin as the second click. Whether Board:GetReachable publishes that no-op destination remains a native uncertainty; Rust deliberately omits zero-distance moves.",
         "The bridge now prefers live predicate calls, but legacy payload defaults and static known Burrower/Jumper fallbacks can differ from native state. The updated modloader has not been installed or controlled-captured during the protected achievement session.",
         "Rust's independent fixed-budget BFS and direct coordinate mutation remain an approximation of native path profiles and AddMove/AddLeap/AddBurrow sequencing, including landing effects.",
@@ -5368,7 +5368,7 @@
         }
       ],
       "known_gaps": [
-        "Exact Windows static evidence now pins Board:GetReachable/GetPath unit costs, directions, tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, and mode-1 live-or-persistent-corpse occupancy. AvoidingMines, runtime corpse subclass/removal timing, matched Mine-Bot path vectors, and every path/collision/terrain edge remain incomplete.",
+        "Exact Windows static evidence now pins Board:GetReachable/GetPath unit costs, directions, tie comparators, output/reconstruction order, ordinary identity-based occupancy, Road Runner, Massive Water, mode-1 live-or-persistent-corpse occupancy, the common IsCorpse predicate, and effective shipped corpse types. AvoidingMines, multi-frame corpse lifecycle/removal timing, matched Mine-Bot path vectors, and every path/collision/terrain edge remain incomplete.",
         "The source construction order establishes Freeze_Mine before AddMove, but native scheduler, animation, movement interruption, item replacement, status, terrain, and simultaneous-effect ordering remain incomplete without a controlled capture.",
         "Rust consumes live queued targets for current enemy actions and does not reproduce native enemy movement, score-list candidate selection, AI target choice, random state, or tie-breaking for Snow bot families.",
         "Mission_BotDefense setup placement, Board:AddPawn placement/UID allocation, objective UI/reward scheduling, and Boss mission robot selection remain live-engine dependencies; no fresh controlled bridge capture was taken during the protected live achievement session."
@@ -5836,7 +5836,7 @@
       "known_gaps": [
         "The source proves each queued forward push but not where Mission_Auto invokes neutral Piston skills relative to environment effects, queued Vek attacks, or other Pistons. Simulator v386 therefore retains state and blocks rather than inventing an order; no push replay is claimed.",
         "Mission setup consumes the native pistons zone, Board validity/edge/occupancy/terrain helpers, Board:ClearSpace, random_removal, and random_element. Rust does not reproduce setup RNG, rejected-candidate consumption, exact tile clearing, or placement order.",
-        "Corpse=true is source-proven and exact Windows static evidence now proves mode-1 live-or-persistent-corpse path occupancy. Matched runtime Piston IsCorpse values, corpse removal/blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
+        "Corpse=true is source-proven, and exact Windows static evidence now proves mode-1 live-or-persistent-corpse path occupancy plus one common IsCorpse predicate covering all four Piston bodies. Piston lifecycle-state transitions, corpse removal/blocker lifetime, and whether a destroyed Piston retains or loses its scheduled action have not been captured. The safety gate remains non-overridable when a corpse is visible.",
         "Native SkillEffect queue boundaries, animation/hide timing, SpaceDamage push/collision ordering, attack-order integration, and target-score scheduling are not exhaustively traced. No fresh controlled live capture was taken during the protected achievement session."
       ],
       "sources": [
@@ -9743,8 +9743,8 @@
         }
       ],
       "known_gaps": [
-        "This map stops when the clamped Pawn HP reaches zero. The continuation proves a structural dead-noncorpse Board-vector erase; exact damage-relative timing, specialized subclass outcomes, Lua OnKill dispatch, kill credit and owner/team attribution, mission or achievement counters, and presentation timing remain untraced.",
-        "Specialized pawn subclass or vtable consumers after HP zero are not exhaustively inventoried. The terminal-state equivalence claim is bounded to stock solver-supported Final Cave and Volcano pawn health, not arbitrary modified pawns with health above the effective sentinel damage.",
+        "This map stops when the clamped Pawn HP reaches zero. Later continuations prove a structural dead-noncorpse Board-vector erase and the common static IsCorpse classification; exact damage-relative lifecycle timing, Lua OnKill dispatch, kill credit and owner/team attribution, mission or achievement counters, and presentation timing remain untraced.",
+        "The later classification map proves there is no subclass-specific IsCorpse implementation on this build; other specialized post-zero vtable, death-effect, and presentation consumers are not exhaustively inventoried. The terminal-state equivalence claim is bounded to stock solver-supported Final Cave and Volcano pawn health, not arbitrary modified pawns with health above the effective sentinel damage.",
         "The reviewed core contains other terrain, spawn, emerge, feedback, scheduler, and callback branches. This record pins the generic Pawn numeric receiver-to-HP path and the separate Building-terrain direct-kill edge; it is not an end-to-end proof of every SpaceDamage field combination.",
         "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
       ],
@@ -9792,7 +9792,7 @@
         },
         {
           "classification": "inference",
-          "statement": "Pawn:IsCorpse true skips the reviewed erase. Joined to the exact-build path-occupancy artifact, a retained corpse remains path occupancy while a retained dead non-corpse does not. Specialized subclass results and the nontrivial IsCorpse predicate inputs are not exhausted."
+          "statement": "Pawn:IsCorpse true skips the reviewed erase. Joined to the exact-build path-occupancy artifact, a retained corpse remains path occupancy while a retained dead non-corpse does not. This artifact alone did not exhaust the nontrivial predicate; the build-keyed corpse-classification successor now proves one common implementation, its static inputs, and all effective shipped Corpse=true types while leaving lifecycle timing open."
         },
         {
           "classification": "inference",
@@ -9820,7 +9820,7 @@
       ],
       "known_gaps": [
         "The two static callers do not prove exact cleanup-sweep timing relative to a particular SpaceDamage, action, effect record, active-effect pass, or settled bridge read.",
-        "Specialized Pawn subclass death and corpse outcomes, including every input to the nontrivial Pawn:IsCorpse predicate, are not exhaustively mapped.",
+        "The corpse-classification successor closes the common Pawn:IsCorpse implementation and shipped static type inputs, but action/frame transitions through lifecycle states 2/3/4 and their exact removal consequence remain untraced.",
         "Generic or indirect Lua OnKill dispatch and EVENT_ENEMY_KILLED delivery remain untraced; absence of a direct rel32 edge into the two property-access functions is not proof that no dispatcher exists.",
         "Environment-kill source, team, and owner attribution plus iKills, iMissionDamage, iKillCount, mission, and achievement counter writes remain untraced.",
         "GetDeathEffect, IsDeathEffect, active-effect scheduling, animation, sound, and visual-removal ordering remain outside this logical Board-cleanup proof.",
@@ -10166,6 +10166,157 @@
         {
           "path": "tests/test_itb_provenance.py",
           "symbols": ["test_native_specialized_enemy_death_record_closes_classification_and_binds_v407"]
+        }
+      ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed artifact data/observatory/native/windows_build_13725832_31fe35265598_corpse_classification_boundary.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9 and scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155. It hash-pins six native regions, ten instruction-aligned control windows, eight data anchors with complete absolute-reference inventories, three complete raw-rel32 call inventories, 13 selected sources, the accepted 153-file Lua inventory, and the zero-HP plus specialized-death dependencies."
+        },
+        {
+          "classification": "fact",
+          "statement": "Pawn:IsCorpse at RVA 0x0022cde0 is one common member with exactly 27 raw-rel32 direct callers and no subclass-vtable dispatch inside the complete predicate. Outside internal lifecycle states 2, 3, and 4, IsMech=true or source Corpse=true returns true directly; the remaining path requires mutation 12 to be current or globally available and accepted by the common eligibility helper."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact Pawn definition loader stores Corpse at +0xf80, Leader at +0x1318, Minor at +0x10d0, and DefaultFaction at +0x10bc. The exact SetMutation implementation writes current mutation at +0x10e8. Teleporter is stored separately and is not an IsCorpse input."
+        },
+        {
+          "classification": "fact",
+          "statement": "Exact global registration maps value 12 to LEADER_NECRO. The relevant eligibility branch admits ordinary team-6/default-faction recipients directly, otherwise requires a Mech or team-4 recipient with Psion_Leech, and excludes Minor recipients plus a Leader whose current mutation already equals the requested id."
+        },
+        {
+          "classification": "fact",
+          "statement": "Across the accepted shipped Lua tree, Jelly_Necro1 and LEADER_NECRO each occur only at the single Jelly_Health1-derived declaration. No mission, spawner, AddPawn, factory, other active Lua reference, or shipped SetMutation call reaches mutation 12. Modded or direct-native activation is outside this shipped-source claim."
+        },
+        {
+          "classification": "fact",
+          "statement": "The accepted tree has exactly ten explicit Corpse=true definitions and six inherited directional Laser/Piston bodies, for 16 effective corpse types. The bridge exports current IsCorpse and source-static Corpse state; Python PawnStats and Rust known_corpse_on_death_type already cover exactly those 16 types. No simulator contradiction or version change follows, so simulator v407 remains current."
+        },
+        {
+          "classification": "inference",
+          "statement": "Static corpse class and field reachability are closed for this build and shipped tree, but the action/frame transitions into lifecycle states 2/3/4 and Mission_Auto ordering of Piston effects, corpse state, and Board cleanup are not. The existing Mission_Piston End Turn safety gate must remain until controlled timeline evidence resolves them."
+        }
+      ],
+      "id": "native-corpse-classification-boundary",
+      "implementations": [
+        {
+          "path": "src/observatory/corpse_classification_boundary.py",
+          "symbols": ["build_corpse_classification_boundary_map", "validate_corpse_classification_boundary_map", "validate_corpse_classification_boundary_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_corpse_classification.py",
+          "symbols": ["main"]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["p:IsCorpse", "pawn_def.Corpse", "corpse_on_death"]
+        },
+        {
+          "path": "src/model/pawn_stats.py",
+          "symbols": ["get_pawn_stats", "corpse_on_death"]
+        },
+        {
+          "path": "rust_solver/src/serde_bridge.rs",
+          "symbols": ["known_corpse_on_death_type", "corpse_on_death"]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": ["_mission_piston_forecast_block", "mission_piston_corpse_lifecycle_unknown"]
+        },
+        {
+          "path": "rust_solver/src/lib.rs",
+          "symbols": ["SIMULATOR_VERSION"]
+        },
+        {
+          "path": "src/solver/verify.py",
+          "symbols": ["SIMULATOR_VERSION"]
+        }
+      ],
+      "known_gaps": [
+        "The static map does not prove the action/frame boundaries at which a killed Pawn enters or leaves internal lifecycle states 2, 3, and 4, nor the exact damage-relative Board-removal sweep.",
+        "Native Mission_Auto ordering for Mission_Piston relative to damage, corpse state, queued enemies, and Board cleanup remains untraced; the current End Turn safety gate remains required.",
+        "Mods or direct native calls may activate mutation 12, register alternate passive state, or alter the shipped corpse inventory and require their own content-keyed analysis.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": ["Pawn", "Corpse", "Minor", "Leader", "DefaultFaction"]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": ["Jelly_Health1"]
+        },
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": ["Jelly_Necro1", "LEADER_NECRO"]
+        },
+        {
+          "path": "scripts/weapons_passive.lua",
+          "sha256": "ba3555413140f1eb33c9cc94e0645d980950411524d96b96716f82dbb2512a47",
+          "symbols": ["Passive_Psions", "Psion_Leech"]
+        },
+        {
+          "path": "scripts/spawner_backend.lua",
+          "sha256": "59e8b2946a99d7bf1ade58b2384cbf0cd02eff26d545af2ea2e8c7060370c301",
+          "symbols": ["EnemyLists", "WeakPawns", "Spawner"]
+        },
+        {
+          "path": "scripts/advanced/missions/grass/mission_armored_train.lua",
+          "sha256": "4c1438bd02ffdcc0d4f975f432168d1d45017126f819995c86873978b67a288a",
+          "symbols": ["Train_Armored_Damaged", "Train_Armored"]
+        },
+        {
+          "path": "scripts/missions/acid/mission_laser.lua",
+          "sha256": "e9195a160fd8a7b971555d767033eb7baea116668462cc0f50d22de01d2b13db",
+          "symbols": ["Pawn_Laser_U", "Pawn_Laser_R", "Pawn_Laser_L", "Pawn_Laser_D"]
+        },
+        {
+          "path": "scripts/missions/acid/mission_piston.lua",
+          "sha256": "1f426bad3b4149f0088831680264f716a3f9cc6acebf828306946c55990d51ad",
+          "symbols": ["Pawn_Piston_U", "Pawn_Piston_R", "Pawn_Piston_L", "Pawn_Piston_D"]
+        },
+        {
+          "path": "scripts/missions/grass/mission_artillery.lua",
+          "sha256": "fe78f546038a8a83a3db277ddd47a32c9be117db14f04ff51145dd880f8418f9",
+          "symbols": ["ArchiveArtillery"]
+        },
+        {
+          "path": "scripts/missions/grass/mission_dam.lua",
+          "sha256": "bc677d4ea6f0dfc80b43b6711d1f20e3ea2d75fb87c869d59956c745830c7f08",
+          "symbols": ["Dam_Pawn"]
+        },
+        {
+          "path": "scripts/missions/grass/mission_satellites.lua",
+          "sha256": "ad88320a25a411db2fb7de188b658e2705b2e6552a737f387d2ab9c982285301",
+          "symbols": ["SatelliteRocket"]
+        },
+        {
+          "path": "scripts/missions/mission_train.lua",
+          "sha256": "a9ec7ce1ea386e3b82ecd992b6cacd8ca17990cb37f7109e8060140cbb3a5e0b",
+          "symbols": ["Train_Pawn", "Train_Damaged"]
+        },
+        {
+          "path": "scripts/missions/sand/mission_filler.lua",
+          "sha256": "38e00c007476a42c05bbe4968f9b081de4bbdfb3761667b0e3e72c28c39079f9",
+          "symbols": ["Filler_Pawn"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_corpse_classification_boundary.py",
+          "symbols": ["test_committed_map_closes_static_corpse_classification_without_timing_overclaim", "test_binding_rejects_predicate_mutation_inventory_or_scope_drift", "test_solver_inventory_bridge_fields_version_and_piston_gate_conform", "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_corpse_classification_record_closes_static_inputs_without_timing_overclaim"]
         }
       ]
     }
