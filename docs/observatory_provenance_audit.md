@@ -887,11 +887,19 @@ snapshot, and records the replacement as pending without fabricating a pawn,
 UID, callback time, or random result. Depth-two search stops there and the
 safety gate stays non-overridable until a fresh live board materializes the
 replacement. Native RNG, effect timing, repeated live replacement cycles, and
-collisions remain untraced. Exact-build continuations separately pin the phase
-handoff, current-limit readiness, countdown code-1 victory write without a
-bomb/objective/`IsEndBlocked` recheck, forced zero-Mech code-3 failure, and
-downstream campaign settlement. The safety gate remains because replacement
-materialization is unknown, not because bomb loss directly ends the mission.
+collisions originally remained untraced. Exact-build continuations now pin the
+phase handoff, current-limit readiness, countdown code-1 victory write without
+a bomb/objective/`IsEndBlocked` recheck, forced zero-Mech code-3 failure,
+replacement materialization/repeat cadence, startup enemy admission, and the
+startup effect's internal record order. The shipped release branch creates 44
+records on three-mountain maps or 46 on four-mountain maps; Mech scripts are
+attempted synchronously in IDs 0, 1, 2 order, and every pylon contributes two
+independent consecutive dropper records. Requested delays, however, do not
+prove wall-clock presentation or impact overlap. Concrete RNG results,
+coordinates/UIDs, modified-state collisions/errors, spawn-block lifetime, and
+live campaign settlement remain open. The safety gate remains because the
+replacement's concrete result is unknown, not because materialization/repeat
+mechanics are unresolved or bomb loss directly ends the mission.
 
 The final Volcano-environment slice, `environment-final-volcano-cycle`, closed
 the then-selected mechanical source index at 96/96. The later runtime-driven

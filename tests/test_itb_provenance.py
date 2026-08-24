@@ -6092,6 +6092,19 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     }
     assert implementations[
         "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "final_cave_startup_effect_order.json"
+    ] == {
+        "release_branch_is_exact",
+        "builders_append_independent_records",
+        "delays_partition_without_reordering",
+        "mech_scripts_are_attempted_in_id_order",
+        "duplicate_pylon_droppers_are_real_records",
+        "startup_effect_order_is_closed",
+        "solver_boundary_remains_settled_read",
+    }
+    assert implementations[
+        "data/observatory/native/"
         "windows_build_13725832_31fe35265598_final_cave_map_choice.json"
     ] == {
         "random_map_is_shipped_lua", "installation_order",
@@ -6153,6 +6166,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "validate_final_cave_startup_spawn_order_map",
         "validate_final_cave_startup_spawn_order_map_binding",
     }
+    assert implementations[
+        "src/observatory/final_cave_startup_effect_order.py"
+    ] == {
+        "build_final_cave_startup_effect_order_map",
+        "validate_final_cave_startup_effect_order_map",
+        "validate_final_cave_startup_effect_order_map_binding",
+    }
     assert implementations["src/observatory/final_cave_map_choice.py"] == {
         "build_final_cave_map_choice_map",
         "validate_final_cave_map_choice_map",
@@ -6198,6 +6218,9 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "scripts/itb_observatory_final_cave_startup_spawn_order.py"
     ] == {"_parser", "main"}
     assert implementations[
+        "scripts/itb_observatory_final_cave_startup_effect_order.py"
+    ] == {"_parser", "main"}
+    assert implementations[
         "scripts/itb_observatory_final_cave_map_choice.py"
     ] == {"_parser", "main"}
     tests = {
@@ -6227,6 +6250,13 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
         "test_committed_map_closes_logical_startup_spawn_order_without_rng_overclaim",
         "test_binding_rejects_wrapper_order_or_prose_drift",
         "test_exact_local_executable_and_sources_reproduce_map_when_available",
+    }
+    assert tests[
+        "tests/test_observatory_final_cave_startup_effect_order.py"
+    ] == {
+        "test_committed_map_closes_startup_effect_order_without_visual_overclaim",
+        "test_binding_rejects_native_source_schedule_or_prose_drift",
+        "test_exact_local_executable_and_source_reproduce_map_when_available",
     }
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "only Hard or Unfair" in facts
@@ -6271,6 +6301,11 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "synchronously calls the exact standard coordinate selector" in facts
     assert "before any queued Mech SetSpace script" in facts
     assert "fresh settled bridge-read boundary remains correct" in facts
+    assert "Registered IsRelease returns true" in facts
+    assert "synchronously attempt luaL_loadbuffer then lua_pcall" in facts
+    assert "valid-startup Mech script order 0, 1, 2" in facts
+    assert "44 records with three mountains or 46 with four" in facts
+    assert "not wall-clock duration, impact overlap" in facts
     assert "contains no Advanced Edition filter" in facts
     assert "FindFirstFileA and FindNextFileA" in facts
     assert "exactly one RandomMap attempt" in facts
@@ -6281,21 +6316,26 @@ def test_real_mission_final_surface_and_cave_record_pins_lifecycle_and_terminal_
     assert "exact-build native maps now close the ordinary turn-limit" in gaps
     assert "Incoming pre-map-draw CRT state" in gaps
     assert "startup explicit/implicit SpawnPawn binding" in gaps
-    assert "startup visual animation interleave" in gaps
+    assert "startup visual impact overlap" in gaps
     assert "SpawnPawns/NextPawn behavior" not in gaps
     assert "enemy logical admission before queued startup-effect dispatch" in gaps
+    assert "release startup record construction/delay partitioning" in gaps
+    assert "ordered 0x134-byte startup records" in gaps
+    assert "both duplicated pylon droppers are exact" in gaps
+    assert "Intra-effect AddScript execution" not in gaps
+    assert "release-versus-debug delays" not in gaps
+    assert "queued startup effects executing conformantly" not in gaps
     assert "concrete selected map" in gaps
     assert "post-StartMechTravel campaign settlement" not in gaps
     assert "live campaign-settlement timing and file contents" in gaps
     assert "whether reused SpaceDamage objects are copied immediately" not in gaps
     assert "each earlier AddDropper record is insulated" in gaps
     assert "repeated native replacement cycles remain untraced" not in gaps
-    assert "semantic repeat ordering are now statically pinned" in gaps
+    assert "Startup record-type order and requested delay values are now statically pinned" in gaps
     assert "actual end-of-countdown outcome" not in gaps
     assert "replacement materialization is unresolved" not in gaps
     assert (
-        "BigBomb drop resolution and semantic repeat ordering are now "
-        "statically pinned"
+        "as are BigBomb drop resolution and semantic repeat ordering"
         in gaps
     )
     assert (

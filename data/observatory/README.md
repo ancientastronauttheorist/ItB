@@ -860,3 +860,45 @@ This closes logical startup admission order, not concrete `NextPawn` results,
 selector candidates/outputs, UIDs, visual animation overlap, or wall-clock
 presentation timing. Those values still arrive through the fresh settled
 bridge read, so no Rust simulator semantic change follows.
+
+## Final Cave startup effect-order boundary
+
+`native/windows_build_13725832_31fe35265598_final_cave_startup_effect_order.json`
+continues the startup and spawn-order maps through the exact registered
+`SkillEffect` builders, common record append, ordered dispatcher, Board damage
+apply slot, and Lua evaluator. It binds the shipped Final Cave source, 20
+reviewed native regions, six registration names and bindings, one Board vtable
+slot, nine instruction-start control windows, 15 direct calls, and two Lua 5.1
+imports. For Windows build `13725832` it establishes that:
+
+- the shipped `IsRelease()` wrapper returns true, so `FAST_VERSION` is false
+  and all three voice records plus every release-only delay are present;
+- `AddVoice`, `AddDelay`, `AddDropper`, `AddScript`, and `AddBoardShake`
+  append independent `0x134`-byte records immediately and in source-call order;
+- the dispatcher starts at record zero, advances one record at a time, and on
+  a nonzero delay stores the suffix beginning at the next record with the
+  delay value, preserving order when work resumes;
+- the three Mech script records reach Board SpaceDamage apply and are attempted
+  synchronously through `luaL_loadbuffer` and `lua_pcall` in IDs 0, 1, 2 order;
+- every one of the seven pylons contributes two independent consecutive
+  building-dropper records before its following `0.5` delay; and
+- exact three-mountain maps construct 44 records, while four-mountain maps
+  construct 46, ordered as initial delay/shake, mountain pairs, Mech scripts,
+  pylon pairs, and the final bomb dropper.
+
+Verify the executable, source, region/data hashes, registrations, vtable slot,
+control windows, direct/import calls, and lexical schedule with:
+
+```powershell
+python scripts/itb_observatory_final_cave_startup_effect_order.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --effect-order-map data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_effect_order.json
+```
+
+The delay values are scheduler inputs, not measured wall-clock seconds, and
+two consecutive droppers prove two record/animation creations rather than
+their eventual visual impact order or overlap. Concrete RNG results,
+coordinates, UIDs, modified-state error/collision behavior, and full spawn-
+block lifetime also remain outside this map. The solver still consumes a fresh
+settled bridge read, so this evidence requires no Rust semantic change.

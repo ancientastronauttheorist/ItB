@@ -1,0 +1,910 @@
+{
+  "analysis_kind": "final_cave_startup_effect_order_boundary_map",
+  "contracts": {
+    "delay_record": {
+      "dispatcher_this_duration_vector_offset": "+0x2c50",
+      "dispatcher_this_effect_suffix_vector_offset": "+0x2c44",
+      "duration_offset": "+0xc8",
+      "flag_offset": "+0xc4",
+      "paired_continuation_insert_position": "current vector beginning",
+      "preserves_remaining_record_order": true,
+      "primary_board_duration_vector_offset": "+0x2c5c",
+      "primary_board_effect_suffix_vector_offset": "+0x2c50",
+      "suffix_begins_at_next_record": true
+    },
+    "record_storage": {
+      "append_is_immediate": true,
+      "append_preserves_call_order": true,
+      "common_append_rva": "0x00259f00",
+      "later_source_mutation_changes_prior_record": false,
+      "record_size": 308
+    },
+    "release_schedule": {
+      "fast_version": false,
+      "is_release_result": true,
+      "mountain_counts": [
+        3,
+        4
+      ],
+      "pylon_count": 7,
+      "record_counts_by_mountain_count": {
+        "3": 44,
+        "4": 46
+      },
+      "record_index_formulas": {
+        "bomb_dropper": "37 + 2*mountain_count",
+        "first_pylon_dropper_j": "12 + 2*mountain_count + 3*j",
+        "mech_script_i": "3 + 2*mountain_count + 2*i",
+        "mountain_dropper_j": "2 + 2*j",
+        "second_pylon_dropper_j": "13 + 2*mountain_count + 3*j"
+      },
+      "record_type_counts_by_mountain_count": {
+        "3": {
+          "board_shake": 1,
+          "delay": 19,
+          "dropper": 18,
+          "script": 3,
+          "voice": 3
+        },
+        "4": {
+          "board_shake": 1,
+          "delay": 20,
+          "dropper": 19,
+          "script": 3,
+          "voice": 3
+        }
+      },
+      "requested_delay_total_by_mountain_count": {
+        "3": 21.6,
+        "4": 21.8
+      },
+      "segments": [
+        "delay 2; board shake 3",
+        "for each mountain: one rock dropper; delay 0.2",
+        "delay 1",
+        "for Mech ids 0, 1, 2: one SetSpace/SpawnAnimation script; delay 0.5",
+        "delay 1; MissionFinal_Pylons voice; delay 3",
+        "for each of seven pylons: two consecutive copied building droppers; delay 0.5",
+        "MissionFinal_Bomb voice; MissionFinal_BombResponse voice; delay 7",
+        "delay 2; one BigBomb dropper"
+      ]
+    },
+    "script_record": {
+      "default_kind": 0,
+      "evaluation_is_synchronous": true,
+      "kind_zero_board_apply_rva": "0x00160110",
+      "loadbuffer_iat_rva": "0x003d64d4",
+      "pcall_iat_rva": "0x003d64d0",
+      "script_string_offset": "+0xe0",
+      "valid_startup_attempt_order": [
+        0,
+        1,
+        2
+      ]
+    },
+    "semantic_boundary": {
+      "each_pylon_has_two_independent_consecutive_dropper_records": true,
+      "logical_enemy_admission_precedes_first_record_dispatch": true,
+      "mech_scripts_precede_pylon_records": true,
+      "mountain_records_precede_mech_scripts": true,
+      "pylon_records_precede_bomb_record": true,
+      "visual_impact_order_proven": false,
+      "wall_clock_duration_proven": false
+    },
+    "solver_handoff": {
+      "current_policy": "Consume a fresh settled bridge state before solving Final Cave.",
+      "reason": "The solver consumes settled state; presentation timing, concrete RNG outputs, coordinates, and UIDs remain outside this static boundary.",
+      "simulator_change_required": false
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "script_eval_calls",
+      "instruction_hex": "2bcb8d450c83fa1068540d82000f43450c5150ff3548608900ff15d4647d0083c41085c07534505050ff3548608900ff15d0647d0083c41085c0751e",
+      "meaning": "The evaluator calls luaL_loadbuffer and then lua_pcall synchronously.",
+      "region_id": "script_evaluator",
+      "sha256": "b732423d876371f3dc6181d87c71550ba49d7587aa9339adf8ce662ab3bbace1",
+      "size": 60,
+      "start_rva": "0x0004cb77"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "apply_script_first",
+      "instruction_hex": "83bdf800000000745283ec188bccc741140f000000c74110000000008379141072048b01eb028bc16affc600008d85e80000006a0050e8517feaff8d45d850e898c9eeff8b45ec83f810720f406a0150ff75d8e86476eaff83c40c",
+      "meaning": "A nonempty record+0xe0 script is copied and evaluated before board damage logic.",
+      "region_id": "apply_space_damage",
+      "sha256": "9e0614cc94c3eece88d4c9b8ce085c007dfcfe6b2f057e08dc5c9643d3c7e08d",
+      "size": 91,
+      "start_rva": "0x00160144"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_order_setup",
+      "instruction_hex": "b8c1de31358b7d0c8bcf8b75082bcef7e9c78564fdffff00000000c1fa068bc2c1e81f03c20f84f706000033c0898568fdffff03c68d8d7cfdffff50e8a2a5ffff",
+      "meaning": "The dispatcher derives record count from vector span and copies record zero first.",
+      "region_id": "effect_dispatcher",
+      "sha256": "66a839497081fe6eef685db6a97fb991b53e95255307c711915a4a4ab42584f6",
+      "size": 65,
+      "start_rva": "0x001613cd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_kind_zero_apply",
+      "instruction_hex": "83bd14feffff0075448d857cfdffff508d8dc8fbffffe8a8a4ffff81ec34010000c645fc0a8d85c8fbffff8bcc50e890a4ffff8b038bcbff108d8dc8fbffffc645fc08e86bcdfaff",
+      "meaning": "Default kind zero reaches the Board SpaceDamage virtual apply slot.",
+      "region_id": "effect_dispatcher",
+      "sha256": "0dbc1aedd96012f2ccbacdc2dd95ac1a0bb534c0a802e2083eaa81541f819e40",
+      "size": 72,
+      "start_rva": "0x001614ed"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_delay_gate_advance",
+      "instruction_hex": "f30f108544feffff0f57c90f2ec19ff6c4447b07b801000000eb0233c084c075518d8d7cfdffffc645fc07e84cc9faff8b7d0cb8c1de31358b75088bcfff8564fdffff2bce818568fdffff34010000f7e9c1fa068bc2c1e81f03c2398564fdffff8b8568fdffff0f826ffaffffe959010000",
+      "meaning": "Zero-duration records advance by one 0x134-byte slot; nonzero duration leaves the loop for continuation setup.",
+      "region_id": "effect_dispatcher",
+      "sha256": "c6af1075636a4a5a35db21823c324a279b1499a1a61efceecb7e8a7ebeaec5a3",
+      "size": 114,
+      "start_rva": "0x00161924"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "dispatcher_delay_suffix",
+      "instruction_hex": "698564fdffff340100008d4de4c68560fdffff00ffb560fdffffc745e400000000ff750c0534010000c745e80000000003450850c745ec00000000e89c6901008d8d14ffffffe8f14bfbff8b45e48d4de4898514ffffff8b45e8898518ffffff8b45ec89851cffffffc745e400000000c745e800000000c745ec00000000e8b94bfbff8d8514ffffff508d8b442c000051ff318d856cfdffff50e8dd4101008d8544feffff508d8b502c000051ff318d856cfdffff50e8014901008d8d14ffffffe8c6c9faff8d8d7cfdffffc645fc07e8b7c7faff8b7d0c8b7508",
+      "meaning": "A delay copies the suffix beginning at the next record and inserts it and the duration at the beginnings of paired Board vectors.",
+      "region_id": "effect_dispatcher",
+      "sha256": "539c60d7b1c456e3ecac312f904df992021950100a03005bcb5256da88738782",
+      "size": 219,
+      "start_rva": "0x00161a14"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "script_build_append",
+      "instruction_hex": "6a008d8dbcfeffffc745fc00000000e8de1ef4ff6aff6a008d4508c645fc01508d4d9ce8fa05dbff8d85bcfeffff508d8d54fcffffe8c83ef0ff8d8554fcffffc645fc02508d8d88fdffffe8b23ef0ff8d8588fdffffc645fc03508bcee8f0230000",
+      "meaning": "AddScript constructs a record, stores the script, copies it, and appends immediately.",
+      "region_id": "add_script",
+      "sha256": "a0838cc89bf1abd6f77637fc1354e5e5837b41f955df1aed4004f35ac409c2fc",
+      "size": 98,
+      "start_rva": "0x00257aae"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "delay_build_append",
+      "instruction_hex": "6a008d8dbcfeffffe8e52ff4fff30f1045088d85bcfeffffc745fc000000008d8d88fdffff50f30f114584c6458001e8ce4ff0ff8d8588fdffffc645fc01508bcee80c350000",
+      "meaning": "AddDelay sets record+0xc4 and record+0xc8, copies the record, and appends immediately.",
+      "region_id": "add_delay",
+      "sha256": "34b8677480a9a9f666f70d01488b4cd44074a9ef59f2ede3e38c02ebe1ff1b82",
+      "size": 70,
+      "start_rva": "0x002569ae"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "vector_push_tail",
+      "instruction_hex": "8b4e04894d08894df0c745fc0100000085c9740657e8131af0ff81460434010000",
+      "meaning": "The common append copies at the current end and advances it by exactly 0x134.",
+      "region_id": "vector_push",
+      "sha256": "3c723ddef43d659ab198ba1bb3d8332826c8ba8d9e6eb4805834375b19e764df",
+      "size": 33,
+      "start_rva": "0x00259f83"
+    }
+  ],
+  "data_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "is_release_name",
+      "rva": "0x00420ad8",
+      "section": ".rdata",
+      "sha256": "f0f475d39753e76ee006f51c2383fb63ae335a15197119d5ca396ac931130abd",
+      "size": 10,
+      "text": "IsRelease"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_voice_name",
+      "rva": "0x00438cdc",
+      "section": ".rdata",
+      "sha256": "7ec7817f62f361c37bd36fdaf52fc43c37636187222ae31b9789315bee717d51",
+      "size": 9,
+      "text": "AddVoice"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_dropper_name",
+      "rva": "0x00438d5c",
+      "section": ".rdata",
+      "sha256": "df21bcd0837354586e6623a5981438897d6dc5fb48a1e3c1e2d7623ac203bbc1",
+      "size": 11,
+      "text": "AddDropper"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_script_name",
+      "rva": "0x00438d74",
+      "section": ".rdata",
+      "sha256": "f6d41ef54372f6decf02a9976dab7044fd5e62024ded73aa7eabe5d37e79a558",
+      "size": 10,
+      "text": "AddScript"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_delay_name",
+      "rva": "0x00438dd0",
+      "section": ".rdata",
+      "sha256": "30000a670942680dd52476b653c0da063198f2dc773cfebfcd4cb66a3abd427f",
+      "size": 9,
+      "text": "AddDelay"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "add_board_shake_name",
+      "rva": "0x00438e6c",
+      "section": ".rdata",
+      "sha256": "7327fd5cdbdf7e0e12d09cf4233e7ad3a35431dc1255d98c4fb12693d3591386",
+      "size": 14,
+      "text": "AddBoardShake"
+    }
+  ],
+  "dependencies": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
+      "artifact_sha256": "4cf2f05a267ed87a8cf5b14edbc874343a3969cef2dfb98e849f645ec177f942",
+      "id": "final_cave_startup",
+      "role": "Pins exact cave maps, zone cardinalities, source RNG skeleton, and source-relative schedule."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup_spawn_order.json",
+      "artifact_sha256": "b798a97c582be31ffba3d173e00b24eefae32a9725d03fe7a2260ca1403214f4",
+      "id": "final_cave_startup_spawn_order",
+      "role": "Pins boss and ordinary logical admission before any startup record dispatch."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+      "artifact_sha256": "b08b6d96d4d4ba0f53c024b301b17a039c8deb944632bbc6b8b4000a6e20af50",
+      "id": "final_cave_replacement",
+      "role": "Pins AddDropper complete record copying and kind-4 animation construction."
+    },
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement_cadence.json",
+      "artifact_sha256": "578275064f6f55ca170128d954613d846eb9398a239c2462de87356549ca7b4e",
+      "id": "final_cave_replacement_cadence",
+      "role": "Pins dispatcher-to-active-animation continuation and busy-to-impact settlement."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002563d0",
+      "id": "voice_to_push",
+      "instruction_hex": "e82b3b0000",
+      "source_region": "add_voice",
+      "target_region": "vector_push",
+      "target_rva": "0x00259f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002569b6",
+      "id": "delay_to_ctor",
+      "instruction_hex": "e8e52ff4ff",
+      "source_region": "add_delay",
+      "target_region": "record_ctor",
+      "target_rva": "0x001999a0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002569dd",
+      "id": "delay_to_copy",
+      "instruction_hex": "e8ce4ff0ff",
+      "source_region": "add_delay",
+      "target_region": "space_damage_copy",
+      "target_rva": "0x0015b9b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002569ef",
+      "id": "delay_to_push",
+      "instruction_hex": "e80c350000",
+      "source_region": "add_delay",
+      "target_region": "vector_push",
+      "target_rva": "0x00259f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00257a2b",
+      "id": "dropper_to_push",
+      "instruction_hex": "e8d0240000",
+      "source_region": "add_dropper",
+      "target_region": "vector_push",
+      "target_rva": "0x00259f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00257abd",
+      "id": "script_to_ctor",
+      "instruction_hex": "e8de1ef4ff",
+      "source_region": "add_script",
+      "target_region": "record_ctor",
+      "target_rva": "0x001999a0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00257ae3",
+      "id": "script_to_copy_one",
+      "instruction_hex": "e8c83ef0ff",
+      "source_region": "add_script",
+      "target_region": "space_damage_copy",
+      "target_rva": "0x0015b9b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00257af9",
+      "id": "script_to_copy_two",
+      "instruction_hex": "e8b23ef0ff",
+      "source_region": "add_script",
+      "target_region": "space_damage_copy",
+      "target_rva": "0x0015b9b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00257b0b",
+      "id": "script_to_push",
+      "instruction_hex": "e8f0230000",
+      "source_region": "add_script",
+      "target_region": "vector_push",
+      "target_rva": "0x00259f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002586e2",
+      "id": "shake_to_push",
+      "instruction_hex": "e819180000",
+      "source_region": "add_board_shake",
+      "target_region": "vector_push",
+      "target_rva": "0x00259f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00259f98",
+      "id": "vector_push_to_copy",
+      "instruction_hex": "e8131af0ff",
+      "source_region": "vector_push",
+      "target_region": "space_damage_copy",
+      "target_rva": "0x0015b9b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00161409",
+      "id": "dispatcher_to_copy",
+      "instruction_hex": "e8a2a5ffff",
+      "source_region": "effect_dispatcher",
+      "target_region": "space_damage_copy",
+      "target_rva": "0x0015b9b0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00160183",
+      "id": "apply_to_script_evaluator",
+      "instruction_hex": "e898c9eeff",
+      "source_region": "apply_space_damage",
+      "target_region": "script_evaluator",
+      "target_rva": "0x0004cb20"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00161aae",
+      "id": "dispatcher_to_suffix_insert",
+      "instruction_hex": "e8dd410100",
+      "source_region": "effect_dispatcher",
+      "target_region": "effect_suffix_insert",
+      "target_rva": "0x00175c90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00161aca",
+      "id": "dispatcher_to_delay_insert",
+      "instruction_hex": "e801490100",
+      "source_region": "effect_dispatcher",
+      "target_region": "effect_delay_insert",
+      "target_rva": "0x001763d0"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The registered shipped IsRelease wrapper returns true, so FAST_VERSION is false and every source-level release voice and delay branch is included.",
+      "evidence_class": "inference",
+      "id": "release_branch_is_exact",
+      "supports": [
+        "is_release_name",
+        "is_release_registration",
+        "is_release_wrapper",
+        "scripts/missions/final/mission_final_two.lua"
+      ]
+    },
+    {
+      "claim": "The reviewed AddVoice, AddDelay, AddDropper, AddScript, and AddBoardShake wrappers immediately reach the common 0x134-byte append. Complete record copies preserve source call order and insulate earlier records from later Lua object mutation.",
+      "evidence_class": "inference",
+      "id": "builders_append_independent_records",
+      "supports": [
+        "vector_push_tail",
+        "vector_push_to_copy",
+        "voice_to_push",
+        "delay_to_push",
+        "dropper_to_push",
+        "script_to_push",
+        "shake_to_push"
+      ]
+    },
+    {
+      "claim": "The dispatcher starts at record zero and advances by one 0x134-byte record. A nonzero delay stores the suffix beginning at the next record plus its duration, so later continuation preserves the remaining record order.",
+      "evidence_class": "inference",
+      "id": "delays_partition_without_reordering",
+      "supports": [
+        "dispatcher_order_setup",
+        "dispatcher_delay_gate_advance",
+        "dispatcher_delay_suffix",
+        "dispatcher_to_suffix_insert",
+        "dispatcher_to_delay_insert",
+        "final_cave_replacement_cadence"
+      ]
+    },
+    {
+      "claim": "On an unmodified valid startup, the three queued chunks are dispatched in Mech-id order 0, 1, 2. Kind zero reaches Board SpaceDamage apply, which evaluates each nonempty script through luaL_loadbuffer and synchronous lua_pcall before proceeding.",
+      "evidence_class": "inference",
+      "id": "mech_scripts_are_attempted_in_id_order",
+      "limitations": [
+        "Arbitrary modified-state Lua errors or cancellation are not ruled out."
+      ],
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "script_build_append",
+        "dispatcher_kind_zero_apply",
+        "board_apply_vtable_slot",
+        "apply_script_first",
+        "evaluator_to_lual_loadbuffer",
+        "evaluator_to_lua_pcall"
+      ]
+    },
+    {
+      "claim": "Each of the seven exact pylon iterations appends two consecutive independent building-dropper records before its following 0.5 delay. This proves two record and animation creations, not their eventual visual overlap or impact order.",
+      "evidence_class": "inference",
+      "id": "duplicate_pylon_droppers_are_real_records",
+      "supports": [
+        "scripts/missions/final/mission_final_two.lua",
+        "builders_append_independent_records",
+        "delays_partition_without_reordering",
+        "final_cave_startup"
+      ]
+    },
+    {
+      "claim": "For exact cave maps, ordered dispatch is delay/shake, all mountain pairs, Mech scripts 0-2, all duplicated pylon pairs, and the final bomb dropper. The exact record total is 44 for three mountains and 46 for four.",
+      "evidence_class": "inference",
+      "id": "startup_effect_order_is_closed",
+      "supports": [
+        "release_branch_is_exact",
+        "builders_append_independent_records",
+        "delays_partition_without_reordering",
+        "mech_scripts_are_attempted_in_id_order",
+        "duplicate_pylon_droppers_are_real_records"
+      ]
+    },
+    {
+      "claim": "No Rust change is justified: enemy admission is already proven to precede this queue, while the existing stage-change handoff consumes the concrete post-presentation board from a fresh settled bridge read.",
+      "evidence_class": "inference",
+      "id": "solver_boundary_remains_settled_read",
+      "supports": [
+        "final_cave_startup_spawn_order",
+        "startup_effect_order_is_closed"
+      ]
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "import_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004cb90",
+      "hint": 18,
+      "iat_rva": "0x003d64d4",
+      "id": "evaluator_to_lual_loadbuffer",
+      "instruction_hex": "ff15d4647d00",
+      "library": "lua5.1.dll",
+      "name": "luaL_loadbuffer",
+      "source_region": "script_evaluator"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0004cba6",
+      "hint": 71,
+      "iat_rva": "0x003d64d0",
+      "id": "evaluator_to_lua_pcall",
+      "instruction_hex": "ff15d0647d00",
+      "library": "lua5.1.dll",
+      "name": "lua_pcall",
+      "source_region": "script_evaluator"
+    }
+  ],
+  "method": {
+    "boundary_review": "Focused Ghidra 12.1.3 registration, record-builder, dispatcher, Board-apply, vtable, and Lua-evaluator review.",
+    "limitations": [
+      "Every native address applies only to the pinned Windows executable.",
+      "Requested delay values are semantic scheduler inputs, not measured wall-clock seconds.",
+      "Record and animation creation order does not prove visual impact overlap or order.",
+      "Concrete startup RNG outputs, coordinates, and UIDs remain unknown."
+    ],
+    "source_review": "Exact shipped Lua identity plus checked construction order and exact cave-map zone counts from the pinned startup artifact."
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 IsRelease registration window.",
+      "end_rva_exclusive": "0x0004b3a7",
+      "evidence_class": "fact",
+      "id": "is_release_registration",
+      "section": ".text",
+      "sha256": "ba3af457a85aaaef4a49b1bdff7d7ffd65e3ccf95a6ac6bcb0d2ba9c83b7ad62",
+      "size": 22,
+      "start_rva": "0x0004b391"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 shipped IsRelease wrapper body.",
+      "end_rva_exclusive": "0x00068eb3",
+      "evidence_class": "fact",
+      "id": "is_release_wrapper",
+      "section": ".text",
+      "sha256": "e18aacce29affcdddaa5f641ac1ec12552e0fe9d066e6408941b1792818b8619",
+      "size": 3,
+      "start_rva": "0x00068eb0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 synchronous Lua buffer evaluator body.",
+      "end_rva_exclusive": "0x0004cc79",
+      "evidence_class": "fact",
+      "id": "script_evaluator",
+      "section": ".text",
+      "sha256": "8909ef982288cfb9fbd7a4ddd053078e2b85545334467f64b3c5986e32fd5ac7",
+      "size": 345,
+      "start_rva": "0x0004cb20"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 complete SkillEffect record copy body.",
+      "end_rva_exclusive": "0x0015bcb4",
+      "evidence_class": "fact",
+      "id": "space_damage_copy",
+      "section": ".text",
+      "sha256": "3846fdb1ca2ebc1b4b6e83a64994f82d4907938345ff0d856c9bbea690957fc6",
+      "size": 772,
+      "start_rva": "0x0015b9b0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board SpaceDamage application body.",
+      "end_rva_exclusive": "0x001604bc",
+      "evidence_class": "fact",
+      "id": "apply_space_damage",
+      "section": ".text",
+      "sha256": "1597eb6d490f3ae9ee95547a0caa83999502b4ba9c3423bc50b1dca7acc20210",
+      "size": 940,
+      "start_rva": "0x00160110"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 ordered SkillEffect dispatcher body.",
+      "end_rva_exclusive": "0x00161c6f",
+      "evidence_class": "fact",
+      "id": "effect_dispatcher",
+      "section": ".text",
+      "sha256": "ccbecc70505f546c2d068ad7c95121f0c631aa27dd197127904de3faaff307c2",
+      "size": 2975,
+      "start_rva": "0x001610d0"
+    },
+    {
+      "boundary_basis": "Contiguous Ghidra 12.1.3 delayed effect-suffix insertion entry and count-calculation prefix; the complete function body is sparse.",
+      "end_rva_exclusive": "0x00175d24",
+      "evidence_class": "fact",
+      "id": "effect_suffix_insert",
+      "section": ".text",
+      "sha256": "f20adaaea64d98610fc995394be8c391f13a5e4193c0e0936b174fece5d1cf52",
+      "size": 148,
+      "start_rva": "0x00175c90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 delayed-duration vector insertion body.",
+      "end_rva_exclusive": "0x001765b2",
+      "evidence_class": "fact",
+      "id": "effect_delay_insert",
+      "section": ".text",
+      "sha256": "e7d9004dacde914ee33f0b41500a7cb98ffa0b0f6ed91e20843300bb3be66c2c",
+      "size": 482,
+      "start_rva": "0x001763d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 default SkillEffect record constructor.",
+      "end_rva_exclusive": "0x00199c3d",
+      "evidence_class": "fact",
+      "id": "record_ctor",
+      "section": ".text",
+      "sha256": "2f17cc9bd3616c14305fb7fc1871bf0e37d09262825a99213f5b0568d6c6045d",
+      "size": 669,
+      "start_rva": "0x001999a0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect AddVoice wrapper.",
+      "end_rva_exclusive": "0x0025641e",
+      "evidence_class": "fact",
+      "id": "add_voice",
+      "section": ".text",
+      "sha256": "daff04ed73a90edb06860f7c8f492f4e6167b093e4c9c87a126372cb9f6b45ea",
+      "size": 238,
+      "start_rva": "0x00256330"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect AddDelay wrapper.",
+      "end_rva_exclusive": "0x00256a26",
+      "evidence_class": "fact",
+      "id": "add_delay",
+      "section": ".text",
+      "sha256": "56e5017dc5f97e3a36f414ad39dc9a0cda8ec55077defd9b7560a5e6b5b32571",
+      "size": 166,
+      "start_rva": "0x00256980"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect AddDropper wrapper.",
+      "end_rva_exclusive": "0x00257a7d",
+      "evidence_class": "fact",
+      "id": "add_dropper",
+      "section": ".text",
+      "sha256": "58c220e4690ef84da004018b95e6de9d13bb39341410e5735a05bdc0f1fb0aef",
+      "size": 221,
+      "start_rva": "0x002579a0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect AddScript wrapper.",
+      "end_rva_exclusive": "0x00257b64",
+      "evidence_class": "fact",
+      "id": "add_script",
+      "section": ".text",
+      "sha256": "5d90280d770c0a71ac491e978bb8256960bc898b513c9562329335412953bf24",
+      "size": 228,
+      "start_rva": "0x00257a80"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 SkillEffect AddBoardShake wrapper.",
+      "end_rva_exclusive": "0x0025871a",
+      "evidence_class": "fact",
+      "id": "add_board_shake",
+      "section": ".text",
+      "sha256": "ba58702321b01df1f1ba7c39d1110ceb5ff90dc5a69b0b4546c4ca55b701e5f1",
+      "size": 410,
+      "start_rva": "0x00258580"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 common 0x134-byte record append body.",
+      "end_rva_exclusive": "0x00259fb7",
+      "evidence_class": "fact",
+      "id": "vector_push",
+      "section": ".text",
+      "sha256": "39a9908012609c47f77556aea5af0865f3eb36943b5a1860c4c338bb6ea6fbb7",
+      "size": 183,
+      "start_rva": "0x00259f00"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 AddVoice registration window.",
+      "end_rva_exclusive": "0x0027b71c",
+      "evidence_class": "fact",
+      "id": "voice_registration",
+      "section": ".text",
+      "sha256": "8b444ae0831bacc85c7f5bb12c8e38c8cfde4085f6a219626947105704b7cf4b",
+      "size": 27,
+      "start_rva": "0x0027b701"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 AddDropper registration window.",
+      "end_rva_exclusive": "0x0027b7ee",
+      "evidence_class": "fact",
+      "id": "dropper_registration",
+      "section": ".text",
+      "sha256": "1ea1e9f3b5ab20f3d53326943a9406eba68b4ef99a3473f9b93e1f70f2f009c7",
+      "size": 27,
+      "start_rva": "0x0027b7d3"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 AddScript registration window.",
+      "end_rva_exclusive": "0x0027b82a",
+      "evidence_class": "fact",
+      "id": "script_registration",
+      "section": ".text",
+      "sha256": "417a2a414ed07472c734658f208138d36903d140204ca0458d70c958cfc166b0",
+      "size": 27,
+      "start_rva": "0x0027b80f"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 AddDelay registration window.",
+      "end_rva_exclusive": "0x0027b952",
+      "evidence_class": "fact",
+      "id": "delay_registration",
+      "section": ".text",
+      "sha256": "0da010be0bbf2b3b5e6040f41ff218d1b4c33587d8bd47784f643028bd3e3e17",
+      "size": 27,
+      "start_rva": "0x0027b937"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 AddBoardShake registration window.",
+      "end_rva_exclusive": "0x0027bb84",
+      "evidence_class": "fact",
+      "id": "shake_registration",
+      "section": ".text",
+      "sha256": "5a4010b5e4d3a645da9a39339670f8428532b2b11e927b8cac10abbc59c8b4de",
+      "size": 27,
+      "start_rva": "0x0027bb69"
+    }
+  ],
+  "registration_bindings": [
+    {
+      "evidence_class": "fact",
+      "lua_name": "IsRelease",
+      "name_anchor": "is_release_name",
+      "name_instruction_hex": "bad80a8200",
+      "name_instruction_rva": "0x0004b396",
+      "region_id": "is_release_registration",
+      "wrapper_instruction_hex": "68b08e4600",
+      "wrapper_instruction_rva": "0x0004b391",
+      "wrapper_rva": "0x00068eb0"
+    },
+    {
+      "evidence_class": "fact",
+      "lua_name": "AddVoice",
+      "name_anchor": "add_voice_name",
+      "name_instruction_hex": "68dc8c8300",
+      "name_instruction_rva": "0x0027b710",
+      "region_id": "voice_registration",
+      "wrapper_instruction_hex": "c745ec30636500",
+      "wrapper_instruction_rva": "0x0027b701",
+      "wrapper_rva": "0x00256330"
+    },
+    {
+      "evidence_class": "fact",
+      "lua_name": "AddDropper",
+      "name_anchor": "add_dropper_name",
+      "name_instruction_hex": "685c8d8300",
+      "name_instruction_rva": "0x0027b7e2",
+      "region_id": "dropper_registration",
+      "wrapper_instruction_hex": "c745eca0796500",
+      "wrapper_instruction_rva": "0x0027b7d3",
+      "wrapper_rva": "0x002579a0"
+    },
+    {
+      "evidence_class": "fact",
+      "lua_name": "AddScript",
+      "name_anchor": "add_script_name",
+      "name_instruction_hex": "68748d8300",
+      "name_instruction_rva": "0x0027b81e",
+      "region_id": "script_registration",
+      "wrapper_instruction_hex": "c745ec807a6500",
+      "wrapper_instruction_rva": "0x0027b80f",
+      "wrapper_rva": "0x00257a80"
+    },
+    {
+      "evidence_class": "fact",
+      "lua_name": "AddDelay",
+      "name_anchor": "add_delay_name",
+      "name_instruction_hex": "68d08d8300",
+      "name_instruction_rva": "0x0027b946",
+      "region_id": "delay_registration",
+      "wrapper_instruction_hex": "c745ec80696500",
+      "wrapper_instruction_rva": "0x0027b937",
+      "wrapper_rva": "0x00256980"
+    },
+    {
+      "evidence_class": "fact",
+      "lua_name": "AddBoardShake",
+      "name_anchor": "add_board_shake_name",
+      "name_instruction_hex": "686c8e8300",
+      "name_instruction_rva": "0x0027bb78",
+      "region_id": "shake_registration",
+      "wrapper_instruction_hex": "c745ec80856500",
+      "wrapper_instruction_rva": "0x0027bb69",
+      "wrapper_rva": "0x00258580"
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "capstone_version": "5.0.7",
+    "ghidra_version": "12.1.3",
+    "lua_files": [
+      {
+        "evidence_class": "fact",
+        "path": "scripts/missions/final/mission_final_two.lua",
+        "sha256": "c8a8e40f512939c1f4fd0e0df416e5cbaec00c639e2985ad776e13c38735b17c",
+        "size": 4887,
+        "symbols": [
+          "FAST_VERSION",
+          "SpawnMechs",
+          "Mission_Final_Cave:StartMission",
+          "Mission_Final_Cave:AddBomb"
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "control_window_count": 9,
+    "data_anchor_count": 6,
+    "dependency_count": 4,
+    "direct_edge_count": 15,
+    "duplicated_pylon_records_proven": true,
+    "finding_count": 7,
+    "import_edge_count": 2,
+    "lua_source_count": 1,
+    "record_order_proven": true,
+    "region_count": 20,
+    "registration_binding_count": 6,
+    "release_branch_proven": true,
+    "script_evaluation_order_proven": true,
+    "simulator_change_required": false,
+    "unresolved_count": 5,
+    "visual_impact_order_proven": false,
+    "vtable_binding_count": 1,
+    "wall_clock_duration_proven": false
+  },
+  "supersedes": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_startup.json",
+    "remaining_gap_ids": [
+      "concrete_startup_rng_outputs",
+      "presentation_timing_and_overlap",
+      "modified_state_errors_and_collisions",
+      "spawn_block_lifetime",
+      "non_windows_equivalence"
+    ],
+    "resolved_facets": [
+      "startup_effect_record_order",
+      "intra_effect_add_script_evaluation_order",
+      "duplicated_pylon_dropper_records",
+      "release_delay_branch"
+    ]
+  },
+  "unresolved": [
+    {
+      "id": "concrete_startup_rng_outputs",
+      "next_evidence": "Use a fresh settled bridge read or a matched startup trace.",
+      "question": "Which coordinates, identities, and UIDs occur in a particular startup?",
+      "static_status": "The call skeleton and effect order are exact, but incoming CRT state and concrete results are not."
+    },
+    {
+      "id": "presentation_timing_and_overlap",
+      "next_evidence": "Capture timestamped presentation telemetry only if UI timing becomes solver-relevant.",
+      "question": "When do queued animations land in wall-clock time, and which overlap?",
+      "static_status": "Requested delay values and record creation order are exact; frame cadence, animation duration, and impact overlap are not."
+    },
+    {
+      "id": "modified_state_errors_and_collisions",
+      "next_evidence": "Add a narrowly controlled trace or separate exact-build boundary map for the concrete edge case.",
+      "question": "How do arbitrary script errors, cancellation, occupancy collisions, or terrain replacement alter presentation?",
+      "static_status": "The ordinary exact startup path is pinned; adversarial or modified-effect outcomes are not generalized."
+    },
+    {
+      "id": "spawn_block_lifetime",
+      "next_evidence": "Map the BlockSpawn cleanup and phase-reset consumers if forecasting across settlement becomes necessary.",
+      "question": "Exactly when do temporary and permanent startup spawn blocks clear or persist?",
+      "static_status": "Synchronous writes and their placement before enemy selection are proven, but full lifetime semantics are outside this queue map."
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Produce independent build-keyed maps.",
+      "question": "Do macOS and other executable builds use identical record and dispatcher semantics?",
+      "static_status": "This evidence is keyed only to Windows build 13725832."
+    }
+  ],
+  "vtable_bindings": [
+    {
+      "evidence_class": "fact",
+      "id": "board_apply_vtable_slot",
+      "pointer_rva": "0x0042e258",
+      "pointer_section": ".rdata",
+      "target_region": "apply_space_damage",
+      "target_rva": "0x00160110"
+    }
+  ]
+}
