@@ -396,12 +396,12 @@ exhaust native-only consumers that address a Skill field by offset.
 Reverify the chain with
 `scripts/itb_observatory_death_event_credit.py verify`. Rust's lethal
 environment path already records the same ordinary mission kill and excludes
-Minor enemies; the focused Final Cave regression locks the behavior, so no
-simulator semantic change or version bump follows. The successor below closes
-exact event-frame visibility. Specialized pawns and teams,
-achievement/profile tails, `any_kill_-10` consumers, the complete
-meaning/writer set for Pawn byte `+0x1175`, native-only `OnKill` consumers, and
-non-Windows equivalence remain open.
+Minor enemies; the focused Final Cave regression locks that portion. The
+event-frame successor below closes exact visibility, and the specialized-death
+successor after it closes shipped boss/Minor classification plus the missing
+Rust IsMech filter. Achievement/profile tails, `any_kill_-10` consumers, the
+complete meaning/writer set for Pawn byte `+0x1175`, native-only `OnKill`
+consumers, and non-Windows equivalence remain open.
 
 ## Board-death event frame visibility
 
@@ -434,6 +434,37 @@ Events raised outside Board/effect processing, the cached-controller helper's
 concrete return type, terminal teardown delivery, and other depots remain
 separate questions. The solver does not model intra-update Lua callback
 visibility, so no Rust semantic change or version bump follows.
+
+## Specialized-enemy death boundary
+
+The exact-build successor
+`data/observatory/native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json`
+joins `Mission_Boss:StartBoss` to the one-argument native Pawn factory, common
+constructor, Board-driven shared Pawn update, and sole common death-processor
+call. The wrapper supplies selector 2, resolves `GetDefaultTeam`, allocates
+0x1328 bytes, invokes the common constructor, installs the common Pawn vtable,
+defaults `IsMech` and `Minor` false, and then loads the Lua definition's
+`Minor` value into Pawn `+0x10d0`. There is no hidden boss subclass constructor
+on this reviewed route.
+
+Once the common death processor is reached, its ordinary event predicate is
+exactly non-Mech, team 6, then non-Minor event 2 versus Minor event 12. The
+complete reviewed body does not gate that split on Leader, Tier, boss, Psion,
+or Pawn type name. The accepted Lua tree has exactly 17 active Minor
+definitions and no child derived from one. Its 21 nonempty `BossPawn` values
+are literal `TEAM_ENEMY` definitions retaining global `Minor=false`.
+Consequently every boss objective and each of `BlobBoss`, `BlobBossMed`, and
+`BlobBossSmall` raises ordinary event 2, while the four boss-specific Minor
+auxiliaries `BlobB`, `TotemB`, `SlugEgg1`, and `SpiderlingEgg1` raise event 12.
+
+The only three shipped `SetMech()` calls construct tutorial player-team mechs;
+the only `SetTeam()` call also selects `TEAM_PLAYER`. Thus the Rust discrepancy
+was not vanilla-reachable, but it still contradicted the exact native
+predicate. Simulator v407 adds the missing `!is_mech` test before preserving
+the Minor and Acid Tank filters, with the pre-v407 corpus archived as
+`recordings/failure_db_snapshot_sim_v406.jsonl`. Reverify the complete chain
+with `scripts/itb_observatory_specialized_enemy_death.py verify`. Detailed
+alternate Mech-death effects, mods, and non-Windows depots remain separate.
 
 ## Reproducible analysis workflow
 
@@ -616,10 +647,13 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    environment credit bypasses all Mech-ID XP/kill/any-kill buckets while the
    mission event remains independent. The accepted shipped Lua tree has no
    `OnKill` callback definition; its seven occurrences are one empty default
-   plus six localization keys for inline `GetSkillEffect` mechanics. Exact
-   sweep and event-frame timing, subclass/team outcomes, native-only Skill
-   field-offset consumers, achievement/profile tails, death presentation, and
-   non-Windows equivalence remain open.
+   plus six localization keys for inline `GetSkillEffect` mechanics. A third
+   build-keyed continuation closes event-frame visibility, and a fourth closes
+   the shipped specialized class/team outcomes while simulator v407 restores
+   the native non-Mech predicate. Exact damage-relative sweep timing, concrete
+   `IsCorpse` subclass values, native-only Skill field-offset consumers,
+   achievement/profile tails, death presentation, and non-Windows equivalence
+   remain open.
 9. Add native candidate records only if a solver mismatch needs more than the
    observed Lua `GetTargetScore` and `ScorePositioning` streams plus reviewed
    candidate-loop RNG caller IDs.

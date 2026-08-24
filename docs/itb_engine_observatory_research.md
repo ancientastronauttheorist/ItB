@@ -515,8 +515,8 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   `-10` instead uses `env_xp` and `any_kill_-10` while still raising the
   non-Minor mission event. All seven shipped Lua `OnKill` occurrences are an
   empty default or localization keys with inline `GetSkillEffect` mechanics,
-  not callback definitions. Native-only field-offset consumers, specialized
-  cases, achievement/profile tails, and other depots remain open; and
+  not callback definitions. Native-only field-offset consumers,
+  achievement/profile tails, and other depots remain open; and
 - the Board-death event-frame continuation: the outer update's sole direct
   pending-event publisher runs before its exact Game/battle/BoardPlayer chain;
   the BoardPlayer orchestrator then runs Board/effect update before
@@ -524,6 +524,15 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   from the same update's `BaseUpdate` and becomes readable in the next ordinary
   active-battle outer update. Pause/teardown timing, non-Board producers, and
   other depots are not generalized; and
+- the specialized-enemy death continuation: the shipped one-argument named
+  factory resolves `GetDefaultTeam`, allocates and constructs the common Pawn,
+  defaults `IsMech`/`Minor` false, and loads Lua `Minor`; Board reaches the
+  shared update and sole common death-processor call. The reached ordinary
+  predicate is exactly non-Mech `TEAM_ENEMY`, with non-Minor event 2 and Minor
+  event 12, independent of boss/leader/Psion/type name. The exact tree contains
+  17 active Minor types, 21 non-Minor boss objectives, and four Minor boss
+  auxiliaries. Rust's missing `!is_mech` filter is corrected in simulator v407
+  with the v406 corpus archived; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,
@@ -778,8 +787,8 @@ only if the recheck passes; a destroyed pylon's surviving permanent block can
 abort that later materialization. Concrete cave startup draws, visual
 presentation interleave, and the replacement callback's incoming RNG state,
 selected coordinate/UID/block state, and wall-clock presentation duration
-remain deliberately unmodeled; simulator v406 still stops for a fresh settled
-bridge read.
+remain deliberately unmodeled; simulator v407 retains v406's fresh-settled-
+bridge-read boundary.
 
 ### Milestone 1: Provenance inventory
 

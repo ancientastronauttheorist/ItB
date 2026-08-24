@@ -6933,6 +6933,125 @@ def test_native_event_frame_visibility_record_closes_board_death_timing():
     assert visibility["solver_impact"]["simulator_change_required"] is False
 
 
+def test_native_specialized_enemy_death_record_closes_classification_and_binds_v407():
+    record = _mission_provenance_record("native-specialized-enemy-death-boundary")
+    assert record["coverage"] == "partial"
+
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations[
+        "src/observatory/specialized_enemy_death_boundary.py"
+    ] == {
+        "build_specialized_enemy_death_boundary_map",
+        "validate_specialized_enemy_death_boundary_map",
+        "validate_specialized_enemy_death_boundary_map_binding",
+    }
+    assert implementations[
+        "scripts/itb_observatory_specialized_enemy_death.py"
+    ] == {"main"}
+    assert implementations["rust_solver/src/board.rs"] == {
+        "unit_counts_for_mission_kill",
+        "test_mission_kill_predicate_matches_native_enemy_event_gate",
+        "test_acid_tank_mission_kill_keeps_native_gate_before_acid_filter",
+    }
+    assert implementations["rust_solver/src/lib.rs"] == {"SIMULATOR_VERSION"}
+    assert implementations["src/solver/verify.py"] == {"SIMULATOR_VERSION"}
+    assert implementations["src/bridge/modloader.lua"] == {
+        "p:GetTeam",
+        "p:IsMech",
+        "pawn_def.Minor",
+    }
+
+    source_by_path = {source["path"]: source for source in record["sources"]}
+    assert len(source_by_path) == 15
+    assert source_by_path["scripts/global.lua"]["sha256"] == (
+        "96d82d83a1620061e6fd013aa8462883e"
+        "1f3764d03752757ad77fbbbd04bc9b2"
+    )
+    assert source_by_path["scripts/missions/bosses/boss.lua"]["sha256"] == (
+        "9a957789e714c6d22d2f90bcd79dbb68"
+        "c897aaa530e23d5be50cf7cf650853f1"
+    )
+    assert source_by_path["scripts/missions/bosses/goo.lua"]["symbols"] == [
+        "BlobBoss",
+        "BlobBossMed",
+        "BlobBossSmall",
+    ]
+    assert source_by_path["scripts/missions/mission_tutorial.lua"]["symbols"] == [
+        "Tank:SetMech",
+        "Artillery:SetMech",
+        "PunchMech:SetMech",
+    ]
+
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "eight reviewed native regions" in facts
+    assert "12 instruction-aligned control windows" in facts
+    assert "one 0x1328-byte object" in facts
+    assert "sole direct caller of the common death processor" in facts
+    assert "17 active Minor=true Pawn definitions" in facts
+    assert "21 nonempty Mission_Boss BossPawn values" in facts
+    assert "BlobBossMed and BlobBossSmall" in facts
+    assert "four boss-specific Minor auxiliaries" in facts
+    assert "old Rust enemy-team-Mech discrepancy was therefore dormant" in facts
+    assert "Simulator v407" in facts
+    assert "failure_db_snapshot_sim_v406.jsonl" in facts
+
+    gaps = " ".join(record["known_gaps"])
+    assert "separate native Mech-death branch" in gaps
+    assert "Mods may create enemy-team Mechs" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_"
+        "specialized_enemy_death_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert boundary["summary"] == {
+        "active_minor_type_count": 17,
+        "boss_objective_type_count": 21,
+        "call_inventory_count": 3,
+        "control_window_count": 12,
+        "data_anchor_count": 1,
+        "dependency_count": 1,
+        "direct_edge_count": 6,
+        "finding_count": 7,
+        "generic_factory_path_proven": True,
+        "minor_boss_auxiliary_type_count": 4,
+        "region_count": 8,
+        "simulator_change_applied": True,
+        "simulator_contradiction_found": True,
+        "simulator_version": 407,
+        "source_count": 15,
+        "specialized_enemy_death_classes_proven": True,
+        "unresolved_count": 3,
+    }
+    assert boundary["contracts"]["ordinary_enemy_event_predicate"] == {
+        "event_2_id": 2,
+        "event_2_name": "EVENT_ENEMY_KILLED",
+        "event_2_required_is_mech_value": False,
+        "event_2_required_minor_value": False,
+        "event_2_required_team_value": 6,
+        "leader_flag_is_a_gate": False,
+        "mech_branch_is_separate": True,
+        "minor_enemy_event_id": 12,
+        "pawn_type_name_is_a_gate": False,
+        "scope": "a Pawn death that reaches the common death processor",
+        "tier_flag_is_a_gate": False,
+    }
+    assert boundary["contracts"]["solver_conformance"][
+        "rust_predicate"
+    ] == "enemy && !is_mech && !minor"
+    assert boundary["contracts"]["solver_conformance"][
+        "fixed_in_simulator_version"
+    ] == 407
+
+
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
     record = _mission_provenance_record(
         "player-sources-dormant-experiment-structure"

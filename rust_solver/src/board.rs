@@ -1102,7 +1102,9 @@ impl Board {
 }
 
 pub fn unit_counts_for_mission_kill(mission_id: &str, unit: &Unit) -> bool {
-    if !unit.is_enemy() || unit.minor() {
+    // Native EVENT_ENEMY_KILLED (event 2) is emitted only from the non-Mech
+    // TEAM_ENEMY branch. Minor enemies take the separate event-12 path.
+    if !unit.is_enemy() || unit.is_mech() || unit.minor() {
         return false;
     }
     if mission_id == "Mission_AcidTank" {
@@ -1328,6 +1330,85 @@ mod tests {
         after.units[3].hp = 0;
 
         assert_eq!(count_unit_deaths_between(&before, &after), 3);
+    }
+
+    #[test]
+    fn test_mission_kill_predicate_matches_native_enemy_event_gate() {
+        for type_name in [
+            "BeetleBoss",
+            "BlobBoss",
+            "BlobBossMed",
+            "BlobBossSmall",
+            "Jelly_Boss",
+            "ScorpionBoss",
+        ] {
+            let mut unit = Unit {
+                team: Team::Enemy,
+                hp: 1,
+                max_hp: 1,
+                ..Unit::default()
+            };
+            unit.set_type_name(type_name);
+            assert!(
+                unit_counts_for_mission_kill("Mission_Boss", &unit),
+                "ordinary non-Minor boss form {type_name} must use event 2",
+            );
+        }
+
+        for type_name in ["BlobB", "TotemB", "SlugEgg1", "SpiderlingEgg1"] {
+            let mut unit = Unit {
+                team: Team::Enemy,
+                hp: 1,
+                max_hp: 1,
+                flags: UnitFlags::MINOR,
+                ..Unit::default()
+            };
+            unit.set_type_name(type_name);
+            assert!(
+                !unit_counts_for_mission_kill("Mission_Boss", &unit),
+                "Minor boss auxiliary {type_name} must use event 12, not event 2",
+            );
+        }
+
+        let enemy_mech = Unit {
+            team: Team::Enemy,
+            hp: 1,
+            max_hp: 1,
+            flags: UnitFlags::IS_MECH,
+            ..Unit::default()
+        };
+        assert!(
+            !unit_counts_for_mission_kill("Mission_Boss", &enemy_mech),
+            "native Mech death handling bypasses the ordinary enemy event branch",
+        );
+
+        for team in [Team::Player, Team::Neutral] {
+            let unit = Unit {
+                team,
+                hp: 1,
+                max_hp: 1,
+                ..Unit::default()
+            };
+            assert!(!unit_counts_for_mission_kill("Mission_Boss", &unit));
+        }
+    }
+
+    #[test]
+    fn test_acid_tank_mission_kill_keeps_native_gate_before_acid_filter() {
+        let mut acid_enemy = Unit {
+            team: Team::Enemy,
+            hp: 1,
+            max_hp: 1,
+            flags: UnitFlags::ACID,
+            ..Unit::default()
+        };
+        assert!(unit_counts_for_mission_kill("Mission_AcidTank", &acid_enemy));
+
+        acid_enemy.flags.insert(UnitFlags::IS_MECH);
+        assert!(!unit_counts_for_mission_kill("Mission_AcidTank", &acid_enemy));
+
+        acid_enemy.flags.remove(UnitFlags::IS_MECH | UnitFlags::ACID);
+        assert!(!unit_counts_for_mission_kill("Mission_AcidTank", &acid_enemy));
     }
 
     #[test]

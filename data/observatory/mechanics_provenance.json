@@ -10016,6 +10016,158 @@
           "symbols": ["test_native_event_frame_visibility_record_closes_board_death_timing"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed native artifact data/observatory/native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9 and scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155. It hash-pins eight reviewed native regions, 12 instruction-aligned control windows, six direct edges, three complete raw-rel32 call inventories, one data anchor, 15 selected sources, and the prior death-event/credit dependency."
+        },
+        {
+          "classification": "fact",
+          "statement": "Mission_Boss:StartBoss uses the one-argument PAWN_FACTORY:CreatePawn route. Its wrapper supplies selector 2, the construct helper resolves GetDefaultTeam, allocates one 0x1328-byte object, invokes the common Pawn constructor, installs the common Pawn vtable, defaults IsMech and Minor false, and then loads Lua Minor into Pawn+0x10d0. No hidden boss subclass constructor appears on this reviewed path."
+        },
+        {
+          "classification": "fact",
+          "statement": "Board master update reaches the shared Pawn update, whose guarded call at RVA 0x002345cd is the sole direct caller of the common death processor. Once reached, the ordinary event branch requires IsMech=false and team 6, then emits EVENT_ENEMY_KILLED event 2 for Minor=false or event 12 for Minor=true. The reviewed complete body contains no leader, tier, boss, Psion, or Pawn type-name gate on that split."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact accepted 153-file Lua tree has 17 active Minor=true Pawn definitions and no child derived from any of those Minor types. It has 21 nonempty Mission_Boss BossPawn values; each objective is a literal TEAM_ENEMY definition retaining the global Minor=false default. The two BlobBoss Minor=true lines are comments, while BlobBossMed and BlobBossSmall inherit the non-Minor BlobBoss definition."
+        },
+        {
+          "classification": "inference",
+          "statement": "Every one of the 21 shipped boss objectives, ordinary leaders, Psions, and each of BlobBoss, BlobBossMed, and BlobBossSmall therefore uses event 2 on an ordinary reached death. BlobB, TotemB, SlugEgg1, and SpiderlingEgg1 are the four boss-specific Minor auxiliaries and use event 12 instead; the other 13 active Minor types do the same."
+        },
+        {
+          "classification": "fact",
+          "statement": "The shipped tree's only three SetMech calls create tutorial PunchMech, TankMech, and ArtiMech definitions whose DefaultTeam is TEAM_PLAYER. Its only SetTeam call changes a Snowmine bot to TEAM_PLAYER, and no active SetTeam(TEAM_ENEMY) or Mech=true property exists. The old Rust enemy-team-Mech discrepancy was therefore dormant in the exact vanilla tree, not evidence that the native IsMech gate could be omitted."
+        },
+        {
+          "classification": "fact",
+          "statement": "Simulator v407 changes rust_solver/src/board.rs::unit_counts_for_mission_kill to require enemy && !is_mech && !minor before retaining Mission_AcidTank's ACID filter. The bridge already supplies team, mech, and minor. The pre-v407 corpus is archived as recordings/failure_db_snapshot_sim_v406.jsonl, and focused boss/Minor/Mech plus broad Rust regression tests bind the correction."
+        }
+      ],
+      "id": "native-specialized-enemy-death-boundary",
+      "implementations": [
+        {
+          "path": "src/observatory/specialized_enemy_death_boundary.py",
+          "symbols": ["build_specialized_enemy_death_boundary_map", "validate_specialized_enemy_death_boundary_map", "validate_specialized_enemy_death_boundary_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_specialized_enemy_death.py",
+          "symbols": ["main"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["unit_counts_for_mission_kill", "test_mission_kill_predicate_matches_native_enemy_event_gate", "test_acid_tank_mission_kill_keeps_native_gate_before_acid_filter"]
+        },
+        {
+          "path": "rust_solver/src/lib.rs",
+          "symbols": ["SIMULATOR_VERSION"]
+        },
+        {
+          "path": "src/solver/verify.py",
+          "symbols": ["SIMULATOR_VERSION"]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": ["p:GetTeam", "p:IsMech", "pawn_def.Minor"]
+        }
+      ],
+      "known_gaps": [
+        "The separate native Mech-death branch is mapped only far enough to prove exclusion from ordinary EVENT_ENEMY_KILLED event 2; every pilot, presentation, and alternate-event side effect inside that branch is not reconstructed.",
+        "The source inventory proves the exact accepted shipped Lua tree. Mods may create enemy-team Mechs, mutate Minor after construction, or replace the factory path and require their own content-keyed classification.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": ["Pawn", "Minor", "DefaultTeam"]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": ["Blob1", "MantisEgg", "WebbEgg1", "Spiderling1", "PunchMech", "TankMech", "ArtiMech"]
+        },
+        {
+          "path": "scripts/advanced/ae_pawns.lua",
+          "sha256": "e87efe90c0342f26969c14159e6b6c93766aeedcbc3319fb0f418048d129e9f4",
+          "symbols": ["Totem1", "Totem2", "BonusDebris"]
+        },
+        {
+          "path": "scripts/advanced/bosses/blobber.lua",
+          "sha256": "0044135d2690c28b7f3a4178c010a0e97d12a07873276a2cc735a4331b0f728c",
+          "symbols": ["BlobberBoss", "BlobB"]
+        },
+        {
+          "path": "scripts/advanced/bosses/shaman.lua",
+          "sha256": "1f9b4b3ac13b4af02a90351bb6e67e3f0785156e7d909f2f3d04342f32d7578c",
+          "symbols": ["ShamanBoss", "TotemB"]
+        },
+        {
+          "path": "scripts/advanced/missions/acid/mission_acidstorm.lua",
+          "sha256": "71d3d80d27ddeee0f05b6f237eaba35e98b5e585d98e67331b0b56a62731f6b8",
+          "symbols": ["Storm_Generator"]
+        },
+        {
+          "path": "scripts/advanced/missions/snow/mission_hacking.lua",
+          "sha256": "1d26d25e090ef69854001d48a676657bf049e37b432acf87aebf66936feb0e55",
+          "symbols": ["Hacked_Building"]
+        },
+        {
+          "path": "scripts/advanced/missions/snow/mission_shields.lua",
+          "sha256": "43a620c78ab42e4fe94e78ba311086bcc5a28433c0a841ca90cc542447a430d6",
+          "symbols": ["Shield_Building"]
+        },
+        {
+          "path": "scripts/missions/acid/mission_barrels.lua",
+          "sha256": "3101ea805315e49e6a098c240f242bea28e39466dd9c41deb253468d93f7fc48",
+          "symbols": ["AcidVat"]
+        },
+        {
+          "path": "scripts/missions/bosses/boss.lua",
+          "sha256": "9a957789e714c6d22d2f90bcd79dbb68c897aaa530e23d5be50cf7cf650853f1",
+          "symbols": ["Mission_Boss:StartBoss", "PAWN_FACTORY:CreatePawn"]
+        },
+        {
+          "path": "scripts/missions/bosses/goo.lua",
+          "sha256": "f6761a7cad49883fa85e631b3a524a6d56d0d593616aa3e1031b1c65b4bab03b",
+          "symbols": ["BlobBoss", "BlobBossMed", "BlobBossSmall"]
+        },
+        {
+          "path": "scripts/missions/bosses/slug.lua",
+          "sha256": "cf93aa66cf65079d55518a446da2bffd85df4a3602c5afdf52bca6ab6c728d52",
+          "symbols": ["SlugBoss", "SlugEgg1"]
+        },
+        {
+          "path": "scripts/missions/bosses/spider.lua",
+          "sha256": "f7d81d714922e1b5b22d5b76a8edcb6fb96dd61ae5b20a3008c66b5068046455",
+          "symbols": ["SpiderBoss", "SpiderlingEgg1"]
+        },
+        {
+          "path": "scripts/missions/mission_tutorial.lua",
+          "sha256": "8629ce275906d97e3f53172ff7202ff3c59cd10322583c3c391a92621b8bbf39",
+          "symbols": ["Tank:SetMech", "Artillery:SetMech", "PunchMech:SetMech"]
+        },
+        {
+          "path": "scripts/missions/snow/mission_botdefense.lua",
+          "sha256": "3b7138e0a0ba821fa46a557f726c94fbba4d7a856a201483873c74e7b06866ef",
+          "symbols": ["pawn:SetTeam(TEAM_PLAYER)"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_specialized_enemy_death_boundary.py",
+          "symbols": ["test_committed_map_closes_specialized_enemy_death_classes", "test_binding_rejects_factory_predicate_inventory_or_solver_drift", "test_v407_solver_predicate_bridge_fields_and_archive_are_bound", "test_exact_local_executable_source_and_dependency_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_specialized_enemy_death_record_closes_classification_and_binds_v407"]
+        }
+      ]
     }
   ],
   "schema_version": 1

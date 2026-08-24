@@ -901,9 +901,10 @@ owners 0 through 2 and otherwise to `env_xp`, while also naming
 environment owner `-10` raises the ordinary mission event without crediting a
 Mech. All seven accepted Lua `OnKill` occurrences are an empty default or
 localization keys backed by inline `GetSkillEffect` mechanics; there is no
-shipped Lua callback definition. Exact same-update visibility, native-only
-field-offset consumers, specialized pawns/teams, achievement/profile tails,
-the remaining `+0x1175` meaning/writers, and non-Windows equivalence stay open.
+shipped Lua callback definition. Exact same-update visibility and shipped
+specialized-pawn classification are closed by the next two records; native-
+only field-offset consumers, achievement/profile tails, the remaining
+`+0x1175` meaning/writers, and non-Windows equivalence stay open.
 
 The `native-event-frame-visibility` successor closes the same-update question
 for Board/effect deaths. The exact outer update publishes pending events before
@@ -917,6 +918,23 @@ later `BaseUpdate`; the next ordinary active-battle outer update promotes the
 pending batch first. This does not promise wall-clock timing across pause or
 teardown, generalize non-Board event producers, or change a Rust board
 transition, so no simulator-version bump follows.
+
+The `native-specialized-enemy-death-boundary` successor closes the shipped
+class question. `Mission_Boss:StartBoss` enters the one-argument factory,
+which selects `GetDefaultTeam`, allocates one common 0x1328-byte Pawn,
+installs the common vtable, defaults `IsMech` and `Minor` false, and loads Lua
+`Minor`. Board master update reaches the shared Pawn update; its guarded call
+is the sole direct caller of the common death processor. The reached ordinary
+predicate is exactly `!IsMech && team == 6`, followed by event 2 when
+non-Minor or event 12 when Minor, with no leader/tier/boss/Psion/type-name
+gate. The accepted tree has 17 active Minor definitions, no Minor-derived
+children, and 21 non-Minor boss objectives. All three Blob Boss forms count;
+the four boss-specific Minor auxiliaries do not. Shipped Lua creates Mechs only
+for three tutorial player-team pawns and never mutates a Pawn to enemy team.
+Rust nevertheless omitted the exact IsMech exclusion, so simulator v407 adds
+it, archives the v406 corpus, and locks boss/Minor/Mech plus broad replay
+conformance. Detailed Mech-branch effects, mods, and other depots remain
+partial gaps.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and

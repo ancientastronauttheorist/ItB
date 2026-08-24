@@ -1048,10 +1048,11 @@ python scripts/itb_observatory_damage_death.py verify `
 ```
 
 This closes the stock Final Cave/Volcano Pawn HP outcome without requiring a
-Rust semantic change. The zero-HP cleanup continuation below now maps the
-conditional Board erase shape. Exact damage-relative timing, Lua `OnKill`
-dispatch, kill credit/ownership, specialized subclass results, and non-Windows
-equivalence remain separate boundaries.
+Rust semantic change. The continuations below map conditional Board erase,
+ordinary event/credit dispatch, same-update visibility, and shipped specialized
+classification. Exact damage-relative timing, concrete `IsCorpse` subclass
+values, native-only `OnKill` field-offset consumers, and non-Windows equivalence
+remain separate boundaries.
 
 ## Zero-HP Board cleanup boundary
 
@@ -1140,14 +1141,14 @@ python scripts/itb_observatory_death_event_credit.py verify `
   --credit-map data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json
 ```
 
-Rust already applies the matching ordinary mission-kill rule to lethal
-environment damage and excludes Minor enemies; the focused Final Cave
-regression locks that conformance, so this tranche requires no semantic or
-simulator-version change. The event-frame successor below closes the exact
-same-outer-update versus next-update question. Native-only `OnKill` field-
-offset consumers, specialized pawns and teams, achievement/profile tails, the
-semantic name and complete writer set for Pawn byte `+0x1175`, consumers of
-`any_kill_-10`, and non-Windows depots remain open.
+Rust already applied the matching ordinary mission-kill rule to lethal
+environment damage and excluded Minor enemies; the focused Final Cave
+regression locked that portion. The event-frame successor below closes the
+exact same-outer-update versus next-update question, and the specialized-death
+successor closes shipped boss/Minor classification plus the missing IsMech
+filter. Native-only `OnKill` field-offset consumers, achievement/profile
+tails, the semantic name and complete writer set for Pawn byte `+0x1175`,
+consumers of `any_kill_-10`, and non-Windows depots remain open.
 
 ## Board-death event frame visibility
 
@@ -1190,3 +1191,50 @@ end the consumer path. The proof is scoped to events recorded during normal
 Board/effect processing and does not generalize event producers elsewhere in
 the outer loop or another depot. This scheduling detail contradicts no Rust
 board transition, so no simulator semantic or version change follows.
+
+## Specialized-enemy death boundary
+
+`native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json`
+continues from the ordinary death-event map through the exact named Pawn
+factory, common constructor/update route, and complete shipped boss/Minor
+source inventory. It binds eight native regions, 12 instruction-start control
+windows, six direct edges, three complete raw-rel32 call inventories, one data
+anchor, and 15 selected source files. For Windows build `13725832` it
+establishes that:
+
+- `Mission_Boss:StartBoss` uses the one-argument named factory; its wrapper
+  selects `GetDefaultTeam`, allocates a single 0x1328-byte common Pawn object,
+  installs the common Pawn vtable, defaults `IsMech` and `Minor` false, then
+  loads Lua `Minor` at Pawn `+0x10d0`;
+- Board master update reaches the shared Pawn update, whose guarded call is
+  the sole direct caller of the common death processor;
+- once reached, ordinary event 2 requires `IsMech=false`, `TEAM_ENEMY=6`, and
+  `Minor=false`; a Minor enemy uses event 12 instead. Leader, tier, boss,
+  Psion, and Pawn type name do not gate this split;
+- the accepted 153-file Lua tree has exactly 17 active `Minor=true`
+  definitions, no child derived from one of those types, and 21 nonempty boss
+  objectives that retain the global non-Minor default;
+- all 21 boss objectives and all three Blob Boss forms therefore count as
+  ordinary enemy kills, while `BlobB`, `TotemB`, `SlugEgg1`, and
+  `SpiderlingEgg1` are Minor boss auxiliaries and do not; and
+- shipped Lua reaches no enemy-team Mech. Its three `SetMech()` calls are
+  tutorial player-team units, and its only `SetTeam()` mutation also selects
+  `TEAM_PLAYER`.
+
+Verify the executable, predecessor map, exact source tree, region/control
+hashes, call edges and inventories, source classification, and solver binding
+with:
+
+```powershell
+python scripts/itb_observatory_specialized_enemy_death.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json
+```
+
+The native IsMech exclusion exposed a real but vanilla-dormant Rust mismatch.
+Simulator v407 now uses `enemy && !is_mech && !minor` before the existing
+`Mission_AcidTank` ACID filter; the pre-v407 corpus is archived as
+`recordings/failure_db_snapshot_sim_v406.jsonl`. Detailed Mech-branch side
+effects, modded factory/mutation paths, and non-Windows equivalence remain
+outside this exact shipped-build result.

@@ -1805,6 +1805,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # legacy masks recover the scalar; ambiguous masks retain the prior fallback.
 # Pre-v393 corpus is archived as
 # recordings/failure_db_snapshot_sim_v392.jsonl.
+# v407: Mission kill projection matches native EVENT_ENEMY_KILLED: the
+# ordinary counter requires a non-Mech TEAM_ENEMY pawn and still excludes
+# Minor enemies, which take native event 12. Pre-v407 corpus is archived as
+# recordings/failure_db_snapshot_sim_v406.jsonl.
 # v406: A projected Mission_Final_Cave turn that destroys the live BigBomb
 # applies the source-guaranteed TurnLimit+2 edge and records an unresolved
 # replacement plus every AddBomb-reachable coordinate for that stable board
@@ -1905,7 +1909,7 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 406
+SIMULATOR_VERSION = 407
 
 
 def predicted_states_from_solve_record(record: dict) -> list:
