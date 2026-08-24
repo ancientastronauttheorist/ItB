@@ -515,9 +515,15 @@ Ghidra review plus the PE byte/call verifier now map and pin:
   `-10` instead uses `env_xp` and `any_kill_-10` while still raising the
   non-Minor mission event. All seven shipped Lua `OnKill` occurrences are an
   empty default or localization keys with inline `GetSkillEffect` mechanics,
-  not callback definitions. Exact event-frame visibility, native-only field-
-  offset consumers, specialized cases, achievement/profile tails, and other
-  depots remain open; and
+  not callback definitions. Native-only field-offset consumers, specialized
+  cases, achievement/profile tails, and other depots remain open; and
+- the Board-death event-frame continuation: the outer update's sole direct
+  pending-event publisher runs before its exact Game/battle/BoardPlayer chain;
+  the BoardPlayer orchestrator then runs Board/effect update before
+  `Mission:BaseUpdate`. A death raised in that Board pass is therefore hidden
+  from the same update's `BaseUpdate` and becomes readable in the next ordinary
+  active-battle outer update. Pause/teardown timing, non-Board producers, and
+  other depots are not generalized; and
 - the Final Cave replacement path from the post-Board-update `BaseUpdate`
   callback through immediate `AddDropper` record copying, `AddEffect` queueing,
   kind-4 `PylonAnimation`, impact-time `SpaceDamage` application, pawn factory,

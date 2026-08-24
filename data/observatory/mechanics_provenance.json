@@ -9953,6 +9953,69 @@
           "symbols": ["test_native_death_event_credit_record_pins_environment_split_without_onkill_overclaim"]
         }
       ]
+    },
+    {
+      "coverage": "partial",
+      "evidence": [
+        {
+          "classification": "fact",
+          "statement": "The build-keyed native artifact data/observatory/native/windows_build_13725832_31fe35265598_event_frame_visibility.json binds exact Windows executable SHA-256 31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9 and scripts revision 591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155. It hash-pins 13 reviewed regions, 16 instruction-aligned control windows, nine direct edges, two vtable pointers, the BaseUpdate string anchor, the exact Mission source, and both predecessor artifacts."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact image contains one direct pending-event publisher call at RVA 0x000e55ac. It runs before the same outer update invokes Game vtable slot +0x04. The same outer object constructs the exact Game type and retains it at the dispatched +0x18 field; the Game vtable maps +0x04 to the pinned Game update, whose active mode-1 branch directly enters battle update."
+        },
+        {
+          "classification": "fact",
+          "statement": "Battle update invokes the present +0xc204 controller at vtable slot +0x10 when +0xd650 is zero. Both normal setup paths construct and store BoardPlayer there, BoardPlayer construction installs vtable VA 0x00830148, and that vtable's +0x10 pointer targets the primary orchestrator at RVA 0x0018ae90. The orchestrator calls Board master/effect update before preparing the exact BaseUpdate name and invoking the named Mission method."
+        },
+        {
+          "classification": "inference",
+          "statement": "An enemy-death event recorded during Board/effect processing enters pending storage after that outer update's sole publication point, so the later same-update Mission:BaseUpdate cannot read it. The next ordinary active-battle outer update promotes the accumulated pending batch before its Game and BoardPlayer work, allowing its later BaseUpdate to read the batch."
+        },
+        {
+          "classification": "inference",
+          "statement": "The result is a native callback-scheduling boundary, not a different board transition. Rust records mission kills as resolved action outcomes and does not expose intra-outer-update Lua event visibility, so no simulator semantic change or version bump is required."
+        }
+      ],
+      "id": "native-event-frame-visibility",
+      "implementations": [
+        {
+          "path": "src/observatory/event_frame_visibility.py",
+          "symbols": ["build_event_frame_visibility_map", "validate_event_frame_visibility_map", "validate_event_frame_visibility_map_binding"]
+        },
+        {
+          "path": "scripts/itb_observatory_event_frame_visibility.py",
+          "symbols": ["main"]
+        },
+        {
+          "path": "rust_solver/src/board.rs",
+          "symbols": ["unit_counts_for_mission_kill", "record_enemy_kill"]
+        }
+      ],
+      "known_gaps": [
+        "The exact timing conclusion is scoped to events recorded during normal Board/effect processing; event producers elsewhere in the outer loop are not generalized.",
+        "The cached-controller transfer helper's concrete return type is not independently mapped; both normal BoardPlayer construction and store paths are pinned.",
+        "Pause, mission teardown, or a terminal transition can delay or end the next Mission:BaseUpdate consumer path; next ordinary outer update is not a fixed wall-clock duration.",
+        "Only exact Windows build 13725832 is bound. macOS and other Windows depot equivalence remain unproven."
+      ],
+      "sources": [
+        {
+          "path": "scripts/missions/missions.lua",
+          "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+          "symbols": ["Mission:BaseUpdate", "Mission.KilledVek", "EVENT_ENEMY_KILLED"]
+        }
+      ],
+      "tests": [
+        {
+          "path": "tests/test_observatory_event_frame_visibility.py",
+          "symbols": ["test_committed_map_proves_next_update_visibility_without_overclaim", "test_binding_rejects_timing_dispatch_or_scope_drift", "test_exact_local_executable_source_and_dependencies_reproduce_map_when_available"]
+        },
+        {
+          "path": "tests/test_itb_provenance.py",
+          "symbols": ["test_native_event_frame_visibility_record_closes_board_death_timing"]
+        }
+      ]
     }
   ],
   "schema_version": 1

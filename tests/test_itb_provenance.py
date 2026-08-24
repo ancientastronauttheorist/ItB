@@ -6867,6 +6867,72 @@ def test_native_death_event_credit_record_pins_environment_split_without_onkill_
     }
 
 
+def test_native_event_frame_visibility_record_closes_board_death_timing():
+    record = _mission_provenance_record("native-event-frame-visibility")
+    assert record["coverage"] == "partial"
+    assert record["sources"] == [
+        {
+            "path": "scripts/missions/missions.lua",
+            "sha256": (
+                "505c02a8668ba2e39d868f95051ede81c"
+                "6cc1611f1e409219b6caa4fbe1d0257"
+            ),
+            "symbols": [
+                "Mission:BaseUpdate",
+                "Mission.KilledVek",
+                "EVENT_ENEMY_KILLED",
+            ],
+        }
+    ]
+    implementations = {
+        reference["path"]: set(reference["symbols"])
+        for reference in record["implementations"]
+    }
+    assert implementations["src/observatory/event_frame_visibility.py"] == {
+        "build_event_frame_visibility_map",
+        "validate_event_frame_visibility_map",
+        "validate_event_frame_visibility_map_binding",
+    }
+    assert implementations[
+        "scripts/itb_observatory_event_frame_visibility.py"
+    ] == {"main"}
+    assert implementations["rust_solver/src/board.rs"] == {
+        "record_enemy_kill",
+        "unit_counts_for_mission_kill",
+    }
+    facts = " ".join(item["statement"] for item in record["evidence"])
+    assert "13 reviewed regions" in facts
+    assert "16 instruction-aligned control windows" in facts
+    assert "nine direct edges" in facts
+    assert "one direct pending-event publisher call" in facts
+    assert "Game vtable maps +0x04" in facts
+    assert "Board master/effect update before" in facts
+    assert "same-update Mission:BaseUpdate cannot read it" in facts
+    assert "next ordinary active-battle outer update" in facts
+    assert "no simulator semantic change or version bump is required" in facts
+    gaps = " ".join(record["known_gaps"])
+    assert "event producers elsewhere" in gaps
+    assert "cached-controller transfer helper" in gaps
+    assert "not a fixed wall-clock duration" in gaps
+    assert "macOS and other Windows depot equivalence" in gaps
+
+    repo_root = Path(__file__).resolve().parents[1]
+    visibility = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_event_frame_visibility.json"
+    ).read_text(encoding="utf-8"))
+    assert visibility["summary"]["exact_event_frame_visibility_proven"] is True
+    assert visibility["summary"]["same_outer_update_visibility"] is False
+    assert visibility["summary"]["next_ordinary_outer_update_visibility"] is True
+    assert visibility["contracts"]["board_death_visibility"][
+        "visibility_delay_outer_updates"
+    ] == 1
+    assert visibility["solver_impact"]["simulator_change_required"] is False
+
+
 def test_real_dormant_player_sources_record_pins_unrouted_legacy_semantics():
     record = _mission_provenance_record(
         "player-sources-dormant-experiment-structure"

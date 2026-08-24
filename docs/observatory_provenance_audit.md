@@ -905,6 +905,19 @@ shipped Lua callback definition. Exact same-update visibility, native-only
 field-offset consumers, specialized pawns/teams, achievement/profile tails,
 the remaining `+0x1175` meaning/writers, and non-Windows equivalence stay open.
 
+The `native-event-frame-visibility` successor closes the same-update question
+for Board/effect deaths. The exact outer update publishes pending events before
+dispatching Game vtable slot `+0x04`; the same object constructs the exact Game
+type and stores it at that dispatched `+0x18` field. The pinned Game and
+BoardPlayer vtables join that path through active battle update to the primary
+orchestrator. The orchestrator runs Board master/effect update before invoking
+the exact `BaseUpdate` name. A death recorded in that Board pass therefore misses the
+current update's already-completed publication point and cannot be read by its
+later `BaseUpdate`; the next ordinary active-battle outer update promotes the
+pending batch first. This does not promise wall-clock timing across pause or
+teardown, generalize non-Board event producers, or change a Rust board
+transition, so no simulator-version bump follows.
+
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
 `mission_final_two.lua`, plus the cave source's local `SpawnMechs` helper. The

@@ -1143,8 +1143,50 @@ python scripts/itb_observatory_death_event_credit.py verify `
 Rust already applies the matching ordinary mission-kill rule to lethal
 environment damage and excludes Minor enemies; the focused Final Cave
 regression locks that conformance, so this tranche requires no semantic or
-simulator-version change. Exact same-outer-update versus next-update event
-visibility, native-only `OnKill` field-offset consumers, specialized pawns and
-teams, achievement/profile tails, the semantic name and complete writer set
-for Pawn byte `+0x1175`, consumers of `any_kill_-10`, and non-Windows depots
-remain open.
+simulator-version change. The event-frame successor below closes the exact
+same-outer-update versus next-update question. Native-only `OnKill` field-
+offset consumers, specialized pawns and teams, achievement/profile tails, the
+semantic name and complete writer set for Pawn byte `+0x1175`, consumers of
+`any_kill_-10`, and non-Windows depots remain open.
+
+## Board-death event frame visibility
+
+`native/windows_build_13725832_31fe35265598_event_frame_visibility.json`
+continues from the enemy-death/credit and Final Cave replacement maps. It binds
+13 native regions, 16 instruction-start control windows, nine direct edges,
+two vtable pointers, the exact `BaseUpdate` string reference, and the pinned
+Mission source. For Windows build `13725832` it establishes that:
+
+- the sole direct pending-event publisher runs before the same outer update's
+  `Game` vtable-slot-`+0x04` call;
+- the same outer object constructs that exact Game type and stores it at the
+  dispatched `+0x18` field; its vtable slot is the exact Game update, whose
+  active battle-mode branch directly enters the battle controller update;
+- the battle update invokes its active `BoardPlayer` at vtable slot `+0x10`,
+  and the exact BoardPlayer vtable maps that slot to the primary orchestrator;
+- the orchestrator runs Board master update and its effect-queue pass before
+  preparing and invoking `Mission:BaseUpdate`;
+- an enemy-death event recorded during that Board/effect pass therefore enters
+  pending storage after the current update's only publication point, so the
+  later same-update `BaseUpdate` cannot read it; and
+- the next ordinary outer update promotes that pending batch before its Game
+  and BoardPlayer work, so its later `BaseUpdate` can read it. Multiple deaths
+  from one pass become readable together.
+
+Verify the executable, both predecessor artifacts, exact Mission source,
+region hashes, instruction windows, direct edges, vtable pointers, string
+anchor, and sole publisher-call inventory with:
+
+```powershell
+python scripts/itb_observatory_event_frame_visibility.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --visibility-map data/observatory/native/windows_build_13725832_31fe35265598_event_frame_visibility.json
+```
+
+“Next ordinary outer update” is a control-flow result, not a fixed wall-clock
+frame guarantee: pause, mission teardown, or a terminal transition can delay or
+end the consumer path. The proof is scoped to events recorded during normal
+Board/effect processing and does not generalize event producers elsewhere in
+the outer loop or another depot. This scheduling detail contradicts no Rust
+board transition, so no simulator semantic or version change follows.

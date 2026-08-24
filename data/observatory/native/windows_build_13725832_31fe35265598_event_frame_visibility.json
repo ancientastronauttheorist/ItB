@@ -1,0 +1,624 @@
+{
+  "analysis_kind": "native_event_frame_visibility_map",
+  "contracts": {
+    "board_death_visibility": {
+      "event_recorded_during": "Board/effect update",
+      "multiple_same_pass_deaths_publish_as_one_readable_batch": true,
+      "next_ordinary_outer_update_base_update_can_read_new_event": true,
+      "next_ordinary_outer_update_publishes_new_event": true,
+      "publisher_runs_before_current_game_update": true,
+      "qualification": "The next-update result assumes the active battle and Mission:BaseUpdate path still run; pause, teardown, or a terminal state can delay or end that consumer path.",
+      "same_outer_update_base_update_reads_new_event": false,
+      "visibility_delay_outer_updates": 1
+    },
+    "dispatch_chain": {
+      "active_battle_mode_value": 1,
+      "active_boardplayer_dispatch_chain_proven": true,
+      "battle_alternate_controller_offset": "+0xd650",
+      "battle_boardplayer_offset": "+0xc204",
+      "boardplayer_update_vtable_slot": "+0x10",
+      "boardplayer_vtable_slot_target_rva": "0x0018ae90",
+      "cached_controller_transfer_present": true,
+      "game_battle_controller_offset": "+0x10",
+      "game_vtable_slot_target_rva": "0x00208c40",
+      "normal_boardplayer_construction_paths_pinned": 2,
+      "outer_game_construction_store_proven": true,
+      "outer_game_pointer_offset": "+0x18",
+      "outer_game_vtable_slot": "+0x04"
+    },
+    "event_buffers": {
+      "event_publisher_direct_call_sites": [
+        "0x000e55ac"
+      ],
+      "get_event_count_source": "readable",
+      "publisher_destination": "readable",
+      "publisher_resets_pending": true,
+      "publisher_source": "pending",
+      "recorder_destination": "pending",
+      "sole_direct_event_publisher_call_proven": true
+    },
+    "orchestrator_order": {
+      "base_update_invoker_call_rva": "0x0018b215",
+      "base_update_name_reference_rva": "0x0018b1d1",
+      "board_effect_update_before_base_update": true,
+      "board_effect_update_call_rva": "0x0016b47b",
+      "board_update_call_rva": "0x0018b0e1"
+    },
+    "scope": {
+      "applies_to": "events recorded during the normal Board/effect pass",
+      "cached_controller_helper_return_type_independently_mapped": false,
+      "events_recorded_elsewhere_in_outer_update_generalized": false,
+      "non_windows_equivalence_claimed": false,
+      "wall_clock_frame_duration_claimed": false
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "event_record_pending",
+      "instruction_hex": "803d50d28b00005675588b7508b9b0d28b00a1a4d28b00897508ff04b08d4508508d45f850e8a00afeff8b45f88b4d0c894814a100d28b008b0dfcd18b002bc1c1f8023bf07d0e85f6780aff04b1",
+      "meaning": "Increment the total and pending event arrays and retain the payload.",
+      "region": "event_recorder",
+      "sha256": "dc34c71f7a45612d66ed9fe85aa578628abb7ba3801aae5c36c4fab7339055db",
+      "size": 78,
+      "start_rva": "0x0009be96"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "event_publish_pending",
+      "instruction_hex": "68fcd18b00b9f0d18b00e83bbafeff8d45fcc745fc00000000506a508d4df0c745f000000000c745f400000000c745f800000000e8711000008d45f0b9fcd18b0050e813bbfeff",
+      "meaning": "Copy pending counts to readable storage, then reset pending storage.",
+      "region": "event_publisher",
+      "sha256": "0bded927dc097ef09c1f3e57578c9ee5247a3fdfe5136057242bfde15dbba945",
+      "size": 71,
+      "start_rva": "0x0009bf06"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "outer_publish_before_game_update",
+      "instruction_hex": "e87487f9ffe84f69fbffe8ea53ffff8b4f188b01ff5004",
+      "meaning": "Publish events, then invoke Game vtable slot +0x04 in the same outer update.",
+      "region": "outer_main_update",
+      "sha256": "ee05dad5951537cf67f224cc579fc038f498531cbad8399b51df6b88bd5efaa7",
+      "size": 23,
+      "start_rva": "0x000e55a7"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "outer_constructs_game_at_update_field",
+      "instruction_hex": "68a8940100e8992e270083c40489855cffffff8bc8c745fc00000000e827351200c745fcffffffff8bc8894718",
+      "meaning": "Construct the exact Game object and retain it at outer object +0x18.",
+      "region": "outer_main_update",
+      "sha256": "b88926612b5e0fb32f9aadf912a874896353ceabec95664d8d762f3734abc49b",
+      "size": 45,
+      "start_rva": "0x000e4638"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_calls_effect_update",
+      "instruction_hex": "8b4d808b4340412b433cc1f802894d803bc80f82c9fdffff8bcbe870e7ffff",
+      "meaning": "Reach the effect-queue update during the Board master update.",
+      "region": "board_master_update",
+      "sha256": "d5e0a318822e590ed935eda8149923d4e6958107e72a257f700a7041c35c89f2",
+      "size": 31,
+      "start_rva": "0x0016b461"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "boardplayer_vtable_install",
+      "instruction_hex": "c70648018300",
+      "meaning": "Install the BoardPlayer vtable at VA 0x00830148.",
+      "region": "boardplayer_constructor",
+      "sha256": "859275cde0f2a1378942d26a610b49cf0b2db0d8b6ce18dbc631f2e734cb5274",
+      "size": 6,
+      "start_rva": "0x0017fac8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "board_update_before_base_update",
+      "instruction_hex": "8b4e04e8eaf7fdff",
+      "meaning": "Load the Board and run its master update before the later BaseUpdate path.",
+      "region": "primary_orchestrator",
+      "sha256": "07ce198474304e7e48b7bfde40655f0cc9ac8f8e0e2ec72126590db5abcecd0a",
+      "size": 8,
+      "start_rva": "0x0018b0de"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "base_update_gate_and_dispatch",
+      "instruction_hex": "83bec80f0000060f84b50100008bcee88be9ffffc686283900000083bee40f00000074758b86941c00003bc7740a85c074068378040074618b86c80f000083f805745683f806745183ec188bcc8965ec6878f98200e835cce7ff83ec18c645fc018bcc8d96d40f0000c741140f000000c74110000000008379141072048b01eb028bc16aff6a0052c60000e8bfcee7ffc645fc00e8e6e60000",
+      "meaning": "After Board update, prepare and invoke Mission:BaseUpdate when its gates permit.",
+      "region": "primary_orchestrator",
+      "sha256": "b9854afa74aaf88ed362f0e95c2d76c1e2e2e35a62a6d420f52e9c210c1683d5",
+      "size": 153,
+      "start_rva": "0x0018b181"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "game_vtable_install",
+      "instruction_hex": "c70614508300",
+      "meaning": "Install the Game vtable at VA 0x00835014.",
+      "region": "game_constructor",
+      "sha256": "c622ba0bf49d1ba31a2851e435af51df4b2a429be1b3605591cdaf57f548ddb3",
+      "size": 6,
+      "start_rva": "0x00207bb7"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "game_active_battle_dispatch",
+      "instruction_hex": "83f8010f85440200008b461083b840c00000000f94059e9e8b0084c975078bc8e8bc5f0000",
+      "meaning": "In Game mode 1, dispatch the active controller through the battle-update body.",
+      "region": "game_update",
+      "sha256": "e4db062aeece88ae4befd6bad859f5e41501c0276e1acf991c6ca5be3b22a21a",
+      "size": 37,
+      "start_rva": "0x00208e7f"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "event_count_reads_readable",
+      "instruction_hex": "a1f4d18b008b15f0d18b002bc28b4d08c1f8023bc87d1485c978108b048a85c00f95c184c974115dc20400",
+      "meaning": "Return the current readable-array count for a valid event ID.",
+      "region": "get_event_count",
+      "sha256": "a4d4615ab59b6f681dcba8a6d64b2f3378147940da986a363c6e20990e21b0ea",
+      "size": 43,
+      "start_rva": "0x0020e783"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "battle_active_boardplayer_dispatch",
+      "instruction_hex": "8b8f04c2000085c90f84ca00000083bf50d60000000f85bd0000008b01ff5010",
+      "meaning": "When +0xc204 is present and +0xd650 is zero, invoke its vtable slot +0x10.",
+      "region": "battle_update",
+      "sha256": "9226c280cbca33d2a8646300ab906cd39c0cbb78d409e81a9b33942b91cc7684",
+      "size": 32,
+      "start_rva": "0x0020f0cf"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "controller_boardplayer_slot",
+      "instruction_hex": "83bf04c20000008db704c20000740732c0e9440200008b9fb0580000c787b058000000000000c70600000000",
+      "meaning": "Name +0xc204 as the setup destination retained in ESI.",
+      "region": "controller_setup",
+      "sha256": "5ee280a9eed39fe950366062861b2a0780dc83b09407c0aa7a12faae8e21bdb4",
+      "size": 44,
+      "start_rva": "0x0020fcdd"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "controller_restored_boardplayer_store",
+      "instruction_hex": "68cc450000e86e77140083c40489459c8bc8c645fc03e802fdf6ff83ec18c645fc028bcc89659c8906",
+      "meaning": "Construct a BoardPlayer and store its returned pointer into +0xc204.",
+      "region": "controller_setup",
+      "sha256": "39f2a487ea2511919192beeb5fc0165ebb362dba7912662d8aa034725442f193",
+      "size": 41,
+      "start_rva": "0x0020fd63"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "controller_cached_pointer_transfer",
+      "instruction_hex": "8d4f04e8712effff890685c0",
+      "meaning": "Transfer the cached-controller helper result into the same +0xc204 slot.",
+      "region": "controller_setup",
+      "sha256": "f7bb992e28c294099fa2d35f430ea5f390ff45637ba81e512bcb326b97e0fff3",
+      "size": 12,
+      "start_rva": "0x0020fe07"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "controller_fresh_boardplayer_store",
+      "instruction_hex": "68cc450000e85376140083c4048945a08bc8c745fc00000000e8e4fbf6ff83ec18c745fcffffffff8bcc8906",
+      "meaning": "Construct the alternate fresh BoardPlayer and store it into +0xc204.",
+      "region": "controller_setup",
+      "sha256": "3d0e636253b6af13f2934ebf6b17ecb0ba31b193bdaa2688dff0f116d0163f75",
+      "size": 44,
+      "start_rva": "0x0020fe7e"
+    }
+  ],
+  "data_pointers": [
+    {
+      "data_rva": "0x00435018",
+      "evidence_class": "fact",
+      "id": "game_update_vtable_slot",
+      "instruction_hex": "408c6000",
+      "role": "Game vtable slot +0x04 targets the exact Game update body.",
+      "section": ".rdata",
+      "target_region": "game_update",
+      "target_rva": "0x00208c40",
+      "target_va": "0x00608c40"
+    },
+    {
+      "data_rva": "0x00430158",
+      "evidence_class": "fact",
+      "id": "boardplayer_primary_update_vtable_slot",
+      "instruction_hex": "90ae5800",
+      "role": "BoardPlayer vtable slot +0x10 targets the primary orchestrator.",
+      "section": ".rdata",
+      "target_region": "primary_orchestrator",
+      "target_rva": "0x0018ae90",
+      "target_va": "0x0058ae90"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "780d1000112a4d801dd9df342a6aac5720dcb5d4fdc482c028416f7d9f18bbc7",
+      "file_sha256": "5f4efd7b808a619630199a1f11628650a7ea09886377a10e3a9e3907587c4688",
+      "id": "death_event_credit_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json",
+      "role": "Pins ordinary enemy-death event 2, the pending/readable arrays, the sole direct publisher, Game:GetEventCount, and Mission:BaseUpdate's KilledVek consumer."
+    },
+    {
+      "canonical_sha256": "b08b6d96d4d4ba0f53c024b301b17a039c8deb944632bbc6b8b4000a6e20af50",
+      "file_sha256": "1d7f6b05b4fa4ddc1566d1e4c87ff5487e5dace83fc2e594b801bc21f4effdb4",
+      "id": "final_cave_replacement",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_replacement.json",
+      "role": "Pins BoardPlayer construction and the primary orchestrator's exact Board/effect-update-before-BaseUpdate ordering."
+    }
+  ],
+  "direct_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e4654",
+      "id": "outer_to_game_constructor",
+      "instruction_hex": "e827351200",
+      "kind": "direct_rel32",
+      "meaning": "Construct the Game instance later dispatched from outer +0x18.",
+      "source_region": "outer_main_update",
+      "target_region": "game_constructor",
+      "target_rva": "0x00207b80"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e55ac",
+      "id": "outer_to_event_publisher",
+      "instruction_hex": "e84f69fbff",
+      "kind": "direct_rel32",
+      "meaning": "Run the sole direct pending-event publisher.",
+      "source_region": "outer_main_update",
+      "target_region": "event_publisher",
+      "target_rva": "0x0009bf00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016b47b",
+      "id": "board_update_to_effect_update",
+      "instruction_hex": "e870e7ffff",
+      "kind": "direct_rel32",
+      "meaning": "Advance the Board effect queue in the current Board update.",
+      "source_region": "board_master_update",
+      "target_region": "board_effect_update",
+      "target_rva": "0x00169bf0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b0e1",
+      "id": "orchestrator_to_board_update",
+      "instruction_hex": "e8eaf7fdff",
+      "kind": "direct_rel32",
+      "meaning": "Run Board update before BaseUpdate.",
+      "source_region": "primary_orchestrator",
+      "target_region": "board_master_update",
+      "target_rva": "0x0016a8d0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0018b215",
+      "id": "orchestrator_to_named_invoker",
+      "instruction_hex": "e8e6e60000",
+      "kind": "direct_rel32",
+      "meaning": "Invoke the prepared BaseUpdate callback name.",
+      "source_region": "primary_orchestrator",
+      "target_region": "mission_named_invoker",
+      "target_rva": "0x00199900"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00208e9f",
+      "id": "game_update_to_battle_update",
+      "instruction_hex": "e8bc5f0000",
+      "kind": "direct_rel32",
+      "meaning": "Enter the active-battle update from Game mode 1.",
+      "source_region": "game_update",
+      "target_region": "battle_update",
+      "target_rva": "0x0020ee60"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020f5a7",
+      "id": "battle_update_to_controller_setup",
+      "instruction_hex": "e804070000",
+      "kind": "direct_rel32",
+      "meaning": "Populate the active +0xc204 controller slot when required.",
+      "source_region": "battle_update",
+      "target_region": "controller_setup",
+      "target_rva": "0x0020fcb0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020fd79",
+      "id": "controller_restored_to_boardplayer_constructor",
+      "instruction_hex": "e802fdf6ff",
+      "kind": "direct_rel32",
+      "meaning": "Construct the restored BoardPlayer stored at +0xc204.",
+      "source_region": "controller_setup",
+      "target_region": "boardplayer_constructor",
+      "target_rva": "0x0017fa80"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0020fe97",
+      "id": "controller_fresh_to_boardplayer_constructor",
+      "instruction_hex": "e8e4fbf6ff",
+      "kind": "direct_rel32",
+      "meaning": "Construct the alternate fresh BoardPlayer stored at +0xc204.",
+      "source_region": "controller_setup",
+      "target_region": "boardplayer_constructor",
+      "target_rva": "0x0017fa80"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The sole direct event-publisher call occurs before the same outer update's Game vtable +0x04 dispatch. The same outer object constructs that exact Game type and retains it at the dispatched +0x18 field.",
+      "classification": "fact",
+      "id": "publisher_precedes_game_update"
+    },
+    {
+      "claim": "Game vtable +0x04 is the pinned Game update; active mode 1 enters battle update, which invokes the present +0xc204 controller at vtable +0x10. BoardPlayer construction installs the pinned vtable, whose +0x10 slot is the primary orchestrator.",
+      "classification": "fact",
+      "id": "game_to_boardplayer_join"
+    },
+    {
+      "claim": "The primary orchestrator calls Board master update, which reaches the effect queue, before preparing and invoking Mission:BaseUpdate.",
+      "classification": "fact",
+      "id": "board_effect_before_base_update"
+    },
+    {
+      "claim": "A death event recorded during Board/effect processing enters pending after that outer update's only publication point, so the later same-update BaseUpdate reader cannot see it.",
+      "classification": "inference",
+      "id": "same_update_invisibility"
+    },
+    {
+      "claim": "The next ordinary outer update promotes the pending batch before Game and BoardPlayer dispatch, allowing its later BaseUpdate to read it.",
+      "classification": "inference",
+      "id": "next_update_visibility"
+    },
+    {
+      "claim": "The Rust simulator accounts for mission kills as resolved action outcomes rather than emulating Lua callback visibility per outer update; this scheduling evidence contradicts no current transition rule.",
+      "classification": "inference",
+      "id": "rust_model_remains_conformant"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "notes": [
+    "This is exact-build static evidence, not a runtime trace.",
+    "Next ordinary outer update is a control-flow statement, not a wall-clock duration guarantee.",
+    "The same-update result is scoped to events recorded during Board/effect processing.",
+    "Multiple deaths accumulated in one Board/effect pass become readable as one promoted batch."
+  ],
+  "refines": {
+    "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json",
+    "exact_event_frame_visibility_proven": true,
+    "next_ordinary_outer_update_visibility": true,
+    "resolved_unresolved_ids": [
+      "exact_event_frame_visibility"
+    ],
+    "same_outer_update_visibility": false
+  },
+  "regions": [
+    {
+      "boundary_basis": "Ghidra 12.1.3 generic event-recorder body.",
+      "end_rva_exclusive": "0x0009beff",
+      "evidence_class": "fact",
+      "id": "event_recorder",
+      "section": ".text",
+      "sha256": "689f97fb534e0f7e8792e4ed7508a851f42171c34158b044581b5c488c0baaa2",
+      "size": 111,
+      "start_rva": "0x0009be90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 pending-to-readable publisher body.",
+      "end_rva_exclusive": "0x0009bf88",
+      "evidence_class": "fact",
+      "id": "event_publisher",
+      "section": ".text",
+      "sha256": "49ceab3bd5073935a21e3df26de48f3b7669318e80dcb569d8f694271fff3ee3",
+      "size": 136,
+      "start_rva": "0x0009bf00"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 outer main-update body.",
+      "end_rva_exclusive": "0x000e5650",
+      "evidence_class": "fact",
+      "id": "outer_main_update",
+      "section": ".text",
+      "sha256": "b5c2bd4bddb20bbda2dd87e2202c607f9ad9d6e5444a8dd361511e0ed15b81c1",
+      "size": 4208,
+      "start_rva": "0x000e45e0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board effect-queue update body.",
+      "end_rva_exclusive": "0x0016a1f5",
+      "evidence_class": "fact",
+      "id": "board_effect_update",
+      "section": ".text",
+      "sha256": "c047a08e5f274e629b6fec7151c94c89f5576ec3bbf11b0535546fb65d7c7877",
+      "size": 1541,
+      "start_rva": "0x00169bf0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Board master-update body.",
+      "end_rva_exclusive": "0x0016bf62",
+      "evidence_class": "fact",
+      "id": "board_master_update",
+      "section": ".text",
+      "sha256": "6d32a302492920ae4353af4505e792776a18c4f9d8c26bd6cf1f9861a6f9129d",
+      "size": 5778,
+      "start_rva": "0x0016a8d0"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer constructor body.",
+      "end_rva_exclusive": "0x001805de",
+      "evidence_class": "fact",
+      "id": "boardplayer_constructor",
+      "section": ".text",
+      "sha256": "c735b98c1ebef4e9c52c43239f752cfd45e99a7c1c18062235a3c24d5578c84a",
+      "size": 2910,
+      "start_rva": "0x0017fa80"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 BoardPlayer primary-update body.",
+      "end_rva_exclusive": "0x0018b36f",
+      "evidence_class": "fact",
+      "id": "primary_orchestrator",
+      "section": ".text",
+      "sha256": "8a5e7744c920a70f30f8056271d452335be6d601625f8b8d935d5457b77ebf82",
+      "size": 1247,
+      "start_rva": "0x0018ae90"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 named Mission method invoker body.",
+      "end_rva_exclusive": "0x00199998",
+      "evidence_class": "fact",
+      "id": "mission_named_invoker",
+      "section": ".text",
+      "sha256": "f104b8d01a7d8904631d4481f8c46efca50e906ff1ba29e34f980df21dde3ac6",
+      "size": 152,
+      "start_rva": "0x00199900"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Game constructor body.",
+      "end_rva_exclusive": "0x00207ca6",
+      "evidence_class": "fact",
+      "id": "game_constructor",
+      "section": ".text",
+      "sha256": "f866bd2c053776c24e913b19457b294a9f8105bcbb7c153e8cb877dc1447d617",
+      "size": 294,
+      "start_rva": "0x00207b80"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 Game primary-update body.",
+      "end_rva_exclusive": "0x00209124",
+      "evidence_class": "fact",
+      "id": "game_update",
+      "section": ".text",
+      "sha256": "d13dc28ca9785872da9803154a84015ad0a6825081cab500dd0f60a671dc6e63",
+      "size": 1252,
+      "start_rva": "0x00208c40"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 GameMap event-count reader body.",
+      "end_rva_exclusive": "0x0020e7c1",
+      "evidence_class": "fact",
+      "id": "get_event_count",
+      "section": ".text",
+      "sha256": "1914235348cc79735d409cecfb4af66c02d538a9cad2badef3527beff5394e0e",
+      "size": 65,
+      "start_rva": "0x0020e780"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 active-battle controller-update body.",
+      "end_rva_exclusive": "0x0020f9f2",
+      "evidence_class": "fact",
+      "id": "battle_update",
+      "section": ".text",
+      "sha256": "3ed314fbd5b9c24a0c017d5b29b10f059b951769e949b3a06907bfcf83f361ee",
+      "size": 2962,
+      "start_rva": "0x0020ee60"
+    },
+    {
+      "boundary_basis": "Ghidra 12.1.3 battle BoardPlayer setup body.",
+      "end_rva_exclusive": "0x0020ff53",
+      "evidence_class": "fact",
+      "id": "controller_setup",
+      "section": ".text",
+      "sha256": "7618d01a903b1919ab815ba33c5562cbacaadb5186118002e839d06048c27ff1",
+      "size": 675,
+      "start_rva": "0x0020fcb0"
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "conforming_paths": [
+      "rust_solver/src/board.rs::ActionResult::record_enemy_kill",
+      "rust_solver/src/board.rs::unit_counts_for_mission_kill"
+    ],
+    "reason": "This closes native event-reader scheduling, not a board transition. The solver does not expose an intra-outer-update Lua callback surface.",
+    "simulator_change_required": false,
+    "simulator_contradiction": false,
+    "simulator_version_bump_required": false
+  },
+  "source": {
+    "path": "scripts/missions/missions.lua",
+    "reviewed_lines": [
+      856,
+      873
+    ],
+    "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+    "size": 29573,
+    "symbols": [
+      "Mission:BaseUpdate",
+      "Mission.KilledVek",
+      "EVENT_ENEMY_KILLED"
+    ]
+  },
+  "string_anchor": {
+    "evidence_class": "fact",
+    "id": "base_update_name",
+    "meaning": "Prepare the exact native Mission method name BaseUpdate.",
+    "reference_hex": "6878f98200",
+    "reference_region": "primary_orchestrator",
+    "reference_rva": "0x0018b1d1",
+    "string_hex": "4261736555706461746500",
+    "string_rva": "0x0042f978"
+  },
+  "summary": {
+    "active_boardplayer_dispatch_chain_proven": true,
+    "board_effect_update_before_base_update_proven": true,
+    "control_window_count": 16,
+    "data_pointer_count": 2,
+    "dependency_count": 2,
+    "direct_edge_count": 9,
+    "exact_event_frame_visibility_proven": true,
+    "finding_count": 6,
+    "next_ordinary_outer_update_visibility": true,
+    "region_count": 13,
+    "same_outer_update_visibility": false,
+    "simulator_change_required": false,
+    "sole_direct_event_publisher_call_proven": true,
+    "source_count": 1,
+    "string_anchor_count": 1,
+    "unresolved_count": 4
+  },
+  "unresolved": [
+    {
+      "id": "non_board_event_producers",
+      "next_evidence": "Map only a concrete non-Board event producer if solver behavior depends on it.",
+      "question": "When are events raised outside the Board/effect pass published?"
+    },
+    {
+      "id": "cached_controller_type",
+      "next_evidence": "Trace the +0x5248 writer only if a restored-session dispatch mismatch appears.",
+      "question": "Which concrete type is returned by the cached-controller transfer helper?"
+    },
+    {
+      "id": "terminal_transition_delivery",
+      "next_evidence": "Trace a concrete terminal-death case through mission teardown if its counter differs.",
+      "question": "Can mission teardown suppress the next BaseUpdate after a terminal Board death?"
+    },
+    {
+      "id": "non_windows_equivalence",
+      "next_evidence": "Repeat this build-keyed boundary map on another exact executable.",
+      "question": "Do macOS and other depots use the same event publication schedule?"
+    }
+  ]
+}

@@ -397,11 +397,43 @@ Reverify the chain with
 `scripts/itb_observatory_death_event_credit.py verify`. Rust's lethal
 environment path already records the same ordinary mission kill and excludes
 Minor enemies; the focused Final Cave regression locks the behavior, so no
-simulator semantic change or version bump follows. Exact event-frame
-visibility, specialized pawns and teams, achievement/profile tails,
-`any_kill_-10` consumers, the complete meaning/writer set for Pawn byte
-`+0x1175`, native-only `OnKill` consumers, and non-Windows equivalence remain
-open.
+simulator semantic change or version bump follows. The successor below closes
+exact event-frame visibility. Specialized pawns and teams,
+achievement/profile tails, `any_kill_-10` consumers, the complete
+meaning/writer set for Pawn byte `+0x1175`, native-only `OnKill` consumers, and
+non-Windows equivalence remain open.
+
+## Board-death event frame visibility
+
+The exact-build successor
+`data/observatory/native/windows_build_13725832_31fe35265598_event_frame_visibility.json`
+joins the pending/readable event buffers to the complete active-battle update
+chain. The outer main update has one direct event-publisher call, then invokes
+`Game` vtable slot `+0x04`. The same outer object constructs that exact Game
+type and retains it at the dispatched `+0x18` field. Its vtable targets the
+mapped Game update; the active mode-1 branch directly enters battle update.
+That routine invokes the present controller at `+0xc204` through vtable slot
+`+0x10`. Both normal construction paths store an exact BoardPlayer there, and the
+BoardPlayer vtable maps `+0x10` to the primary orchestrator.
+
+The orchestrator calls Board master update first. That body reaches the Board
+effect queue, then returns before the orchestrator constructs the exact
+`BaseUpdate` name and calls the named Mission invoker. Consequently, a death
+recorded during Board/effect processing writes pending state after this outer
+update's only publication point. `Mission:BaseUpdate` later in that same update
+reads the old readable array and cannot see the death. At the start of the next
+ordinary outer update, the sole publisher promotes the accumulated pending
+batch before Game/battle/BoardPlayer dispatch, so the later `BaseUpdate` can
+read it.
+
+Reverify the chain with
+`scripts/itb_observatory_event_frame_visibility.py verify`. “Next ordinary
+outer update” assumes the active battle and Mission callback path still run;
+it is not a wall-clock promise across pause, teardown, or terminal transition.
+Events raised outside Board/effect processing, the cached-controller helper's
+concrete return type, terminal teardown delivery, and other depots remain
+separate questions. The solver does not model intra-update Lua callback
+visibility, so no Rust semantic change or version bump follows.
 
 ## Reproducible analysis workflow
 
