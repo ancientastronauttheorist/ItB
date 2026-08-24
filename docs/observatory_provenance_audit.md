@@ -969,9 +969,26 @@ before its slot loses its push while its `Corpse=true` wreck remains occupancy.
 action. Simulator v408 now preserves bridge unit order, interleaves living
 Piston pushes and Vek actions at exact vector slots, and accepts complete known
 active, corpse-only, or empty states. Missing, duplicated, partial, or reordered
-payloads remain a non-overridable gate. Setup RNG, general non-Piston lifecycle
-states 2/3/4, presentation-only timing, mods, and other depots remain partial
-gaps.
+payloads remain a non-overridable gate. At that artifact stage setup RNG was
+still open; the exact setup successor below closes its parameterized stock
+grammar. General non-Piston lifecycle states 2/3/4, presentation-only timing,
+mods, and other depots remain partial gaps.
+
+The `native-piston-setup-boundary` successor binds the seven-map
+`RandomMap(pistons, acid)` pool and installation order, each exact ordered
+`pistons` zone, native zone ingestion/copying, direction constants, every
+placement predicate, `ClearSpace`, valid-point `AddPawn`, the one-argument Pawn
+factory, and the complete 118-entry direct RNG-call catalog. Every attempt
+consumes one candidate draw. Rejections stop there; acceptances also consume a
+direction draw and one unconditional common-constructor draw, for the exact
+formula `attempts + 2 * acceptances`. `AddPawn`'s two-RNG random-position helper
+is behind a coordinate-invalid guard and is unreachable for all exact zone
+sources. The offline replay is therefore complete given the selected map and
+incoming observable state. Those concrete inputs and the used-map registry are
+not ordinary solver state, so the bridge's settled board remains authoritative,
+simulator v408 remains current, and this proof does not invent pre-board
+placements. Runtime UIDs/constructor values, presentation-only timing, mods,
+other depots, and non-Windows equivalence remain partial gaps.
 
 The two-stage Final mission slice, `mission-final-surface-and-cave-lifecycle`,
 indexes all fifteen callback definitions in `mission_final.lua` and
@@ -1064,10 +1081,14 @@ must preserve Board-vector order rather than sort by UID, that living Piston
 pushes and queued Vek interleave at those vector slots, that dead Pistons lose
 their queue while retaining corpse occupancy, and that inherited `Env_Null`
 adds no environment action. Simulator v408 implements those semantics and
-narrows the gate to incomplete or malformed ordered evidence. Coverage remains
-`partial` only for setup RNG/rejected placement calls, `Board:ClearSpace`
-generation details, presentation-only timing, mods, and other depots; no live
-push replay is needed for the now build-keyed static scheduler proof.
+narrows the gate to incomplete or malformed ordered evidence. The subsequent
+exact-build setup boundary closes the stock parameterized placement grammar:
+ordered map zones and every accepted or rejected attempt replay exactly from a
+selected map plus incoming observable CRT state, including `Board:ClearSpace`
+and the hidden Pawn-constructor draw. Coverage remains `partial` only because
+those concrete future inputs are not ordinary solver state and because
+presentation-only timing, mods, other depots, and non-Windows equivalence stay
+outside the proof; no live push replay is needed for the build-keyed scheduler.
 
 The tutorial/trailer slice adds the three exact shipped `Mission_Tutorial`
 sources and their 17 defined callable callbacks: four each from the base and

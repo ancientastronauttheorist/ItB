@@ -5755,6 +5755,18 @@
         },
         {
           "classification": "fact",
+          "statement": "The exact Windows installation admits acid0, acid1, acid10, acid11, acid15, acid3, and acid4 in that RandomMap candidate order. Native map loading preserves each pistons Lua array's first-occurrence order, Board:GetZone copies it without sorting, and extract_table indexes it unchanged. All seven maps are 8x8 with no embedded or initial spawn pawns; only acid1's initial sources (2,0) and (2,7) are guaranteed to have no eligible direction."
+        },
+        {
+          "classification": "fact",
+          "statement": "Every StartMission attempt consumes one positive-bound random_int for random_removal. A rejected source consumes no further draw; an accepted source consumes a direction random_int and then one unconditional raw MSVC draw in the common Pawn constructor, for exactly three draws. Board:AddPawn's invalid-coordinate fallback has two separate RNG sites but is unreachable for the proven valid zone sources, and the reached skill-list wrapper is distinct from the neighboring two-draw AnimTracker function."
+        },
+        {
+          "classification": "inference",
+          "statement": "Given a selected exact map and the observable MSVC state immediately before StartMission's first zone-removal draw, the build-keyed offline replay now determines every attempt, placement, rejected-candidate draw, hidden constructor result, remaining zone, and outgoing observable state. The incoming shared state, concrete used-map registry, and future selected map are not exposed by ordinary solver input, so the settled bridge board remains authoritative and simulator v408 requires no change."
+        },
+        {
+          "classification": "fact",
           "statement": "Pawn_Piston_U is a one-HP neutral TEAM_NONE pawn with MoveSpeed zero, Corpse=true, Pushable=false, and Piston_U_Atk. The R, L, and D variants inherit those traits while replacing image, directional skill ID, and fixed direction."
         },
         {
@@ -5831,7 +5843,33 @@
           ]
         },
         {
+          "path": "src/observatory/piston_setup_boundary.py",
+          "symbols": [
+            "build_piston_setup_boundary_map",
+            "validate_piston_setup_boundary_map",
+            "validate_piston_setup_boundary_map_binding",
+            "replay_piston_start_mission"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json",
+          "symbols": [
+            "piston_map_pool_and_zone_order",
+            "rejected_attempt_draw_count",
+            "hidden_constructor_draw",
+            "invalid_fallback_excluded",
+            "parameterized_replay_complete",
+            "solver_boundary_unchanged"
+          ]
+        },
+        {
           "path": "scripts/itb_observatory_piston_scheduler.py",
+          "symbols": [
+            "main"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_piston_setup.py",
           "symbols": [
             "main"
           ]
@@ -5892,7 +5930,7 @@
         }
       ],
       "known_gaps": [
-        "Mission setup consumes the native pistons zone, Board validity/edge/occupancy/terrain helpers, Board:ClearSpace, random_removal, and random_element. Rust does not reproduce setup RNG, rejected-candidate consumption, exact tile clearing, or placement order.",
+        "The stock setup grammar is now exact and replayable from a selected map plus incoming observable CRT state. Ordinary bridge/save input does not expose that pre-tag state, the concrete used-map registry and retry count, or a future selected map, so no concrete pre-board forecast is justified; the settled live bridge board remains authoritative.",
         "The exact scheduler map is static evidence for Windows build 13725832 and the shipped Lua tree. macOS, other depots, and mods that add an Environment or alternate scheduler require their own build/content-keyed proof.",
         "Presentation-only hide/animation timing is not simulated. Exact queued-pawn selection, fixed zero-damage push/collision behavior, death cancellation, and Corpse=true occupancy are covered; revisit animation timing only if it produces a concrete board-state mismatch."
       ],
@@ -5916,11 +5954,28 @@
           ]
         },
         {
+          "path": "scripts/global.lua",
+          "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+          "symbols": [
+            "random_element",
+            "random_removal"
+          ]
+        },
+        {
+          "path": "scripts/events.lua",
+          "sha256": "c47c17d4e3a57638cacf4546b186360a867c0a9457f926fd9bb57febdb37535a",
+          "symbols": [
+            "extract_table"
+          ]
+        },
+        {
           "path": "scripts/missions/missions.lua",
           "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
           "symbols": [
             "Mission",
             "Mission_Auto",
+            "Mission:GetMapTag",
+            "Mission:BaseStart",
             "Mission:BaseUpdate"
           ]
         },
@@ -5928,6 +5983,7 @@
           "path": "scripts/environments.lua",
           "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
           "symbols": [
+            "Environment:Start",
             "Environment:IsEffect",
             "Environment:ApplyEffect",
             "Env_Null"
@@ -5973,6 +6029,19 @@
             "test_bridge_rust_gate_version_and_archive_conform_to_native_map",
             "test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts",
             "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_piston_setup_boundary.py",
+          "symbols": [
+            "test_committed_map_closes_parameterized_piston_setup_rng_boundary",
+            "test_exact_map_pool_zone_order_and_initial_rejections_are_pinned",
+            "test_replay_pins_hidden_constructor_draw_and_dynamic_zone_removal",
+            "test_replay_rejected_candidates_consume_only_one_draw_each",
+            "test_replay_canonicalizes_only_the_permanently_hidden_state_bit",
+            "test_binding_rejects_draw_zone_guard_or_solver_scope_drift",
+            "test_artifact_file_is_immutable_and_hash_pinned",
+            "test_exact_local_executable_sources_maps_and_dependencies_reproduce_when_available"
           ]
         },
         {

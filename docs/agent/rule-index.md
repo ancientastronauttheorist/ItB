@@ -516,3 +516,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 514 | — | Mission kill projection follows the native non-Mech enemy event predicate. | `docs/agent/solver-reference.md` |
 | 515 | — | Pawn:IsCorpse is one common native predicate; static stock classification is exact. | `docs/agent/solver-reference.md` |
 | 516 | — | Mission_Piston interleaves living Trash Compactors and queued Vek in Board-vector order. | `docs/agent/solver-reference.md` |
+| 517 | — | Mission_Piston setup replay requires the selected map and incoming observable RNG state. | `docs/agent/solver-reference.md` |

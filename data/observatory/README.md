@@ -1330,9 +1330,63 @@ each living Piston push with queued Vek in Rust, and cancels dead-Piston actions
 without deleting their corpse occupancy. Complete known active, corpse-only,
 and empty payloads are forecastable; missing, partial, duplicated,
 orientation-mismatched, or reordered evidence still fails closed. The pre-v408
-corpus is archived as `recordings/failure_db_snapshot_sim_v407.jsonl`. Setup RNG
-and rejected-placement draw order, general non-Piston lifecycle states 2/3/4,
-presentation-only timing, mods, and non-Windows depots remain separate gaps.
+corpus is archived as `recordings/failure_db_snapshot_sim_v407.jsonl`. At this
+artifact stage, setup RNG and rejected-placement draw order remained open; the
+successor below closes that parameterized stock boundary. General non-Piston
+lifecycle states 2/3/4, presentation-only timing, mods, and non-Windows depots
+remain separate gaps.
 The deployed v408 bridge is admitted as a separately hash-pinned
 post-publication overlay by predecessor source-tree verifiers; their published
 evidence bodies and original overlay inventories remain byte-immutable.
+
+## Native Mission_Piston setup boundary and replay
+
+`native/windows_build_13725832_31fe35265598_piston_setup_boundary.json`
+refines the scheduler artifact with the exact pre-board setup grammar. It binds
+33 native regions, 18 instruction-aligned control windows, 22 direct edges,
+eight Lua bindings, the native direction constants/vectors, the complete
+118-entry direct RNG-call catalog, six exact Lua sources, and all seven eligible
+map files. For the current Windows installation it proves:
+
+- the `RandomMap(pistons, acid)` pool is `acid0`, `acid1`, `acid10`, `acid11`,
+  `acid15`, `acid3`, and `acid4` in that order;
+- native map loading preserves each `pistons` Lua array's first-occurrence
+  order, `Board:GetZone` copies it without sorting, and `extract_table` indexes
+  it unchanged;
+- every attempt consumes one positive-bound `random_int` for
+  `random_removal`; a rejected source stops there, while an accepted source
+  consumes a direction draw and one unconditional raw draw in the common Pawn
+  constructor;
+- `Board:AddPawn` has a two-RNG random-position fallback, but that call is
+  guarded by coordinate invalidity and cannot run for the exact valid 8x8 zone
+  points; and
+- the exact draw formula is `attempts + 2 * accepted placements`. The bundled
+  replay dynamically accounts for new Piston occupancy and removal of the
+  chosen forward zone point.
+
+Reverify the executable, predecessor artifacts, source/map identities, native
+regions and calls, bindings, direction anchors, and RNG catalog with:
+
+```powershell
+python scripts/itb_observatory_piston_setup.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --content-root "<Into the Breach>" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json
+```
+
+Replay one selected map from the observable MSVC state immediately before
+`StartMission`'s first zone-removal draw with:
+
+```powershell
+python scripts/itb_observatory_piston_setup.py replay `
+  --map-name acid1 `
+  --rng-state 0x12345678
+```
+
+This closes the old `mission_piston_setup_rng` gap as a parameterized exact
+boundary, not as a concrete future forecast. The shared CRT state before the
+one-entry map-tag draw, the current used-map registry/retry count, and the
+future selected map are not ordinary solver inputs. Rust therefore remains at
+simulator v408 and continues to consume the authoritative settled bridge board.
+Concrete runtime UIDs/constructor values, mods, other depots, and non-Windows
+equivalence remain outside the artifact.

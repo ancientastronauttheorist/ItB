@@ -3889,7 +3889,7 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
     )
     assert record["coverage"] == "partial"
     source_by_path = {source["path"]: source for source in record["sources"]}
-    assert len(source_by_path) == 3
+    assert len(source_by_path) == 5
     assert source_by_path["scripts/missions/acid/mission_piston.lua"] == {
         "path": "scripts/missions/acid/mission_piston.lua",
         "sha256": (
@@ -3914,9 +3914,19 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
     assert source_by_path["scripts/missions/missions.lua"]["symbols"] == [
         "Mission",
         "Mission_Auto",
+        "Mission:GetMapTag",
+        "Mission:BaseStart",
         "Mission:BaseUpdate",
     ]
+    assert source_by_path["scripts/global.lua"]["symbols"] == [
+        "random_element",
+        "random_removal",
+    ]
+    assert source_by_path["scripts/events.lua"]["symbols"] == [
+        "extract_table",
+    ]
     assert source_by_path["scripts/environments.lua"]["symbols"] == [
+        "Environment:Start",
         "Environment:IsEffect",
         "Environment:ApplyEffect",
         "Env_Null",
@@ -3946,7 +3956,27 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
         "validate_piston_scheduler_boundary_map",
         "validate_piston_scheduler_boundary_map_binding",
     }
+    assert implementations["src/observatory/piston_setup_boundary.py"] == {
+        "build_piston_setup_boundary_map",
+        "validate_piston_setup_boundary_map",
+        "validate_piston_setup_boundary_map_binding",
+        "replay_piston_start_mission",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_piston_setup_boundary.json"
+    ] == {
+        "piston_map_pool_and_zone_order",
+        "rejected_attempt_draw_count",
+        "hidden_constructor_draw",
+        "invalid_fallback_excluded",
+        "parameterized_replay_complete",
+        "solver_boundary_unchanged",
+    }
     assert implementations["scripts/itb_observatory_piston_scheduler.py"] == {
+        "main"
+    }
+    assert implementations["scripts/itb_observatory_piston_setup.py"] == {
         "main"
     }
     assert implementations["src/observatory/death_event_credit_boundary.py"] == {
@@ -3990,6 +4020,16 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
         "test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts",
         "test_exact_local_executable_sources_and_dependencies_reproduce_map_when_available",
     }
+    assert tests["tests/test_observatory_piston_setup_boundary.py"] == {
+        "test_committed_map_closes_parameterized_piston_setup_rng_boundary",
+        "test_exact_map_pool_zone_order_and_initial_rejections_are_pinned",
+        "test_replay_pins_hidden_constructor_draw_and_dynamic_zone_removal",
+        "test_replay_rejected_candidates_consume_only_one_draw_each",
+        "test_replay_canonicalizes_only_the_permanently_hidden_state_bit",
+        "test_binding_rejects_draw_zone_guard_or_solver_scope_drift",
+        "test_artifact_file_is_immutable_and_hash_pinned",
+        "test_exact_local_executable_sources_maps_and_dependencies_reproduce_when_available",
+    }
 
     facts = " ".join(item["statement"] for item in record["evidence"])
     assert "valid, non-edge, unoccupied" in facts
@@ -4002,9 +4042,14 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
     assert "blocks only incomplete or malformed ordered payloads" in facts
     assert "hash-pinned post-publication bridge-only overlay" in facts
     assert "304 analysis-relevant non-overlay scripts entries" in facts
+    assert "acid0, acid1, acid10, acid11, acid15, acid3, and acid4" in facts
+    assert "exactly three draws" in facts
+    assert "common Pawn constructor" in facts
+    assert "build-keyed offline replay" in facts
     gaps = " ".join(record["known_gaps"])
-    assert "Board:ClearSpace" in gaps
-    assert "rejected-candidate consumption" in gaps
+    assert "incoming observable CRT state" in gaps
+    assert "used-map registry" in gaps
+    assert "settled live bridge board remains authoritative" in gaps
     assert "macOS, other depots, and mods" in gaps
     assert "Presentation-only hide/animation timing" in gaps
 
@@ -4018,6 +4063,19 @@ def test_real_mission_piston_record_pins_native_order_and_remaining_gaps():
     ).read_text(encoding="utf-8"))
     assert boundary["summary"]["mission_piston_scheduler_gate_closed"] is True
     assert boundary["summary"]["simulator_version"] == 408
+
+    setup_boundary = json.loads((
+        repo_root
+        / "data"
+        / "observatory"
+        / "native"
+        / "windows_build_13725832_31fe35265598_"
+        "piston_setup_boundary.json"
+    ).read_text(encoding="utf-8"))
+    assert setup_boundary["summary"]["parameterized_replay_complete"] is True
+    assert setup_boundary["summary"]["constructor_draw_proven"] is True
+    assert setup_boundary["summary"]["concrete_forecast_proven"] is False
+    assert setup_boundary["summary"]["simulator_version"] == 408
 
 
 def test_real_mission_freeze_buildings_record_pins_exact_predicate_and_rubble_gap():

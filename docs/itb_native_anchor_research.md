@@ -545,8 +545,56 @@ pre-v408 corpus is archived as
 Reverify the executable, predecessor maps, selected sources, native regions,
 control windows, calls, pointers, and solver binding with
 `scripts/itb_observatory_piston_scheduler.py verify`. Mission setup RNG and
-rejected-placement draw order, general non-Piston lifecycle states 2/3/4,
-presentation-only timing, mods, and non-Windows depots remain separate gaps.
+rejected-placement draw order remained open at that artifact stage. The setup
+successor below closes the parameterized stock boundary; general non-Piston
+lifecycle states 2/3/4, presentation-only timing, mods, and non-Windows depots
+remain separate gaps.
+
+## Native Mission_Piston setup boundary
+
+The exact-build successor
+`data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json`
+joins the scheduler and map-choice artifacts to the exact Piston/global/event/
+mission/environment/map-helper sources, seven shipped candidate maps, native
+zone storage, all placement predicates, Pawn creation, and the complete raw
+RNG caller catalog.
+
+The current installation's eligible order is `acid0`, `acid1`, `acid10`,
+`acid11`, `acid15`, `acid3`, and `acid4`. Native map loading visits each zone
+array in encounter order, appends only the first occurrence of a Point, and
+`Board:GetZone` returns order-preserving copies; `extract_table` then indexes
+the PointList from one through its size. All seven maps are 8x8 with no embedded
+or initial spawn pawns before `StartMission`. Direction registration is exactly
+U/R/D/L values 0/1/2/3 with vectors `(0,-1)`, `(1,0)`, `(0,1)`, and `(-1,0)`.
+
+Every loop attempt first consumes `random_int(#zone)` through
+`random_removal`. If no direction survives the exact terrain, live-pawn,
+validity, and non-edge predicates, the attempt consumes no more RNG. An
+accepted source consumes `random_int(#choices)`, clears its source, and evaluates
+`PAWN_FACTORY:CreatePawn` before `Board:AddPawn`. The one-argument factory
+reaches the common Pawn constructor, whose unconditional call at RVA
+`0x0022b78a` consumes a raw MSVC result and stores it at `Pawn+0x924`. Thus a
+rejection costs one draw and an acceptance costs three. The random-position
+fallback inside `AddPawn` contains RNG calls at RVAs `0x00172e16` and
+`0x00172e70`, but the exact guard reaches it only for an invalid supplied Point;
+every Piston zone source is valid, so neither call participates. The reached
+skill-list wrapper at `0x00242c50` is likewise distinct from the neighboring
+two-draw AnimTracker constructor at `0x00242cb0`.
+
+`replay_piston_start_mission` now reproduces the ordered attempts, dynamic
+occupancy, forward-zone removal, placements, constructor results, and outgoing
+observable MSVC state from a selected map plus the observable state immediately
+before the first zone-removal draw. Reverify the full exact-installation join
+with `scripts/itb_observatory_piston_setup.py verify`, or run a parameterized
+case with its `replay --map-name ... --rng-state ...` command.
+
+The one-entry `Mission:GetMapTag` call advances once, and each native map retry
+advances once against the seven-entry pool. A concrete future placement still
+requires the incoming shared CRT state, used-map registry/retry count, and
+selected map, none of which is exposed in ordinary solver state. Consequently
+the settled bridge board remains authoritative and simulator v408 does not
+change. Concrete runtime UIDs/constructor-field values, mods, other depots, and
+non-Windows equivalence remain outside scope.
 
 ## Reproducible analysis workflow
 

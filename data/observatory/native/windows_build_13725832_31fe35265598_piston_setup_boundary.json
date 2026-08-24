@@ -1,0 +1,4388 @@
+{
+  "analysis_kind": "native_piston_setup_boundary_map",
+  "bindings": [
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x00279c69",
+      "helper_region": "bind_bool_point",
+      "helper_target_rva": "0x002871f0",
+      "id": "isvalid_point",
+      "instruction_hex": "c745e8c3396e00ff75f0c745ec00000000518d4de85168d08583008bc8e882d50000",
+      "native_target_rva": "0x002e39c3",
+      "native_target_va": "0x006e39c3",
+      "start_rva": "0x00279c4c",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x00279cb3",
+      "helper_region": "bind_bool_point",
+      "helper_target_rva": "0x002871f0",
+      "id": "ispawnspace_point",
+      "instruction_hex": "c745e880714e00ff75f0c745ec0c000000518d4de85168c48583008bc8e838d50000",
+      "native_target_rva": "0x000e7180",
+      "native_target_va": "0x004e7180",
+      "start_rva": "0x00279c96",
+      "this_adjustment": 12
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x00279fbe",
+      "helper_region": "bind_getterrain_point",
+      "helper_target_rva": "0x00286ff0",
+      "id": "getterrain_point",
+      "instruction_hex": "c745e8704b5000ff75f0c745ec00000000518d4de85168c08683008bc8e82dd00000",
+      "native_target_rva": "0x00104b70",
+      "native_target_va": "0x00504b70",
+      "start_rva": "0x00279fa1",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x0027a166",
+      "helper_region": "bind_addpawn_point",
+      "helper_target_rva": "0x002881a0",
+      "id": "addpawn_pawn_point",
+      "instruction_hex": "c745e8c0e85600ff75f0c745ec00000000518d4de851518bc8e835e00000",
+      "native_target_rva": "0x0016e8c0",
+      "native_target_va": "0x0056e8c0",
+      "start_rva": "0x0027a14d",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x0027a557",
+      "helper_region": "bind_getzone",
+      "helper_target_rva": "0x00288f10",
+      "id": "getzone_string",
+      "instruction_hex": "c745e8f0d95600ff75f0c745ec00000000518d4de851518bc8e8b4e90000",
+      "native_target_rva": "0x0016d9f0",
+      "native_target_va": "0x0056d9f0",
+      "start_rva": "0x0027a53e",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x0027a9e3",
+      "helper_region": "bind_clearspace",
+      "helper_target_rva": "0x00287690",
+      "id": "clearspace_point",
+      "instruction_hex": "c745e8d05d5600ff75f0c745ec00000000518d4de85168888983008bc8e8a8cc0000",
+      "native_target_rva": "0x00165dd0",
+      "native_target_va": "0x00565dd0",
+      "start_rva": "0x0027a9c6",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x0027ab28",
+      "helper_region": "bind_bool_point",
+      "helper_target_rva": "0x002871f0",
+      "id": "isedge_point",
+      "instruction_hex": "c745e8200a5700ff75f0c745ec00000000518d4de851680c8a83008bc8e8c3c60000",
+      "native_target_rva": "0x00170a20",
+      "native_target_va": "0x00570a20",
+      "start_rva": "0x0027ab0b",
+      "this_adjustment": 0
+    },
+    {
+      "evidence_class": "fact",
+      "helper_call_rva": "0x0027d387",
+      "helper_region": "bind_createpawn_one",
+      "helper_target_rva": "0x0028e930",
+      "id": "createpawn_one_string",
+      "instruction_hex": "c745ece04f6400ff75f0518d4dec51518bc8e8a4150100",
+      "native_target_rva": "0x00244fe0",
+      "native_target_va": "0x00644fe0",
+      "start_rva": "0x0027d375",
+      "this_adjustment": null
+    }
+  ],
+  "contracts": {
+    "base_start_order": {
+      "after_start_mission": [
+        "SetupDiffMod",
+        "optional bonus debris",
+        "SpawnPawns"
+      ],
+      "before_start_mission": [
+        "optional AssetId building",
+        "LiveEnvironment construction",
+        "LiveEnvironment:Start"
+      ],
+      "candidate_maps_have_embedded_pawns": false,
+      "candidate_maps_have_spawn_entries": false,
+      "env_null_start_is_empty": true,
+      "initial_pawn_occupancy_during_piston_selection": [],
+      "mission_piston_asset_id": "",
+      "mission_piston_environment": "Env_Null",
+      "start_mission_position": 4
+    },
+    "candidate_predicate": {
+      "choices_recomputed_after_every_attempt": true,
+      "chosen_front_removed_from_remaining_zone_if_present": true,
+      "edge_coordinates": "x == 0, y == 0, x == width-1, or y == height-1",
+      "placed_source_becomes_occupied_immediately": true,
+      "requires_not_edge": true,
+      "requires_not_pawn_space": true,
+      "requires_valid": true,
+      "terrain_rejections": {
+        "TERRAIN_BUILDING": 1,
+        "TERRAIN_MOUNTAIN": 4,
+        "TERRAIN_WATER": 3
+      }
+    },
+    "direction_order": {
+      "dir_end": 3,
+      "dir_start": 0,
+      "ordered_values": [
+        {
+          "delta": [
+            0,
+            -1
+          ],
+          "name": "up",
+          "pawn_type": "Pawn_Piston_U",
+          "short": "U",
+          "value": 0
+        },
+        {
+          "delta": [
+            1,
+            0
+          ],
+          "name": "right",
+          "pawn_type": "Pawn_Piston_R",
+          "short": "R",
+          "value": 1
+        },
+        {
+          "delta": [
+            0,
+            1
+          ],
+          "name": "down",
+          "pawn_type": "Pawn_Piston_D",
+          "short": "D",
+          "value": 2
+        },
+        {
+          "delta": [
+            -1,
+            0
+          ],
+          "name": "left",
+          "pawn_type": "Pawn_Piston_L",
+          "short": "L",
+          "value": 3
+        }
+      ]
+    },
+    "guarded_paths": {
+      "addpawn_invalid_fallback_call_rva": "0x0016e935",
+      "adjacent_animtracker_rng_function_rva": "0x00242cb0",
+      "adjacent_rng_caller_ids": [
+        116,
+        117
+      ],
+      "adjacent_rng_function_reached_by_piston_factory": false,
+      "fallback_reachable_for_candidate_zone_points": false,
+      "fallback_rng_call_rvas": [
+        "0x00172e16",
+        "0x00172e70"
+      ],
+      "fallback_rng_caller_ids": [
+        59,
+        60
+      ],
+      "reason": "Every candidate source is an in-bounds Point from an exact 8x8 map zone.",
+      "skill_list_wrapper_rva": "0x00242c50"
+    },
+    "map_selection": {
+      "candidate_count": 7,
+      "candidate_order": [
+        "acid0",
+        "acid1",
+        "acid10",
+        "acid11",
+        "acid15",
+        "acid3",
+        "acid4"
+      ],
+      "draw_per_random_map_attempt": 1,
+      "get_map_tag_draw": {
+        "advances_rng": true,
+        "bound": 1,
+        "result": 0,
+        "semantic_result": "pistons"
+      },
+      "input_sector": "acid",
+      "mission_map_tags": [
+        "pistons"
+      ],
+      "mission_map_vetoes": [],
+      "random_map_bound": 7,
+      "retry_limit": 10,
+      "retry_reasons": [
+        "mission veto",
+        "already-used map"
+      ],
+      "selected_map_available_after_live_board_read": true,
+      "used_map_registry_available_to_solver": false
+    },
+    "replay_boundary": {
+      "concrete_forecast_without_input_state": false,
+      "incoming_state_available_to_solver": false,
+      "input": "selected exact map name plus observable MSVC state immediately before StartMission's first zone-removal draw",
+      "output": "ordered attempts, placements, draw transcript, constructor raw results, remaining zone, and final observable state",
+      "settled_bridge_board_remains_authoritative": true
+    },
+    "rng_grammar": {
+      "accepted_attempt_draws": 3,
+      "accepted_draw_order": [
+        "random_int(current zone size)",
+        "random_int(current eligible direction count)",
+        "common Pawn constructor raw rand"
+      ],
+      "all_start_mission_bounds_positive": true,
+      "candidate_draw": "one random_int(current zone size) on every attempt",
+      "constructor_call_rva": "0x0022b78a",
+      "constructor_caller_id": 108,
+      "constructor_store_offset": "Pawn+0x924",
+      "core_output": "(state >> 16) & 0x7fff",
+      "core_transition": "state = state * 0x343fd + 0x269ec3 (mod 2^32)",
+      "draw_count_formula": "attempt_count + 2 * accepted_count",
+      "observable_state_mask": "0x7fffffff",
+      "random_int_call_rva": "0x000e0c2d",
+      "random_int_caller_id": 21,
+      "random_int_one_advances": true,
+      "rejected_attempt_draws": 1
+    },
+    "zone_order": {
+      "all_candidate_zone_points_valid": true,
+      "all_candidate_zones_unique": true,
+      "duplicate_policy": "append first occurrence only",
+      "extract_table_indices": "1 through PointList:size in order",
+      "getzone_copy_preserves_order": true,
+      "map_loader_source_order": "Lua array encounter order",
+      "sorting_step_present": false
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "zone_create_in_encounter_order",
+      "instruction_hex": "83ec188d45d48bcc50e82372eeff8bcfe84c860000",
+      "meaning": "Create the named zone before visiting its Lua array.",
+      "region": "map_loader",
+      "sha256": "57705be0a95ebf909b47360744fdaf5b262dd81ff3e9659628a29427a60712bc",
+      "size": 21,
+      "start_rva": "0x001639df"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "zone_point_append",
+      "instruction_hex": "8d85b8feffff508d8d14ffffffe8debbeeff8bd0c645fc248d8df8feffffe8cd310100ff7004ff308d45d483ec188bcc50e88a71eeff8bcfe8a3a60000",
+      "meaning": "Read each next Lua Point, preserve x/y, and append it.",
+      "region": "map_loader",
+      "sha256": "bcf9805e5a948d1d23b8ec07e607c9a9ced99bcce7a1dbea7c39898b1e9af89e",
+      "size": 61,
+      "start_rva": "0x00163a50"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "zone_loop_advance",
+      "instruction_hex": "8d8d14ffffffe89de6eeff8d55988d8d14ffffffe89f88f0ff84c0759b",
+      "meaning": "Advance the Lua array iterator and loop without sorting.",
+      "region": "map_loader",
+      "sha256": "eb2c1efb4e51cf01f29c95080fa469edb08938c59a2ec04974cc9c93fce0e80f",
+      "size": 29,
+      "start_rva": "0x00163a98"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "getzone_copy_chain",
+      "instruction_hex": "8d45dc8bcf50e8cc0400008d45dcc645fc01508d4de8e86ccef2ff8d45e8c645fc02508bcee85dcef2ff",
+      "meaning": "Look up the named zone and copy the stored PointList twice without reordering.",
+      "region": "getzone",
+      "sha256": "6455f5bbeedf0dab32c3915b0507de2202bf16bfcfa33c0b99b16aff2b2d5a2c",
+      "size": 42,
+      "start_rva": "0x0016da59"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "zone_lookup_copy",
+      "instruction_hex": "837de80074438d450c8bcf50e802a5f5ff83c0188bcb50e817c9f2ff",
+      "meaning": "Copy the found zone record PointList at record offset +0x18.",
+      "region": "zone_lookup",
+      "sha256": "ae6af70106671914584ba6064a5905ad7c5fe935580d6807ebed72dddae9861f",
+      "size": 28,
+      "start_rva": "0x0016dfad"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "zone_unique_append",
+      "instruction_hex": "8b40183bc674168b4d248b552039107505394804740783c0083bc675f03bc7751b8d452050518d45088bcb50e805a3f5ff83c4048d4818e8ba6ef4ff",
+      "meaning": "Scan existing points and append only an unseen point, preserving first occurrence.",
+      "region": "zone_append",
+      "sha256": "2ac94678bd422efe5893a24ccb615861f738a7253e0bfe2583f86c33a11327f4",
+      "size": 60,
+      "start_rva": "0x0016e18a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "isvalid_bounds",
+      "instruction_hex": "558bec8b450885c078173b41487d128b450c85c0780b3b414c7d06b0015dc2080032c05dc20800",
+      "meaning": "Require nonnegative x/y below Board width/height.",
+      "region": "isvalid",
+      "sha256": "ccc44e753f417cb103727661382ad7b18cd729f23a1bed12057027a3ef1506b1",
+      "size": 39,
+      "start_rva": "0x00162280"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ispawnspace_live_only",
+      "instruction_hex": "558bec8b016a01ff750cff75088b404cffd05dc20800",
+      "meaning": "Dispatch the live-only occupant predicate.",
+      "region": "ispawnspace_body",
+      "sha256": "b5eed1df511c992ecc74b23340515fe754981e7328c9cd6293c2771e0243e758",
+      "size": 22,
+      "start_rva": "0x0016fd50"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "getterrain_tile_field",
+      "instruction_hex": "558becff750cff7508e8c29f05008b80e02a00005dc20800",
+      "meaning": "Look up the tile and return its terrain field.",
+      "region": "getterrain",
+      "sha256": "bb0a4b8ace45f2208137e41a481c3d02d8c88c57e4b8def6e7d56776825eaf41",
+      "size": 24,
+      "start_rva": "0x00104b70"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "clearspace_reviewed_calls",
+      "instruction_hex": "ff750c8bf1ff7508e8a9c1ffff8b068bce8b5d0c8b7d08538b400857ffd084c074118b46508d0c7f69d3bc2b0000031488eb038d565c8bcae8a9a5030033ff0f1f800000000057ff750c8bceff75086a00e8b0e600004783ff047cea",
+      "meaning": "Clear the selected tile and four edge flags through reviewed non-RNG helpers.",
+      "region": "clearspace",
+      "sha256": "c42c17f116eede63fbb40f792198ef1e8ec882736a144e993c4e8c7f4b527dbb",
+      "size": 92,
+      "start_rva": "0x00165dda"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "isedge_bounds",
+      "instruction_hex": "558bec837d0800741e8b550c85d274178b414848394508740e8b414c483bd0740632c05dc20800b0015dc20800",
+      "meaning": "Return true exactly on x/y zero or width/height minus one.",
+      "region": "isedge",
+      "sha256": "73584f34e6e823a5e2b92298f3c8562ff91d29aaf7432ffc2b6a39851c281c6f",
+      "size": 45,
+      "start_rva": "0x00170a20"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "addpawn_valid_guard",
+      "instruction_hex": "8b038bcbff7514ff75108b4008ffd084c07519568d45b08bcb50e8564100008b08894d108b4004894514eb06",
+      "meaning": "Call random-position fallback only when the supplied Point fails Board:IsValid.",
+      "region": "addpawn",
+      "sha256": "4586a3d4a6d885f558de08d4ffa7bc9bcc6b8646fd89072e208e92b67ed69fc7",
+      "size": 44,
+      "start_rva": "0x0016e91b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "createpawn_one_wrapper",
+      "instruction_hex": "8bf16a0283ec18c745fc000000008bcc8d45086aff6a00c741140f000000c741100000000050c60100e89e30dcff8bcee8b7fdffff",
+      "meaning": "Forward one type name to the named Pawn factory.",
+      "region": "createpawn_wrapper",
+      "sha256": "b03f21143a04c10f3bc83768a7734579d376266a225899ca94a2ee8cc552d098",
+      "size": 53,
+      "start_rva": "0x00245004"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "construct_common_pawn",
+      "instruction_hex": "568bcbe87857feff",
+      "meaning": "Pass the source definition into the common Pawn constructor.",
+      "region": "pawn_factory_construct",
+      "sha256": "e898596111e51fceae181b093ada0d81147ebc007ea4f3f32e1b2822c7213f43",
+      "size": 8,
+      "start_rva": "0x002451a0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "constructor_hidden_rng",
+      "instruction_hex": "8bcee866090000e887c71500898624090000",
+      "meaning": "Load the static definition, consume one raw RNG result, and store it at Pawn+0x924.",
+      "region": "pawn_constructor",
+      "sha256": "55a4d865b1cc91f1a517b53296a48acb60053d80c0c3d695fbae49fc328bd253",
+      "size": 18,
+      "start_rva": "0x0022b783"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "skill_list_wrapper",
+      "instruction_hex": "558bec51ff750881c194000000c745fc00000000e8e766e0ff8b45088be55dc20400",
+      "meaning": "The reached skill-list wrapper is distinct from the neighboring two-draw AnimTracker constructor.",
+      "region": "skill_list",
+      "sha256": "c94aea5aaaeb5aee0af4941b2e9450260386d1d1edfcc04ddfa312b70130e9d5",
+      "size": 34,
+      "start_rva": "0x00242c50"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "positive_bound_random_int",
+      "instruction_hex": "558bec837d0800750433c05dc3e8e4722a0099f77d088bc25dc3",
+      "meaning": "Only bound zero skips the RNG; every positive Piston bound advances once and returns output modulo bound.",
+      "region": "random_int",
+      "sha256": "76e4d6f1289067724a2b6a8348ef91cb772a9bb12f6debf07b66efc11a6dd70e",
+      "size": 26,
+      "start_rva": "0x000e0c20"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "shared_msvc_rng",
+      "instruction_hex": "e8176e0000694818fd43030081c1c39e2600894818c1e91081e1ff7f00008bc1c3",
+      "meaning": "Advance state by 0x343fd and 0x269ec3, then return bits 16 through 30.",
+      "region": "rng_core",
+      "sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179",
+      "size": 33,
+      "start_rva": "0x00387f16"
+    }
+  ],
+  "data_pointers": [
+    {
+      "data_hex": "80225600",
+      "data_rva": "0x0042e304",
+      "evidence_class": "fact",
+      "id": "board_primary_isvalid_slot",
+      "meaning": "Board primary vtable slot +0x08 resolves the IsValid thunk to the exact bounds body.",
+      "section": ".rdata",
+      "target_region": "isvalid",
+      "target_rva": "0x00162280",
+      "target_va": "0x00562280"
+    },
+    {
+      "data_hex": "70fd5600",
+      "data_rva": "0x0042e2a4",
+      "evidence_class": "fact",
+      "id": "board_secondary_occupancy_slot",
+      "meaning": "Board secondary vtable slot +0x4c resolves the occupancy predicate.",
+      "section": ".rdata",
+      "target_region": "occupancy",
+      "target_rva": "0x0016fd70",
+      "target_va": "0x0056fd70"
+    },
+    {
+      "data_hex": "50fd5600",
+      "data_rva": "0x0042e2a8",
+      "evidence_class": "fact",
+      "id": "board_secondary_ispawnspace_slot",
+      "meaning": "Board secondary vtable slot +0x50 resolves IsPawnSpace.",
+      "section": ".rdata",
+      "target_region": "ispawnspace_body",
+      "target_rva": "0x0016fd50",
+      "target_va": "0x0056fd50"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "8068a847b328ba8137ff9c88864f66eaaa0bf93c5f8ba34aedd1b4115e7936db",
+      "file_sha256": "dce09ab926596f90e521475f24c00604be31a15d3808ef1d863e0f037df6e6ef",
+      "id": "final_cave_map_choice",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_map_choice.json",
+      "role": "Pins exact Win32 map-directory enumeration, MAP_LIST registration order, RandomMap filtering, native retry policy, and positive-bound random_int advancement."
+    },
+    {
+      "canonical_sha256": "3579738e75297d27bae3cd3ca2ba8fabc938e4520371f1259a4c3ee91490074e",
+      "file_sha256": "4de5af4130b0ec1c45eee6804471a0de9da31cfaf1d1bb60a0035c59d20b9a4e",
+      "id": "piston_scheduler_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json",
+      "role": "Pins the exact shipped Mission_Piston source, its static Pawn definitions, Env_Null inheritance, and settled-board scheduler."
+    },
+    {
+      "canonical_sha256": "d8c7e65344b77cef66745b3c85f7d7ec507a05158586134e990ae2d1b97bd205",
+      "file_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+      "id": "rng_return_ids",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json",
+      "role": "Pins all 118 raw direct-call candidates to the shared MSVC RNG core, including random_int, the Pawn constructor, and the guarded invalid-position fallback."
+    }
+  ],
+  "direct_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x001639ef",
+      "id": "map_loader_to_zone_create",
+      "instruction_hex": "e84c860000",
+      "kind": "direct_rel32",
+      "meaning": "Create each named zone in encounter order.",
+      "source_region": "map_loader",
+      "target_region": "zone_create",
+      "target_rva": "0x0016c040"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00163a88",
+      "id": "map_loader_to_zone_append",
+      "instruction_hex": "e8a3a60000",
+      "kind": "direct_rel32",
+      "meaning": "Append each converted Lua-array Point.",
+      "source_region": "map_loader",
+      "target_region": "zone_append",
+      "target_rva": "0x0016e130"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00163669",
+      "id": "map_loader_embedded_pawn_path",
+      "instruction_hex": "e8021a0e00",
+      "kind": "direct_rel32",
+      "meaning": "Map records with embedded pawns can construct them; all seven exact Piston maps have none.",
+      "source_region": "map_loader",
+      "target_region": "pawn_factory_construct",
+      "target_rva": "0x00245070"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016da5f",
+      "id": "getzone_to_lookup",
+      "instruction_hex": "e8cc040000",
+      "kind": "direct_rel32",
+      "meaning": "Look up the stored named zone.",
+      "source_region": "getzone",
+      "target_region": "zone_lookup",
+      "target_rva": "0x0016df30"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016da6f",
+      "id": "getzone_first_copy",
+      "instruction_hex": "e86ccef2ff",
+      "kind": "direct_rel32",
+      "meaning": "Copy the lookup result.",
+      "source_region": "getzone",
+      "target_region": "pointlist_copy",
+      "target_rva": "0x0009a8e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016da7e",
+      "id": "getzone_second_copy",
+      "instruction_hex": "e85dcef2ff",
+      "kind": "direct_rel32",
+      "meaning": "Copy into the Luabind return value.",
+      "source_region": "getzone",
+      "target_region": "pointlist_copy",
+      "target_rva": "0x0009a8e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016dfc4",
+      "id": "zone_lookup_to_copy",
+      "instruction_hex": "e817c9f2ff",
+      "kind": "direct_rel32",
+      "meaning": "Copy the stored record PointList.",
+      "source_region": "zone_lookup",
+      "target_region": "pointlist_copy",
+      "target_rva": "0x0009a8e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00104b79",
+      "id": "getterrain_to_tile_lookup",
+      "instruction_hex": "e8c29f0500",
+      "kind": "direct_rel32",
+      "meaning": "Resolve the tile before reading terrain.",
+      "source_region": "getterrain",
+      "target_region": "getterrain_core",
+      "target_rva": "0x0015eb40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00165de2",
+      "id": "clearspace_to_clear_tile",
+      "instruction_hex": "e8a9c1ffff",
+      "kind": "direct_rel32",
+      "meaning": "Clear the selected source tile.",
+      "source_region": "clearspace",
+      "target_region": "clear_tile",
+      "target_rva": "0x00161f90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00165e12",
+      "id": "clearspace_to_tile_helper",
+      "instruction_hex": "e8a9a50300",
+      "kind": "direct_rel32",
+      "meaning": "Resolve the tile state used for clearing.",
+      "source_region": "clearspace",
+      "target_region": "tile_helper",
+      "target_rva": "0x001a03c0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00165e2b",
+      "id": "clearspace_to_edge_mutator",
+      "instruction_hex": "e8b0e60000",
+      "kind": "direct_rel32",
+      "meaning": "Clear four directional edge flags.",
+      "source_region": "clearspace",
+      "target_region": "set_edge",
+      "target_rva": "0x001744e0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016e935",
+      "id": "addpawn_to_invalid_fallback",
+      "instruction_hex": "e856410000",
+      "kind": "direct_rel32",
+      "meaning": "Choose a random position only after supplied-coordinate invalidity.",
+      "source_region": "addpawn",
+      "target_region": "invalid_addpawn_fallback",
+      "target_rva": "0x00172a90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0016eaf0",
+      "id": "addpawn_to_skill_list",
+      "instruction_hex": "e85b410d00",
+      "kind": "direct_rel32",
+      "meaning": "Read the created Pawn skill list without entering the adjacent RNG function.",
+      "source_region": "addpawn",
+      "target_region": "skill_list",
+      "target_rva": "0x00242c50"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00245034",
+      "id": "createpawn_wrapper_to_factory",
+      "instruction_hex": "e8b7fdffff",
+      "kind": "direct_rel32",
+      "meaning": "Forward the one-argument CreatePawn call.",
+      "source_region": "createpawn_wrapper",
+      "target_region": "pawn_factory",
+      "target_rva": "0x00244df0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00244e56",
+      "id": "factory_to_construct",
+      "instruction_hex": "e815020000",
+      "kind": "direct_rel32",
+      "meaning": "Allocate and construct the named Pawn.",
+      "source_region": "pawn_factory",
+      "target_region": "pawn_factory_construct",
+      "target_rva": "0x00245070"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00244e98",
+      "id": "factory_to_skill_list",
+      "instruction_hex": "e8b3ddffff",
+      "kind": "direct_rel32",
+      "meaning": "Read the static skill list through the non-RNG wrapper.",
+      "source_region": "pawn_factory",
+      "target_region": "skill_list",
+      "target_rva": "0x00242c50"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x002451a3",
+      "id": "construct_to_constructor",
+      "instruction_hex": "e87857feff",
+      "kind": "direct_rel32",
+      "meaning": "Enter the common Pawn constructor.",
+      "source_region": "pawn_factory_construct",
+      "target_region": "pawn_constructor",
+      "target_rva": "0x0022a920"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0022b785",
+      "id": "constructor_to_definition_loader",
+      "instruction_hex": "e866090000",
+      "kind": "direct_rel32",
+      "meaning": "Load the static Piston definition before the hidden draw.",
+      "source_region": "pawn_constructor",
+      "target_region": "pawn_definition_loader",
+      "target_rva": "0x0022c0f0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0022b78a",
+      "id": "constructor_to_rng",
+      "instruction_hex": "e887c71500",
+      "kind": "direct_rel32",
+      "meaning": "Consume the one hidden constructor draw.",
+      "source_region": "pawn_constructor",
+      "target_region": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e16",
+      "id": "invalid_fallback_rng_one",
+      "instruction_hex": "e8fb502100",
+      "kind": "direct_rel32",
+      "meaning": "First RNG site in the invalid-coordinate fallback.",
+      "source_region": "invalid_addpawn_fallback",
+      "target_region": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e70",
+      "id": "invalid_fallback_rng_two",
+      "instruction_hex": "e8a1502100",
+      "kind": "direct_rel32",
+      "meaning": "Second RNG site in the invalid-coordinate fallback.",
+      "source_region": "invalid_addpawn_fallback",
+      "target_region": "rng_core",
+      "target_rva": "0x00387f16"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x000e0c2d",
+      "id": "random_int_to_rng",
+      "instruction_hex": "e8e4722a00",
+      "kind": "direct_rel32",
+      "meaning": "Advance the shared generator for every positive bound.",
+      "source_region": "random_int",
+      "target_region": "rng_core",
+      "target_rva": "0x00387f16"
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The exact installation admits seven acid-sector Piston maps in the pinned MAP_LIST order, and each pistons zone reaches Lua in its source encounter order without sorting.",
+      "classification": "fact",
+      "id": "piston_map_pool_and_zone_order"
+    },
+    {
+      "claim": "Every attempt removes one source, recomputes U/R/D/L choices, rejects blocked terrain, pawns, invalid points, and edges, then removes an accepted forward zone point if still present.",
+      "classification": "fact",
+      "id": "dynamic_placement_predicate"
+    },
+    {
+      "claim": "A rejected source consumes exactly its positive-bound candidate draw and no direction or Pawn-construction draw.",
+      "classification": "fact",
+      "id": "rejected_attempt_draw_count"
+    },
+    {
+      "claim": "Every accepted placement consumes candidate and direction draws, then the common Pawn constructor unconditionally consumes one raw MSVC result and stores it at Pawn+0x924.",
+      "classification": "fact",
+      "id": "hidden_constructor_draw"
+    },
+    {
+      "claim": "AddPawn's random-position helper contains two RNG sites but is guarded by supplied-coordinate invalidity; all exact zone sources are valid, so neither site contributes to Piston setup.",
+      "classification": "inference",
+      "id": "invalid_fallback_excluded"
+    },
+    {
+      "claim": "Given the selected shipped map and incoming observable CRT state, the ordered Piston placements and outgoing observable state are fully replayable offline.",
+      "classification": "inference",
+      "id": "parameterized_replay_complete"
+    },
+    {
+      "claim": "Ordinary solving begins after setup and already reads ordered live Pistons. Without the incoming CRT state and used-map registry, Rust must not fabricate a pre-mission placement forecast.",
+      "classification": "inference",
+      "id": "solver_boundary_unchanged"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "maps": [
+    {
+      "candidate_index_zero_based": 0,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            5
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            5
+          ]
+        },
+        {
+          "directions": [
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            1
+          ]
+        },
+        {
+          "directions": [
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            1
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            5
+          ]
+        },
+        {
+          "directions": [
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            3
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 0,
+      "map_name": "acid0",
+      "path": "maps/acid0.map",
+      "pistons_zone": [
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "sha256": "9e3daeb115afa3d8e2a57bee1fb65595a517759420b0fe24498bc2c384502fc5",
+      "size": 2433,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "acid_pool",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "44300344",
+        "43100134",
+        "31100113",
+        "00000000",
+        "00011000",
+        "30000003",
+        "43000034",
+        "44300344"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 14
+    },
+    {
+      "candidate_index_zero_based": 1,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            1
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            2,
+            3
+          ]
+        },
+        {
+          "directions": [],
+          "guaranteed_initial_rejection": true,
+          "source": [
+            2,
+            0
+          ]
+        },
+        {
+          "directions": [],
+          "guaranteed_initial_rejection": true,
+          "source": [
+            2,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            1
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            0
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 1,
+      "map_name": "acid1",
+      "path": "maps/acid1.map",
+      "pistons_zone": [
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          0
+        ]
+      ],
+      "sha256": "d348086ab042d0bf2355699a32cb3c745cd144fbd772f43ba46e72ca55698a95",
+      "size": 1665,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "acid_pool",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "00000000",
+        "01011010",
+        "01000010",
+        "00000000",
+        "33000033",
+        "00000000",
+        "00000000",
+        "33033033"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 16
+    },
+    {
+      "candidate_index_zero_based": 2,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            2,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            1,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            0
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 2,
+      "map_name": "acid10",
+      "path": "maps/acid10.map",
+      "pistons_zone": [
+        [
+          4,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          5,
+          0
+        ]
+      ],
+      "sha256": "b506dfdce356fa89e98393a33a30559e9b79ffd9547a1ddd0b559e92172f971a",
+      "size": 1884,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "acid_pool",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "03011044",
+        "00011004",
+        "03000000",
+        "31100010",
+        "00000010",
+        "30000000",
+        "00000030",
+        "33303033"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 9
+    },
+    {
+      "candidate_index_zero_based": 3,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            1
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            4
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 3,
+      "map_name": "acid11",
+      "path": "maps/acid11.map",
+      "pistons_zone": [
+        [
+          2,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "sha256": "4f2118c94b92f695237ea1ea32a1522c97360d63e83cf375b8f59c3d4bd22767",
+      "size": 1765,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "acid_pool",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "00000034",
+        "01101034",
+        "03300034",
+        "03301033",
+        "33101013",
+        "00000000",
+        "00000000",
+        "00000000"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 9
+    },
+    {
+      "candidate_index_zero_based": 4,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "U"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            7
+          ]
+        },
+        {
+          "directions": [
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            4
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            2,
+            2
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 7,
+      "map_name": "acid15",
+      "path": "maps/acid15.map",
+      "pistons_zone": [
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "sha256": "d6ce18751c114114f51b17501d5429c7a3d5a602abb6448cbe08722e0ccb90e2",
+      "size": 1584,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "40000004",
+        "40110104",
+        "00110104",
+        "00000000",
+        "00010000",
+        "03000300",
+        "03303300",
+        "00000004"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 7
+    },
+    {
+      "candidate_index_zero_based": 5,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            6,
+            6
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 9,
+      "map_name": "acid3",
+      "path": "maps/acid3.map",
+      "pistons_zone": [
+        [
+          4,
+          6
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          6
+        ]
+      ],
+      "sha256": "73fc3730648a7dbb78cbc6881caa16fd007eb47abd18b4b7aa7f8d5856104588",
+      "size": 1793,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "acid_pool",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "00001444",
+        "01001144",
+        "01000334",
+        "00000334",
+        "30010014",
+        "30000000",
+        "30000000",
+        "33000000"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 7
+    },
+    {
+      "candidate_index_zero_based": 6,
+      "dimensions": [
+        8,
+        8
+      ],
+      "embedded_pawns": [],
+      "evidence_class": "fact",
+      "initial_eligible_directions": [
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            3
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R",
+            "D"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            5
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "R"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            3,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "directions": [
+            "U",
+            "D",
+            "L"
+          ],
+          "guaranteed_initial_rejection": false,
+          "source": [
+            4,
+            5
+          ]
+        }
+      ],
+      "map_list_index_zero_based": 10,
+      "map_name": "acid4",
+      "path": "maps/acid4.map",
+      "pistons_zone": [
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "sha256": "b6971aa39ea88abe2a322f106c0e91491dbb182aa0b0448f25b2f8d6e798da8c",
+      "size": 1638,
+      "spawn_ids": [],
+      "spawn_points": [],
+      "spawns": [],
+      "tags": [
+        "generic",
+        "acid",
+        "pistons"
+      ],
+      "terrain_by_x": [
+        "00000000",
+        "30130130",
+        "30130130",
+        "00000000",
+        "00000000",
+        "30130130",
+        "30030030",
+        "00000000"
+      ],
+      "terrain_encoding": "terrain_by_x[x][y], decimal terrain enum",
+      "zone_size": 10
+    }
+  ],
+  "notes": [
+    "This is exact-build static evidence plus a parameterized offline replay, not a concrete runtime capture.",
+    "Constructor raw result means the 15-bit rand return before any modulo; the purpose of Pawn+0x924 is outside this placement claim.",
+    "The hidden top CRT state bit is discarded because it never changes any future observable result.",
+    "Fresh bridge state remains authoritative for the selected map, Piston UIDs, and settled placement order."
+  ],
+  "refines": [
+    {
+      "artifact": "data/observatory/native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json",
+      "qualification": "The stock setup grammar and parameterized replay are exact. The incoming shared state, concrete used-map registry, and future selected map remain runtime inputs rather than static facts.",
+      "resolved_unresolved_ids": [
+        "mission_piston_setup_rng"
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Ghidra map-loader body containing ordered zone ingestion.",
+      "end_rva_exclusive": "0x00163cfc",
+      "evidence_class": "fact",
+      "id": "map_loader",
+      "section": ".text",
+      "sha256": "8e232f9d11aee6d546e6496cd5dfeed93d28ad811d20ec2a8072456fc352edd0",
+      "size": 6732,
+      "start_rva": "0x001622b0"
+    },
+    {
+      "boundary_basis": "Ghidra Board:GetZone target body.",
+      "end_rva_exclusive": "0x0016db0f",
+      "evidence_class": "fact",
+      "id": "getzone",
+      "section": ".text",
+      "sha256": "b9afd4ac0e799ba1608f2734a17ca4ef3cbcbad346ad32388a3d2bfd94148568",
+      "size": 287,
+      "start_rva": "0x0016d9f0"
+    },
+    {
+      "boundary_basis": "Ghidra named-zone lookup and PointList copy body.",
+      "end_rva_exclusive": "0x0016e12b",
+      "evidence_class": "fact",
+      "id": "zone_lookup",
+      "section": ".text",
+      "sha256": "91f988fdcbeb90b07539b86903785687bcfd1864cdb0d72c5bc958319d02bfb3",
+      "size": 507,
+      "start_rva": "0x0016df30"
+    },
+    {
+      "boundary_basis": "Ghidra PointList order-preserving copy body.",
+      "end_rva_exclusive": "0x0009a92f",
+      "evidence_class": "fact",
+      "id": "pointlist_copy",
+      "section": ".text",
+      "sha256": "4359ecaf051506bce97afe182b66c453ca8d13ac4091d72a810f9df43d14d2e0",
+      "size": 79,
+      "start_rva": "0x0009a8e0"
+    },
+    {
+      "boundary_basis": "Ghidra named-zone creation body.",
+      "end_rva_exclusive": "0x0016c13d",
+      "evidence_class": "fact",
+      "id": "zone_create",
+      "section": ".text",
+      "sha256": "3a7263905c040c883afd7c5fcb7f9e562019da8096d05df6efa4763798a484f3",
+      "size": 253,
+      "start_rva": "0x0016c040"
+    },
+    {
+      "boundary_basis": "Ghidra first-occurrence-preserving zone append body.",
+      "end_rva_exclusive": "0x0016e1f1",
+      "evidence_class": "fact",
+      "id": "zone_append",
+      "section": ".text",
+      "sha256": "d41216b10077d3ac9c4e75fb7e3faf820f648e5f84c774fbcb1006aa7c6e079d",
+      "size": 193,
+      "start_rva": "0x0016e130"
+    },
+    {
+      "boundary_basis": "Ghidra Board coordinate-validity body.",
+      "end_rva_exclusive": "0x001622a7",
+      "evidence_class": "fact",
+      "id": "isvalid",
+      "section": ".text",
+      "sha256": "ccc44e753f417cb103727661382ad7b18cd729f23a1bed12057027a3ef1506b1",
+      "size": 39,
+      "start_rva": "0x00162280"
+    },
+    {
+      "boundary_basis": "Ghidra secondary-this virtual thunk.",
+      "end_rva_exclusive": "0x000e7185",
+      "evidence_class": "fact",
+      "id": "ispawnspace_thunk",
+      "section": ".text",
+      "sha256": "35db3b17881aa60eaa25d8781db30c6df0065324b7097613cbe416b3add2e77c",
+      "size": 5,
+      "start_rva": "0x000e7180"
+    },
+    {
+      "boundary_basis": "Ghidra live-only Board:IsPawnSpace body.",
+      "end_rva_exclusive": "0x0016fd66",
+      "evidence_class": "fact",
+      "id": "ispawnspace_body",
+      "section": ".text",
+      "sha256": "b5eed1df511c992ecc74b23340515fe754981e7328c9cd6293c2771e0243e758",
+      "size": 22,
+      "start_rva": "0x0016fd50"
+    },
+    {
+      "boundary_basis": "Ghidra tile-occupant predicate body.",
+      "end_rva_exclusive": "0x0016fde1",
+      "evidence_class": "fact",
+      "id": "occupancy",
+      "section": ".text",
+      "sha256": "8bed0407e45f2443921799cbe630af6ddae0d7f14b1d3c6199c6e3de818d6f69",
+      "size": 113,
+      "start_rva": "0x0016fd70"
+    },
+    {
+      "boundary_basis": "Ghidra Board:GetTerrain target body.",
+      "end_rva_exclusive": "0x00104b88",
+      "evidence_class": "fact",
+      "id": "getterrain",
+      "section": ".text",
+      "sha256": "bb0a4b8ace45f2208137e41a481c3d02d8c88c57e4b8def6e7d56776825eaf41",
+      "size": 24,
+      "start_rva": "0x00104b70"
+    },
+    {
+      "boundary_basis": "Ghidra tile lookup body.",
+      "end_rva_exclusive": "0x0015eb83",
+      "evidence_class": "fact",
+      "id": "getterrain_core",
+      "section": ".text",
+      "sha256": "08b4eea50daec1988817c68bb6c65743e773f32a02a55f8b7f8627c387bf1d89",
+      "size": 67,
+      "start_rva": "0x0015eb40"
+    },
+    {
+      "boundary_basis": "Ghidra Board:ClearSpace target body.",
+      "end_rva_exclusive": "0x00165f15",
+      "evidence_class": "fact",
+      "id": "clearspace",
+      "section": ".text",
+      "sha256": "4eb4b55bfd3cda41d98896abeceafaea532c172a54266971855913245dc5291d",
+      "size": 325,
+      "start_rva": "0x00165dd0"
+    },
+    {
+      "boundary_basis": "Ghidra tile-clear helper body.",
+      "end_rva_exclusive": "0x00162051",
+      "evidence_class": "fact",
+      "id": "clear_tile",
+      "section": ".text",
+      "sha256": "b9db32b4afd49798529efb1baad2a5fcb8007044303c68278a211aac1950bed6",
+      "size": 193,
+      "start_rva": "0x00161f90"
+    },
+    {
+      "boundary_basis": "Ghidra clear-space tile helper body.",
+      "end_rva_exclusive": "0x001a0461",
+      "evidence_class": "fact",
+      "id": "tile_helper",
+      "section": ".text",
+      "sha256": "057f64d0c20e9fc3018d5a9d4ef3a80cd6bc3d697612cef28233abccd968a93d",
+      "size": 161,
+      "start_rva": "0x001a03c0"
+    },
+    {
+      "boundary_basis": "Ghidra edge-state mutator called by ClearSpace.",
+      "end_rva_exclusive": "0x0017457f",
+      "evidence_class": "fact",
+      "id": "set_edge",
+      "section": ".text",
+      "sha256": "69e0892bc47ce95193a48c4d89c6c9b5831aec7edcb2b25f8d01b34e17743388",
+      "size": 159,
+      "start_rva": "0x001744e0"
+    },
+    {
+      "boundary_basis": "Ghidra Board:IsEdge target body.",
+      "end_rva_exclusive": "0x00170a4d",
+      "evidence_class": "fact",
+      "id": "isedge",
+      "section": ".text",
+      "sha256": "73584f34e6e823a5e2b92298f3c8562ff91d29aaf7432ffc2b6a39851c281c6f",
+      "size": 45,
+      "start_rva": "0x00170a20"
+    },
+    {
+      "boundary_basis": "Ghidra Board:AddPawn(Pawn*,Point) body.",
+      "end_rva_exclusive": "0x0016ec8d",
+      "evidence_class": "fact",
+      "id": "addpawn",
+      "section": ".text",
+      "sha256": "c9031f10d38ba7cb28959b3460aec686a4366b4697accc7479638436aaa7280a",
+      "size": 973,
+      "start_rva": "0x0016e8c0"
+    },
+    {
+      "boundary_basis": "Ghidra random-position fallback used only for an invalid supplied point.",
+      "end_rva_exclusive": "0x00172ef6",
+      "evidence_class": "fact",
+      "id": "invalid_addpawn_fallback",
+      "section": ".text",
+      "sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+      "size": 1126,
+      "start_rva": "0x00172a90"
+    },
+    {
+      "boundary_basis": "Ghidra one-argument PAWN_FACTORY:CreatePawn wrapper.",
+      "end_rva_exclusive": "0x00245066",
+      "evidence_class": "fact",
+      "id": "createpawn_wrapper",
+      "section": ".text",
+      "sha256": "f7148da1226256df25b4eb4aa019a4f7ffcf354bac806f6b18e7ead5aa3bf095",
+      "size": 134,
+      "start_rva": "0x00244fe0"
+    },
+    {
+      "boundary_basis": "Ghidra named Pawn factory body.",
+      "end_rva_exclusive": "0x00244fe0",
+      "evidence_class": "fact",
+      "id": "pawn_factory",
+      "section": ".text",
+      "sha256": "15a9ff7b5140c97a90f9907c90c506d051136da05475580861c2ba557cf88559",
+      "size": 496,
+      "start_rva": "0x00244df0"
+    },
+    {
+      "boundary_basis": "Ghidra allocation and common-constructor body.",
+      "end_rva_exclusive": "0x0024524e",
+      "evidence_class": "fact",
+      "id": "pawn_factory_construct",
+      "section": ".text",
+      "sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+      "size": 478,
+      "start_rva": "0x00245070"
+    },
+    {
+      "boundary_basis": "Ghidra common Pawn constructor body.",
+      "end_rva_exclusive": "0x0022bac8",
+      "evidence_class": "fact",
+      "id": "pawn_constructor",
+      "section": ".text",
+      "sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+      "size": 4520,
+      "start_rva": "0x0022a920"
+    },
+    {
+      "boundary_basis": "Ghidra source-definition loader body.",
+      "end_rva_exclusive": "0x0022cbb7",
+      "evidence_class": "fact",
+      "id": "pawn_definition_loader",
+      "section": ".text",
+      "sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+      "size": 2759,
+      "start_rva": "0x0022c0f0"
+    },
+    {
+      "boundary_basis": "Ghidra skill-list wrapper reached by factory and AddPawn.",
+      "end_rva_exclusive": "0x00242c72",
+      "evidence_class": "fact",
+      "id": "skill_list",
+      "section": ".text",
+      "sha256": "c94aea5aaaeb5aee0af4941b2e9450260386d1d1edfcc04ddfa312b70130e9d5",
+      "size": 34,
+      "start_rva": "0x00242c50"
+    },
+    {
+      "boundary_basis": "Ghidra one-argument random_int body.",
+      "end_rva_exclusive": "0x000e0c3a",
+      "evidence_class": "fact",
+      "id": "random_int",
+      "section": ".text",
+      "sha256": "76e4d6f1289067724a2b6a8348ef91cb772a9bb12f6debf07b66efc11a6dd70e",
+      "size": 26,
+      "start_rva": "0x000e0c20"
+    },
+    {
+      "boundary_basis": "Ghidra shared MSVC rand body.",
+      "end_rva_exclusive": "0x00387f37",
+      "evidence_class": "fact",
+      "id": "rng_core",
+      "section": ".text",
+      "sha256": "3d7a67186e320b23a31d2ca6f9281211b373b60d44f35531cf4369da45cf0179",
+      "size": 33,
+      "start_rva": "0x00387f16"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind bool(Board::*)(Point) helper.",
+      "end_rva_exclusive": "0x00287291",
+      "evidence_class": "fact",
+      "id": "bind_bool_point",
+      "section": ".text",
+      "sha256": "5d882eebecbc2d19686bce0f8cb92d71e17d9c9b0ba718b4a0f6497ac4764126",
+      "size": 161,
+      "start_rva": "0x002871f0"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind terrain(Board::*)(Point) helper.",
+      "end_rva_exclusive": "0x00287091",
+      "evidence_class": "fact",
+      "id": "bind_getterrain_point",
+      "section": ".text",
+      "sha256": "c1d7ea169676500c1b1e4acc0f063bc41cf52e37a473ecd201b0c89095a2b2dc",
+      "size": 161,
+      "start_rva": "0x00286ff0"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind Point(Board::*)(Pawn*,Point) helper.",
+      "end_rva_exclusive": "0x00288240",
+      "evidence_class": "fact",
+      "id": "bind_addpawn_point",
+      "section": ".text",
+      "sha256": "b73cd813a1e33f0bf9c62b5794f095331024615f533bfe479d9b99afada2a29a",
+      "size": 160,
+      "start_rva": "0x002881a0"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind PointList(Board::*)(string) helper.",
+      "end_rva_exclusive": "0x00288fb0",
+      "evidence_class": "fact",
+      "id": "bind_getzone",
+      "section": ".text",
+      "sha256": "af9093764dfb69798d2f67183f5c4af69b7476407dfbe68926a8962749d4ff06",
+      "size": 160,
+      "start_rva": "0x00288f10"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind void(Board::*)(Point) helper.",
+      "end_rva_exclusive": "0x00287731",
+      "evidence_class": "fact",
+      "id": "bind_clearspace",
+      "section": ".text",
+      "sha256": "5087409c2d00e0936fa1d728db1a3dc204155bc6c02106cfef608d936f97118f",
+      "size": 161,
+      "start_rva": "0x00287690"
+    },
+    {
+      "boundary_basis": "Ghidra Luabind Pawn*(PawnFactory::*)(string) helper.",
+      "end_rva_exclusive": "0x0028e9c3",
+      "evidence_class": "fact",
+      "id": "bind_createpawn_one",
+      "section": ".text",
+      "sha256": "bbf8a4374671e2d654e62b93152f541b32b66cdf2e3a4ab68c412d194cc214ad",
+      "size": 147,
+      "start_rva": "0x0028e930"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "7d205a8e3458b19a7b5f2cbc1aa27ff856a6991c2dc94b6462f31ab108adda30",
+      "map_name": "acid0",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 1,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 2,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 4,
+          "source": [
+            5,
+            5
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "facead29db9ed2c458d596c105ef2d35b524241f2fbb29d2befdcf1f94145149",
+      "map_name": "acid1",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            2,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 1,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 2,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 3,
+          "source": [
+            6,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 4,
+          "source": [
+            6,
+            1
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 13,
+      "final_state": "0x0476d49f",
+      "full_replay_canonical_sha256": "ae6f86077e541abe26982154918eede5a6c5d30e5d859278516a95d8cf901b01",
+      "map_name": "acid10",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 1,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 8365,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 30612,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            5,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 1142,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            2,
+            6
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 1
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "cf927ae39e1ef151431b401a68e93c3112fa9ae4930d887058d2854e2e5b12e9",
+      "map_name": "acid11",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            6,
+            1
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            6,
+            2
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "7724f3bb158f2b62071513b1180881b823ea2a05bb450a6a9a655ba1bafa3d48",
+      "map_name": "acid15",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 1,
+          "source": [
+            6,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 2,
+          "source": [
+            4,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            3,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            5,
+            7
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "4685e30523a653f5045ec9834a42f6d8f9ceca7fe095a2be1ee0e68b5ee8880f",
+      "map_name": "acid3",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            5,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 3,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 4,
+          "source": [
+            4,
+            6
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6dc4fe0c",
+      "full_replay_canonical_sha256": "3634ed1f679e45cab582e0b5cee223fb264f5495bd381f6add2ea8482d732db8",
+      "map_name": "acid4",
+      "placements": [
+        {
+          "constructor_raw_result": 21238,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            3,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 11797,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 10450,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": true,
+          "front": [
+            3,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            3,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 28100,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            3,
+            0
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000000",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "43b43b5c4a5b0f9c16046c95a774190b060be79250280f6154dd4f84932800b6",
+      "map_name": "acid0",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            4,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 3,
+          "source": [
+            5,
+            1
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 4,
+          "source": [
+            5,
+            6
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 14,
+      "final_state": "0x41bbb05f",
+      "full_replay_canonical_sha256": "f6e271bd1fb3793fda0a85644c7fb818d14ff4f94fbc2374ba48158d53d56515",
+      "map_name": "acid1",
+      "placements": [
+        {
+          "constructor_raw_result": 26500,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 1,
+          "source": [
+            6,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 11478,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            6,
+            1
+          ]
+        },
+        {
+          "constructor_raw_result": 24464,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 3,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 16827,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 4,
+          "source": [
+            5,
+            3
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 2
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "f7b07ac0cc9763d3d1187e5b72eae64bd2c2fc6af709b77d9eae3df8766fe0ea",
+      "map_name": "acid10",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            1,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            2,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 2,
+          "source": [
+            5,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            3,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            4,
+            0
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "e34914896e29f7ce6938d1d6a958d867cc6ac8cfa4263ac5ac2ee0866fd2b22a",
+      "map_name": "acid11",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 1,
+          "source": [
+            5,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            5,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            2,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            6,
+            4
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "db2611f1edfabf2729103a2d74241e4ec543d6f8d1203df77801524e89c55b20",
+      "map_name": "acid15",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 1,
+          "source": [
+            2,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 2,
+          "source": [
+            4,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            6,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            3,
+            7
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "a1db0ecb72e0673c38d61eea778bb44b0a1fff03cb68d69e986d9af34b60df6b",
+      "map_name": "acid3",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 4,
+          "source": [
+            3,
+            3
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x6df109fd",
+      "full_replay_canonical_sha256": "2b89abab4132d53da18315c1b09ff60a71dcbbf0c4069b68ec75b893087034d3",
+      "map_name": "acid4",
+      "placements": [
+        {
+          "constructor_raw_result": 6334,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 1,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 15724,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            4,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 26962,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            4,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 28145,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            3,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 4,
+          "source": [
+            4,
+            2
+          ]
+        }
+      ],
+      "pre_call_state": "0x00000001",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "d5c1609bddee797c987c2007b3a144416e584ca33ae09f670f749862c8f284e3",
+      "map_name": "acid0",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            5,
+            5
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            4,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            6,
+            5
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 15,
+      "final_state": "0x0d092be9",
+      "full_replay_canonical_sha256": "3d19f9a74e654ff45c34bf479f6959bcfb059413456616498bd0e3117a3e7c9d",
+      "map_name": "acid1",
+      "placements": [
+        {
+          "constructor_raw_result": 24737,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            5,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            6,
+            1
+          ]
+        },
+        {
+          "constructor_raw_result": 18180,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            5,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 3337,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            2,
+            3
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 3
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "711b3bf2bc87633d17a0b4ed4187bfa3c2d5d4bc74ee7d6b88ff98d78882b086",
+      "map_name": "acid10",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            1,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            2,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 2,
+          "source": [
+            5,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 3,
+          "source": [
+            6,
+            0
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            4,
+            6
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "d6f70226c6b8b258ca2797af879b5586f63d94745c0b1f5f4a95b39b226df7f5",
+      "map_name": "acid11",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 1,
+          "source": [
+            5,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 2,
+          "source": [
+            6,
+            6
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": true,
+          "front": [
+            6,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            6,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            6,
+            0
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "e30fdb2d738c47762d70ff056964dfb80c808af5f1c430e919de6eba32b30d29",
+      "map_name": "acid15",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 1,
+          "source": [
+            6,
+            7
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            2,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 2,
+          "source": [
+            2,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            4
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 3,
+          "source": [
+            4,
+            4
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            4,
+            7
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "2db2289353471825d56c6deba3d0e2e93354fa9a03bd1de11e21fe9fd4c76598",
+      "map_name": "acid3",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "left",
+          "direction_native_value": 3,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_L",
+          "placement_index": 1,
+          "source": [
+            5,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": false,
+          "front": [
+            6,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            5,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            3,
+            2
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            5,
+            5
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 4,
+          "source": [
+            5,
+            6
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    },
+    {
+      "accepted_count": 4,
+      "draw_count": 12,
+      "final_state": "0x2d618d04",
+      "full_replay_canonical_sha256": "153e5aee23307dfe894473154c40498b0f112b1a071d43d5b412d29694a264ca",
+      "map_name": "acid4",
+      "placements": [
+        {
+          "constructor_raw_result": 19469,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            6
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 1,
+          "source": [
+            4,
+            5
+          ]
+        },
+        {
+          "constructor_raw_result": 14229,
+          "direction": "right",
+          "direction_native_value": 1,
+          "forward_removed_from_zone": true,
+          "front": [
+            4,
+            3
+          ],
+          "pawn_type": "Pawn_Piston_R",
+          "placement_index": 2,
+          "source": [
+            3,
+            3
+          ]
+        },
+        {
+          "constructor_raw_result": 32073,
+          "direction": "up",
+          "direction_native_value": 0,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_U",
+          "placement_index": 3,
+          "source": [
+            4,
+            2
+          ]
+        },
+        {
+          "constructor_raw_result": 11617,
+          "direction": "down",
+          "direction_native_value": 2,
+          "forward_removed_from_zone": false,
+          "front": [
+            4,
+            1
+          ],
+          "pawn_type": "Pawn_Piston_D",
+          "placement_index": 4,
+          "source": [
+            4,
+            0
+          ]
+        }
+      ],
+      "pre_call_state": "0x12345678",
+      "rejected_count": 0
+    }
+  ],
+  "rng_call_inventory": {
+    "all_other_pinned_regions_have_no_direct_rng_core_calls": true,
+    "raw_direct_call_candidate_count": 118,
+    "reviewed_region_calls": {
+      "invalid_addpawn_fallback": [
+        "0x00172e16",
+        "0x00172e70"
+      ],
+      "pawn_constructor": [
+        "0x0022b78a"
+      ],
+      "random_int": [
+        "0x000e0c2d"
+      ]
+    },
+    "rng_core_rva": "0x00387f16"
+  },
+  "scalar_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "DIR_UP",
+      "instruction_hex": "6a00",
+      "instruction_rva": "0x0004b7fe",
+      "value": 0
+    },
+    {
+      "evidence_class": "fact",
+      "id": "DIR_RIGHT",
+      "instruction_hex": "6a01",
+      "instruction_rva": "0x0004b9a2",
+      "value": 1
+    },
+    {
+      "evidence_class": "fact",
+      "id": "DIR_DOWN",
+      "instruction_hex": "6a02",
+      "instruction_rva": "0x0004b88a",
+      "value": 2
+    },
+    {
+      "evidence_class": "fact",
+      "id": "DIR_LEFT",
+      "instruction_hex": "6a03",
+      "instruction_rva": "0x0004b916",
+      "value": 3
+    },
+    {
+      "evidence_class": "fact",
+      "id": "DIR_START",
+      "instruction_hex": "6a00",
+      "instruction_rva": "0x0004baba",
+      "value": 0
+    },
+    {
+      "evidence_class": "fact",
+      "id": "DIR_END",
+      "instruction_hex": "6a03",
+      "instruction_rva": "0x0004bbd2",
+      "value": 3
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "current_simulator_version": 408,
+    "reason": "The Rust solver consumes the settled bridge board after setup. Replaying an unavailable pre-setup state would weaken, not improve, that authoritative boundary.",
+    "simulator_change_required": false,
+    "simulator_contradiction_found": false,
+    "simulator_version_bump_required": false
+  },
+  "sources": [
+    {
+      "path": "scripts/missions/acid/mission_piston.lua",
+      "sha256": "1f426bad3b4149f0088831680264f716a3f9cc6acebf828306946c55990d51ad",
+      "size": 2420,
+      "symbols": [
+        "Mission_Piston",
+        "Mission_Piston:StartMission",
+        "Pawn_Piston_U",
+        "Pawn_Piston_R",
+        "Pawn_Piston_D",
+        "Pawn_Piston_L"
+      ]
+    },
+    {
+      "path": "scripts/global.lua",
+      "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "size": 17363,
+      "symbols": [
+        "random_element",
+        "random_removal"
+      ]
+    },
+    {
+      "path": "scripts/events.lua",
+      "sha256": "c47c17d4e3a57638cacf4546b186360a867c0a9457f926fd9bb57febdb37535a",
+      "size": 7405,
+      "symbols": [
+        "extract_table"
+      ]
+    },
+    {
+      "path": "scripts/missions/missions.lua",
+      "sha256": "505c02a8668ba2e39d868f95051ede81c6cc1611f1e409219b6caa4fbe1d0257",
+      "size": 29573,
+      "symbols": [
+        "Mission",
+        "Mission:GetMapTag",
+        "Mission:BaseStart"
+      ]
+    },
+    {
+      "path": "scripts/environments.lua",
+      "sha256": "5f8a7d74f537abb33bc88c1f9669f3f6fabdd5c8c51aad3486d2e965e4fb80ec",
+      "size": 8924,
+      "symbols": [
+        "Environment:Start",
+        "Env_Null"
+      ]
+    },
+    {
+      "path": "maps/maphelper.lua",
+      "sha256": "f6455082a050f734ccc60ef3df6914619f5a250832a79f71e3ad6f1758431077",
+      "size": 2093,
+      "symbols": [
+        "AddMap",
+        "RandomMap"
+      ]
+    }
+  ],
+  "string_anchors": [
+    {
+      "evidence_class": "fact",
+      "id": "GetZone",
+      "reference_hex": "c7420800888300",
+      "reference_rva": "0x00288f5f",
+      "string_hex": "4765745a6f6e6500",
+      "string_rva": "0x00438800"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "IsValid",
+      "reference_hex": "68d0858300",
+      "reference_rva": "0x00279c62",
+      "string_hex": "497356616c696400",
+      "string_rva": "0x004385d0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "IsPawnSpace",
+      "reference_hex": "68c4858300",
+      "reference_rva": "0x00279cac",
+      "string_hex": "49735061776e537061636500",
+      "string_rva": "0x004385c4"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "GetTerrain",
+      "reference_hex": "68c0868300",
+      "reference_rva": "0x00279fb7",
+      "string_hex": "4765745465727261696e00",
+      "string_rva": "0x004386c0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "AddPawn",
+      "reference_hex": "c7420814878300",
+      "reference_rva": "0x002881ef",
+      "string_hex": "4164645061776e00",
+      "string_rva": "0x00438714"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "ClearSpace",
+      "reference_hex": "6888898300",
+      "reference_rva": "0x0027a9dc",
+      "string_hex": "436c656172537061636500",
+      "string_rva": "0x00438988"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "IsEdge",
+      "reference_hex": "680c8a8300",
+      "reference_rva": "0x0027ab21",
+      "string_hex": "49734564676500",
+      "string_rva": "0x00438a0c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "CreatePawn",
+      "reference_hex": "c7420888948300",
+      "reference_rva": "0x0028e978",
+      "string_hex": "4372656174655061776e00",
+      "string_rva": "0x00439488"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "PAWN_FACTORY",
+      "reference_hex": "68e0968300",
+      "reference_rva": "0x0027e048",
+      "string_hex": "5041574e5f464143544f525900",
+      "string_rva": "0x004396e0"
+    }
+  ],
+  "summary": {
+    "binding_count": 8,
+    "candidate_order_proven": true,
+    "concrete_forecast_proven": false,
+    "constructor_draw_proven": true,
+    "control_window_count": 18,
+    "data_pointer_count": 3,
+    "dependency_count": 3,
+    "direct_edge_count": 22,
+    "finding_count": 7,
+    "map_count": 7,
+    "parameterized_replay_complete": true,
+    "region_count": 33,
+    "rejected_draw_count_proven": true,
+    "replay_vector_count": 21,
+    "scalar_anchor_count": 6,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "source_count": 6,
+    "string_anchor_count": 9,
+    "unresolved_count": 4,
+    "vector_anchor_count": 4,
+    "zone_order_proven": true
+  },
+  "unresolved": [
+    {
+      "id": "incoming_shared_crt_state",
+      "next_evidence": "Capture or recover the state at that exact boundary only if concrete pre-board forecasting becomes useful.",
+      "question": "What is the shared CRT state immediately before the one-entry Piston map-tag draw?"
+    },
+    {
+      "id": "concrete_used_map_registry",
+      "next_evidence": "Read the concrete campaign registry or observe the selected map; the retry grammar and seven-entry remainder mapping are already exact.",
+      "question": "Which Piston candidates are already used, and how many RandomMap attempts occur for one future mission?"
+    },
+    {
+      "id": "concrete_runtime_instances",
+      "next_evidence": "Use the settled bridge board and, only if needed, the parameterized replay with a recovered incoming state.",
+      "question": "What concrete Piston UIDs and constructor-field values materialize in a future mission?"
+    },
+    {
+      "id": "modded_or_non_windows_setup",
+      "next_evidence": "Build a separate executable/content/installation-keyed artifact before generalizing.",
+      "question": "Do mods, macOS, or another depot preserve this exact setup boundary?"
+    }
+  ],
+  "vector_anchors": [
+    {
+      "data_hex": "00000000ffffffff",
+      "data_rva": "0x00494da4",
+      "evidence_class": "fact",
+      "id": "VEC_UP",
+      "point": [
+        0,
+        -1
+      ],
+      "section": ".data"
+    },
+    {
+      "data_hex": "0000000001000000",
+      "data_rva": "0x00494dac",
+      "evidence_class": "fact",
+      "id": "VEC_DOWN",
+      "point": [
+        0,
+        1
+      ],
+      "section": ".data"
+    },
+    {
+      "data_hex": "0100000000000000",
+      "data_rva": "0x00494db4",
+      "evidence_class": "fact",
+      "id": "VEC_RIGHT",
+      "point": [
+        1,
+        0
+      ],
+      "section": ".data"
+    },
+    {
+      "data_hex": "ffffffff00000000",
+      "data_rva": "0x00494dbc",
+      "evidence_class": "fact",
+      "id": "VEC_LEFT",
+      "point": [
+        -1,
+        0
+      ],
+      "section": ".data"
+    }
+  ]
+}
