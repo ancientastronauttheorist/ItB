@@ -1,0 +1,1094 @@
+{
+  "analysis_kind": "native_enemy_position_observations_boundary",
+  "avoiding_mines_source_census": [
+    {
+      "column": 2,
+      "line": 153,
+      "path": "scripts/global.lua",
+      "value": false
+    },
+    {
+      "column": 3,
+      "line": 1288,
+      "path": "scripts/pawns.lua",
+      "value": true
+    },
+    {
+      "column": 3,
+      "line": 1304,
+      "path": "scripts/pawns.lua",
+      "value": true
+    }
+  ],
+  "build_identity": {
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "call_edges": [
+    {
+      "id": "dangerous_item_to_core_valid",
+      "instruction_hex": "e8ebeb0200",
+      "instruction_rva": "0x00172680",
+      "target_rva": "0x001a1270"
+    },
+    {
+      "id": "dangerous_item_to_core_fallback",
+      "instruction_hex": "e8daeb0200",
+      "instruction_rva": "0x00172691",
+      "target_rva": "0x001a1270"
+    },
+    {
+      "id": "targeted_to_point_predicate",
+      "instruction_hex": "e8baa20b00",
+      "instruction_rva": "0x0016e7f1",
+      "target_rva": "0x00228ab0"
+    },
+    {
+      "id": "board_pawn_team_to_pawn_lookup",
+      "instruction_hex": "e876200000",
+      "instruction_rva": "0x0016fc85",
+      "target_rva": "0x00171d00"
+    },
+    {
+      "id": "board_pawn_team_to_pawn_is_team",
+      "instruction_hex": "e8cfdb0c00",
+      "instruction_rva": "0x0016fc8c",
+      "target_rva": "0x0023d860"
+    },
+    {
+      "id": "distance_to_pawn_to_profile_builder",
+      "instruction_hex": "e87aadf5ff",
+      "instruction_rva": "0x00173cd1",
+      "target_rva": "0x000cea50"
+    },
+    {
+      "id": "distance_to_pawn_to_pawn_is_team",
+      "instruction_hex": "e85b9b0c00",
+      "instruction_rva": "0x00173d00",
+      "target_rva": "0x0023d860"
+    },
+    {
+      "id": "avoiding_mines_to_boolean_getter",
+      "instruction_hex": "e8dce4e0ff",
+      "instruction_rva": "0x0023aecf",
+      "target_rva": "0x000493b0"
+    },
+    {
+      "id": "ranged_to_integer_getter",
+      "instruction_hex": "e81c99e0ff",
+      "instruction_rva": "0x0023f96f",
+      "target_rva": "0x00049290"
+    }
+  ],
+  "closure": {
+    "complete_enemy_phase_forecast": false,
+    "current_state_carrier_matrix_complete": true,
+    "direct_dangerous_bridge_carriers_complete": false,
+    "native_named_bindings_complete": true,
+    "native_score_positioning_observation_semantics_complete": true,
+    "prospective_board_observations_complete": false,
+    "runtime_mutated_definition_flags_complete": false,
+    "simulator_change_required": false,
+    "simulator_version": 408
+  },
+  "contracts": {
+    "board_is_pawn_team_empty_team_any_result": true,
+    "building": {
+      "distance": "minimum Manhattan or INT_MAX",
+      "point_cache": "+0x2c44/+0x2c48",
+      "terrain_offset": "+0x2ae0",
+      "terrain_value": 1
+    },
+    "dangerous": {
+      "environment_danger_is_not_a_substitute": true,
+      "first_point_vector": "+0x7460/+0x7464",
+      "second_point_vector": "+0x7470/+0x7474",
+      "tile_flag_offset": "+0x2af0"
+    },
+    "dangerous_item": {
+      "embedded_space_damage_base": "+0x2884",
+      "fields": [
+        {
+          "name": "iDamage",
+          "neutral": 0,
+          "record_offset": "+0x08",
+          "tile_test_offset": "+0x288c"
+        },
+        {
+          "name": "iPush",
+          "neutral": 4,
+          "record_offset": "+0x0c",
+          "tile_test_offset": "+0x2890"
+        },
+        {
+          "name": "iShield",
+          "neutral": 0,
+          "record_offset": "+0x10",
+          "tile_test_offset": "+0x2894"
+        },
+        {
+          "name": "iFire",
+          "neutral": 0,
+          "record_offset": "+0x18",
+          "tile_test_offset": "+0x289c"
+        },
+        {
+          "name": "iFrozen",
+          "neutral": 0,
+          "record_offset": "+0x1c",
+          "tile_test_offset": "+0x28a0"
+        },
+        {
+          "name": "iSmoke",
+          "neutral": 0,
+          "record_offset": "+0x24",
+          "tile_test_offset": "+0x28a8"
+        },
+        {
+          "name": "iAcid",
+          "neutral": 0,
+          "record_offset": "+0x28",
+          "tile_test_offset": "+0x28ac"
+        },
+        {
+          "name": "sPawn",
+          "neutral": "empty length at +0xb4",
+          "record_offset": "+0xa4",
+          "tile_test_offset": "+0x2938"
+        }
+      ],
+      "item_presence_offset": "+0x2b04",
+      "safe_tuple": {
+        "iAcid": 0,
+        "iDamage": 0,
+        "iFire": 0,
+        "iFrozen": 0,
+        "iPush": 4,
+        "iShield": 0,
+        "iSmoke": 0,
+        "sPawn": "empty"
+      }
+    },
+    "dir_none": 4,
+    "pawn_distance": {
+      "board_pawn_vector": "+0x3c/+0x40",
+      "empty_result": 2147483647,
+      "path_profile": 6,
+      "valid_grid_distance": "Manhattan"
+    },
+    "pawn_fields": {
+      "AvoidingMines": "Lua boolean",
+      "Ranged": "Lua integer equals 1",
+      "fire": "+0x8d0 byte",
+      "runtime_flying": "+0x1314 byte",
+      "team": "+0xb0"
+    },
+    "scope": "valid Points on the shipped 8x8 Board",
+    "score_positioning_never_queries_team_any": true,
+    "spawning": {
+      "point_vector": "+0x2d50/+0x2d54",
+      "tile_flag_offset": "+0x27e8"
+    },
+    "targeted": {
+      "active_virtual_slot": "+0x18",
+      "board_object_vector": "+0x3c/+0x40",
+      "point_predicate_rva": "0x00228ab0"
+    },
+    "team_values": {
+      "TEAM_ANY": 2,
+      "TEAM_ENEMY": 6,
+      "TEAM_PLAYER": 1
+    },
+    "terrain_building": 1
+  },
+  "control_windows": [
+    {
+      "id": "space_damage_field_bindings",
+      "meaning": "Pins all relevant SpaceDamage field-name/offset pairs.",
+      "sha256": "7c40ef019e89ee225f54ac2e1f2f84552d5b58754e0bd3f75b788db750e6682c",
+      "size": 140,
+      "start_rva": "0x0027ad76"
+    },
+    {
+      "id": "distance_profile_six_builder",
+      "meaning": "Passes literal low path profile six into the cached distance builder.",
+      "sha256": "634b9eac90220ddfb196cb966a4f3c12b7a24fcd8bc674faa9b1e85a7103e053",
+      "size": 28,
+      "start_rva": "0x00173cba"
+    },
+    {
+      "id": "profile_six_traverses_every_valid_tile",
+      "meaning": "Low profile six returns traversal true before terrain or occupancy tests.",
+      "sha256": "3d20501621a6eac9bd1bb93c0d1bc9eb9711a7bef19c90562968381a92ff909e",
+      "size": 33,
+      "start_rva": "0x001a0162"
+    },
+    {
+      "id": "profile_six_ignores_directional_walls",
+      "meaning": "Low profile six returns no wall block, matching profiles one, three, and five.",
+      "sha256": "f162cc9641713cb41aa8cee69f5864fbac1a0b7e25f0c7c3965fbc501c7d9ddc",
+      "size": 47,
+      "start_rva": "0x001744a4"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "99c8c30fa2e213039e6ba07f5f5062d6487aaa6286eee9cc9cb0cf6aaed23afc",
+      "file_sha256": "098cbbc5a9dc4c99a07b5f85eac7aaa19812bf093249d1d3f6e6c5ec49277486",
+      "id": "path_boundaries",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json",
+      "role": "Pins the complete profile traversal and directional-wall bodies used by the distance-to-Pawn search."
+    },
+    {
+      "canonical_sha256": "2bd57afec6c28ca75f7964995dd69125439fe913286a94a7a7fda877c0d0ad7d",
+      "file_sha256": "f21127154c770ca5db14fec30ec8f9460c7694927bda2c152db1d9d0e3961fb5",
+      "id": "path_cost_ordering",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json",
+      "role": "Pins the cached reachability search and unit edge-cost grammar used by Board:GetDistanceToPawn."
+    },
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "id": "accepted_local_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins the exact executable and shipped Lua source files."
+    }
+  ],
+  "findings": [
+    {
+      "claim": "Seventeen Board/Pawn names used by ScorePositioning bind to the reviewed exact-build members; IsPawnTeam reaches its implementation through secondary-vtable slot +0x88.",
+      "classification": "fact",
+      "id": "all_named_observation_bindings_are_exact"
+    },
+    {
+      "claim": "Board:IsDangerous tests tile byte +0x2af0 and exact Point membership in Board vectors +0x7460 and +0x7470; it does not call Board:IsEnvironmentDanger.",
+      "classification": "fact",
+      "id": "dangerous_is_not_environment_danger"
+    },
+    {
+      "claim": "An item is dangerous only when present and at least one of iDamage, non-DIR_NONE iPush, iShield, iFire, iSmoke, nonempty sPawn, iAcid, or iFrozen is active.",
+      "classification": "fact",
+      "id": "dangerous_item_has_eight_effect_tests"
+    },
+    {
+      "claim": "Board:IsSpawning returns true from either tile byte +0x27e8 or membership in Board Point vector +0x2d50/+0x2d54.",
+      "classification": "fact",
+      "id": "spawning_has_two_native_sources"
+    },
+    {
+      "claim": "Board:IsTargeted walks active Board objects and returns true at the first object whose native Point predicate matches; the bridge's direct all-board scan preserves that result.",
+      "classification": "fact",
+      "id": "targeted_is_direct_object_membership"
+    },
+    {
+      "claim": "For ScorePositioning's only queries, TEAM_PLAYER=1 requires exact team one and TEAM_ENEMY=6 accepts every actual team greater than or equal to six.",
+      "classification": "fact",
+      "id": "score_team_queries_are_simple"
+    },
+    {
+      "claim": "GetDistanceToPawn uses literal low profile six; exact traversal and wall bodies admit every valid cardinal neighbor at unit cost, so its minimum distance to a matching on-board Pawn is Manhattan and empty is INT_MAX.",
+      "classification": "inference",
+      "id": "pawn_distance_is_manhattan"
+    },
+    {
+      "claim": "The native cache builder clears +0x2c44/+0x2c48 and appends every terrain-one Point; GetDistanceToBuilding returns minimum Manhattan distance over that explicit cache or INT_MAX when empty.",
+      "classification": "fact",
+      "id": "building_distance_uses_terrain_one_cache"
+    },
+    {
+      "claim": "IsRanged is exact Lua integer equality with one; IsAvoidingMines is an exact Lua boolean; IsFlying combines its Lua property and runtime byte then rejects dead Pawns. The ordinary bridge directly exports only IsFlying.",
+      "classification": "fact",
+      "id": "pawn_definition_flags_are_exact_but_not_all_live_carriers"
+    },
+    {
+      "claim": "These findings refine prospective native enemy scoring inputs; the Rust solver still consumes the settled queue and no current simulator rule contradicts the boundary.",
+      "classification": "inference",
+      "id": "no_solver_contradiction"
+    }
+  ],
+  "method_bindings": [
+    {
+      "id": "board_is_pod",
+      "implementation_rva": "0x00172580",
+      "member_target_rva": "0x00172580",
+      "name": "IsPod",
+      "name_rva": "0x004385e0",
+      "owner": "Board",
+      "registration_rva": "0x00279cdc",
+      "registration_sha256": "216804eaf647a9ef0ba46a7511954c6be38ab258535c1f11c9a970da52d246e6",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_dangerous_item",
+      "implementation_rva": "0x00172650",
+      "member_target_rva": "0x00172650",
+      "name": "IsDangerousItem",
+      "name_rva": "0x004385e8",
+      "owner": "Board",
+      "registration_rva": "0x00279d4b",
+      "registration_sha256": "83f78ab2af7b225e167e594f29a0e1c0d4764b707497c583ae41a7ea126d810c",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_dangerous",
+      "implementation_rva": "0x001726a0",
+      "member_target_rva": "0x001726a0",
+      "name": "IsDangerous",
+      "name_rva": "0x0043861c",
+      "owner": "Board",
+      "registration_rva": "0x00279d70",
+      "registration_sha256": "eab17162c1ee63b83c63a9fb4c06c66f3035d213af78fc7f9f0ec97da08831e1",
+      "registration_size": 34
+    },
+    {
+      "id": "board_get_terrain",
+      "implementation_rva": "0x00104b70",
+      "member_target_rva": "0x00104b70",
+      "name": "GetTerrain",
+      "name_rva": "0x004386c0",
+      "owner": "Board",
+      "registration_rva": "0x00279fa1",
+      "registration_sha256": "ef8cd4549bc103d9e776aa32989ba25886d468c3c66578353903c471dbeef043",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_building",
+      "implementation_rva": "0x00168c00",
+      "member_target_rva": "0x00168c00",
+      "name": "IsBuilding",
+      "name_rva": "0x004386d8",
+      "owner": "Board",
+      "registration_rva": "0x0027a010",
+      "registration_sha256": "53f9d576e0d4aa68c040b1d31614fb004c4b1ed338c4a2378e38fed41962cafa",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_pawn_team",
+      "implementation_rva": "0x0016fc50",
+      "member_target_rva": "0x002e39d7",
+      "name": "IsPawnTeam",
+      "name_rva": "0x004386f0",
+      "owner": "Board",
+      "registration_rva": "0x0027a0a4",
+      "registration_sha256": "7bf110e171a9a0531465d5b7ada4254bafb4fbc34ee8d78bd5d6733e6be9e3bc",
+      "registration_size": 34,
+      "this_adjustment": 12,
+      "vtable_slot_rva": "0x0042e2e0"
+    },
+    {
+      "id": "board_is_targeted",
+      "implementation_rva": "0x0016e760",
+      "member_target_rva": "0x0016e760",
+      "name": "IsTargeted",
+      "name_rva": "0x0043881c",
+      "owner": "Board",
+      "registration_rva": "0x0027a55f",
+      "registration_sha256": "c27419572c664f07f5e0347cf610cd7e9ef23afbe084622622de82702887eead",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_fire",
+      "implementation_rva": "0x00168b50",
+      "member_target_rva": "0x00168b50",
+      "name": "IsFire",
+      "name_rva": "0x00438908",
+      "owner": "Board",
+      "registration_rva": "0x0027a860",
+      "registration_sha256": "de2add1a408ecea60cfaf3198f94b34c6115705ab9fab00e31c5a821f9e2dc87",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_smoke",
+      "implementation_rva": "0x001662f0",
+      "member_target_rva": "0x001662f0",
+      "name": "IsSmoke",
+      "name_rva": "0x00438924",
+      "owner": "Board",
+      "registration_rva": "0x0027a885",
+      "registration_sha256": "445622a476843d2590f1f67d8a7cd0b076b145830044534019f87189f1817283",
+      "registration_size": 34
+    },
+    {
+      "dedicated_constructor_rva": "0x00289230",
+      "id": "board_get_distance_to_pawn",
+      "implementation_rva": "0x00173c90",
+      "member_target_rva": "0x00173c90",
+      "name": "GetDistanceToPawn",
+      "name_rva": "0x00438940",
+      "owner": "Board",
+      "registration_rva": "0x0027a936",
+      "registration_sha256": "a6b53c37db799573d7c1bf61d800136c7678b041f9b06a5cc7b3cbc7c04be39a",
+      "registration_size": 30
+    },
+    {
+      "id": "board_get_distance_to_building",
+      "implementation_rva": "0x00173f30",
+      "member_target_rva": "0x00173f30",
+      "name": "GetDistanceToBuilding",
+      "name_rva": "0x00438970",
+      "owner": "Board",
+      "registration_rva": "0x0027a957",
+      "registration_sha256": "8fe375417e1a0e400fff75dafca61d35b64c740a88fe487655a8d482e6641a47",
+      "registration_size": 34
+    },
+    {
+      "id": "board_is_spawning",
+      "implementation_rva": "0x0016e4b0",
+      "member_target_rva": "0x0016e4b0",
+      "name": "IsSpawning",
+      "name_rva": "0x004389b4",
+      "owner": "Board",
+      "registration_rva": "0x0027a9eb",
+      "registration_sha256": "de4e75e0457e706f80f39b68d0e7ab232eabf3453df902f2238c2acbf6f2ef36",
+      "registration_size": 34
+    },
+    {
+      "id": "pawn_is_avoiding_mines",
+      "implementation_rva": "0x0023aea0",
+      "member_target_rva": "0x0023aea0",
+      "name": "IsAvoidingMines",
+      "name_rva": "0x00438f70",
+      "owner": "Pawn",
+      "registration_rva": "0x0027bf47",
+      "registration_sha256": "965c22dc87b238d5e584ba09bb77f1a6c4845fa0d7db9d1bbb0e8f271350763e",
+      "registration_size": 34
+    },
+    {
+      "id": "pawn_get_team",
+      "implementation_rva": "0x0023d850",
+      "member_target_rva": "0x0023d850",
+      "name": "GetTeam",
+      "name_rva": "0x00439074",
+      "owner": "Pawn",
+      "registration_rva": "0x0027c1c1",
+      "registration_sha256": "ef6daf844d8d0df8bd6c920735f77996c14931c67e272b4e742ce32ea34a4de5",
+      "registration_size": 34
+    },
+    {
+      "id": "pawn_is_fire",
+      "implementation_rva": "0x0023d170",
+      "member_target_rva": "0x0023d170",
+      "name": "IsFire",
+      "name_rva": "0x00438908",
+      "owner": "Pawn",
+      "registration_rva": "0x0027c5b3",
+      "registration_sha256": "a0bc6f930e16ec5fabace04fd2bb16b4a5295f6edbdf2c7d4f70e42e162de75b",
+      "registration_size": 34
+    },
+    {
+      "id": "pawn_is_flying",
+      "implementation_rva": "0x0023e490",
+      "member_target_rva": "0x0023e490",
+      "name": "IsFlying",
+      "name_rva": "0x004391a0",
+      "owner": "Pawn",
+      "registration_rva": "0x0027c622",
+      "registration_sha256": "e48be6db3ad039859dbd4b04cef60ea6edea39faa3d890d7d7f126f99ad79549",
+      "registration_size": 34
+    },
+    {
+      "id": "pawn_is_ranged",
+      "implementation_rva": "0x0023f940",
+      "member_target_rva": "0x0023f940",
+      "name": "IsRanged",
+      "name_rva": "0x004391d4",
+      "owner": "Pawn",
+      "registration_rva": "0x0027c6d3",
+      "registration_sha256": "d7a296f1fdcb3f69b7c57516ebf4272041b2d4d0ee9c71c1d2579633a0893a8e",
+      "registration_size": 34
+    }
+  ],
+  "native_regions": [
+    {
+      "id": "board_is_pod",
+      "meaning": "Candidate equals the Board pod point and the tile pod marker equals one.",
+      "sha256": "04c19003a85b5a2687be2b27597d6fb7518cb79580a06e720eb64c7f8ed6ea03",
+      "size": 106,
+      "start_rva": "0x00172580"
+    },
+    {
+      "id": "board_get_terrain",
+      "meaning": "Returns the selected tile terrain dword at +0x2ae0.",
+      "sha256": "bb0a4b8ace45f2208137e41a481c3d02d8c88c57e4b8def6e7d56776825eaf41",
+      "size": 24,
+      "start_rva": "0x00104b70"
+    },
+    {
+      "id": "board_is_targeted",
+      "meaning": "Scans active Board objects and asks each target predicate about the Point.",
+      "sha256": "1fc492e2bd8ddf36545c8d365198266220fc8ae270584834da6f048fdbc50ab4",
+      "size": 198,
+      "start_rva": "0x0016e760"
+    },
+    {
+      "id": "board_is_smoke",
+      "meaning": "Returns the valid tile smoke byte at +0x2b25.",
+      "sha256": "7fd9bd9b5e6d81e4ec25278e26fdaf11f84cc576507b5278c6c4297c5d55e2e8",
+      "size": 72,
+      "start_rva": "0x001662f0"
+    },
+    {
+      "id": "board_is_fire",
+      "meaning": "Returns whether the valid tile fire dword at +0x2aec is nonzero.",
+      "sha256": "47375e562f03472f2a5113a18f3a01bd98d42b68eb7a8c9180069b1952540c4f",
+      "size": 83,
+      "start_rva": "0x00168b50"
+    },
+    {
+      "id": "board_is_spawning",
+      "meaning": "Tests tile byte +0x27e8, then Board Point vector +0x2d50/+0x2d54.",
+      "sha256": "78d607fec18d17442ef892f210ed5f8b5140d54bc35317b32f3b20a69c60100b",
+      "size": 124,
+      "start_rva": "0x0016e4b0"
+    },
+    {
+      "id": "board_is_dangerous_item",
+      "meaning": "Selects the tile and invokes the exact embedded-item danger predicate.",
+      "sha256": "b004ccd55b2fa6f4489aa7f1daafde27cb775f02b5ababd34e724521b882fcc2",
+      "size": 77,
+      "start_rva": "0x00172650"
+    },
+    {
+      "id": "tile_dangerous_item_core",
+      "meaning": "Requires an item and tests eight embedded SpaceDamage effects.",
+      "sha256": "bea7f9b5a0800c4bb29afb4df88d651aadae87805c8019cba1f5cd6b34f42fd3",
+      "size": 87,
+      "start_rva": "0x001a1270"
+    },
+    {
+      "id": "board_is_dangerous",
+      "meaning": "Tests tile byte +0x2af0 and two Board-owned Point vectors.",
+      "sha256": "c6e15d03f65fc709b28c8b15bf60cf5a7870700343d7b5be38ce7c3791d7f3f8",
+      "size": 206,
+      "start_rva": "0x001726a0"
+    },
+    {
+      "id": "board_is_building",
+      "meaning": "Returns whether terrain +0x2ae0 equals one.",
+      "sha256": "dd8e526b31d9c1dba37385d664ddc76cdd32fae812334775e7c589e1aa164ab6",
+      "size": 28,
+      "start_rva": "0x00168c00"
+    },
+    {
+      "id": "board_is_pawn_team",
+      "meaning": "For an occupied tile, delegates the query to Pawn:IsTeam.",
+      "sha256": "aac917614c7bd4bef2cf9cb8f9b8ad78db2898a13648adf674b689bba93a3e69",
+      "size": 72,
+      "start_rva": "0x0016fc50"
+    },
+    {
+      "id": "pawn_is_team",
+      "meaning": "Implements special team queries; ScorePositioning uses only one and six.",
+      "sha256": "6f3a65620b7f448715c301400b1d26ce9784879254b5255b5772a1f95ad53906",
+      "size": 209,
+      "start_rva": "0x0023d860"
+    },
+    {
+      "id": "board_get_distance_to_pawn",
+      "meaning": "Builds profile-six distances and minimizes across Pawns matching Pawn:IsTeam.",
+      "sha256": "a78e58e1161895d3b8237ef823ed3d50fd8793c865dbb462fa05ef950cdb5f79",
+      "size": 348,
+      "start_rva": "0x00173c90"
+    },
+    {
+      "id": "board_get_distance_to_building",
+      "meaning": "Returns minimum Manhattan distance to cached building Points.",
+      "sha256": "85273d46807dd98b8f0d4f635ea11a9d165bf71242000a9754f584c048bd4d6b",
+      "size": 113,
+      "start_rva": "0x00173f30"
+    },
+    {
+      "id": "board_rebuild_building_points",
+      "meaning": "Clears the building Point cache and appends every tile whose terrain equals one.",
+      "sha256": "976153e7decaf1d7372e825dd99a8334ea2432ca62c9d0e9e9628abef583374c",
+      "size": 400,
+      "start_rva": "0x001732f0"
+    },
+    {
+      "id": "pawn_is_avoiding_mines",
+      "meaning": "Reads the exact Lua boolean property AvoidingMines.",
+      "sha256": "ea98c01213b665dcf1c4d458586e2ddb9860de30abc1bc36314788d794e757a1",
+      "size": 57,
+      "start_rva": "0x0023aea0"
+    },
+    {
+      "id": "pawn_get_team",
+      "meaning": "Returns Pawn dword +0xb0.",
+      "sha256": "a33ed4c54f724b1cdd526b3c3e8bfc670f9881db0df0a549f9dd82f82745c8cf",
+      "size": 7,
+      "start_rva": "0x0023d850"
+    },
+    {
+      "id": "pawn_is_flying",
+      "meaning": "Combines the Lua Flying property and runtime byte +0x1314, then excludes dead Pawns.",
+      "sha256": "06fe4311381c6f3a5f31db9b53004c771762327a02ef33ced2c3af2bb021fbdb",
+      "size": 225,
+      "start_rva": "0x0023e490"
+    },
+    {
+      "id": "pawn_is_fire",
+      "meaning": "Returns Pawn byte +0x8d0.",
+      "sha256": "259360f841139af029982d66f7d2e5a0859318d972c8ffd445fe7782651efd71",
+      "size": 7,
+      "start_rva": "0x0023d170"
+    },
+    {
+      "id": "pawn_is_ranged",
+      "meaning": "Reads exact Lua integer property Ranged and returns equality with one.",
+      "sha256": "63a7c7ed2a8c3d343132bba50f65de5f11b45c2526e1850b55d084a6306a94c8",
+      "size": 65,
+      "start_rva": "0x0023f940"
+    },
+    {
+      "id": "distance_to_pawn_binding_constructor",
+      "meaning": "Hard-codes GetDistanceToPawn at VA 0x00838940.",
+      "sha256": "82d77a3a18b2420f04afc803334b946e01177df4de474d27c660a184442870a4",
+      "size": 158,
+      "start_rva": "0x00289230"
+    },
+    {
+      "id": "is_pawn_team_thunk",
+      "meaning": "Dispatches Board secondary-vtable slot +0x88.",
+      "sha256": "b7655f4aae69b7187b779cdc966f345e6a878c6ce4f756b676a079015b791f42",
+      "size": 8,
+      "start_rva": "0x002e39d7"
+    }
+  ],
+  "observation_carriers": [
+    {
+      "carrier": "tiles[].pod",
+      "observation": "Board:IsPod",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "tiles[].terrain_id",
+      "observation": "Board:GetTerrain",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "targeted_tiles",
+      "observation": "Board:IsTargeted",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "tiles[].smoke",
+      "observation": "Board:IsSmoke",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "tiles[].fire",
+      "observation": "Board:IsFire",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "units[].fire",
+      "observation": "Pawn:IsFire",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "spawning_tiles",
+      "observation": "Board:IsSpawning",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "units[].flying",
+      "observation": "Pawn:IsFlying",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "units[].team",
+      "observation": "Pawn:GetTeam",
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
+    },
+    {
+      "carrier": "tiles[].terrain_id == 1",
+      "observation": "Board:IsBuilding",
+      "source": "native terrain equality",
+      "status": "exact_current_derivation"
+    },
+    {
+      "carrier": "occupied units[].team",
+      "observation": "Board:IsPawnTeam for team 1/6",
+      "source": "native Pawn:IsTeam",
+      "status": "exact_current_derivation_if_native_occupant_is_identified"
+    },
+    {
+      "carrier": "units[].{x,y,team}",
+      "observation": "Board:GetDistanceToPawn for team 1/6",
+      "source": "profile-six Manhattan replay",
+      "status": "exact_current_derivation"
+    },
+    {
+      "carrier": "native building Point cache",
+      "observation": "Board:GetDistanceToBuilding",
+      "source": "native terrain-1 cache builder",
+      "status": "exact_replay_from_explicit_cache"
+    },
+    {
+      "carrier": "units[].ranged",
+      "observation": "Pawn:IsRanged",
+      "source": "src/model/pawn_stats.py via src/loop/commands.py",
+      "status": "stock_static_projection_not_runtime_exact"
+    },
+    {
+      "carrier": null,
+      "observation": "Pawn:IsAvoidingMines",
+      "source": "base false; Snowmine1/Snowmine2 true",
+      "status": "not_exported_stock_source_derivable"
+    },
+    {
+      "carrier": null,
+      "observation": "Board:IsDangerous",
+      "source": "native tile byte plus two Point vectors",
+      "status": "not_exported"
+    },
+    {
+      "carrier": "tiles[].item only",
+      "observation": "Board:IsDangerousItem",
+      "source": "embedded SpaceDamage fields are not exported",
+      "status": "insufficient_for_native_predicate"
+    }
+  ],
+  "property_strings": [
+    {
+      "id": "avoiding_mines_property",
+      "reference_instruction_rva": "0x0023aebc",
+      "rva": "0x0043699c",
+      "value": "AvoidingMines"
+    },
+    {
+      "id": "flying_property",
+      "reference_instruction_rva": "0x0023e4e2",
+      "rva": "0x00436014",
+      "value": "Flying"
+    },
+    {
+      "id": "ranged_property",
+      "reference_instruction_rva": "0x0023f95c",
+      "rva": "0x0042c7b4",
+      "value": "Ranged"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": true,
+      "id": "danger_tile_flag",
+      "input": {
+        "first_points": [],
+        "point": [
+          3,
+          3
+        ],
+        "second_points": [],
+        "tile_flag": true
+      },
+      "kind": "board_is_dangerous"
+    },
+    {
+      "expected": true,
+      "id": "danger_first_vector",
+      "input": {
+        "first_points": [
+          [
+            3,
+            3
+          ]
+        ],
+        "point": [
+          3,
+          3
+        ],
+        "second_points": [],
+        "tile_flag": false
+      },
+      "kind": "board_is_dangerous"
+    },
+    {
+      "expected": true,
+      "id": "danger_second_vector",
+      "input": {
+        "first_points": [],
+        "point": [
+          3,
+          3
+        ],
+        "second_points": [
+          [
+            3,
+            3
+          ]
+        ],
+        "tile_flag": false
+      },
+      "kind": "board_is_dangerous"
+    },
+    {
+      "expected": false,
+      "id": "danger_absent",
+      "input": {
+        "first_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "point": [
+          3,
+          3
+        ],
+        "second_points": [
+          [
+            3,
+            2
+          ]
+        ],
+        "tile_flag": false
+      },
+      "kind": "board_is_dangerous"
+    },
+    {
+      "expected": false,
+      "id": "dangerous_item_neutral_tuple",
+      "input": {
+        "i_acid": 0,
+        "i_damage": 0,
+        "i_fire": 0,
+        "i_frozen": 0,
+        "i_push": 4,
+        "i_shield": 0,
+        "i_smoke": 0,
+        "item_present": true,
+        "s_pawn_present": false
+      },
+      "kind": "board_is_dangerous_item"
+    },
+    {
+      "expected": true,
+      "id": "dangerous_item_damage",
+      "input": {
+        "i_acid": 0,
+        "i_damage": 1,
+        "i_fire": 0,
+        "i_frozen": 0,
+        "i_push": 4,
+        "i_shield": 0,
+        "i_smoke": 0,
+        "item_present": true,
+        "s_pawn_present": false
+      },
+      "kind": "board_is_dangerous_item"
+    },
+    {
+      "expected": true,
+      "id": "dangerous_item_non_none_push",
+      "input": {
+        "i_acid": 0,
+        "i_damage": 0,
+        "i_fire": 0,
+        "i_frozen": 0,
+        "i_push": 0,
+        "i_shield": 0,
+        "i_smoke": 0,
+        "item_present": true,
+        "s_pawn_present": false
+      },
+      "kind": "board_is_dangerous_item"
+    },
+    {
+      "expected": true,
+      "id": "dangerous_item_spawned_pawn",
+      "input": {
+        "i_acid": 0,
+        "i_damage": 0,
+        "i_fire": 0,
+        "i_frozen": 0,
+        "i_push": 4,
+        "i_shield": 0,
+        "i_smoke": 0,
+        "item_present": true,
+        "s_pawn_present": true
+      },
+      "kind": "board_is_dangerous_item"
+    },
+    {
+      "expected": true,
+      "id": "enemy_query_accepts_specialized_enemy_team",
+      "input": {
+        "actual_team": 7,
+        "query_team": 6
+      },
+      "kind": "score_team_match"
+    },
+    {
+      "expected": false,
+      "id": "empty_pawn_tile_is_false_for_score_query",
+      "input": {
+        "occupant_team": null,
+        "query_team": 6
+      },
+      "kind": "board_is_pawn_team"
+    },
+    {
+      "expected": 5,
+      "id": "distance_to_enemy_uses_manhattan_and_team_filter",
+      "input": {
+        "pawns": [
+          {
+            "point": [
+              3,
+              2
+            ],
+            "team": 1
+          },
+          {
+            "point": [
+              6,
+              5
+            ],
+            "team": 6
+          },
+          {
+            "point": [
+              -1,
+              -1
+            ],
+            "team": 6
+          }
+        ],
+        "point": [
+          3,
+          3
+        ],
+        "query_team": 6
+      },
+      "kind": "distance_to_pawn"
+    },
+    {
+      "expected": 2147483647,
+      "id": "distance_to_pawn_empty_is_int_max",
+      "input": {
+        "pawns": [],
+        "point": [
+          3,
+          3
+        ],
+        "query_team": 1
+      },
+      "kind": "distance_to_pawn"
+    },
+    {
+      "expected": 3,
+      "id": "distance_to_building_is_manhattan",
+      "input": {
+        "building_points": [
+          [
+            0,
+            0
+          ],
+          [
+            5,
+            4
+          ]
+        ],
+        "point": [
+          3,
+          3
+        ]
+      },
+      "kind": "distance_to_building"
+    },
+    {
+      "expected": 2147483647,
+      "id": "distance_to_building_empty_is_int_max",
+      "input": {
+        "building_points": [],
+        "point": [
+          3,
+          3
+        ]
+      },
+      "kind": "distance_to_building"
+    },
+    {
+      "expected": false,
+      "id": "ranged_requires_exact_integer_one",
+      "input": {
+        "lua_integer": 2
+      },
+      "kind": "pawn_is_ranged"
+    },
+    {
+      "expected": false,
+      "id": "dead_pawn_suppresses_flying",
+      "input": {
+        "definition_flying": true,
+        "pawn_is_dead": true,
+        "runtime_flying": false
+      },
+      "kind": "pawn_is_flying"
+    }
+  ],
+  "schema_version": 1,
+  "source_files": [
+    {
+      "path": "scripts/global.lua",
+      "role": "Pins Pawn defaults and the ScorePositioning call site.",
+      "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "size": 17363
+    },
+    {
+      "path": "scripts/pawns.lua",
+      "role": "Pins the only two shipped AvoidingMines=true assignments.",
+      "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+      "size": 27397
+    }
+  ],
+  "summary": {
+    "call_edge_count": 9,
+    "carrier_count": 17,
+    "control_window_count": 4,
+    "dependency_count": 3,
+    "finding_count": 10,
+    "method_binding_count": 17,
+    "native_region_count": 22,
+    "native_score_positioning_observation_semantics_complete": true,
+    "prospective_board_observations_complete": false,
+    "replay_vector_count": 16,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "source_file_count": 2,
+    "unresolved_count": 4
+  },
+  "unresolved": [
+    {
+      "id": "candidate_time_board_snapshot",
+      "question": "What are all observations at each future candidate's exact callback time?",
+      "static_status": "The native meanings are exact, but a settled current bridge read is not a post-player-action, per-candidate enemy callback snapshot."
+    },
+    {
+      "id": "direct_dangerous_bridge_carriers",
+      "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?",
+      "static_status": "The bridge currently exports IsEnvironmentDanger and item names, neither of which is an exact substitute for these two native predicates."
+    },
+    {
+      "id": "runtime_mutated_definition_flags",
+      "question": "Can runtime-mutated Ranged and AvoidingMines values be observed without static type assumptions?",
+      "static_status": "Native property access is exact. Ranged is currently a stock type projection and AvoidingMines is absent from the bridge."
+    },
+    {
+      "id": "complete_enemy_phase_forecast",
+      "question": "Does this observation closure produce a full native enemy tournament?",
+      "static_status": "No; concrete future callback payloads, candidate records, shared RNG state, and selector entry remain separate inputs."
+    }
+  ]
+}

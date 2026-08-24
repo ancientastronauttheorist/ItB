@@ -2063,7 +2063,7 @@
         },
         {
           "classification": "fact",
-          "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, six hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations and binds the stock Pawn-helper successor while leaving runtime/mod field mutation, future Board predicates/distances, and callback-time x87 control for fractional native results explicit."
+          "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, seven hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations and binds both the stock Pawn-helper and native-observation successors while leaving runtime/mod field mutation, candidate-time Board state, and callback-time x87 control for fractional native results explicit."
         },
         {
           "classification": "fact",
@@ -2072,6 +2072,18 @@
         {
           "classification": "fact",
           "statement": "Exact CreateClass(Pawn) source synthesizes Get<member>(self,pawn) getters. Across all 152 inventoried shipped Lua files excluding the local modloader, the only active score-field occurrences are base ScoreDanger=-10 and PositionScore=0, with no explicit generated-getter or field override. The two unmodified shipped helper results are therefore exact under every x87 rounding mode; runtime/mod mutation remains outside this stock-content claim."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact observation continuation pins all 17 named Board/Pawn bindings used by ScorePositioning and 22 native implementation regions. Board:IsDangerous is a native tile byte plus two Point vectors and is not Board:IsEnvironmentDanger. Board:IsDangerousItem first requires item presence, then tests nonzero damage, non-DIR_NONE push, shield, fire, smoke, spawned Pawn, ACID, or frozen; Board:IsSpawning similarly combines a tile byte and Point-vector membership."
+        },
+        {
+          "classification": "fact",
+          "statement": "Score team query 1 matches exactly actual team 1, while query 6 matches actual team 6 or greater. Profile-six Board:GetDistanceToPawn filters matching Pawns and reduces to unit-cost Manhattan distance with INT_MAX for an empty set. Board:GetDistanceToBuilding uses Manhattan distance over the native cache that is rebuilt by scanning every terrain-1 tile, also returning INT_MAX when empty."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable observation artifact carries 17 qualified current-state mappings and 16 replay vectors. The ordinary bridge directly exports or exactly derives most current observations, but environment danger and item names are not substitutes for the two dangerous predicates; live Ranged/AvoidingMines mutation and the Board snapshot at each future candidate callback remain explicit missing carriers. Native observation meanings and the current carrier matrix are complete without claiming a prospective enemy tournament or a Rust simulator change."
         },
         {
           "classification": "inference",
@@ -2091,7 +2103,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, runtime-mutated Pawn-helper values, future Board observations, callback-time x87 control, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. Concrete Lua callback payloads, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, callback-time x87 control, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2302,7 +2314,8 @@
             "melee_adjacency_order_is_exact",
             "melee_distance_preserves_half_points",
             "stock_pawn_score_helpers_resolve_to_inherited_defaults",
-            "native_integer_rounding_depends_on_x87_control"
+            "native_integer_rounding_depends_on_x87_control",
+            "native_observation_boundaries_and_current_carriers_are_exact"
           ]
         },
         {
@@ -2332,6 +2345,41 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_position_observations_boundary.py",
+          "symbols": [
+            "replay_board_is_dangerous",
+            "replay_board_is_dangerous_item",
+            "replay_board_is_spawning",
+            "replay_board_is_pawn_team",
+            "replay_distance_to_pawn",
+            "replay_distance_to_building",
+            "build_enemy_position_observations_boundary",
+            "validate_enemy_position_observations_boundary"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_position_observations.py",
+          "symbols": [
+            "build",
+            "verify"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json",
+          "symbols": [
+            "all_named_observation_bindings_are_exact",
+            "dangerous_is_not_environment_danger",
+            "dangerous_item_has_eight_effect_tests",
+            "spawning_has_two_native_sources",
+            "targeted_is_direct_object_membership",
+            "score_team_queries_are_simple",
+            "pawn_distance_is_manhattan",
+            "building_distance_uses_terrain_one_cache",
+            "pawn_definition_flags_are_exact_but_not_all_live_carriers",
+            "no_solver_contradiction"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2349,8 +2397,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, future Board observations, callback-time x87 control, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, future Board observations, runtime-mutated Pawn score values and callback-time x87 mode, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, callback-time x87 control, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values and callback-time x87 mode, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2364,7 +2412,18 @@
             "ScorePositioning",
             "CreateClass",
             "Pawn.ScoreDanger",
-            "Pawn.PositionScore"
+            "Pawn.PositionScore",
+            "Pawn.Ranged",
+            "Pawn.Flying",
+            "Pawn.AvoidingMines"
+          ]
+        },
+        {
+          "path": "scripts/pawns.lua",
+          "sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+          "symbols": [
+            "Snowmine1.AvoidingMines",
+            "Snowmine2.AvoidingMines"
           ]
         },
         {
@@ -2524,6 +2583,18 @@
             "test_native_call_edges_reach_both_integer_converters",
             "test_stock_replay_resolves_inherited_values_without_rounding_input",
             "test_exact_install_rebuilds_executable_dll_and_shipped_source_join_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_position_observations_boundary.py",
+          "symbols": [
+            "test_all_score_positioning_native_method_names_are_bound",
+            "test_dangerous_replay_uses_tile_flag_and_two_independent_point_vectors",
+            "test_each_dangerous_item_effect_is_independently_sufficient",
+            "test_score_team_queries_match_native_one_and_six_semantics",
+            "test_distance_to_pawn_is_team_filtered_manhattan_and_empty_int_max",
+            "test_carrier_matrix_keeps_native_danger_separate_from_environment_danger",
+            "test_exact_install_rebuilds_native_source_and_carrier_join_when_available"
           ]
         },
         {

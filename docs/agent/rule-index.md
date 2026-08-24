@@ -526,3 +526,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 524 | — | Inherited base enemy scoring is exact from projected Board/Pawn predicates. | `docs/agent/solver-reference.md` |
 | 525 | — | Global ScorePositioning is exact from projected observations; native half-points still need the x87 mode. | `docs/agent/solver-reference.md` |
 | 526 | — | Native Pawn positioning helpers dispatch generated Lua getters; unmodified shipped values are -10 and 0. | `docs/agent/solver-reference.md` |
+| 527 | — | ScorePositioning observation meanings and current carriers are exact; candidate-time Board state remains input. | `docs/agent/solver-reference.md` |

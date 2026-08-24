@@ -106,6 +106,10 @@ The durable artifacts are:
   for the exact `GetDangerScore`/`GetCustomPositionScore` registrations and
   call bodies, their generated Lua getters, and the unmodified shipped
   `ScoreDanger=-10` / `PositionScore=0` defaults;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json`
+  for all 17 named Board/Pawn observations used by `ScorePositioning`, their
+  exact native meanings, pure predicate/distance replays, and the qualified
+  current-state carrier matrix;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -411,9 +415,25 @@ candidate Point. Both paths require a Lua number and reach the pinned
 getters from the base fields, while the complete 152-file shipped Lua census
 contains only `ScoreDanger = -10` and `PositionScore = 0` and no explicit
 getter/field override. The unmodified shipped helper results are therefore
-exact and independent of x87 rounding mode. Runtime/mod mutations and
-prospective Board predicates/distances remain explicit inputs, so the future
-tournament is still not fabricated.
+exact and independent of x87 rounding mode.
+
+The following native observation join closes the remaining predicate meanings,
+not the future tournament. All 17 named Board/Pawn bindings are exact.
+`Board:IsDangerous` reads a native tile flag plus two Point vectors and is not
+the bridge's `Board:IsEnvironmentDanger`; `Board:IsDangerousItem` requires item
+presence and tests the embedded `SpaceDamage` damage, push, shield, fire,
+smoke, spawned-Pawn, ACID, and frozen fields. `Board:IsSpawning` combines its
+tile flag and Point vector, while `Board:IsTargeted` scans active Board objects.
+Team queries one and six mean exact player and actual team at least six.
+Profile-six distance to a matching Pawn reduces to Manhattan distance, and the
+Building distance is Manhattan over a cache rebuilt from every terrain-1 tile.
+
+The ordinary bridge directly carries or exactly derives most current values.
+It does not directly carry the two dangerous predicates, runtime-exact Ranged
+or AvoidingMines mutations, or the Board snapshot at each later candidate
+callback. Runtime/mod mutations, that candidate-time snapshot, and the x87
+control word remain explicit inputs, so the future tournament is still not
+fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -929,6 +949,13 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    normalization, history/priority target modifiers, callback resolver branch,
    positive-score floor, and signed addition are replayable from explicit
    callback and pawn/skill inputs.
+   **Completed offline for `ScorePositioning` observations:** all 17 named
+   Board/Pawn bindings and their native meanings are exact, including the two-
+   vector dangerous predicate, eight-field dangerous-item test, spawn sources,
+   team matching, and Manhattan Pawn/Building distances. The current carrier
+   matrix is explicit; direct dangerous carriers, live definition mutations,
+   and the candidate-time Board snapshot remain unavailable inputs rather than
+   unknown native semantics.
    **Completed offline for the native target-area gate:** the active/smoke/
    Water/bonus-shift/usable-skill/IsMech predicate and literal-50
    `Skill_Repair` resolver are replayable from explicit inputs.

@@ -115,8 +115,17 @@ body from projected observations, including the inactive commented ACID check,
 hard-coded stock edges, asymmetric team choice, ordered adjacency checks, and
 fractional melee distance result. The native integer route is joined through
 the exact installed `lua_tointeger` x87 `FISTP`, with the active thread rounding
-mode kept as runtime state rather than silently assumed. Natural callback pairs
-exercise the four
+mode kept as runtime state rather than silently assumed. A native/source helper
+join fixes unmodified shipped `GetDangerScore=-10` and
+`GetCustomPositionScore=0`. The observation continuation then pins all 17
+Board/Pawn method bindings and exact native meanings: dangerous tile/vector
+state is distinct from environment danger, dangerous items use eight embedded
+effect tests, spawning has tile/vector sources, team queries one/six are exact,
+and the Pawn/Building distances reduce to Manhattan over their respective
+filtered Pawn set and terrain-1 cache. Its carrier matrix separates directly
+exported or exactly derivable current values from dangerous-state gaps,
+runtime-mutated definition flags, and the still-absent Board snapshot at each
+future callback. Natural callback pairs exercise the four
 Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -130,9 +139,11 @@ Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
 state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score Board/Pawn predicates, runtime-mutated Pawn score helpers, callback-time
-x87 control for fractional native results, plus transitive native-bound helper RNG
-before the now-proven native postprocessing boundaries remain unjoined.
+score candidate-time Board snapshots, direct dangerous predicate carriers,
+runtime-mutated Pawn definition/score helpers, callback-time x87 control for
+fractional native results, plus transitive native-bound helper RNG before the
+now-proven native postprocessing boundaries remain unjoined. The native
+meanings and current-state carrier matrix themselves are no longer open.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers
 only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate

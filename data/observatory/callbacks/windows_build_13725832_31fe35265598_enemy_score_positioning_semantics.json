@@ -9,7 +9,9 @@
   },
   "closure": {
     "complete_enemy_phase_forecast": false,
+    "current_state_carrier_matrix_complete": true,
     "lua_fractional_result_complete": true,
+    "native_board_predicate_semantics_complete": true,
     "native_integer_conversion_parametric_complete": true,
     "native_pawn_score_helpers_complete": true,
     "prospective_board_observations_complete": false,
@@ -20,6 +22,8 @@
     "x87_rounding_mode_observed": false
   },
   "contracts": {
+    "candidate_time_board_snapshot_is_input": true,
+    "current_state_carrier_matrix_complete": true,
     "direct_lua_consumer_preserves_fraction": true,
     "future_board_state_is_not_fabricated": true,
     "inactive_source_branch": "commented Board:IsAcid penalty",
@@ -34,6 +38,7 @@
       "Board:IsPawnTeam",
       "Board:IsBuilding"
     ],
+    "native_board_predicate_semantics_complete": true,
     "native_conversion_instruction": "x87 FISTP dword",
     "native_integer_api": "lua_tointeger",
     "native_integer_rounding_mode_is_runtime_input": true,
@@ -73,6 +78,13 @@
       "id": "enemy_position_score_helpers_boundary",
       "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json",
       "role": "Pins both native Pawn helper registrations/call paths and the unmodified shipped ScoreDanger=-10 / PositionScore=0 defaults."
+    },
+    {
+      "canonical_sha256": "b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b",
+      "file_sha256": "c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479",
+      "id": "enemy_position_observations_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json",
+      "role": "Pins the exact native Board/Pawn observations consumed by ScorePositioning and distinguishes exact current carriers from candidate-time state that is not serialized."
     },
     {
       "canonical_sha256": "4871a8f128211e258f6737b2c221e5f73789a021a95ecd995e5d5a3a86566d60",
@@ -154,6 +166,11 @@
       "claim": "The native named integer route reaches lua_tointeger, whose exact pinned DLL body converts the double with x87 FISTP; the four-mode replay therefore requires the active thread rounding mode.",
       "classification": "fact",
       "id": "native_integer_rounding_depends_on_x87_control"
+    },
+    {
+      "claim": "Every named Board/Pawn observation used by ScorePositioning is pinned to its exact-build native binding and implementation. The current bridge carries or exactly derives most current-state values, while native dangerous flags/effects and a future candidate-time Board snapshot remain explicit inputs.",
+      "classification": "fact",
+      "id": "native_observation_boundaries_and_current_carriers_are_exact"
     }
   ],
   "native_regions": [
@@ -1560,8 +1577,10 @@
   ],
   "summary": {
     "complete_enemy_phase_forecast": false,
-    "dependency_count": 6,
-    "finding_count": 9,
+    "current_state_carrier_matrix_complete": true,
+    "dependency_count": 7,
+    "finding_count": 10,
+    "native_board_predicate_semantics_complete": true,
     "native_integer_conversion_parametric_complete": true,
     "native_pawn_score_helpers_complete": true,
     "native_region_count": 3,
@@ -1587,7 +1606,7 @@
     {
       "id": "prospective_board_observations",
       "question": "Can every candidate Board predicate and distance be known prospectively?",
-      "static_status": "The replay consumes an exact observation packet, but ordinary bridge state does not serialize a future native candidate tournament."
+      "static_status": "The native meanings and current-state carrier matrix are exact, but ordinary bridge state does not serialize the Board snapshot at each future candidate callback in the native tournament."
     },
     {
       "id": "complete_enemy_phase_forecast",

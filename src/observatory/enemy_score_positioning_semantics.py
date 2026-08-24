@@ -23,6 +23,10 @@ from src.observatory.enemy_position_score_helpers_boundary import (
     EnemyPositionScoreHelpersBoundaryError,
     validate_enemy_position_score_helpers_boundary_binding,
 )
+from src.observatory.enemy_position_observations_boundary import (
+    EnemyPositionObservationsBoundaryError,
+    validate_enemy_position_observations_boundary_binding,
+)
 from src.observatory.enemy_score_list_semantics import (
     EnemyScoreListSemanticsError,
     validate_enemy_score_list_semantics_binding,
@@ -95,6 +99,25 @@ DEPENDENCY_SPECS = (
         "role": (
             "Pins both native Pawn helper registrations/call paths and the "
             "unmodified shipped ScoreDanger=-10 / PositionScore=0 defaults."
+        ),
+    },
+    {
+        "id": "enemy_position_observations_boundary",
+        "path": (
+            "data/observatory/native/"
+            "windows_build_13725832_31fe35265598_"
+            "enemy_position_observations_boundary.json"
+        ),
+        "file_sha256": (
+            "c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479"
+        ),
+        "canonical_sha256": (
+            "b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b"
+        ),
+        "role": (
+            "Pins the exact native Board/Pawn observations consumed by "
+            "ScorePositioning and distinguishes exact current carriers from "
+            "candidate-time state that is not serialized."
         ),
     },
     {
@@ -903,6 +926,17 @@ def _findings() -> list[dict[str, str]]:
                 "replay therefore requires the active thread rounding mode."
             ),
         },
+        {
+            "id": "native_observation_boundaries_and_current_carriers_are_exact",
+            "classification": "fact",
+            "claim": (
+                "Every named Board/Pawn observation used by ScorePositioning "
+                "is pinned to its exact-build native binding and implementation. "
+                "The current bridge carries or exactly derives most current-state "
+                "values, while native dangerous flags/effects and a future "
+                "candidate-time Board snapshot remain explicit inputs."
+            ),
+        },
     ]
 
 
@@ -929,8 +963,9 @@ def _unresolved() -> list[dict[str, str]]:
             "id": "prospective_board_observations",
             "question": "Can every candidate Board predicate and distance be known prospectively?",
             "static_status": (
-                "The replay consumes an exact observation packet, but ordinary "
-                "bridge state does not serialize a future native candidate tournament."
+                "The native meanings and current-state carrier matrix are exact, "
+                "but ordinary bridge state does not serialize the Board snapshot "
+                "at each future candidate callback in the native tournament."
             ),
         },
         {
@@ -1007,6 +1042,9 @@ def _expected_shape() -> dict[str, Any]:
             "unmodified_shipped_danger_score": -10,
             "unmodified_shipped_custom_position_score": 0,
             "stock_helper_defaults_require_runtime_rounding_mode": False,
+            "native_board_predicate_semantics_complete": True,
+            "current_state_carrier_matrix_complete": True,
+            "candidate_time_board_snapshot_is_input": True,
             "future_board_state_is_not_fabricated": True,
         },
         "replay_vectors": vectors,
@@ -1019,6 +1057,8 @@ def _expected_shape() -> dict[str, Any]:
             "x87_rounding_mode_observed": False,
             "native_pawn_score_helpers_complete": True,
             "unmodified_shipped_pawn_score_defaults_complete": True,
+            "native_board_predicate_semantics_complete": True,
+            "current_state_carrier_matrix_complete": True,
             "prospective_board_observations_complete": False,
             "complete_enemy_phase_forecast": False,
             "simulator_change_required": False,
@@ -1035,6 +1075,8 @@ def _expected_shape() -> dict[str, Any]:
             "native_integer_conversion_parametric_complete": True,
             "x87_rounding_mode_observed": False,
             "native_pawn_score_helpers_complete": True,
+            "native_board_predicate_semantics_complete": True,
+            "current_state_carrier_matrix_complete": True,
             "complete_enemy_phase_forecast": False,
             "simulator_change_required": False,
             "simulator_version": 408,
@@ -1077,6 +1119,9 @@ def _verify_dependencies(content_root: Path, inventory: Mapping[str, Any]) -> No
         validate_enemy_position_score_helpers_boundary_binding(
             values["enemy_position_score_helpers_boundary"]
         )
+        validate_enemy_position_observations_boundary_binding(
+            values["enemy_position_observations_boundary"]
+        )
         validate_enemy_candidate_score_boundary_map_binding(
             values["enemy_candidate_score_boundary"]
         )
@@ -1091,6 +1136,7 @@ def _verify_dependencies(content_root: Path, inventory: Mapping[str, Any]) -> No
     except (
         EnemyScoreListSemanticsError,
         EnemyPositionScoreHelpersBoundaryError,
+        EnemyPositionObservationsBoundaryError,
         EnemyCandidateScoreBoundaryError,
         PistonSetupBoundaryError,
         PEBoundaryError,
@@ -1222,6 +1268,8 @@ def validate_enemy_score_positioning_semantics_binding(
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
         "native_pawn_score_helpers_complete": True,
+        "native_board_predicate_semantics_complete": True,
+        "current_state_carrier_matrix_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,

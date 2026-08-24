@@ -90,28 +90,32 @@ def test_committed_map_binds_exact_source_projection_without_rounding_overclaim(
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "462c5ee971ff5208174d29e3d60da655"
-            "0d96325bfc1fb2a18511f3b03541dd62"
+            "959594546f80361f0417076ff30e676e"
+            "ec8ac2df26edc75d17bcdcf94f5ae80a"
         ),
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
         "native_pawn_score_helpers_complete": True,
+        "native_board_predicate_semantics_complete": True,
+        "current_state_carrier_matrix_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,
     }
     assert value["summary"] == {
-        "dependency_count": 6,
+        "dependency_count": 7,
         "source_region_count": 1,
         "native_region_count": 3,
         "replay_vector_count": 14,
-        "finding_count": 9,
+        "finding_count": 10,
         "unresolved_count": 4,
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
         "native_pawn_score_helpers_complete": True,
+        "native_board_predicate_semantics_complete": True,
+        "current_state_carrier_matrix_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,
@@ -174,6 +178,33 @@ def test_native_pawn_helper_dependency_closes_stock_defaults_without_overclaim()
     assert value["unresolved"][1]["id"] == (
         "runtime_or_modded_pawn_score_mutation"
     )
+
+
+def test_native_observation_dependency_closes_meanings_not_candidate_time_state():
+    value = _load()
+    dependency = next(
+        item
+        for item in value["dependencies"]
+        if item["id"] == "enemy_position_observations_boundary"
+    )
+    assert dependency["file_sha256"] == (
+        "c6d168464c067c92f7366a0acf4a1256"
+        "1f2949af4f5491593d0f900519b56479"
+    )
+    assert dependency["canonical_sha256"] == (
+        "b994f0a9fe464d885d7675819666be93"
+        "e94bb8cef0a9939fba93d6a01b57af0b"
+    )
+    assert value["contracts"]["native_board_predicate_semantics_complete"] is True
+    assert value["contracts"]["current_state_carrier_matrix_complete"] is True
+    assert value["contracts"]["candidate_time_board_snapshot_is_input"] is True
+    assert value["closure"]["native_board_predicate_semantics_complete"] is True
+    assert value["closure"]["current_state_carrier_matrix_complete"] is True
+    assert value["closure"]["prospective_board_observations_complete"] is False
+    assert value["unresolved"][2]["id"] == "prospective_board_observations"
+    assert "native meanings and current-state carrier matrix are exact" in value[
+        "unresolved"
+    ][2]["static_status"]
 
 
 def test_hazard_precedence_starts_with_pod_hole_and_targeted_danger():
@@ -513,4 +544,6 @@ def test_exact_install_rebuilds_source_executable_and_lua_dll_join_when_availabl
     assert result["native_integer_conversion_parametric_complete"] is True
     assert result["x87_rounding_mode_observed"] is False
     assert result["native_pawn_score_helpers_complete"] is True
+    assert result["native_board_predicate_semantics_complete"] is True
+    assert result["current_state_carrier_matrix_complete"] is True
     assert result["simulator_change_required"] is False

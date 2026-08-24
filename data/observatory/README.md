@@ -512,9 +512,9 @@ continues the base score replay through the exact shipped global
 `ScorePositioning` body. It also joins the exact `Breach.exe` callback wrapper
 and named integer invoker to the installed `lua5.1.dll` `lua_tointeger` body.
 Its raw SHA-256 is
-`f25888e1dbd841809625f86fa6750461c2415dabbf2b327fa3faf9c36e559aa7`;
+`b3c20127b504e9de2379fc582452cea5d9a294774edd26da06c8141157e705cf`;
 its canonical document SHA-256 is
-`462c5ee971ff5208174d29e3d60da6550d96325bfc1fb2a18511f3b03541dd62`.
+`959594546f80361f0417076ff30e676eec8ac2df26edc75d17bcdcf94f5ae80a`.
 
 The projected replay preserves the complete source order: Pod, grounded Hole,
 targeted danger score, Smoke, new Fire, spawning, generic mission danger,
@@ -566,11 +566,37 @@ python scripts/itb_observatory_enemy_position_score_helpers.py verify `
   --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json
 ```
 
-Runtime/mod mutations of those fields/getters, future Board predicates and
-distances, and the callback-time x87 control word for fractional native
-`ScorePositioning` results remain explicit inputs. This local replay does not
-forecast the enemy tournament or replace the settled queue; simulator v408
-remains current.
+The second dependent artifact,
+`native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json`,
+pins all 17 named Board/Pawn observations used by `ScorePositioning`, 22 native
+regions, and the exact current-state carrier matrix. Its raw SHA-256 is
+`c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479`;
+its canonical document SHA-256 is
+`b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b`.
+
+`Board:IsDangerous` is a native tile flag plus two Point vectors, not
+`Board:IsEnvironmentDanger`. `Board:IsDangerousItem` tests item presence and
+eight embedded `SpaceDamage` conditions: damage, non-`DIR_NONE` push, shield,
+fire, smoke, spawned Pawn, ACID, or frozen. Spawning is a tile flag or Point-
+vector membership. Distance to a selected-team Pawn is Manhattan under exact
+profile six; distance to a Building is Manhattan over the native cache rebuilt
+from every terrain-1 tile. Current bridge fields directly carry or exactly
+derive most observations, while the two dangerous predicates, live Ranged/
+AvoidingMines mutation, and the Board snapshot at each future callback remain
+explicitly unavailable or qualified. Verify it with:
+
+```powershell
+python scripts/itb_observatory_enemy_position_observations.py verify `
+  --content-root "<Into the Breach>" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json
+```
+
+The native observation meanings and current-state carrier matrix are closed.
+Runtime/mod mutations, the candidate-time Board snapshot, and the callback-time
+x87 control word for fractional native `ScorePositioning` results remain
+explicit inputs. This local replay does not forecast the enemy tournament or
+replace the settled queue; simulator v408 remains current.
 
 ## Native path and reachability boundaries
 

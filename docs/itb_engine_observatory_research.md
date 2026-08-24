@@ -899,8 +899,16 @@ bridge-read boundary.
   `GetPositionScore(point)`. `CreateClass(Pawn)` builds both getters, and the
   complete shipped Lua census has only inherited defaults `ScoreDanger=-10`
   and `PositionScore=0`, with no explicit override. Those unmodified stock
-  results are exact under every x87 rounding mode; runtime/mod mutation and
-  future Board observations remain inputs.
+  results are exact under every x87 rounding mode; runtime/mod mutation remains
+  an input.
+- **Completed offline through the native positioning observations:** all 17
+  named Board/Pawn bindings and their meanings are exact, including native
+  danger versus environment danger, the eight-field dangerous-item predicate,
+  spawning/targeted sources, team matching, and Manhattan Pawn/Building
+  distances. The current carrier matrix identifies direct, derived, static-
+  only, and absent values. Direct dangerous carriers, live definition
+  mutations, and the Board snapshot at each future candidate callback remain
+  inputs; they are no longer unknown native semantics.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
