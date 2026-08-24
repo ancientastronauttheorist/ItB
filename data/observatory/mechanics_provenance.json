@@ -2015,6 +2015,18 @@
         },
         {
           "classification": "inference",
+          "statement": "The exact-build SkillEffect continuation requires the selected target to match one cached target point. A miss stores (-1,-1), invokes no Lua callback, clears both cached record vectors, resets iOwner to -1, and clears the private Skill key. A hit selects GetFinalEffect_Helper only for TwoClick with both second-target coordinates different from literal -1, passing [origin, second target, selected target]; every other hit selects GetSkillEffect(origin, selected target) and move-replaces the complete cache from the converted callback result."
+        },
+        {
+          "classification": "inference",
+          "statement": "The same continuation annotates effect then q_effect: empty sAnimation defaults from Explosion, private origin defaults only from exact (-1,-1), and the private source tag is overwritten. It then writes SkillEffect.iOwner and the private Skill key before applying Vek Hormones followed by Boost. Vek Hormones adds one/two/three only to eligible positive hostile-target damage excluding 500/1000; Boost excludes exact Move/Move_Power, adjusts ordinary positive and -9..-1 damage, writes the private boost marker on every record, and uses wrapping signed 32-bit arithmetic."
+        },
+        {
+          "classification": "fact",
+          "statement": "The immutable SkillEffect artifact binds 16 complete reviewed functions, 14 semantic instruction windows, 13 direct edges, complete eight-site materializer and three-site annotation caller inventories, 16 string/vtable anchors, two instruction anchors, and six adversarial replay vectors. It closes the parameterized native cache materializer from an explicit projected Lua SkillEffect while leaving concrete subclass payloads, score-side call ancestry, and a future enemy phase unresolved."
+        },
+        {
+          "classification": "inference",
           "statement": "The exact-build PE boundary map pins the native enemy candidate loop: it consumes the returned target-area vector sequentially, obtains ScorePositioning, invokes GetTargetScore for each target, retains equal-best records, and chooses among them with a direct shared-RNG call modulo the equal-best count."
         },
         {
@@ -2031,7 +2043,7 @@
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but callback materialization, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known, but concrete Lua callback payloads, score-side SkillEffect ancestry, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2141,6 +2153,31 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_skill_effect_boundary.py",
+          "symbols": [
+            "replay_enemy_skill_effect_boundary",
+            "validate_enemy_skill_effect_boundary_map"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_skill_effect.py",
+          "symbols": [
+            "build",
+            "verify",
+            "replay"
+          ]
+        },
+        {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_skill_effect_boundary.json",
+          "symbols": [
+            "selected_target_membership_is_hard_gate",
+            "two_click_final_argument_order",
+            "both_record_vectors_receive_annotations",
+            "vek_hormones_adjustment_is_exact",
+            "boost_adjustment_is_exact"
+          ]
+        },
+        {
           "path": "src/observatory/enemy_record_selector_boundary.py",
           "symbols": [
             "replay_enemy_target_tie",
@@ -2158,8 +2195,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, and score adjustments, the now-proven record-level native tournament, per-subclass Lua target-point construction, callback/effect-side score materialization, and shared-RNG state.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, score-side callback ancestry, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
         "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2277,6 +2314,16 @@
             "test_invalid_origin_clears_nonempty_cache_and_invokes_no_callback",
             "test_regular_callback_filter_is_negative_only_and_stable",
             "test_two_click_dispatches_second_callback_with_two_point_arguments",
+            "test_exact_installed_executable_rebuilds_committed_map_when_available"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_skill_effect_boundary.py",
+          "symbols": [
+            "test_target_cache_miss_clears_cache_and_invokes_no_callback",
+            "test_two_click_final_effect_uses_exact_three_point_order",
+            "test_annotations_cover_both_vectors_and_default_only_exact_empty_sentinels",
+            "test_vek_hormones_precedes_boost_at_special_threshold",
             "test_exact_installed_executable_rebuilds_committed_map_when_available"
           ]
         },

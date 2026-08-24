@@ -377,6 +377,52 @@ the branch, or `null` for both outputs when the origin is invalid. The adjacent
 native SkillEffect materialization body remains a separate continuation; no
 Rust semantic or simulator-version change follows from this wrapper alone.
 
+## Native enemy SkillEffect materialization boundary
+
+`native/windows_build_13725832_31fe35265598_enemy_skill_effect_boundary.json`
+continues from the cached target PointList through the native SkillEffect
+cache body. It binds 16 complete reviewed functions, 14 instruction windows,
+13 direct calls, both complete direct-caller inventories, 16 string/vtable
+anchors, two additional instruction anchors, and six adversarial replay
+vectors. Its raw SHA-256 is
+`bd8fe003c19d8440569a7a6fb0ba1524481280e4f5dc31afdb5d93a2bc5d9c13`;
+its canonical document SHA-256 is
+`d3502ffc37ce5fb0a685e6df3587173f2076f0701e944dbd4888ee0f46711bdd`.
+
+The selected target must occur exactly in the cached PointList. A miss resets
+the selected target to `(-1,-1)`, invokes no Lua effect callback, clears both
+cached record vectors, resets `SkillEffect.iOwner` to `-1`, and clears its
+private Skill key. A hit uses `GetFinalEffect_Helper` only when `TwoClick` is
+true and both second-target coordinates differ from literal `-1`; its exact
+ordered PointList is `[origin, second target, selected target]`. All other
+hits use `GetSkillEffect(origin, selected target)`.
+
+The selected Lua result replaces the whole cache. Native code then walks both
+`effect` and `q_effect`: an empty `sAnimation` defaults from `Explosion`, a
+private origin of exactly `(-1,-1)` defaults from the Skill origin, and the
+private source tag is overwritten from `Skill +0x150`. It writes owner and
+Skill key before postprocessing both vectors. Vek Hormones and Boost damage
+arithmetic, exact `Move`/`Move_Power` exclusions, special values `500`/`1000`,
+signed wrapping, and the private boost marker are replayed in native order.
+
+Verify or replay the immutable boundary with:
+
+```powershell
+python scripts/itb_observatory_enemy_skill_effect.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_skill_effect_boundary.json
+
+python scripts/itb_observatory_enemy_skill_effect.py replay `
+  --payload skill-effect-projection.json
+```
+
+The replay accepts only the fields this native body reads or writes; the
+concrete Lua-produced `SkillEffect` is an explicit projected input. The exact
+eight direct callers identify this body as a Board/SkillManager/Skill cache
+materializer, not the enemy candidate scorer itself. Per-subclass Lua payloads,
+score-side call ancestry, and a prospective enemy phase therefore remain
+unresolved, and simulator v408 remains current.
+
 ## Native path and reachability boundaries
 
 `native/windows_build_13725832_31fe35265598_path_boundaries.json` is the

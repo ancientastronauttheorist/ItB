@@ -85,6 +85,11 @@ The durable artifacts are:
   for the joined Board context/validity guard, `TwoClick` dispatch, invalid-
   origin cache clear, stable negative-coordinate filter, complete direct-caller
   inventories, and pure replay from an already-materialized callback PointList;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_skill_effect_boundary.json`
+  for the selected-target membership gate, exact regular/final callback
+  dispatch and argument order, cache clear/replace behavior, both record-vector
+  annotation passes, Vek Hormones/Boost arithmetic, and pure projected replay
+  from an already-materialized Lua SkillEffect;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -229,7 +234,7 @@ stream is therefore disproven for this build.
 | Target-area wrapper | `0x00229230` | Enters the dynamic target-area implementation used by the candidate loop |
 | `GetTargetScore` | `0x00229310` | Applies native modifiers, resolves the actual skill, and dynamically obtains the callback score |
 | `GetTargetArea` / `GetSecondTargetArea` | `0x00269cc0` | Selects the applicable callback, copies its vector, and filters invalid negative coordinates |
-| `GetSkillEffect` containing function | `0x00268050` | Dynamically obtains and copies the returned effect container |
+| SkillEffect cache materializer | `0x00268050` | Gates on cached-target membership, invokes the applicable Lua effect callback, replaces the cache, annotates both vectors, and applies native damage modifiers |
 
 The candidate loop preserves the returned target vector's order. For each
 candidate it calls `GetTargetScore`; equal-best targets are stored and selected
@@ -291,6 +296,35 @@ whose x or y is negative. It does not reapply `Board:IsValid` to returned
 points, so duplicates, encounter order, and positive out-of-board coordinates
 survive. The pure replay starts with that already-materialized ordered
 PointList and therefore does not claim the concrete Lua construction itself.
+
+The SkillEffect continuation closes the adjacent cache body without
+overclaiming the Lua payload. The selected target must exactly match one point
+in the cached target vector. A miss stores `(-1,-1)`, invokes no callback,
+clears both cached `SpaceDamage` vectors, resets `SkillEffect.iOwner +0x5c` to
+`-1`, and clears the private Skill key. A hit invokes
+`GetFinalEffect_Helper([origin, second target, selected target])` only when
+`TwoClick` is true and both second-target coordinates differ from literal
+`-1`; otherwise it invokes `GetSkillEffect(origin, selected target)`. The
+converted callback result move-replaces the complete old cache.
+
+Native annotation then walks `effect` followed by `q_effect`. Empty
+`sAnimation +0x38` defaults from dynamic `Explosion`; the private point at
+`+0x9c/+0xa0` defaults from the Skill origin only when both coordinates are
+`-1`; and private `+0xc0` is always overwritten from the constructor-supplied
+Skill source tag at `+0x150`. Native code next writes owner and Skill key, then
+postprocesses both vectors. Vek Hormones adds one, two, or three to eligible
+positive hostile-on-hostile damage, excluding exact special values 500 and
+1000. Boost runs afterward, excludes exact Skill IDs `Move` and `Move_Power`,
+adds one to ordinary positive damage, subtracts one only from `-9..-1`, and
+sets private byte `+0x31` on every record. Arithmetic wraps as signed 32-bit.
+
+The main body has exactly eight direct native callers, all in reviewed
+Board/SkillManager/Skill cache-refresh paths. That census proves this body is
+a cache materializer, not that it is the candidate scorer's score-side
+`GetSkillEffect` route. The pure replay therefore accepts the concrete Lua
+SkillEffect and resolved Board predicate results as inputs; subclass payloads,
+score-side call ancestry, selector-entry shared state, and a future enemy phase
+remain unresolved.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its

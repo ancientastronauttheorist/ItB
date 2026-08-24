@@ -1,0 +1,1791 @@
+{
+  "analysis_kind": "native_enemy_skill_effect_boundary_map",
+  "build_identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "executable": "Breach.exe",
+    "image_base": 4194304,
+    "platform": "windows",
+    "sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "size": 5530112
+  },
+  "call_inventories": [
+    {
+      "id": "skill_effect_materialize_callers",
+      "sites": [
+        {
+          "role": "Board master-update cache refresh path 1",
+          "rva": 1487067
+        },
+        {
+          "role": "Board master-update cache refresh path 2",
+          "rva": 1488636
+        },
+        {
+          "role": "Board actor traversal cache refresh",
+          "rva": 1501135
+        },
+        {
+          "role": "SkillManager queued-target refresh",
+          "rva": 2261060
+        },
+        {
+          "role": "SkillManager translated-target refresh",
+          "rva": 2264900
+        },
+        {
+          "role": "Skill origin/target update",
+          "rva": 2525625
+        },
+        {
+          "role": "Skill secondary-effect refresh",
+          "rva": 2531875
+        },
+        {
+          "role": "Skill target reset",
+          "rva": 2533374
+        }
+      ],
+      "target_rva": 2523216
+    },
+    {
+      "id": "skill_effect_annotation_callers",
+      "sites": [
+        {
+          "role": "additional native SkillEffect annotation path 1",
+          "rva": 2288093
+        },
+        {
+          "role": "additional native SkillEffect annotation path 2",
+          "rva": 2288938
+        },
+        {
+          "role": "reviewed Skill cache materialization path",
+          "rva": 2523816
+        }
+      ],
+      "target_rva": 2520848
+    }
+  ],
+  "closure": {
+    "annotation_and_damage_postprocess_complete": true,
+    "callback_selection_and_argument_order_complete": true,
+    "complete_enemy_phase_forecast": false,
+    "concrete_lua_skill_effect_payloads_complete": false,
+    "parameterized_native_materializer_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "target_membership_and_clear_complete": true
+  },
+  "contracts": {
+    "annotation_order": [
+      "default empty sAnimation from Explosion",
+      "default private origin only when both coordinates are -1",
+      "overwrite private source tag",
+      "write SkillEffect.iOwner",
+      "write SkillEffect private skill key",
+      "postprocess effect",
+      "postprocess q_effect"
+    ],
+    "boost": {
+      "excluded_exact_skill_ids": [
+        "Move",
+        "Move_Power"
+      ],
+      "integer_arithmetic": "32-bit wrapping",
+      "marker_write": "private record byte +0x31 = 1 for every record",
+      "negative_adjust": "-1 only for original values -9 through -1",
+      "positive_adjust": "+1 except 500 and 1000"
+    },
+    "callback_dispatch": {
+      "cache_install": "move-replace complete converted SkillEffect",
+      "final": "GetFinalEffect_Helper([origin, second_target, selected_target])",
+      "final_gate": "TwoClick and second_target.x != -1 and second_target.y != -1",
+      "regular": "GetSkillEffect(origin, selected_target)"
+    },
+    "friendly_fire": {
+      "a_or_b_bonus": 2,
+      "ab_bonus": 3,
+      "base_bonus": 1,
+      "base_required": true,
+      "damage_gate": "iDamage > 0 and iDamage != 500 and iDamage != 1000",
+      "owner_team_mode": 6,
+      "shipped_name": "Vek Hormones",
+      "target_team_mode": 6
+    },
+    "projection_boundary": {
+      "board_team_and_boost_predicate_results_are_inputs": true,
+      "complete_enemy_phase_is_not_forecast": true,
+      "lua_skill_effect_payload_is_input": true,
+      "unmentioned_record_fields_are_not_fabricated": true
+    },
+    "skill_effect_layout": {
+      "effect_vector": "+0x00",
+      "iOwner": "+0x5c",
+      "private_skill_key": "+0x60",
+      "q_effect_vector": "+0x0c",
+      "size": "0x7c"
+    },
+    "skill_layout": {
+      "cached_effect": "+0x18",
+      "cached_target_points": "+0x118..+0x120",
+      "lua_skill_key": "+0x134",
+      "native_source_tag": "+0x150",
+      "origin": "+0x12c/+0x130",
+      "owner_id": "+0x188",
+      "second_target": "+0x220/+0x224",
+      "selected_target": "+0x124/+0x128"
+    },
+    "space_damage_projection": {
+      "iDamage": "+0x08",
+      "loc": "+0x00/+0x04",
+      "private_boost_marker": "+0x31",
+      "private_origin": "+0x9c/+0xa0",
+      "private_source_tag": "+0xc0",
+      "sAnimation": "+0x38",
+      "sAnimation_length": "+0x48",
+      "stride": "0x134"
+    },
+    "target_membership": {
+      "comparison": "ordered linear scan for exact x/y equality",
+      "miss_cache_action": "clear both vectors, iOwner=-1, private key empty",
+      "miss_callback_count": 0,
+      "miss_selected_target": [
+        -1,
+        -1
+      ]
+    }
+  },
+  "control_windows": [
+    {
+      "bytes": "8b871c0100008d9f240100008b8f180100003bc874198b33393175088b51043b5304740783c1083bc875ed3bc8751a8d4f18c703ffffffffc74304ffffffffe88ce1feffe95a020000",
+      "id": "target_membership_and_clear",
+      "meaning": "Scan cached points; on a miss reset selected target and clear the cached effect.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523264
+    },
+    {
+      "bytes": "68fc808300c60000e8d9fed9ff8d8f34010000e8ae12deff84c00f84da00000083bf20020000ff0f84cd00000083bf24020000ff0f84c0000000",
+      "id": "two_click_gate",
+      "meaning": "Require TwoClick plus both second-target coordinates different from -1.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523370
+    },
+    {
+      "bytes": "8d872c010000c745fc00000000508d4de4e831cfe4ff8d8720020000508d4de4e822cfe4ff538d4de4e819cfe4ff",
+      "id": "final_argument_order",
+      "meaning": "Append origin, second target, and selected target in that exact order.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523449
+    },
+    {
+      "bytes": "68507f8300e894fcd9ff83ec18c645fc018bc489a554ffffff8d8f3401000050e8b911deff83ec0cc645fc028bcc8d45e4898d50ffffff50e83127e3ff8d8558ffffffc645fc0050e8019e00008d4f1850e87800f1ff",
+      "id": "final_callback_replace",
+      "meaning": "Invoke GetFinalEffect_Helper, convert, and move-replace the effect cache.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523506
+    },
+    {
+      "bytes": "ff7304ff33ffb730010000ffb72c01000083ec188bcc89a550ffffff68407f8300e806fcd9ff83ec18c745fc030000008d8f3401000054e83011deff8d8558ffffffc745fcffffffff50e85d9f00008d4f1850e80400f1ff",
+      "id": "regular_callback_replace",
+      "meaning": "Invoke GetSkillEffect(origin,target), convert, and move-replace the cache.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523620
+    },
+    {
+      "bytes": "83ec188bf489a550ffffff83ec188bcc68807f8300e8affbd9ff568d8f34010000e8430fdeffc745fc04000000ff73048bb750010000ff338d5f18ffb730010000ffb72c01000083ec7c8bcc53e8c784efff8bd6c745fcffffffff8d8d58ffffffe863f4ffff81c4a40000008bcb50e885fff0ff8d8d58ffffffe8da61eaff",
+      "id": "explosion_annotation_install",
+      "meaning": "Copy the cache, apply Explosion/origin/source annotations, and replace it.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523719
+    },
+    {
+      "bytes": "8b87880100008d8f340100008947748d45d850e87210deff508d4f78e86921deff8b45ec83f810720f6a014050ff75d8e805f5d9ff83c40c538bcfc745ec0f000000c745e800000000c645d800e8280000008d47248bcf50e81d000000",
+      "id": "owner_key_and_both_postprocess",
+      "meaning": "Write iOwner and the private skill key, then postprocess effect before q_effect.",
+      "region_id": "skill_effect_materialize",
+      "rva": 2523846
+    },
+    {
+      "bytes": "837c3e4800751c8d4f3803ce8d85940000003bc8740d6aff6a0050e81009daff8b750883bc3e9c000000ff8d0c3e752483b9a0000000ff751b8b858400000089819c0000008b85880000008981a00000008b75088b45f04389843ec0000000",
+      "id": "first_record_annotation",
+      "meaning": "For effect records, default empty sAnimation and (-1,-1) origin, then write +0xc0.",
+      "region_id": "skill_effect_annotation",
+      "rva": 2520992
+    },
+    {
+      "bytes": "837c3e4800751c8d4f3803ce8d85940000003bc8740d6aff6a0050e86008daff8b751483bc3e9c000000ff8d0c3e752483b9a0000000ff751b8b858400000089819c0000008b85880000008981a00000008b75148b45f04389843ec0000000",
+      "id": "second_record_annotation",
+      "meaning": "Repeat the same annotation for q_effect records.",
+      "region_id": "skill_effect_annotation",
+      "rva": 2521168
+    },
+    {
+      "bytes": "83ec188bd98bcc6a14c741140f000000c741100000000068687f8300c60100e860fcd9ffe88b63ffff8b750883c41884c00f84120100008b8b100100006a06ffb3880100008b018b8084000000ffd084c00f84f200000083ec18c7442428010000008bcc68a47f8300e856fad9ffe84163ffff83c41884c0740ac744241003000000eb3e83ec188bcc688c7f8300e831fad9ffe81c63ffff83c41884c0751b83ec188bcc68bc7f8300e816fad9ffe80163ffff83c41884c07408c744241002000000",
+      "id": "friendly_fire_gate_and_amount",
+      "meaning": "Base Vek Hormones plus hostile owner gate; AB=3, A/B=2, base=1.",
+      "region_id": "skill_effect_postprocess",
+      "rva": 2523980
+    },
+    {
+      "bytes": "8b168b443a083df4010000743285c07e2e3de803000074278b8b100100006a06ff743a048b01ff343a8b8088000000ffd084c0740a8b068b4c2410014c0708",
+      "id": "friendly_fire_record_adjust",
+      "meaning": "Add the Vek Hormones amount only to positive non-500/non-1000 damage on hostile targets.",
+      "region_id": "skill_effect_postprocess",
+      "rva": 2524208
+    },
+    {
+      "bytes": "837b141072048b0beb028bcb8b7b10b8040000003bf8baa0a782000f42c750e8f73ce0ff83c40485c0750b83ff0472060f869b000000ba888083008bcbe8d942e1ff84c00f85870000008b8b10010000ffb3880100008b018b808c000000ffd084c0746d",
+      "id": "boost_gate",
+      "meaning": "Exclude exact Move and Move_Power, then require the owner Boost predicate.",
+      "region_id": "skill_effect_postprocess",
+      "rva": 2524309
+    },
+    {
+      "bytes": "8b0e03cf8b510881faf4010000741d85d27e0e81fae803000074068d42018941088d420983f8087703ff4908c6413101",
+      "id": "boost_record_adjust",
+      "meaning": "Boost regular positive damage by one, -9..-1 by minus one, and set private byte +0x31.",
+      "region_id": "skill_effect_postprocess",
+      "rva": 2524437
+    },
+    {
+      "bytes": "8bf98b5f108b770c3bf37412908bcee83980ebff81c6340100003bf375ef8b470c8947108b5f048b373bf374118bcee81980ebff81c6340100003bf375ef8b078d4f606a0089470468dcdf8000c7475cffffffffe8241ddbff",
+      "id": "effect_clear_fields",
+      "meaning": "Destroy q_effect then effect records, set iOwner=-1, and clear +0x60.",
+      "region_id": "skill_effect_clear",
+      "rva": 2450003
+    }
+  ],
+  "data_anchors": [
+    {
+      "bytes": "4d6f766500",
+      "id": "move_id",
+      "meaning": "Exact Move Skill ID used by the Boost exclusion.",
+      "rva": 4368288,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "4172726f67616e745f426f6f737400",
+      "id": "arrogant_boost",
+      "meaning": "Exact Arrogant_Boost field used by Pawn Boost evaluation.",
+      "rva": 4417032,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "476574536b696c6c45666665637400",
+      "id": "get_skill_effect",
+      "meaning": "Exact GetSkillEffect callback name.",
+      "rva": 4423488,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "47657446696e616c4566666563745f48656c70657200",
+      "id": "get_final_effect_helper",
+      "meaning": "Exact GetFinalEffect_Helper callback name.",
+      "rva": 4423504,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "506173736976655f467269656e646c794669726500",
+      "id": "passive_friendly_fire",
+      "meaning": "Exact Vek Hormones base passive ID.",
+      "rva": 4423528,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "4578706c6f73696f6e00",
+      "id": "explosion",
+      "meaning": "Exact Explosion field name.",
+      "rva": 4423552,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "506173736976655f467269656e646c79466972655f4100",
+      "id": "passive_friendly_fire_a",
+      "meaning": "Exact Vek Hormones A ID.",
+      "rva": 4423564,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "506173736976655f467269656e646c79466972655f414200",
+      "id": "passive_friendly_fire_ab",
+      "meaning": "Exact Vek Hormones AB ID.",
+      "rva": 4423588,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "506173736976655f467269656e646c79466972655f4200",
+      "id": "passive_friendly_fire_b",
+      "meaning": "Exact Vek Hormones B ID.",
+      "rva": 4423612,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "4d6f76655f506f77657200",
+      "id": "move_power_id",
+      "meaning": "Exact Move_Power Skill ID used by the Boost exclusion.",
+      "rva": 4423816,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "54776f436c69636b00",
+      "id": "two_click",
+      "meaning": "Exact TwoClick field name.",
+      "rva": 4423932,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "6944616d61676500",
+      "id": "i_damage",
+      "meaning": "Registered SpaceDamage iDamage name.",
+      "rva": 4426392,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "73416e696d6174696f6e00",
+      "id": "s_animation",
+      "meaning": "Registered SpaceDamage sAnimation name.",
+      "rva": 4426452,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "f0fc5600",
+      "id": "friendly_owner_slot",
+      "meaning": "Board secondary slot +0x84 points to RVA 0x0016fcf0.",
+      "rva": 4383452,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "50fc5600",
+      "id": "friendly_target_slot",
+      "meaning": "Board secondary slot +0x88 points to RVA 0x0016fc50.",
+      "rva": 4383456,
+      "section": ".rdata"
+    },
+    {
+      "bytes": "20fd5600",
+      "id": "boosted_owner_slot",
+      "meaning": "Board secondary slot +0x8c points to RVA 0x0016fd20.",
+      "rva": 4383460,
+      "section": ".rdata"
+    }
+  ],
+  "dependencies": [
+    {
+      "canonical_sha256": "bcac4ea3c6a6e5cec73d95ea27f0edab5ef592de09d135200ea5efb8b66c405f",
+      "file_sha256": "dc45fc0a32b52cff2e6fb400857fadeca85737f8329e9d32f5e6196e77ec6289",
+      "id": "enemy_target_area_callback",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_target_area_callback_boundary.json",
+      "role": "Pins the ordered target cache, stored origin/targets, TwoClick sentinel rule, and callback context immediately before this body."
+    },
+    {
+      "canonical_sha256": "780d1000112a4d801dd9df342a6aac5720dcb5d4fdc482c028416f7d9f18bbc7",
+      "file_sha256": "5f4efd7b808a619630199a1f11628650a7ea09886377a10e3a9e3907587c4688",
+      "id": "death_event_credit",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_death_event_credit_boundary.json",
+      "role": "Pins SkillEffect.iOwner at +0x5c and its preservation through the queued-effect copy/dispatch chain."
+    }
+  ],
+  "direct_edges": [
+    {
+      "bytes": "e88ce1feff",
+      "call_rva": 2523327,
+      "id": "miss_to_clear",
+      "meaning": "Clear on target-cache miss.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_clear",
+      "target_rva": 2450000
+    },
+    {
+      "bytes": "e831cfe4ff",
+      "call_rva": 2523466,
+      "id": "append_origin",
+      "meaning": "Append origin first.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "point_vector_append",
+      "target_rva": 741504
+    },
+    {
+      "bytes": "e822cfe4ff",
+      "call_rva": 2523481,
+      "id": "append_second",
+      "meaning": "Append second target second.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "point_vector_append",
+      "target_rva": 741504
+    },
+    {
+      "bytes": "e819cfe4ff",
+      "call_rva": 2523490,
+      "id": "append_selected",
+      "meaning": "Append selected target third.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "point_vector_append",
+      "target_rva": 741504
+    },
+    {
+      "bytes": "e8019e0000",
+      "call_rva": 2523578,
+      "id": "convert_final",
+      "meaning": "Convert final-effect result.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "get_final_effect_converter",
+      "target_rva": 2564032
+    },
+    {
+      "bytes": "e87800f1ff",
+      "call_rva": 2523587,
+      "id": "install_final",
+      "meaning": "Install final effect.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_move_assign",
+      "target_rva": 1540672
+    },
+    {
+      "bytes": "e85d9f0000",
+      "call_rva": 2523694,
+      "id": "convert_regular",
+      "meaning": "Convert regular effect result.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "get_skill_effect_converter",
+      "target_rva": 2564496
+    },
+    {
+      "bytes": "e80400f1ff",
+      "call_rva": 2523703,
+      "id": "install_regular",
+      "meaning": "Install regular effect.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_move_assign",
+      "target_rva": 1540672
+    },
+    {
+      "bytes": "e8c784efff",
+      "call_rva": 2523796,
+      "id": "copy_for_annotation",
+      "meaning": "Copy complete cached effect.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_copy",
+      "target_rva": 1443680
+    },
+    {
+      "bytes": "e863f4ffff",
+      "call_rva": 2523816,
+      "id": "annotate_effect",
+      "meaning": "Annotate both record vectors.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_annotation",
+      "target_rva": 2520848
+    },
+    {
+      "bytes": "e885fff0ff",
+      "call_rva": 2523830,
+      "id": "install_annotation",
+      "meaning": "Install annotated copy.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_move_assign",
+      "target_rva": 1540672
+    },
+    {
+      "bytes": "e828000000",
+      "call_rva": 2523923,
+      "id": "postprocess_effect",
+      "meaning": "Postprocess effect vector first.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_postprocess",
+      "target_rva": 2523968
+    },
+    {
+      "bytes": "e81d000000",
+      "call_rva": 2523934,
+      "id": "postprocess_q_effect",
+      "meaning": "Postprocess q_effect vector second.",
+      "source_region": "skill_effect_materialize",
+      "target_region": "skill_effect_postprocess",
+      "target_rva": 2523968
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The selected target must match one cached Point exactly. A miss resets the selected target, invokes no Lua effect callback, clears both cached record vectors, sets iOwner=-1, and clears the private skill key.",
+      "classification": "fact",
+      "id": "selected_target_membership_is_hard_gate"
+    },
+    {
+      "claim": "TwoClick plus two non-minus-one second-target coordinates selects GetFinalEffect_Helper with [origin, second target, selected target]; all other cached-target cases use GetSkillEffect(origin,target).",
+      "classification": "fact",
+      "id": "two_click_final_argument_order"
+    },
+    {
+      "claim": "Each selected Lua result is converted to a complete SkillEffect and move-assigned over the prior cache before native annotations.",
+      "classification": "fact",
+      "id": "callback_result_replaces_complete_cache"
+    },
+    {
+      "claim": "Every record in effect and q_effect receives the same ordered pass: empty sAnimation defaults from Explosion, (-1,-1) private origin defaults from the Skill origin, and private +0xc0 is overwritten from Skill +0x150.",
+      "classification": "fact",
+      "id": "both_record_vectors_receive_annotations"
+    },
+    {
+      "claim": "Skill +0x188 is written to SkillEffect.iOwner +0x5c and the Skill's Lua lookup key is copied to private effect +0x60 before effect then q_effect are postprocessed.",
+      "classification": "fact",
+      "id": "owner_and_skill_key_written_before_damage_postprocess"
+    },
+    {
+      "claim": "Vek Hormones requires a hostile owner and hostile target. It adds one for base, two for A or B, and three for AB only to positive iDamage values other than 500 and 1000.",
+      "classification": "fact",
+      "id": "vek_hormones_adjustment_is_exact"
+    },
+    {
+      "claim": "For a Boosted owner and any exact Skill ID except Move/Move_Power, native code adds one to regular positive damage, subtracts one from -9..-1, leaves 500/1000 special values alone, and sets private +0x31 on every record.",
+      "classification": "fact",
+      "id": "boost_adjustment_is_exact"
+    },
+    {
+      "claim": "The exact eight-caller inventory binds this as a Skill effect-cache materializer used by Board/SkillManager/Skill refresh paths. It does not by itself prove where a Lua GetSkillEffect body participates in enemy candidate scoring.",
+      "classification": "scope",
+      "id": "this_is_not_the_enemy_scorer"
+    }
+  ],
+  "instruction_anchors": [
+    {
+      "bytes": "6a3868d48a8300",
+      "id": "register_s_animation",
+      "meaning": "Bind SpaceDamage.sAnimation to +0x38.",
+      "rva": 2600377
+    },
+    {
+      "bytes": "6a0868988a8300",
+      "id": "register_i_damage",
+      "meaning": "Bind SpaceDamage.iDamage to +0x08.",
+      "rva": 2600440
+    }
+  ],
+  "native_regions": [
+    {
+      "basis": "Exact native std::string equality helper used for Move_Power.",
+      "end": 509957,
+      "id": "lua_string_equal",
+      "sha256": "c0a0823d4c48882c5b64ac059812e6b1adcb02780effe5e037e1f46cc0aa74ea",
+      "start": 509872
+    },
+    {
+      "basis": "Complete eight-byte Point vector append helper.",
+      "end": 741618,
+      "id": "point_vector_append",
+      "sha256": "5fa5ce9bd76705a63de61684acbfb6b6147c4be3da1e4f86cb9bc991d3f748eb",
+      "start": 741504
+    },
+    {
+      "basis": "Complete 0x7c-byte SkillEffect copy constructor.",
+      "end": 1443961,
+      "id": "skill_effect_copy",
+      "sha256": "30471eac4d66d47a928438248a7d8f26e2c0a6384bafe7b0c02e42b2250efcd6",
+      "start": 1443680
+    },
+    {
+      "basis": "Board secondary-vtable target-team predicate.",
+      "end": 1506456,
+      "id": "friendly_target_predicate",
+      "sha256": "aac917614c7bd4bef2cf9cb8f9b8ad78db2898a13648adf674b689bba93a3e69",
+      "start": 1506384
+    },
+    {
+      "basis": "Board secondary-vtable owner-team predicate.",
+      "end": 1506582,
+      "id": "friendly_owner_predicate",
+      "sha256": "e0e785a3aad74dbaa0d97fd1b12360c2df7ecaf4c82af55faf0866128f75e422",
+      "start": 1506544
+    },
+    {
+      "basis": "Board secondary-vtable owner Boost predicate.",
+      "end": 1506627,
+      "id": "boosted_owner_predicate",
+      "sha256": "74d49bcafae258d46a513bf008f35473918c6b53ebadd95d628c110f5d951a4f",
+      "start": 1506592
+    },
+    {
+      "basis": "Complete SkillEffect move-assignment body.",
+      "end": 1541101,
+      "id": "skill_effect_move_assign",
+      "sha256": "e4312b34a0b20c8e9f06e12335424565a0f069c6bd4f1162a3ac4ecfb5c4a3f3",
+      "start": 1540672
+    },
+    {
+      "basis": "Complete default 0x134-byte SpaceDamage constructor.",
+      "end": 1678397,
+      "id": "space_damage_ctor",
+      "sha256": "2f17cc9bd3616c14305fb7fc1871bf0e37d09262825a99213f5b0568d6c6045d",
+      "start": 1677728
+    },
+    {
+      "basis": "Pawn Boost/Arrogant_Boost predicate used by the Board wrapper.",
+      "end": 2313411,
+      "id": "pawn_boost_predicate",
+      "sha256": "8f8552ea81239134b413758ce8e181db99d51903552a9fa2b38f2239880bb290",
+      "start": 2313328
+    },
+    {
+      "basis": "Pawn team-class predicate; mode six accepts hostile teams.",
+      "end": 2349361,
+      "id": "pawn_team_predicate",
+      "sha256": "6f3a65620b7f448715c301400b1d26ce9784879254b5255b5772a1f95ad53906",
+      "start": 2349152
+    },
+    {
+      "basis": "Clear both effect vectors, reset iOwner, and clear the private skill key.",
+      "end": 2450096,
+      "id": "skill_effect_clear",
+      "sha256": "1a940afe5f395d8cfd6bbd5ae1efdce0d3fbfebb1e93e4d6245b292c81569fa5",
+      "start": 2450000
+    },
+    {
+      "basis": "Annotate both SpaceDamage vectors and return the moved effect.",
+      "end": 2521373,
+      "id": "skill_effect_annotation",
+      "sha256": "771a522903bf79af9e8e0aad8d137275aedbde53ab1eb8e9cec0d365a3fae647",
+      "start": 2520848
+    },
+    {
+      "basis": "Selected-target gate, Lua callback dispatch, cache, and postprocess body.",
+      "end": 2523967,
+      "id": "skill_effect_materialize",
+      "sha256": "6bb49352f06f6b4c19cc0e469e8d6e2a95afc87c8214eb68e85fdd5d5085155a",
+      "start": 2523216
+    },
+    {
+      "basis": "Vek Hormones and Boost postprocessor for one SpaceDamage vector.",
+      "end": 2524527,
+      "id": "skill_effect_postprocess",
+      "sha256": "595e58ad603664da5ba5270a18c14b93690c929d9e5ee2c36fa0c5ab5a2f673c",
+      "start": 2523968
+    },
+    {
+      "basis": "GetFinalEffect_Helper Lua-result to SkillEffect converter.",
+      "end": 2564204,
+      "id": "get_final_effect_converter",
+      "sha256": "105f3fbbe975ec6d860d09dfb0f8260619f1a36558188d7e1dc1f42aa6989db4",
+      "start": 2564032
+    },
+    {
+      "basis": "GetSkillEffect Lua-result to SkillEffect converter.",
+      "end": 2564672,
+      "id": "get_skill_effect_converter",
+      "sha256": "363cb9a295dee60f4a5a20ebdaca51838c6cc8f8d4a1972cba7342d6c520bc40",
+      "start": 2564496
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "cache_action": "replace",
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ],
+          "iOwner": 17,
+          "native_skill_key": "FireflyAtk1",
+          "q_effect": []
+        },
+        "callback": "GetSkillEffect",
+        "callback_arguments": {
+          "origin": [
+            4,
+            5
+          ],
+          "target": [
+            2,
+            3
+          ]
+        },
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": {
+          "boost": {
+            "active": false,
+            "adjustments": [],
+            "marked": []
+          },
+          "explosion_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "friendly_fire": {
+            "active": false,
+            "adjustments": [],
+            "bonus": 0
+          },
+          "iOwner_written": 17,
+          "native_skill_key_written": "FireflyAtk1",
+          "origin_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "source_tag_written": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "vector_order": [
+            "effect",
+            "q_effect"
+          ]
+        },
+        "schema_version": 1,
+        "selected_target": [
+          2,
+          3
+        ],
+        "target_was_cached": true
+      },
+      "id": "regular_callback",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": false,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": false,
+          "b": false,
+          "base": false
+        },
+        "friendly_fire_target_points": [],
+        "get_final_effect": null,
+        "get_skill_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": false,
+        "owner_id": 17,
+        "second_target": [
+          -1,
+          -1
+        ],
+        "selected_target": [
+          2,
+          3
+        ],
+        "skill_id": "FireflyAtk1",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": false
+      }
+    },
+    {
+      "expected": {
+        "cache_action": "clear",
+        "cached_effect": {
+          "effect": [],
+          "iOwner": -1,
+          "native_skill_key": "",
+          "q_effect": []
+        },
+        "callback": null,
+        "callback_arguments": null,
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": null,
+        "schema_version": 1,
+        "selected_target": [
+          -1,
+          -1
+        ],
+        "target_was_cached": false
+      },
+      "id": "target_cache_miss_clears",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": false,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": false,
+          "b": false,
+          "base": false
+        },
+        "friendly_fire_target_points": [],
+        "get_final_effect": null,
+        "get_skill_effect": null,
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": false,
+        "owner_id": 17,
+        "second_target": [
+          -1,
+          -1
+        ],
+        "selected_target": [
+          7,
+          7
+        ],
+        "skill_id": "FireflyAtk1",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": false
+      }
+    },
+    {
+      "expected": {
+        "cache_action": "replace",
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 3,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": true,
+              "native_source_tag": 1,
+              "piOrigin": [
+                -1,
+                4
+              ],
+              "sAnimation": "kept"
+            }
+          ],
+          "iOwner": 17,
+          "native_skill_key": "FireflyAtk1",
+          "q_effect": [
+            {
+              "iDamage": -2,
+              "loc": [
+                1,
+                1
+              ],
+              "native_boost_marker": true,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ]
+        },
+        "callback": "GetFinalEffect_Helper",
+        "callback_arguments": {
+          "ordered_points": [
+            [
+              4,
+              5
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        },
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": {
+          "boost": {
+            "active": true,
+            "adjustments": [
+              {
+                "after": 3,
+                "before": 2,
+                "index": 0,
+                "list": "effect"
+              },
+              {
+                "after": -2,
+                "before": -1,
+                "index": 0,
+                "list": "q_effect"
+              }
+            ],
+            "marked": [
+              {
+                "index": 0,
+                "list": "effect"
+              },
+              {
+                "index": 0,
+                "list": "q_effect"
+              }
+            ]
+          },
+          "explosion_defaulted": [
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "friendly_fire": {
+            "active": false,
+            "adjustments": [],
+            "bonus": 0
+          },
+          "iOwner_written": 17,
+          "native_skill_key_written": "FireflyAtk1",
+          "origin_defaulted": [
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "source_tag_written": [
+            {
+              "index": 0,
+              "list": "effect"
+            },
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "vector_order": [
+            "effect",
+            "q_effect"
+          ]
+        },
+        "schema_version": 1,
+        "selected_target": [
+          2,
+          3
+        ],
+        "target_was_cached": true
+      },
+      "id": "final_order_and_boost",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": false,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": false,
+          "b": false,
+          "base": false
+        },
+        "friendly_fire_target_points": [],
+        "get_final_effect": {
+          "effect": [
+            {
+              "iDamage": 2,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                4
+              ],
+              "sAnimation": "kept"
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": [
+            {
+              "iDamage": -1,
+              "loc": [
+                1,
+                1
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ]
+        },
+        "get_skill_effect": null,
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": true,
+        "owner_id": 17,
+        "second_target": [
+          6,
+          5
+        ],
+        "selected_target": [
+          2,
+          3
+        ],
+        "skill_id": "FireflyAtk1",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": true
+      }
+    },
+    {
+      "expected": {
+        "cache_action": "replace",
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ],
+          "iOwner": 17,
+          "native_skill_key": "FireflyAtk1",
+          "q_effect": []
+        },
+        "callback": "GetSkillEffect",
+        "callback_arguments": {
+          "origin": [
+            4,
+            5
+          ],
+          "target": [
+            2,
+            3
+          ]
+        },
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": {
+          "boost": {
+            "active": false,
+            "adjustments": [],
+            "marked": []
+          },
+          "explosion_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "friendly_fire": {
+            "active": false,
+            "adjustments": [],
+            "bonus": 0
+          },
+          "iOwner_written": 17,
+          "native_skill_key_written": "FireflyAtk1",
+          "origin_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "source_tag_written": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "vector_order": [
+            "effect",
+            "q_effect"
+          ]
+        },
+        "schema_version": 1,
+        "selected_target": [
+          2,
+          3
+        ],
+        "target_was_cached": true
+      },
+      "id": "partial_minus_one_uses_regular",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": false,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": false,
+          "b": false,
+          "base": false
+        },
+        "friendly_fire_target_points": [],
+        "get_final_effect": null,
+        "get_skill_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": false,
+        "owner_id": 17,
+        "second_target": [
+          -1,
+          -2
+        ],
+        "selected_target": [
+          2,
+          3
+        ],
+        "skill_id": "FireflyAtk1",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": true
+      }
+    },
+    {
+      "expected": {
+        "cache_action": "replace",
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 503,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": true,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            },
+            {
+              "iDamage": 5,
+              "loc": [
+                9,
+                9
+              ],
+              "native_boost_marker": true,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ],
+          "iOwner": 17,
+          "native_skill_key": "FireflyAtk1",
+          "q_effect": [
+            {
+              "iDamage": 1000,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": true,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ]
+        },
+        "callback": "GetSkillEffect",
+        "callback_arguments": {
+          "origin": [
+            4,
+            5
+          ],
+          "target": [
+            2,
+            3
+          ]
+        },
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": {
+          "boost": {
+            "active": true,
+            "adjustments": [
+              {
+                "after": 503,
+                "before": 502,
+                "index": 0,
+                "list": "effect"
+              },
+              {
+                "after": 5,
+                "before": 4,
+                "index": 1,
+                "list": "effect"
+              }
+            ],
+            "marked": [
+              {
+                "index": 0,
+                "list": "effect"
+              },
+              {
+                "index": 1,
+                "list": "effect"
+              },
+              {
+                "index": 0,
+                "list": "q_effect"
+              }
+            ]
+          },
+          "explosion_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            },
+            {
+              "index": 1,
+              "list": "effect"
+            },
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "friendly_fire": {
+            "active": true,
+            "adjustments": [
+              {
+                "after": 502,
+                "before": 499,
+                "index": 0,
+                "list": "effect"
+              }
+            ],
+            "bonus": 3
+          },
+          "iOwner_written": 17,
+          "native_skill_key_written": "FireflyAtk1",
+          "origin_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            },
+            {
+              "index": 1,
+              "list": "effect"
+            },
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "source_tag_written": [
+            {
+              "index": 0,
+              "list": "effect"
+            },
+            {
+              "index": 1,
+              "list": "effect"
+            },
+            {
+              "index": 0,
+              "list": "q_effect"
+            }
+          ],
+          "vector_order": [
+            "effect",
+            "q_effect"
+          ]
+        },
+        "schema_version": 1,
+        "selected_target": [
+          2,
+          3
+        ],
+        "target_was_cached": true
+      },
+      "id": "hormones_then_boost",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": true,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": true,
+          "b": false,
+          "base": true
+        },
+        "friendly_fire_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "get_final_effect": null,
+        "get_skill_effect": {
+          "effect": [
+            {
+              "iDamage": 499,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            },
+            {
+              "iDamage": 4,
+              "loc": [
+                9,
+                9
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": [
+            {
+              "iDamage": 1000,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ]
+        },
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": true,
+        "owner_id": 17,
+        "second_target": [
+          -1,
+          -1
+        ],
+        "selected_target": [
+          2,
+          3
+        ],
+        "skill_id": "FireflyAtk1",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": false
+      }
+    },
+    {
+      "expected": {
+        "cache_action": "replace",
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 1,
+              "piOrigin": [
+                4,
+                5
+              ],
+              "sAnimation": "ExploAir2"
+            }
+          ],
+          "iOwner": 17,
+          "native_skill_key": "FireflyAtk1",
+          "q_effect": []
+        },
+        "callback": "GetSkillEffect",
+        "callback_arguments": {
+          "origin": [
+            4,
+            5
+          ],
+          "target": [
+            2,
+            3
+          ]
+        },
+        "kind": "native_enemy_skill_effect_projection_replay",
+        "postprocess": {
+          "boost": {
+            "active": false,
+            "adjustments": [],
+            "marked": []
+          },
+          "explosion_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "friendly_fire": {
+            "active": false,
+            "adjustments": [],
+            "bonus": 0
+          },
+          "iOwner_written": 17,
+          "native_skill_key_written": "FireflyAtk1",
+          "origin_defaulted": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "source_tag_written": [
+            {
+              "index": 0,
+              "list": "effect"
+            }
+          ],
+          "vector_order": [
+            "effect",
+            "q_effect"
+          ]
+        },
+        "schema_version": 1,
+        "selected_target": [
+          2,
+          3
+        ],
+        "target_was_cached": true
+      },
+      "id": "move_power_excludes_boost",
+      "input": {
+        "cached_effect": {
+          "effect": [
+            {
+              "iDamage": 9,
+              "loc": [
+                0,
+                0
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "cached_target_points": [
+          [
+            2,
+            3
+          ]
+        ],
+        "explosion": "ExploAir2",
+        "friendly_fire_owner_matches_team6": false,
+        "friendly_fire_passives": {
+          "a": false,
+          "ab": false,
+          "b": false,
+          "base": false
+        },
+        "friendly_fire_target_points": [],
+        "get_final_effect": null,
+        "get_skill_effect": {
+          "effect": [
+            {
+              "iDamage": 1,
+              "loc": [
+                2,
+                3
+              ],
+              "native_boost_marker": false,
+              "native_source_tag": 2,
+              "piOrigin": [
+                -1,
+                -1
+              ],
+              "sAnimation": ""
+            }
+          ],
+          "iOwner": -1,
+          "native_skill_key": "old",
+          "q_effect": []
+        },
+        "origin": [
+          4,
+          5
+        ],
+        "owner_boosted": true,
+        "owner_id": 17,
+        "second_target": [
+          -1,
+          -1
+        ],
+        "selected_target": [
+          2,
+          3
+        ],
+        "skill_id": "Move_Power",
+        "skill_key": "FireflyAtk1",
+        "skill_source_tag": 1,
+        "two_click": false
+      }
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "annotation_and_damage_postprocess_complete": true,
+    "call_inventory_count": 2,
+    "callback_selection_and_argument_order_complete": true,
+    "complete_enemy_phase_forecast": false,
+    "concrete_lua_skill_effect_payloads_complete": false,
+    "control_window_count": 14,
+    "data_anchor_count": 16,
+    "dependency_count": 2,
+    "direct_edge_count": 13,
+    "finding_count": 8,
+    "instruction_anchor_count": 2,
+    "parameterized_native_materializer_complete": true,
+    "region_count": 16,
+    "replay_vector_count": 6,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "target_membership_and_clear_complete": true,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "id": "concrete_lua_skill_effect_payloads",
+      "next_evidence": "Use source-exact subclass models or bounded callback traces as mechanic-specific inputs.",
+      "question": "What complete record payload does every Lua weapon subclass return?",
+      "static_status": "Converters and cache ownership are exact; subclass record construction remains Lua-defined."
+    },
+    {
+      "id": "private_source_tag_friendly_name",
+      "next_evidence": "Name it only if another registration/archive/RTTI path exposes the enum label.",
+      "question": "What shipped C++ enum name corresponds to Skill +0x150 / SpaceDamage +0xc0?",
+      "static_status": "Construction, default value, overwrite, copies, and offsets are exact; the debug symbol/name is absent."
+    },
+    {
+      "id": "full_board_predicate_reconstruction",
+      "next_evidence": "Join exact Board/Pawn state only where settled bridge fields do not already decide the predicate.",
+      "question": "Can every owner/target team and Boost predicate be rebuilt prospectively from ordinary solver input?",
+      "static_status": "Native predicates are pinned, but the pure projection accepts their resolved Boolean/point results."
+    },
+    {
+      "id": "enemy_score_side_effect_route",
+      "next_evidence": "Trace Lua-level call ancestry or finish the separate score-side Lua/native call graph.",
+      "question": "Which Lua GetSkillEffect invocations are score-side effects versus cache/execution materialization?",
+      "static_status": "This body's complete direct callers are known; no caller is labeled as the candidate-score wrapper itself."
+    },
+    {
+      "id": "complete_enemy_phase",
+      "next_evidence": "Keep the settled queue authoritative and convert only proven mismatch-specific mechanics into Rust tests.",
+      "question": "Can this projection replace the settled queued-action bridge state?",
+      "static_status": "No. Candidate payloads, subclass Lua mechanics, shared RNG entry state, and later action scheduling remain inputs."
+    }
+  ]
+}

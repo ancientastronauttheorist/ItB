@@ -23,6 +23,11 @@ names literal index 50 as the separately owned `Skill_Repair`, and distinguishes
 A further continuation joins `Skill +0x110` to `Board:IsValid` and makes the
 native target-area callback selection, cache mutation, negative-coordinate
 filter, and returned PointList pure replayable from materialized Lua points.
+The adjacent SkillEffect continuation now makes selected-target membership,
+regular/final callback dispatch, cache replacement, both record annotation
+passes, and Vek Hormones/Boost postprocessing pure replayable from a projected
+Lua SkillEffect, while explicitly separating that cache body from score-side
+callback ancestry.
 Two atomic live captures further bind 2,982 native RNG records to the exact
 build and exercise reviewed RNG leaves, candidate tie-breaking, record
 selection, and seed advance with clean byte restoration. Five natural callback
@@ -219,12 +224,14 @@ live-or-persistent-corpse, including Road Runner corpse transit but no corpse
 stop; simulator v403 carries that rule. A later exact-build continuation closes
 the one common `IsCorpse` predicate, its mutation-12 fallback, and all 16
 effective shipped source corpse types. Transient lifecycle/removal timing,
-concrete Lua target-point/effect construction, selector-entry state delivery,
-and broader queue paths remain to be validated. The native positioning clamp,
+concrete Lua target-point/effect construction, score-side effect-call ancestry,
+selector-entry state delivery, and broader queue paths remain to be validated.
+The native positioning clamp,
 selected-weapon normalization, history/priority modifiers, positive-score
 floor, active/smoke/Water/bonus-shift/usable-skill/IsMech target-area gate,
-literal-50 repair resolver, and target-area callback/cache/filter wrapper are
-exact-build replayable from explicit inputs. The higher-level record
+literal-50 repair resolver, target-area callback/cache/filter wrapper, and
+SkillEffect cache materializer/postprocessor are exact-build replayable from
+explicit inputs. The higher-level record
 selector itself is now exact-build replayable: it consumes six-integer records,
 applies the native positioning/target comparator, retains only the immediately
 displaced primary group, spends a primary draw even for a singleton, and gates
@@ -856,6 +863,12 @@ bridge-read boundary.
   replacement, stable negative-coordinate filtering, and return copying are
   replayable from already-materialized Lua points. Concrete Lua point
   construction remains a runtime input.
+- **Completed offline through the SkillEffect cache materializer:** selected-
+  target membership, regular/final callback choice and argument order, full
+  cache clear/replace, annotations across `effect` and `q_effect`, and native
+  Vek Hormones/Boost arithmetic are replayable from a projected Lua
+  SkillEffect. Concrete subclass payloads and score-side call ancestry remain
+  inputs rather than inferred behavior.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
@@ -887,8 +900,9 @@ bridge-read boundary.
 
 - **Offline Windows tranche complete:** named RNG bindings, the shared RNG,
   enemy candidate/score callbacks, the complete pre-target-area gate and repair
-  sentinel, the target-area callback/cache/filter wrapper, tie-breaking, and
-  the selected record are build-keyed and independently verifiable.
+  sentinel, the target-area callback/cache/filter wrapper, the SkillEffect
+  cache materializer/postprocessor, tie-breaking, and the selected record are
+  build-keyed and independently verifiable.
 - **Road Runner boundary complete:** the path API bindings, profile constants,
   Board search vtable, and profile-4 transit/stop split are build-keyed and
   independently verifiable; simulator v401 carries the proven rule.

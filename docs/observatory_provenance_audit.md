@@ -93,7 +93,13 @@ usable-skill/`IsMech` gate, names literal index 50 as separately owned
 eight block-commented source matches. The callback-wrapper continuation joins
 `Skill +0x110` to `Board:IsValid`, proves invalid-origin cache clearing,
 selects `GetTargetArea` versus `GetSecondTargetArea`, and stably filters only
-negative returned coordinates. Natural callback pairs exercise the four
+negative returned coordinates. The SkillEffect continuation closes the next
+cache layer: exact selected-target membership, regular/final callback choice
+and ordered arguments, cache clear/replace, annotations across both record
+vectors, and Vek Hormones/Boost arithmetic are independently replayable from
+an explicit projected Lua payload. Its complete eight-caller census places the
+body in Board/SkillManager/Skill cache-refresh paths rather than proving it is
+the score-side callback route. Natural callback pairs exercise the four
 Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
@@ -106,8 +112,9 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
-state, and concrete Lua callback values/PointLists/effects plus effect-side
-draws before the now-proven native postprocessing boundaries remain unjoined.
+state, and concrete Lua callback values/PointLists/SkillEffects, score-side
+effect-call ancestry, plus effect-side draws before the now-proven native
+postprocessing boundaries remain unjoined.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers
 only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate

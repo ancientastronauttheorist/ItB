@@ -832,6 +832,30 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "two_click_callback_selection",
         "native_post_callback_filter",
     }
+    assert implementations[
+        "src/observatory/enemy_skill_effect_boundary.py"
+    ] == {
+        "replay_enemy_skill_effect_boundary",
+        "validate_enemy_skill_effect_boundary_map",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_skill_effect.py"
+    ] == {
+        "build",
+        "verify",
+        "replay",
+    }
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_skill_effect_boundary.json"
+    ] == {
+        "selected_target_membership_is_hard_gate",
+        "two_click_final_argument_order",
+        "both_record_vectors_receive_annotations",
+        "vek_hormones_adjustment_is_exact",
+        "boost_adjustment_is_exact",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -840,9 +864,13 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "one Firefly1 single-weapon shape" in gaps
     assert "now-proven native target-area eligibility gate" in gaps
     assert "callback/cache/filter wrapper" in gaps
+    assert "SkillEffect cache materializer/postprocessor" in gaps
     assert "native target-area wrapper" in gaps
+    assert "native target-area wrapper and SkillEffect cache wrapper" in gaps
     assert "concrete ordered Lua-produced PointLists" in gaps
+    assert "concrete ordered Lua-produced PointLists and SkillEffects" in gaps
     assert "raw callback values" in gaps
+    assert "score-side callback ancestry" in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
     assert "24-byte record comparator" in gaps
 
