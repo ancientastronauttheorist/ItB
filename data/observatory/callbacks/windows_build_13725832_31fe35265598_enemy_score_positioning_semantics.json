@@ -11,11 +11,12 @@
     "complete_enemy_phase_forecast": false,
     "lua_fractional_result_complete": true,
     "native_integer_conversion_parametric_complete": true,
-    "native_pawn_score_helpers_complete": false,
+    "native_pawn_score_helpers_complete": true,
     "prospective_board_observations_complete": false,
     "score_positioning_projection_complete": true,
     "simulator_change_required": false,
     "simulator_version": 408,
+    "unmodified_shipped_pawn_score_defaults_complete": true,
     "x87_rounding_mode_observed": false
   },
   "contracts": {
@@ -60,9 +61,19 @@
     "stock_edge_coordinates": [
       0,
       7
-    ]
+    ],
+    "stock_helper_defaults_require_runtime_rounding_mode": false,
+    "unmodified_shipped_custom_position_score": 0,
+    "unmodified_shipped_danger_score": -10
   },
   "dependencies": [
+    {
+      "canonical_sha256": "9f572158d5e8dc760974166a4ad6a21f68a68324d0ec6d97eb6f8d02d4fa3cd9",
+      "file_sha256": "989c2d74194b810e14ae8327b17cbaa9535a8ec83acedefad951bc9ad77c8ff9",
+      "id": "enemy_position_score_helpers_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json",
+      "role": "Pins both native Pawn helper registrations/call paths and the unmodified shipped ScoreDanger=-10 / PositionScore=0 defaults."
+    },
     {
       "canonical_sha256": "4871a8f128211e258f6737b2c221e5f73789a021a95ecd995e5d5a3a86566d60",
       "file_sha256": "a990c1ae3648618651c65096339a8a5f24d44407c422324c8cf43ac30dab11a6",
@@ -133,6 +144,11 @@
       "claim": "A ranged Pawn that reaches the interior tail returns five.",
       "classification": "fact",
       "id": "ranged_interior_returns_five"
+    },
+    {
+      "claim": "The exact native Pawn helpers dispatch generated GetScoreDanger and GetPositionScore methods. Unmodified shipped Pawn definitions inherit ScoreDanger=-10 and PositionScore=0 with no explicit getter or field override in the shipped Lua corpus.",
+      "classification": "fact",
+      "id": "stock_pawn_score_helpers_resolve_to_inherited_defaults"
     },
     {
       "claim": "The native named integer route reaches lua_tointeger, whose exact pinned DLL body converts the double with x87 FISTP; the four-mode replay therefore requires the active thread rounding mode.",
@@ -1544,9 +1560,10 @@
   ],
   "summary": {
     "complete_enemy_phase_forecast": false,
-    "dependency_count": 5,
-    "finding_count": 8,
+    "dependency_count": 6,
+    "finding_count": 9,
     "native_integer_conversion_parametric_complete": true,
+    "native_pawn_score_helpers_complete": true,
     "native_region_count": 3,
     "replay_vector_count": 14,
     "score_positioning_projection_complete": true,
@@ -1563,9 +1580,9 @@
       "static_status": "The call-local wrapper and lua_tointeger bodies are exact, but the thread control word is runtime state rather than an image constant."
     },
     {
-      "id": "native_pawn_score_helpers",
-      "question": "How do GetDangerScore and GetCustomPositionScore compute their values?",
-      "static_status": "Their source call sites are exact; returned integers remain explicit projected inputs."
+      "id": "runtime_or_modded_pawn_score_mutation",
+      "question": "Can runtime code or a mod replace either inherited Pawn score value/getter?",
+      "static_status": "The native dispatch and unmodified shipped defaults are exact. Runtime mutation and non-inventoried mods remain outside the immutable stock-content claim."
     },
     {
       "id": "prospective_board_observations",

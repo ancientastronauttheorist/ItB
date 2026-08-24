@@ -130,8 +130,8 @@ Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
 state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score Board/Pawn predicates and Pawn helper values, callback-time x87 control,
-plus transitive native-bound helper RNG
+score Board/Pawn predicates, runtime-mutated Pawn score helpers, callback-time
+x87 control for fractional native results, plus transitive native-bound helper RNG
 before the now-proven native postprocessing boundaries remain unjoined.
 The prospective spawn replay
 capsule/selector-time CRT state remains absent, the queue correlation covers

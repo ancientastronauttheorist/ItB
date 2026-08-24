@@ -521,3 +521,8 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 519 | — | Native enemy score adjustments are exact, but callback outputs remain boundary inputs. | `docs/agent/solver-reference.md` |
 | 520 | — | Native target-area eligibility is exact; resolver index 50 is the separate repair Skill. | `docs/agent/solver-reference.md` |
 | 521 | — | Native target-area callback selection/cache/filtering is exact from materialized Lua points. | `docs/agent/solver-reference.md` |
+| 522 | — | Native SkillEffect cache materialization is exact from a projected Lua payload. | `docs/agent/solver-reference.md` |
+| 523 | — | Score-time SkillEffects bypass the native cache materializer; shipped Lua effect bodies have no direct RNG calls. | `docs/agent/solver-reference.md` |
+| 524 | — | Inherited base enemy scoring is exact from projected Board/Pawn predicates. | `docs/agent/solver-reference.md` |
+| 525 | — | Global ScorePositioning is exact from projected observations; native half-points still need the x87 mode. | `docs/agent/solver-reference.md` |
+| 526 | — | Native Pawn positioning helpers dispatch generated Lua getters; unmodified shipped values are -10 and 0. | `docs/agent/solver-reference.md` |

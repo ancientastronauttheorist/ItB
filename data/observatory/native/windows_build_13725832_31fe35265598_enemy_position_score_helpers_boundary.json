@@ -1,0 +1,366 @@
+{
+  "analysis_kind": "native_enemy_position_score_helpers_boundary",
+  "build_identity": {
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua5_1_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "platform": "windows",
+    "scripts_revision_sha256": "591315057e493d11b029ed669bc7eb1d02ae49d14cdca4bcdc640acfa5421155"
+  },
+  "call_edges": [
+    {
+      "id": "danger_member_to_prefixed_getter",
+      "instruction_hex": "e86cfae0ff",
+      "instruction_rva": "0x0023981f",
+      "target_rva": "0x00049290"
+    },
+    {
+      "id": "prefixed_getter_to_no_argument_wrapper",
+      "instruction_hex": "e8a8010000",
+      "instruction_rva": "0x00049313",
+      "target_rva": "0x000494c0"
+    },
+    {
+      "id": "custom_member_to_named_lookup",
+      "instruction_hex": "e8ebcce0ff",
+      "instruction_rva": "0x0023c660",
+      "target_rva": "0x00049350"
+    },
+    {
+      "id": "custom_member_to_point_wrapper",
+      "instruction_hex": "e80f7d0000",
+      "instruction_rva": "0x0023c66c",
+      "target_rva": "0x00244380"
+    },
+    {
+      "id": "no_argument_wrapper_to_integer_conversion",
+      "instruction_hex": "e8af040000",
+      "instruction_rva": "0x0004951c",
+      "target_rva": "0x000499d0"
+    },
+    {
+      "id": "point_wrapper_to_integer_conversion",
+      "instruction_hex": "e82b010000",
+      "instruction_rva": "0x002443e0",
+      "target_rva": "0x00244510"
+    }
+  ],
+  "closure": {
+    "native_helper_call_paths_complete": true,
+    "native_registrations_complete": true,
+    "runtime_or_modded_field_mutation_complete": false,
+    "shipped_source_default_census_complete": true,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "unmodified_shipped_results_complete": true
+  },
+  "contracts": {
+    "absent_script_object_danger_fallback": 0,
+    "create_class_getter_rule": "Get<member>(self,pawn) -> self[member]",
+    "custom_field": "PositionScore",
+    "custom_method_argument": "candidate Point",
+    "custom_method_literal": "GetPositionScore",
+    "custom_native_binding": "Pawn:GetCustomPositionScore",
+    "danger_field_literal": "ScoreDanger",
+    "danger_generated_method": "GetScoreDanger",
+    "danger_native_binding": "Pawn:GetDangerScore",
+    "native_conversion_instruction": "x87 FISTP dword",
+    "native_integer_api": "lua_tointeger",
+    "stock_defaults_require_runtime_rounding_mode": false,
+    "unmodified_shipped_custom_position_score": 0,
+    "unmodified_shipped_danger_score": -10
+  },
+  "dependencies": [
+    {
+      "canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+      "id": "accepted_local_inventory",
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "role": "Pins the exact executable, Lua DLL, and source corpus."
+    }
+  ],
+  "findings": [
+    {
+      "claim": "The unique GetDangerScore and GetCustomPositionScore member pointers resolve to exact 57-byte and 147-byte Pawn bodies.",
+      "classification": "fact",
+      "id": "native_registrations_are_exact"
+    },
+    {
+      "claim": "GetDangerScore supplies ScoreDanger to a helper that prefixes Get, dispatches GetScoreDanger, requires a Lua number, and extracts it with lua_tointeger.",
+      "classification": "fact",
+      "id": "danger_score_uses_generated_getter"
+    },
+    {
+      "claim": "GetCustomPositionScore resolves literal GetPositionScore and passes the candidate Point before integer extraction.",
+      "classification": "fact",
+      "id": "custom_position_uses_get_position_score"
+    },
+    {
+      "claim": "CreateClass synthesizes Get<member> methods returning self[member]; CreateClass(Pawn) therefore installs both score getters from the pinned base fields.",
+      "classification": "fact",
+      "id": "create_class_synthesizes_both_getters"
+    },
+    {
+      "claim": "Across all 152 inventoried shipped Lua files (excluding the local modloader), the only active ScoreDanger and PositionScore tokens are the base assignments -10 and 0; neither generated getter name occurs explicitly.",
+      "classification": "fact",
+      "id": "shipped_defaults_have_no_explicit_override"
+    },
+    {
+      "claim": "The installed lua_tointeger still uses x87 FISTP, but exact integer-valued defaults -10 and 0 produce the same result in all four rounding-control modes.",
+      "classification": "fact",
+      "id": "stock_results_are_rounding_invariant"
+    }
+  ],
+  "native_regions": [
+    {
+      "id": "get_danger_score_registration",
+      "image": "Breach.exe",
+      "meaning": "Registers GetDangerScore with the unique member pointer 0x006397f0 (RVA 0x002397f0).",
+      "sha256": "984bd78ae114f2637501d831932ac3bf91bea4e486adc2b934fec04c6e2de9f5",
+      "size": 37,
+      "start_rva": "0x0027c040"
+    },
+    {
+      "id": "get_custom_position_score_registration_callsite",
+      "image": "Breach.exe",
+      "meaning": "Passes the unique member pointer 0x0063c5f0 to the dedicated GetCustomPositionScore binding constructor.",
+      "sha256": "0e0cd0c6f67446f57b12522f7a48dadc636849db9716c151c3c074897b21a0c5",
+      "size": 33,
+      "start_rva": "0x0027c6af"
+    },
+    {
+      "id": "get_custom_position_score_binding_constructor",
+      "image": "Breach.exe",
+      "meaning": "Hard-codes the GetCustomPositionScore registration name at VA 0x008391e0.",
+      "sha256": "b80bcfb21dc07d04bea789dcbf3f3a48694eb8a5876a1506656e55b275c65364",
+      "size": 160,
+      "start_rva": "0x0028cf50"
+    },
+    {
+      "id": "pawn_get_danger_score",
+      "image": "Breach.exe",
+      "meaning": "Passes the ScoreDanger literal to the prefixed integer getter on the Pawn script object at +0x94.",
+      "sha256": "07d477c77050dd56456f47323bbf8a7d2d742bae4b69ed08ed9e53063e5c4aa5",
+      "size": 57,
+      "start_rva": "0x002397f0"
+    },
+    {
+      "id": "pawn_get_custom_position_score",
+      "image": "Breach.exe",
+      "meaning": "Looks up literal GetPositionScore and invokes it with the x/y candidate Point through the integer-returning call wrapper.",
+      "sha256": "cfe0638fe491baa6eac09cce493680916f46f4152e4a2057636e9dd8ffbedc7e",
+      "size": 147,
+      "start_rva": "0x0023c5f0"
+    },
+    {
+      "id": "prefixed_integer_getter",
+      "image": "Breach.exe",
+      "meaning": "Returns zero for an absent script object; otherwise concatenates Get with the supplied field name and invokes the generated getter.",
+      "sha256": "e93780ade10c743dfbadd0d4032493b7e4fa8da26ed230715b842061577b0c0c",
+      "size": 181,
+      "start_rva": "0x00049290"
+    },
+    {
+      "id": "named_method_lookup",
+      "image": "Breach.exe",
+      "meaning": "Resolves the supplied method name on the Pawn script object.",
+      "sha256": "3741dfe3df3bb4b4f1567efb5af0dfb4cd45f05b4e0226bf0e603e05566eaf96",
+      "size": 82,
+      "start_rva": "0x00049350"
+    },
+    {
+      "id": "no_argument_integer_call_wrapper",
+      "image": "Breach.exe",
+      "meaning": "Builds the CallMethod dispatch used by GetScoreDanger.",
+      "sha256": "8a41bafd282d1cf65648d8966db32d294f98572a178eceed37e65eae1d2bd5b6",
+      "size": 345,
+      "start_rva": "0x000494c0"
+    },
+    {
+      "id": "no_argument_integer_conversion",
+      "image": "Breach.exe",
+      "meaning": "Calls the Lua method, requires LUA_TNUMBER, and imports lua_tointeger through IAT VA 0x007d64f0.",
+      "sha256": "ccd19ecdc7b47020439e5c934b51019e06682a2b8130a5989ae3b7b994f167f9",
+      "size": 330,
+      "start_rva": "0x000499d0"
+    },
+    {
+      "id": "point_integer_call_wrapper",
+      "image": "Breach.exe",
+      "meaning": "Builds the Point-bearing GetPositionScore method call.",
+      "sha256": "d492781c51a7a8160ef98c7979fde909a6199966de91d1027bc43420c33c9c02",
+      "size": 343,
+      "start_rva": "0x00244380"
+    },
+    {
+      "id": "point_integer_conversion",
+      "image": "Breach.exe",
+      "meaning": "Calls the Lua method with the Point, requires LUA_TNUMBER, and imports lua_tointeger through IAT VA 0x007d64f0.",
+      "sha256": "39be0df7ca5ca5b43f55a2c34b86047524c29e7a31c8a05228004c1b5fc69fa7",
+      "size": 340,
+      "start_rva": "0x00244510"
+    },
+    {
+      "conversion_instruction_hex": "dd45f0db5de4",
+      "id": "lua_tointeger",
+      "image": "lua5.1.dll",
+      "meaning": "Converts the Lua double with x87 FISTP; the shipped helper defaults -10 and 0 are exact under every rounding-control mode.",
+      "sha256": "2d935d28eefdd86c2035f20567820a17c7bc0b9941b5343bf3475fcf7c30b2ab",
+      "size": 125,
+      "start_rva": "0x000016d0"
+    }
+  ],
+  "native_strings": [
+    {
+      "id": "score_danger_field",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0023980c",
+      "rva": "0x00436960",
+      "value": "ScoreDanger"
+    },
+    {
+      "id": "get_position_score_method",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0023c642",
+      "rva": "0x00436aec",
+      "value": "GetPositionScore"
+    },
+    {
+      "id": "get_danger_score_registration_name",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0027c059",
+      "rva": "0x00438fec",
+      "value": "GetDangerScore"
+    },
+    {
+      "id": "get_custom_position_score_registration_name",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0028cf9f",
+      "rva": "0x004391e0",
+      "value": "GetCustomPositionScore"
+    },
+    {
+      "id": "getter_prefix",
+      "reference_count": 5,
+      "reference_instruction_rva": "0x000492d4",
+      "rva": "0x0041fe68",
+      "value": "Get"
+    },
+    {
+      "id": "call_method_global",
+      "reference_count": 4,
+      "reference_instruction_rva": "0x00049b32",
+      "rva": "0x0041ff08",
+      "value": "CallMethod"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "expected": {
+        "custom_position_score": {
+          "argument": "candidate Point",
+          "field": "PositionScore",
+          "lua_method": "GetPositionScore",
+          "lua_value": 0,
+          "native_binding": "Pawn:GetCustomPositionScore",
+          "native_integer": 0
+        },
+        "danger_score": {
+          "field": "ScoreDanger",
+          "lua_method": "GetScoreDanger",
+          "lua_value": -10,
+          "native_binding": "Pawn:GetDangerScore",
+          "native_integer": -10
+        },
+        "replay_kind": "stock_enemy_position_score_helpers_replay",
+        "scope": "unmodified shipped Lua Pawn definitions",
+        "x87_rounding_invariant": true
+      },
+      "id": "unmodified_shipped_pawn_defaults"
+    }
+  ],
+  "schema_version": 1,
+  "source_census": {
+    "active_occurrences": {
+      "GetCustomPositionScore": [
+        {
+          "column": 22,
+          "line": 475,
+          "path": "scripts/global.lua"
+        }
+      ],
+      "GetPositionScore": [],
+      "GetScoreDanger": [],
+      "PositionScore": [
+        {
+          "column": 2,
+          "line": 149,
+          "path": "scripts/global.lua"
+        }
+      ],
+      "ScoreDanger": [
+        {
+          "column": 2,
+          "line": 141,
+          "path": "scripts/global.lua"
+        }
+      ]
+    },
+    "excluded_local_loader": "scripts/modloader.lua",
+    "explicit_override_count": 0,
+    "scanned_inventory_script_file_count": 305,
+    "scanned_shipped_lua_file_count": 152
+  },
+  "source_regions": [
+    {
+      "body_sha256": "214fce796c535562d79f4cdeef89be1e098b7652b2444c6957702b6a6aed29f9",
+      "body_size": 430,
+      "id": "create_class",
+      "line": 86,
+      "source_path": "scripts/global.lua",
+      "symbol": "CreateClass"
+    },
+    {
+      "body_sha256": "8f38b9c9ec4bb4acc43da66118ff1399f2ec43e342336155b332bf8c94e68ff9",
+      "body_size": 1330,
+      "id": "pawn_defaults_and_getter_install",
+      "line": 107,
+      "source_path": "scripts/global.lua",
+      "symbol": "Pawn / CreateClass(Pawn)"
+    }
+  ],
+  "summary": {
+    "call_edge_count": 6,
+    "dependency_count": 1,
+    "finding_count": 6,
+    "native_region_count": 12,
+    "native_string_count": 6,
+    "replay_vector_count": 1,
+    "scanned_shipped_lua_file_count": 152,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "source_region_count": 2,
+    "unmodified_shipped_results_complete": true,
+    "unresolved_count": 1
+  },
+  "unique_member_pointers": [
+    {
+      "id": "get_danger_score_member_pointer",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0027c043",
+      "target_va": "0x006397f0"
+    },
+    {
+      "id": "get_custom_position_score_member_pointer",
+      "reference_count": 1,
+      "reference_instruction_rva": "0x0027c6b2",
+      "target_va": "0x0063c5f0"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "runtime_or_modded_field_mutation",
+      "question": "Can runtime code or a mod replace either inherited score value/getter?",
+      "static_status": "The exact shipped active Lua census contains no explicit override. Runtime mutation and non-inventoried mods remain outside this immutable stock-content claim."
+    }
+  ]
+}

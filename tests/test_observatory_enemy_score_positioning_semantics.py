@@ -90,26 +90,28 @@ def test_committed_map_binds_exact_source_projection_without_rounding_overclaim(
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "71c32732d7d28488a1086bf44d2e2abb"
-            "2d01f3aec1fd5d4098f14fbbf91ff763"
+            "462c5ee971ff5208174d29e3d60da655"
+            "0d96325bfc1fb2a18511f3b03541dd62"
         ),
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
+        "native_pawn_score_helpers_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,
     }
     assert value["summary"] == {
-        "dependency_count": 5,
+        "dependency_count": 6,
         "source_region_count": 1,
         "native_region_count": 3,
         "replay_vector_count": 14,
-        "finding_count": 8,
+        "finding_count": 9,
         "unresolved_count": 4,
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
+        "native_pawn_score_helpers_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,
@@ -143,6 +145,35 @@ def test_exact_source_and_native_conversion_regions_are_pinned():
         "fld qword ptr [ebp-0x10]",
         "fistp dword ptr [ebp-0x1c]",
     ]
+
+
+def test_native_pawn_helper_dependency_closes_stock_defaults_without_overclaim():
+    value = _load()
+    dependency = next(
+        item
+        for item in value["dependencies"]
+        if item["id"] == "enemy_position_score_helpers_boundary"
+    )
+    assert dependency["file_sha256"] == (
+        "989c2d74194b810e14ae8327b17cbaa9"
+        "535a8ec83acedefad951bc9ad77c8ff9"
+    )
+    assert dependency["canonical_sha256"] == (
+        "9f572158d5e8dc760974166a4ad6a21f"
+        "68a68324d0ec6d97eb6f8d02d4fa3cd9"
+    )
+    assert value["contracts"]["unmodified_shipped_danger_score"] == -10
+    assert value["contracts"]["unmodified_shipped_custom_position_score"] == 0
+    assert value["contracts"][
+        "stock_helper_defaults_require_runtime_rounding_mode"
+    ] is False
+    assert value["closure"]["native_pawn_score_helpers_complete"] is True
+    assert value["closure"][
+        "unmodified_shipped_pawn_score_defaults_complete"
+    ] is True
+    assert value["unresolved"][1]["id"] == (
+        "runtime_or_modded_pawn_score_mutation"
+    )
 
 
 def test_hazard_precedence_starts_with_pod_hole_and_targeted_danger():
@@ -481,4 +512,5 @@ def test_exact_install_rebuilds_source_executable_and_lua_dll_join_when_availabl
     assert result["score_positioning_projection_complete"] is True
     assert result["native_integer_conversion_parametric_complete"] is True
     assert result["x87_rounding_mode_observed"] is False
+    assert result["native_pawn_score_helpers_complete"] is True
     assert result["simulator_change_required"] is False

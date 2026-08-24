@@ -744,6 +744,13 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "active callback-thread rounding mode remains runtime state" in evidence
     assert "one exact 2,075-byte source body" in evidence
     assert "14 adversarial replay vectors" in evidence
+    assert "unique native GetDangerScore registration" in evidence
+    assert "exact 57-byte body" in evidence
+    assert "unique GetCustomPositionScore registration" in evidence
+    assert "exact 147-byte body" in evidence
+    assert "all 152 inventoried shipped Lua files" in evidence
+    assert "base ScoreDanger=-10 and PositionScore=0" in evidence
+    assert "exact under every x87 rounding mode" in evidence
     tournament = next(
         item
         for item in record["evidence"]
@@ -949,7 +956,30 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "enemy_team_selection_is_binary",
         "melee_adjacency_order_is_exact",
         "melee_distance_preserves_half_points",
+        "stock_pawn_score_helpers_resolve_to_inherited_defaults",
         "native_integer_rounding_depends_on_x87_control",
+    }
+    assert implementations[
+        "src/observatory/enemy_position_score_helpers_boundary.py"
+    ] == {
+        "replay_stock_enemy_position_score_helpers",
+        "build_enemy_position_score_helpers_boundary",
+        "validate_enemy_position_score_helpers_boundary",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_position_score_helpers.py"
+    ] == {"build", "verify"}
+    assert implementations[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_position_score_helpers_boundary.json"
+    ] == {
+        "native_registrations_are_exact",
+        "danger_score_uses_generated_getter",
+        "custom_position_uses_get_position_score",
+        "create_class_synthesizes_both_getters",
+        "shipped_defaults_have_no_explicit_override",
+        "stock_results_are_rounding_invariant",
     }
 
     tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
@@ -971,6 +1001,15 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "test_x87_integer_conversion_replay_distinguishes_all_rounding_modes",
         "test_exact_install_rebuilds_source_executable_and_lua_dll_join_when_available",
     }
+    assert tests[
+        "tests/test_observatory_enemy_position_score_helpers_boundary.py"
+    ] == {
+        "test_complete_active_source_census_has_defaults_and_no_explicit_getters",
+        "test_registration_windows_bind_unique_member_pointers_and_names",
+        "test_native_call_edges_reach_both_integer_converters",
+        "test_stock_replay_resolves_inherited_values_without_rounding_input",
+        "test_exact_install_rebuilds_executable_dll_and_shipped_source_join_when_available",
+    }
 
     gaps = " ".join(record["known_gaps"])
     assert "now-proven record-level native tournament" in gaps
@@ -988,11 +1027,14 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps
     assert "global ScorePositioning projection" in gaps
-    assert "resolved native Pawn-helper/future Board observations" in gaps
+    assert "native Pawn positioning helpers" in gaps
+    assert "runtime-mutated Pawn score fields" in gaps
+    assert "future Board observations" in gaps
     assert "callback-time x87 control" in gaps
     assert "base ScoreList projection" in gaps
     assert "global ScorePositioning projections" in gaps
-    assert "resolved Board/Pawn helper observations and callback-time x87 mode" in gaps
+    assert "native Pawn positioning helper defaults" in gaps
+    assert "runtime-mutated Pawn score values and callback-time x87 mode" in gaps
     assert "transitive native-helper RNG" in gaps
     assert "score-side callback ancestry" not in gaps
     assert "Candidate evaluation order and native tie-breaking are not captured" not in gaps
@@ -1018,6 +1060,9 @@ def test_real_broad_records_keep_symbols_on_their_exact_source_files():
                 "Skill:GetTargetScore",
                 "Skill:ScoreList",
                 "ScorePositioning",
+                "CreateClass",
+                "Pawn.ScoreDanger",
+                "Pawn.PositionScore",
             ],
         },
         {

@@ -512,9 +512,9 @@ continues the base score replay through the exact shipped global
 `ScorePositioning` body. It also joins the exact `Breach.exe` callback wrapper
 and named integer invoker to the installed `lua5.1.dll` `lua_tointeger` body.
 Its raw SHA-256 is
-`178a097eb9bf5432a306ebe5a28c0c3ddeb070e904dd35950b3023a8cc5255ff`;
+`f25888e1dbd841809625f86fa6750461c2415dabbf2b327fa3faf9c36e559aa7`;
 its canonical document SHA-256 is
-`71c32732d7d28488a1086bf44d2e2abb2d01f3aec1fd5d4098f14fbbf91ff763`.
+`462c5ee971ff5208174d29e3d60da6550d96325bfc1fb2a18511f3b03541dd62`.
 
 The projected replay preserves the complete source order: Pod, grounded Hole,
 targeted danger score, Smoke, new Fire, spawning, generic mission danger,
@@ -543,10 +543,34 @@ python scripts/itb_observatory_enemy_score_positioning.py verify `
   --semantics-map data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_positioning_semantics.json
 ```
 
-`GetDangerScore`, `GetCustomPositionScore`, future Board predicates/distances,
-and the callback-time x87 control word remain explicit inputs. This local
-replay does not forecast the enemy tournament or replace the settled queue;
-simulator v408 remains current.
+The dependent
+`native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json`
+closes the two native Pawn helpers for unmodified shipped definitions. Its raw
+SHA-256 is
+`989c2d74194b810e14ae8327b17cbaa9535a8ec83acedefad951bc9ad77c8ff9`;
+its canonical document SHA-256 is
+`9f572158d5e8dc760974166a4ad6a21f68a68324d0ec6d97eb6f8d02d4fa3cd9`.
+The exact registrations bind a 57-byte `GetDangerScore` member and a 147-byte
+`GetCustomPositionScore` member. The former constructs `GetScoreDanger`; the
+latter invokes literal `GetPositionScore(point)`. Pinned `CreateClass(Pawn)`
+source generates both getters from `ScoreDanger = -10` and
+`PositionScore = 0`. All 152 inventoried shipped Lua files (the local
+`modloader.lua` is deliberately excluded) contain no explicit field or getter
+override, so those two stock results are exact and x87-rounding invariant.
+Build or verify the helper artifact with:
+
+```powershell
+python scripts/itb_observatory_enemy_position_score_helpers.py verify `
+  --content-root "<Into the Breach>" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json
+```
+
+Runtime/mod mutations of those fields/getters, future Board predicates and
+distances, and the callback-time x87 control word for fractional native
+`ScorePositioning` results remain explicit inputs. This local replay does not
+forecast the enemy tournament or replace the settled queue; simulator v408
+remains current.
 
 ## Native path and reachability boundaries
 

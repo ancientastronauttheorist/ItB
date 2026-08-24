@@ -19,6 +19,10 @@ from src.observatory.enemy_candidate_score_boundary import (
     EnemyCandidateScoreBoundaryError,
     validate_enemy_candidate_score_boundary_map_binding,
 )
+from src.observatory.enemy_position_score_helpers_boundary import (
+    EnemyPositionScoreHelpersBoundaryError,
+    validate_enemy_position_score_helpers_boundary_binding,
+)
 from src.observatory.enemy_score_list_semantics import (
     EnemyScoreListSemanticsError,
     validate_enemy_score_list_semantics_binding,
@@ -75,6 +79,24 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 DEPENDENCY_SPECS = (
+    {
+        "id": "enemy_position_score_helpers_boundary",
+        "path": (
+            "data/observatory/native/"
+            "windows_build_13725832_31fe35265598_"
+            "enemy_position_score_helpers_boundary.json"
+        ),
+        "file_sha256": (
+            "989c2d74194b810e14ae8327b17cbaa9535a8ec83acedefad951bc9ad77c8ff9"
+        ),
+        "canonical_sha256": (
+            "9f572158d5e8dc760974166a4ad6a21f68a68324d0ec6d97eb6f8d02d4fa3cd9"
+        ),
+        "role": (
+            "Pins both native Pawn helper registrations/call paths and the "
+            "unmodified shipped ScoreDanger=-10 / PositionScore=0 defaults."
+        ),
+    },
     {
         "id": "enemy_score_list_semantics",
         "path": (
@@ -863,6 +885,16 @@ def _findings() -> list[dict[str, str]]:
             "claim": "A ranged Pawn that reaches the interior tail returns five.",
         },
         {
+            "id": "stock_pawn_score_helpers_resolve_to_inherited_defaults",
+            "classification": "fact",
+            "claim": (
+                "The exact native Pawn helpers dispatch generated GetScoreDanger "
+                "and GetPositionScore methods. Unmodified shipped Pawn definitions "
+                "inherit ScoreDanger=-10 and PositionScore=0 with no explicit "
+                "getter or field override in the shipped Lua corpus."
+            ),
+        },
+        {
             "id": "native_integer_rounding_depends_on_x87_control",
             "classification": "fact",
             "claim": (
@@ -885,11 +917,12 @@ def _unresolved() -> list[dict[str, str]]:
             ),
         },
         {
-            "id": "native_pawn_score_helpers",
-            "question": "How do GetDangerScore and GetCustomPositionScore compute their values?",
+            "id": "runtime_or_modded_pawn_score_mutation",
+            "question": "Can runtime code or a mod replace either inherited Pawn score value/getter?",
             "static_status": (
-                "Their source call sites are exact; returned integers remain "
-                "explicit projected inputs."
+                "The native dispatch and unmodified shipped defaults are exact. "
+                "Runtime mutation and non-inventoried mods remain outside the "
+                "immutable stock-content claim."
             ),
         },
         {
@@ -971,6 +1004,9 @@ def _expected_shape() -> dict[str, Any]:
             "native_conversion_instruction": "x87 FISTP dword",
             "native_integer_rounding_modes": list(X87_ROUNDING_MODES),
             "native_integer_rounding_mode_is_runtime_input": True,
+            "unmodified_shipped_danger_score": -10,
+            "unmodified_shipped_custom_position_score": 0,
+            "stock_helper_defaults_require_runtime_rounding_mode": False,
             "future_board_state_is_not_fabricated": True,
         },
         "replay_vectors": vectors,
@@ -981,7 +1017,8 @@ def _expected_shape() -> dict[str, Any]:
             "lua_fractional_result_complete": True,
             "native_integer_conversion_parametric_complete": True,
             "x87_rounding_mode_observed": False,
-            "native_pawn_score_helpers_complete": False,
+            "native_pawn_score_helpers_complete": True,
+            "unmodified_shipped_pawn_score_defaults_complete": True,
             "prospective_board_observations_complete": False,
             "complete_enemy_phase_forecast": False,
             "simulator_change_required": False,
@@ -997,6 +1034,7 @@ def _expected_shape() -> dict[str, Any]:
             "score_positioning_projection_complete": True,
             "native_integer_conversion_parametric_complete": True,
             "x87_rounding_mode_observed": False,
+            "native_pawn_score_helpers_complete": True,
             "complete_enemy_phase_forecast": False,
             "simulator_change_required": False,
             "simulator_version": 408,
@@ -1036,6 +1074,9 @@ def _verify_dependencies(content_root: Path, inventory: Mapping[str, Any]) -> No
         validate_enemy_score_list_semantics_binding(
             values["enemy_score_list_semantics"]
         )
+        validate_enemy_position_score_helpers_boundary_binding(
+            values["enemy_position_score_helpers_boundary"]
+        )
         validate_enemy_candidate_score_boundary_map_binding(
             values["enemy_candidate_score_boundary"]
         )
@@ -1049,6 +1090,7 @@ def _verify_dependencies(content_root: Path, inventory: Mapping[str, Any]) -> No
         )
     except (
         EnemyScoreListSemanticsError,
+        EnemyPositionScoreHelpersBoundaryError,
         EnemyCandidateScoreBoundaryError,
         PistonSetupBoundaryError,
         PEBoundaryError,
@@ -1179,6 +1221,7 @@ def validate_enemy_score_positioning_semantics_binding(
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
         "x87_rounding_mode_observed": False,
+        "native_pawn_score_helpers_complete": True,
         "complete_enemy_phase_forecast": False,
         "simulator_change_required": False,
         "simulator_version": 408,

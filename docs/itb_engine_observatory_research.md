@@ -892,8 +892,15 @@ bridge-read boundary.
   branch is replayable from projected observations. Direct Lua consumers keep
   melee half-points. The separate native named-integer route reaches a pinned
   x87 `FISTP`; all four rounding modes are replayable, but the callback-time
-  thread control word plus native Pawn helper/Board results remain runtime
-  inputs.
+  thread control word for fractional results remains a runtime input.
+- **Completed offline through the native Pawn positioning helpers:** exact
+  registrations and call bodies prove `GetDangerScore` dispatches generated
+  `GetScoreDanger`, while `GetCustomPositionScore` dispatches generated
+  `GetPositionScore(point)`. `CreateClass(Pawn)` builds both getters, and the
+  complete shipped Lua census has only inherited defaults `ScoreDanger=-10`
+  and `PositionScore=0`, with no explicit override. Those unmodified stock
+  results are exact under every x87 rounding mode; runtime/mod mutation and
+  future Board observations remain inputs.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot

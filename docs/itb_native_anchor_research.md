@@ -102,6 +102,10 @@ The durable artifacts are:
   for every shipped global `ScorePositioning` branch, exact half-point melee
   arithmetic, the native named-integer join, and conversion replay under an
   explicit callback-time x87 rounding mode;
+- `data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_score_helpers_boundary.json`
+  for the exact `GetDangerScore`/`GetCustomPositionScore` registrations and
+  call bodies, their generated Lua getters, and the unmodified shipped
+  `ScoreDanger=-10` / `PositionScore=0` defaults;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
   shared RNG core. Eleven are matched to reviewed call edges; the other 107
@@ -395,9 +399,21 @@ direct Lua `ScoreList` route retains that fraction. The separate native
 candidate route enters the pinned named integer invoker and installed
 `lua5.1.dll` `lua_tointeger`; its exact body uses x87 `FISTP`. Conversion is
 therefore replayable for each of the four x87 rounding modes, while the active
-thread control word remains runtime evidence. Native `GetDangerScore`/
-`GetCustomPositionScore` values and prospective Board predicates/distances also
-remain explicit inputs, so the future tournament is still not fabricated.
+thread control word remains runtime evidence for fractional results.
+
+The next native/source join resolves both Pawn helpers. The unique
+`GetDangerScore` registration points to a 57-byte body that supplies
+`ScoreDanger` to a shared `Get`-prefix dispatcher, producing
+`GetScoreDanger`. The unique `GetCustomPositionScore` registration points to a
+147-byte body that resolves literal `GetPositionScore` and supplies the
+candidate Point. Both paths require a Lua number and reach the pinned
+`lua_tointeger` import. Exact `CreateClass(Pawn)` source synthesizes those two
+getters from the base fields, while the complete 152-file shipped Lua census
+contains only `ScoreDanger = -10` and `PositionScore = 0` and no explicit
+getter/field override. The unmodified shipped helper results are therefore
+exact and independent of x87 rounding mode. Runtime/mod mutations and
+prospective Board predicates/distances remain explicit inputs, so the future
+tournament is still not fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
