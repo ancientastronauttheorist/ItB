@@ -106,6 +106,7 @@ not be relabelled as clean stock.
 | Selected action | Build-keyed x86 hardware observer, strict selected-to-queue correlator, and exact offline 24-byte record-selector replay | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill. The preceding comparator, displaced-primary fallback, and caller-ID 29–33 draw grammar are exact from ordered post-callback records plus selector-entry state; those prospective inputs are not ordinary bridge data |
 | Complete enemy tournament | Reproducible no-detour x86 hardware observer at selector entry, selected-record copy, and queue commit; strict build/ASLR/restore guards; exact offline selector replay | Three fresh-process, counterbalanced triplets capture the same eight ordered Firefly1 records. From CRT state `0xd6ac62fb`, one caller-30 draw selects input 5 and reaches `0x6f5d21d2`; `[5,4] -> [4,4]` binds to the immediate queue commit. All nine outcomes share semantic SHA `957554...c673`; cleanup restores the exact 32-file save tree and baseline Mod Loader with no active Observatory DLL or bridge artifact. Other boards/enemies and upstream callback intermediates remain unproven |
 | Fixed Firefly target-area sequence | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to the complete native tournament | Three fresh-process pairs capture the same nine `FireflyAtk1:GetTargetArea` calls with zero drops/errors and matched semantic outcomes. Calls 0–7 originate at the eight native candidate destinations in exact order; each native candidate target is PointList index 3. Call 8 repeats selected input 5. Cleanup removes ten install artifacts and two bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. This is bounded cross-campaign correlation, not a universal callback grammar or prospective solver input |
+| Fixed Firefly target-score matrix | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to both target-area and native-tournament receipts | Three fresh-process pairs capture the same 32 `FireflyAtk1:GetTargetScore` returns with zero drops/errors and matched semantic outcomes. Eight consecutive four-call groups follow target-area calls 0–7 exactly; every raw score vector is `[0,0,0,5]`, and index 3 matches the native retained target and target score. One retained-output attempt was safely rejected before any game command and is archived only as a diagnostic. Cleanup removes ten install artifacts and seven bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. Wrapper-level losing scores, target-tie RNG state, SkillEffects, and prospective solver inputs remain open |
 | `ScorePositioning` x87 conversion | Reproducible one-shot x86 observer at the exact `lua_tointeger` `FISTP`, filtered by the four-frame `ScorePositioning` call chain | Three counterbalanced control/dormant/armed triplets record `0x027F`/nearest-even in every armed process, all six control comparisons match semantically, and every debug register, VEH, file handle, and image seam restores cleanly |
 | Native path/death boundary | Four exact-build API/profile/vtable, cost/order, lifecycle-occupancy, and corpse-classification maps with region hashes, control windows, direction/cost tables, comparators, lifecycle bindings, source inventory, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 live/corpse transit-versus-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, Massive Water, live-or-persistent-corpse mode-1 occupancy, the common `IsCorpse` predicate, dormant Necro fallback, and all 16 shipped corpse types. Simulators v401/v402/v403 have focused regressions; classification already conforms at v407. Lifecycle/removal timing, matched vectors, and `AddMove` execution remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
@@ -526,10 +527,38 @@ experiment artifacts plus two bridge artifacts, and regenerated a post-cleanup
 32-file save manifest byte-identical to the pre-experiment manifest. The
 post-cleanup game content matches the prior post-tournament inventory for the
 executable, all six native libraries, all 305 scripts, and all 377 maps; the
-mutable Steam appmanifest evidence hash is reported separately. SkillEffects,
-raw score callbacks, target-tie state, and candidate-time Board predicates are
-still absent from ordinary solver input, so this evidence adds conformance
-coverage without a Rust change or simulator-version bump.
+mutable Steam appmanifest evidence hash is reported separately.
+
+The next one-family campaign activates only `GetTargetScore` against the same
+fixed save, seeds, Firefly1, and three counterbalanced launch orders. Every
+control reports zero calls. Every exact process reports the same 32 calls with
+zero drop, serialization error, or restore conflict, and every paired
+whole-game outcome again has semantic SHA-256
+`957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673`.
+All 15 target-score defining slots were installed while the other 50 callback
+slots remained disabled, and the controller restored all 65 afterward.
+
+The 32 calls form eight consecutive groups of four. Their origins match target-
+area calls 0 through 7, and each group's target order is the corresponding
+four-point list. Every raw callback vector is `[0,0,0,5]`; its unique raw best
+at index 3 is the target retained in the separately captured native record,
+whose post-wrapper target score is also 5. The separate target-area campaign's
+ninth, selected-destination repeat has no additional four-call group in the
+score trace. These are deterministic cross-campaign correlations, not a same-
+process causal timeline. They do not expose post-wrapper values for losing
+targets, the native equal-best set or caller-29 state, concrete SkillEffects,
+or callback-time Board predicates.
+
+The immutable target-score receipt is
+`windows_build_13725832_owner_local_modified_20260824_enemy_target_score_callback_receipt.json`;
+the matching `_cleanup_receipt.json` binds the safely rejected pre-command
+pair-002 diagnostic, exact restoration of the prior Mod Loader, removal of ten
+active-install and seven bridge artifacts, a stopped game, and byte-identical
+pre/post 32-file save manifests. The post-cleanup executable, native libraries,
+scripts, and maps match the target-area baseline; mutable appmanifest evidence
+is separate. Ordinary solver input still lacks the prospective callback state,
+SkillEffects, native wrapper intermediates, and selector-entry RNG state, so
+this adds conformance coverage without a Rust change or simulator-version bump.
 
 The later `ScorePositioning` x87 campaign reused that deterministic one-
 `Firefly1` mission shape but observed only the current thread's hardware
@@ -659,10 +688,12 @@ exactly. Timing is reported separately; it never excuses output drift.
    one complete eight-record runtime vector plus selector-entry/exit state to
    exact replay and the immediate queue. Three additional one-family matched
    pairs bind the fixed Firefly `GetTargetArea` PointLists to those eight
-   destinations and the selected-destination repeat. Capture another payload
-   only for a concrete mismatch, another enemy/weapon/cancellation/retarget
-   shape, or when the still-missing SkillEffects, score callback values,
-   target-tie state, or candidate-time Board predicates matter.
+   destinations and the selected-destination repeat; three more bind the 32
+   raw `GetTargetScore` returns to the first eight PointLists and retained
+   records. Capture another payload only for a concrete mismatch, another
+   enemy/weapon/cancellation/retarget shape, or when the still-missing
+   SkillEffects, post-wrapper losing scores, target-tie RNG state, or candidate-
+   time Board predicates matter.
 
 For each family, archive the suite, both receipts, helper/controller/hook
 hashes, raw checkpoint, comparison, and cleanup inventory. A crash, mismatch,

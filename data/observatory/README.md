@@ -262,8 +262,36 @@ and 377 maps equal the prior post-tournament content inventory; the changing
 Steam appmanifest evidence hash is reported separately. This is deterministic
 cross-campaign correlation for one fixed Firefly shape, not a same-process
 dual-observer causal trace, a universal callback grammar, or a prospective
-solver input. SkillEffects, score callback values, target-tie state, and
-candidate-time Board predicates remain open, so simulator v408 is unchanged.
+solver input.
+
+The following one-family archive under
+`captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_score_callback/`
+isolates `FireflyAtk1:GetTargetScore` for the same fixed scenario. Three fresh-
+process control/exact pairs again use control/exact, exact/control, and
+control/exact orders. Controls contain zero calls; every exact trace contains
+the same 32 calls, zero integrity errors, and complete restoration of all 65
+callback slots. The 15 score slots are the only installed family.
+
+Those calls are eight consecutive groups of four. Each origin and target order
+matches target-area calls 0–7, and all eight raw score vectors are
+`[0,0,0,5]`. The unique raw best at index 3 equals the corresponding native
+record target, and both its callback return and native target score are 5. The
+separate target-area call 8 repeats selected destination `[5,4]`; no ninth score
+group appears. This is bounded deterministic correlation across separately
+matched campaigns, not a same-process causal ordering. Post-wrapper values for
+the three losing targets, the native equal-best set and caller-29 state,
+SkillEffects, and candidate-time Board predicates remain open.
+
+The immutable target-score receipt is
+`windows_build_13725832_owner_local_modified_20260824_enemy_target_score_callback_receipt.json`.
+Its cleanup receipt binds byte-identical pre/post 32-file save manifests, exact
+restoration of the prior 315,686-byte Mod Loader, removal of ten active-install
+files and seven bridge artifacts, and a stopped game. A retained-output guard
+rejected one pair-002 control attempt before any game command; its immutable
+diagnostic is explicitly excluded from the six accepted trials. Post-cleanup
+game content matches the target-area baseline except for separately reported
+mutable appmanifest evidence. Ordinary solver input still cannot construct the
+prospective callback state, so simulator v408 is unchanged.
 
 Verify the immutable artifact against the pinned executable and replay a
 captured record payload with:
@@ -614,7 +642,9 @@ restored. The subsequent one-family trial bridge is admitted as the
 365,924-byte `enemy_target_area_callback_project_bridge` overlay with SHA-256
 `07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d`;
 its cleanup receipt independently proves the same owner-installed baseline was
-restored after the target-area campaign. All three later overlays remain
+restored after the target-area campaign, and the later target-score campaign
+reused that exact source overlay before independently restoring the same
+baseline again. All three later overlay identities remain
 immutable exact-hash exceptions for predecessor source-tree verifiers rather
 than rewrites of their published artifacts.
 This is an exact-build ordinary-callback observation, not a claim about every

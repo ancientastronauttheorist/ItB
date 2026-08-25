@@ -1,0 +1,46 @@
+{
+  "arm_packet_sha256": "143fa790d91d927599d385909917d049193eeca26033f7e74dae194ca2c79721",
+  "callback_counts": {
+    "attempted_calls": 32,
+    "event_count": 32
+  },
+  "callback_family": "enemy_target_score",
+  "capsule_sha256": "7e22b844ad33a7069c1479e65311b3cba2e318189e0f9ffa0e6e7704af4226eb",
+  "capture_id": "firefly-target-score-pair-001",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_ENEMY_CALLBACK_TRIAL condition=exact_hook family=enemy_target_score capture=firefly-target-score-pair-001 pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 attempts=32 events=32 complete=true",
+  "condition": "exact_hook",
+  "created_at": "2026-08-25T01:08:58.629363+00:00",
+  "errors": {
+    "command": "",
+    "outcome": [],
+    "validation": ""
+  },
+  "kind": "observatory_enemy_callback_turn_trial",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair001\\exact_hook\\outcome.json",
+    "sha256": "17b4bee11d140da4f7365b543d2b5a611fbdee710869f13bb5b70bdf157dd29e"
+  },
+  "pair_id": "pair001",
+  "pair_plan_sha256": "e2ca071de438ce79c3a0449ba3d69c443651f2d3f7616cfc833b4ae7183c7eba",
+  "result": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair001\\exact_hook\\result.json",
+    "sha256": "a47cd29eb554091106a7b0d949add68273be2b8291e28a485591a7c73b0b7a5f"
+  },
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "trace": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair001\\exact_hook\\trace.json",
+    "sha256": "7a9ab73fe9de72abf85b33cf3456a3ffbd800f6f32df5a71051aefacb0c41b71"
+  },
+  "valid_trial": true
+}

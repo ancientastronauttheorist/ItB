@@ -1,0 +1,28 @@
+{
+  "arm_packet_sha256": "4ba09455184c70bede926448e77fe50e29dd0c7d1354be51e5d20d4c6d41fbdf",
+  "callback_counts": null,
+  "callback_family": "enemy_target_score",
+  "capsule_sha256": "64a3c8af6f4b3b2a74339480a26c14034180f9c42ee44df1c4a90e480bb1c4e0",
+  "capture_id": "firefly-target-score-pair-002",
+  "capture_track": "owner_local_modified",
+  "command_ack": null,
+  "condition": "control",
+  "created_at": "2026-08-25T01:10:30.876389+00:00",
+  "errors": {
+    "command": "enemy callback trial output already exists",
+    "outcome": [
+      "bridge_outcome_missing"
+    ],
+    "validation": ""
+  },
+  "kind": "observatory_enemy_callback_turn_trial",
+  "outcome": null,
+  "pair_id": "pair002",
+  "pair_plan_sha256": "78bd8a76aadfb7ebc97ac40d634dd0fb72f3bb4d41728cc0c7f846a57100a0a4",
+  "result": null,
+  "scenario": null,
+  "schema_version": 1,
+  "status": "rejected",
+  "trace": null,
+  "valid_trial": false
+}

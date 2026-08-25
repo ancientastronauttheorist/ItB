@@ -819,6 +819,16 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "scripts/itb_observatory_enemy_target_area_callback_campaign.py"
     ] == {"main"}
     assert implementations[
+        "src/observatory/enemy_target_score_callback_campaign.py"
+    ] == {
+        "archive_enemy_target_score_callback_campaign",
+        "build_enemy_target_score_callback_campaign_receipt",
+        "publish_enemy_target_score_callback_campaign_receipt",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_target_score_callback_campaign.py"
+    ] == {"main"}
+    assert implementations[
         "src/native/observatory_enemy_tournament_hw_observer.c"
     ] == {
         "observer_enemy_tournament_veh",
@@ -1182,6 +1192,37 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_target_score_callback_receipt.json"
+    ] == {
+        (
+            '"classification": "fixed_firefly_get_target_score_runtime_'
+            'matrix_correlated_to_target_areas_and_complete_native_tournament"'
+        ),
+        '"exact_event_counts": [',
+        '"raw_callback_scores": [',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_target_score_callback_cleanup_receipt.json"
+    ] == {
+        "observatory_enemy_target_score_callback_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_enemy_target_score_callback_campaign.py"
+    ] == {
+        "test_committed_target_score_campaign_rebuilds_exactly_and_is_neutral",
+        "test_committed_target_score_campaign_correlates_areas_and_native_candidates",
+        "test_pair002_retained_output_attempt_is_bound_as_rejected_not_evidence",
+        "test_target_score_cleanup_closes_restore_and_binds_artifacts",
+        "test_post_cleanup_inventory_preserves_target_area_baseline_content",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
         "score_positioning_x87_receipt.json"
     ] == {
         '"classification": "score_positioning_x87_rounding_mode_resolved"',
@@ -1221,7 +1262,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "concrete ordered Lua-produced PointLists" in gaps
     assert "supplies the concrete ordered Lua-produced PointLists" in gaps
     assert "concrete ordered Lua-produced PointLists and SkillEffects" not in gaps
-    assert "raw score callback values" in gaps
+    assert "fixed raw GetTargetScore matrix" in gaps
+    assert "raw score callback values for other shapes" in gaps
+    assert "post-wrapper losing-target scores" in gaps
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps
     assert "global ScorePositioning projection" in gaps

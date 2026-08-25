@@ -530,3 +530,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 528 | — | Exact Windows build 13725832 uses x87 nearest-even at the ordinary native ScorePositioning integer boundary. | `docs/agent/solver-reference.md` |
 | 529 | — | One complete native enemy-record tournament is runtime-proven for the fixed Firefly1 scenario. | `docs/agent/solver-reference.md` |
 | 530 | — | The fixed Firefly1 GetTargetArea sequence correlates exactly to the complete native candidate order. | `docs/agent/solver-reference.md` |
+| 531 | — | The fixed Firefly1 raw GetTargetScore matrix correlates exactly to its target areas and native records. | `docs/agent/solver-reference.md` |

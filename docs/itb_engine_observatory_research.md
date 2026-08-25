@@ -38,6 +38,13 @@ selection, and seed advance with clean byte restoration. Five natural callback
 pairs cover all loaded `ScorePositioning`, `GetTargetArea`, `GetTargetScore`,
 and `GetSkillEffect` slots. The owner save and all 689 accepted install entries
 have since been restored exactly, with no active Observatory file remaining.
+Three later matched pairs bind nine fixed Firefly1 `GetTargetArea` calls to a
+complete eight-record native tournament and selected-destination repeat. Three
+more matched pairs bind the corresponding 32 raw `GetTargetScore` returns:
+eight ordered vectors of `[0,0,0,5]`, whose unique raw winners match the native
+record targets and target scores. Both synthetic campaigns are whole-game
+neutral for the fixed scenario, restore all 65 callback slots, and end with
+byte-identical pre/post save manifests and the prior Mod Loader restored.
 Three source-verified `Spawner:NextPawn` spans now resolve the normal
 weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
 triplets also correlate the final selected record to the immediate Pawn queue
@@ -779,7 +786,7 @@ The scaling hierarchy should be:
 
 ## Recommended first project: ITB Engine Observatory v0
 
-Current implementation status (2026-08-23): the provenance inventory and
+Current implementation status (2026-08-24): the provenance inventory and
 focused offline Windows boundary map are complete; runtime callback identity
 and defining-slot inventories are deterministic; and the Lua RNG boundary has
 six seeded, return-preserving pairs but fails the stricter whole-game neutrality
@@ -872,6 +879,24 @@ bridge-read boundary.
   replacement, stable negative-coordinate filtering, and return copying are
   replayable from already-materialized Lua points. Concrete Lua point
   construction remains a runtime input.
+- **Completed at runtime for one fixed target-area shape:** three fresh-process,
+  counterbalanced control/exact pairs serialize the same nine ordered
+  `FireflyAtk1:GetTargetArea` calls. Calls 0–7 match the complete native
+  tournament destinations and each retained target is PointList index 3; call
+  8 repeats selected input 5. All paired outcomes match and all callback slots
+  restore.
+- **Completed at runtime for the corresponding raw target scores:** three more
+  fresh-process, counterbalanced pairs serialize the same 32
+  `FireflyAtk1:GetTargetScore` returns. The eight four-target groups preserve
+  those PointLists and each score vector is `[0,0,0,5]`; the unique raw winner
+  matches the native record target and score. Losing-target post-wrapper
+  values, equal-best/caller-29 state, SkillEffects, and other shapes remain
+  open.
+- **Completed at runtime for one full tournament:** three counterbalanced native
+  triplets capture the same eight post-callback records, selector-entry and
+  exit CRT state, selected record, and immediate queue commit. Exact replay
+  selects input 5 and every whole-game outcome matches semantically. This is
+  bounded conformance evidence, not prospective ordinary solver input.
 - **Completed offline through the SkillEffect cache materializer:** selected-
   target membership, regular/final callback choice and argument order, full
   cache clear/replace, annotations across `effect` and `q_effect`, and native

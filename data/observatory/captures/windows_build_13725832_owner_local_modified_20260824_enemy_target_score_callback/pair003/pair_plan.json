@@ -1,0 +1,59 @@
+{
+  "activation_nonce": "cd7cb936aaac8cda1283fc8d4eac5b58",
+  "artifacts": {
+    "arm_packet": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair003\\itb_observatory_arm_firefly-target-score-pair-003_0_842766ab86509f8715cf1af8e595495ad3837e2de6dcad4e93630f346b97d791.json",
+      "sha256": "842766ab86509f8715cf1af8e595495ad3837e2de6dcad4e93630f346b97d791"
+    },
+    "bindings": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\captures\\windows_build_13725832_owner_local_modified_20260822T025049Z_callback_bindings_live_slot_update.json",
+      "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24"
+    },
+    "callback_join": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\captures\\windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb"
+    },
+    "callback_join_document_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+    "capsule": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair003\\itb_observatory_callback_capsule_aa970ddf2ed41a69bcd282d3bcf531eaa1520c02a969027744e83588125e5504.lua",
+      "sha256": "aa970ddf2ed41a69bcd282d3bcf531eaa1520c02a969027744e83588125e5504"
+    },
+    "capture_identity": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair003\\itb_observatory_callback_firefly-target-score-pair-003_capture_identity.json",
+      "sha256": "957735706ed9cc4b0e531668a77026277f2552d5d34cd1a133c8221337ed7d53"
+    },
+    "config": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair003\\itb_observatory_callback_firefly-target-score-pair-003_config.json",
+      "sha256": "fb189a96ed4274f081cf98ddae9d57ba28bbb2fcdcc8d4a2ea42548e6796508b"
+    },
+    "controller": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\src\\bridge\\observatory_callback_controller.lua",
+      "sha256": "4c30aeb71aa53332f1558133205e716c40230e0db4dbc08f386c23cd2f69fdee"
+    },
+    "hook_plan": {
+      "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_target_score\\pair003\\itb_observatory_callback_firefly-target-score-pair-003_hook_plan.json",
+      "sha256": "2f8a5ba2faa9211b66fdebbad5192963dcd2d848b9651b2eab492c994b9a99cd"
+    },
+    "installed_modloader": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\src\\bridge\\modloader.lua",
+      "sha256": "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
+    },
+    "inventory": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\data\\observatory\\inventories\\windows_build_13725832_31fe35265598_local_modified.json",
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f"
+    },
+    "trial_host": {
+      "path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\src\\bridge\\observatory_callback_trial_host.lua",
+      "sha256": "6477d7e5d631628b4ba3c1d7a306658702a3e91f3d674aff354e9182483f6925"
+    }
+  },
+  "callback_family": "enemy_target_score",
+  "capture_id": "firefly-target-score-pair-003",
+  "capture_track": "owner_local_modified",
+  "conditions": [
+    "control",
+    "exact_hook"
+  ],
+  "kind": "observatory_callback_trial_pair_plan",
+  "schema_version": 1
+}

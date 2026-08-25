@@ -2110,8 +2110,12 @@
           "statement": "Three fresh-process, counterbalanced control/exact-hook pairs on that fixed Firefly1 scenario isolated only GetTargetArea. Every control recorded zero attempts; every exact run serialized the same nine ordered FireflyAtk1 calls with zero drops, serialization errors, or restore conflicts and restored all 65 callback slots. Calls 0 through 7 originate at the complete native tournament's eight candidate destinations in exact order. For each origin (x,y), the PointList is [(x,y-1),(x+1,y),(x,y+1),(x-1,y)], and the corresponding native candidate target is index 3. Call 8 repeats selected input 5's [5,4] origin and PointList. All three paired whole-game outcomes retained semantic SHA 957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673."
         },
         {
+          "classification": "fact",
+          "statement": "Three fresh-process, counterbalanced control/exact-hook pairs on the same fixed Firefly1 scenario isolated only GetTargetScore. Every control recorded zero attempts; every exact run serialized the same 32 ordered returns with zero drops, serialization errors, or restore conflicts, installed only the 15 target-score slots, and restored all 65 callback slots. The calls form eight four-target groups whose origins and target order equal target-area calls 0 through 7. Every raw score vector is [0,0,0,5]; its unique raw best at index 3 equals the corresponding native candidate target, and raw five equals that record's target score. All paired whole-game outcomes retained semantic SHA 957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673. One pair002 control attempt was rejected before any game command because retained exact output existed and is bound only as a diagnostic."
+        },
+        {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. The bounded Firefly campaigns now supply one complete runtime candidate payload and selector-entry state as conformance evidence, plus its concrete ordered GetTargetArea PointLists. This is deterministic cross-campaign correlation rather than a same-process dual-observer causal trace; SkillEffects, raw score callback values, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, equivalent payloads for other scenarios, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. The bounded Firefly campaigns now supply one complete runtime candidate payload and selector-entry state as conformance evidence, plus its concrete ordered GetTargetArea PointLists and raw GetTargetScore matrix. This is deterministic cross-campaign correlation rather than a same-process dual-observer causal trace; concrete SkillEffects, post-wrapper losing-target scores, native equal-best sets and caller-29 states, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, equivalent payloads for other scenarios, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2160,6 +2164,20 @@
         },
         {
           "path": "scripts/itb_observatory_enemy_target_area_callback_campaign.py",
+          "symbols": [
+            "main"
+          ]
+        },
+        {
+          "path": "src/observatory/enemy_target_score_callback_campaign.py",
+          "symbols": [
+            "archive_enemy_target_score_callback_campaign",
+            "build_enemy_target_score_callback_campaign_receipt",
+            "publish_enemy_target_score_callback_campaign_receipt"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_target_score_callback_campaign.py",
           "symbols": [
             "main"
           ]
@@ -2475,8 +2493,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament; outside the one captured Firefly PointList sequence, per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector and selector-entry/exit state, while a separate matched campaign supplies the concrete ordered Lua-produced PointLists and selected-destination repeat. The join is deterministic cross-campaign correlation, not a same-process dual-observer trace, and it still does not expose SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, raw score callback values, effect-side draws, or target-tie states; none of those prospective inputs is ordinary solver data.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament; outside the one captured Firefly PointList sequence and raw GetTargetScore matrix, per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector and selector-entry/exit state, a separate matched campaign supplies the concrete ordered Lua-produced PointLists and selected-destination repeat, and a third supplies the fixed raw GetTargetScore matrix for the first eight lists. The join is deterministic cross-campaign correlation, not a same-process dual-observer trace, and it still does not expose SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, post-wrapper losing-target scores, raw score callback values for other shapes, effect-side draws, or target-tie states; none of those prospective inputs is ordinary solver data.",
         "The natural and synthetic callback evidence covers 65 loaded slots in one Mission_Power shape and does not establish every subclass, mission, or callback path. Complete candidate-to-selection-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2579,6 +2597,23 @@
           ]
         },
         {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_score_callback_receipt.json",
+          "symbols": [
+            "\"classification\": \"fixed_firefly_get_target_score_runtime_matrix_correlated_to_target_areas_and_complete_native_tournament\"",
+            "\"exact_event_counts\": [",
+            "\"raw_callback_scores\": [",
+            "\"all_semantic_outcomes_match\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_score_callback_cleanup_receipt.json",
+          "symbols": [
+            "observatory_enemy_target_score_callback_cleanup_receipt",
+            "\"remaining_experimental_file_count\": 0",
+            "\"file_set_and_bytes_match_pre_experiment\": true"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json",
           "symbols": [
             "\"classification\": \"score_positioning_x87_rounding_mode_resolved\"",
@@ -2638,6 +2673,16 @@
             "test_committed_target_area_campaign_correlates_native_candidates",
             "test_target_area_cleanup_closes_restore_and_binds_artifacts",
             "test_post_cleanup_inventory_preserves_exact_campaign_baseline_content"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_target_score_callback_campaign.py",
+          "symbols": [
+            "test_committed_target_score_campaign_rebuilds_exactly_and_is_neutral",
+            "test_committed_target_score_campaign_correlates_areas_and_native_candidates",
+            "test_pair002_retained_output_attempt_is_bound_as_rejected_not_evidence",
+            "test_target_score_cleanup_closes_restore_and_binds_artifacts",
+            "test_post_cleanup_inventory_preserves_target_area_baseline_content"
           ]
         },
         {

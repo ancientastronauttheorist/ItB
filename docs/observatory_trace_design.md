@@ -349,19 +349,22 @@ that selected it.
   neutrality? The coordinate/RNG campaign now explains why a fixed seed is not
   enough: particle, pilot-portrait, and unit-status presentation code consumes
   the same stream at variable counts before gameplay selection.
-- Can the mapped candidate loop export its complete post-callback record payload
-  and selector-entry observable state without perturbing vector order or dynamic
-  callback lookup? The record layout, target tie, selector comparator,
-  displaced-primary fallback, and local RNG grammar are now closed offline.
+- The mapped candidate loop now exports its complete post-callback record
+  payload and selector-entry observable state without perturbing one fixed
+  Firefly1 decision. The record layout, target tie, selector comparator,
+  displaced-primary fallback, and local RNG grammar are closed offline.
   So are the normal/debug route modes, injured one-HP positioning clamp,
   selected-weapon normalization, history/priority target modifiers, callback
   resolver branch, post-callback score arithmetic, complete pre-target-area
   active/smoke/Water/bonus-shift/usable-skill/IsMech gate, and literal-50
   `Skill_Repair` resolver. Target-area Board validity, `TwoClick` dispatch,
   cache replacement, and stable negative-coordinate filtering are closed too.
-  The missing payload is now specifically the Lua-produced callback values and
-  ordered PointLists/effects before native postprocessing, plus boundary-entry
-  RNG state, rather than unknown native adjustment rules.
+  Three matched campaigns additionally bind that fixed decision's nine ordered
+  PointLists, 32 raw `GetTargetScore` returns, complete eight-record tournament,
+  and final selection. The general missing payload is now specifically concrete
+  SkillEffects, post-wrapper losing-target scores, candidate-time Board state,
+  target-tie/effect-side RNG state, and equivalent PointLists/scores outside the
+  fixed shape, rather than unknown native adjustment rules.
   Native path costs, comparators, output/reconstruction
   order, Road Runner occupancy, Massive Water, and mode-1 persistent-corpse
   pathing and the structural dead-noncorpse Board-vector erase are already
