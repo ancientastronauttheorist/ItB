@@ -6497,6 +6497,190 @@ local function consume_observatory_callback_trial_startup_request()
     return true
 end
 
+ENEMY_TOURNAMENT.callback_families = {
+    get_target_area = true,
+    enemy_target_score = true,
+    get_skill_effect = true,
+    score_positioning = true,
+}
+
+-- Run one already-attested callback family over the same fixed Firefly1
+-- scenario used by the complete enemy-tournament observer.  The existing
+-- callback host owns activation, checkpointing, and exact slot restoration;
+-- this command supplies only deterministic scenario setup and native turn
+-- progression.  It is dormant unless explicitly invoked with a content-
+-- addressed capsule and activation nonce.
+function ENEMY_TOURNAMENT.callback_trial(
+    condition, family, capture_id, activation_nonce, capsule_sha256
+)
+    local command_name = "OBS_ENEMY_CALLBACK_TRIAL"
+    if condition ~= "control" and condition ~= "exact_hook" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not ENEMY_TOURNAMENT.callback_families[family] then
+        return nil, command_name .. " callback family is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96
+        or type(activation_nonce) ~= "string"
+        or string.len(activation_nonce) < 32
+        or string.len(activation_nonce) > 64
+        or string.match(activation_nonce, "^[0-9a-f]+$") == nil
+        or not valid_lower_sha256(capsule_sha256) then
+        return nil, command_name .. " capture identity is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") ~= nil then
+        return nil, "another callback trial is already active"
+    end
+
+    local result_path = BRIDGE_DIR .. "/itb_observatory_callback_trial_"
+        .. capture_id .. "_" .. condition .. ".json"
+    local raw_path = BRIDGE_DIR .. "/itb_observatory_trace_"
+        .. capture_id .. "_0.raw"
+    if observatory_path_exists(result_path)
+        or observatory_path_exists(result_path .. ".tmp")
+        or observatory_path_exists(raw_path)
+        or observatory_path_exists(raw_path .. ".tmp") then
+        return nil, "enemy callback trial output already exists"
+    end
+
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+
+    local trial, trial_error = initialize_observatory_callback_trial({
+        condition = condition,
+        activation_nonce = activation_nonce,
+        capsule_sha256 = capsule_sha256,
+    })
+    if not trial then return nil, tostring(trial_error) end
+    local initial_status_ok, initial_status = pcall(
+        rawget(trial, "status"), trial
+    )
+    if not initial_status_ok or type(initial_status) ~= "table"
+        or rawget(initial_status, "state") ~= "waiting"
+        or rawget(initial_status, "condition") ~= condition
+        or rawget(initial_status, "capture_id") ~= capture_id
+        or rawget(initial_status, "callback_family") ~= family
+        or rawget(initial_status, "slots_restored") ~= true then
+        pcall(rawget(trial, "abort"), trial, "initial status mismatch")
+        return nil, "enemy callback trial capsule/status mismatch"
+    end
+
+    local function abort_trial(reason)
+        pcall(rawget(trial, "abort"), trial, tostring(reason))
+        if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") == trial then
+            _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+        end
+        return nil, tostring(reason)
+    end
+
+    local scenario, scenario_error = observatory_selected_queue_scenario()
+    if not scenario then return abort_trial(scenario_error) end
+    local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, mech_id in ipairs(mech_ids) do
+        local mech = Board:GetPawn(mech_id)
+        if mech and not mech:IsDead() then mech:SetActive(false) end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return abort_trial("enemy callback seed failed: " .. tostring(seeded))
+    end
+
+    _ITB_OBSERVATORY_CALLBACK_TRIAL = trial
+    local start_count = -1
+    pcall(function() start_count = Game:GetTurnCount() end)
+    local end_ok, invoked = pcall(rawget(gameflow, "end_player_turn"))
+    if not end_ok or invoked ~= true then
+        return abort_trial(
+            "enemy callback native End Turn failed: " .. tostring(invoked)
+        )
+    end
+    local advanced = wait_until_coro(function()
+        if Board:IsBusy() then return false end
+        local current_count = -1
+        local current_team = -1
+        pcall(function() current_count = Game:GetTurnCount() end)
+        pcall(function() current_team = Game:GetTeamTurn() end)
+        return current_count > start_count and current_team == TEAM_PLAYER
+    end, 60)
+    if not advanced then
+        return abort_trial("enemy callback turn transition timed out")
+    end
+    local settled = wait_until_coro(function()
+        local ok, status = pcall(rawget(trial, "status"), trial)
+        return ok and type(status) == "table"
+            and (rawget(status, "state") == "complete"
+                or rawget(status, "state") == "failed")
+    end, 5)
+    if not settled then
+        return abort_trial("enemy callback host did not settle")
+    end
+
+    local status_ok, status = pcall(rawget(trial, "status"), trial)
+    if not status_ok or type(status) ~= "table"
+        or rawget(status, "state") ~= "complete"
+        or rawget(status, "condition") ~= condition
+        or rawget(status, "capture_id") ~= capture_id
+        or rawget(status, "callback_family") ~= family
+        or rawget(status, "result_published") ~= true
+        or rawget(status, "slots_restored") ~= true
+        or rawget(status, "error") ~= ""
+        or type(rawget(status, "attempted_calls")) ~= "number"
+        or type(rawget(status, "raw_event_count")) ~= "number"
+        or rawget(status, "serialization_errors") ~= 0 then
+        return abort_trial("enemy callback host completion mismatch")
+    end
+    local attempts = rawget(status, "attempted_calls")
+    local events = rawget(status, "raw_event_count")
+    if condition == "control" then
+        if attempts ~= 0 or events ~= 0
+            or rawget(status, "raw_written") ~= false then
+            return abort_trial("control callback trial emitted observations")
+        end
+    elseif attempts < 1 or events ~= attempts
+        or rawget(status, "raw_written") ~= true then
+        return abort_trial("exact callback trial is incomplete")
+    end
+    if rawget(_G, "_ITB_OBSERVATORY_CALLBACK_TRIAL") == trial then
+        _ITB_OBSERVATORY_CALLBACK_TRIAL = nil
+    end
+    return command_name .. " condition=" .. condition
+        .. " family=" .. family
+        .. " capture=" .. capture_id
+        .. " pawn=" .. tostring(scenario.pawn_id)
+        .. " type=" .. tostring(scenario.pawn_type)
+        .. " at=" .. tostring(scenario.x) .. "," .. tostring(scenario.y)
+        .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
+        .. " attempts=" .. tostring(attempts)
+        .. " events=" .. tostring(events)
+        .. " complete=true"
+end
+
 local function execute_command(cmd_str)
     local parts = {}
     for word in cmd_str:gmatch("%S+") do
@@ -7134,6 +7318,26 @@ local function execute_command(cmd_str)
             ENEMY_TOURNAMENT.trial(parts[2], parts[3])
         if not completed then
             write_ack("ERROR: OBS_ENEMY_TOURNAMENT_TRIAL "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_ENEMY_CALLBACK_TRIAL" then
+        if #parts ~= 6 then
+            write_ack(
+                "ERROR: OBS_ENEMY_CALLBACK_TRIAL requires condition, family, "
+                .. "capture ID, activation nonce, and capsule SHA-256"
+            )
+            return
+        end
+        local completed, trial_error =
+            ENEMY_TOURNAMENT.callback_trial(
+                parts[2], parts[3], parts[4], parts[5], parts[6]
+            )
+        if not completed then
+            write_ack("ERROR: OBS_ENEMY_CALLBACK_TRIAL "
                 .. tostring(trial_error))
             return
         end

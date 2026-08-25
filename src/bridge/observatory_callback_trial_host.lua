@@ -442,6 +442,7 @@ function Host:status()
         raw_written = self.raw_written == true,
         raw_event_count = self.raw_event_count,
         attempted_calls = self.attempted_calls,
+        serialization_errors = self.serialization_errors,
         result_published = self.result_published == true,
         slots_restored = self:_all_restored(),
         error = self.last_error or "",

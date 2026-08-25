@@ -1136,6 +1136,160 @@ def run_observatory_enemy_tournament_trial(
     )
 
 
+def run_observatory_enemy_callback_trial(
+    condition: str,
+    family: str,
+    capture_id: str,
+    activation_nonce: str,
+    capsule_sha256: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict, dict | None]:
+    """Run one callback family over the fixed synthetic Firefly scenario."""
+    families = {
+        "get_target_area",
+        "enemy_target_score",
+        "get_skill_effect",
+        "score_positioning",
+    }
+    if condition not in {"control", "exact_hook"}:
+        raise BridgeError("enemy callback condition is invalid")
+    if family not in families:
+        raise BridgeError("enemy callback family is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("enemy callback capture ID is invalid")
+    if (
+        type(activation_nonce) is not str
+        or re.fullmatch(r"[0-9a-f]{32,64}", activation_nonce) is None
+    ):
+        raise BridgeError("enemy callback activation nonce is invalid")
+    if (
+        type(capsule_sha256) is not str
+        or re.fullmatch(r"[0-9a-f]{64}", capsule_sha256) is None
+    ):
+        raise BridgeError("enemy callback capsule SHA-256 is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "enemy callback trial requires an unpaused active mission heartbeat"
+        )
+
+    result_path = (
+        BRIDGE_DIR
+        / f"itb_observatory_callback_trial_{capture_id}_{condition}.json"
+    )
+    result_tmp = result_path.with_name(result_path.name + ".tmp")
+    trace_path = BRIDGE_DIR / f"itb_observatory_trace_{capture_id}_0.raw"
+    trace_tmp = trace_path.with_name(trace_path.name + ".tmp")
+    if any(path.exists() for path in (result_path, result_tmp, trace_path, trace_tmp)):
+        raise BridgeError("enemy callback trial output already exists")
+    result_before = _file_generation(result_path)
+    trace_before = _file_generation(trace_path)
+    command = (
+        f"OBS_ENEMY_CALLBACK_TRIAL {condition} {family} {capture_id} "
+        f"{activation_nonce} {capsule_sha256}"
+    )
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_ENEMY_CALLBACK_TRIAL condition=(control|exact_hook) "
+        r"family=(get_target_area|enemy_target_score|get_skill_effect|score_positioning) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) pawn=(\d+) type=Firefly1 "
+        r"at=([0-7]),([0-7]) consumed_spawns=(\d+) attempts=(\d+) "
+        r"events=(\d+) complete=true",
+        ack,
+    )
+    if (
+        match is None
+        or match.group(1) != condition
+        or match.group(2) != family
+        or match.group(3) != capture_id
+    ):
+        raise BridgeError(f"unexpected enemy callback trial ACK: {ack}")
+    attempts = int(match.group(8))
+    events = int(match.group(9))
+    if condition == "control":
+        if attempts != 0 or events != 0:
+            raise BridgeError("control enemy callback trial emitted observations")
+    elif attempts < 1 or events != attempts:
+        raise BridgeError("exact enemy callback trial is incomplete")
+
+    result_generation = _file_generation(result_path)
+    if result_generation is None or result_generation == result_before:
+        raise BridgeError("enemy callback result was not published freshly")
+    result = _read_json_file(result_path)
+    if (
+        not isinstance(result, dict)
+        or result.get("schema_version") != 1
+        or result.get("kind") != "observatory_callback_trial_result"
+        or result.get("status") != "complete"
+        or result.get("condition") != condition
+        or result.get("capture_id") != capture_id
+        or result.get("callback_family") != family
+        or result.get("attempted_calls") != attempts
+        or result.get("raw_event_count") != events
+        or result.get("serialization_errors") != 0
+        or result.get("slots_restored") is not True
+    ):
+        raise BridgeError("enemy callback result does not match its ACK")
+
+    if condition == "control":
+        if _file_generation(trace_path) != trace_before:
+            raise BridgeError("control enemy callback trial published a trace")
+        return ack, result, None
+    trace_generation = _file_generation(trace_path)
+    if trace_generation is None or trace_generation == trace_before:
+        raise BridgeError("enemy callback trace was not published freshly")
+    trace = _read_json_file(trace_path)
+    summary = trace.get("summary") if isinstance(trace, dict) else None
+    attempted = trace.get("attempted_calls") if isinstance(trace, dict) else None
+    trace_events = trace.get("events") if isinstance(trace, dict) else None
+    if (
+        not isinstance(trace, dict)
+        or trace.get("raw_schema_version") != 1
+        or trace.get("controller_version")
+            != "observatory-callback-controller/1"
+        or trace.get("capture_id") != capture_id
+        or trace.get("checkpoint_seq") != 0
+        or not isinstance(trace_events, list)
+        or len(trace_events) != events
+        or not isinstance(attempted, dict)
+        or attempted.get(family) != attempts
+        or any(
+            value != (attempts if key == family else 0)
+            for key, value in attempted.items()
+        )
+        or not isinstance(summary, dict)
+        or summary.get("accepted_events") != events
+        or summary.get("dropped_events") != 0
+        or summary.get("filtered_events") != 0
+        or summary.get("serialization_errors") != 0
+        or summary.get("restore_conflicts") != 0
+        or summary.get("stop_reasons") != []
+        or summary.get("truncation_reasons") != []
+    ):
+        raise BridgeError("enemy callback trace does not match its ACK")
+    for index, event in enumerate(trace_events):
+        if (
+            not isinstance(event, dict)
+            or event.get("seq") != index
+            or event.get("kind") != family
+            or event.get("mission_id") != "Mission_Power"
+            or event.get("phase") != "combat_enemy"
+            or not isinstance(event.get("context"), dict)
+            or not isinstance(event.get("payload"), dict)
+        ):
+            raise BridgeError("enemy callback trace event stream is invalid")
+    return ack, result, trace
+
+
 def prepare_observatory_spawn_coordinate(
     condition: str,
     capture_id: str,
