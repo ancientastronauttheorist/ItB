@@ -24,6 +24,7 @@ from src.bridge.protocol import (
     prepare_observatory_spawn_replay_control,
     request_observatory_callback_bindings,
     request_observatory_callback_manifest,
+    run_observatory_enemy_tournament_trial,
     run_observatory_selected_queue_trial,
     seed_and_arm_observatory_native_rng,
     seed_and_arm_observatory_native_rng_spawn_span,
@@ -416,6 +417,18 @@ def bridge_observatory_selected_queue_trial(
 ) -> tuple[str, dict | None]:
     """Run one fixed one-enemy selected-record/queue diagnostic."""
     return run_observatory_selected_queue_trial(
+        condition, capture_id, timeout=timeout
+    )
+
+
+def bridge_observatory_enemy_tournament_trial(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict | None]:
+    """Run one fixed complete enemy-record tournament diagnostic."""
+    return run_observatory_enemy_tournament_trial(
         condition, capture_id, timeout=timeout
     )
 

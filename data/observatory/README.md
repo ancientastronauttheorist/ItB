@@ -215,6 +215,30 @@ destination. The record-selector replay begins after every complete candidate
 record has been materialized. Neither API claims to reconstruct upstream Lua
 subclass logic or provide an ordinary future-enemy solver input.
 
+The later build-keyed runtime campaign under
+`captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/`
+provides one complete parameterized conformance vector. A no-detour x86
+hardware observer copies the ordered records at selector entry, reads the
+pinned shared CRT owner state before and after selection, and then captures the
+selected record and immediate queue commit. Three fresh-process,
+counterbalanced control/dormant/armed triplets all produce the same eight
+records. Starting from `0xd6ac62fb`, exact replay consumes one caller-30 draw,
+selects input 5, and reaches `0x6f5d21d2`; destination `[5,4]`, target `[4,4]`,
+and skill 1 bind to the settled Firefly1 queue. All nine whole-game outcomes
+share the same semantic hash, and the cleanup receipt proves the exact save,
+Mod Loader, installation, bridge, and process restore.
+
+The campaign receipt is
+`windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_receipt.json`;
+its matching `_cleanup_receipt.json` closes the pending restore fields. The DLL
+is deliberately omitted, while its reproducible build receipt and exact
+hardware-breakpoint plan are committed under `native/`. This bounded capture
+does not reveal each upstream Lua PointList, SkillEffect, callback value,
+target-tie state, or candidate-time Board predicate, and it does not generalize
+to other enemy, weapon, cancellation, or retarget paths. Ordinary solver input
+still lacks both the prospective vector and selector-entry state, so the live
+settled queue remains authoritative.
+
 Verify the immutable artifact against the pinned executable and replay a
 captured record payload with:
 
@@ -553,6 +577,12 @@ source-tree verifiers as the 338,859-byte
 `0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989`;
 the cleanup receipt proves the prior 315,686-byte installed bridge was restored
 without rewriting that historical v408 overlay identity.
+The later enemy-tournament bridge is independently admitted as the
+357,175-byte `enemy_tournament_hw_project_bridge` overlay with SHA-256
+`1abb8001eb6402c26d59fb09c05c78159a9199267130eecf9c73ccfd7879a5ac`;
+its own cleanup receipt again proves the same 315,686-byte installed bridge was
+restored. Both overlays remain immutable exact-hash exceptions for predecessor
+source-tree verifiers rather than rewrites of their published artifacts.
 This is an exact-build ordinary-callback observation, not a claim about every
 future process or other Lua integer conversion. Build or verify the static
 replay with:

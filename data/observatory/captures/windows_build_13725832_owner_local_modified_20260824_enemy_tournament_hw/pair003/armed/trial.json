@@ -1,0 +1,48 @@
+{
+  "analysis": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_tournament_campaign_final\\pair003\\armed\\analysis.json",
+    "sha256": "58e0752264f43f1fa5a9922fafab37a874952fc4744747db48a4a342d0c97c12",
+    "status": "correlated"
+  },
+  "build_receipt_sha256": "db2f730938f0a49d13809d444928c8e5f0ff32904ace4aabf8e7e165b66ae862",
+  "capture_id": "tournament-pair-003-armed",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_ENEMY_TOURNAMENT_TRIAL condition=armed capture=tournament-pair-003-armed pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 candidates=8 selected=1 queue=1 complete=true",
+  "condition": "armed",
+  "created_at": "2026-08-24T23:34:45.329840+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_enemy_tournament_turn_trial",
+  "module_sha256": "d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa",
+  "native_counts": {
+    "candidate_count": 8,
+    "queue_count": 1,
+    "selected_count": 1
+  },
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_tournament_campaign_final\\pair003\\armed\\outcome.json",
+    "sha256": "0b3a14167d94866061b3f6f4d15e445522b0b1fa89e3d211528a0246ee9246f8"
+  },
+  "pair_id": "tournament-pair-003",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": {
+    "candidate_count": 8,
+    "complete": true,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_tournament_campaign_final\\pair003\\armed\\snapshot.json",
+    "sha256": "b7a710195fa2121210a425b795fd26e067c5c22d75b97cf739c585e976863e8f"
+  },
+  "status": "complete",
+  "valid_trial": true
+}

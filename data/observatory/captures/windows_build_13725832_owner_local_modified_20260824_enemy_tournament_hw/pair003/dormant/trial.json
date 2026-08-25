@@ -1,0 +1,39 @@
+{
+  "analysis": null,
+  "build_receipt_sha256": "db2f730938f0a49d13809d444928c8e5f0ff32904ace4aabf8e7e165b66ae862",
+  "capture_id": "tournament-pair-003-dormant",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_ENEMY_TOURNAMENT_TRIAL condition=dormant capture=tournament-pair-003-dormant pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 candidates=0 selected=0 queue=0 complete=true",
+  "condition": "dormant",
+  "created_at": "2026-08-24T23:30:19.432988+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_enemy_tournament_turn_trial",
+  "module_sha256": "d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa",
+  "native_counts": {
+    "candidate_count": 0,
+    "queue_count": 0,
+    "selected_count": 0
+  },
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_tournament_campaign_final\\pair003\\dormant\\outcome.json",
+    "sha256": "79cf5b395ee8e2ae5d168f67fa77faba6ede2d3370e9d14d2b86d59e09f623ce"
+  },
+  "pair_id": "tournament-pair-003",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": null,
+  "status": "complete",
+  "valid_trial": true
+}

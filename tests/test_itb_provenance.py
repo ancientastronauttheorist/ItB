@@ -693,12 +693,19 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "direct shared-RNG call modulo the equal-best count" in evidence
     assert "accepted all 100, 47, and 181 attempts" in evidence
     assert "every pair restored all 65 installed callback slots" in evidence
-    assert "selected 24-byte record immediately" in evidence
-    assert "aiDest matched queue origin" in evidence
+    assert "selected 24-byte record" in evidence
+    assert "immediate same-thread queue commit" in evidence
+    assert "selected destination [5,4]" in evidence
+    assert "complete ordered eight-record vector" in evidence
+    assert "exact replay from 0xd6ac62fb" in evidence
+    assert "consumed one caller-30 draw" in evidence
+    assert "selected input index 5" in evidence
+    assert "base-current-weapon field changed from -1" in evidence
+    assert "one complete runtime candidate payload" in evidence
     assert "live bridge queue remains the authoritative current action" in evidence
     assert "immediately displaced primary group" in evidence
     assert "caller-31 remainder of zero out of four" in evidence
-    assert "selector-entry shared state" in evidence
+    assert "selector-entry state as conformance evidence" in evidence
     assert "Pawn +0x8d6 is bInjured" in evidence
     assert "ordinary planning passes mode 0" in evidence
     assert "targetHistory contributes -5" in evidence
@@ -787,6 +794,26 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "validate_selected_queue_snapshot",
         "correlate_selected_queue_snapshot",
     }
+    assert implementations["src/observatory/enemy_tournament_hw.py"] == {
+        "validate_enemy_tournament_snapshot",
+        "correlate_enemy_tournament_snapshot",
+    }
+    assert implementations[
+        "src/observatory/enemy_tournament_hw_campaign.py"
+    ] == {
+        "build_enemy_tournament_hw_campaign_receipt",
+        "publish_enemy_tournament_hw_campaign_receipt",
+    }
+    assert implementations[
+        "src/native/observatory_enemy_tournament_hw_observer.c"
+    ] == {
+        "observer_enemy_tournament_veh",
+        "tournament_arm",
+        "tournament_finish",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_tournament_trial.py"
+    ] == {"run"}
     assert implementations[
         "src/observatory/enemy_record_selector_boundary.py"
     ] == {
@@ -1088,6 +1115,32 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_tournament_hw_receipt.json"
+    ] == {
+        '"classification": "complete_enemy_record_tournament_runtime_replay"',
+        '"candidate_counts": [',
+        '"selected_input_indices": [',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_tournament_hw_cleanup_receipt.json"
+    ] == {
+        "observatory_enemy_tournament_hw_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_enemy_tournament_hw_campaign.py"
+    ] == {
+        "test_committed_enemy_tournament_rebuilds_exactly_and_is_neutral",
+        "test_committed_enemy_tournament_replays_exact_selection_and_queue",
+        "test_enemy_tournament_cleanup_closes_restore_and_binds_artifacts",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
         "score_positioning_x87_receipt.json"
     ] == {
         '"classification": "score_positioning_x87_rounding_mode_resolved"',
@@ -1113,9 +1166,11 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     }
 
     gaps = " ".join(record["known_gaps"])
-    assert "now-proven record-level native tournament" in gaps
-    assert "no live capture serializes one complete tournament" in gaps
-    assert "selector-entry state" in gaps
+    assert "capture-proven bounded record tournament" in gaps
+    assert "no live capture serializes one complete tournament" not in gaps
+    assert "complete final eight-record vector" in gaps
+    assert "selector-entry/exit state" in gaps
+    assert "ordinary solver data" in gaps
     assert "one Firefly1 single-weapon shape" in gaps
     assert "now-proven native target-area eligibility gate" in gaps
     assert "callback/cache/filter wrapper" in gaps

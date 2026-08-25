@@ -202,15 +202,15 @@ def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
         ),
     }
     current = {
-        "id": "score_positioning_x87_project_bridge",
+        "id": "enemy_tournament_hw_project_bridge",
         "size": bridge.stat().st_size,
         "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
     }
     assert current == {
-        "id": "score_positioning_x87_project_bridge",
-        "size": 338_859,
+        "id": "enemy_tournament_hw_project_bridge",
+        "size": 357_175,
         "sha256": (
-            "0ad8f0c65ad25a646b16439a57bfd0e47d21f6b4b3ba4b8a5c8b5bac77775989"
+            "1abb8001eb6402c26d59fb09c05c78159a9199267130eecf9c73ccfd7879a5ac"
         ),
     }
     assert v408 in DEATH_EVENT_BRIDGE_OVERLAYS

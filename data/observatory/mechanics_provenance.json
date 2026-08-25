@@ -2103,11 +2103,11 @@
         },
         {
           "classification": "fact",
-          "statement": "Three counterbalanced hardware-observer triplets on one bounded Firefly1 scenario correlated the selected 24-byte record immediately to the same pawn's queue commit on the same thread. aiDest matched queue origin, aiTarget matched queue target and queued shot, and current weapon matched queued skill; all control, dormant, and armed outcomes were semantically identical."
+          "statement": "Three fresh-process, counterbalanced hardware-observer triplets on one bounded Firefly1 scenario captured the complete ordered eight-record vector at selector entry, the shared CRT state before and after selection, the selected 24-byte record, and the immediate same-thread queue commit. Every record had target and positioning score 5; exact replay from 0xd6ac62fb consumed one caller-30 draw, selected input index 5, and reached 0x6f5d21d2. The selected destination [5,4] and target [4,4] matched queue origin and shot, current weapon 1 matched queued skill 1, and the base-current-weapon field changed from -1 before selection to 1 at queue commit. All control, dormant, and armed outcomes were semantically identical."
         },
         {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. Concrete Lua callback payloads, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, the complete runtime candidate payload, selector-entry shared state, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. The bounded Firefly campaign now supplies one complete runtime candidate payload and selector-entry state as conformance evidence, but concrete Lua callback intermediates, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, equivalent payloads for other scenarios, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2130,6 +2130,34 @@
           "symbols": [
             "validate_selected_queue_snapshot",
             "correlate_selected_queue_snapshot"
+          ]
+        },
+        {
+          "path": "src/observatory/enemy_tournament_hw.py",
+          "symbols": [
+            "validate_enemy_tournament_snapshot",
+            "correlate_enemy_tournament_snapshot"
+          ]
+        },
+        {
+          "path": "src/observatory/enemy_tournament_hw_campaign.py",
+          "symbols": [
+            "build_enemy_tournament_hw_campaign_receipt",
+            "publish_enemy_tournament_hw_campaign_receipt"
+          ]
+        },
+        {
+          "path": "src/native/observatory_enemy_tournament_hw_observer.c",
+          "symbols": [
+            "observer_enemy_tournament_veh",
+            "tournament_arm",
+            "tournament_finish"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_tournament_trial.py",
+          "symbols": [
+            "run"
           ]
         },
         {
@@ -2429,9 +2457,9 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and now-proven record-level native tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known, but no live capture serializes one complete tournament end to end: movement destinations, concrete ordered Lua-produced PointLists and SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, raw callback values, adjusted per-candidate scores, complete records, target-tie states, and the selector-entry state remain absent from ordinary solver input.",
-        "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Selected-record-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament; per-subclass Lua target-point/SkillEffect construction, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One live Firefly1 capture now serializes the complete final eight-record vector and selector-entry/exit state, but it does not separately expose the concrete ordered Lua-produced PointLists and SkillEffects, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, raw callback values, effect-side draws, or target-tie states that produced those records; none of those prospective inputs is ordinary solver data.",
+        "The natural callback evidence covers 65 loaded slots in one Mission_Power turn and does not establish every subclass, mission, or callback path. Complete candidate-to-selection-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
         {
@@ -2499,6 +2527,23 @@
           ]
         },
         {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_receipt.json",
+          "symbols": [
+            "\"classification\": \"complete_enemy_record_tournament_runtime_replay\"",
+            "\"candidate_counts\": [",
+            "\"selected_input_indices\": [",
+            "\"all_semantic_outcomes_match\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_cleanup_receipt.json",
+          "symbols": [
+            "observatory_enemy_tournament_hw_cleanup_receipt",
+            "\"remaining_experimental_file_count\": 0",
+            "\"file_set_and_bytes_match_pre_experiment\": true"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_score_positioning_x87_receipt.json",
           "symbols": [
             "\"classification\": \"score_positioning_x87_rounding_mode_resolved\"",
@@ -2541,6 +2586,14 @@
           "path": "tests/test_observatory_selected_queue_hw.py",
           "symbols": [
             "test_complete_pair_validates_and_correlates_to_bridge_queue"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_tournament_hw_campaign.py",
+          "symbols": [
+            "test_committed_enemy_tournament_rebuilds_exactly_and_is_neutral",
+            "test_committed_enemy_tournament_replays_exact_selection_and_queue",
+            "test_enemy_tournament_cleanup_closes_restore_and_binds_artifacts"
           ]
         },
         {

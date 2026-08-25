@@ -73,6 +73,12 @@ SELECTED_QUEUE_SNAPSHOT_FILE = (
 SELECTED_QUEUE_SNAPSHOT_TMP = (
     BRIDGE_DIR / "itb_observatory_selected_queue_snapshot.json.tmp"
 )
+ENEMY_TOURNAMENT_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_enemy_tournament_snapshot.json"
+)
+ENEMY_TOURNAMENT_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_enemy_tournament_snapshot.json.tmp"
+)
 SCORE_POSITIONING_X87_SNAPSHOT_FILE = (
     BRIDGE_DIR / "itb_observatory_score_positioning_x87_snapshot.json"
 )
@@ -1041,6 +1047,93 @@ def run_observatory_selected_queue_trial(
             raise BridgeError("selected/queue snapshot does not match its ACK")
         return ack, snapshot
     raise TimeoutError(f"Fresh selected/queue snapshot timeout after {timeout:.0f}s")
+
+
+def run_observatory_enemy_tournament_trial(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 75.0,
+) -> tuple[str, dict | None]:
+    """Run one fixed complete enemy-record tournament trial to completion."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("enemy-tournament condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("enemy-tournament capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "enemy-tournament trial requires an unpaused active mission heartbeat"
+        )
+    if (
+        ENEMY_TOURNAMENT_SNAPSHOT_FILE.exists()
+        or ENEMY_TOURNAMENT_SNAPSHOT_TMP.exists()
+    ):
+        raise BridgeError("enemy-tournament snapshot output already exists")
+    before = _file_generation(ENEMY_TOURNAMENT_SNAPSHOT_FILE)
+    command = f"OBS_ENEMY_TOURNAMENT_TRIAL {condition} {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_ENEMY_TOURNAMENT_TRIAL condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) pawn=(\d+) type=Firefly1 "
+        r"at=([0-7]),([0-7]) consumed_spawns=(\d+) candidates=(\d+) "
+        r"selected=(\d+) queue=(\d+) complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != condition or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected enemy-tournament trial ACK: {ack}")
+    candidate_count = int(match.group(7))
+    selected_count = int(match.group(8))
+    queue_count = int(match.group(9))
+    if condition != "armed":
+        if (
+            candidate_count != 0
+            or selected_count != 0
+            or queue_count != 0
+            or _file_generation(ENEMY_TOURNAMENT_SNAPSHOT_FILE) != before
+        ):
+            raise BridgeError("unarmed enemy-tournament trial published observer output")
+        return ack, None
+    if not 1 <= candidate_count <= 256 or selected_count != 1 or queue_count != 1:
+        raise BridgeError("armed enemy-tournament trial did not report one exact capture")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(ENEMY_TOURNAMENT_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                ENEMY_TOURNAMENT_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"enemy-tournament snapshot is not valid JSON: {exc}"
+            ) from exc
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind") != "native_enemy_tournament_hw_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or snapshot.get("summary", {}).get("candidate_count")
+                != candidate_count
+            or snapshot.get("summary", {}).get("selected_count") != 1
+            or snapshot.get("summary", {}).get("queue_count") != 1
+        ):
+            raise BridgeError("enemy-tournament snapshot does not match its ACK")
+        return ack, snapshot
+    raise TimeoutError(
+        f"Fresh enemy-tournament snapshot timeout after {timeout:.0f}s"
+    )
 
 
 def prepare_observatory_spawn_coordinate(

@@ -1,0 +1,112 @@
+{
+  "architecture": "x86",
+  "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+  "boundary_map_file_sha256": "a7c5bf375245ba058d59d3c92b73557b3620be4bf4bfae586acd36b59da3f2b3",
+  "build_id": "13725832",
+  "compile_flags": [
+    "/c",
+    "/TC",
+    "/O2",
+    "/Oi",
+    "/Ob3",
+    "/Oy",
+    "/W4",
+    "/WX",
+    "/GS-",
+    "/Gy",
+    "/Zl",
+    "/DLL",
+    "/NOENTRY",
+    "/NODEFAULTLIB",
+    "/INCREMENTAL:NO",
+    "/Brepro",
+    "/OPT:REF",
+    "/OPT:ICF"
+  ],
+  "compiler": "Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30154 for x86",
+  "compiler_stdout": "observatory_enemy_tournament_hw_observer.c\n\n   Creating library <temporary-build>\\itb_observatory_enemy_tournament_hw_observer.lib and object <temporary-build>\\itb_observatory_enemy_tournament_hw_observer.exp",
+  "executable_bytes_modified": false,
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "executable_size": 5530112,
+  "export_name": "luaopen_itb_observatory_enemy_tournament_hw_observer",
+  "exports": [
+    "luaopen_itb_observatory_enemy_tournament_hw_observer"
+  ],
+  "generated_include_sha256": "2c11fd14e41d956cd13f049a1d3c3d2d0cbed74aa1e171a4c723cdd641ad0bfe",
+  "hardware_breakpoint_plan_filename": "windows_build_13725832_enemy_tournament_hw_plan_e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25.json",
+  "hardware_breakpoint_plan_sha256": "e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25",
+  "imports": [
+    "bcrypt.dll",
+    "kernel32.dll"
+  ],
+  "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+  "kind": "observatory_enemy_tournament_hw_observer_build",
+  "loaded_or_armed": false,
+  "machine_attestation": {
+    "executable_mutation_api_imports_absent": true,
+    "loader_entry_absent": true,
+    "pe_entry_point_rva": "0x00000000",
+    "veh": {
+      "branch_count": 193,
+      "direct_or_indirect_call_count": 0,
+      "instruction_count": 790,
+      "return_count": 9,
+      "section_rva": "0x00004000",
+      "section_sha256": "439a272caa9ed151ae772ca5596afd87ed276df59f21c8bbc1a63f6d452e713b",
+      "section_size": 3397,
+      "windows_api_call_count": 0,
+      "x87_mmx_sse_avx_instruction_count": 0
+    }
+  },
+  "module_filename": "itb_observatory_enemy_tournament_hw_observer_d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa.dll",
+  "module_sha256": "d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa",
+  "module_size": 25088,
+  "observer_version": "observatory-enemy-tournament-hw-observer/1",
+  "preferred_image_base": "0x00400000",
+  "queue_prebytes_hex": "83ec188bcc",
+  "queue_prebytes_sha256": "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+  "queue_rva": "0x00227d20",
+  "record_selector_boundary_canonical_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+  "record_selector_boundary_file_sha256": "73ccd7972fd25f2f455173673fed19b2310f6039e58b8cf5118236ff4f8b2022",
+  "reproducibility": {
+    "attestations_identical": true,
+    "independent_build_count": 2,
+    "module_bytes_identical": true
+  },
+  "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+  "rng_state_owner_relocation_offsets": [
+    6,
+    13,
+    66,
+    83,
+    110,
+    122
+  ],
+  "rng_state_owner_rva": "0x0038ed32",
+  "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+  "rng_state_owner_size": 131,
+  "schema_version": 1,
+  "selected_prebytes_hex": "8b0152ff5028",
+  "selected_prebytes_sha256": "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b",
+  "selected_queue_source_path": "src/native/observatory_selected_queue_hw_observer.c",
+  "selected_queue_source_sha256": "c57293d35e4bba11edfc1b66233368fb32a3ce51c04c01aea681a9024c3b2be6",
+  "selected_rva": "0x000f6854",
+  "selector_control_window_relocation_offsets": [
+    6
+  ],
+  "selector_prebytes_hex": "558bec6aff68",
+  "selector_prebytes_sha256": "c2dc277ed8da14a5cafc75481372e17e4d759a08a1588db1e553a10d1235ede4",
+  "selector_rva": "0x000f7dd0",
+  "source_attestation": {
+    "executable_mutation_api_text_absent": true,
+    "fixed_candidate_ring_present": true,
+    "historical_opener_export_neutralized": true,
+    "hot_source_sha256": "12d6219350b103ab3a4b70d36860e7d8e2e0f749c29b7a4b6130534d6ff6b301",
+    "private_debug_register_transition_present": true,
+    "rng_owner_relocation_normalization_present": true,
+    "selected_queue_dependency_include_present": true,
+    "source_sha256": "56a599684b949836ac175be0514fb6312ca270f0cb61a970ffa18d2882479819"
+  },
+  "source_path": "src/native/observatory_enemy_tournament_hw_observer.c",
+  "source_sha256": "56a599684b949836ac175be0514fb6312ca270f0cb61a970ffa18d2882479819"
+}

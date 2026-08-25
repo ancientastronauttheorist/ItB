@@ -1,0 +1,111 @@
+{
+  "breakpoints": [
+    {
+      "expected_prebytes_hex": "558bec6aff68",
+      "expected_prebytes_sha256": "c2dc277ed8da14a5cafc75481372e17e4d759a08a1588db1e553a10d1235ede4",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "live_identity_comparison": "six relocation-free entry bytes; the full selector region is pinned by the executable and record-selector hashes",
+      "register_contract": "ECX=selector context; vector begin/end/capacity at +08/+0c/+10; AI=ECX-0x14; Pawn=[AI+4]",
+      "rva": "0x000f7dd0",
+      "semantic_boundary": "complete_ordered_record_vector_before_selector_rng",
+      "slot": "DR0"
+    },
+    {
+      "expected_prebytes_hex": "8b0152ff5028",
+      "expected_prebytes_sha256": "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "EBX=AI; selected record at AI+0x50; Pawn=[EBX+4]",
+      "rva": "0x000f6854",
+      "semantic_boundary": "selected_record_after_copy",
+      "slot": "DR1"
+    },
+    {
+      "expected_prebytes_hex": "83ec188bcc",
+      "expected_prebytes_sha256": "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+      "kind": "x86_execute_length_1_current_thread_only",
+      "register_contract": "ESI=Pawn",
+      "rva": "0x00227d20",
+      "semantic_boundary": "queued_action_stable_read",
+      "slot": "DR2"
+    }
+  ],
+  "data_contract": {
+    "addresses_or_pointers_published": false,
+    "ordered_vector_copied_before_first_selector_instruction": true,
+    "record_fields": [
+      "destination_x",
+      "destination_y",
+      "target_x",
+      "target_y",
+      "target_score",
+      "positioning_score"
+    ],
+    "record_size_bytes": 24,
+    "selected_record_and_queue_require_same_pawn": true
+  },
+  "debug_register_contract": {
+    "after_selector_dr7_exact": "0x00000014",
+    "arm_dr7_exact": "0x00000015",
+    "arm_rejects_any_nonzero_dr0_dr1_dr2_dr3_or_dr7": true,
+    "finish_requires_proven_clear_state": true,
+    "queue_commit_clears_dr0_dr1_dr2_dr3_dr6_dr7": true,
+    "queue_only_dr7_exact": "0x00000010",
+    "transition": "private_RaiseException_handled_by_VEH"
+  },
+  "hot_contract": {
+    "addresses_or_pointers_published": false,
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false,
+    "windows_api_calls": false,
+    "x87_mmx_sse_avx_state_changes": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "record_selector_boundary_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "selected_queue_source_sha256": "c57293d35e4bba11edfc1b66233368fb32a3ce51c04c01aea681a9024c3b2be6",
+    "source_sha256": "56a599684b949836ac175be0514fb6312ca270f0cb61a970ffa18d2882479819"
+  },
+  "kind": "observatory_enemy_tournament_hardware_breakpoint_plan",
+  "limits": {
+    "candidate_capacity": 256,
+    "queue_capacity": 1,
+    "selected_capacity": 1,
+    "thread_capacity": 1
+  },
+  "mutation_contract": {
+    "detour_installed": false,
+    "executable_bytes_modified": false,
+    "gateway_allocated": false,
+    "page_protection_changed": false
+  },
+  "observer_version": "observatory-enemy-tournament-hw-observer/1",
+  "rng_state_contract": {
+    "base_relocation_offsets": [
+      6,
+      13,
+      66,
+      83,
+      110,
+      122
+    ],
+    "live_identity_comparison": "all non-relocation bytes exact; each HIGHLOW dword equals the pinned file dword plus the loaded-image delta",
+    "owner_called_once_on_arm_thread_before_debug_register_arm": true,
+    "owner_region_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "owner_region_size": 131,
+    "owner_rva": "0x0038ed32",
+    "preferred_image_base": "0x00400000",
+    "state_offset": "0x18",
+    "state_read_before_selector_and_after_selected_copy": true
+  },
+  "schema_version": 1
+}

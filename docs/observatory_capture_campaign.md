@@ -8,14 +8,18 @@ natural callback pairs, two counterbalanced atomic native-RNG captures, three
 source-verified `Spawner:NextPawn` spans, three counterbalanced spawn-replay
 pairs, three coordinate hardware-observer triplets, three same-process
 coordinate/RNG-core captures, and three counterbalanced control/dormant/armed
-selected-record triplets.
+selected-record triplets, plus three counterbalanced complete enemy-tournament
+triplets.
 Both seeded native checkpoints include
 the fixed seed's first core result, bind every caller to the exact executable
 catalog, and report clean byte restoration. The later spans resolve the normal
 three-draw `NextPawn` call order. The replay pairs recover an exact observable
 MSVC pre-call state class and reproduce each captured pawn from the exported
-ratios and candidate order. The hardware observer correlates the reviewed final
-selected record to the immediate Pawn queue commit in all three armed trials.
+ratios and candidate order. The selected-action hardware observer correlates
+the reviewed final record to the immediate Pawn queue commit in all three armed
+trials. The later tournament observer additionally captures the complete
+ordered record vector and selector-entry/exit CRT state before making the same
+queue correlation.
 All achievements are complete, and the user explicitly
 authorized runtime research in the current owner installation. Evidence from
 that installation is accepted for practical, build-keyed Observatory work when
@@ -100,6 +104,7 @@ not be relabelled as clean stock.
 | Callback gameflow helper | Build-keyed, one-export in-process Continue/End Turn helper with no OS-input surface and fail-closed live-screen identity checks | Two independent `/Brepro` builds produced byte-identical 78,848-byte modules and byte-identical normalized receipts; the generated DLL is omitted |
 | Spawn RNG | Source-verified `Spawner:NextPawn` span/replay ledgers, exact MSVC observable-state recovery, coordinate hardware observation, same-process RNG attribution, and a Rust non-fabrication safeguard | Three pawn replays reproduce `Firefly2`, `Scarab2`, and `Firefly2`. Three coordinate captures prove ordered-candidate modulo selection at direct caller 60; ordinals 1495/1475/1450 vary because the shared stream includes presentation draws. Ordinary solver input still lacks selector-time state or complete upstream replay |
 | Selected action | Build-keyed x86 hardware observer, strict selected-to-queue correlator, and exact offline 24-byte record-selector replay | Three counterbalanced control/dormant/armed triplets match semantically; every armed trial records one final selected record immediately followed by the same pawn's queue commit, with `aiDest` = origin, `aiTarget` = target/shot, and weapon = skill. The preceding comparator, displaced-primary fallback, and caller-ID 29–33 draw grammar are exact from ordered post-callback records plus selector-entry state; those prospective inputs are not ordinary bridge data |
+| Complete enemy tournament | Reproducible no-detour x86 hardware observer at selector entry, selected-record copy, and queue commit; strict build/ASLR/restore guards; exact offline selector replay | Three fresh-process, counterbalanced triplets capture the same eight ordered Firefly1 records. From CRT state `0xd6ac62fb`, one caller-30 draw selects input 5 and reaches `0x6f5d21d2`; `[5,4] -> [4,4]` binds to the immediate queue commit. All nine outcomes share semantic SHA `957554...c673`; cleanup restores the exact 32-file save tree and baseline Mod Loader with no active Observatory DLL or bridge artifact. Other boards/enemies and upstream callback intermediates remain unproven |
 | `ScorePositioning` x87 conversion | Reproducible one-shot x86 observer at the exact `lua_tointeger` `FISTP`, filtered by the four-frame `ScorePositioning` call chain | Three counterbalanced control/dormant/armed triplets record `0x027F`/nearest-even in every armed process, all six control comparisons match semantically, and every debug register, VEH, file handle, and image seam restores cleanly |
 | Native path/death boundary | Four exact-build API/profile/vtable, cost/order, lifecycle-occupancy, and corpse-classification maps with region hashes, control windows, direction/cost tables, comparators, lifecycle bindings, source inventory, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 live/corpse transit-versus-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, Massive Water, live-or-persistent-corpse mode-1 occupancy, the common `IsCorpse` predicate, dormant Necro fallback, and all 16 shipped corpse types. Simulators v401/v402/v403 have focused regressions; classification already conforms at v407. Lifecycle/removal timing, matched vectors, and `AddMove` execution remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
@@ -346,7 +351,8 @@ whole-game neutrality. Because every other bridge field matches, the final
 queued enemy actions also match within all five pairs. At this stage direct
 native selected-record correlation and native candidate-enumeration records
 remained separate gaps; the later selected-queue campaign closes the former
-for its bounded Firefly scenario.
+for its bounded Firefly scenario, and the 2026-08-24 complete-tournament
+campaign closes one runtime instance of the latter for that same scenario.
 
 The archived pairs and strict receipt are under
 `data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/`
@@ -361,7 +367,7 @@ Two independent deterministic builds produced the same 78,848-byte DLL and
 the same normalized receipt. The DLL is not committed; the source, builder,
 build receipt, and two-build reproducibility receipt are committed.
 
-## Spawn-span, spawn-replay, coordinate, and selected-queue campaigns
+## Spawn-span, replay, coordinate, selected-queue, and tournament campaigns
 
 Three fresh-state spawn pairs counterbalanced an exact native-RNG checkpoint
 against the same checkpoint plus a source-verified `Spawner:NextPawn` span.
@@ -451,6 +457,44 @@ bytes were unchanged, and no executable file bytes changed. This is a bounded
 one-pawn proof, not a universal claim about cancellation, retargeting, or every
 enemy type. The immutable receipt is
 `windows_build_13725832_owner_local_modified_20260822_selected_queue_receipt.json`.
+
+The complete enemy-tournament campaign extends that bounded scenario one seam
+earlier. Its no-detour observer copies the entire record vector before the
+selector's first instruction, reads the pinned shared CRT owner state before
+and after selection, then observes the selected-record copy and same-pawn queue
+commit. The module is reproducible, has no loader entry point, imports no
+executable-mutation API, and its hot exception path makes no calls, allocations,
+I/O, clock reads, locks, or floating-point/SIMD changes. Its live identity guard
+normalizes the six accepted `HIGHLOW` relocations in the full RNG-owner region
+and compares the selector's six relocation-free entry bytes while the complete
+on-disk selector body remains pinned by the executable and boundary hashes.
+
+Across three fresh-process condition orders—control/dormant/armed,
+armed/control/dormant, and dormant/armed/control—all nine post-turn states have
+semantic SHA-256
+`957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673`.
+Every armed process captured the same eight records, all with target and
+positioning score five. Exact replay from selector state `0xd6ac62fb` consumes
+one caller-30 draw (`28509 % 8 = 5`), selects destination `[5,4]` and target
+`[4,4]`, and reaches `0x6f5d21d2`. The selected record binds to queue origin
+`[5,4]`, shot `[4,4]`, and skill 1; the Pawn's base-current-weapon field is
+`-1` before selection and 1 at queue commit. Every observer reports complete
+restore, zero integrity counters, cleared debug state, removed VEH, unchanged
+seams, no published pointer, and no executable-byte mutation.
+
+The immutable campaign and cleanup receipts are
+`windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_receipt.json`
+and the matching `_cleanup_receipt.json`. The cleanup binds the restored
+32-file, 2,434,067-byte owner save tree
+`cfdb040a...6686c11`, exact prior Mod Loader SHA-256
+`5af8e809...abf22d`, a 689-entry post-cleanup inventory, zero active
+Observatory DLLs or bridge files, and a stopped game process. This closes one
+complete native tournament end to end at the final-record boundary. It does
+not expose each upstream PointList, SkillEffect, callback value, target-tie
+state, or candidate-time Board predicate separately, and it is not evidence
+for other enemy/weapon/cancellation/retarget shapes. Those prospective inputs
+also remain absent from ordinary solver state, so the settled queue stays
+authoritative and simulator v408 remains current.
 
 The later `ScorePositioning` x87 campaign reused that deterministic one-
 `Firefly1` mission shape but observed only the current thread's hardware
@@ -572,14 +616,16 @@ exactly. Timing is reported separately; it never excuses output drift.
    snapshot. Correlate `aiDest`, `aiTarget`, and skill only when there is one
    selected record, one immediate queued enemy, and no cancellation or
    retarget.
-9. **Candidate tournament (native scoring and record selection completed
-   offline).** The exact-build replays preserve vector order, native score
-   adjustments, the complete pre-target-area eligibility gate and repair
-   resolver, target-area callback selection/cache/filter behavior, equal-best
-   target draws, record comparison, and selector RNG grammar. Capture one
-   complete runtime payload only when a concrete mismatch requires the still-
-   missing Lua-produced target points, callback values, effects, or selector-
-   entry state.
+9. **Candidate tournament (completed for one bounded Firefly scenario).** The
+   exact-build replays preserve vector order, native score adjustments, the
+   complete pre-target-area eligibility gate and repair resolver, target-area
+   callback selection/cache/filter behavior, equal-best target draws, record
+   comparison, and selector RNG grammar. Three fresh-process triplets now bind
+   one complete eight-record runtime vector plus selector-entry/exit state to
+   exact replay and the immediate queue. Capture another payload only for a
+   concrete mismatch, another enemy/weapon/cancellation/retarget shape, or when
+   the separately missing Lua-produced target points, callback values,
+   SkillEffects, target-tie state, or candidate-time Board predicates matter.
 
 For each family, archive the suite, both receipts, helper/controller/hook
 hashes, raw checkpoint, comparison, and cleanup inventory. A crash, mismatch,

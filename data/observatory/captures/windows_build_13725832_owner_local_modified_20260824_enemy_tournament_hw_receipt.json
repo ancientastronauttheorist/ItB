@@ -1,0 +1,715 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25",
+    "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "module_sha256": "d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa",
+    "record_selector_boundary_canonical_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f"
+  },
+  "campaign": {
+    "condition_orders": [
+      [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      [
+        "dormant",
+        "armed",
+        "control"
+      ]
+    ],
+    "conditions": [
+      "control",
+      "dormant",
+      "armed"
+    ],
+    "fixed_seed": 324508639,
+    "pair_count": 3,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "scenario": {
+      "consumed_spawn_count": 0,
+      "pawn_id": 1303,
+      "pawn_type": "Firefly1",
+      "start": [
+        4,
+        4
+      ]
+    }
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "A universal candidate vector or selected action for other boards, enemy types, multiple weapons, cancellation, or retarget paths.",
+      "Concrete intermediate Lua PointLists, SkillEffects, callback values, or candidate-time Board observations beyond the final records captured in this scenario.",
+      "Prospective enemy-phase forecasting from ordinary solver input, which still lacks the complete candidate vector and selector-entry RNG state.",
+      "Pristine-depot behavior; this is the attested owner-local-modified Windows build."
+    ],
+    "proven": [
+      "The fixed Firefly1 scenario produced the same complete ordered vector of eight 24-byte enemy candidate records in all three armed fresh processes.",
+      "Starting from selector state 0xd6ac62fb, the exact record-selector replay consumed one caller-30 draw, selected input index 5, reached state 0x6f5d21d2, and bound that record to the immediate same-pawn queue commit.",
+      "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets.",
+      "Every one-shot observer cleared all private debug state, removed its vectored exception handler, released its pinned executable, preserved every seam, published no pointer, and modified no executable bytes."
+    ]
+  },
+  "kind": "observatory_enemy_tournament_hw_campaign_receipt",
+  "pairs": [
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/armed/analysis.json",
+          "sha256": "d3de71d98d914ec0d5bcf0870bb5edf6d2b584d26e15c2373e361d215f54a02f",
+          "size": 3808
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/armed/outcome.json",
+          "sha256": "e1c6a3332e9ad1fc86d5710bc254c73a665cba5f28516d70896c6b012a08b874",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/armed/snapshot.json",
+          "sha256": "4506482f860e1323ac2bcc1895d95a553c85a284a4964c6d0850b25fa2e5e066",
+          "size": 4555
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/armed/trial.json",
+          "sha256": "f9477361ec706562611a56bffd3db7916883aca545cd758223296b81fe0dada4",
+          "size": 1882
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/control/outcome.json",
+          "sha256": "5b5781a631705bd4b4200458943f73bb977c81fc2968518914ae3ca055d76f6a",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/control/trial.json",
+          "sha256": "969e1c676c23689735e6db269c0563dfaf2070e82e518021b18ede0710f78ea7",
+          "size": 1328
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/dormant/outcome.json",
+          "sha256": "cbd775ff7cf05c8a2ffc10c0df8d9bd5dad2e2e7bad789b0d825b85de59f35e6",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair001/dormant/trial.json",
+          "sha256": "2f6693295ed9a7a2f5428e6399a6c741be9a655d7a4a29aee10fc9b6d6a14f4f",
+          "size": 1328
+        }
+      },
+      "condition_order": [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "cf7c4a58ea77cf8014d04494b66fe05987a55f4a20cc2fe28adb256af6f6172f",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair001",
+      "pair_id": "tournament-pair-001",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/armed/analysis.json",
+          "sha256": "dc68833d88b12b73d12854ad6ddf04b9a3110f7c28e93e719bd916cbe1f8cc9c",
+          "size": 3808
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/armed/outcome.json",
+          "sha256": "1a71820f33c8659847f2acf543492b852bcfcb6a498dc4126592d5d53a98f91a",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/armed/snapshot.json",
+          "sha256": "5557b9207714fef05740290dc17ab6b93f4e018a95e49854ad4b8f66295ba6f3",
+          "size": 4555
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/armed/trial.json",
+          "sha256": "8ff5a8838c22f11415bfb059dd9583ca13f6bfbb5e2c1390ce20d670a5a3e0e7",
+          "size": 1882
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/control/outcome.json",
+          "sha256": "dcd5d551d2999422de135b6751560a56a706d4fd7c4e1cb1b848e71e5cfc9119",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/control/trial.json",
+          "sha256": "eda843d707cce22d0879c39a45d90fb1437224aa08bf02dada3d2127068f5ce3",
+          "size": 1328
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/dormant/outcome.json",
+          "sha256": "04119863c7a72fda08fbc1dc8c35ebad3d125174796eb4d74eef44f27cc89dbe",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair002/dormant/trial.json",
+          "sha256": "c36d22aa86e75aa8adcd5e6741ab3a9b034d24b325c43a69b7876a6a33d32655",
+          "size": 1328
+        }
+      },
+      "condition_order": [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "cf7c4a58ea77cf8014d04494b66fe05987a55f4a20cc2fe28adb256af6f6172f",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair002",
+      "pair_id": "tournament-pair-002",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/armed/analysis.json",
+          "sha256": "58e0752264f43f1fa5a9922fafab37a874952fc4744747db48a4a342d0c97c12",
+          "size": 3808
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/armed/outcome.json",
+          "sha256": "0b3a14167d94866061b3f6f4d15e445522b0b1fa89e3d211528a0246ee9246f8",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/armed/snapshot.json",
+          "sha256": "b7a710195fa2121210a425b795fd26e067c5c22d75b97cf739c585e976863e8f",
+          "size": 4555
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/armed/trial.json",
+          "sha256": "c864ac5b0076e992e36e69f3efe6fa5ccf24fcac8296383a7797e7ecd928e906",
+          "size": 1882
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/control/outcome.json",
+          "sha256": "b6a0efde42cc2e61a1c76bb8b6806a230af16b8b341a306cd4ca263961c17f55",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/control/trial.json",
+          "sha256": "70b7d860e1ba3b036cd219c6bbc3b8c8c7d35f40b718abe0bd3c75534fe395ed",
+          "size": 1328
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/dormant/outcome.json",
+          "sha256": "79cf5b395ee8e2ae5d168f67fa77faba6ede2d3370e9d14d2b86d59e09f623ce",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw/pair003/dormant/trial.json",
+          "sha256": "0d86e8ca0463e241b93377e2532eb2af07d341a721d0192f5e7f7b0fe698171a",
+          "size": 1328
+        }
+      },
+      "condition_order": [
+        "dormant",
+        "armed",
+        "control"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "cf7c4a58ea77cf8014d04494b66fe05987a55f4a20cc2fe28adb256af6f6172f",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair003",
+      "pair_id": "tournament-pair-003",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    }
+  ],
+  "restore": {
+    "install_restoration_pending": true,
+    "save_restoration_pending": true,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+  },
+  "results": {
+    "all_armed_observations_match": true,
+    "all_semantic_outcomes_match": true,
+    "caller_ids": [
+      30,
+      30,
+      30
+    ],
+    "candidate_counts": [
+      8,
+      8,
+      8
+    ],
+    "classification": "complete_enemy_record_tournament_runtime_replay",
+    "complete_restored_snapshots": 3,
+    "draw_counts": [
+      1,
+      1,
+      1
+    ],
+    "queue_origins": [
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        4
+      ]
+    ],
+    "queued_shots": [
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        4
+      ]
+    ],
+    "selected_input_indices": [
+      5,
+      5,
+      5
+    ],
+    "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+    "stable_candidate_vector_sha256": "dbff6e2357617b6aa47716a072058ad64a577cafdf2441aa8e74cb391b1fe466",
+    "stable_native_observation_sha256": "cf7c4a58ea77cf8014d04494b66fe05987a55f4a20cc2fe28adb256af6f6172f",
+    "stable_selector_rng_state_after": "0x6f5d21d2",
+    "stable_selector_rng_state_before": "0xd6ac62fb"
+  },
+  "schema_version": 1,
+  "solver_conformance": {
+    "capture_backed_test": "test_committed_enemy_tournament_replays_exact_selection_and_queue",
+    "offline_model": "src.observatory.enemy_record_selector_boundary.replay_enemy_record_selector",
+    "reason": "The Rust simulator consumes the authoritative settled enemy queue and does not receive the complete prospective record vector or selector-entry RNG state.",
+    "resolved_rule": "Given every complete ordered native record and selector-entry state, replay the exact record selector and require the selected record to bind to the settled queue",
+    "rust_change_required": false,
+    "simulator_version_bump_required": false
+  },
+  "supporting_artifacts": {
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_enemy_tournament_hw_plan_e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25.json",
+      "sha256": "e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25",
+      "size": 4341
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_enemy_tournament_hw_observer_d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa.dll.receipt.json",
+      "sha256": "db2f730938f0a49d13809d444928c8e5f0ff32904ace4aabf8e7e165b66ae862",
+      "size": 4831
+    }
+  }
+}

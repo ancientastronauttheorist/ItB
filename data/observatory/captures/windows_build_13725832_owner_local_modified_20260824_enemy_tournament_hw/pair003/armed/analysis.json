@@ -1,0 +1,128 @@
+{
+  "bridge": {
+    "enemy_count": 1,
+    "matched_uid": true,
+    "queue_corroboration": "targeted_tiles_ray",
+    "queued_origin": null,
+    "queued_target": null,
+    "targeted_tiles": [
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "capture_id": "tournament-pair-003-armed",
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "e9af1b68805383f062d222c85b01aebb83e4febb3c92e72942634ae9529afc25",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "queue_prebytes_sha256": "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+    "record_selector_boundary_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "selected_prebytes_sha256": "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b",
+    "selected_queue_source_sha256": "c57293d35e4bba11edfc1b66233368fb32a3ce51c04c01aea681a9024c3b2be6",
+    "selector_prebytes_sha256": "c2dc277ed8da14a5cafc75481372e17e4d759a08a1588db1e553a10d1235ede4"
+  },
+  "kind": "enemy_tournament_hw_replay_correlation",
+  "module_sha256": "d5c173e53182534fb9eb038008bfee9c34b44b77a15bbe4fc5db0c55a7008dfa",
+  "native": {
+    "base_current_weapon_at_queue_raw": 1,
+    "base_current_weapon_before_queue_raw": -1,
+    "candidate_count": 8,
+    "current_weapon_raw": 1,
+    "draw_count": 1,
+    "pawn_id": 1303,
+    "queue_origin": [
+      5,
+      4
+    ],
+    "queued_shot": [
+      4,
+      4
+    ],
+    "rng_state_after": "0x6f5d21d2",
+    "rng_state_before": "0xd6ac62fb",
+    "selected_input_index": 5,
+    "selected_source": "primary"
+  },
+  "reasons": [],
+  "replay": {
+    "analysis_kind": "native_enemy_record_selector_replay",
+    "board_dimensions": [
+      8,
+      8
+    ],
+    "canonical_observable_final_state": "0x6f5d21d2",
+    "canonical_observable_pre_call_state": "0x56ac62fb",
+    "displaced_primary_input_indices": [],
+    "draw_count": 1,
+    "eligible_input_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "fallback_attempts": [],
+    "fallback_explored": false,
+    "fallback_gate_remainder": null,
+    "input_state": "0xd6ac62fb",
+    "interior_favorable": true,
+    "primary_input_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "primary_selected_input_index": 5,
+    "record_count": 8,
+    "rejected_records": [],
+    "rng_transcript": [
+      {
+        "bound": 8,
+        "call_rva": "0x000f7f6a",
+        "caller_id": 30,
+        "canonical_observable_post_call_state": "0x6f5d21d2",
+        "canonical_observable_pre_call_state": "0x56ac62fb",
+        "draw_index": 1,
+        "modulo_result": 5,
+        "raw_result": 28509,
+        "source": "primary_record_group"
+      }
+    ],
+    "schema_version": 1,
+    "selected_input_index": 5,
+    "selected_record": {
+      "destination_x": 5,
+      "destination_y": 4,
+      "positioning_score": 5,
+      "target_score": 5,
+      "target_x": 4,
+      "target_y": 4
+    },
+    "selected_source": "primary"
+  },
+  "schema_version": 1,
+  "snapshot_sha256": "b15fa866de3059c8e1faf09c91c331d3e645b64a9dd42f82f732f5764d7e238d",
+  "status": "correlated",
+  "summary": {
+    "bridge_queue_matches": true,
+    "correlated": true,
+    "native_replay_exact": true,
+    "selected_queue_binding_exact": true
+  }
+}
