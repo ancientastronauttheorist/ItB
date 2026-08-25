@@ -128,6 +128,13 @@ POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
             "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
         ),
     },
+    {
+        "id": "enemy_materialized_effect_hw_project_bridge",
+        "size": 389_371,
+        "sha256": (
+            "232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038"
+        ),
+    },
 )
 
 

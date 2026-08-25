@@ -1,0 +1,908 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce",
+    "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "materialized_prebytes_sha256": "d71b7e11a5a44b20cbf9f799f08536bb7b4c3156be716a5eb91dfc365d695668",
+    "module_sha256": "cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328",
+    "record_selector_boundary_canonical_sha256": "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "skill_effect_boundary_canonical_sha256": "d3502ffc37ce5fb0a685e6df3587173f2076f0701e944dbd4888ee0f46711bdd"
+  },
+  "campaign": {
+    "condition_orders": [
+      [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      [
+        "armed",
+        "dormant",
+        "control"
+      ],
+      [
+        "dormant",
+        "control",
+        "armed"
+      ]
+    ],
+    "conditions": [
+      "control",
+      "dormant",
+      "armed"
+    ],
+    "fixed_seed": 324508639,
+    "pair_count": 3,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "scenario": {
+      "consumed_spawn_count": 0,
+      "pawn_id": 1303,
+      "pawn_type": "Firefly1",
+      "start": [
+        4,
+        4
+      ]
+    }
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "A universal candidate vector or selected action for other boards, enemy types, multiple weapons, cancellation, or retarget paths.",
+      "Universal SkillEffect materialization, TwoClick/final-effect routes, or callback-time Board observations outside this fixed selected FireflyAtk1 path.",
+      "Prospective enemy-phase forecasting from ordinary solver input, which still lacks the complete candidate vector and selector-entry RNG state.",
+      "Pristine-depot behavior; this is the attested owner-local-modified Windows build."
+    ],
+    "proven": [
+      "The fixed Firefly1 scenario produced the same complete ordered vector of eight 24-byte enemy candidate records in all three armed fresh processes.",
+      "Starting from selector state 0xd6ac62fb, the exact record-selector replay consumed one caller-30 draw, selected input index 5, reached state 0x6f5d21d2, and bound that record to the immediate same-pawn queue commit.",
+      "At the native SkillEffect postprocess seam in each armed process, the selected FireflyAtk1 materialized with owner and source ancestry 1303/6, origin [5,4], selected target [4,4], and one queued one-damage ExploFirefly1 SpaceDamage at [3,4]; that exact object then bound to the settled attack ray.",
+      "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets.",
+      "Every one-shot observer cleared all private debug state, removed its vectored exception handler, released its pinned executable, preserved every seam, published no pointer, and modified no executable bytes."
+    ]
+  },
+  "kind": "observatory_enemy_materialized_effect_hw_campaign_receipt",
+  "pairs": [
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/armed/analysis.json",
+          "sha256": "e5c42ca8c7b5ebeca5d1dfa6aa2253f6c822cbb8b546f8b65e3e3d3b1c0f4ad0",
+          "size": 4247
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/armed/outcome.json",
+          "sha256": "e8d1f8c3dd61553368a93df1f15e2348889ecdd50f3742dffad669aa5453aa21",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/armed/snapshot.json",
+          "sha256": "b0805627f6b1904b7ef3faa52be0b1a41053e63d77df7ad2a559ee7f4ce654cb",
+          "size": 5445
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/armed/trial.json",
+          "sha256": "2b96f1b4a1a5b542f312f614566c4a12bf8aca20b672f59926c3d6389c74e12f",
+          "size": 2002
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/control/outcome.json",
+          "sha256": "45d6b4b700c392dcadaddc413426d68974a996e190c9391d6d3d4989a41f7802",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/control/trial.json",
+          "sha256": "35ef61f6f74075a3c11c3743f0cd8e2f9d25890f70948eef6850072f54275a2a",
+          "size": 1406
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/dormant/outcome.json",
+          "sha256": "b9b9b7f0a48faf10c9c04c4979187941a0614a61294cf45e8f7cba5fbd542c20",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair001/dormant/trial.json",
+          "sha256": "4470c4d22c4b41b15bf01acdbfa43cf99ddc4ebe238d848e151d300731a1124f",
+          "size": 1406
+        }
+      },
+      "condition_order": [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "materialized_effect": {
+          "effect_count": 0,
+          "origin_x": 5,
+          "origin_y": 4,
+          "owner_id": 1303,
+          "queued_animation": "ExploFirefly1",
+          "queued_animation_length": 13,
+          "queued_boost_marker": false,
+          "queued_count": 1,
+          "queued_damage": 1,
+          "queued_loc_x": 3,
+          "queued_loc_y": 4,
+          "queued_private_origin_x": 5,
+          "queued_private_origin_y": 4,
+          "queued_private_source_tag": 6,
+          "selected_target_x": 4,
+          "selected_target_y": 4,
+          "skill_key": "FireflyAtk1",
+          "skill_key_length": 11,
+          "skill_owner_id": 1303,
+          "skill_source_tag": 6
+        },
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "ceefb4a019aa4cf2fb64add37fe926dbc9a0da702872a2830b802a9bf17efea3",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "ordering_error_count": 0,
+        "overflow_count": 0,
+        "pointer_fault_count": 0,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "torn_candidate_count": 0,
+        "torn_materialized_count": 0,
+        "torn_record_count": 0,
+        "transition_mismatch_count": 0,
+        "unexpected_breakpoint_count": 0,
+        "veh_removed": true,
+        "wrong_thread_count": 0
+      },
+      "pair": "pair001",
+      "pair_id": "materialized-pair-001",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/armed/analysis.json",
+          "sha256": "51e963186caba7653132084e484afecdae663529f776940a4ecb93a440f3b137",
+          "size": 4247
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/armed/outcome.json",
+          "sha256": "b7e62a1d2132583aa653f424836c23f12e9f7f585d4e67ebb4ca6758e8c59f52",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/armed/snapshot.json",
+          "sha256": "5a0f32ab16962dc6268b2bcbc17458d1f6583cf173515174983f4198f8803671",
+          "size": 5445
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/armed/trial.json",
+          "sha256": "bdc22e301cf0df2dd5699b46aff6997214835a7e1b10621efc20397ef13dcc19",
+          "size": 2002
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/control/outcome.json",
+          "sha256": "1654837cff992f3e380c5365c0c97708a91e2e87e3cfb4777d5905834481e295",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/control/trial.json",
+          "sha256": "071afd642979b6745de1cc2e0bfefdfb9dde2a3ba4f48c7c765600778b0702e2",
+          "size": 1406
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/dormant/outcome.json",
+          "sha256": "26e2efa2860c2375b30ed863195806906c9f5d0b8bf5d9dc902162e8a6c66091",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair002/dormant/trial.json",
+          "sha256": "23b36a1737a08c1315e2467219d546d8274dacafc450557db95948756011ca6e",
+          "size": 1406
+        }
+      },
+      "condition_order": [
+        "armed",
+        "dormant",
+        "control"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "materialized_effect": {
+          "effect_count": 0,
+          "origin_x": 5,
+          "origin_y": 4,
+          "owner_id": 1303,
+          "queued_animation": "ExploFirefly1",
+          "queued_animation_length": 13,
+          "queued_boost_marker": false,
+          "queued_count": 1,
+          "queued_damage": 1,
+          "queued_loc_x": 3,
+          "queued_loc_y": 4,
+          "queued_private_origin_x": 5,
+          "queued_private_origin_y": 4,
+          "queued_private_source_tag": 6,
+          "selected_target_x": 4,
+          "selected_target_y": 4,
+          "skill_key": "FireflyAtk1",
+          "skill_key_length": 11,
+          "skill_owner_id": 1303,
+          "skill_source_tag": 6
+        },
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "ceefb4a019aa4cf2fb64add37fe926dbc9a0da702872a2830b802a9bf17efea3",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "ordering_error_count": 0,
+        "overflow_count": 0,
+        "pointer_fault_count": 0,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "torn_candidate_count": 0,
+        "torn_materialized_count": 0,
+        "torn_record_count": 0,
+        "transition_mismatch_count": 0,
+        "unexpected_breakpoint_count": 0,
+        "veh_removed": true,
+        "wrong_thread_count": 0
+      },
+      "pair": "pair002",
+      "pair_id": "materialized-pair-002",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/armed/analysis.json",
+          "sha256": "c38e979bd99e945422ce7e87ea21eeb6b40d380ca26c80e5aab70eb080566baa",
+          "size": 4247
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/armed/outcome.json",
+          "sha256": "fc1942660a1d3f535533936eed009da8e921bfe4c6ce6c285e412de2c696149d",
+          "size": 11340
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/armed/snapshot.json",
+          "sha256": "24c391d633662d79707bc9a3c36431845dd394ff15657dddc5a6f9a2fb9e1059",
+          "size": 5445
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/armed/trial.json",
+          "sha256": "1333e82ada733073073c913e67adfb6dcefada1fc02673d711927da6d73f2141",
+          "size": 2002
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/control/outcome.json",
+          "sha256": "9cfe6951904a7a652c3b37363137c09e9728708f6b13fc271d99b7af09190d33",
+          "size": 11340
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/control/trial.json",
+          "sha256": "7d13e28046f30f48f7d02f224d1ac91096bbfeb2f7c69a6826a1e243b6aacefb",
+          "size": 1406
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/dormant/outcome.json",
+          "sha256": "e7944f598e66a358196aade03a9184fffa69332eb4cedbec9c5130cb6413b5d1",
+          "size": 11340
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/pair003/dormant/trial.json",
+          "sha256": "5ec987e7a0f5a76b2baaeaebf9afc9313f631759f245d049d2554b4aa9e5315b",
+          "size": 1406
+        }
+      },
+      "condition_order": [
+        "dormant",
+        "control",
+        "armed"
+      ],
+      "observation": {
+        "base_current_weapon_at_queue_raw": 1,
+        "base_current_weapon_before_queue_raw": -1,
+        "candidate_records": [
+          {
+            "destination_x": 4,
+            "destination_y": 2,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 2
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 3
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 6,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 6
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 3,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 3
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 4
+          },
+          {
+            "destination_x": 5,
+            "destination_y": 5,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 4,
+            "target_y": 5
+          },
+          {
+            "destination_x": 4,
+            "destination_y": 4,
+            "positioning_score": 5,
+            "target_score": 5,
+            "target_x": 3,
+            "target_y": 4
+          }
+        ],
+        "current_weapon_raw": 1,
+        "materialized_effect": {
+          "effect_count": 0,
+          "origin_x": 5,
+          "origin_y": 4,
+          "owner_id": 1303,
+          "queued_animation": "ExploFirefly1",
+          "queued_animation_length": 13,
+          "queued_boost_marker": false,
+          "queued_count": 1,
+          "queued_damage": 1,
+          "queued_loc_x": 3,
+          "queued_loc_y": 4,
+          "queued_private_origin_x": 5,
+          "queued_private_origin_y": 4,
+          "queued_private_source_tag": 6,
+          "selected_target_x": 4,
+          "selected_target_y": 4,
+          "skill_key": "FireflyAtk1",
+          "skill_key_length": 11,
+          "skill_owner_id": 1303,
+          "skill_source_tag": 6
+        },
+        "queue_origin": [
+          5,
+          4
+        ],
+        "queued_shot": [
+          4,
+          4
+        ],
+        "rng_transcript": [
+          {
+            "bound": 8,
+            "call_rva": "0x000f7f6a",
+            "caller_id": 30,
+            "canonical_observable_post_call_state": "0x6f5d21d2",
+            "canonical_observable_pre_call_state": "0x56ac62fb",
+            "draw_index": 1,
+            "modulo_result": 5,
+            "raw_result": 28509,
+            "source": "primary_record_group"
+          }
+        ],
+        "selected_record": {
+          "destination_x": 5,
+          "destination_y": 4,
+          "positioning_score": 5,
+          "target_score": 5,
+          "target_x": 4,
+          "target_y": 4
+        },
+        "selector_context": {
+          "base_current_weapon_raw": -1,
+          "board_height": 8,
+          "board_width": 8,
+          "current_weapon_raw": 1,
+          "interior_favorable": true,
+          "pawn_id": 1303,
+          "selector_rng_state_after": "0x6f5d21d2",
+          "selector_rng_state_before": "0xd6ac62fb"
+        }
+      },
+      "observation_sha256": "ceefb4a019aa4cf2fb64add37fe926dbc9a0da702872a2830b802a9bf17efea3",
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "ordering_error_count": 0,
+        "overflow_count": 0,
+        "pointer_fault_count": 0,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "torn_candidate_count": 0,
+        "torn_materialized_count": 0,
+        "torn_record_count": 0,
+        "transition_mismatch_count": 0,
+        "unexpected_breakpoint_count": 0,
+        "veh_removed": true,
+        "wrong_thread_count": 0
+      },
+      "pair": "pair003",
+      "pair_id": "materialized-pair-003",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "whole_game_outcome": {
+        "control_armed": "matched",
+        "control_dormant": "matched",
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673"
+      }
+    }
+  ],
+  "restore": {
+    "install_restoration_pending": true,
+    "save_restoration_pending": true,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+  },
+  "results": {
+    "all_armed_observations_match": true,
+    "all_semantic_outcomes_match": true,
+    "caller_ids": [
+      30,
+      30,
+      30
+    ],
+    "candidate_counts": [
+      8,
+      8,
+      8
+    ],
+    "classification": "selected_firefly_skill_effect_materialization_runtime_proven",
+    "complete_restored_snapshots": 3,
+    "draw_counts": [
+      1,
+      1,
+      1
+    ],
+    "materialized_animations": [
+      "ExploFirefly1",
+      "ExploFirefly1",
+      "ExploFirefly1"
+    ],
+    "materialized_damages": [
+      1,
+      1,
+      1
+    ],
+    "materialized_effects": [
+      {
+        "effect_count": 0,
+        "origin_x": 5,
+        "origin_y": 4,
+        "owner_id": 1303,
+        "queued_animation": "ExploFirefly1",
+        "queued_animation_length": 13,
+        "queued_boost_marker": false,
+        "queued_count": 1,
+        "queued_damage": 1,
+        "queued_loc_x": 3,
+        "queued_loc_y": 4,
+        "queued_private_origin_x": 5,
+        "queued_private_origin_y": 4,
+        "queued_private_source_tag": 6,
+        "selected_target_x": 4,
+        "selected_target_y": 4,
+        "skill_key": "FireflyAtk1",
+        "skill_key_length": 11,
+        "skill_owner_id": 1303,
+        "skill_source_tag": 6
+      },
+      {
+        "effect_count": 0,
+        "origin_x": 5,
+        "origin_y": 4,
+        "owner_id": 1303,
+        "queued_animation": "ExploFirefly1",
+        "queued_animation_length": 13,
+        "queued_boost_marker": false,
+        "queued_count": 1,
+        "queued_damage": 1,
+        "queued_loc_x": 3,
+        "queued_loc_y": 4,
+        "queued_private_origin_x": 5,
+        "queued_private_origin_y": 4,
+        "queued_private_source_tag": 6,
+        "selected_target_x": 4,
+        "selected_target_y": 4,
+        "skill_key": "FireflyAtk1",
+        "skill_key_length": 11,
+        "skill_owner_id": 1303,
+        "skill_source_tag": 6
+      },
+      {
+        "effect_count": 0,
+        "origin_x": 5,
+        "origin_y": 4,
+        "owner_id": 1303,
+        "queued_animation": "ExploFirefly1",
+        "queued_animation_length": 13,
+        "queued_boost_marker": false,
+        "queued_count": 1,
+        "queued_damage": 1,
+        "queued_loc_x": 3,
+        "queued_loc_y": 4,
+        "queued_private_origin_x": 5,
+        "queued_private_origin_y": 4,
+        "queued_private_source_tag": 6,
+        "selected_target_x": 4,
+        "selected_target_y": 4,
+        "skill_key": "FireflyAtk1",
+        "skill_key_length": 11,
+        "skill_owner_id": 1303,
+        "skill_source_tag": 6
+      }
+    ],
+    "materialized_locations": [
+      [
+        3,
+        4
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "native_skill_keys": [
+      "FireflyAtk1",
+      "FireflyAtk1",
+      "FireflyAtk1"
+    ],
+    "queue_origins": [
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        4
+      ]
+    ],
+    "queued_shots": [
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        4,
+        4
+      ]
+    ],
+    "selected_input_indices": [
+      5,
+      5,
+      5
+    ],
+    "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+    "stable_candidate_vector_sha256": "dbff6e2357617b6aa47716a072058ad64a577cafdf2441aa8e74cb391b1fe466",
+    "stable_native_observation_sha256": "ceefb4a019aa4cf2fb64add37fe926dbc9a0da702872a2830b802a9bf17efea3",
+    "stable_selector_rng_state_after": "0x6f5d21d2",
+    "stable_selector_rng_state_before": "0xd6ac62fb"
+  },
+  "schema_version": 1,
+  "solver_conformance": {
+    "capture_backed_test": "test_committed_enemy_materialized_effect_binds_raw_selected_and_settled_queue",
+    "offline_model": "src.observatory.enemy_record_selector_boundary.replay_enemy_record_selector",
+    "reason": "The Rust simulator consumes the authoritative settled enemy queue and does not receive the complete prospective record vector or selector-entry RNG state.",
+    "resolved_rule": "Given every complete ordered native record and selector-entry state, replay the exact record selector and require the selected record to bind through its native materialized SkillEffect to the settled queue",
+    "rust_change_required": false,
+    "simulator_version_bump_required": false
+  },
+  "supporting_artifacts": {
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_enemy_materialized_effect_hw_plan_6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce.json",
+      "sha256": "6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce",
+      "size": 5511
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_enemy_materialized_effect_hw_observer_cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328.dll.receipt.json",
+      "sha256": "0c7de96bf9fcde3fa07c109eb4c3d0b295fc7db707c19e74f61af7236f8da3a2",
+      "size": 5334
+    }
+  }
+}

@@ -48,6 +48,14 @@ last repeats the selected effect whose impact is present in the same process's
 settled queue. All three synthetic campaigns are whole-game neutral for the
 fixed scenario, restore all 65 callback slots, and end with byte-identical
 pre/post save manifests and the prior Mod Loader restored.
+Three counterbalanced hardware triplets now close the selected native
+materialization seam for that same path: input 5 becomes a postprocessed
+`FireflyAtk1` owned by pawn 1303 with source tag 6, origin `[5,4]`, target
+`[4,4]`, and one queued one-damage `ExploFirefly1` record at `[3,4]`, then binds
+to the settled attack. All nine successful outcomes match semantically and all
+native state restores. Two rejected attempts are retained only as diagnostics,
+including one unexplained host-validation failure that succeeds on a fresh-
+process retry.
 Three source-verified `Spawner:NextPawn` spans now resolve the normal
 weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
 triplets also correlate the final selected record to the immediate Pawn queue
@@ -833,6 +841,10 @@ adds a focused Firefly queue-direction conformance regression. The final
 closure receipts prove the baseline 33-file save tree, Mod Loader, and
 689-entry installation were restored and the active bridge/install contain no
 Observatory diagnostic file.
+A later three-triplet observer extends the fixed selected path through native
+SkillEffect postprocessing: it binds input 5 to the exact owner/source fields,
+one `ExploFirefly1` damage record at `[3,4]`, and the settled attack, with all
+nine outcomes matched and the 32-file campaign save/install restored exactly.
 The Final boundary continuations additionally prove that both shipped Final
 stages end through the current turn-limit/state-2 readiness branch before
 `IsEndBlocked`, that Final Cave writes outcome code 1 there without rechecking
@@ -901,9 +913,16 @@ bridge-read boundary.
   Calls 0–31 match the 32 score arguments, and source ancestry proves the
   inherited scorer materializes one actual effect per call. Call 32 repeats
   score-side call 23's `[5,4] -> [4,4]` arguments and `[3,4]` impact; the same
-  process settles that Firefly origin and queued impact. Native annotation and
-  postprocessing, other subclasses and TwoClick paths, prospective Board
-  state, and other decision shapes remain open.
+  process settles that Firefly origin and queued impact. Other subclasses and
+  TwoClick paths, prospective Board state, and other decision shapes remain
+  open.
+- **Completed at runtime for the selected native SkillEffect:** three
+  counterbalanced control/dormant/armed triplets capture selected input 5,
+  postprocessed owner/source/origin/target fields, the queued damage/animation
+  record at `[3,4]`, and the subsequent queue commit in one process. All nine
+  successful outcomes match and all observer state restores. This closes only
+  the fixed selected Firefly path, not other materialization routes or
+  prospective solver input.
 - **Completed at runtime for one full tournament:** three counterbalanced native
   triplets capture the same eight post-callback records, selector-entry and
   exit CRT state, selected record, and immediate queue commit. Exact replay
@@ -989,6 +1008,9 @@ bridge-read boundary.
   cache materializer/postprocessor, score-side Lua effect ancestry,
   tie-breaking, and the selected record are build-keyed and independently
   verifiable.
+- **Selected materialization validation complete:** the exact postprocess seam
+  is dynamically validated for the fixed Firefly1 winner through its settled
+  queue, with three counterbalanced repetitions and complete cleanup.
 - **Road Runner boundary complete:** the path API bindings, profile constants,
   Board search vtable, and profile-4 transit/stop split are build-keyed and
   independently verifiable; simulator v401 carries the proven rule.
@@ -1038,14 +1060,15 @@ Useful metrics include:
 
 The targeted offline map is now deep enough; do not broaden into full
 decompilation. The reversible owner campaign has completed the planned Lua RNG,
-natural callback, bounded native RNG, `Spawner:NextPawn` span/replay, and
-selected-queue observations. The replay model is exact when supplied its
-captured state and candidates, but ordinary planning still lacks those inputs
-before the call and lacks the selected coordinate. Keep the current Rust
-non-fabrication rule. If a future solver mismatch justifies more runtime work,
-add only the missing narrow input—coordinate scheduling, pre-call capsule
-delivery, a broader selected-action path, or one native candidate record—under
-the same matched and reversible protocol.
+natural callback, bounded native RNG, `Spawner:NextPawn` span/replay,
+selected-queue, and fixed selected-SkillEffect materialization observations.
+The replay model is exact when supplied its captured state and candidates, but
+ordinary planning still lacks those inputs before the call and lacks the
+selected coordinate. Keep the current Rust non-fabrication rule. If a future
+solver mismatch justifies more runtime work, add only the missing narrow
+input—coordinate scheduling, pre-call capsule delivery, a broader selected-
+action path, or one native candidate record—under the same matched and
+reversible protocol.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

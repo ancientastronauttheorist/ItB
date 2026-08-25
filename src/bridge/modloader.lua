@@ -130,6 +130,45 @@ local ENEMY_TOURNAMENT = {
         "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
     observer = nil,
 }
+ENEMY_TOURNAMENT.materialized_effect = {
+    snapshot_file =
+        BRIDGE_DIR .. "/itb_observatory_enemy_materialized_effect_snapshot.json",
+    snapshot_tmp =
+        BRIDGE_DIR .. "/itb_observatory_enemy_materialized_effect_snapshot.json.tmp",
+    rejected_snapshot_file = BRIDGE_DIR
+        .. "/itb_observatory_enemy_materialized_effect_rejected_snapshot.json",
+    rejected_snapshot_tmp = BRIDGE_DIR
+        .. "/itb_observatory_enemy_materialized_effect_rejected_snapshot.json.tmp",
+    observer_sha256 =
+        "cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328",
+    observer_export =
+        "luaopen_itb_observatory_enemy_materialized_effect_hw_observer",
+    plan_sha256 =
+        "6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce",
+    inventory_sha256 =
+        "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    boundary_sha256 =
+        "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    rng_return_sha256 =
+        "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    record_selector_sha256 =
+        "1a7ef818d1e889849e68301cb3e94d2291bc908f98b7501c5033d390ba110bfc",
+    skill_effect_boundary_sha256 =
+        "d3502ffc37ce5fb0a685e6df3587173f2076f0701e944dbd4888ee0f46711bdd",
+    selected_queue_source_sha256 =
+        "c57293d35e4bba11edfc1b66233368fb32a3ce51c04c01aea681a9024c3b2be6",
+    selector_prebytes_sha256 =
+        "c2dc277ed8da14a5cafc75481372e17e4d759a08a1588db1e553a10d1235ede4",
+    selected_prebytes_sha256 =
+        "8e2e44aae1e456d15513da12e097135d095ae740d579715d19e83cb65c35650b",
+    queue_prebytes_sha256 =
+        "f63c44a5d0405f6e008755d711095ec30ac330c6b1bfcfbb43340ca8b0ed84b3",
+    materialized_prebytes_sha256 =
+        "d71b7e11a5a44b20cbf9f799f08536bb7b4c3156be716a5eb91dfc365d695668",
+    rng_state_owner_sha256 =
+        "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    observer = nil,
+}
 local SCORE_POSITIONING_X87 = {
     snapshot_file =
         BRIDGE_DIR .. "/itb_observatory_score_positioning_x87_snapshot.json",
@@ -3881,6 +3920,63 @@ function ENEMY_TOURNAMENT.load(directory)
     return observer
 end
 
+function ENEMY_TOURNAMENT.materialized_effect.load(directory)
+    if not is_windows() then
+        return nil, "enemy materialized-effect observer requires Windows"
+    end
+    if type(directory) ~= "string" then
+        return nil, "enemy materialized-effect observer directory is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename =
+        "itb_observatory_enemy_materialized_effect_hw_observer_"
+        .. ENEMY_TOURNAMENT.materialized_effect.observer_sha256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        ENEMY_TOURNAMENT.materialized_effect.observer_export
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load enemy materialized-effect observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "enemy materialized-effect observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-enemy-materialized-effect-hw-observer/1"
+        or rawget(observer, "BUILD_ID") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "SELECTOR_RVA") ~= "0x000f7dd0"
+        or rawget(observer, "SELECTED_RVA") ~= "0x000f6854"
+        or rawget(observer, "QUEUE_RVA") ~= "0x00227d20"
+        or rawget(observer, "MATERIALIZED_RVA") ~= "0x00268323"
+        or rawget(observer, "RNG_STATE_OWNER_RVA") ~= "0x0038ed32"
+        or rawget(observer, "HARDWARE_BREAKPOINT_PLAN_SHA256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.plan_sha256
+        or rawget(observer, "RECORD_SELECTOR_BOUNDARY_SHA256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.record_selector_sha256
+        or rawget(observer, "SKILL_EFFECT_BOUNDARY_SHA256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.skill_effect_boundary_sha256
+        or rawget(observer, "SELECTED_QUEUE_SOURCE_SHA256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.selected_queue_source_sha256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "enemy materialized-effect observer contract mismatch"
+    end
+    return observer
+end
+
 function SCORE_POSITIONING_X87.load(directory)
     if not is_windows() then
         return nil, "ScorePositioning x87 observer requires Windows"
@@ -4911,6 +5007,191 @@ function ENEMY_TOURNAMENT.snapshot_complete(snapshot)
     return true
 end
 
+function ENEMY_TOURNAMENT.materialized_effect.validate_snapshot(snapshot, capture_id)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_enemy_materialized_effect_hw_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-enemy-materialized-effect-hw-observer/1"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "selector_context")) ~= "table"
+        or type(rawget(snapshot, "candidate_records")) ~= "table"
+        or type(rawget(snapshot, "selected_record")) ~= "table"
+        or type(rawget(snapshot, "materialized_effect")) ~= "table"
+        or type(rawget(snapshot, "queued_action")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "enemy materialized-effect snapshot contract mismatch"
+    end
+    local identity = rawget(snapshot, "identity")
+    local integrity = rawget(snapshot, "integrity")
+    local selector = rawget(snapshot, "selector_context")
+    local candidates = rawget(snapshot, "candidate_records")
+    local selected = rawget(snapshot, "selected_record")
+    local effect = rawget(snapshot, "materialized_effect")
+    local queued = rawget(snapshot, "queued_action")
+    local summary = rawget(snapshot, "summary")
+    local before = rawget(selector, "selector_rng_state_before")
+    local after = rawget(selector, "selector_rng_state_after")
+    if rawget(identity, "platform") ~= "windows"
+        or rawget(identity, "architecture") ~= "x86"
+        or rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "executable_size") ~= 5530112
+        or rawget(identity, "inventory_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.inventory_sha256
+        or rawget(identity, "boundary_map_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.boundary_sha256
+        or rawget(identity, "rng_return_map_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.rng_return_sha256
+        or rawget(identity, "record_selector_boundary_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.record_selector_sha256
+        or rawget(identity, "skill_effect_boundary_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.skill_effect_boundary_sha256
+        or rawget(identity, "selected_queue_source_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.selected_queue_source_sha256
+        or rawget(identity, "hardware_breakpoint_plan_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.plan_sha256
+        or rawget(identity, "selector_prebytes_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.selector_prebytes_sha256
+        or rawget(identity, "selected_prebytes_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.selected_prebytes_sha256
+        or rawget(identity, "queue_prebytes_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.queue_prebytes_sha256
+        or rawget(identity, "materialized_prebytes_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.materialized_prebytes_sha256
+        or rawget(identity, "rng_state_owner_sha256")
+            ~= ENEMY_TOURNAMENT.materialized_effect.rng_state_owner_sha256
+        or type(rawget(selector, "pawn_id")) ~= "number"
+        or type(rawget(selector, "current_weapon_raw")) ~= "number"
+        or type(rawget(selector, "base_current_weapon_raw")) ~= "number"
+        or rawget(selector, "board_width") ~= 8
+        or rawget(selector, "board_height") ~= 8
+        or type(rawget(selector, "interior_favorable")) ~= "boolean"
+        or type(before) ~= "string"
+        or string.match(before, "^0x%x%x%x%x%x%x%x%x$") == nil
+        or type(after) ~= "string"
+        or string.match(after, "^0x%x%x%x%x%x%x%x%x$") == nil
+        or rawget(summary, "candidate_count") ~= #candidates
+        or type(rawget(integrity, "complete")) ~= "boolean" then
+        return nil, "enemy materialized-effect identity or counts mismatch"
+    end
+    for index, record in ipairs(candidates) do
+        if type(record) ~= "table"
+            or rawget(record, "seq") ~= index - 1
+            or type(rawget(record, "destination_x")) ~= "number"
+            or type(rawget(record, "destination_y")) ~= "number"
+            or type(rawget(record, "target_x")) ~= "number"
+            or type(rawget(record, "target_y")) ~= "number"
+            or type(rawget(record, "target_score")) ~= "number"
+            or type(rawget(record, "positioning_score")) ~= "number" then
+            return nil, "enemy materialized-effect snapshot has an invalid candidate"
+        end
+    end
+    if rawget(selected, "kind") ~= "selected_record"
+        or rawget(selected, "seq") ~= 0
+        or type(rawget(selected, "pawn_id")) ~= "number"
+        or type(rawget(selected, "current_weapon_raw")) ~= "number"
+        or type(rawget(selected, "base_current_weapon_raw")) ~= "number"
+        or type(rawget(selected, "ai_dest_x")) ~= "number"
+        or type(rawget(selected, "ai_dest_y")) ~= "number"
+        or type(rawget(selected, "ai_target_x")) ~= "number"
+        or type(rawget(selected, "ai_target_y")) ~= "number"
+        or type(rawget(selected, "selected_field_4_raw")) ~= "number"
+        or type(rawget(selected, "selected_field_5_raw")) ~= "number"
+        or rawget(queued, "kind") ~= "queued_action"
+        or rawget(queued, "seq") ~= 1
+        or type(rawget(queued, "pawn_id")) ~= "number"
+        or type(rawget(queued, "current_weapon_raw")) ~= "number"
+        or type(rawget(queued, "base_current_weapon_raw")) ~= "number"
+        or type(rawget(queued, "target_x")) ~= "number"
+        or type(rawget(queued, "target_y")) ~= "number"
+        or type(rawget(queued, "origin_x")) ~= "number"
+        or type(rawget(queued, "origin_y")) ~= "number"
+        or type(rawget(queued, "queued_shot_x")) ~= "number"
+        or type(rawget(queued, "queued_shot_y")) ~= "number"
+        or type(rawget(queued, "queued_skill_raw")) ~= "number" then
+        return nil, "enemy materialized-effect selected/queue record is invalid"
+    end
+    local animation = rawget(effect, "queued_animation")
+    local skill_key = rawget(effect, "skill_key")
+    if rawget(effect, "effect_count") ~= 0
+        or rawget(effect, "queued_count") ~= 1
+        or rawget(effect, "owner_id") ~= rawget(selector, "pawn_id")
+        or rawget(effect, "skill_owner_id") ~= rawget(selector, "pawn_id")
+        or type(rawget(effect, "skill_source_tag")) ~= "number"
+        or rawget(effect, "origin_x") ~= rawget(selected, "ai_dest_x")
+        or rawget(effect, "origin_y") ~= rawget(selected, "ai_dest_y")
+        or rawget(effect, "selected_target_x")
+            ~= rawget(selected, "ai_target_x")
+        or rawget(effect, "selected_target_y")
+            ~= rawget(selected, "ai_target_y")
+        or type(rawget(effect, "queued_loc_x")) ~= "number"
+        or type(rawget(effect, "queued_loc_y")) ~= "number"
+        or type(rawget(effect, "queued_damage")) ~= "number"
+        or rawget(effect, "queued_private_origin_x")
+            ~= rawget(selected, "ai_dest_x")
+        or rawget(effect, "queued_private_origin_y")
+            ~= rawget(selected, "ai_dest_y")
+        or rawget(effect, "queued_private_source_tag")
+            ~= rawget(effect, "skill_source_tag")
+        or type(rawget(effect, "queued_boost_marker")) ~= "boolean"
+        or type(animation) ~= "string"
+        or type(rawget(effect, "queued_animation_length")) ~= "number"
+        or rawget(effect, "queued_animation_length") ~= string.len(animation)
+        or string.len(animation) > 63
+        or type(skill_key) ~= "string"
+        or string.len(skill_key) < 1
+        or type(rawget(effect, "skill_key_length")) ~= "number"
+        or rawget(effect, "skill_key_length") ~= string.len(skill_key)
+        or string.len(skill_key) > 63 then
+        return nil, "enemy materialized-effect record is invalid"
+    end
+    return true
+end
+
+function ENEMY_TOURNAMENT.materialized_effect.snapshot_complete(snapshot)
+    local integrity = rawget(snapshot, "integrity") or {}
+    local summary = rawget(snapshot, "summary") or {}
+    if rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "stopped_reason") ~= nil
+        or rawget(integrity, "overflow_count") ~= 0
+        or rawget(integrity, "ordering_error_count") ~= 0
+        or rawget(integrity, "pointer_fault_count") ~= 0
+        or rawget(integrity, "transition_mismatch_count") ~= 0
+        or rawget(integrity, "wrong_thread_count") ~= 0
+        or rawget(integrity, "unexpected_breakpoint_count") ~= 0
+        or rawget(integrity, "torn_candidate_count") ~= 0
+        or rawget(integrity, "torn_record_count") ~= 0
+        or rawget(integrity, "torn_materialized_count") ~= 0
+        or rawget(integrity, "debug_registers_armed") ~= false
+        or rawget(integrity, "debug_registers_cleared") ~= true
+        or rawget(integrity, "veh_installed") ~= false
+        or rawget(integrity, "veh_removed") ~= true
+        or rawget(integrity, "executable_file_released") ~= true
+        or rawget(integrity, "executable_bytes_modified") ~= false
+        or rawget(integrity, "seam_bytes_unchanged") ~= true
+        or rawget(integrity, "addresses_or_pointers_published") ~= false
+        or rawget(summary, "selector_count") ~= 1
+        or type(rawget(summary, "candidate_count")) ~= "number"
+        or rawget(summary, "candidate_count") < 1
+        or rawget(summary, "candidate_count") > 256
+        or rawget(summary, "selected_count") ~= 1
+        or rawget(summary, "materialized_effect_count") ~= 1
+        or rawget(summary, "queue_count") ~= 1
+        or rawget(summary, "pair_count") ~= 1
+        or rawget(summary, "thread_count") ~= 1
+        or rawget(summary, "stage") ~= 4
+        or rawget(summary, "pending_selection") ~= false then
+        return nil, "enemy materialized-effect snapshot is incomplete"
+    end
+    return true
+end
+
 function SCORE_POSITIONING_X87.mode(bits)
     if bits == 0 then return "nearest_even" end
     if bits == 0x0400 then return "down" end
@@ -5541,6 +5822,177 @@ function ENEMY_TOURNAMENT.trial(condition, capture_id)
         .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
         .. " candidates=" .. tostring(candidate_count)
         .. " selected=" .. tostring(selected_count)
+        .. " queue=" .. tostring(queue_count)
+        .. " complete=true"
+end
+
+function ENEMY_TOURNAMENT.materialized_effect.trial(condition, capture_id)
+    local command_name = "OBS_ENEMY_MATERIALIZED_EFFECT_TRIAL"
+    if condition ~= "control" and condition ~= "dormant"
+        and condition ~= "armed" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " capture ID is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    if ENEMY_TOURNAMENT.materialized_effect.observer ~= nil then
+        return nil, "enemy materialized-effect observer is already consumed"
+    end
+    if observatory_path_exists(ENEMY_TOURNAMENT.materialized_effect.snapshot_file)
+        or observatory_path_exists(ENEMY_TOURNAMENT.materialized_effect.snapshot_tmp)
+        or observatory_path_exists(
+            ENEMY_TOURNAMENT.materialized_effect.rejected_snapshot_file
+        )
+        or observatory_path_exists(
+            ENEMY_TOURNAMENT.materialized_effect.rejected_snapshot_tmp
+        ) then
+        return nil, "enemy materialized-effect snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local gameflow, gameflow_error =
+        load_observatory_native_gameflow_helper(directory)
+    if not gameflow then return nil, tostring(gameflow_error) end
+    local observer = nil
+    if condition ~= "control" then
+        local observer_error = nil
+        observer, observer_error = ENEMY_TOURNAMENT.materialized_effect.load(directory)
+        if not observer then return nil, tostring(observer_error) end
+    end
+    local scenario, scenario_error = observatory_selected_queue_scenario()
+    if not scenario then return nil, tostring(scenario_error) end
+    local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, mech_id in ipairs(mech_ids) do
+        local mech = Board:GetPawn(mech_id)
+        if mech and not mech:IsDead() then mech:SetActive(false) end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "enemy materialized-effect seed failed: "
+            .. tostring(seeded)
+    end
+    if condition == "armed" then
+        ENEMY_TOURNAMENT.materialized_effect.observer = observer
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "enemy materialized-effect arm failed: "
+                .. tostring(armed)
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "stage") ~= 0
+            or rawget(status, "selector_count") ~= 0
+            or rawget(status, "candidate_count") ~= 0
+            or rawget(status, "record_count") ~= 0
+            or rawget(status, "materialized_effect_count") ~= 0
+            or rawget(status, "debug_registers_armed") ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "enemy materialized-effect arm status mismatch"
+        end
+    end
+    local start_count = -1
+    pcall(function() start_count = Game:GetTurnCount() end)
+    local end_ok, invoked = pcall(rawget(gameflow, "end_player_turn"))
+    if not end_ok or invoked ~= true then
+        if condition == "armed" then pcall(rawget(observer, "finish")) end
+        return nil, "enemy materialized-effect native End Turn failed: "
+            .. tostring(invoked)
+    end
+    local advanced = wait_until_coro(function()
+        if Board:IsBusy() then return false end
+        local current_count = -1
+        local current_team = -1
+        pcall(function() current_count = Game:GetTurnCount() end)
+        pcall(function() current_team = Game:GetTeamTurn() end)
+        return current_count > start_count and current_team == TEAM_PLAYER
+    end, 60)
+    if not advanced then
+        if condition == "armed" then pcall(rawget(observer, "finish")) end
+        return nil, "enemy materialized-effect turn transition timed out"
+    end
+    local candidate_count = 0
+    local selected_count = 0
+    local materialized_count = 0
+    local queue_count = 0
+    if condition == "armed" then
+        local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+        if not finish_ok or type(snapshot) ~= "table" then
+            return nil, "enemy materialized-effect finish failed: "
+                .. tostring(snapshot)
+        end
+        local valid, validation_error =
+            ENEMY_TOURNAMENT.materialized_effect.validate_snapshot(
+                snapshot, capture_id
+            )
+        if not valid then
+            local diagnostic_wrote, diagnostic_error =
+                write_observatory_create_only_json(
+                    ENEMY_TOURNAMENT.materialized_effect.rejected_snapshot_file,
+                    ENEMY_TOURNAMENT.materialized_effect.rejected_snapshot_tmp,
+                    snapshot,
+                    256 * 1024
+                )
+            if not diagnostic_wrote then
+                return nil, tostring(validation_error)
+                    .. "; rejected snapshot output failed: "
+                    .. tostring(diagnostic_error)
+            end
+            return nil, tostring(validation_error)
+                .. "; rejected snapshot captured"
+        end
+        local wrote, write_error = write_observatory_create_only_json(
+            ENEMY_TOURNAMENT.materialized_effect.snapshot_file,
+            ENEMY_TOURNAMENT.materialized_effect.snapshot_tmp,
+            snapshot,
+            256 * 1024
+        )
+        if not wrote then
+            return nil, "enemy materialized-effect snapshot output failed: "
+                .. tostring(write_error)
+        end
+        candidate_count = rawget(snapshot.summary, "candidate_count") or 0
+        selected_count = rawget(snapshot.summary, "selected_count") or 0
+        materialized_count =
+            rawget(snapshot.summary, "materialized_effect_count") or 0
+        queue_count = rawget(snapshot.summary, "queue_count") or 0
+        local complete, complete_error =
+            ENEMY_TOURNAMENT.materialized_effect.snapshot_complete(snapshot)
+        if not complete then return nil, tostring(complete_error) end
+    end
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " pawn=" .. tostring(scenario.pawn_id)
+        .. " type=" .. tostring(scenario.pawn_type)
+        .. " at=" .. tostring(scenario.x) .. "," .. tostring(scenario.y)
+        .. " consumed_spawns=" .. tostring(scenario.consumed_spawn_count)
+        .. " candidates=" .. tostring(candidate_count)
+        .. " selected=" .. tostring(selected_count)
+        .. " materialized=" .. tostring(materialized_count)
         .. " queue=" .. tostring(queue_count)
         .. " complete=true"
 end
@@ -7318,6 +7770,24 @@ local function execute_command(cmd_str)
             ENEMY_TOURNAMENT.trial(parts[2], parts[3])
         if not completed then
             write_ack("ERROR: OBS_ENEMY_TOURNAMENT_TRIAL "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_ENEMY_MATERIALIZED_EFFECT_TRIAL" then
+        if #parts ~= 3 then
+            write_ack(
+                "ERROR: OBS_ENEMY_MATERIALIZED_EFFECT_TRIAL requires "
+                .. "condition and capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            ENEMY_TOURNAMENT.materialized_effect.trial(parts[2], parts[3])
+        if not completed then
+            write_ack("ERROR: OBS_ENEMY_MATERIALIZED_EFFECT_TRIAL "
                 .. tostring(trial_error))
             return
         end

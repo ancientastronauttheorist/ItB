@@ -290,8 +290,39 @@ files and seven bridge artifacts, and a stopped game. A retained-output guard
 rejected one pair-002 control attempt before any game command; its immutable
 diagnostic is explicitly excluded from the six accepted trials. Post-cleanup
 game content matches the target-area baseline except for separately reported
-mutable appmanifest evidence. Ordinary solver input still cannot construct the
-prospective callback state, so simulator v408 is unchanged.
+mutable appmanifest evidence. The later raw-effect and native-materialization
+campaigns close the fixed selected effect but ordinary solver input still
+cannot construct the prospective callback state, so simulator v408 is
+unchanged.
+
+The one-family archive under
+`captures/windows_build_13725832_owner_local_modified_20260824_enemy_skill_effect_callback/`
+isolates `FireflyAtk1:GetSkillEffect` in the same shape. Three counterbalanced
+control/exact pairs capture the same 33 raw effects with zero drops/errors and
+matched semantic outcomes. Calls 0–31 match the 32 score arguments; call 32
+repeats selected score-side call 23 and the same process settles its `[3,4]`
+impact. The immutable receipt and matching cleanup receipt bind the complete
+trace, exact loader/save restore, 689/689 content match, and stopped game.
+
+The no-detour hardware archive under
+`captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw/`
+continues selected input 5 through the native postprocess seam at RVA
+`0x00268323` and its queue commit. Three fresh-process condition orders—
+control/dormant/armed, armed/dormant/control, and dormant/control/armed—capture
+the same owner/source ancestry `1303/6`, origin `[5,4]`, target `[4,4]`, and one
+queued one-damage `ExploFirefly1` record at `[3,4]`. All nine successful
+outcomes share semantic SHA
+`957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673`;
+all integrity counters are zero and native state restores completely.
+
+The immutable receipt is
+`windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json`;
+its matching `_cleanup_receipt.json` binds the two excluded rejected
+diagnostics, exact 32-file pre/post save, restored 315,686-byte baseline loader,
+689-entry post-cleanup inventory, zero active experiment/bridge residue, and
+stopped game. The generated DLL is omitted; its reproducible build receipt and
+exact hardware-breakpoint plan are committed under `native/`. This is a fixed
+selected-path proof, not prospective input or a universal effect grammar.
 
 Verify the immutable artifact against the pinned executable and replay a
 captured record payload with:
@@ -500,10 +531,11 @@ python scripts/itb_observatory_enemy_skill_effect.py replay `
 The replay accepts only the fields this native body reads or writes; the
 concrete Lua-produced `SkillEffect` is an explicit projected input. The exact
 eight direct callers identify this body as a Board/SkillManager/Skill cache
-materializer, not the enemy candidate scorer itself. Per-subclass Lua payloads,
-and a prospective enemy phase remain unresolved; the source-keyed successor
-below separately closes score-side call ancestry. Simulator v408 remains
-current.
+materializer, not the enemy candidate scorer itself. The selected hardware
+campaign above validates one fixed postprocessed Firefly1 payload through its
+settled queue. Other subclasses/materialization routes and a prospective enemy
+phase remain unresolved; the source-keyed successor below separately closes
+score-side call ancestry. Simulator v408 remains current.
 
 ## Enemy score-to-SkillEffect source ancestry
 
@@ -644,7 +676,12 @@ restored. The subsequent one-family trial bridge is admitted as the
 its cleanup receipt independently proves the same owner-installed baseline was
 restored after the target-area campaign, and the later target-score campaign
 reused that exact source overlay before independently restoring the same
-baseline again. All three later overlay identities remain
+baseline again. The selected-materialization campaign's final project bridge
+is separately admitted as the 389,371-byte
+`enemy_materialized_effect_hw_project_bridge` overlay with SHA-256
+`232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038`;
+its cleanup receipt proves the exact baseline was restored again. All four
+later overlay identities remain
 immutable exact-hash exceptions for predecessor source-tree verifiers rather
 than rewrites of their published artifacts.
 This is an exact-build ordinary-callback observation, not a claim about every

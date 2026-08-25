@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_enemy_materialized_effect_hw_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-25T03:28:48Z",
+  "repository_base_commit": "cd2051eda0a4af7a63b327b54d6ea3bda7f25803",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json",
+      "size": 31284,
+      "sha256": "af9283bc43a98d1a7b44810c7ec9b33eef2cff211d9bcd1f873e5697a3aea84d"
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_enemy_materialized_effect_hw_observer_cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328.dll.receipt.json",
+      "size": 5334,
+      "sha256": "0c7de96bf9fcde3fa07c109eb4c3d0b295fc7db707c19e74f61af7236f8da3a2"
+    },
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_enemy_materialized_effect_hw_plan_6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce.json",
+      "size": 5511,
+      "sha256": "6fdf67dac784b5e6d681a3d2f52e489d1f40c52f58d3ff464314e70a413071ce"
+    }
+  },
+  "supersedes_pending_state": {
+    "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json",
+    "fields": [
+      "restore.install_restoration_pending",
+      "restore.save_restoration_pending"
+    ],
+    "prior_value": true,
+    "resolved": true
+  },
+  "install_restore": {
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_enemy_materialized_effect_hw_restore_20260824.json",
+      "size": 125467,
+      "sha256": "1722cf568457f252a52627ad91bf79d2a48113b29deaf43a6f7bd6eb70978e48"
+    },
+    "inventory_summary": {
+      "entry_count": 689,
+      "script_count": 305,
+      "map_count": 377,
+      "native_library_count": 6,
+      "executable_count": 1
+    },
+    "installed_modloader_before_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "installed_modloader_before_size": 315686,
+    "accepted_trial_loader_sha256s": [
+      "015083a617f3e38fec1235cbf823b9225f1ea144100446378cfedabfddd8e35a",
+      "232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038"
+    ],
+    "accepted_trial_loader_hash_binding": "Capture-notebook install hashes; individual trial JSON does not embed the loader hash.",
+    "final_experimental_loader_size": 389371,
+    "installed_modloader_after_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "installed_modloader_after_size": 315686,
+    "baseline_loader_restored_byte_exact": true,
+    "quarantined_experimental_dlls": [
+      {
+        "filename": "itb_observatory_continue_e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a.dll",
+        "size": 78848,
+        "sha256": "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a"
+      },
+      {
+        "filename": "itb_observatory_enemy_materialized_effect_hw_observer_cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328.dll",
+        "size": 28160,
+        "sha256": "cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328"
+      },
+      {
+        "filename": "itb_observatory_rng_seed_bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787.dll",
+        "size": 73728,
+        "sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787"
+      }
+    ],
+    "quarantined_experimental_dll_count": 3,
+    "quarantined_experimental_dll_byte_count": 180736,
+    "remaining_experimental_file_count": 0,
+    "comparison_to_post_skill_effect_restore": {
+      "matching_content_entry_count": 689,
+      "differing_content_entry_count": 0,
+      "executable_equal": true,
+      "native_libraries_equal": true,
+      "scripts_revision_equal": true,
+      "maps_revision_equal": true,
+      "steam_build_and_depot_manifest_equal": true,
+      "prior_appmanifest_evidence_sha256": "31e9eaf9171ac41d3149eb794db3977d4dc41fa3b855dcd6cb5d8aa81c9d6407",
+      "current_appmanifest_evidence_sha256": "0b1c0d2cb15ffd130fb9d190ad55b1c0322f796afb8b9315bb1545f54c4c5e3f",
+      "appmanifest_evidence_hash_equal": false,
+      "interpretation": "All 689 inventoried game-content entries are identical; only mutable Steam appmanifest evidence and the inventory label differ."
+    },
+    "experimental_files_preserved_in_recoverable_owner_staging": true
+  },
+  "save_restore": {
+    "pre_experiment_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_pre_experiment_save_manifest.json",
+      "size": 6644,
+      "sha256": "a53c9e797aaba4ddd0c605b9ca8ca676ef6a950478bfd9c6d5b926e02d774650",
+      "file_count": 32,
+      "byte_count": 2434067,
+      "tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+    },
+    "post_cleanup_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_post_cleanup_save_manifest.json",
+      "size": 6644,
+      "sha256": "a53c9e797aaba4ddd0c605b9ca8ca676ef6a950478bfd9c6d5b926e02d774650",
+      "file_count": 32,
+      "byte_count": 2434067,
+      "tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+    },
+    "file_set_and_bytes_match_pre_experiment": true
+  },
+  "bridge_cleanup": {
+    "accepted_snapshot_count_archived": 3,
+    "accepted_snapshot_byte_count": 12801,
+    "remaining_observatory_file_count": 0,
+    "remaining_rejected_snapshot_or_temp_count": 0,
+    "recoverable_owner_staging_preserved": true
+  },
+  "rejected_diagnostics": {
+    "excluded_from_campaign_evidence": true,
+    "cause_of_host_validation_rejection_resolved": false,
+    "artifacts": [
+      {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_diagnostics/stale_heartbeat_01_trial.json",
+        "size": 841,
+        "sha256": "41d54441db1ffe9a548205c8c35c6b937a779a48cc97697618f32a623f14d6b0"
+      },
+      {
+        "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_diagnostics/pair002_armed_host_rejection_01_trial.json",
+        "size": 861,
+        "sha256": "4a64d3bc4e0426d644c9e627c61a39e143fb67b71e459c920b1c8fc95e41ed74"
+      }
+    ]
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "enemy_materialized_effect_hw_observer_installed": false,
+    "rng_seed_helper_installed": false,
+    "continue_helper_installed": false,
+    "experimental_modloader_installed": false,
+    "observatory_bridge_artifact_present": false
+  },
+  "claims": {
+    "proven": [
+      "The active owner save file set and bytes match independently generated pre-experiment and post-cleanup manifests.",
+      "The exact prior Mod Loader was restored, the three experimental DLLs were quarantined, and no Observatory file remains in the active installation.",
+      "The post-cleanup inventory has 689 of 689 content entries identical to the prior post-skill-effect baseline; mutable Steam appmanifest evidence is reported separately.",
+      "No Observatory output, rejected snapshot, temporary snapshot, or request remains in the active bridge; Breach.exe is stopped.",
+      "The two rejected attempts are preserved and explicitly excluded from the three accepted counterbalanced triplets; this receipt closes both pending restoration fields in the campaign receipt."
+    ],
+    "not_proven": [
+      "The cause of the first pair002 armed host-validation rejection; the same observer succeeded in a fresh process and only accepted complete captures support semantic claims.",
+      "Pristine Steam-depot behavior; the campaign remains owner-local-modified and restored its exact owner-installed baseline.",
+      "That files outside the explicitly inventoried installation, save, bridge, and campaign-staging roots were unchanged.",
+      "Universal native SkillEffect materialization outside the fixed selected FireflyAtk1 scenario."
+    ]
+  }
+}

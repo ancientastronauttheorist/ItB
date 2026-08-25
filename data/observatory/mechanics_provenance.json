@@ -2118,8 +2118,12 @@
           "statement": "Three fresh-process, counterbalanced control/exact-hook pairs on the same fixed Firefly1 scenario isolated only GetSkillEffect. Every control recorded zero attempts; every exact run serialized the same 33 ordered raw SkillEffects with zero drops, serialization errors, or restore conflicts, installed only the 38 effect slots, and restored all 65 callback slots. Calls 0 through 31 have the exact origins and targets of the 32 GetTargetScore arguments; source-exact inherited Skill:GetTargetScore ancestry calls self:GetSkillEffect once per score. Each raw result has no instant primitive and one queued one-damage, DIR_NONE projectile primitive. Call 32 repeats score-side call 23's [5,4] origin, [4,4] selected target, and [3,4] impact payload; the same process settles Firefly1 at [5,4] with a queued attack targeting [3,4]. All paired whole-game outcomes retained semantic SHA 957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673."
         },
         {
+          "classification": "fact",
+          "statement": "Three fresh-process, counterbalanced control/dormant/armed triplets then observed the exact selected native SkillEffect postprocess seam in that fixed Firefly1 scenario. Every armed run captured the same selected record, one native materialization, and one queue commit: FireflyAtk1 owner and Skill owner 1303, source tag 6, origin [5,4], selected target [4,4], no instant records, and one queued one-damage ExploFirefly1 SpaceDamage at [3,4] with private origin [5,4], source tag 6, and boost marker false. The exact materialized object binds the raw selected input to the settled attack ray in one process. All nine control, dormant, and armed outcomes retained semantic SHA 957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673; every observer restored all native state and seams. Two rejected attempts are preserved as diagnostics and excluded from evidence, including one unexplained host-validation rejection that succeeded on a fresh-process retry."
+        },
+        {
           "classification": "inference",
-          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. The bounded Firefly campaigns now supply one complete runtime candidate payload and selector-entry state as conformance evidence, plus its concrete ordered GetTargetArea PointLists, raw GetTargetScore matrix, 32 score-side raw SkillEffects, and final selected-effect repeat tied to the settled queue. This is deterministic cross-campaign correlation rather than a same-process dual-observer causal trace across every boundary; native SkillEffect annotation/postprocessing, post-wrapper losing-target scores, native equal-best sets and caller-29 states, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, equivalent payloads for other scenarios, and wider selected-action paths are not ordinary solver inputs."
+          "statement": "The live bridge queue remains the authoritative current action, while Rust's next-turn projection stays heuristic. Exact destination order, native target/effect cache materialization, score-side SkillEffect ancestry, inherited base ScoreList and global ScorePositioning arithmetic, unmodified Pawn-helper defaults, all ScorePositioning observation meanings and current carriers, the exact-build nearest-even native conversion, target ties, 24-byte record comparison, displaced-primary fallback, and selector-local draw grammar are known. The bounded Firefly campaigns now supply one complete runtime candidate payload and selector-entry state as conformance evidence, its concrete ordered GetTargetArea PointLists, raw GetTargetScore matrix, 32 score-side raw SkillEffects, and a same-process selected-record to native-materialized-SkillEffect to queue binding. Joins to the separate target/score callback campaigns remain deterministic cross-campaign correlations; post-wrapper losing-target scores, native equal-best sets and caller-29 states, runtime-mutated Pawn-helper values, direct dangerous carriers, candidate-time Board snapshots, transitive native-helper RNG, equivalent materialized payloads for other scenarios, and wider selected-action paths are not ordinary solver inputs."
         }
       ],
       "id": "enemy-target-scoring",
@@ -2156,6 +2160,26 @@
           "symbols": [
             "build_enemy_tournament_hw_campaign_receipt",
             "publish_enemy_tournament_hw_campaign_receipt"
+          ]
+        },
+        {
+          "path": "src/observatory/enemy_materialized_effect_hw.py",
+          "symbols": [
+            "validate_enemy_materialized_effect_snapshot",
+            "correlate_enemy_materialized_effect_snapshot"
+          ]
+        },
+        {
+          "path": "src/observatory/enemy_materialized_effect_hw_campaign.py",
+          "symbols": [
+            "build_enemy_materialized_effect_hw_campaign_receipt",
+            "publish_enemy_materialized_effect_hw_campaign_receipt"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_materialized_effect_hw_campaign.py",
+          "symbols": [
+            "main"
           ]
         },
         {
@@ -2209,7 +2233,21 @@
           ]
         },
         {
+          "path": "src/native/observatory_enemy_materialized_effect_hw_observer.c",
+          "symbols": [
+            "observer_enemy_materialized_effect_veh",
+            "materialized_effect_arm",
+            "materialized_effect_finish"
+          ]
+        },
+        {
           "path": "scripts/itb_observatory_enemy_tournament_trial.py",
+          "symbols": [
+            "run"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_enemy_materialized_effect_trial.py",
           "symbols": [
             "run"
           ]
@@ -2511,8 +2549,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament. The fixed Firefly evidence now includes one PointList sequence, raw GetTargetScore matrix, 32 score-side raw SkillEffects, and a final raw selected-effect repeat; other subclasses and boards, native effect annotation/postprocessing, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector and selector-entry/exit state, separate matched campaigns supply the concrete ordered Lua-produced PointLists, raw GetTargetScore matrix, and 33-call raw GetSkillEffect sequence. The final effect repeat and settled action are same-process, while the native-record and target/score joins remain deterministic cross-campaign correlations rather than one dual-observer trace. Native effect postprocessing, candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, post-wrapper losing-target scores, raw callbacks for other shapes, effect-side draws, and target-tie states remain outside ordinary solver data.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament. The fixed Firefly evidence now includes one PointList sequence, raw GetTargetScore matrix, 32 score-side raw SkillEffects, a final raw selected-effect repeat, and the selected native postprocessed SkillEffect; other subclasses and boards, other materialization/final-effect paths, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector, selector-entry/exit state, selected postprocessed SkillEffect, and queue commit in one process; separate matched campaigns supply the concrete ordered Lua-produced PointLists, raw GetTargetScore matrix, and 33-call raw GetSkillEffect sequence. The native-record/materialized-effect/queue join is same-process, while target/score joins remain deterministic cross-campaign correlations. Candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, post-wrapper losing-target scores, raw callbacks and materialization for other shapes, effect-side draws, and target-tie states remain outside ordinary solver data.",
         "The natural and synthetic callback evidence covers 65 loaded slots in one Mission_Power shape and does not establish every subclass, mission, or callback path. Complete candidate-to-selection-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -2601,6 +2639,23 @@
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_cleanup_receipt.json",
           "symbols": [
             "observatory_enemy_tournament_hw_cleanup_receipt",
+            "\"remaining_experimental_file_count\": 0",
+            "\"file_set_and_bytes_match_pre_experiment\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json",
+          "symbols": [
+            "\"classification\": \"selected_firefly_skill_effect_materialization_runtime_proven\"",
+            "\"materialized_effects\": [",
+            "\"materialized_effect_binding_exact\": true",
+            "\"all_semantic_outcomes_match\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_cleanup_receipt.json",
+          "symbols": [
+            "observatory_enemy_materialized_effect_hw_cleanup_receipt",
             "\"remaining_experimental_file_count\": 0",
             "\"file_set_and_bytes_match_pre_experiment\": true"
           ]
@@ -2707,6 +2762,15 @@
             "test_committed_enemy_tournament_rebuilds_exactly_and_is_neutral",
             "test_committed_enemy_tournament_replays_exact_selection_and_queue",
             "test_enemy_tournament_cleanup_closes_restore_and_binds_artifacts"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_materialized_effect_hw_campaign.py",
+          "symbols": [
+            "test_committed_enemy_materialized_effect_rebuilds_exactly_and_is_neutral",
+            "test_committed_enemy_materialized_effect_binds_raw_selected_and_settled_queue",
+            "test_enemy_materialized_effect_cleanup_closes_restore_and_binds_artifacts",
+            "test_post_cleanup_inventory_preserves_prior_campaign_baseline_content"
           ]
         },
         {

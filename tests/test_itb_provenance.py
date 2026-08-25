@@ -709,7 +709,12 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "Calls 0 through 31 have the exact origins and targets" in evidence
     assert "Call 32 repeats score-side call 23's [5,4] origin" in evidence
     assert "same process settles Firefly1 at [5,4]" in evidence
-    assert "deterministic cross-campaign correlation" in evidence
+    assert "exact selected native SkillEffect postprocess seam" in evidence
+    assert "one native materialization, and one queue commit" in evidence
+    assert "one queued one-damage ExploFirefly1 SpaceDamage at [3,4]" in evidence
+    assert "exact materialized object binds the raw selected input" in evidence
+    assert "unexplained host-validation rejection" in evidence
+    assert "target/score callback campaigns remain deterministic cross-campaign" in evidence
     assert "one complete runtime candidate payload" in evidence
     assert "live bridge queue remains the authoritative current action" in evidence
     assert "immediately displaced primary group" in evidence
@@ -813,6 +818,19 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "build_enemy_tournament_hw_campaign_receipt",
         "publish_enemy_tournament_hw_campaign_receipt",
     }
+    assert implementations["src/observatory/enemy_materialized_effect_hw.py"] == {
+        "validate_enemy_materialized_effect_snapshot",
+        "correlate_enemy_materialized_effect_snapshot",
+    }
+    assert implementations[
+        "src/observatory/enemy_materialized_effect_hw_campaign.py"
+    ] == {
+        "build_enemy_materialized_effect_hw_campaign_receipt",
+        "publish_enemy_materialized_effect_hw_campaign_receipt",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_materialized_effect_hw_campaign.py"
+    ] == {"main"}
     assert implementations[
         "src/observatory/enemy_target_area_callback_campaign.py"
     ] == {
@@ -851,7 +869,17 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "tournament_finish",
     }
     assert implementations[
+        "src/native/observatory_enemy_materialized_effect_hw_observer.c"
+    ] == {
+        "observer_enemy_materialized_effect_veh",
+        "materialized_effect_arm",
+        "materialized_effect_finish",
+    }
+    assert implementations[
         "scripts/itb_observatory_enemy_tournament_trial.py"
+    ] == {"run"}
+    assert implementations[
+        "scripts/itb_observatory_enemy_materialized_effect_trial.py"
     ] == {"run"}
     assert implementations[
         "src/observatory/enemy_record_selector_boundary.py"
@@ -1180,6 +1208,33 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_materialized_effect_hw_receipt.json"
+    ] == {
+        '"classification": "selected_firefly_skill_effect_materialization_runtime_proven"',
+        '"materialized_effects": [',
+        '"materialized_effect_binding_exact": true',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_materialized_effect_hw_cleanup_receipt.json"
+    ] == {
+        "observatory_enemy_materialized_effect_hw_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_enemy_materialized_effect_hw_campaign.py"
+    ] == {
+        "test_committed_enemy_materialized_effect_rebuilds_exactly_and_is_neutral",
+        "test_committed_enemy_materialized_effect_binds_raw_selected_and_settled_queue",
+        "test_enemy_materialized_effect_cleanup_closes_restore_and_binds_artifacts",
+        "test_post_cleanup_inventory_preserves_prior_campaign_baseline_content",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
         "enemy_target_area_callback_receipt.json"
     ] == {
         '"classification": "fixed_firefly_get_target_area_runtime_order_correlated_to_complete_native_tournament"',
@@ -1309,7 +1364,10 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "33-call raw GetSkillEffect sequence" in gaps
     assert "concrete ordered Lua-produced PointLists and SkillEffects" not in gaps
     assert "raw GetTargetScore matrix" in gaps
-    assert "raw callbacks for other shapes" in gaps
+    assert "raw callbacks and materialization for other shapes" in gaps
+    assert "selected postprocessed SkillEffect" in gaps
+    assert "native-record/materialized-effect/queue join is same-process" in gaps
+    assert "native effect postprocessing" not in gaps
     assert "post-wrapper losing-target scores" in gaps
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps

@@ -59,8 +59,12 @@ Three later matched callback campaigns close those concrete inputs for the one
 fixed Firefly1 shape: nine ordered target-area calls, 32 raw target-score
 returns, and 33 raw SkillEffects. The first 32 effects match the score arguments;
 the final effect repeats native selected input 5 and its `[3,4]` impact appears
-in the same process's settled queue. These bounded results do not generalize
-other subclasses, native effect postprocessing, or prospective Board state.
+in the same process's settled queue. A later three-triplet hardware campaign
+also captures the selected native postprocessed `FireflyAtk1` at RVA
+`0x00268323`, binding owner/source ancestry, origin/target, animation, damage,
+and impact to the selected record and settled attack in one process. These
+bounded results do not generalize other subclasses, materialization routes, or
+prospective Board state.
 The scheduler/fallback *control flow* is no longer unknown: exact
 offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
@@ -103,6 +107,11 @@ The durable artifacts are:
   dispatch and argument order, cache clear/replace behavior, both record-vector
   annotation passes, Vek Hormones/Boost arithmetic, and pure projected replay
   from an already-materialized Lua SkillEffect;
+- `data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json`
+  for three counterbalanced runtime observations of the fixed selected
+  Firefly1 postprocessed SkillEffect, same-process selected-record/effect/queue
+  binding, matched semantic outcomes, and complete one-shot restoration; the
+  matching cleanup receipt binds the rejected diagnostics and exact restore;
 - `data/observatory/callbacks/windows_build_13725832_31fe35265598_enemy_score_effect_ancestry.json`
   for all 20 active shipped `GetTargetScore` bodies, their direct/nested/
   synthetic/no-effect routes, Shaman-to-Totem inheritance, and the zero direct
@@ -272,6 +281,7 @@ stream is therefore disproven for this build.
 | `GetTargetScore` | `0x00229310` | Applies native modifiers, resolves the actual skill, and dynamically obtains the callback score |
 | `GetTargetArea` / `GetSecondTargetArea` | `0x00269cc0` | Selects the applicable callback, copies its vector, and filters invalid negative coordinates |
 | SkillEffect cache materializer | `0x00268050` | Gates on cached-target membership, invokes the applicable Lua effect callback, replaces the cache, annotates both vectors, and applies native damage modifiers |
+| Selected SkillEffect postprocess seam | `0x00268323` | Runs after both effect/q_effect passes; the hardware campaign samples the selected cache here before its queue commit |
 
 The candidate loop preserves the returned target vector's order. For each
 candidate it calls `GetTargetScore`; equal-best targets are stored and selected
@@ -361,6 +371,16 @@ a cache materializer, not that it is the candidate scorer's score-side
 `GetSkillEffect` route. The pure replay therefore accepts the concrete Lua
 SkillEffect and resolved Board predicate results as inputs; subclass payloads,
 selector-entry shared state, and a future enemy phase remain unresolved.
+
+The selected-materialization hardware campaign validates one concrete use of
+that cache body. Across three counterbalanced control/dormant/armed triplets,
+the selected input-5 path always reaches the postprocess seam with
+`FireflyAtk1`, owner and Skill owner 1303, source tag 6, origin `[5,4]`, target
+`[4,4]`, no instant record, and one queued one-damage `ExploFirefly1` record at
+`[3,4]`. Its private origin/source/boost fields are `[5,4]`, 6, and false. The
+same observer then sees the queue commit, and all nine successful outcomes
+match semantically. This closes only the selected fixed path; it does not turn
+the static parameterized replay into a prospective multi-shape forecast.
 
 The source-keyed ancestry continuation closes that score-side call question.
 The accepted tree has 22 raw `GetTargetScore` identifier occurrences: one
@@ -1001,6 +1021,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    SkillEffect sequences to the native eight-record tournament. The final
    effect repeat and settled action are same-process; cross-family/native joins
    remain deterministic cross-campaign correlations.
+   **Completed at runtime for one selected native materialization:** three
+   counterbalanced triplets bind input 5 through the exact postprocess seam to
+   one queued `ExploFirefly1` damage record at `[3,4]` and the settled attack.
+   All nine outcomes match, every observer restores completely, and two failed
+   attempts are preserved only as rejected diagnostics. Other shapes and
+   prospective delivery remain open.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit
@@ -1108,8 +1134,8 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 9. Add a complete runtime candidate record only if a solver mismatch needs
    more than the observed Lua callback streams, exact native score adjustments,
    and reviewed candidate/selector RNG grammar.
-10. **Completed for every sealed live series through the Firefly SkillEffect
-   campaign:** the associated cleanup receipts close every pending save/install
+10. **Completed for every sealed live series through the selected Firefly
+   materialization campaign:** the associated cleanup receipts close every pending save/install
    field. The current post-cleanup inventory matches 689/689 prior content
    entries, the campaign's 32-file save tree is byte-exact, the baseline Mod
    Loader hash is restored, and no active Observatory file remains. Repeat this
@@ -1144,8 +1170,8 @@ and
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json`;
 their restoration is closed by
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`.
-The bounded Firefly tournament, target-area, target-score, and SkillEffect
-evidence is sealed in the corresponding
+The bounded Firefly tournament, target-area, target-score, raw SkillEffect, and
+selected native materialization evidence is sealed in the corresponding
 `windows_build_13725832_owner_local_modified_20260824_enemy_*_receipt.json`
 files under `data/observatory/captures/`; each campaign has a matching cleanup
 receipt that closes its pending restore fields.

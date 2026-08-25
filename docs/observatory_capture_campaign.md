@@ -107,7 +107,8 @@ not be relabelled as clean stock.
 | Complete enemy tournament | Reproducible no-detour x86 hardware observer at selector entry, selected-record copy, and queue commit; strict build/ASLR/restore guards; exact offline selector replay | Three fresh-process, counterbalanced triplets capture the same eight ordered Firefly1 records. From CRT state `0xd6ac62fb`, one caller-30 draw selects input 5 and reaches `0x6f5d21d2`; `[5,4] -> [4,4]` binds to the immediate queue commit. All nine outcomes share semantic SHA `957554...c673`; cleanup restores the exact 32-file save tree and baseline Mod Loader with no active Observatory DLL or bridge artifact. Other boards/enemies and upstream callback intermediates remain unproven |
 | Fixed Firefly target-area sequence | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to the complete native tournament | Three fresh-process pairs capture the same nine `FireflyAtk1:GetTargetArea` calls with zero drops/errors and matched semantic outcomes. Calls 0–7 originate at the eight native candidate destinations in exact order; each native candidate target is PointList index 3. Call 8 repeats selected input 5. Cleanup removes ten install artifacts and two bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. This is bounded cross-campaign correlation, not a universal callback grammar or prospective solver input |
 | Fixed Firefly target-score matrix | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to both target-area and native-tournament receipts | Three fresh-process pairs capture the same 32 `FireflyAtk1:GetTargetScore` returns with zero drops/errors and matched semantic outcomes. Eight consecutive four-call groups follow target-area calls 0–7 exactly; every raw score vector is `[0,0,0,5]`, and index 3 matches the native retained target and target score. One retained-output attempt was safely rejected before any game command and is archived only as a diagnostic. Cleanup removes ten install artifacts and seven bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. Rule 532 supplies this scenario's raw SkillEffects; wrapper-level losing scores, target-tie RNG state, and prospective solver inputs remain open |
-| Fixed Firefly SkillEffect sequence | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to target-area, target-score, source-ancestry, native-tournament, and settled-action evidence | Three fresh-process pairs capture the same 33 `FireflyAtk1:GetSkillEffect` returns with zero drops/errors and matched semantic outcomes. Calls 0–31 exactly match the 32 score arguments; source ancestry identifies them as score-side effects. Call 32 repeats selected score-side call 23 and the same process settles its `[3,4]` impact as the queued attack. Cleanup removes ten install artifacts and seven bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. Other subclasses, native effect postprocessing, prospective Board state, and selector RNG remain open |
+| Fixed Firefly SkillEffect sequence | Dormant one-family callback controller plus synthetic matched control/exact trial host, joined to target-area, target-score, source-ancestry, native-tournament, and settled-action evidence | Three fresh-process pairs capture the same 33 `FireflyAtk1:GetSkillEffect` returns with zero drops/errors and matched semantic outcomes. Calls 0–31 exactly match the 32 score arguments; source ancestry identifies them as score-side effects. Call 32 repeats selected score-side call 23 and the same process settles its `[3,4]` impact as the queued attack. Cleanup removes ten install artifacts and seven bridge files, restores the exact baseline loader, and reproduces the byte-identical 32-file save manifest. Rule 533 supplies the selected native postprocessed effect; other subclasses, prospective Board state, and selector RNG remain open |
+| Selected Firefly native materialization | Reproducible no-detour x86 observer spanning selector entry, selected-record copy, exact SkillEffect postprocess seam, and queue commit | Three counterbalanced control/dormant/armed triplets capture the same selected input 5 and exact postprocessed `FireflyAtk1`: owner/source ancestry `1303/6`, origin `[5,4]`, selected target `[4,4]`, and one queued one-damage `ExploFirefly1` record at `[3,4]`. All nine successful outcomes share semantic SHA `957554...c673`; all integrity counters are zero and cleanup restores the exact baseline loader, 689-entry install, and byte-identical 32-file save. Two rejected attempts are preserved only as diagnostics, including one unexplained host-validation rejection that succeeds on fresh-process retry. Other effect shapes and prospective solver inputs remain open |
 | `ScorePositioning` x87 conversion | Reproducible one-shot x86 observer at the exact `lua_tointeger` `FISTP`, filtered by the four-frame `ScorePositioning` call chain | Three counterbalanced control/dormant/armed triplets record `0x027F`/nearest-even in every armed process, all six control comparisons match semantically, and every debug register, VEH, file handle, and image seam restores cleanly |
 | Native path/death boundary | Four exact-build API/profile/vtable, cost/order, lifecycle-occupancy, and corpse-classification maps with region hashes, control windows, direction/cost tables, comparators, lifecycle bindings, source inventory, and reconstruction proof | Offline proof closes Henry Kwan's profile-4 live/corpse transit-versus-stop distinction, unit reachability costs, `(x,y)` output, weighted GetPath ordering, ordinary identity-based occupancy, Massive Water, live-or-persistent-corpse mode-1 occupancy, the common `IsCorpse` predicate, dormant Necro fallback, and all 16 shipped corpse types. Simulators v401/v402/v403 have focused regressions; classification already conforms at v407. Lifecycle/removal timing, matched vectors, and `AddMove` execution remain on demand |
 | Authoritative schema-v2 trace | Existing codec/finalizer/store remain unchanged | No native diagnostic is promoted automatically |
@@ -588,10 +589,50 @@ The immutable effect receipt is
 the matching `_cleanup_receipt.json` binds byte-exact restoration of the prior
 Mod Loader and 32-file save, removal of ten install artifacts and seven bridge
 artifacts, a stopped game, and a 689/689 content match to the post-target-score
-inventory. This does not expose native cache annotation/postprocessing,
-candidate-time Board state, other subclass/TwoClick paths, post-wrapper losing
-scores, or selector-entry RNG. The settled bridge queue remains authoritative,
-so simulator v408 remains current.
+inventory. Rule 533's later campaign supplies the selected native
+postprocessed effect, but candidate-time Board state, other subclass/TwoClick
+paths, post-wrapper losing scores, and selector-entry RNG remain open. The
+settled bridge queue remains authoritative, so simulator v408 remains current.
+
+The selected-materialization campaign closes that final native boundary for
+this one fixed `Firefly1` path. Its no-detour x86 observer arms at selector
+entry, follows the selected-record copy, enables the exact SkillEffect
+postprocess breakpoint only for that selected path, and then observes the queue
+commit. The postprocess seam is RVA `0x00268323`, after both instant and queued
+record annotation passes. Every live identity is build-keyed and every
+breakpoint transition fails closed; the hot VEH path has no calls, allocation,
+I/O, clock reads, locks, or floating-point/SIMD instructions.
+
+Three fresh-process triplets used orders control/dormant/armed,
+armed/dormant/control, and dormant/control/armed. Every armed run captured the
+same eight candidates, selected input 5, one native effect materialization, and
+one queue commit. `FireflyAtk1` had owner and Skill owner 1303, Skill and
+SpaceDamage source tag 6, origin `[5,4]`, selected target `[4,4]`, no instant
+record, and one queued one-damage `ExploFirefly1` record at `[3,4]`. Its private
+origin was `[5,4]`, its boost marker was false, and the exact object lay on the
+settled attack ray. Selector state again advanced `0xd6ac62fb` to `0x6f5d21d2`
+through one caller-30 draw. All nine successful outcomes retained semantic
+SHA-256
+`957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673`.
+
+Every armed snapshot reports complete restoration, zero ordering, overflow,
+pointer, torn-record, transition, unexpected-breakpoint, and wrong-thread
+counters, cleared debug registers, removed VEH, released executable, unchanged
+seams, no published pointer, and no executable-byte mutation. A stale-heartbeat
+control and one pair-002 armed host-validation failure were rejected and are
+committed only as diagnostics. The latter's cause remains unknown; no snapshot
+was accepted, and the unchanged observer succeeded in a fresh process.
+
+The immutable campaign and cleanup receipts are
+`windows_build_13725832_owner_local_modified_20260824_enemy_materialized_effect_hw_receipt.json`
+and the matching `_cleanup_receipt.json`. Cleanup restored the exact
+315,686-byte baseline Mod Loader, quarantined all three experiment DLLs, left
+zero install or bridge residue, stopped the game, reproduced the byte-identical
+32-file/2,434,067-byte save manifest, and matched all 689 inventoried content
+entries to the prior post-SkillEffect baseline. This closes selected native
+annotation/postprocessing only for the fixed Firefly path. It does not provide
+prospective callback state or selector-entry RNG to Rust, so the settled bridge
+queue remains authoritative and simulator v408 remains current.
 
 The later `ScorePositioning` x87 campaign reused that deterministic one-
 `Firefly1` mission shape but observed only the current thread's hardware

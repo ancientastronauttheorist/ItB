@@ -1,0 +1,50 @@
+{
+  "analysis": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_materialized_effect_campaign\\pair002\\armed\\analysis.json",
+    "sha256": "51e963186caba7653132084e484afecdae663529f776940a4ecb93a440f3b137",
+    "status": "correlated"
+  },
+  "build_receipt_sha256": "0c7de96bf9fcde3fa07c109eb4c3d0b295fc7db707c19e74f61af7236f8da3a2",
+  "capture_id": "materialized-pair-002-armed",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_ENEMY_MATERIALIZED_EFFECT_TRIAL condition=armed capture=materialized-pair-002-armed pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 candidates=8 selected=1 materialized=1 queue=1 complete=true",
+  "condition": "armed",
+  "created_at": "2026-08-25T03:15:53.397561+00:00",
+  "errors": {
+    "analysis": "",
+    "command": "",
+    "outcome": []
+  },
+  "kind": "observatory_enemy_materialized_effect_turn_trial",
+  "module_sha256": "cf686bb2c48b56f1314d996ad53236b76a03eb679d9893d2878929724adde328",
+  "native_counts": {
+    "candidate_count": 8,
+    "materialized_effect_count": 1,
+    "queue_count": 1,
+    "selected_count": 1
+  },
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_materialized_effect_campaign\\pair002\\armed\\outcome.json",
+    "sha256": "b7e62a1d2132583aa653f424836c23f12e9f7f585d4e67ebb4ca6758e8c59f52"
+  },
+  "pair_id": "materialized-pair-002",
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "snapshot": {
+    "candidate_count": 8,
+    "complete": true,
+    "materialized_effect_count": 1,
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_materialized_effect_campaign\\pair002\\armed\\snapshot.json",
+    "sha256": "5a0f32ab16962dc6268b2bcbc17458d1f6583cf173515174983f4198f8803671"
+  },
+  "status": "complete",
+  "valid_trial": true
+}

@@ -209,15 +209,15 @@ def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
         ),
     }
     current = {
-        "id": "enemy_target_area_callback_project_bridge",
+        "id": "enemy_materialized_effect_hw_project_bridge",
         "size": bridge.stat().st_size,
         "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
     }
     assert current == {
-        "id": "enemy_target_area_callback_project_bridge",
-        "size": 365_924,
+        "id": "enemy_materialized_effect_hw_project_bridge",
+        "size": 389_371,
         "sha256": (
-            "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
+            "232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038"
         ),
     }
     assert v408 in DEATH_EVENT_BRIDGE_OVERLAYS
