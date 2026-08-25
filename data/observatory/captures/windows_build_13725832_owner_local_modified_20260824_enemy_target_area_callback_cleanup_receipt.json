@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_enemy_target_area_callback_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-25T00:44:25Z",
+  "repository_base_commit": "10216f43cde6b0525ec6b12157efee216d8e2676",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback_receipt.json",
+      "size": 37337,
+      "sha256": "4caceecfce548ca2952265a606901b62c8a7b39ed0f5c0e1c7ef63f7cecb88af"
+    }
+  },
+  "supersedes_pending_state": {
+    "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback_receipt.json",
+    "fields": [
+      "restore.install_restoration_pending",
+      "restore.save_restoration_pending"
+    ],
+    "prior_value": true,
+    "resolved": true
+  },
+  "install_restore": {
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_enemy_target_area_callback_restore_20260824.json",
+      "size": 125465,
+      "sha256": "d3d65b5ba27d462213fcfa270304d8dc94ad76eb78387cca842dcc48446f691e"
+    },
+    "inventory_summary": {
+      "entry_count": 689,
+      "script_count": 305,
+      "map_count": 377,
+      "native_library_count": 6,
+      "executable_count": 1
+    },
+    "installed_modloader_before_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "installed_modloader_before_size": 315686,
+    "installed_modloader_experiment_sha256": "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d",
+    "installed_modloader_after_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "installed_modloader_after_size": 315686,
+    "baseline_loader_restored_byte_exact": true,
+    "removed_experimental_file_count": 10,
+    "removed_experimental_byte_count": 1707641,
+    "remaining_experimental_file_count": 0,
+    "comparison_to_accepted_owner_inventory": {
+      "matching_entry_count": 688,
+      "differing_entry_count": 1,
+      "only_difference": {
+        "path": "scripts/modloader.lua",
+        "accepted_sha256": "8d765cb4d501f1cdc83a6423ad7c2f66e01d98844ec3e8afd1f3c099e4763c10",
+        "accepted_size": 132609,
+        "restored_campaign_baseline_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+        "restored_campaign_baseline_size": 315686
+      },
+      "interpretation": "The campaign began and ended with the same owner-installed baseline Mod Loader; this is not a pristine-depot claim."
+    },
+    "comparison_to_post_enemy_tournament_restore": {
+      "executable_equal": true,
+      "native_libraries_equal": true,
+      "scripts_revision_equal": true,
+      "maps_revision_equal": true,
+      "steam_build_and_depot_manifest_equal": true,
+      "appmanifest_evidence_hash_equal": false,
+      "interpretation": "Inventoried game content is identical; only mutable Steam appmanifest evidence and the inventory label differ."
+    },
+    "experimental_files_preserved_in_recoverable_owner_staging": true
+  },
+  "save_restore": {
+    "pre_experiment_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback_pre_experiment_save_manifest.json",
+      "size": 6644,
+      "sha256": "a53c9e797aaba4ddd0c605b9ca8ca676ef6a950478bfd9c6d5b926e02d774650",
+      "file_count": 32,
+      "byte_count": 2434067,
+      "tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+    },
+    "post_cleanup_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback_post_cleanup_save_manifest.json",
+      "size": 6644,
+      "sha256": "a53c9e797aaba4ddd0c605b9ca8ca676ef6a950478bfd9c6d5b926e02d774650",
+      "file_count": 32,
+      "byte_count": 2434067,
+      "tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+    },
+    "file_set_and_bytes_match_pre_experiment": true
+  },
+  "bridge_cleanup": {
+    "removed_observatory_file_count": 2,
+    "removed_observatory_byte_count": 22009,
+    "remaining_observatory_file_count": 0,
+    "recoverable_owner_staging_preserved": true
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "callback_capsule_installed": false,
+    "callback_controller_installed": false,
+    "rng_seed_helper_installed": false,
+    "gameflow_helper_installed": false,
+    "experimental_modloader_installed": false,
+    "observatory_bridge_artifact_present": false
+  },
+  "claims": {
+    "proven": [
+      "The active owner save file set and bytes match independently generated pre-experiment and post-cleanup manifests.",
+      "The campaign's prior installed Mod Loader was restored byte-exactly; all ten active-install experiment files and both bridge artifacts were removed.",
+      "The post-cleanup executable, native libraries, scripts, and maps match the prior post-tournament content inventory, while mutable Steam appmanifest evidence is reported separately.",
+      "Breach.exe is stopped and this receipt closes both pending restoration fields in the campaign receipt."
+    ],
+    "not_proven": [
+      "Pristine Steam depot behavior; the campaign remains owner-local-modified and restored its exact owner-installed baseline.",
+      "That files outside the explicitly inventoried installation, save, and bridge roots were unchanged.",
+      "A universal target-area sequence outside the fixed Firefly1 scenario."
+    ]
+  }
+}

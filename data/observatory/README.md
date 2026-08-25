@@ -239,6 +239,32 @@ to other enemy, weapon, cancellation, or retarget paths. Ordinary solver input
 still lacks both the prospective vector and selector-entry state, so the live
 settled queue remains authoritative.
 
+The subsequent one-family archive under
+`captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/`
+binds one upstream Lua payload to that tournament. Three fresh-process
+control/exact pairs use condition orders control/exact, exact/control, and
+control/exact. Every control contains zero observations; every exact trace
+contains the same nine ordered `FireflyAtk1:GetTargetArea` calls with zero
+drops, serialization errors, or restore conflicts. Calls 0–7 originate at the
+eight native candidate destinations in exact order. For each origin `(x,y)`,
+the returned list is
+`[(x,y-1),(x+1,y),(x,y+1),(x-1,y)]`, and the corresponding native candidate
+target is list index 3. Call 8 repeats selected input 5's `[5,4]` origin and
+PointList. All paired whole-game outcomes share the tournament's semantic hash.
+
+The immutable receipt is
+`windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback_receipt.json`;
+its matching `_cleanup_receipt.json` binds byte-identical pre/post 32-file save
+manifests, exact restoration of the campaign's prior 315,686-byte Mod Loader,
+removal of ten active-install experiment files and two bridge artifacts, and a
+stopped game. The post-cleanup executable, six native libraries, 305 scripts,
+and 377 maps equal the prior post-tournament content inventory; the changing
+Steam appmanifest evidence hash is reported separately. This is deterministic
+cross-campaign correlation for one fixed Firefly shape, not a same-process
+dual-observer causal trace, a universal callback grammar, or a prospective
+solver input. SkillEffects, score callback values, target-tie state, and
+candidate-time Board predicates remain open, so simulator v408 is unchanged.
+
 Verify the immutable artifact against the pinned executable and replay a
 captured record payload with:
 
@@ -348,10 +374,11 @@ python scripts/itb_observatory_enemy_target_area.py replay-gate `
   --payload target-area-gate.json
 ```
 
-The replay stops at whether native code invokes Lua. The ordered target points
-returned by each concrete `GetTargetArea`, the later callback scores/effects,
-and prospective enemy-phase state remain explicit runtime inputs. Rust still
-uses the settled live queue, so simulator v408 remains current.
+The replay stops at whether native code invokes Lua. The later bounded
+Firefly campaign captures one concrete ordered `GetTargetArea` sequence, but
+other subclasses, later callback scores/effects, and prospective enemy-phase
+state remain explicit runtime inputs. Rust still uses the settled live queue,
+so simulator v408 remains current.
 
 ## Native enemy target-area callback wrapper
 
@@ -381,7 +408,9 @@ After the selected callback returns, native code replaces the cache and erases
 only points with negative x or y. Encounter order and duplicates survive, as
 do nonnegative coordinates beyond the current Board dimensions. The replay
 therefore accepts the selected callback's already-materialized ordered
-PointList explicitly; Lua point construction remains unresolved.
+PointList explicitly. Lua point construction remains a general input boundary;
+the later target-area campaign supplies one fixed Firefly1 runtime vector
+without claiming other subclasses or board states.
 
 Verify or replay the immutable boundary with:
 
@@ -581,8 +610,13 @@ The later enemy-tournament bridge is independently admitted as the
 357,175-byte `enemy_tournament_hw_project_bridge` overlay with SHA-256
 `1abb8001eb6402c26d59fb09c05c78159a9199267130eecf9c73ccfd7879a5ac`;
 its own cleanup receipt again proves the same 315,686-byte installed bridge was
-restored. Both overlays remain immutable exact-hash exceptions for predecessor
-source-tree verifiers rather than rewrites of their published artifacts.
+restored. The subsequent one-family trial bridge is admitted as the
+365,924-byte `enemy_target_area_callback_project_bridge` overlay with SHA-256
+`07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d`;
+its cleanup receipt independently proves the same owner-installed baseline was
+restored after the target-area campaign. All three later overlays remain
+immutable exact-hash exceptions for predecessor source-tree verifiers rather
+than rewrites of their published artifacts.
 This is an exact-build ordinary-callback observation, not a claim about every
 future process or other Lua integer conversion. Build or verify the static
 replay with:

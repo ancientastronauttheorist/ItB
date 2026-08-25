@@ -90,6 +90,13 @@ POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
             "1abb8001eb6402c26d59fb09c05c78159a9199267130eecf9c73ccfd7879a5ac"
         ),
     },
+    {
+        "id": "enemy_target_area_callback_project_bridge",
+        "size": 365_924,
+        "sha256": (
+            "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
+        ),
+    },
 )
 STARTUP_SPAWN_ORDER_ARTIFACT_SHA256 = (
     "b798a97c582be31ffba3d173e00b24eefae32a9725d03fe7a2260ca1403214f4"

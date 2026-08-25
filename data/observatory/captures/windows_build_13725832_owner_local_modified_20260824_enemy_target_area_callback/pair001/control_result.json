@@ -1,0 +1,48 @@
+{
+  "arm_packet_sha256": "c1e74755c00a630b9fa106ea1316a41c3d4b0f35162b29985d1ff5a9b06416b4",
+  "attempted_calls": 0,
+  "binding_manifest_sha256": "d6b25a368df6cbe9d556f56c7dc0e94531369d0ac2f97ad5ac0d4a169b7d9eb3",
+  "callback_family": "get_target_area",
+  "callback_join_sha256": "018ea315ab5e5324dfc2c8949b693ee49aa76c38a8185360fa92157511fb42fc",
+  "capsule_sha256": "c571cbac8c093b88f27563475b63073b88a8f85ec982cb1550883cea57e2b9ab",
+  "capture_id": "firefly-target-area-pair-001",
+  "capture_track": "owner_local_modified",
+  "checkpoint_seq": 0,
+  "condition": "control",
+  "controller_status": {
+    "activated": false,
+    "consumed": true,
+    "prepared": true,
+    "written": false
+  },
+  "error": "",
+  "host_version": "observatory-callback-trial-host/2",
+  "kind": "observatory_callback_trial_result",
+  "raw_event_count": 0,
+  "raw_written": false,
+  "runtime_after": {
+    "ai_seed_fingerprint": "69ed51ff787c0f1e52b8232dfdbe16ed46339325a074e77b78e4387156f2083a",
+    "master_seed": 664577925,
+    "mission_id": "Mission_Power",
+    "now_epoch": 1787617680,
+    "phase": "combat_player",
+    "region_id": "region1",
+    "timeline_fingerprint": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "turn": 2
+  },
+  "runtime_before": {
+    "ai_seed_fingerprint": "69ed51ff787c0f1e52b8232dfdbe16ed46339325a074e77b78e4387156f2083a",
+    "master_seed": 664577925,
+    "mission_id": "Mission_Power",
+    "now_epoch": 1787617679,
+    "phase": "combat_enemy",
+    "region_id": "region1",
+    "timeline_fingerprint": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "turn": 1
+  },
+  "schema_version": 1,
+  "serialization_errors": 0,
+  "slot_count": 65,
+  "slots_restored": true,
+  "status": "complete"
+}

@@ -1,0 +1,1445 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "callback_build_identity_sha256": "e3e93229f5e216a397088f11051aa6c8e3763b0aa70cd05552c4717e8696dd11",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "installed_experiment_modloader_sha256": "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "platform": "windows"
+  },
+  "campaign": {
+    "callback_family": "get_target_area",
+    "condition_orders": [
+      [
+        "control",
+        "exact_hook"
+      ],
+      [
+        "exact_hook",
+        "control"
+      ],
+      [
+        "control",
+        "exact_hook"
+      ]
+    ],
+    "conditions": [
+      "control",
+      "exact_hook"
+    ],
+    "fixed_seed": 324508639,
+    "fresh_processes": 3,
+    "pair_count": 3,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "scenario": {
+      "consumed_spawn_count": 0,
+      "pawn_id": 1303,
+      "pawn_type": "Firefly1",
+      "start": [
+        4,
+        4
+      ]
+    }
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "A universal GetTargetArea call count, PointList, target choice, or selected-destination repeat for other boards, enemies, weapons, cancellation, or retarget paths.",
+      "A same-process dual-observer causal ordering between each Lua callback and the native record seam; the correlation joins separately counterbalanced deterministic campaigns.",
+      "Candidate-time Board predicates, GetSkillEffect values, GetTargetScore values, ScorePositioning values, target-tie RNG state, or transitive native-helper RNG.",
+      "Prospective enemy forecasting from ordinary solver input or pristine-depot behavior."
+    ],
+    "proven": [
+      "In the fixed Firefly1 scenario, all three exact-hook fresh processes emitted the same nine ordered GetTargetArea calls while every matched control emitted none.",
+      "The first eight call origins equal the complete native tournament's eight candidate destinations in order, and each native candidate target is coordinate index three of the corresponding four-point Lua PointList.",
+      "The ninth call repeats candidate input 5's destination and PointList; that input is the record selected by the separately sealed native selector replay in this deterministic scenario.",
+      "Every control/exact whole-game outcome matched semantically, all 65 slots were restored, and all exact calls serialized with zero drops, errors, or restore conflicts."
+    ]
+  },
+  "correlation": {
+    "candidate_calls": [
+      {
+        "call_order": 0,
+        "candidate_index": 0,
+        "candidate_target": [
+          3,
+          2
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          4,
+          2
+        ],
+        "target_area": [
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      },
+      {
+        "call_order": 1,
+        "candidate_index": 1,
+        "candidate_target": [
+          3,
+          3
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          4,
+          3
+        ],
+        "target_area": [
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            3,
+            3
+          ]
+        ]
+      },
+      {
+        "call_order": 2,
+        "candidate_index": 2,
+        "candidate_target": [
+          3,
+          5
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          4,
+          5
+        ],
+        "target_area": [
+          [
+            4,
+            4
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            3,
+            5
+          ]
+        ]
+      },
+      {
+        "call_order": 3,
+        "candidate_index": 3,
+        "candidate_target": [
+          3,
+          6
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          4,
+          6
+        ],
+        "target_area": [
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            4,
+            7
+          ],
+          [
+            3,
+            6
+          ]
+        ]
+      },
+      {
+        "call_order": 4,
+        "candidate_index": 4,
+        "candidate_target": [
+          4,
+          3
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          5,
+          3
+        ],
+        "target_area": [
+          [
+            5,
+            2
+          ],
+          [
+            6,
+            3
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            4,
+            3
+          ]
+        ]
+      },
+      {
+        "call_order": 5,
+        "candidate_index": 5,
+        "candidate_target": [
+          4,
+          4
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          5,
+          4
+        ],
+        "target_area": [
+          [
+            5,
+            3
+          ],
+          [
+            6,
+            4
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      },
+      {
+        "call_order": 6,
+        "candidate_index": 6,
+        "candidate_target": [
+          4,
+          5
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          5,
+          5
+        ],
+        "target_area": [
+          [
+            5,
+            4
+          ],
+          [
+            6,
+            5
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      },
+      {
+        "call_order": 7,
+        "candidate_index": 7,
+        "candidate_target": [
+          3,
+          4
+        ],
+        "candidate_target_area_index": 3,
+        "origin": [
+          4,
+          4
+        ],
+        "target_area": [
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      }
+    ],
+    "candidate_count": 8,
+    "native_candidate_source": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_receipt.json",
+      "sha256": "0b62208bfe03d9364a5ab62fd90842b311d33bebce832378518a4a3f174b5a26",
+      "size": 24896
+    },
+    "native_candidate_vector_sha256": "dbff6e2357617b6aa47716a072058ad64a577cafdf2441aa8e74cb391b1fe466",
+    "selected_destination_repeat": {
+      "call_order": 8,
+      "matches_candidate_call_order": 5,
+      "origin": [
+        5,
+        4
+      ],
+      "target_area": [
+        [
+          5,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          4,
+          4
+        ]
+      ]
+    },
+    "selected_input_index": 5
+  },
+  "kind": "observatory_enemy_target_area_callback_campaign_receipt",
+  "pairs": [
+    {
+      "artifacts": {
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/control_outcome.json",
+          "sha256": "93d890059ea80b0471251e992858b82b00ba4ab861598b2256f59f4130eb51f5",
+          "size": 11340
+        },
+        "control_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/control_result.json",
+          "sha256": "a92e14d27fc3bef6f4d41880f129b91a84253c5fc6819c277731be451b94e512",
+          "size": 1749
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/control_trial.json",
+          "sha256": "6866b0729d69e5a7522290669d54068992036992ab5f5fcf176196c8a066423a",
+          "size": 1661
+        },
+        "exact_hook_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/exact_hook_outcome.json",
+          "sha256": "d6335b82d4d2395d56493a778166374fd68325ae1feed3d1c40b4c0b38b18f53",
+          "size": 11340
+        },
+        "exact_hook_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/exact_hook_result.json",
+          "sha256": "256c810c3177d973c17710440696df4233aa698c45b316d48f20cd0766d37bff",
+          "size": 1750
+        },
+        "exact_hook_trace": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/exact_hook_trace.json",
+          "sha256": "af8213dc5bee1ef5142b4d88f04319b38554ced9db8819ceff131bea38877da4",
+          "size": 27829
+        },
+        "exact_hook_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/exact_hook_trial.json",
+          "sha256": "b1774e8499442e189f96b21bc17c773add0e1b8a0c7fc8b6d1e0556cca3fc448",
+          "size": 1914
+        },
+        "pair_plan": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair001/pair_plan.json",
+          "sha256": "d1c0fb4a41856a8ff67b072f2dffa6877f858f3ac934fc2db9d83e1965c7ae84",
+          "size": 3611
+        }
+      },
+      "callback_comparison": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "both_restored": true,
+        "serialization_errors": 0,
+        "status": "matched"
+      },
+      "capture_id": "firefly-target-area-pair-001",
+      "condition_order": [
+        "control",
+        "exact_hook"
+      ],
+      "pair": "pair001",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "trace": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "event_payloads": [
+          {
+            "call_order": 0,
+            "origin": [
+              4,
+              2
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                1
+              ],
+              [
+                5,
+                2
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                3,
+                2
+              ]
+            ]
+          },
+          {
+            "call_order": 1,
+            "origin": [
+              4,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                2
+              ],
+              [
+                5,
+                3
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                3,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 2,
+            "origin": [
+              4,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                3,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 3,
+            "origin": [
+              4,
+              6
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                7
+              ],
+              [
+                3,
+                6
+              ]
+            ]
+          },
+          {
+            "call_order": 4,
+            "origin": [
+              5,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                2
+              ],
+              [
+                6,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 5,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 6,
+            "origin": [
+              5,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                4
+              ],
+              [
+                6,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 7,
+            "origin": [
+              4,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                3,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 8,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          }
+        ],
+        "event_payloads_sha256": "85339d4a91223ba36e3efd919da28aaa5b8b9da82e55f277f8822b421ac26bf3",
+        "installed_get_target_area_slots": 11,
+        "restore_conflicts": 0,
+        "serialization_errors": 0
+      },
+      "whole_game_outcome": {
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+        "status": "matched"
+      }
+    },
+    {
+      "artifacts": {
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/control_outcome.json",
+          "sha256": "b92ce46b2892e5f3267b9353b0105599813245cb5f57b79ca9671bf621924b26",
+          "size": 11340
+        },
+        "control_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/control_result.json",
+          "sha256": "dc6c1cce37f6cbf1362dc184cfc09c2272d355bb7f68a73335a9b3f607c1ffeb",
+          "size": 1749
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/control_trial.json",
+          "sha256": "3e142d212bd4e9a0fa43c5ea15b90e57513bdf53e4855daad1c0525a353e17f9",
+          "size": 1661
+        },
+        "exact_hook_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/exact_hook_outcome.json",
+          "sha256": "441f4c022c0f33e832b6fcc5d78721106ded56936bdbe3bc39143847ef0ef859",
+          "size": 11340
+        },
+        "exact_hook_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/exact_hook_result.json",
+          "sha256": "b07293aa810fb8ff2577f1b0ff95a9cbe83cbbaad684d5b80264b15fd102f6a8",
+          "size": 1750
+        },
+        "exact_hook_trace": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/exact_hook_trace.json",
+          "sha256": "3d3b1d20b3d7c658776edf436064ebab6154598fc78d41563ee98ac520eabdc5",
+          "size": 27829
+        },
+        "exact_hook_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/exact_hook_trial.json",
+          "sha256": "a418c88fdaa4d9761cbc68c7a8be7913a082c67e86b899b7608135a9ba7935ee",
+          "size": 1914
+        },
+        "pair_plan": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair002/pair_plan.json",
+          "sha256": "33f7358a30e10623a506f37c4fa1e62f0762ea8c26c2e99430c714fda8ef51ea",
+          "size": 3611
+        }
+      },
+      "callback_comparison": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "both_restored": true,
+        "serialization_errors": 0,
+        "status": "matched"
+      },
+      "capture_id": "firefly-target-area-pair-002",
+      "condition_order": [
+        "exact_hook",
+        "control"
+      ],
+      "pair": "pair002",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "trace": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "event_payloads": [
+          {
+            "call_order": 0,
+            "origin": [
+              4,
+              2
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                1
+              ],
+              [
+                5,
+                2
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                3,
+                2
+              ]
+            ]
+          },
+          {
+            "call_order": 1,
+            "origin": [
+              4,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                2
+              ],
+              [
+                5,
+                3
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                3,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 2,
+            "origin": [
+              4,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                3,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 3,
+            "origin": [
+              4,
+              6
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                7
+              ],
+              [
+                3,
+                6
+              ]
+            ]
+          },
+          {
+            "call_order": 4,
+            "origin": [
+              5,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                2
+              ],
+              [
+                6,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 5,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 6,
+            "origin": [
+              5,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                4
+              ],
+              [
+                6,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 7,
+            "origin": [
+              4,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                3,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 8,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          }
+        ],
+        "event_payloads_sha256": "85339d4a91223ba36e3efd919da28aaa5b8b9da82e55f277f8822b421ac26bf3",
+        "installed_get_target_area_slots": 11,
+        "restore_conflicts": 0,
+        "serialization_errors": 0
+      },
+      "whole_game_outcome": {
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+        "status": "matched"
+      }
+    },
+    {
+      "artifacts": {
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/control_outcome.json",
+          "sha256": "c4462f7c07d114f3fbbc7f952d25702625fba0c2047871396c90333e177809e3",
+          "size": 11340
+        },
+        "control_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/control_result.json",
+          "sha256": "92ec78d1fc2a25e8fd345b6edfc276c7545572d8367df5ce87570f9e9353de29",
+          "size": 1749
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/control_trial.json",
+          "sha256": "16065c4d5f1e148de42b77fa47e77342350f268b7abbd11b52ebfc3921aebbe0",
+          "size": 1661
+        },
+        "exact_hook_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/exact_hook_outcome.json",
+          "sha256": "373890272c004599ce71115bf82a874213ff24c73788229fa51d94f78cc0f469",
+          "size": 11340
+        },
+        "exact_hook_result": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/exact_hook_result.json",
+          "sha256": "e1a3765e4d3e7ab53877a30463f310e08a699600a7a90e90de10c91cbb344f16",
+          "size": 1750
+        },
+        "exact_hook_trace": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/exact_hook_trace.json",
+          "sha256": "6f834bd88435cc6872aaeeb85ef7361aefd576b7e3a3d7c8adadd508733ba7b2",
+          "size": 27829
+        },
+        "exact_hook_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/exact_hook_trial.json",
+          "sha256": "1f6769ca40960ac20bd0dcb06b5e4d73cd091569f3ff30ea7f3466b8703db213",
+          "size": 1914
+        },
+        "pair_plan": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_target_area_callback/pair003/pair_plan.json",
+          "sha256": "69d1622bdcd9c7d8819c09c1b2553e78d469a58696a15fe1cb272d384f5fe16e",
+          "size": 3611
+        }
+      },
+      "callback_comparison": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "both_restored": true,
+        "serialization_errors": 0,
+        "status": "matched"
+      },
+      "capture_id": "firefly-target-area-pair-003",
+      "condition_order": [
+        "control",
+        "exact_hook"
+      ],
+      "pair": "pair003",
+      "scenario": {
+        "consumed_spawn_count": 0,
+        "pawn_id": 1303,
+        "pawn_type": "Firefly1",
+        "start": [
+          4,
+          4
+        ]
+      },
+      "trace": {
+        "accepted_events": 9,
+        "attempted_calls": 9,
+        "event_payloads": [
+          {
+            "call_order": 0,
+            "origin": [
+              4,
+              2
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                1
+              ],
+              [
+                5,
+                2
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                3,
+                2
+              ]
+            ]
+          },
+          {
+            "call_order": 1,
+            "origin": [
+              4,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                2
+              ],
+              [
+                5,
+                3
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                3,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 2,
+            "origin": [
+              4,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                3,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 3,
+            "origin": [
+              4,
+              6
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                7
+              ],
+              [
+                3,
+                6
+              ]
+            ]
+          },
+          {
+            "call_order": 4,
+            "origin": [
+              5,
+              3
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                2
+              ],
+              [
+                6,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                3
+              ]
+            ]
+          },
+          {
+            "call_order": 5,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 6,
+            "origin": [
+              5,
+              5
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                4
+              ],
+              [
+                6,
+                5
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                4,
+                5
+              ]
+            ]
+          },
+          {
+            "call_order": 7,
+            "origin": [
+              4,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                4,
+                3
+              ],
+              [
+                5,
+                4
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                3,
+                4
+              ]
+            ]
+          },
+          {
+            "call_order": 8,
+            "origin": [
+              5,
+              4
+            ],
+            "pawn_uid": 1303,
+            "payload_version": 1,
+            "representation": "coordinate_list",
+            "skill_id": "FireflyAtk1",
+            "target_area": [
+              [
+                5,
+                3
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                4,
+                4
+              ]
+            ]
+          }
+        ],
+        "event_payloads_sha256": "85339d4a91223ba36e3efd919da28aaa5b8b9da82e55f277f8822b421ac26bf3",
+        "installed_get_target_area_slots": 11,
+        "restore_conflicts": 0,
+        "serialization_errors": 0
+      },
+      "whole_game_outcome": {
+        "difference_count": 0,
+        "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+        "status": "matched"
+      }
+    }
+  ],
+  "restore": {
+    "install_restoration_pending": true,
+    "save_restoration_pending": true,
+    "save_tree_sha256": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11"
+  },
+  "results": {
+    "all_event_streams_match": true,
+    "all_semantic_outcomes_match": true,
+    "all_slots_restored": true,
+    "classification": "fixed_firefly_get_target_area_runtime_order_correlated_to_complete_native_tournament",
+    "complete_restored_pairs": 3,
+    "control_attempt_counts": [
+      0,
+      0,
+      0
+    ],
+    "event_payloads_sha256": "85339d4a91223ba36e3efd919da28aaa5b8b9da82e55f277f8822b421ac26bf3",
+    "exact_attempt_counts": [
+      9,
+      9,
+      9
+    ],
+    "exact_event_counts": [
+      9,
+      9,
+      9
+    ],
+    "restore_conflict_count": 0,
+    "semantic_sha256": "957554169ca884c49e8770255ef6dc6aac5f51fafef3f64e8cad23294240c673",
+    "serialization_error_count": 0
+  },
+  "runtime_identity": {
+    "ai_seed_fingerprint": "69ed51ff787c0f1e52b8232dfdbe16ed46339325a074e77b78e4387156f2083a",
+    "master_seed": 664577925,
+    "mission_id": "Mission_Power",
+    "region_id": "region1",
+    "timeline_fingerprint": "cfdb040ab907f854595b5760d1da4492886e6f9240c6d6a5a90886e1b6686c11",
+    "turn": 1
+  },
+  "schema_version": 1,
+  "solver_conformance": {
+    "capture_backed_test": "test_committed_target_area_campaign_correlates_native_candidates",
+    "reason": "The Rust simulator consumes the authoritative settled queue; ordinary solver input still lacks prospective Lua PointLists, candidate-time Board state, and selector-entry RNG state.",
+    "resolved_rule": "For the fixed Firefly1 payload, preserve the observed ordered four-point target areas and bind the first eight origins to the complete native candidate destination order",
+    "rust_change_required": false,
+    "simulator_version_bump_required": false
+  },
+  "supporting_artifacts": {
+    "callback_join": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb",
+      "size": 179219
+    },
+    "complete_enemy_tournament_receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260824_enemy_tournament_hw_receipt.json",
+      "sha256": "0b62208bfe03d9364a5ab62fd90842b311d33bebce832378518a4a3f174b5a26",
+      "size": 24896
+    },
+    "inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f",
+      "size": 125477
+    },
+    "runtime_callback_bindings": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822T025049Z_callback_bindings_live_slot_update.json",
+      "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24",
+      "size": 131137
+    }
+  }
+}

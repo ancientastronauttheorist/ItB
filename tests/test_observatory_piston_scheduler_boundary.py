@@ -201,20 +201,29 @@ def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
             "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d"
         ),
     }
-    current = {
-        "id": "enemy_tournament_hw_project_bridge",
-        "size": bridge.stat().st_size,
-        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
-    }
-    assert current == {
+    tournament = {
         "id": "enemy_tournament_hw_project_bridge",
         "size": 357_175,
         "sha256": (
             "1abb8001eb6402c26d59fb09c05c78159a9199267130eecf9c73ccfd7879a5ac"
         ),
     }
+    current = {
+        "id": "enemy_target_area_callback_project_bridge",
+        "size": bridge.stat().st_size,
+        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
+    }
+    assert current == {
+        "id": "enemy_target_area_callback_project_bridge",
+        "size": 365_924,
+        "sha256": (
+            "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
+        ),
+    }
     assert v408 in DEATH_EVENT_BRIDGE_OVERLAYS
     assert v408 in FINAL_CAVE_BRIDGE_OVERLAYS
+    assert tournament in DEATH_EVENT_BRIDGE_OVERLAYS
+    assert tournament in FINAL_CAVE_BRIDGE_OVERLAYS
     assert current in DEATH_EVENT_BRIDGE_OVERLAYS
     assert current in FINAL_CAVE_BRIDGE_OVERLAYS
 

@@ -701,6 +701,10 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "consumed one caller-30 draw" in evidence
     assert "selected input index 5" in evidence
     assert "base-current-weapon field changed from -1" in evidence
+    assert "same nine ordered FireflyAtk1 calls" in evidence
+    assert "Calls 0 through 7 originate" in evidence
+    assert "Call 8 repeats selected input 5's [5,4] origin" in evidence
+    assert "deterministic cross-campaign correlation" in evidence
     assert "one complete runtime candidate payload" in evidence
     assert "live bridge queue remains the authoritative current action" in evidence
     assert "immediately displaced primary group" in evidence
@@ -804,6 +808,16 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "build_enemy_tournament_hw_campaign_receipt",
         "publish_enemy_tournament_hw_campaign_receipt",
     }
+    assert implementations[
+        "src/observatory/enemy_target_area_callback_campaign.py"
+    ] == {
+        "archive_enemy_target_area_callback_campaign",
+        "build_enemy_target_area_callback_campaign_receipt",
+        "publish_enemy_target_area_callback_campaign_receipt",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_target_area_callback_campaign.py"
+    ] == {"main"}
     assert implementations[
         "src/native/observatory_enemy_tournament_hw_observer.c"
     ] == {
@@ -1141,6 +1155,33 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_target_area_callback_receipt.json"
+    ] == {
+        '"classification": "fixed_firefly_get_target_area_runtime_order_correlated_to_complete_native_tournament"',
+        '"exact_event_counts": [',
+        '"selected_input_index": 5',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_target_area_callback_cleanup_receipt.json"
+    ] == {
+        "observatory_enemy_target_area_callback_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_enemy_target_area_callback_campaign.py"
+    ] == {
+        "test_committed_target_area_campaign_rebuilds_exactly_and_is_neutral",
+        "test_committed_target_area_campaign_correlates_native_candidates",
+        "test_target_area_cleanup_closes_restore_and_binds_artifacts",
+        "test_post_cleanup_inventory_preserves_exact_campaign_baseline_content",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
         "score_positioning_x87_receipt.json"
     ] == {
         '"classification": "score_positioning_x87_rounding_mode_resolved"',
@@ -1178,8 +1219,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "native target-area wrapper" in gaps
     assert "native target-area wrapper and SkillEffect cache wrapper" in gaps
     assert "concrete ordered Lua-produced PointLists" in gaps
-    assert "concrete ordered Lua-produced PointLists and SkillEffects" in gaps
-    assert "raw callback values" in gaps
+    assert "supplies the concrete ordered Lua-produced PointLists" in gaps
+    assert "concrete ordered Lua-produced PointLists and SkillEffects" not in gaps
+    assert "raw score callback values" in gaps
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps
     assert "global ScorePositioning projection" in gaps
