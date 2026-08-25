@@ -531,3 +531,4 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 529 | — | One complete native enemy-record tournament is runtime-proven for the fixed Firefly1 scenario. | `docs/agent/solver-reference.md` |
 | 530 | — | The fixed Firefly1 GetTargetArea sequence correlates exactly to the complete native candidate order. | `docs/agent/solver-reference.md` |
 | 531 | — | The fixed Firefly1 raw GetTargetScore matrix correlates exactly to its target areas and native records. | `docs/agent/solver-reference.md` |
+| 532 | — | The fixed Firefly1 raw GetSkillEffect sequence closes score-side effects and the selected-effect repeat. | `docs/agent/solver-reference.md` |

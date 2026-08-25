@@ -1,0 +1,43 @@
+{
+  "arm_packet_sha256": "48f73c1490be9548bd0b1445302227be8056444e51987834206cfe0becd0a022",
+  "callback_counts": {
+    "attempted_calls": 0,
+    "event_count": 0
+  },
+  "callback_family": "get_skill_effect",
+  "capsule_sha256": "655f5b76fb1bd0df701043062e210c28f24db9080e3e904a88302d2ca9bd2fc1",
+  "capture_id": "firefly-skill-effect-pair-003",
+  "capture_track": "owner_local_modified",
+  "command_ack": "OK OBS_ENEMY_CALLBACK_TRIAL condition=control family=get_skill_effect capture=firefly-skill-effect-pair-003 pawn=1303 type=Firefly1 at=4,4 consumed_spawns=0 attempts=0 events=0 complete=true",
+  "condition": "control",
+  "created_at": "2026-08-25T01:58:00.008114+00:00",
+  "errors": {
+    "command": "",
+    "outcome": [],
+    "validation": ""
+  },
+  "kind": "observatory_enemy_callback_turn_trial",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_skill_effect\\pair003\\control\\outcome.json",
+    "sha256": "554066010ec6b552116f545ab5e873c249e564231608fe35d37ec88e6aff8dc2"
+  },
+  "pair_id": "pair003",
+  "pair_plan_sha256": "2bca575dd60a4185dc93a2ceca94d614955009c80335a4d91ad13c5f0a885fe1",
+  "result": {
+    "path": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach\\observatory_staging\\20260824_enemy_callback_skill_effect\\pair003\\control\\result.json",
+    "sha256": "6f7cc815c1563f970697c33cca715719b0ab49758dda569b117291942e2e4036"
+  },
+  "scenario": {
+    "consumed_spawn_count": 0,
+    "pawn_id": 1303,
+    "pawn_type": "Firefly1",
+    "start": [
+      4,
+      4
+    ]
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "trace": null,
+  "valid_trial": true
+}

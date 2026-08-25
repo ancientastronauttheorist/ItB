@@ -704,6 +704,11 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "same nine ordered FireflyAtk1 calls" in evidence
     assert "Calls 0 through 7 originate" in evidence
     assert "Call 8 repeats selected input 5's [5,4] origin" in evidence
+    assert "same 33 ordered raw SkillEffects" in evidence
+    assert "installed only the 38 effect slots" in evidence
+    assert "Calls 0 through 31 have the exact origins and targets" in evidence
+    assert "Call 32 repeats score-side call 23's [5,4] origin" in evidence
+    assert "same process settles Firefly1 at [5,4]" in evidence
     assert "deterministic cross-campaign correlation" in evidence
     assert "one complete runtime candidate payload" in evidence
     assert "live bridge queue remains the authoritative current action" in evidence
@@ -827,6 +832,16 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     }
     assert implementations[
         "scripts/itb_observatory_enemy_target_score_callback_campaign.py"
+    ] == {"main"}
+    assert implementations[
+        "src/observatory/enemy_skill_effect_callback_campaign.py"
+    ] == {
+        "archive_enemy_skill_effect_callback_campaign",
+        "build_enemy_skill_effect_callback_campaign_receipt",
+        "publish_enemy_skill_effect_callback_campaign_receipt",
+    }
+    assert implementations[
+        "scripts/itb_observatory_enemy_skill_effect_callback_campaign.py"
     ] == {"main"}
     assert implementations[
         "src/native/observatory_enemy_tournament_hw_observer.c"
@@ -1223,6 +1238,36 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_skill_effect_callback_receipt.json"
+    ] == {
+        (
+            '"classification": "fixed_firefly_get_skill_effect_runtime_'
+            'sequence_correlated_to_scoring_native_selection_and_settled_action"'
+        ),
+        '"exact_event_counts": [',
+        '"selected_effect_repeat": {',
+        '"all_semantic_outcomes_match": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_skill_effect_callback_cleanup_receipt.json"
+    ] == {
+        "observatory_enemy_skill_effect_callback_cleanup_receipt",
+        '"remaining_experimental_file_count": 0',
+        '"file_set_and_bytes_match_pre_experiment": true',
+    }
+    assert tests[
+        "tests/test_observatory_enemy_skill_effect_callback_campaign.py"
+    ] == {
+        "test_committed_skill_effect_campaign_rebuilds_exactly_and_is_neutral",
+        "test_committed_skill_effect_campaign_correlates_scoring_and_settled_action",
+        "test_skill_effect_cleanup_closes_restore_and_binds_artifacts",
+        "test_post_cleanup_inventory_preserves_target_score_baseline_content",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260824_"
         "score_positioning_x87_receipt.json"
     ] == {
         '"classification": "score_positioning_x87_rounding_mode_resolved"',
@@ -1260,10 +1305,11 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "native target-area wrapper" in gaps
     assert "native target-area wrapper and SkillEffect cache wrapper" in gaps
     assert "concrete ordered Lua-produced PointLists" in gaps
-    assert "supplies the concrete ordered Lua-produced PointLists" in gaps
+    assert "supply the concrete ordered Lua-produced PointLists" in gaps
+    assert "33-call raw GetSkillEffect sequence" in gaps
     assert "concrete ordered Lua-produced PointLists and SkillEffects" not in gaps
-    assert "fixed raw GetTargetScore matrix" in gaps
-    assert "raw score callback values for other shapes" in gaps
+    assert "raw GetTargetScore matrix" in gaps
+    assert "raw callbacks for other shapes" in gaps
     assert "post-wrapper losing-target scores" in gaps
     assert "source-exact score/effect ancestry" in gaps
     assert "inherited base ScoreList projection" in gaps
@@ -1322,6 +1368,17 @@ def test_real_broad_records_keep_symbols_on_their_exact_source_files():
             "symbols": [
                 "Snowmine1.AvoidingMines",
                 "Snowmine2.AvoidingMines",
+            ],
+        },
+        {
+            "path": "scripts/weapons_enemy.lua",
+            "sha256": (
+                "5231dd7a2de730f04fa4116c0d99f07e"
+                "cbb3b25059db3593d54d689c37bd4b7b"
+            ),
+            "symbols": [
+                "FireflyAtk1",
+                "FireflyAtk1:GetSkillEffect",
             ],
         },
         {

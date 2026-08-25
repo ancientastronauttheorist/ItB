@@ -40,10 +40,12 @@ coordinate/RNG captures show that the selector ordinal is not stable under a
 restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
 environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
 observer neutrality, prospective selector-state delivery or complete upstream
-replay, runtime inputs for the special coordinate paths, broader
-selected-action paths, and the complete runtime candidate payload plus its
-selector-entry state remain unresolved. Native score adjustment around that
-payload is no longer anonymous: a later exact-build continuation names the
+replay, runtime inputs for the special coordinate paths, and broader
+selected-action paths remain unresolved. One complete Firefly1 runtime
+candidate payload plus selector-entry state is now sealed, but ordinary
+prospective delivery and equivalent payloads for other shapes remain
+unresolved. Native score adjustment around that payload is no longer
+anonymous: a later exact-build continuation names the
 injured/health/weapon/history/priority fields and closes the positioning clamp
 and target-score modifier arithmetic. The post-callback record tournament is
 also no longer an offline unknown: another exact-build continuation closes its
@@ -53,6 +55,12 @@ boundary too: `Skill +0x110` is joined to `Board +0x0c` and `Board:IsValid`,
 invalid origins clear the cache, `TwoClick` selects the callback, and only
 negative returned coordinates are filtered. Concrete Lua-produced points
 remain explicit inputs.
+Three later matched callback campaigns close those concrete inputs for the one
+fixed Firefly1 shape: nine ordered target-area calls, 32 raw target-score
+returns, and 33 raw SkillEffects. The first 32 effects match the score arguments;
+the final effect repeats native selected input 5 and its `[3,4]` impact appears
+in the same process's settled queue. These bounded results do not generalize
+other subclasses, native effect postprocessing, or prospective Board state.
 The scheduler/fallback *control flow* is no longer unknown: exact
 offline review identifies caller 59 as the logged emergency modulo selector
 and caller 66 as without-replacement predicate ordering before a separate
@@ -945,6 +953,11 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    bounded events with no adapter or restoration error. Only the three
    non-`GetSkillEffect` pairs match whole-game outcomes; two counterbalanced
    `GetSkillEffect` pairs repeat a spawn-coordinate-only mismatch.
+   **Completed for a neutral synthetic `GetSkillEffect` shape:** three fresh-
+   process pairs on the fixed no-spawn Firefly1 mission capture the same 33
+   calls with matching outcomes, zero drops/errors/conflicts, and full slot
+   restoration. Calls 0–31 are the source-proven score-side materializations;
+   call 32 repeats the selected raw effect and matches the settled queue impact.
 5. **Completed for a bounded `Firefly1` queue path:** three counterbalanced
    triplets correlate one final selected record directly to one immediate queue
    commit on the same thread, with exact destination, target/shot, and
@@ -983,6 +996,11 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    replayable from an already-materialized callback PointList. Concrete Lua
    target-point construction and the complete prospective payload remain
    outside this boundary.
+   **Completed at runtime for one concrete callback payload:** separate matched
+   campaigns bind the complete Firefly1 target-area, raw target-score, and raw
+   SkillEffect sequences to the native eight-record tournament. The final
+   effect repeat and settled action are same-process; cross-family/native joins
+   remain deterministic cross-campaign correlations.
 6. **Completed offline for native path costs, ordering, and corpse occupancy:** the exact
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit
@@ -1090,12 +1108,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
 9. Add a complete runtime candidate record only if a solver mismatch needs
    more than the observed Lua callback streams, exact native score adjustments,
    and reviewed candidate/selector RNG grammar.
-10. **Completed for all live series:** the callback/native, native-boundaries,
-   spawn-replay, and spawn-coordinate cleanup receipts close all seven
-   immutable campaign receipts' pending save/install fields. Each
-   accepted/post-cleanup comparison matches 689/689, the 33-file save tree is
-   byte-exact, the baseline Mod Loader hash is restored, and no active
-   Observatory file remains. Repeat this gate after every future live series.
+10. **Completed for every sealed live series through the Firefly SkillEffect
+   campaign:** the associated cleanup receipts close every pending save/install
+   field. The current post-cleanup inventory matches 689/689 prior content
+   entries, the campaign's 32-file save tree is byte-exact, the baseline Mod
+   Loader hash is restored, and no active Observatory file remains. Repeat this
+   gate after every future live series.
 
 The exact isolation gate, helper constraints, counterbalanced experiment order,
 abort rules, and cleanup proof are in `docs/observatory_capture_campaign.md`.
@@ -1126,3 +1144,8 @@ and
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json`;
 their restoration is closed by
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`.
+The bounded Firefly tournament, target-area, target-score, and SkillEffect
+evidence is sealed in the corresponding
+`windows_build_13725832_owner_local_modified_20260824_enemy_*_receipt.json`
+files under `data/observatory/captures/`; each campaign has a matching cleanup
+receipt that closes its pending restore fields.

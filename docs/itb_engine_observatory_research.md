@@ -42,9 +42,12 @@ Three later matched pairs bind nine fixed Firefly1 `GetTargetArea` calls to a
 complete eight-record native tournament and selected-destination repeat. Three
 more matched pairs bind the corresponding 32 raw `GetTargetScore` returns:
 eight ordered vectors of `[0,0,0,5]`, whose unique raw winners match the native
-record targets and target scores. Both synthetic campaigns are whole-game
-neutral for the fixed scenario, restore all 65 callback slots, and end with
-byte-identical pre/post save manifests and the prior Mod Loader restored.
+record targets and target scores. A third set of three matched pairs binds 33
+raw `GetSkillEffect` returns: the first 32 match those score arguments and the
+last repeats the selected effect whose impact is present in the same process's
+settled queue. All three synthetic campaigns are whole-game neutral for the
+fixed scenario, restore all 65 callback slots, and end with byte-identical
+pre/post save manifests and the prior Mod Loader restored.
 Three source-verified `Spawner:NextPawn` spans now resolve the normal
 weak/pawn/upgrade RNG call order. Three counterbalanced hardware-observer
 triplets also correlate the final selected record to the immediate Pawn queue
@@ -889,9 +892,18 @@ bridge-read boundary.
   fresh-process, counterbalanced pairs serialize the same 32
   `FireflyAtk1:GetTargetScore` returns. The eight four-target groups preserve
   those PointLists and each score vector is `[0,0,0,5]`; the unique raw winner
-  matches the native record target and score. Losing-target post-wrapper
-  values, equal-best/caller-29 state, SkillEffects, and other shapes remain
-  open.
+  matches the native record target and score. Rule 532 supplies the matching
+  raw SkillEffects; losing-target post-wrapper values, equal-best/caller-29
+  state, and other shapes remain open.
+- **Completed at runtime for the corresponding raw SkillEffects:** three more
+  fresh-process, counterbalanced pairs serialize the same 33
+  `FireflyAtk1:GetSkillEffect` returns with only the 38 effect slots active.
+  Calls 0–31 match the 32 score arguments, and source ancestry proves the
+  inherited scorer materializes one actual effect per call. Call 32 repeats
+  score-side call 23's `[5,4] -> [4,4]` arguments and `[3,4]` impact; the same
+  process settles that Firefly origin and queued impact. Native annotation and
+  postprocessing, other subclasses and TwoClick paths, prospective Board
+  state, and other decision shapes remain open.
 - **Completed at runtime for one full tournament:** three counterbalanced native
   triplets capture the same eight post-callback records, selector-entry and
   exit CRT state, selected record, and immediate queue commit. Exact replay
