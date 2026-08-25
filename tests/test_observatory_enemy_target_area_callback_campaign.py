@@ -6,6 +6,7 @@ from pathlib import Path
 
 from src.observatory.enemy_target_area_callback_campaign import (
     EXPECTED_TARGET_AREA_EVENTS,
+    MODLOADER_SOURCE,
     SEMANTIC_SHA256,
     build_enemy_target_area_callback_campaign_receipt,
 )
@@ -45,7 +46,6 @@ def test_committed_target_area_campaign_rebuilds_exactly_and_is_neutral():
         CAPTURE_ROOT,
         repository_root=ROOT,
     )
-
     assert rebuilt == receipt
     assert receipt["results"]["classification"] == (
         "fixed_firefly_get_target_area_runtime_order_correlated_to_"
@@ -74,6 +74,20 @@ def test_committed_target_area_campaign_rebuilds_exactly_and_is_neutral():
             "semantic_sha256": SEMANTIC_SHA256,
         }
         for pair in receipt["pairs"]
+    )
+
+
+def test_campaign_modloader_is_bound_to_immutable_hash_named_evidence():
+    path = ROOT / MODLOADER_SOURCE
+
+    assert path.name == (
+        "windows_build_13725832_owner_local_modified_20260824_"
+        "enemy_callback_modloader_"
+        "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d.lua"
+    )
+    assert path.stat().st_size == 365_924
+    assert _sha256(path) == (
+        "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d"
     )
 
 

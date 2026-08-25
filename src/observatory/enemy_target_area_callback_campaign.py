@@ -72,7 +72,11 @@ TOURNAMENT_RECEIPT = Path("data/observatory/captures") / (
     "windows_build_13725832_owner_local_modified_20260824_"
     "enemy_tournament_hw_receipt.json"
 )
-MODLOADER_SOURCE = Path("src/bridge/modloader.lua")
+MODLOADER_SOURCE = Path("data/observatory/captures") / (
+    "windows_build_13725832_owner_local_modified_20260824_"
+    "enemy_callback_modloader_"
+    "07af106b8cc2abab88fd215ed0ddfe04fc138ba9c4987f2500a445509898071d.lua"
+)
 CONTROLLER_SOURCE = Path("src/bridge/observatory_callback_controller.lua")
 TRIAL_HOST_SOURCE = Path("src/bridge/observatory_callback_trial_host.lua")
 
