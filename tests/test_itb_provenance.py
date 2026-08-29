@@ -632,6 +632,8 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "caller 59 as the emergency selector" in evidence
     assert "caller 66 as without-replacement predicate ordering" in evidence
     assert "candidates[raw_rng % 5]" in evidence
+    assert "canonical observable pre-states 0x161229bc" in evidence
+    assert "selects exact coordinates [5,4], [5,4], and [5,2]" in evidence
     assert "all 689 accepted installation entries" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
@@ -647,6 +649,16 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "attribute_spawn_coordinate_rng",
         "compare_spawn_coordinate_rng_attributions",
         "explain_spawn_coordinate_rng_variation",
+    }
+    assert implementations[
+        "src/observatory/spawn_coordinate_state_replay.py"
+    ] == {
+        "recover_selector_replay_vector",
+        "build_spawn_coordinate_state_replay_receipt",
+    }
+    assert implementations["rust_solver/src/native_rng.rs"] == {
+        "draw_msvc_rand",
+        "replay_spawn_coordinate",
     }
     tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
     assert tests[
@@ -669,11 +681,22 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         '"selector_rng_ordinals":[1495,1475,1450]',
         '"ordinal_deltas_fully_accounted":true',
     }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260822_"
+        "spawn_coordinate_state_replay_receipt.json"
+    ] == {
+        "selector_time_observable_state_recovered_post_hoc_exact_replay_not_prospective",
+        "0x161229bc",
+        "0x495e317b",
+        "0x2c54aa4a",
+    }
     gaps = " ".join(record["known_gaps"])
     assert "does not parse or apply SectorSpawners" in gaps
     assert "GAME:GetSpawnList" in gaps
     assert "Standard spawn-coordinate candidate order" in gaps
     assert "scheduler/fallback paths' opaque predicate inputs" in gaps
+    assert "recovered exactly post hoc" in gaps
     assert "spawn-coordinate selection, and the coordinate RNG call order" not in gaps
 
 

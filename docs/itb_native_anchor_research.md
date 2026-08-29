@@ -963,6 +963,12 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Lua leaf; classified count deltas `[0,-20,-45]` exactly match the ordinal
    deltas. Presentation functions account for 1271, 1250, and 1225 draws, so a
    fixed seed plus ordinary save state is not a stable prediction boundary.
+   A strict derived receipt joins three consecutive native results at each
+   selector and recovers observable pre-states `0x161229bc`, `0x495e317b`, and
+   `0x2c54aa4a`; the input-driven Rust replay reproduces raw results `3642`,
+   `15777`, and `30530` and exact coordinates `[5,4]`, `[5,4]`, and `[5,2]`.
+   This closes post-hoc replay only; ordinary input still lacks the state before
+   a future call.
    Scheduler and fallback selector paths remain unexercised at runtime. Their
    offline semantics are now resolved: caller 59 is emergency placement after
    the ordinary vector empties, while caller 66 samples predicate-check order
@@ -1170,6 +1176,12 @@ and
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json`;
 their restoration is closed by
 `windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json`.
+A strict read-only derivation is sealed separately in
+`windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_state_replay_receipt.json`.
+It recovers observable selector pre-states `0x161229bc`, `0x495e317b`, and
+`0x2c54aa4a` from the three same-process native windows and drives the Rust
+input-based replay to exact coordinates `[5,4]`, `[5,4]`, and `[5,2]`. It does
+not make those states available prospectively to ordinary planning.
 The bounded Firefly tournament, target-area, target-score, raw SkillEffect, and
 selected native materialization evidence is sealed in the corresponding
 `windows_build_13725832_owner_local_modified_20260824_enemy_*_receipt.json`

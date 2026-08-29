@@ -71,6 +71,10 @@ and ordered candidates needed to reproduce `Firefly2`, `Scarab2`, and
 scheduler/selector candidates and proves the standard selector's exact
 `raw_rng % candidate_count` rule. Three same-process coordinate-plus-RNG-core
 captures place that draw at caller 60 and ordinals 1495, 1475, and 1450.
+Their contiguous native windows now recover exact observable selector pre-
+states `0x161229bc`, `0x495e317b`, and `0x2c54aa4a`; an input-driven Rust replay
+reproduces all three raw draws and selected coordinates without changing the
+future-spawn non-fabrication rule.
 Focused static review classifies every caller whose upstream count varied: the
 dominant consumers are particle, pilot-portrait, and `UnitAcid` presentation
 code sharing the same native RNG stream. Focused offline control-flow review
@@ -224,6 +228,12 @@ the logged emergency-placement vector. Caller 66 belongs to a scheduler loop
 that samples supplied points without replacement for opaque predicate checks;
 it advances the shared stream but delegates any final coordinate to the
 ordinary selector.
+The three accepted same-process transcripts do contain enough adjacent native
+output to recover the exact low-31-bit observable state at each already-
+executed standard selector. Their states `0x161229bc`, `0x495e317b`, and
+`0x2c54aa4a` replay raw results `3642`, `15777`, and `30530` and exact
+coordinates `[5,4]`, `[5,4]`, and `[5,2]`. This is a durable post-hoc
+conformance capsule, not a future-state oracle.
 
 ### Enemy targeting
 
@@ -823,6 +833,10 @@ emergency-placement modulo selector and caller 66 as without-replacement
 scheduler predicate ordering; the scheduler calls caller 60 separately for any
 final coordinate. Neither result supplies selector-time state to ordinary
 solver input.
+The derived state-replay receipt nevertheless recovers that state post hoc for
+all three captured standard calls and drives the same exact MSVC transition and
+candidate-index rule in Rust. Because the value is absent before a future call,
+the production projection remains unchanged.
 The exact-build path-boundary map separately proves that `Pilot_Hotshot`
 selects `PATH_ROADRUNNER=4`: native search may expand through occupied live
 pawn tiles, while destination filtering still forbids stopping there. Rust
@@ -1062,7 +1076,8 @@ The targeted offline map is now deep enough; do not broaden into full
 decompilation. The reversible owner campaign has completed the planned Lua RNG,
 natural callback, bounded native RNG, `Spawner:NextPawn` span/replay,
 selected-queue, and fixed selected-SkillEffect materialization observations.
-The replay model is exact when supplied its captured state and candidates, but
+The spawn-coordinate replay is now exact for three capture-backed selector
+states as well as when supplied any exact state and candidate vector, but
 ordinary planning still lacks those inputs before the call and lacks the
 selected coordinate. Keep the current Rust non-fabrication rule. If a future
 solver mismatch justifies more runtime work, add only the missing narrow

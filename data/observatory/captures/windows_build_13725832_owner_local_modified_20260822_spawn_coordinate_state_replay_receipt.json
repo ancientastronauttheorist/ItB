@@ -1,0 +1,281 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "helper_sha256": "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c",
+    "hook_plan_sha256": "a3d09bbc95ed32c1d8fc4c4155f6b09cabea69a90c361bbb966e2de69023f378",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "restore_manifest_sha256": "d7ad5662a8ba8cdce081f56705ea8302ad425e5f7dbf6830ba4056f99408b73d",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48"
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "Ordinary bridge delivery of selector-time native state before a future spawn decision.",
+      "A stable RNG ordinal from save state or the fixed seed; presentation draws moved the selector across ordinals 1495, 1475, and 1450.",
+      "Scheduler or emergency-fallback runtime behavior; all three joined decisions used standard caller 60.",
+      "Pristine-depot or non-Windows equivalence."
+    ],
+    "proven": [
+      "Each same-process selector event begins a contiguous three-result native RNG window that recovers exactly two raw pre-states differing only in hidden bit 31.",
+      "The canonical low-31-bit pre-state reproduces the selector's native raw RNG result and the following two native results in every capture.",
+      "Applying raw_rng modulo the preserved ordered candidate count selects the exact native spawn coordinate in all three captures.",
+      "The source campaign rebuilds exactly and its cleanup receipt binds a restored 689-entry installation, exact save tree, empty active Observatory residue, and stopped game."
+    ]
+  },
+  "kind": "observatory_spawn_coordinate_state_replay_receipt",
+  "results": {
+    "classification": "selector_time_observable_state_recovered_post_hoc_exact_replay_not_prospective",
+    "observable_pre_states": [
+      "0x161229bc",
+      "0x495e317b",
+      "0x2c54aa4a"
+    ],
+    "raw_rng_values": [
+      3642,
+      15777,
+      30530
+    ],
+    "replay_count": 3,
+    "selected_coordinates": [
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        2
+      ]
+    ],
+    "selected_indices": [
+      2,
+      2,
+      0
+    ]
+  },
+  "schema_version": 1,
+  "solver_conformance": {
+    "remaining_guard": "Do not forecast a future spawn coordinate unless an exact pre-call state and ordered candidate capsule is available before selection.",
+    "resolved_replay": "Advance the observable MSVC state once, then select candidates[raw_rng % candidate_count].",
+    "rust_module": "rust_solver/src/native_rng.rs",
+    "rust_test": "rust_solver/tests/observatory_spawn_coordinate_state_replay.rs",
+    "simulator_version_bump_required": false
+  },
+  "source_evidence": {
+    "cleanup_receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_cleanup_receipt.json",
+      "sha256": "a06f33b73ae4d2aa156a84c324060beb1566cf31ef47f2bae32ba781fa344a93",
+      "size": 4668
+    },
+    "coordinate_rng_receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
+      "sha256": "7a791aa243fd17858644e7331f87f0d2770cbabd0fd0a0a9944a8cdd72a91982",
+      "size": 11610
+    }
+  },
+  "vectors": [
+    {
+      "artifacts": {
+        "attribution": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair001/attribution.json",
+          "sha256": "205346253447d26f7d081137ba6f7f93f707806723b065c880b9a7e63e6955e5",
+          "size": 3561
+        },
+        "coordinate_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair001/coordinate_analysis.json",
+          "sha256": "b07ecaccdb7591a8a53a29ead61f120e84f0d62e485662ec2880ab7905b354fb",
+          "size": 2396
+        },
+        "rng_checkpoint": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair001/rng_checkpoint.json",
+          "sha256": "5cdfa6ab0acbe412dac90fa73a5e90dee355f4c10917fd434af0551daf99ad06",
+          "size": 192142
+        }
+      },
+      "candidate_count": 5,
+      "candidates": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "capture_id": "spawn-coordinate-rng-pair001",
+      "native_result_window": [
+        3642,
+        30415,
+        25880
+      ],
+      "observable_post_state": 238686607,
+      "observable_post_state_hex": "0x0e3a118f",
+      "observable_pre_state": 370289084,
+      "observable_pre_state_hex": "0x161229bc",
+      "pair": "pair001",
+      "raw_pre_state_candidates_hex": [
+        "0x161229bc",
+        "0x961229bc"
+      ],
+      "raw_rng": 3642,
+      "rng_ordinal": 1495,
+      "rng_sequence": 1494,
+      "selected": [
+        5,
+        4
+      ],
+      "selected_index": 2
+    },
+    {
+      "artifacts": {
+        "attribution": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair002/attribution.json",
+          "sha256": "cc038744925fccdf7b9c5fbe791c37ce299acc79affad5c3b06022ca3c9548b5",
+          "size": 3559
+        },
+        "coordinate_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair002/coordinate_analysis.json",
+          "sha256": "07ef8de4df93f4da76e2c48e82fe983d4c65c2f4f3996a58c0f61f0b8ee82f92",
+          "size": 2399
+        },
+        "rng_checkpoint": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair002/rng_checkpoint.json",
+          "sha256": "710903eb0e54c0cf3a3f2f0ff379a36c7bde7a91a3ecc570b58de9d78a204e5a",
+          "size": 189776
+        }
+      },
+      "candidate_count": 5,
+      "candidates": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "capture_id": "spawn-coordinate-rng-pair002",
+      "native_result_window": [
+        15777,
+        24229,
+        5536
+      ],
+      "observable_post_state": 1034008146,
+      "observable_post_state_hex": "0x3da1b652",
+      "observable_pre_state": 1230909819,
+      "observable_pre_state_hex": "0x495e317b",
+      "pair": "pair002",
+      "raw_pre_state_candidates_hex": [
+        "0x495e317b",
+        "0xc95e317b"
+      ],
+      "raw_rng": 15777,
+      "rng_ordinal": 1475,
+      "rng_sequence": 1474,
+      "selected": [
+        5,
+        4
+      ],
+      "selected_index": 2
+    },
+    {
+      "artifacts": {
+        "attribution": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair003/attribution.json",
+          "sha256": "36fce9ca1fb71d9d87db22ec01828a783074eeed4ed4de84be3a3af9ebafbc4d",
+          "size": 3555
+        },
+        "coordinate_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair003/coordinate_analysis.json",
+          "sha256": "24fdca644a94b80d621d17b64d35a9d2cce065c99a43b68ac90d927dec94af97",
+          "size": 2399
+        },
+        "rng_checkpoint": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/pair003/rng_checkpoint.json",
+          "sha256": "97530faeb1b0afe3bd85f1922478a39355eee2a20097f547b37ebce9cf53d0fe",
+          "size": 188697
+        }
+      },
+      "candidate_count": 5,
+      "candidates": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "capture_id": "spawn-coordinate-rng-pair003",
+      "native_result_window": [
+        30530,
+        3367,
+        12061
+      ],
+      "observable_post_state": 2000832485,
+      "observable_post_state_hex": "0x774247e5",
+      "observable_pre_state": 743746122,
+      "observable_pre_state_hex": "0x2c54aa4a",
+      "pair": "pair003",
+      "raw_pre_state_candidates_hex": [
+        "0x2c54aa4a",
+        "0xac54aa4a"
+      ],
+      "raw_rng": 30530,
+      "rng_ordinal": 1450,
+      "rng_sequence": 1449,
+      "selected": [
+        5,
+        2
+      ],
+      "selected_index": 0
+    }
+  ]
+}

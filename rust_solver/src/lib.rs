@@ -12,6 +12,7 @@ pub mod serde_bridge;
 pub mod turn_projection;
 pub mod beam;
 pub mod replay;
+pub mod native_rng;
 
 /// Solve a turn given bridge JSON data.
 ///

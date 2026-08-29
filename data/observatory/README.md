@@ -981,6 +981,23 @@ consume 1233/1188/1200 draws and `UnitAcid` effects consume 30/54/18; pilot
 portrait draws add 8/8/7. This is a conformance result and a prediction guard,
 not permission to synthesize a future coordinate from a save plus seed.
 
+The derived receipt
+`captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_state_replay_receipt.json`
+now makes the post-hoc selector state explicit without changing either
+immutable source receipt. Each caller-60 event begins a contiguous three-result
+native window. Those windows recover observable pre-states `0x161229bc`,
+`0x495e317b`, and `0x2c54aa4a`; advancing once reproduces raw results `3642`,
+`15777`, and `30530`, whose modulo indices select `[5,4]`, `[5,4]`, and `[5,2]`
+from the preserved five-point order. Rust carries the same input-driven replay
+primitive and a capture-backed test. Ordinary bridge state still does not
+deliver a future selector state before the call, so the non-fabrication guard
+remains unchanged and no simulator-version bump follows. Rebuild the derived
+receipt with:
+
+```powershell
+python scripts/itb_observatory_spawn_coordinate_state_replay.py
+```
+
 Rebuild the immutable receipts with:
 
 ```powershell

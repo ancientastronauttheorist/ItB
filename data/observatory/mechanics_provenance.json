@@ -1089,6 +1089,10 @@
         },
         {
           "classification": "fact",
+          "statement": "A strict derived receipt joins each standard-selector event to its contiguous three-result native RNG window. The windows recover canonical observable pre-states 0x161229bc, 0x495e317b, and 0x2c54aa4a; replay yields raw results 3642, 15777, and 30530 and selects exact coordinates [5,4], [5,4], and [5,2] from the preserved candidate order. This is post-hoc replay evidence, not prospective bridge delivery."
+        },
+        {
+          "classification": "fact",
           "statement": "The later spawn-coordinate cleanup receipt closes the combined campaign's pending restoration fields: all 689 accepted installation entries and the sealed 33-file owner save tree matched byte-for-byte, the prior Mod Loader file was restored, and no Observatory diagnostic file remained active."
         },
         {
@@ -1137,6 +1141,20 @@
           ]
         },
         {
+          "path": "src/observatory/spawn_coordinate_state_replay.py",
+          "symbols": [
+            "recover_selector_replay_vector",
+            "build_spawn_coordinate_state_replay_receipt"
+          ]
+        },
+        {
+          "path": "rust_solver/src/native_rng.rs",
+          "symbols": [
+            "draw_msvc_rand",
+            "replay_spawn_coordinate"
+          ]
+        },
+        {
           "path": "tests/test_observatory_native_boundary_campaign.py",
           "symbols": [
             "test_committed_spawn_replay_campaign_recovers_exact_native_choices",
@@ -1147,7 +1165,7 @@
       ],
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
-        "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor selector-time CRT state, so the solver cannot yet use either proven replay rule prospectively.",
+        "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
         "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, complete coordinate-candidate construction/filtering, and the exact runtime replay capsule remain unresolved. Standard spawn-coordinate candidate order, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are now exact; only the scheduler/fallback paths' opaque predicate inputs and runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
@@ -1249,6 +1267,29 @@
             "observatory_spawn_coordinate_rng_cleanup_receipt",
             "\"The active installation matches all 689 entries in the accepted owner-local inventory.\"",
             "\"The active owner save file set and bytes match the sealed 33-file baseline.\""
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_state_replay_receipt.json",
+          "symbols": [
+            "selector_time_observable_state_recovered_post_hoc_exact_replay_not_prospective",
+            "0x161229bc",
+            "0x495e317b",
+            "0x2c54aa4a"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_state_replay.py",
+          "symbols": [
+            "test_committed_selector_state_receipt_rebuilds_exactly",
+            "test_selector_state_recovery_rejects_changed_following_result",
+            "test_selector_state_recovery_rejects_candidate_order_drift"
+          ]
+        },
+        {
+          "path": "rust_solver/tests/observatory_spawn_coordinate_state_replay.rs",
+          "symbols": [
+            "committed_native_selector_states_replay_all_three_coordinates"
           ]
         },
         {
