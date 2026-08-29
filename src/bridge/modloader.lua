@@ -1240,8 +1240,18 @@ local function dump_state()
         end
     end
 
-    -- Tiles (all 64)
+    -- Tiles (all 64). Keep native enemy-spawn observations in a separate,
+    -- explicitly current-only payload. Board:IsDangerous is not equivalent to
+    -- environment_danger, and Board:IsBlocked(..., PATH_GROUND) is stronger
+    -- than reconstructing occupancy from the ordinary tile/unit projection.
+    -- BlockSpawn and the direct spawn-marker vector still have no Lua getter;
+    -- their false completeness flags prevent this payload from being mistaken
+    -- for a prospective spawn forecast.
     state.tiles = {}
+    local native_dangerous_tiles = {}
+    local native_ground_blocked_tiles = {}
+    local native_dangerous_complete = true
+    local native_ground_blocked_complete = true
     for y = 0, 7 do
         for x = 0, 7 do
             local pt = Point(x, y)
@@ -1279,6 +1289,30 @@ local function dump_state()
             if ok_fr and frozen then tile.frozen = true end
             local ok_cr, cracked = pcall(function() return Board:IsCracked(pt) end)
             if ok_cr and cracked then tile.cracked = true end
+
+            local ok_native_danger, native_danger = pcall(function()
+                return Board:IsDangerous(pt)
+            end)
+            if ok_native_danger and type(native_danger) == "boolean" then
+                if native_danger then
+                    native_dangerous_tiles[#native_dangerous_tiles + 1] = {x, y}
+                end
+            else
+                native_dangerous_complete = false
+            end
+
+            local ok_ground_blocked, ground_blocked = pcall(function()
+                return Board:IsBlocked(pt, PATH_GROUND)
+            end)
+            if ok_ground_blocked and type(ground_blocked) == "boolean" then
+                if ground_blocked then
+                    native_ground_blocked_tiles[
+                        #native_ground_blocked_tiles + 1
+                    ] = {x, y}
+                end
+            else
+                native_ground_blocked_complete = false
+            end
 
             -- Conveyor belt direction (from save file)
             local belt_dir = conveyor_belts[x .. "," .. y]
@@ -1325,6 +1359,71 @@ local function dump_state()
             state.tiles[#state.tiles + 1] = tile
         end
     end
+
+    -- Preserve Board:GetZone("enemy") order exactly. Keep this inside
+    -- dump_state instead of adding another main-chunk local: Lua 5.1 limits
+    -- each function to 200 locals and this long-lived loader is near that
+    -- ceiling.
+    local native_enemy_zone = nil
+    if Board and Board.GetZone then
+        local ok_zone, pt_list = pcall(function()
+            return Board:GetZone("enemy")
+        end)
+        if ok_zone and pt_list then
+            local ok_size, count = pcall(function() return pt_list:size() end)
+            if ok_size and type(count) == "number"
+                    and count == math.floor(count)
+                    and count >= 0 and count <= 64 then
+                local zone = {}
+                local seen = {}
+                local valid = true
+                for i = 1, count do
+                    local ok_point, point = pcall(function()
+                        return pt_list:index(i)
+                    end)
+                    if not ok_point or not point then
+                        valid = false
+                        break
+                    end
+                    local ok_xy, zone_x, zone_y = pcall(function()
+                        return point.x, point.y
+                    end)
+                    if not ok_xy
+                            or type(zone_x) ~= "number"
+                            or type(zone_y) ~= "number"
+                            or zone_x ~= math.floor(zone_x)
+                            or zone_y ~= math.floor(zone_y)
+                            or zone_x < 0 or zone_x > 7
+                            or zone_y < 0 or zone_y > 7 then
+                        valid = false
+                        break
+                    end
+                    local key = zone_x .. "," .. zone_y
+                    if seen[key] then
+                        valid = false
+                        break
+                    end
+                    seen[key] = true
+                    zone[#zone + 1] = {zone_x, zone_y}
+                end
+                if valid then native_enemy_zone = zone end
+            end
+        end
+    end
+    state.native_enemy_spawn_inputs = {
+        schema_version = 1,
+        current_snapshot_only = true,
+        enemy_zone_ordered_complete = native_enemy_zone ~= nil,
+        enemy_zone_ordered = native_enemy_zone or {},
+        dangerous_tiles_complete = native_dangerous_complete,
+        dangerous_tiles = native_dangerous_complete
+            and native_dangerous_tiles or {},
+        ground_blocked_tiles_complete = native_ground_blocked_complete,
+        ground_blocked_tiles = native_ground_blocked_complete
+            and native_ground_blocked_tiles or {},
+        block_spawn_values_complete = false,
+        existing_spawn_marker_vector_complete = false,
+    }
 
     -- Queued shots from consolidated save read
     local queued_shots = save_data.queued_shots

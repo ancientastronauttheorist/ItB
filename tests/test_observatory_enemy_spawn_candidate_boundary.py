@@ -54,7 +54,7 @@ def test_committed_map_closes_parameterized_enemy_candidate_construction():
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "75621c762fc35f01c29471cdafb7745f412b936225759756a5eefd430c0bc1c4"
+            "950fc2618b36e901502d2da6fd256e987f343c6c1132453c3f431960e4f9a3e7"
         ),
         "enemy_source_order_proven": True,
         "primary_stable_filter_proven": True,
@@ -228,9 +228,9 @@ def test_binding_rejects_contract_replay_or_solver_scope_drift():
 
 
 def test_artifact_file_is_immutable_and_hash_pinned():
-    assert BOUNDARY_MAP.stat().st_size == 33_117
+    assert BOUNDARY_MAP.stat().st_size == 33_110
     assert hashlib.sha256(BOUNDARY_MAP.read_bytes()).hexdigest() == (
-        "2e2200e787193e73af39af9e402bab5375232309dd6b30790852e56fffc16fb4"
+        "1ae8d63d5a605c814bd565f656b377076ce686856408503fc16479f89e363bde"
     )
 
 

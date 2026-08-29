@@ -468,12 +468,15 @@ Team queries one and six mean exact player and actual team at least six.
 Profile-six distance to a matching Pawn reduces to Manhattan distance, and the
 Building distance is Manhattan over a cache rebuilt from every terrain-1 tile.
 
-The ordinary bridge directly carries or exactly derives most current values.
-It does not directly carry the two dangerous predicates, runtime-exact Ranged
-or AvoidingMines mutations, or the Board snapshot at each later candidate
-callback. Runtime/mod mutations and that candidate-time snapshot remain
-explicit inputs. The callback-time x87 seam is resolved to nearest-even for the
-attested Windows build, but the future tournament is still not fabricated.
+The ordinary bridge directly carries or exactly derives most current values
+and now calls `Board:IsDangerous` for all 64 tiles. It still does not directly
+carry `Board:IsDangerousItem`, runtime-exact Ranged or AvoidingMines mutations,
+or the Board snapshot at each later candidate callback. The separate pinned
+query/read-only reader closes the current spawn-specific Point-keyed
+`BlockSpawn` and direct marker-vector carriers, but not a future callback-time
+snapshot. Runtime/mod mutations and that future snapshot remain explicit
+inputs. The callback-time x87 seam is resolved to nearest-even for the attested
+Windows build, but the future tournament is still not fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its
@@ -1013,9 +1016,11 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Board/Pawn bindings and their native meanings are exact, including the two-
    vector dangerous predicate, eight-field dangerous-item test, spawn sources,
    team matching, and Manhattan Pawn/Building distances. The current carrier
-   matrix is explicit; direct dangerous carriers, live definition mutations,
-   and the candidate-time Board snapshot remain unavailable inputs rather than
-   unknown native semantics.
+   matrix is explicit; current `Board:IsDangerous` is exported directly and a
+   read-only active-Board reader supplies current spawn `BlockSpawn`/marker
+   state. Dangerous-item state, live definition mutations, and the future
+   candidate-time Board snapshot remain unavailable inputs rather than unknown
+   native semantics.
    **Completed at runtime for native integer rounding:** three fresh armed
    processes record x87 control word `0x027F` immediately before the exact
    `ScorePositioning` `FISTP`, while all six control comparisons match and every

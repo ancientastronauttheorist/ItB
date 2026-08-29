@@ -62,8 +62,8 @@ def test_committed_map_binds_complete_native_observation_semantics():
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "b994f0a9fe464d885d7675819666be93"
-            "e94bb8cef0a9939fba93d6a01b57af0b"
+            "c63820e6cf3bba78a3b010f7d478959"
+            "aed2ff93faeb0be5c358a90c0b7621103"
         ),
         "native_score_positioning_observation_semantics_complete": True,
         "current_state_carrier_matrix_complete": True,
@@ -275,7 +275,12 @@ def test_carrier_matrix_keeps_native_danger_separate_from_environment_danger():
     carriers = {
         item["observation"]: item for item in _load()["observation_carriers"]
     }
-    assert carriers["Board:IsDangerous"]["status"] == "not_exported"
+    assert carriers["Board:IsDangerous"] == {
+        "observation": "Board:IsDangerous",
+        "carrier": "native_enemy_spawn_inputs.dangerous_tiles",
+        "status": "direct_exact_current",
+        "source": "src/bridge/modloader.lua",
+    }
     assert carriers["Board:IsDangerousItem"]["status"] == (
         "insufficient_for_native_predicate"
     )
@@ -293,7 +298,8 @@ def test_carrier_matrix_keeps_native_danger_separate_from_environment_danger():
     assert "Board:IsTargeted(Point(x, y))" in bridge
     assert "Board:IsSpawning(Point(x, y))" in bridge
     assert "Board:IsEnvironmentDanger" in bridge
-    assert "Board:IsDangerous(Point" not in bridge
+    assert "return Board:IsDangerous(pt)" in bridge
+    assert "native_enemy_spawn_inputs" in bridge
     assert ":IsAvoidingMines()" not in bridge
     assert ":IsRanged()" not in bridge
     assert 'u["ranged"] = stats.ranged' in commands

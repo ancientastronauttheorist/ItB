@@ -747,10 +747,10 @@
       "status": "not_exported_stock_source_derivable"
     },
     {
-      "carrier": null,
+      "carrier": "native_enemy_spawn_inputs.dangerous_tiles",
       "observation": "Board:IsDangerous",
-      "source": "native tile byte plus two Point vectors",
-      "status": "not_exported"
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
     },
     {
       "carrier": "tiles[].item only",
@@ -1078,7 +1078,7 @@
     {
       "id": "direct_dangerous_bridge_carriers",
       "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?",
-      "static_status": "The bridge currently exports IsEnvironmentDanger and item names, neither of which is an exact substitute for these two native predicates."
+      "static_status": "Board:IsDangerous is now exported exactly in the current-only native enemy-spawn payload. IsDangerousItem remains unavailable because item names do not expose the embedded SpaceDamage fields."
     },
     {
       "id": "runtime_mutated_definition_flags",

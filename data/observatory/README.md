@@ -982,10 +982,40 @@ The same artifact pins the ordinary enemy rejection inputs: item, active pod,
 temporary/permanent `BlockSpawn`, exact `Board:IsDangerous`, ground blocking,
 terrain literals 5/6/Water, ACID, and existing spawn-marker membership. Smoke,
 Fire, Frozen, and Targeted are not separate rejection gates on this branch.
-Python and Rust now replay the ordered pool from explicit candidate-time facts;
-they do not forecast because the bridge still lacks exact `Board:IsDangerous`,
-the Point-keyed `BlockSpawn` values, and the shared CRT state before a future
-selector call. Verify the immutable map with:
+Python and Rust replay the ordered pool from explicit candidate-time facts.
+The bridge now exports the exact current ordered enemy zone,
+`Board:IsDangerous`, and `Board:IsBlocked(point, PATH_GROUND)` observations.
+The Windows-only read-only probe in
+`src/observatory/native_spawn_input_reader.py` resolves the active Board through
+the pinned host/Game/screen/BoardPlayer chain, then reads the complete 64-cell
+Point-keyed `BlockSpawn` map and direct spawn-marker vector. It opens the
+process with query/read access only, double-reads the native structures, emits
+no addresses, and fails closed on build, controller, vtable, tree, vector, or
+bridge-sandwich drift.
+
+The first current-only proof is
+`captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_native_spawn_candidate_replay.json`
+(SHA-256 `680eaedea377f8c74313b717ba60c2d9a5ae4c851dbbaaec60388cfbedbdd15d`).
+On a stable `Mission_Power` player-turn-one Board it observes all 64
+`BlockSpawn` values as zero, an empty direct marker vector, and exactly four
+ordinary candidates in native order: `[5,3]`, `[5,4]`, `[5,5]`, `[6,2]`.
+This proves the complete carrier and replay path for that current snapshot. It
+does not supply the Board after future player/environment changes or the shared
+CRT state immediately before a future selector call, so it is not a production
+spawn forecast and simulator v408 remains unchanged.
+
+Capture and verify the current-only joined artifact with:
+
+```powershell
+python scripts/itb_observatory_native_spawn_inputs.py `
+  --with-bridge-replay `
+  --output recordings/observatory/<capture>.json
+
+python scripts/itb_observatory_native_spawn_inputs.py `
+  --verify recordings/observatory/<capture>.json
+```
+
+Verify the immutable static map with:
 
 ```powershell
 python scripts/itb_observatory_enemy_spawn_candidate_boundary.py verify `

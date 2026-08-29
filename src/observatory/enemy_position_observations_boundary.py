@@ -992,7 +992,7 @@ def _carrier_matrix() -> list[dict[str, Any]]:
         {"observation": "Board:GetDistanceToBuilding", "carrier": "native building Point cache", "status": "exact_replay_from_explicit_cache", "source": "native terrain-1 cache builder"},
         {"observation": "Pawn:IsRanged", "carrier": "units[].ranged", "status": "stock_static_projection_not_runtime_exact", "source": "src/model/pawn_stats.py via src/loop/commands.py"},
         {"observation": "Pawn:IsAvoidingMines", "carrier": None, "status": "not_exported_stock_source_derivable", "source": "base false; Snowmine1/Snowmine2 true"},
-        {"observation": "Board:IsDangerous", "carrier": None, "status": "not_exported", "source": "native tile byte plus two Point vectors"},
+        {"observation": "Board:IsDangerous", "carrier": "native_enemy_spawn_inputs.dangerous_tiles", "status": "direct_exact_current", "source": "src/bridge/modloader.lua"},
         {"observation": "Board:IsDangerousItem", "carrier": "tiles[].item only", "status": "insufficient_for_native_predicate", "source": "embedded SpaceDamage fields are not exported"},
     ]
 
@@ -1015,7 +1015,7 @@ def _findings() -> list[dict[str, str]]:
 def _unresolved() -> list[dict[str, str]]:
     return [
         {"id": "candidate_time_board_snapshot", "question": "What are all observations at each future candidate's exact callback time?", "static_status": "The native meanings are exact, but a settled current bridge read is not a post-player-action, per-candidate enemy callback snapshot."},
-        {"id": "direct_dangerous_bridge_carriers", "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?", "static_status": "The bridge currently exports IsEnvironmentDanger and item names, neither of which is an exact substitute for these two native predicates."},
+        {"id": "direct_dangerous_bridge_carriers", "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?", "static_status": "Board:IsDangerous is now exported exactly in the current-only native enemy-spawn payload. IsDangerousItem remains unavailable because item names do not expose the embedded SpaceDamage fields."},
         {"id": "runtime_mutated_definition_flags", "question": "Can runtime-mutated Ranged and AvoidingMines values be observed without static type assumptions?", "static_status": "Native property access is exact. Ranged is currently a stock type projection and AvoidingMines is absent from the bridge."},
         {"id": "complete_enemy_phase_forecast", "question": "Does this observation closure produce a full native enemy tournament?", "static_status": "No; concrete future callback payloads, candidate records, shared RNG state, and selector entry remain separate inputs."},
     ]

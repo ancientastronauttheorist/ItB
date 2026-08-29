@@ -635,6 +635,8 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "canonical observable pre-states 0x161229bc" in evidence
     assert "selects exact coordinates [5,4], [5,4], and [5,2]" in evidence
     assert "all 689 accepted installation entries" in evidence
+    assert "pinned query/read-only Windows reader" in evidence
+    assert "exact ordinary candidates [5,3], [5,4], [5,5], and [6,2]" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
         for item in record["implementations"]
@@ -659,10 +661,20 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert implementations[
         "src/observatory/enemy_spawn_candidate_boundary.py"
     ] == {
+        "bridge_native_enemy_spawn_observations",
         "default_enemy_spawn_zone",
         "enemy_spawn_tile_is_valid",
         "replay_enemy_spawn_candidate_pool",
+        "replay_current_bridge_enemy_spawn_candidate_pool",
         "build_enemy_spawn_candidate_boundary_map",
+    }
+    assert implementations["src/observatory/native_spawn_input_reader.py"] == {
+        "capture_live_native_spawn_inputs",
+        "combine_current_bridge_native_capture",
+        "validate_current_bridge_native_capture_artifact",
+    }
+    assert implementations["src/bridge/modloader.lua"] == {
+        "native_enemy_spawn_inputs"
     }
     assert implementations["rust_solver/src/native_rng.rs"] == {
         "build_native_enemy_spawn_candidate_pool",
@@ -694,6 +706,16 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     }
     assert tests[
         "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "mission_power_turn1_native_spawn_candidate_replay.json"
+    ] == {
+        '"analysis_kind": "live_native_enemy_spawn_candidate_replay"',
+        '"candidate_count": 4',
+        '"future_forecast": false',
+        '"stable_across_native_capture": true',
+    }
+    assert tests[
+        "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260822_"
         "spawn_coordinate_rng_receipt.json"
     ] == {
@@ -720,6 +742,14 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_default_enemy_zone_and_all_replay_branches_are_exact",
         "test_enemy_validity_rejects_each_native_input_without_guessing_it",
     }
+    assert tests["tests/test_observatory_enemy_spawn_bridge_inputs.py"] == {
+        "test_bridge_sandwich_combines_exact_native_capture_into_current_replay",
+        "test_bridge_sandwich_fails_closed_on_state_or_native_integrity_drift",
+    }
+    assert tests["tests/test_observatory_native_spawn_input_reader.py"] == {
+        "test_read_only_capture_recovers_all_cells_and_direct_marker_order",
+        "test_reader_fails_closed_when_active_controller_chain_differs",
+    }
     assert tests[
         "rust_solver/tests/observatory_enemy_spawn_candidate_boundary.rs"
     ] == {
@@ -729,8 +759,9 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     gaps = " ".join(record["known_gaps"])
     assert "does not parse or apply SectorSpawners" in gaps
     assert "GAME:GetSpawnList" in gaps
-    assert "candidate-time Board:IsDangerous" in gaps
+    assert "Board after future player/environment changes" in gaps
     assert "Point-keyed BlockSpawn values" in gaps
+    assert "Current ordered zone, Board:IsDangerous" in gaps
     assert "Standard candidate source order" in gaps
     assert "emergency greatest-x-row construction" in gaps
     assert "recovered exactly post hoc" in gaps

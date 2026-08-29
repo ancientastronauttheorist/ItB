@@ -1085,7 +1085,11 @@
         },
         {
           "classification": "fact",
-          "statement": "The exact-build enemy-spawn candidate map pins ordered enemy-zone acquisition and its deterministic 12-point absent-zone fallback, stable TEAM_ENEMY filtering, the turn-zero literal-mode-9 Forest retry and selected-Forest cleanup, emergency x-major/y-minor enumeration retaining the greatest valid x row, and every ordinary enemy validity rejection. Candidate-time Board:IsDangerous and Point-keyed BlockSpawn values remain explicit unavailable inputs rather than unknown predicate semantics."
+          "statement": "The exact-build enemy-spawn candidate map pins ordered enemy-zone acquisition and its deterministic 12-point absent-zone fallback, stable TEAM_ENEMY filtering, the turn-zero literal-mode-9 Forest retry and selected-Forest cleanup, emergency x-major/y-minor enumeration retaining the greatest valid x row, and every ordinary enemy validity rejection."
+        },
+        {
+          "classification": "fact",
+          "statement": "The current bridge exports exact ordered enemy-zone, Board:IsDangerous, and PATH_GROUND blocking observations. A pinned query/read-only Windows reader resolves the active Board through the exact host/Game/screen/BoardPlayer chain, double-reads all 64 Point-keyed BlockSpawn values and the direct spawn-marker vector, writes no game memory, and emits no addresses. One stable Mission_Power turn-one bridge sandwich observes zero BlockSpawn values, no direct markers, and exact ordinary candidates [5,3], [5,4], [5,5], and [6,2]. This is exact current-state replay, not a future Board or coordinate forecast."
         },
         {
           "classification": "fact",
@@ -1154,10 +1158,26 @@
         {
           "path": "src/observatory/enemy_spawn_candidate_boundary.py",
           "symbols": [
+            "bridge_native_enemy_spawn_observations",
             "default_enemy_spawn_zone",
             "enemy_spawn_tile_is_valid",
             "replay_enemy_spawn_candidate_pool",
+            "replay_current_bridge_enemy_spawn_candidate_pool",
             "build_enemy_spawn_candidate_boundary_map"
+          ]
+        },
+        {
+          "path": "src/observatory/native_spawn_input_reader.py",
+          "symbols": [
+            "capture_live_native_spawn_inputs",
+            "combine_current_bridge_native_capture",
+            "validate_current_bridge_native_capture_artifact"
+          ]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "native_enemy_spawn_inputs"
           ]
         },
         {
@@ -1182,7 +1202,7 @@
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
         "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, candidate-time Board:IsDangerous and Point-keyed BlockSpawn values, and the exact runtime replay capsule remain unresolved. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, selector-time CRT state, and an atomic future runtime replay capsule remain unresolved. Current ordered zone, Board:IsDangerous, ground blocking, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1279,6 +1299,15 @@
           ]
         },
         {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_native_spawn_candidate_replay.json",
+          "symbols": [
+            "\"analysis_kind\": \"live_native_enemy_spawn_candidate_replay\"",
+            "\"candidate_count\": 4",
+            "\"future_forecast\": false",
+            "\"stable_across_native_capture\": true"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
           "symbols": [
             "\"classification\":\"spawn_coordinate_direct_rng_resolved_shared_presentation_stream_blocks_stable_prediction\"",
@@ -1330,6 +1359,20 @@
             "test_committed_map_closes_parameterized_enemy_candidate_construction",
             "test_default_enemy_zone_and_all_replay_branches_are_exact",
             "test_enemy_validity_rejects_each_native_input_without_guessing_it"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_spawn_bridge_inputs.py",
+          "symbols": [
+            "test_bridge_sandwich_combines_exact_native_capture_into_current_replay",
+            "test_bridge_sandwich_fails_closed_on_state_or_native_integrity_drift"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_native_spawn_input_reader.py",
+          "symbols": [
+            "test_read_only_capture_recovers_all_cells_and_direct_marker_order",
+            "test_reader_fails_closed_when_active_controller_chain_differs"
           ]
         },
         {

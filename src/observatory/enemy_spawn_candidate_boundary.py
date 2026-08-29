@@ -159,15 +159,15 @@ DEPENDENCY_SPECS = (
             "enemy_position_observations_boundary.json"
         ),
         "file_sha256": (
-            "c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479"
+            "8f0ab10d21a7fef4a4076ff2fc15ea7de7eb4892456f98cdb6b6ff0df92d4000"
         ),
         "canonical_sha256": (
-            "b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b"
+            "c63820e6cf3bba78a3b010f7d478959aed2ff93faeb0be5c358a90c0b7621103"
         ),
         "analysis_kind": "native_enemy_position_observations_boundary",
         "role": (
-            "Pins Board:IsDangerous and active-pod semantics and records that "
-            "exact dangerous state is not currently exported by the bridge."
+            "Pins Board:IsDangerous and active-pod semantics; the current-only "
+            "bridge carrier now exports the exact dangerous result."
         ),
     },
     {
@@ -546,6 +546,209 @@ def replay_enemy_spawn_candidate_pool(
             kind == POOL_ORDINARY_TURN_ZERO_FOREST_RETRY
         ),
     }
+
+
+def _bridge_points(
+    raw: Any,
+    label: str,
+    *,
+    ordered: bool,
+) -> tuple[Point, ...]:
+    if not isinstance(raw, list):
+        raise EnemySpawnCandidateBoundaryError(f"{label} must be a Point list")
+    points = tuple(
+        _coerce_point(point, f"{label} point {index}")
+        for index, point in enumerate(raw)
+    )
+    if any(not (0 <= x < 8 and 0 <= y < 8) for x, y in points):
+        raise EnemySpawnCandidateBoundaryError(f"{label} contains an off-board Point")
+    if len(set(points)) != len(points):
+        raise EnemySpawnCandidateBoundaryError(f"{label} contains duplicate Points")
+    if not ordered:
+        return tuple(sorted(points))
+    return points
+
+
+def bridge_native_enemy_spawn_observations(
+    bridge_data: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the exact current-only spawn observations exported by Lua.
+
+    This intentionally does not substitute ``spawning_tiles`` for the native
+    marker vector and does not invent ``BlockSpawn`` values. Both remain
+    explicit missing inputs until a separate build-keyed reader supplies them.
+    """
+    if not isinstance(bridge_data, Mapping):
+        raise EnemySpawnCandidateBoundaryError("bridge data must be a mapping")
+    payload = bridge_data.get("native_enemy_spawn_inputs")
+    if not isinstance(payload, Mapping):
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge native enemy-spawn observations are unavailable"
+        )
+    if payload.get("schema_version") != 1:
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge native enemy-spawn schema differs"
+        )
+    if payload.get("current_snapshot_only") is not True:
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge native enemy-spawn observations are not current-only"
+        )
+
+    required_complete = (
+        "enemy_zone_ordered_complete",
+        "dangerous_tiles_complete",
+        "ground_blocked_tiles_complete",
+    )
+    if any(payload.get(key) is not True for key in required_complete):
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge native enemy-spawn observations are incomplete"
+        )
+
+    source_points = _bridge_points(
+        payload.get("enemy_zone_ordered"),
+        "enemy zone",
+        ordered=True,
+    )
+    dangerous_points = frozenset(
+        _bridge_points(
+            payload.get("dangerous_tiles"),
+            "native dangerous tiles",
+            ordered=False,
+        )
+    )
+    ground_blocked_points = frozenset(
+        _bridge_points(
+            payload.get("ground_blocked_tiles"),
+            "native ground-blocked tiles",
+            ordered=False,
+        )
+    )
+    missing_inputs = []
+    if payload.get("block_spawn_values_complete") is not True:
+        missing_inputs.append("block_spawn_values")
+    if payload.get("existing_spawn_marker_vector_complete") is not True:
+        missing_inputs.append("existing_spawn_marker_vector")
+    return {
+        "source_points": source_points,
+        "dangerous_points": dangerous_points,
+        "ground_blocked_points": ground_blocked_points,
+        "missing_inputs": tuple(missing_inputs),
+        "complete_for_candidate_replay": not missing_inputs,
+        "current_snapshot_only": True,
+    }
+
+
+def _complete_bridge_tiles(
+    bridge_data: Mapping[str, Any],
+) -> dict[Point, Mapping[str, Any]]:
+    raw_tiles = bridge_data.get("tiles")
+    if not isinstance(raw_tiles, list):
+        raise EnemySpawnCandidateBoundaryError("bridge tiles must be a list")
+    tiles: dict[Point, Mapping[str, Any]] = {}
+    for index, raw in enumerate(raw_tiles):
+        if not isinstance(raw, Mapping):
+            raise EnemySpawnCandidateBoundaryError(
+                f"bridge tile {index} must be a mapping"
+            )
+        point = _coerce_point(
+            (raw.get("x"), raw.get("y")),
+            f"bridge tile {index}",
+        )
+        if not (0 <= point[0] < 8 and 0 <= point[1] < 8):
+            raise EnemySpawnCandidateBoundaryError("bridge tile is off-board")
+        if point in tiles:
+            raise EnemySpawnCandidateBoundaryError("bridge tiles contain duplicates")
+        terrain = raw.get("terrain_id")
+        if type(terrain) is not int:
+            raise EnemySpawnCandidateBoundaryError(
+                "bridge tile terrain_id must be an integer"
+            )
+        for key in ("pod", "acid"):
+            if key in raw and type(raw[key]) is not bool:
+                raise EnemySpawnCandidateBoundaryError(
+                    f"bridge tile {key} must be a boolean"
+                )
+        item = raw.get("item", "")
+        if not isinstance(item, str):
+            raise EnemySpawnCandidateBoundaryError(
+                "bridge tile item must be a string"
+            )
+        tiles[point] = raw
+    expected = {(x, y) for x in range(8) for y in range(8)}
+    if set(tiles) != expected:
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge tiles must cover the complete 8x8 Board"
+        )
+    return tiles
+
+
+def replay_current_bridge_enemy_spawn_candidate_pool(
+    bridge_data: Mapping[str, Any],
+    *,
+    block_spawn_values: Mapping[Point, int],
+    existing_spawn_marker_points: Collection[Point],
+) -> dict[str, Any]:
+    """Replay the current candidate pool from bridge plus native-only facts.
+
+    ``block_spawn_values`` must cover all 64 Points, and
+    ``existing_spawn_marker_points`` must be the direct Board vector rather
+    than the broader ``Board:IsSpawning`` result. Requiring both arguments is
+    the non-fabrication boundary for the remaining native-only state.
+    """
+    observations = bridge_native_enemy_spawn_observations(bridge_data)
+    tiles = _complete_bridge_tiles(bridge_data)
+    if not isinstance(block_spawn_values, Mapping):
+        raise EnemySpawnCandidateBoundaryError(
+            "BlockSpawn values must be a Point mapping"
+        )
+    expected = set(tiles)
+    if set(block_spawn_values) != expected or any(
+        type(value) is not int for value in block_spawn_values.values()
+    ):
+        raise EnemySpawnCandidateBoundaryError(
+            "BlockSpawn values must cover the complete 8x8 Board with integers"
+        )
+    marker_points = {
+        _coerce_point(point, "existing spawn marker")
+        for point in existing_spawn_marker_points
+    }
+    if any(point not in expected for point in marker_points):
+        raise EnemySpawnCandidateBoundaryError(
+            "existing spawn-marker vector contains an off-board Point"
+        )
+
+    facts: dict[Point, EnemySpawnTileFacts] = {}
+    for point, raw in tiles.items():
+        facts[point] = EnemySpawnTileFacts(
+            has_item=bool(raw.get("item")),
+            active_pod=raw.get("pod", False) is True,
+            block_spawn=block_spawn_values[point],
+            dangerous=point in observations["dangerous_points"],
+            blocked_for_ground=point in observations["ground_blocked_points"],
+            terrain=raw["terrain_id"],
+            acid=raw.get("acid", False) is True,
+            existing_spawn_marker=point in marker_points,
+        )
+
+    turn = bridge_data.get("turn")
+    if type(turn) is not int or turn < 0:
+        raise EnemySpawnCandidateBoundaryError(
+            "bridge turn must be a nonnegative integer"
+        )
+    replay = replay_enemy_spawn_candidate_pool(
+        observations["source_points"],
+        8,
+        8,
+        turn,
+        lambda point, mode: enemy_spawn_tile_is_valid(mode, facts[point]),
+    )
+    replay["input_boundary"] = {
+        "bridge_native_observations": "exact_current",
+        "block_spawn_values": "explicit_native_input",
+        "existing_spawn_marker_vector": "explicit_native_input",
+        "future_forecast": False,
+    }
+    return replay
 
 
 def replay_enemy_spawn_candidate_pool_from_valid_points(

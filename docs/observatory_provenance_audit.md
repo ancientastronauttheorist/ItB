@@ -82,8 +82,11 @@ tie-break, standard spawn-coordinate selection, or its native RNG caller as
 unknown. The pinned PE map establishes the candidate-loop order; the later
 enemy-spawn continuation additionally closes ordered zone acquisition, stable
 primary and turn-zero mode-9 filtering, emergency greatest-x-row construction,
-and every ordinary enemy validity rejection while preserving the missing
-candidate-time dangerous/BlockSpawn facts as explicit inputs. The later
+and every ordinary enemy validity rejection. The current bridge/read-only
+reader join now supplies ordered zone, exact dangerous/ground-blocked tiles,
+all 64 Point-keyed BlockSpawn values, and the direct marker vector for a stable
+current snapshot; future candidate-time Board facts remain explicit inputs.
+The later
 enemy-record selector continuation closes the six-integer record layout,
 movement-vector consumption order, post-wrapper target tie, positioning/score
 comparator, immediately displaced fallback group, and selector-local caller-ID
@@ -143,7 +146,7 @@ Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
 state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score candidate-time Board snapshots, direct dangerous predicate carriers,
+score future candidate-time Board snapshots, the dangerous-item predicate,
 runtime-mutated Pawn definition/score helpers, callback-time x87 control for
 fractional native results, plus transitive native-bound helper RNG before the
 now-proven native postprocessing boundaries remain unjoined. The native
