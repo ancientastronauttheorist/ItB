@@ -973,6 +973,15 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    offline semantics are now resolved: caller 59 is emergency placement after
    the ordinary vector empties, while caller 66 samples predicate-check order
    without replacement and delegates the final coordinate to caller 60.
+   The exact offline continuation also resolves the vector itself: ordinary
+   enemies use the `enemy` zone in preserved Lua order (or a deterministic
+   12-point absent-zone fallback), filter it stably, retry the original zone on
+   turn zero with literal validity mode 9 when needed, and otherwise retain
+   only the greatest valid x row from an x-major/y-minor full-Board scan. Item,
+   active-pod, temporary/permanent BlockSpawn, native dangerous, ground-block,
+   terrain, ACID, and existing-marker gates are exact. Candidate-time
+   `Board:IsDangerous`, BlockSpawn values, and the future pre-call CRT state
+   remain unavailable inputs, not unknown native semantics.
 4. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620

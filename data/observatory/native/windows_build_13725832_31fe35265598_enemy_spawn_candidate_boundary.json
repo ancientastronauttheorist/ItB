@@ -1,0 +1,1083 @@
+{
+  "analysis_kind": "native_enemy_spawn_candidate_boundary_map",
+  "capture_join": {
+    "candidates": [
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        5
+      ]
+    ],
+    "observable_pre_state": 370289084,
+    "observable_pre_state_hex": "0x161229bc",
+    "raw_rng": 3642,
+    "scope": "post-hoc exact replay; not a future-state forecast",
+    "selected": [
+      5,
+      4
+    ],
+    "selected_index": 2,
+    "source_dependency": "spawn_coordinate_state_replay"
+  },
+  "constants": {
+    "BLOCKED_NONE": 0,
+    "BLOCKED_PERM": 2,
+    "BLOCKED_TEMP": 1,
+    "PATH_GROUND": 0,
+    "TEAM_ENEMY": 6,
+    "TEAM_PLAYER": 1,
+    "TERRAIN_FOREST": 6,
+    "TERRAIN_NATIVE_REJECT_5": 5,
+    "TERRAIN_ROAD": 0,
+    "TERRAIN_WATER": 3,
+    "TURN_ZERO_FOREST_RETRY_MODE": 9
+  },
+  "contracts": {
+    "emergency": {
+      "empty_result": [
+        -1,
+        -1
+      ],
+      "iteration_order": "x-major then y-minor over the actual Board",
+      "requires_ordinary_empty": true,
+      "retention": "only valid points on the greatest x with any valid point",
+      "same_row_order": "ascending y",
+      "selector_rng_caller_id": 59,
+      "validation_mode": 6
+    },
+    "enemy_source": {
+      "absent_zone_fallback_formula": "for x in width-3..width-1, for y in 2..5, append Point(x,y)",
+      "fallback_8x8": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          5
+        ]
+      ],
+      "named_zone": "enemy",
+      "team": 6,
+      "zone_order": "original Lua encounter order, first occurrence unique"
+    },
+    "enemy_validity": {
+      "common_rejections": [
+        "any item",
+        "tile pod state equals 1",
+        "BlockSpawn value equals BLOCKED_TEMP=1 or BLOCKED_PERM=2",
+        "Board:IsDangerous(point)"
+      ],
+      "enemy_rejections": [
+        "Board:IsBlocked(point, PATH_GROUND=0)",
+        "terrain literal 5",
+        "terrain 6 unless original validity mode is 9",
+        "TERRAIN_WATER=3",
+        "acid tile byte",
+        "native dangerous tile byte",
+        "membership in Board Point vector +0x2d50/+0x2d54"
+      ],
+      "existing_marker_test": "direct Point-vector membership, not the tile-byte half of Board:IsSpawning",
+      "not_separate_rejections": [
+        "smoke",
+        "fire",
+        "frozen",
+        "targeted"
+      ]
+    },
+    "ordinary_selector_rng_caller_id": 60,
+    "primary_filter": {
+      "erase_semantics": "stable; surviving source order is preserved",
+      "path_profile_source": "Pawn:GetPathProf",
+      "validation_mode": 6
+    },
+    "turn_zero_retry": {
+      "excluded_team": 1,
+      "requires_board_turn": 0,
+      "requires_primary_empty": true,
+      "selected_terrain_6_becomes": 0,
+      "source_is_original_zone_copy": true,
+      "validation_mode": 9,
+      "validation_mode_is_path_profile": false
+    }
+  },
+  "control_windows": [
+    {
+      "evidence_class": "fact",
+      "id": "enemy_source_dispatch",
+      "instruction_hex": "8b450c8bc8c745fc000000006a018bb8b0000000897ddce872ad0c0084c0740f6a008d45bc8bcb50e821e0feffeb1a83ec188bcc68a0e98200e80053e9ff8d45bc8bcb50e815b4ffff508d4db0e88cdbf6ff",
+      "meaning": "TEAM_PLAYER uses the deployment source; every other team requests the named enemy zone.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 82,
+      "start_rva": "0x00172ad2"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "primary_stable_filter",
+      "instruction_hex": "8b75cc8bc68b4dc82bc1c1f803c745e00000000085c074698bf98d59080f1f4000ff77048b4d0cff37e813040c008b4df050ff75dce87703000084c075218bc62bc3505357e8e7b91f008b4de083ee0883c40c8975cc4983ef0883eb08eb038b4de08bc6412b45c883c708c1f80383c308894de03bc872a9",
+      "meaning": "Forward iteration erases invalid points by shifting the tail left, preserving source order.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 120,
+      "start_rva": "0x00172b4f"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "turn_zero_mode9_retry_gate",
+      "instruction_hex": "3bce0f94c084c00f849c00000083bba82c0000000f858f00000083ff010f84860000008d45b0508d4dc8e8b12ff5ff",
+      "meaning": "An empty primary pool retries only at Board turn zero and only for a non-player pawn.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 47,
+      "start_rva": "0x00172bd0"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "mode9_stable_filter",
+      "instruction_hex": "8b75cc8bc68b4dc82bc1c1f803c745e00000000085c074628bf98d59080f1f4000ff77048b4d0cff37e863030c008b4df0506a09e8c802000084c075218bc62bc3505357e838b91f008b4de083ee0883c40c8975cc4983ef0883eb08eb038b4de08bc6412b45c883c708c1f80383c308894de03bc872aa8b4dc8",
+      "meaning": "The retry recopies the original source and stably filters with literal validity mode 9.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 122,
+      "start_rva": "0x00172bff"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_grid_count",
+      "instruction_hex": "8b45f0c645fc02895dec8b48542b4850b8abaaaa2af7e9d1fa8bc2c1e81f03c20f847901000033c9894de08b45f0c745e8000000008b405003c18b48042b08b8a903a85df7e9c1fa0c8bc2c1e81f03c20f84de0000000f1f440000",
+      "meaning": "Emergency construction obtains actual Board width and height and initializes x-major/y-minor iteration.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 91,
+      "start_rva": "0x00172ca5"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_mode6_validity",
+      "instruction_hex": "ff75e88b4d0cff75ece882020c008b4df050ff75dce8e601000084c00f8486000000",
+      "meaning": "Every emergency point uses the pawn path profile and original enemy mode 6, never retry mode 9.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 34,
+      "start_rva": "0x00172d00"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_keep_max_x",
+      "instruction_hex": "8b45ec3bfe740839070f4cf78975c08b4de88d55d48945d4894dd83bd673383bfa77348bda2bdfc1fb033b75e475166a018d4dbce8f52bf4ff8b45c48b75c08b7dbc8945e485f674378b04df89068b44df04894604eb293bf3751c6a018d4dbce8c92bf4ff8b45c48b75c08b7dbc8b4de88945e48b45ec85f674058906894e04",
+      "meaning": "A valid point on a greater x clears earlier rows; equal-x points append in ascending y order.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 128,
+      "start_rva": "0x00172d22"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "emergency_iteration",
+      "instruction_hex": "8b45f08b5de843895de88b40500345e08b48042b08b8a903a85df7e9c1fa0c8bc2c1e81f03c23bd88b5de40f8227ffffff8b45f08345e00cff45ec8b48542b4850b8abaaaa2af7e98b4de0d1fa8bc2c1e81f03c23945ec0f82cbfeffff",
+      "meaning": "The inner y loop completes before x advances, fixing emergency order to x-major then y-minor.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 93,
+      "start_rva": "0x00172da8"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "forest_clear_after_selection",
+      "instruction_hex": "8b5cd1048b3cd18b75f08bce5357e8b2bcfeff83b8e02a000006750b6a0053578bcee87e30ffff8b7508893e895e04",
+      "meaning": "A selected ordinary terrain-6 point is changed to terrain 0 before the coordinate is returned.",
+      "region_id": "spawn_coordinate_selector",
+      "size": 47,
+      "start_rva": "0x00172e7b"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "validity_common_rejections",
+      "instruction_hex": "8bf9ff75148b5d08be06000000ff751083fb090f45f3e82deefeff83b8042b0000000f855c030000ff75148bcfff7510e813eefeff83b8e42a0000010f84420300008d4d10518d4dec518d8f58740000e8c3f1f5ff8b45ec837818020f84220300008d4510508d45ec508d8f58740000e8a3f1f5ff8b45ec837818010f8402030000ff75148bcfff7510e8e9f6ffff84c00f85ed020000",
+      "meaning": "Every mode rejects an item, active pod state, permanent or temporary BlockSpawn, and Board:IsDangerous.",
+      "region_id": "spawn_validity",
+      "size": 151,
+      "start_rva": "0x00172f28"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "validity_existing_spawn_absence",
+      "instruction_hex": "8d4d0c8bb7542d00008d551056ffb7502d0000e8bce6f5ff83c40839307519b8010000008b4df464890d00000000595f5e5b8be55dc21000",
+      "meaning": "Validity succeeds only when the point is absent from the Board +0x2d50/+0x2d54 spawn-marker vector.",
+      "region_id": "spawn_validity",
+      "size": 56,
+      "start_rva": "0x0017304c"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "validity_enemy_ground_terrain",
+      "instruction_hex": "6a00ff7514ff7510ffd084c075dcff75148bcfff7510e88bbafeff83b8e02a00000574c6ff75148bcfff7510e875bafeff83b8e02a000006750583fb0975abff75148bcfff7510e85abafeff83b8e02a0000037495ff75148bcfff7510e874ecfeff80b8f12a0000000f857bffffffff75148bcfff7510e85aecfeff80b8f02a0000000f8561ffffff",
+      "meaning": "Enemy validity calls Board:IsBlocked with PATH_GROUND=0, rejects terrain 5, rejects forest except in original mode 9, and rejects water, acid, and the native danger byte.",
+      "region_id": "spawn_validity",
+      "size": 137,
+      "start_rva": "0x0017309a"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "zone_absent_enemy_fallback",
+      "instruction_hex": "33db33ff33f6895ddc897de08975e468a0e982008d4d0cc645fc01e86a06f0ff85c00f85d40000008b4dd88d55c4528b01ff50048b4dd88d55c4528b0083e8038945ec8b01ff50048b55ec3b100f8da90000000f1f8000000000b9020000008955cc894de80f1f4400008d45cc894dd03bc773383bd877348bf02bf3c1fe033b7de475166a018d4ddce8cc78f4ff8b7de08b5ddc8b4de88b55ec85ff74318b04f389078b44f304894704eb233bfe75166a018d4ddce8a078f4ff8b7de08b5ddc8b4de88b55ec85ff74058917894f048b75e44183c708894de8897de083f9067c898b4dd8428955ec8d55c4528b01ff50048b55ec3b100f8c5effffff",
+      "meaning": "When the enemy zone is absent, fallback points are x=width-3..width-1 and y=2..5 in x-major order.",
+      "region_id": "named_zone_lookup",
+      "size": 252,
+      "start_rva": "0x0016dff6"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "active_pod_test",
+      "instruction_hex": "558bec83e4f85153568bf1578b86702d00003b450875488b86742d00003b450c753d8bbe702d00008bd88b0653578b4008ffd084c074118b46508d0c7f69f3bc2b0000033488eb0383c65c83bee42a000001750bb0015f5e5b8be55dc208005f5e32c05b8be55dc20800",
+      "meaning": "Board:IsPod uses tile pod state 1 for the active pod coordinate; spawn validity directly rejects that same state value.",
+      "region_id": "board_is_pod",
+      "size": 106,
+      "start_rva": "0x00172580"
+    },
+    {
+      "evidence_class": "fact",
+      "id": "get_turn_field_reader",
+      "instruction_hex": "8b81a82c0000c3",
+      "meaning": "The registered Board:GetTurn reader returns Board +0x2ca8, the field tested by the retry gate.",
+      "region_id": "board_get_turn",
+      "size": 7,
+      "start_rva": "0x0016cec0"
+    }
+  ],
+  "dependencies": [
+    {
+      "analysis_kind": "native_spawn_coordinate_path_map",
+      "canonical_sha256": "6a5ee719660542979f0e827acd917e43640a018ec6101960e79bafb9a51ce5ed",
+      "file_sha256": "ccc3064a6f1e14e740b1fc5cf2e3f6712dc95c1e8c92a979079b55431f55c32e",
+      "id": "spawn_coordinate_paths",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_spawn_coordinate_paths.json",
+      "role": "Pins the ordinary caller-60 and emergency caller-59 modulo selectors around the candidate construction mapped here."
+    },
+    {
+      "analysis_kind": "native_path_boundary_map",
+      "canonical_sha256": "99c8c30fa2e213039e6ba07f5f5062d6487aaa6286eee9cc9cb0cf6aaed23afc",
+      "file_sha256": "098cbbc5a9dc4c99a07b5f85eac7aaa19812bf093249d1d3f6e6c5ec49277486",
+      "id": "path_boundaries",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json",
+      "role": "Pins Pawn:GetPathProf, Board:IsBlocked, PATH_GROUND=0, and the Board path-manager vtable used by the enemy validity branch."
+    },
+    {
+      "analysis_kind": "final_cave_block_spawn_lifetime_boundary_map",
+      "canonical_sha256": "69d63632fe6585ac02864e09e3106e796e47abadd65991e41e1b76a1e2370889",
+      "file_sha256": "f596b594b3cf8ef160c0a7af84229fc4e1ad12278d41a4703daa13362fd0b3db",
+      "id": "final_cave_block_spawn_lifetime",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_final_cave_block_spawn_lifetime.json",
+      "role": "Pins BLOCKED_NONE/TEMP/PERM values 0/1/2 and the Point-keyed Board BlockSpawn map consulted by spawn validity."
+    },
+    {
+      "analysis_kind": "native_piston_setup_boundary_map",
+      "canonical_sha256": "0368d923cef97c4bb500c287a355ae43b24c0d59bf81529731f2956a8fd7717f",
+      "file_sha256": "dfd1ab705beee79f06a609865930f918b937745c22393f516c5f84720a69b230",
+      "id": "piston_setup_boundary",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json",
+      "role": "Pins original Lua Point-list encounter order through GetZone and extract_table without a sorting step."
+    },
+    {
+      "analysis_kind": "native_enemy_position_observations_boundary",
+      "canonical_sha256": "b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b",
+      "file_sha256": "c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479",
+      "id": "enemy_position_observations",
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json",
+      "role": "Pins Board:IsDangerous and active-pod semantics and records that exact dangerous state is not currently exported by the bridge."
+    },
+    {
+      "analysis_kind": "observatory_spawn_coordinate_state_replay_receipt",
+      "file_sha256": "5ba273dc10faf62fa15010a5f1f269c7161613a6e0b4cf45965803178787dd31",
+      "id": "spawn_coordinate_state_replay",
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_state_replay_receipt.json",
+      "role": "Supplies a post-hoc exact pre-state and ordered five-point pool used only to join candidate replay to the existing RNG replay."
+    }
+  ],
+  "direct_call_edges": [
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172ae9",
+      "id": "selector_to_is_team",
+      "instruction_hex": "e872ad0c00",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "pawn_is_team",
+      "target_rva": "0x0023d860"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172b16",
+      "id": "selector_to_named_zone",
+      "instruction_hex": "e815b4ffff",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "named_zone_lookup",
+      "target_rva": "0x0016df30"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172b78",
+      "id": "primary_to_get_path_prof",
+      "instruction_hex": "e813040c00",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "pawn_get_path_prof",
+      "target_rva": "0x00232f90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172b84",
+      "id": "primary_to_validity",
+      "instruction_hex": "e877030000",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "spawn_validity",
+      "target_rva": "0x00172f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172c28",
+      "id": "mode9_to_get_path_prof",
+      "instruction_hex": "e863030c00",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "pawn_get_path_prof",
+      "target_rva": "0x00232f90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172c33",
+      "id": "mode9_to_validity",
+      "instruction_hex": "e8c8020000",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "spawn_validity",
+      "target_rva": "0x00172f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172d09",
+      "id": "emergency_to_get_path_prof",
+      "instruction_hex": "e882020c00",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "pawn_get_path_prof",
+      "target_rva": "0x00232f90"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172d15",
+      "id": "emergency_to_validity",
+      "instruction_hex": "e8e6010000",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "spawn_validity",
+      "target_rva": "0x00172f00"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e89",
+      "id": "selected_to_tile",
+      "instruction_hex": "e8b2bcfeff",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "board_tile_lookup",
+      "target_rva": "0x0015eb40"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172e9d",
+      "id": "selected_to_set_terrain",
+      "instruction_hex": "e87e30ffff",
+      "source_region": "spawn_coordinate_selector",
+      "target_id": "set_terrain_core",
+      "target_rva": "0x00165f20"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172f3e",
+      "id": "validity_item_tile",
+      "instruction_hex": "e82deefeff",
+      "source_region": "spawn_validity",
+      "target_id": "board_tile_lookup_2",
+      "target_rva": "0x00161d70"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172f58",
+      "id": "validity_pod_tile",
+      "instruction_hex": "e813eefeff",
+      "source_region": "spawn_validity",
+      "target_id": "board_tile_lookup_2",
+      "target_rva": "0x00161d70"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172f78",
+      "id": "validity_perm_block",
+      "instruction_hex": "e8c3f1f5ff",
+      "source_region": "spawn_validity",
+      "target_id": "block_spawn_map_accessor",
+      "target_rva": "0x000d2140"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172f98",
+      "id": "validity_temp_block",
+      "instruction_hex": "e8a3f1f5ff",
+      "source_region": "spawn_validity",
+      "target_id": "block_spawn_map_accessor",
+      "target_rva": "0x000d2140"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x00172fb2",
+      "id": "validity_to_is_dangerous",
+      "instruction_hex": "e8e9f6ffff",
+      "source_region": "spawn_validity",
+      "target_id": "board_is_dangerous",
+      "target_rva": "0x001726a0"
+    },
+    {
+      "evidence_class": "fact",
+      "from_rva": "0x0017305f",
+      "id": "validity_to_spawn_membership",
+      "instruction_hex": "e8bce6f5ff",
+      "source_region": "spawn_validity",
+      "target_id": "point_vector_membership",
+      "target_rva": "0x000d1720"
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "bits": 32,
+    "build_id": "13725832",
+    "capstone_version": "5.0.7",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "ghidra_version": "12.1.3",
+    "image_base": "0x00400000",
+    "platform": "windows"
+  },
+  "method": {
+    "binary_verification": "Capstone rechecks every region, instruction-aligned control window, direct E8 target, string anchor, and immutable upstream dependency.",
+    "boundary_review": "Focused Ghidra 12.1.3 decompilation and x86 control-flow review joined the selector, validity predicate, named-zone fallback, GetTurn field reader, path profile, danger, pod, and terrain setter.",
+    "limitations": [
+      "Semantic names are conservative inferences over exact machine-code facts.",
+      "Static control flow does not prove natural runtime reachability.",
+      "The replay requires candidate-time predicate inputs and never reads a stale save as their substitute.",
+      "The artifact applies only to the exact owner-observed Windows executable."
+    ]
+  },
+  "method_bindings": [
+    {
+      "evidence_class": "fact",
+      "field_offset": "0x2ca8",
+      "member_store_hex": "c745e8c0ce5600",
+      "member_store_rva": "0x0027a584",
+      "name": "GetTurn",
+      "name_reference_hex": "6814888300",
+      "name_reference_rva": "0x0027a59a",
+      "native_entry_rva": "0x0016cec0",
+      "owner": "Board",
+      "string_hex": "4765745475726e00",
+      "string_rva": "0x00438814"
+    }
+  ],
+  "regions": [
+    {
+      "boundary_basis": "Complete reviewed selector through RET.",
+      "end_rva_exclusive": "0x00172ef6",
+      "evidence_class": "fact",
+      "id": "spawn_coordinate_selector",
+      "section": ".text",
+      "sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+      "size": 1126,
+      "start_rva": "0x00172a90"
+    },
+    {
+      "boundary_basis": "Complete reviewed spawn-validity predicate through RET.",
+      "end_rva_exclusive": "0x001732c2",
+      "evidence_class": "fact",
+      "id": "spawn_validity",
+      "section": ".text",
+      "sha256": "ece436016741d70821025fcc00b3e30965480a2b99a00960449e9262592956bb",
+      "size": 962,
+      "start_rva": "0x00172f00"
+    },
+    {
+      "boundary_basis": "Complete reviewed named-zone lookup and enemy fallback through RET.",
+      "end_rva_exclusive": "0x0016e12b",
+      "evidence_class": "fact",
+      "id": "named_zone_lookup",
+      "section": ".text",
+      "sha256": "91f988fdcbeb90b07539b86903785687bcfd1864cdb0d72c5bc958319d02bfb3",
+      "size": 507,
+      "start_rva": "0x0016df30"
+    },
+    {
+      "boundary_basis": "Complete field reader through RET.",
+      "end_rva_exclusive": "0x0016cec7",
+      "evidence_class": "fact",
+      "id": "board_get_turn",
+      "section": ".text",
+      "sha256": "277d038f2fa1c59d6c30ba494117b8c29d60a753a5059ce4ffdb9b9b7416093a",
+      "size": 7,
+      "start_rva": "0x0016cec0"
+    },
+    {
+      "boundary_basis": "Instruction-aligned Luabind registration of Board:GetTurn.",
+      "end_rva_exclusive": "0x0027a5a6",
+      "evidence_class": "fact",
+      "id": "board_get_turn_registration",
+      "section": ".text",
+      "sha256": "515efa4cbbce35df3cbe8ed1e1003346a85a5bc6c4ee3c1c568d67a7258ed4bd",
+      "size": 37,
+      "start_rva": "0x0027a581"
+    },
+    {
+      "boundary_basis": "Complete Pawn:GetPathProf member through RET.",
+      "end_rva_exclusive": "0x002330ca",
+      "evidence_class": "fact",
+      "id": "pawn_get_path_prof",
+      "section": ".text",
+      "sha256": "3cc91e8ef2be9950114b088f141a4087057bf7eee702aade83be716e1bccfa40",
+      "size": 314,
+      "start_rva": "0x00232f90"
+    },
+    {
+      "boundary_basis": "Complete Board:IsPod member through RET 0x08.",
+      "end_rva_exclusive": "0x001725ea",
+      "evidence_class": "fact",
+      "id": "board_is_pod",
+      "section": ".text",
+      "sha256": "04c19003a85b5a2687be2b27597d6fb7518cb79580a06e720eb64c7f8ed6ea03",
+      "size": 106,
+      "start_rva": "0x00172580"
+    },
+    {
+      "boundary_basis": "Complete Board:IsDangerous member through RET 0x08.",
+      "end_rva_exclusive": "0x0017276e",
+      "evidence_class": "fact",
+      "id": "board_is_dangerous",
+      "section": ".text",
+      "sha256": "c6e15d03f65fc709b28c8b15bf60cf5a7870700343d7b5be38ce7c3791d7f3f8",
+      "size": 206,
+      "start_rva": "0x001726a0"
+    },
+    {
+      "boundary_basis": "Complete reviewed terrain setter core through RET 0x0c.",
+      "end_rva_exclusive": "0x00165f6d",
+      "evidence_class": "fact",
+      "id": "set_terrain_core",
+      "section": ".text",
+      "sha256": "d77ae2e0dda86ba7f2de1c14f19e5aee25932ba99853c0802883aa4098ab857b",
+      "size": 77,
+      "start_rva": "0x00165f20"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "board_dimensions": [
+        8,
+        8
+      ],
+      "expected": {
+        "analysis_kind": "native_enemy_spawn_candidate_replay",
+        "board_dimensions": [
+          8,
+          8
+        ],
+        "build_id": "13725832",
+        "candidate_count": 2,
+        "candidates": [
+          [
+            5,
+            4
+          ],
+          [
+            6,
+            2
+          ]
+        ],
+        "pool_kind": "ordinary_primary",
+        "rng_caller_id": 60,
+        "rng_consumed": false,
+        "selected_forest_becomes_road": false,
+        "source_points": [
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            6,
+            5
+          ]
+        ],
+        "turn": 1,
+        "validation_mode": 6
+      },
+      "id": "stable_primary_filter",
+      "source_points": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "turn": 1,
+      "valid_points": [
+        {
+          "mode": 6,
+          "points": [
+            [
+              5,
+              4
+            ],
+            [
+              6,
+              2
+            ]
+          ]
+        },
+        {
+          "mode": 9,
+          "points": []
+        }
+      ]
+    },
+    {
+      "board_dimensions": [
+        8,
+        8
+      ],
+      "expected": {
+        "analysis_kind": "native_enemy_spawn_candidate_replay",
+        "board_dimensions": [
+          8,
+          8
+        ],
+        "build_id": "13725832",
+        "candidate_count": 2,
+        "candidates": [
+          [
+            5,
+            3
+          ],
+          [
+            6,
+            5
+          ]
+        ],
+        "pool_kind": "ordinary_turn_zero_forest_retry",
+        "rng_caller_id": 60,
+        "rng_consumed": false,
+        "selected_forest_becomes_road": true,
+        "source_points": [
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            6,
+            5
+          ]
+        ],
+        "turn": 0,
+        "validation_mode": 9
+      },
+      "id": "turn_zero_mode9_retry",
+      "source_points": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "turn": 0,
+      "valid_points": [
+        {
+          "mode": 6,
+          "points": []
+        },
+        {
+          "mode": 9,
+          "points": [
+            [
+              5,
+              3
+            ],
+            [
+              6,
+              5
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "board_dimensions": [
+        8,
+        8
+      ],
+      "expected": {
+        "analysis_kind": "native_enemy_spawn_candidate_replay",
+        "board_dimensions": [
+          8,
+          8
+        ],
+        "build_id": "13725832",
+        "candidate_count": 2,
+        "candidates": [
+          [
+            7,
+            1
+          ],
+          [
+            7,
+            3
+          ]
+        ],
+        "pool_kind": "emergency_max_x_row",
+        "rng_caller_id": 59,
+        "rng_consumed": false,
+        "selected_forest_becomes_road": false,
+        "source_points": [
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ]
+        ],
+        "turn": 1,
+        "validation_mode": 6
+      },
+      "id": "later_turn_skips_mode9_and_keeps_emergency_max_x",
+      "source_points": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ]
+      ],
+      "turn": 1,
+      "valid_points": [
+        {
+          "mode": 6,
+          "points": [
+            [
+              3,
+              7
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              7,
+              1
+            ],
+            [
+              7,
+              3
+            ]
+          ]
+        },
+        {
+          "mode": 9,
+          "points": [
+            [
+              5,
+              2
+            ],
+            [
+              5,
+              3
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "board_dimensions": [
+        8,
+        8
+      ],
+      "expected": {
+        "analysis_kind": "native_enemy_spawn_candidate_replay",
+        "board_dimensions": [
+          8,
+          8
+        ],
+        "build_id": "13725832",
+        "candidate_count": 2,
+        "candidates": [
+          [
+            6,
+            2
+          ],
+          [
+            6,
+            7
+          ]
+        ],
+        "pool_kind": "emergency_max_x_row",
+        "rng_caller_id": 59,
+        "rng_consumed": false,
+        "selected_forest_becomes_road": false,
+        "source_points": [
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ]
+        ],
+        "turn": 0,
+        "validation_mode": 6
+      },
+      "id": "turn_zero_retry_empty_then_emergency",
+      "source_points": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ]
+      ],
+      "turn": 0,
+      "valid_points": [
+        {
+          "mode": 6,
+          "points": [
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              6,
+              7
+            ]
+          ]
+        },
+        {
+          "mode": 9,
+          "points": []
+        }
+      ]
+    },
+    {
+      "board_dimensions": [
+        8,
+        8
+      ],
+      "expected": {
+        "analysis_kind": "native_enemy_spawn_candidate_replay",
+        "board_dimensions": [
+          8,
+          8
+        ],
+        "build_id": "13725832",
+        "candidate_count": 0,
+        "candidates": [],
+        "pool_kind": "failure",
+        "rng_caller_id": null,
+        "rng_consumed": false,
+        "selected_forest_becomes_road": false,
+        "source_points": [
+          [
+            5,
+            2
+          ]
+        ],
+        "turn": 0,
+        "validation_mode": null
+      },
+      "id": "complete_failure",
+      "source_points": [
+        [
+          5,
+          2
+        ]
+      ],
+      "turn": 0,
+      "valid_points": [
+        {
+          "mode": 6,
+          "points": []
+        },
+        {
+          "mode": 9,
+          "points": []
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "solver_impact": {
+    "current_simulator_version": 408,
+    "native_candidate_replay_added": true,
+    "production_forecast_enabled": false,
+    "reason": "The construction/order algorithm is exact, but future exact Board:IsDangerous, BlockSpawn, and pre-call RNG state remain inputs.",
+    "simulator_change_required": false,
+    "simulator_contradiction_found": false,
+    "simulator_version_bump_required": false
+  },
+  "summary": {
+    "concrete_forecast_proven": false,
+    "control_window_count": 15,
+    "dependency_count": 6,
+    "direct_edge_count": 16,
+    "emergency_max_x_row_proven": true,
+    "enemy_source_order_proven": true,
+    "enemy_validity_rejections_proven": true,
+    "parameterized_replay_complete": true,
+    "primary_stable_filter_proven": true,
+    "region_count": 9,
+    "replay_vector_count": 5,
+    "simulator_change_required": false,
+    "simulator_version": 408,
+    "turn_zero_mode9_retry_proven": true,
+    "unresolved_count": 5
+  },
+  "unresolved": [
+    {
+      "current_carrier": null,
+      "id": "candidate_time_board_is_dangerous",
+      "next_evidence": "Export the native tile byte and two Point vectors or capture the predicate result at this boundary.",
+      "question": "What exact Board:IsDangerous result exists at each future candidate check?"
+    },
+    {
+      "current_carrier": null,
+      "id": "candidate_time_block_spawn_value",
+      "next_evidence": "Export the native BlockSpawn map or capture values at this boundary.",
+      "question": "What exact Point-keyed BlockSpawn value exists at each future candidate check?"
+    },
+    {
+      "current_carrier": null,
+      "id": "future_pre_call_rng_state",
+      "next_evidence": "Use the dormant build-keyed RNG capsule; do not infer the state from save data.",
+      "question": "What shared CRT state enters a future caller-59 or caller-60 selection?"
+    },
+    {
+      "current_carrier": null,
+      "id": "fallback_runtime_reachability",
+      "next_evidence": "Capture branch identity during a matched native run if natural reachability matters.",
+      "question": "Which unmodified encounters naturally reach the absent-zone or emergency branches?"
+    },
+    {
+      "current_carrier": null,
+      "id": "non_windows_or_modified_builds",
+      "next_evidence": "Build a separate executable/content-keyed artifact before generalizing.",
+      "question": "Do other depots or mods preserve this exact boundary?"
+    }
+  ]
+}

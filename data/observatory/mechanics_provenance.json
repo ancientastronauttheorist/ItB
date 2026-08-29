@@ -1085,6 +1085,10 @@
         },
         {
           "classification": "fact",
+          "statement": "The exact-build enemy-spawn candidate map pins ordered enemy-zone acquisition and its deterministic 12-point absent-zone fallback, stable TEAM_ENEMY filtering, the turn-zero literal-mode-9 Forest retry and selected-Forest cleanup, emergency x-major/y-minor enumeration retaining the greatest valid x row, and every ordinary enemy validity rejection. Candidate-time Board:IsDangerous and Point-keyed BlockSpawn values remain explicit unavailable inputs rather than unknown predicate semantics."
+        },
+        {
+          "classification": "fact",
           "statement": "Three combined coordinate/RNG captures retained the same ordered five candidates and joined the standard selector to caller 60 at native RNG ordinals 1495, 1475, and 1450. The selected point was candidates[raw_rng % 5] in every capture; all varying upstream callers were classified, and classified count deltas [0, -20, -45] exactly matched the selector-ordinal deltas."
         },
         {
@@ -1148,9 +1152,21 @@
           ]
         },
         {
+          "path": "src/observatory/enemy_spawn_candidate_boundary.py",
+          "symbols": [
+            "default_enemy_spawn_zone",
+            "enemy_spawn_tile_is_valid",
+            "replay_enemy_spawn_candidate_pool",
+            "build_enemy_spawn_candidate_boundary_map"
+          ]
+        },
+        {
           "path": "rust_solver/src/native_rng.rs",
           "symbols": [
+            "build_native_enemy_spawn_candidate_pool",
+            "default_native_enemy_spawn_zone",
             "draw_msvc_rand",
+            "native_enemy_spawn_tile_is_valid",
             "replay_spawn_coordinate"
           ]
         },
@@ -1166,7 +1182,7 @@
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
         "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, complete coordinate-candidate construction/filtering, and the exact runtime replay capsule remain unresolved. Standard spawn-coordinate candidate order, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are now exact; only the scheduler/fallback paths' opaque predicate inputs and runtime reachability remain uncaptured.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, candidate-time Board:IsDangerous and Point-keyed BlockSpawn values, and the exact runtime replay capsule remain unresolved. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1253,6 +1269,16 @@
           ]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_31fe35265598_enemy_spawn_candidate_boundary.json",
+          "symbols": [
+            "enemy_source_order_proven",
+            "primary_stable_filter_proven",
+            "turn_zero_mode9_retry_proven",
+            "emergency_max_x_row_proven",
+            "enemy_validity_rejections_proven"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
           "symbols": [
             "\"classification\":\"spawn_coordinate_direct_rng_resolved_shared_presentation_stream_blocks_stable_prediction\"",
@@ -1296,6 +1322,21 @@
           "path": "tests/test_observatory_spawn_coordinate_paths.py",
           "symbols": [
             "test_committed_path_map_closes_offline_scheduler_and_fallback_semantics"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_enemy_spawn_candidate_boundary.py",
+          "symbols": [
+            "test_committed_map_closes_parameterized_enemy_candidate_construction",
+            "test_default_enemy_zone_and_all_replay_branches_are_exact",
+            "test_enemy_validity_rejects_each_native_input_without_guessing_it"
+          ]
+        },
+        {
+          "path": "rust_solver/tests/observatory_enemy_spawn_candidate_boundary.rs",
+          "symbols": [
+            "committed_candidate_vectors_replay_every_native_branch",
+            "candidate_pool_joins_existing_exact_state_replay_without_forecasting"
           ]
         },
         {

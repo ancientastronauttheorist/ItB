@@ -967,6 +967,32 @@ ordinary caller-60 selector separately; it does not choose the final coordinate.
 The two unobserved paths therefore need a live capture only if a concrete
 solver mismatch makes their runtime inputs relevant.
 
+`native/windows_build_13725832_31fe35265598_enemy_spawn_candidate_boundary.json`
+closes the selector's candidate-construction boundary. It binds nine exact
+regions, 15 instruction-aligned control windows, 16 direct edges, and six
+immutable upstream artifacts. For ordinary enemies, the named `enemy` zone is
+used in original Lua encounter order; if it is absent, the exact 8x8 fallback
+is `(5..7, 2..5)` in x-major order. The primary filter is stable. If it is
+empty on Board turn zero, the original zone is stably retried with literal
+validity mode 9, which admits Forest and clears a selected Forest tile to Road.
+If that retry is unavailable or empty, native code scans the whole Board in
+x-major/y-minor order and retains only valid points on the greatest x row.
+
+The same artifact pins the ordinary enemy rejection inputs: item, active pod,
+temporary/permanent `BlockSpawn`, exact `Board:IsDangerous`, ground blocking,
+terrain literals 5/6/Water, ACID, and existing spawn-marker membership. Smoke,
+Fire, Frozen, and Targeted are not separate rejection gates on this branch.
+Python and Rust now replay the ordered pool from explicit candidate-time facts;
+they do not forecast because the bridge still lacks exact `Board:IsDangerous`,
+the Point-keyed `BlockSpawn` values, and the shared CRT state before a future
+selector call. Verify the immutable map with:
+
+```powershell
+python scripts/itb_observatory_enemy_spawn_candidate_boundary.py verify `
+  --executable "<Into the Breach>\Breach.exe" `
+  --boundary-map data/observatory/native/windows_build_13725832_31fe35265598_enemy_spawn_candidate_boundary.json
+```
+
 `captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng/`
 contains three later same-process captures that combine that observer with the
 complete RNG-core stream. The coordinate draw uniquely maps to caller ID 60 at

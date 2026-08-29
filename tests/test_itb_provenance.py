@@ -656,8 +656,19 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "recover_selector_replay_vector",
         "build_spawn_coordinate_state_replay_receipt",
     }
+    assert implementations[
+        "src/observatory/enemy_spawn_candidate_boundary.py"
+    ] == {
+        "default_enemy_spawn_zone",
+        "enemy_spawn_tile_is_valid",
+        "replay_enemy_spawn_candidate_pool",
+        "build_enemy_spawn_candidate_boundary_map",
+    }
     assert implementations["rust_solver/src/native_rng.rs"] == {
+        "build_native_enemy_spawn_candidate_pool",
+        "default_native_enemy_spawn_zone",
         "draw_msvc_rand",
+        "native_enemy_spawn_tile_is_valid",
         "replay_spawn_coordinate",
     }
     tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
@@ -669,6 +680,17 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "both_final_selectors_use_modulo",
         "scheduler_is_predicate_order_not_final_selection",
         "scheduler_draws_are_upstream_state",
+    }
+    assert tests[
+        "data/observatory/native/"
+        "windows_build_13725832_31fe35265598_"
+        "enemy_spawn_candidate_boundary.json"
+    ] == {
+        "enemy_source_order_proven",
+        "primary_stable_filter_proven",
+        "turn_zero_mode9_retry_proven",
+        "emergency_max_x_row_proven",
+        "enemy_validity_rejections_proven",
     }
     assert tests[
         "data/observatory/captures/"
@@ -691,12 +713,28 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "0x495e317b",
         "0x2c54aa4a",
     }
+    assert tests[
+        "tests/test_observatory_enemy_spawn_candidate_boundary.py"
+    ] == {
+        "test_committed_map_closes_parameterized_enemy_candidate_construction",
+        "test_default_enemy_zone_and_all_replay_branches_are_exact",
+        "test_enemy_validity_rejects_each_native_input_without_guessing_it",
+    }
+    assert tests[
+        "rust_solver/tests/observatory_enemy_spawn_candidate_boundary.rs"
+    ] == {
+        "committed_candidate_vectors_replay_every_native_branch",
+        "candidate_pool_joins_existing_exact_state_replay_without_forecasting",
+    }
     gaps = " ".join(record["known_gaps"])
     assert "does not parse or apply SectorSpawners" in gaps
     assert "GAME:GetSpawnList" in gaps
-    assert "Standard spawn-coordinate candidate order" in gaps
-    assert "scheduler/fallback paths' opaque predicate inputs" in gaps
+    assert "candidate-time Board:IsDangerous" in gaps
+    assert "Point-keyed BlockSpawn values" in gaps
+    assert "Standard candidate source order" in gaps
+    assert "emergency greatest-x-row construction" in gaps
     assert "recovered exactly post hoc" in gaps
+    assert "complete coordinate-candidate construction/filtering" not in gaps
     assert "spawn-coordinate selection, and the coordinate RNG call order" not in gaps
 
 

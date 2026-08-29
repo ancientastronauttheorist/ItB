@@ -1076,14 +1076,19 @@ The targeted offline map is now deep enough; do not broaden into full
 decompilation. The reversible owner campaign has completed the planned Lua RNG,
 natural callback, bounded native RNG, `Spawner:NextPawn` span/replay,
 selected-queue, and fixed selected-SkillEffect materialization observations.
-The spawn-coordinate replay is now exact for three capture-backed selector
-states as well as when supplied any exact state and candidate vector, but
-ordinary planning still lacks those inputs before the call and lacks the
-selected coordinate. Keep the current Rust non-fabrication rule. If a future
-solver mismatch justifies more runtime work, add only the missing narrow
-input—coordinate scheduling, pre-call capsule delivery, a broader selected-
-action path, or one native candidate record—under the same matched and
-reversible protocol.
+The standard spawn-coordinate algorithm is now exact end to end when supplied
+its dynamic boundary inputs. Offline evidence pins the ordered `enemy` zone and
+its deterministic absent-zone fallback, stable primary filtering, the turn-zero
+mode-9 Forest retry and cleanup, the emergency greatest-x-row pool, every
+ordinary enemy rejection input, and raw modulo selection. Python and Rust
+replay those rules, and three capture-backed selector states reproduce exact
+coordinates. Ordinary planning still lacks candidate-time
+`Board:IsDangerous`, Point-keyed `BlockSpawn` values, and the shared CRT state
+before a future selector call, so it still cannot know the selected coordinate.
+Keep the current Rust non-fabrication rule. If a future solver mismatch
+justifies more runtime work, add only one missing carrier or pre-call capsule
+under the same matched and reversible protocol; candidate construction itself
+no longer needs another broad native investigation.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

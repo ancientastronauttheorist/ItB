@@ -80,6 +80,10 @@ against the later exact maps, matched campaigns, and cleanup receipts. The gap
 audit no longer describes ordinary enemy candidate order, the equal-best modulo
 tie-break, standard spawn-coordinate selection, or its native RNG caller as
 unknown. The pinned PE map establishes the candidate-loop order; the later
+enemy-spawn continuation additionally closes ordered zone acquisition, stable
+primary and turn-zero mode-9 filtering, emergency greatest-x-row construction,
+and every ordinary enemy validity rejection while preserving the missing
+candidate-time dangerous/BlockSpawn facts as explicit inputs. The later
 enemy-record selector continuation closes the six-integer record layout,
 movement-vector consumption order, post-wrapper target tie, positioning/score
 comparator, immediately displaced fallback group, and selector-local caller-ID

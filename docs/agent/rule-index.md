@@ -532,3 +532,6 @@ Duplicate numbers: 152, 203, 219, 220, 221, 499.
 | 530 | — | The fixed Firefly1 GetTargetArea sequence correlates exactly to the complete native candidate order. | `docs/agent/solver-reference.md` |
 | 531 | — | The fixed Firefly1 raw GetTargetScore matrix correlates exactly to its target areas and native records. | `docs/agent/solver-reference.md` |
 | 532 | — | The fixed Firefly1 raw GetSkillEffect sequence closes score-side effects and the selected-effect repeat. | `docs/agent/solver-reference.md` |
+| 533 | — | The fixed selected Firefly1 native SkillEffect is runtime-proven through the settled attack. | `docs/agent/solver-reference.md` |
+| 534 | — | Standard spawn-coordinate selection is exactly replayable from a supplied native state. | `docs/agent/solver-reference.md` |
+| 535 | — | Native enemy spawn-candidate construction is exact from explicit candidate-time Board facts. | `docs/agent/solver-reference.md` |
