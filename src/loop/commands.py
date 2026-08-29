@@ -10295,7 +10295,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             if "units" in bridge_data:
                 for u in bridge_data["units"]:
                     stats = get_pawn_stats(u.get("type", ""))
-                    u["ranged"] = stats.ranged
+                    u.setdefault("ranged", stats.ranged)
                     if stats.armor:
                         u.setdefault("armor", True)
                     if not stats.pushable:
@@ -53414,7 +53414,7 @@ def _solve_with_rust(bridge_data: dict, time_limit: float,
     if "units" in bd:
         for u in bd["units"]:
             stats = get_pawn_stats(u.get("type", ""))
-            u["ranged"] = stats.ranged
+            u.setdefault("ranged", stats.ranged)
             if stats.armor:
                 u.setdefault("armor", True)
             if not stats.pushable:
@@ -54270,7 +54270,7 @@ def _re_solve_partial(
         for u in bridge_data["units"]:
             uid = u.get("uid")
             stats = get_pawn_stats(u.get("type", ""))
-            u["ranged"] = stats.ranged
+            u.setdefault("ranged", stats.ranged)
             if stats.armor:
                 u.setdefault("armor", True)
             if not stats.pushable:

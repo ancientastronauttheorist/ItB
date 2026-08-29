@@ -109,10 +109,10 @@ DEPENDENCY_SPECS = (
             "enemy_position_observations_boundary.json"
         ),
         "file_sha256": (
-            "8f0ab10d21a7fef4a4076ff2fc15ea7de7eb4892456f98cdb6b6ff0df92d4000"
+            "5be65abbb996582666fca63fa6028431599627eeef24e4967cb524805de4ec8a"
         ),
         "canonical_sha256": (
-            "c63820e6cf3bba78a3b010f7d478959aed2ff93faeb0be5c358a90c0b7621103"
+            "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329"
         ),
         "role": (
             "Pins the exact native Board/Pawn observations consumed by "

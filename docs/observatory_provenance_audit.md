@@ -129,11 +129,12 @@ Board/Pawn method bindings and exact native meanings: dangerous tile/vector
 state is distinct from environment danger, dangerous items use eight embedded
 effect tests, spawning has tile/vector sources, team queries one/six are exact,
 and the Pawn/Building distances reduce to Manhattan over their respective
-filtered Pawn set and terrain-1 cache. Its carrier matrix separates directly
-exported or exactly derivable current values from dangerous-state gaps,
-runtime-mutated definition flags, and the still-absent Board snapshot at each
-future callback. Natural callback pairs exercise the four
-Lua-visible families; three Firefly triplets
+filtered Pawn set and terrain-1 cache. The bridge now directly exports both
+dangerous predicates plus live ordered Ranged/AvoidingMines flags, and a stable
+`Mission_Power` turn-one sandwich validates all 64 item-danger booleans and ten
+Pawn records. The carrier matrix is therefore complete for a current snapshot;
+the Board at each future callback remains absent. Natural callback pairs
+exercise the four Lua-visible families; three Firefly triplets
 join one selected 24-byte record to its immediate queue commit; and three
 coordinate/RNG captures join the same ordered five-point vector to caller 60
 and `candidates[raw_rng % 5]`. Separate exact-build review identifies caller 59
@@ -146,8 +147,8 @@ Those records remain `partial` / `native_dependency` for narrower reasons.
 Rust does not reproduce the native future enemy tournament, the bridge does not
 provide one complete post-callback record payload or its selector-entry CRT
 state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score future candidate-time Board snapshots, the dangerous-item predicate,
-runtime-mutated Pawn definition/score helpers, callback-time x87 control for
+score future candidate-time Board snapshots, runtime-mutated Pawn score-helper
+values, callback-time x87 control for
 fractional native results, plus transitive native-bound helper RNG before the
 now-proven native postprocessing boundaries remain unjoined. The native
 meanings and current-state carrier matrix themselves are no longer open.

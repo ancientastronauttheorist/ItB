@@ -1248,6 +1248,14 @@ local function dump_state()
     -- their false completeness flags prevent this payload from being mistaken
     -- for a prospective spawn forecast.
     state.tiles = {}
+    state.native_enemy_position_inputs = {
+        schema_version = 1,
+        current_snapshot_only = true,
+        dangerous_item_tiles_complete = true,
+        dangerous_item_tiles = {},
+        pawn_flags_ordered_complete = true,
+        pawn_flags_ordered = {},
+    }
     local native_dangerous_tiles = {}
     local native_ground_blocked_tiles = {}
     local native_dangerous_complete = true
@@ -1299,6 +1307,22 @@ local function dump_state()
                 end
             else
                 native_dangerous_complete = false
+            end
+
+            local ok_native_item, native_item = pcall(function()
+                return Board:IsDangerousItem(pt)
+            end)
+            if ok_native_item and type(native_item) == "boolean" then
+                tile.dangerous_item = native_item
+                if native_item then
+                    local inputs = state.native_enemy_position_inputs
+                    inputs.dangerous_item_tiles[
+                        #inputs.dangerous_item_tiles + 1
+                    ] = {x, y}
+                end
+            else
+                state.native_enemy_position_inputs
+                    .dangerous_item_tiles_complete = false
             end
 
             local ok_ground_blocked, ground_blocked = pcall(function()
@@ -1481,6 +1505,41 @@ local function dump_state()
                     corpse_on_death = corpse_on_death,
                     void_shock_immune = pawn_def and pawn_def.VoidShockImmune or false,
                 }
+
+                -- Export the exact live Lua-backed properties consumed by
+                -- ScorePositioning. Static PawnStats remains a fallback for
+                -- older bridge payloads, but must not overwrite these values
+                -- when a runtime definition has been mutated.
+                do
+                    local ok_ra, ranged = pcall(function()
+                        return p:IsRanged()
+                    end)
+                    local ok_am, avoiding_mines = pcall(function()
+                        return p:IsAvoidingMines()
+                    end)
+                    local ranged_valid = ok_ra and type(ranged) == "boolean"
+                    local avoiding_valid = ok_am
+                        and type(avoiding_mines) == "boolean"
+                    if ranged_valid then
+                        unit.ranged = ranged and 1 or 0
+                    end
+                    if avoiding_valid then
+                        unit.avoiding_mines = avoiding_mines
+                    end
+                    if ranged_valid and avoiding_valid then
+                        local inputs = state.native_enemy_position_inputs
+                        inputs.pawn_flags_ordered[
+                            #inputs.pawn_flags_ordered + 1
+                        ] = {
+                            uid = pid,
+                            ranged = ranged,
+                            avoiding_mines = avoiding_mines,
+                        }
+                    else
+                        state.native_enemy_position_inputs
+                            .pawn_flags_ordered_complete = false
+                    end
+                end
 
                 -- Pilot info (mechs only). Save-file-derived is the most
                 -- reliable source; Lua-API probes are a fallback. Save
@@ -1785,6 +1844,9 @@ local function dump_state()
                     end
                 end
             end
+        else
+            state.native_enemy_position_inputs
+                .pawn_flags_ordered_complete = false
         end
     end
 

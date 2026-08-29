@@ -1089,7 +1089,7 @@
         },
         {
           "classification": "fact",
-          "statement": "The current bridge exports exact ordered enemy-zone, Board:IsDangerous, and PATH_GROUND blocking observations. A pinned query/read-only Windows reader resolves the active Board through the exact host/Game/screen/BoardPlayer chain, double-reads all 64 Point-keyed BlockSpawn values and the direct spawn-marker vector, writes no game memory, and emits no addresses. One stable Mission_Power turn-one bridge sandwich observes zero BlockSpawn values, no direct markers, and exact ordinary candidates [5,3], [5,4], [5,5], and [6,2]. This is exact current-state replay, not a future Board or coordinate forecast."
+          "statement": "The current bridge exports exact ordered enemy-zone, Board:IsDangerous, Board:IsDangerousItem, PATH_GROUND blocking, and live ordered Pawn Ranged/AvoidingMines observations. A pinned query/read-only Windows reader resolves the active Board through the exact host/Game/screen/BoardPlayer chain, double-reads all 64 Point-keyed BlockSpawn values and the direct spawn-marker vector, writes no game memory, and emits no addresses. Stable Mission_Power turn-one bridge sandwiches observe zero BlockSpawn values, no direct markers, exact ordinary candidates [5,3], [5,4], [5,5], and [6,2], all 64 item-danger booleans, and ten ordered Pawn flag records. This is exact current-state replay, not a future Board or coordinate forecast."
         },
         {
           "classification": "fact",
@@ -1305,6 +1305,15 @@
             "\"candidate_count\": 4",
             "\"future_forecast\": false",
             "\"stable_across_native_capture\": true"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_current_position_carriers.json",
+          "symbols": [
+            "\"position_observation_carriers_complete\": true",
+            "\"complete_for_current_score_positioning\": true",
+            "\"future_candidate_time\": false",
+            "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec"
           ]
         },
         {
@@ -2192,7 +2201,7 @@
         },
         {
           "classification": "fact",
-          "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, seven hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations and binds both the stock Pawn-helper and native-observation successors while leaving runtime/mod field mutation, candidate-time Board state, and callback-time x87 control for fractional native results explicit."
+          "statement": "The immutable ScorePositioning artifact binds one exact 2,075-byte source body, three native regions across Breach.exe and lua5.1.dll, seven hash-pinned dependencies, and 14 adversarial replay vectors. It closes the global arithmetic from projected observations and binds both the stock Pawn-helper and native-observation successors. Direct current dangerous predicates and live Ranged/AvoidingMines carriers are exact; runtime/mod Pawn score-helper values, candidate-time Board state, and callback-time x87 control for fractional native results remain explicit."
         },
         {
           "classification": "fact",
@@ -2212,7 +2221,11 @@
         },
         {
           "classification": "fact",
-          "statement": "The immutable observation artifact carries 17 qualified current-state mappings and 16 replay vectors. The ordinary bridge directly exports or exactly derives most current observations, but environment danger and item names are not substitutes for the two dangerous predicates; live Ranged/AvoidingMines mutation and the Board snapshot at each future candidate callback remain explicit missing carriers. Native observation meanings and the current carrier matrix are complete without claiming a prospective enemy tournament or a Rust simulator change."
+          "statement": "The immutable observation artifact carries 17 current-state mappings and 16 replay vectors. The ordinary bridge directly exports both dangerous predicates and live ordered Ranged/AvoidingMines flags, cross-checking compact carriers against all 64 tile records and the native Board pawn order. Native observation meanings and the current carrier matrix are complete; the Board snapshot at each future candidate callback remains an explicit missing input, so this does not claim a prospective enemy tournament or a Rust simulator change."
+        },
+        {
+          "classification": "fact",
+          "statement": "A stable Mission_Power turn-one bridge/native sandwich under the exact 396,449-byte installed overlay validates all 64 Board:IsDangerousItem booleans and ten ordered Pawn:IsRanged/Pawn:IsAvoidingMines records, with no dangerous or dangerous-item points and the same four ordinary spawn candidates as the earlier current replay. Its deterministic receipt is current-only and marks future_candidate_time false."
         },
         {
           "classification": "inference",
@@ -2630,8 +2643,24 @@
             "replay_board_is_pawn_team",
             "replay_distance_to_pawn",
             "replay_distance_to_building",
+            "bridge_native_enemy_position_observations",
             "build_enemy_position_observations_boundary",
             "validate_enemy_position_observations_boundary"
+          ]
+        },
+        {
+          "path": "src/bridge/modloader.lua",
+          "symbols": [
+            "native_enemy_position_inputs",
+            "Board:IsDangerousItem(pt)",
+            "p:IsRanged()",
+            "p:IsAvoidingMines()"
+          ]
+        },
+        {
+          "path": "src/loop/commands.py",
+          "symbols": [
+            "setdefault(\"ranged\""
           ]
         },
         {
@@ -2652,8 +2681,17 @@
             "score_team_queries_are_simple",
             "pawn_distance_is_manhattan",
             "building_distance_uses_terrain_one_cache",
-            "pawn_definition_flags_are_exact_but_not_all_live_carriers",
+            "pawn_definition_flags_are_exact_live_carriers",
             "no_solver_contradiction"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_current_position_carriers.json",
+          "symbols": [
+            "position_observation_carriers_complete",
+            "complete_for_current_score_positioning",
+            "future_candidate_time",
+            "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec"
           ]
         },
         {
@@ -2674,8 +2712,8 @@
         }
       ],
       "known_gaps": [
-        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament. The fixed Firefly evidence now includes one PointList sequence, raw GetTargetScore matrix, 32 score-side raw SkillEffects, a final raw selected-effect repeat, and the selected native postprocessed SkillEffect; other subclasses and boards, other materialization/final-effect paths, runtime-mutated Pawn score fields, direct dangerous predicate carriers, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
-        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector, selector-entry/exit state, selected postprocessed SkillEffect, and queue commit in one process; separate matched campaigns supply the concrete ordered Lua-produced PointLists, raw GetTargetScore matrix, and 33-call raw GetSkillEffect sequence. The native-record/materialized-effect/queue join is same-process, while target/score joins remain deterministic cross-campaign correlations. Candidate-time Board snapshots, direct dangerous carriers, runtime-mutated Pawn score values, post-wrapper losing-target scores, raw callbacks and materialization for other shapes, effect-side draws, and target-tie states remain outside ordinary solver data.",
+        "The Rust next-turn enemy model is heuristic rather than a direct implementation of the now-proven native target-area eligibility gate, callback/cache/filter wrapper, SkillEffect cache materializer/postprocessor, source-exact score/effect ancestry, inherited base ScoreList projection, global ScorePositioning projection, native Pawn positioning helpers, exact ScorePositioning observation meanings/current carriers, exact-build nearest-even integer conversion, score adjustments, and capture-proven bounded record tournament. The fixed Firefly evidence now includes one PointList sequence, raw GetTargetScore matrix, 32 score-side raw SkillEffects, a final raw selected-effect repeat, and the selected native postprocessed SkillEffect; other subclasses and boards, other materialization/final-effect paths, runtime-mutated Pawn score fields, candidate-time Board snapshots, transitive native-helper RNG, effect-side draws, and shared-RNG state remain external inputs.",
+        "The exact static destination pipeline, pre-target-area eligibility gate, native target-area wrapper and SkillEffect cache wrapper, base ScoreList and global ScorePositioning projections, native Pawn positioning helper defaults, ScorePositioning observation semantics/current carrier matrix, exact-build nearest-even integer conversion, native ScorePositioning clamp, GetTargetScore adjustments, target tie, 24-byte record comparator, displaced-primary fallback, and selector-local draw grammar are known. One fixed Firefly1 campaign serializes the complete final eight-record vector, selector-entry/exit state, selected postprocessed SkillEffect, and queue commit in one process; separate matched campaigns supply the concrete ordered Lua-produced PointLists, raw GetTargetScore matrix, and 33-call raw GetSkillEffect sequence. The native-record/materialized-effect/queue join is same-process, while target/score joins remain deterministic cross-campaign correlations. Candidate-time Board snapshots, runtime-mutated Pawn score values, post-wrapper losing-target scores, raw callbacks and materialization for other shapes, effect-side draws, and target-tie states remain outside ordinary solver data.",
         "The natural and synthetic callback evidence covers 65 loaded slots in one Mission_Power shape and does not establish every subclass, mission, or callback path. Complete candidate-to-selection-to-queue correlation remains bounded to one Firefly1 single-weapon shape rather than other pawn types, multi-weapon selection, cancellation, or retarget paths."
       ],
       "sources": [
@@ -3028,6 +3066,8 @@
         {
           "path": "tests/test_observatory_enemy_position_observations_boundary.py",
           "symbols": [
+            "test_bridge_normalizer_closes_all_exact_current_native_position_carriers",
+            "test_bridge_normalizer_fails_closed_on_incomplete_or_disagreeing_carriers",
             "test_all_score_positioning_native_method_names_are_bound",
             "test_dangerous_replay_uses_tile_flag_and_two_independent_point_vectors",
             "test_each_dangerous_item_effect_is_independently_sufficient",
@@ -3035,6 +3075,15 @@
             "test_distance_to_pawn_is_team_filtered_manhattan_and_empty_int_max",
             "test_carrier_matrix_keeps_native_danger_separate_from_environment_danger",
             "test_exact_install_rebuilds_native_source_and_carrier_join_when_available"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_current_position_carriers.json",
+          "symbols": [
+            "\"position_observation_carriers_complete\": true",
+            "\"complete_for_current_score_positioning\": true",
+            "\"future_candidate_time\": false",
+            "\"pawn_flags_ordered\": ["
           ]
         },
         {

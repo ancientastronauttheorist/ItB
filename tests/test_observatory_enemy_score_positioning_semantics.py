@@ -90,8 +90,8 @@ def test_committed_map_binds_exact_source_projection_without_rounding_overclaim(
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "7c5a8253bbebf7b0cb8444fa718a6103"
-            "2391f9fd5e9cfcba0de5d99a707588fc"
+            "e6375c6d0ea6d8708db90e940aaefef3"
+            "5184315b81a6f9fd4233a11548b8d615"
         ),
         "score_positioning_projection_complete": True,
         "native_integer_conversion_parametric_complete": True,
@@ -188,12 +188,12 @@ def test_native_observation_dependency_closes_meanings_not_candidate_time_state(
         if item["id"] == "enemy_position_observations_boundary"
     )
     assert dependency["file_sha256"] == (
-        "8f0ab10d21a7fef4a4076ff2fc15ea7d"
-        "e7eb4892456f98cdb6b6ff0df92d4000"
+        "5be65abbb996582666fca63fa60284315"
+        "99627eeef24e4967cb524805de4ec8a"
     )
     assert dependency["canonical_sha256"] == (
-        "c63820e6cf3bba78a3b010f7d478959"
-        "aed2ff93faeb0be5c358a90c0b7621103"
+        "f7871672fac450ff60196638bb35e28fb"
+        "865f11844ce2cab76e9ba8bcafc8329"
     )
     assert value["contracts"]["native_board_predicate_semantics_complete"] is True
     assert value["contracts"]["current_state_carrier_matrix_complete"] is True

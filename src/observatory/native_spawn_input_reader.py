@@ -485,7 +485,7 @@ def _bridge_candidate_projection(
 ) -> dict[str, Any]:
     if not isinstance(bridge_data, Mapping):
         raise NativeSpawnInputReaderError("bridge state must be a mapping")
-    return {
+    projection = {
         "mission_id": bridge_data.get("mission_id"),
         "phase": bridge_data.get("phase"),
         "turn": bridge_data.get("turn"),
@@ -494,6 +494,37 @@ def _bridge_candidate_projection(
             "native_enemy_spawn_inputs"
         ),
     }
+    # Preserve old schema-1 spawn receipts byte-for-byte under deterministic
+    # replay while admitting the newer exact ScorePositioning carriers when
+    # the bridge actually published them.  Only the fields required by the
+    # carrier validator enter the stable projection.
+    if "native_enemy_position_inputs" in bridge_data:
+        projection["native_enemy_position_inputs"] = bridge_data.get(
+            "native_enemy_position_inputs"
+        )
+        raw_units = bridge_data.get("units")
+        if isinstance(raw_units, list):
+            projected_units: list[Any] = []
+            for unit in raw_units:
+                if not isinstance(unit, Mapping):
+                    projected_units.append(unit)
+                    continue
+                projected_units.append(
+                    {
+                        key: unit[key]
+                        for key in (
+                            "uid",
+                            "ranged",
+                            "avoiding_mines",
+                            "is_extra_tile",
+                        )
+                        if key in unit
+                    }
+                )
+            projection["units"] = projected_units
+        else:
+            projection["units"] = raw_units
+    return projection
 
 
 def combine_current_bridge_native_capture(
@@ -551,13 +582,51 @@ def combine_current_bridge_native_capture(
     except EnemySpawnCandidateBoundaryError as exc:
         raise NativeSpawnInputReaderError(str(exc)) from exc
 
+    position_replay: dict[str, Any] | None = None
+    if "native_enemy_position_inputs" in before_projection:
+        from src.observatory.enemy_position_observations_boundary import (
+            EnemyPositionObservationsBoundaryError,
+            bridge_native_enemy_position_observations,
+        )
+
+        try:
+            observations = bridge_native_enemy_position_observations(
+                before_projection
+            )
+        except EnemyPositionObservationsBoundaryError as exc:
+            raise NativeSpawnInputReaderError(str(exc)) from exc
+        pawn_order = list(observations["pawn_order"])
+        pawn_flags = observations["pawn_flags"]
+        position_replay = {
+            "dangerous_points": [
+                list(point) for point in sorted(observations["dangerous_points"])
+            ],
+            "dangerous_item_points": [
+                list(point)
+                for point in sorted(observations["dangerous_item_points"])
+            ],
+            "pawn_flags_ordered": [
+                {
+                    "uid": uid,
+                    "ranged": pawn_flags[uid]["ranged"],
+                    "avoiding_mines": pawn_flags[uid]["avoiding_mines"],
+                }
+                for uid in pawn_order
+            ],
+            "complete_for_current_score_positioning": observations[
+                "complete_for_current_score_positioning"
+            ],
+            "current_snapshot_only": observations["current_snapshot_only"],
+            "future_candidate_time": observations["future_candidate_time"],
+        }
+
     canonical = json.dumps(
         before_projection,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
     ).encode("ascii")
-    return {
+    result = {
         "schema_version": SCHEMA_VERSION,
         "analysis_kind": CANDIDATE_REPLAY_ANALYSIS_KIND,
         "build_identity": dict(native_capture["build_identity"]),
@@ -586,6 +655,10 @@ def combine_current_bridge_native_capture(
             "future_forecast": False,
         },
     }
+    if position_replay is not None:
+        result["position_observation_replay"] = position_replay
+        result["integrity"]["position_observation_carriers_complete"] = True
+    return result
 
 
 def validate_current_bridge_native_capture_artifact(

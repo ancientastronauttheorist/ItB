@@ -13,6 +13,7 @@ from src.observatory.enemy_position_observations_boundary import (
     TEAM_ENEMY,
     TEAM_PLAYER,
     EnemyPositionObservationsBoundaryError,
+    bridge_native_enemy_position_observations,
     build_enemy_position_observations_boundary,
     encode_enemy_position_observations_boundary,
     replay_board_is_dangerous,
@@ -53,6 +54,85 @@ def _load(path: Path = BOUNDARY_MAP) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _bridge_payload() -> dict:
+    tiles = [
+        {
+            "x": x,
+            "y": y,
+            "dangerous_item": (x, y) == (1, 2),
+        }
+        for y in range(8)
+        for x in range(8)
+    ]
+    return {
+        "tiles": tiles,
+        "units": [
+            {"uid": 3, "ranged": 1, "avoiding_mines": False},
+            {"uid": 4, "ranged": 0, "avoiding_mines": True},
+            {
+                "uid": 3,
+                "ranged": 1,
+                "avoiding_mines": False,
+                "is_extra_tile": True,
+            },
+        ],
+        "native_enemy_spawn_inputs": {
+            "schema_version": 1,
+            "current_snapshot_only": True,
+            "dangerous_tiles_complete": True,
+            "dangerous_tiles": [[0, 0], [6, 7]],
+        },
+        "native_enemy_position_inputs": {
+            "schema_version": 1,
+            "current_snapshot_only": True,
+            "dangerous_item_tiles_complete": True,
+            "dangerous_item_tiles": [[1, 2]],
+            "pawn_flags_ordered_complete": True,
+            "pawn_flags_ordered": [
+                {"uid": 3, "ranged": True, "avoiding_mines": False},
+                {"uid": 4, "ranged": False, "avoiding_mines": True},
+            ],
+        },
+    }
+
+
+def test_bridge_normalizer_closes_all_exact_current_native_position_carriers():
+    assert bridge_native_enemy_position_observations(_bridge_payload()) == {
+        "dangerous_points": frozenset({(0, 0), (6, 7)}),
+        "dangerous_item_points": frozenset({(1, 2)}),
+        "pawn_flags": {
+            3: {"ranged": True, "avoiding_mines": False},
+            4: {"ranged": False, "avoiding_mines": True},
+        },
+        "pawn_order": (3, 4),
+        "complete_for_current_score_positioning": True,
+        "current_snapshot_only": True,
+        "future_candidate_time": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda data: data["native_enemy_position_inputs"].update(
+            {"dangerous_item_tiles_complete": False}
+        ),
+        lambda data: data["tiles"][0].update({"dangerous_item": True}),
+        lambda data: data["units"][0].update({"ranged": 0}),
+        lambda data: data["native_enemy_position_inputs"][
+            "pawn_flags_ordered"
+        ].reverse(),
+    ],
+)
+def test_bridge_normalizer_fails_closed_on_incomplete_or_disagreeing_carriers(
+    mutate,
+):
+    data = _bridge_payload()
+    mutate(data)
+    with pytest.raises(EnemyPositionObservationsBoundaryError):
+        bridge_native_enemy_position_observations(data)
+
+
 def test_committed_map_binds_complete_native_observation_semantics():
     value = _load()
     result = validate_enemy_position_observations_boundary_binding(value)
@@ -62,8 +142,8 @@ def test_committed_map_binds_complete_native_observation_semantics():
         "analysis_kind": ANALYSIS_KIND,
         "status": "bound",
         "artifact_sha256": (
-            "c63820e6cf3bba78a3b010f7d478959"
-            "aed2ff93faeb0be5c358a90c0b7621103"
+            "f7871672fac450ff60196638bb35e28fb"
+            "865f11844ce2cab76e9ba8bcafc8329"
         ),
         "native_score_positioning_observation_semantics_complete": True,
         "current_state_carrier_matrix_complete": True,
@@ -81,7 +161,7 @@ def test_committed_map_binds_complete_native_observation_semantics():
         "carrier_count": 17,
         "replay_vector_count": 16,
         "finding_count": 10,
-        "unresolved_count": 4,
+        "unresolved_count": 2,
         "native_score_positioning_observation_semantics_complete": True,
         "prospective_board_observations_complete": False,
         "simulator_change_required": False,
@@ -281,13 +361,9 @@ def test_carrier_matrix_keeps_native_danger_separate_from_environment_danger():
         "status": "direct_exact_current",
         "source": "src/bridge/modloader.lua",
     }
-    assert carriers["Board:IsDangerousItem"]["status"] == (
-        "insufficient_for_native_predicate"
-    )
-    assert carriers["Pawn:IsRanged"]["status"] == (
-        "stock_static_projection_not_runtime_exact"
-    )
-    assert carriers["Pawn:IsAvoidingMines"]["carrier"] is None
+    assert carriers["Board:IsDangerousItem"]["status"] == "direct_exact_current"
+    assert carriers["Pawn:IsRanged"]["status"] == "direct_exact_current"
+    assert carriers["Pawn:IsAvoidingMines"]["status"] == "direct_exact_current"
 
     bridge = (ROOT / "src" / "bridge" / "modloader.lua").read_text(
         encoding="utf-8"
@@ -299,10 +375,12 @@ def test_carrier_matrix_keeps_native_danger_separate_from_environment_danger():
     assert "Board:IsSpawning(Point(x, y))" in bridge
     assert "Board:IsEnvironmentDanger" in bridge
     assert "return Board:IsDangerous(pt)" in bridge
+    assert "return Board:IsDangerousItem(pt)" in bridge
     assert "native_enemy_spawn_inputs" in bridge
-    assert ":IsAvoidingMines()" not in bridge
-    assert ":IsRanged()" not in bridge
-    assert 'u["ranged"] = stats.ranged' in commands
+    assert "native_enemy_position_inputs" in bridge
+    assert ":IsAvoidingMines()" in bridge
+    assert ":IsRanged()" in bridge
+    assert 'u.setdefault("ranged", stats.ranged)' in commands
 
 
 @pytest.mark.parametrize(

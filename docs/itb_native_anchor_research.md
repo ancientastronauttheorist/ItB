@@ -468,15 +468,21 @@ Team queries one and six mean exact player and actual team at least six.
 Profile-six distance to a matching Pawn reduces to Manhattan distance, and the
 Building distance is Manhattan over a cache rebuilt from every terrain-1 tile.
 
-The ordinary bridge directly carries or exactly derives most current values
-and now calls `Board:IsDangerous` for all 64 tiles. It still does not directly
-carry `Board:IsDangerousItem`, runtime-exact Ranged or AvoidingMines mutations,
-or the Board snapshot at each later candidate callback. The separate pinned
-query/read-only reader closes the current spawn-specific Point-keyed
-`BlockSpawn` and direct marker-vector carriers, but not a future callback-time
-snapshot. Runtime/mod mutations and that future snapshot remain explicit
-inputs. The callback-time x87 seam is resolved to nearest-even for the attested
-Windows build, but the future tournament is still not fabricated.
+The ordinary bridge now calls `Board:IsDangerous` and
+`Board:IsDangerousItem` for all 64 tiles and calls each on-board Pawn's live
+`IsRanged` and `IsAvoidingMines` methods in native Board order. It publishes
+both compact ordered carriers and matching tile/unit fields, failing
+completeness closed on any unavailable method or disagreement. A stable
+`Mission_Power` turn-one bridge/native sandwich validates all 64 item-danger
+booleans and ten ordered Pawn flag records under the installed 396,449-byte
+overlay; the deterministic receipt is
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_current_position_carriers.json`.
+The separate pinned query/read-only reader closes the current spawn-specific
+Point-keyed `BlockSpawn` and direct marker-vector carriers. Neither current
+capture supplies the Board at a later candidate callback, so that future
+snapshot remains an explicit input. The callback-time x87 seam is resolved to
+nearest-even for the attested Windows build, but the future tournament is still
+not fabricated.
 
 The exact-build selector continuation resolves the higher-level grammar. The
 movement producer retains native `GetReachable` `(x,y)` order through its

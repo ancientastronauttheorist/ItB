@@ -1082,18 +1082,21 @@ its deterministic absent-zone fallback, stable primary filtering, the turn-zero
 mode-9 Forest retry and cleanup, the emergency greatest-x-row pool, every
 ordinary enemy rejection input, and raw modulo selection. Python and Rust
 replay those rules, and three capture-backed selector states reproduce exact
-coordinates. The current bridge now exports ordered enemy-zone,
-`Board:IsDangerous`, and ground-blocked facts, while a pinned query/read-only
-Windows reader supplies the complete current Point-keyed `BlockSpawn` map and
-direct spawn-marker vector. A stable `Mission_Power` turn-one sandwich replays
-the exact four-point current pool without writing game memory. Ordinary
-planning still lacks the Board after future player/environment changes and the
-shared CRT state immediately before a future selector call, so it still cannot
-know the selected coordinate. Keep the current Rust non-fabrication rule. If a
-future solver mismatch justifies more runtime work, capture a selector-time
-Board/RNG capsule under the same matched and reversible protocol; candidate
-construction and current-state carrier integration no longer need another
-broad native investigation.
+coordinates. The current bridge now exports ordered enemy-zone, direct
+`Board:IsDangerous`, direct `Board:IsDangerousItem`, ground-blocked facts, and
+live ordered `Pawn:IsRanged` / `Pawn:IsAvoidingMines` values. A pinned
+query/read-only Windows reader supplies the complete current Point-keyed
+`BlockSpawn` map and direct spawn-marker vector. Two stable `Mission_Power`
+turn-one sandwiches replay the exact four-point current pool without writing
+game memory; the later one also validates all 64 item-danger booleans and ten
+on-board Pawn flag records as a complete current `ScorePositioning` carrier
+projection. Ordinary planning still lacks the Board after future
+player/environment changes and the shared CRT state immediately before a
+future selector call, so it still cannot know the selected coordinate. Keep
+the current Rust non-fabrication rule. If a future solver mismatch justifies
+more runtime work, capture a selector-time Board/RNG capsule under the same
+matched and reversible protocol; candidate construction and current-state
+carrier integration no longer need another broad native investigation.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

@@ -85,11 +85,11 @@
   "closure": {
     "complete_enemy_phase_forecast": false,
     "current_state_carrier_matrix_complete": true,
-    "direct_dangerous_bridge_carriers_complete": false,
+    "direct_dangerous_bridge_carriers_complete": true,
     "native_named_bindings_complete": true,
     "native_score_positioning_observation_semantics_complete": true,
     "prospective_board_observations_complete": false,
-    "runtime_mutated_definition_flags_complete": false,
+    "runtime_mutated_definition_flags_complete": true,
     "simulator_change_required": false,
     "simulator_version": 408
   },
@@ -297,9 +297,9 @@
       "id": "building_distance_uses_terrain_one_cache"
     },
     {
-      "claim": "IsRanged is exact Lua integer equality with one; IsAvoidingMines is an exact Lua boolean; IsFlying combines its Lua property and runtime byte then rejects dead Pawns. The ordinary bridge directly exports only IsFlying.",
+      "claim": "IsRanged is exact Lua integer equality with one; IsAvoidingMines is an exact Lua boolean; IsFlying combines its Lua property and runtime byte then rejects dead Pawns. The current bridge now calls and exports all three live predicates without replacing them with stock type assumptions.",
       "classification": "fact",
-      "id": "pawn_definition_flags_are_exact_but_not_all_live_carriers"
+      "id": "pawn_definition_flags_are_exact_live_carriers"
     },
     {
       "claim": "These findings refine prospective native enemy scoring inputs; the Rust solver still consumes the settled queue and no current simulator rule contradicts the boundary.",
@@ -735,16 +735,16 @@
       "status": "exact_replay_from_explicit_cache"
     },
     {
-      "carrier": "units[].ranged",
+      "carrier": "units[].ranged plus native_enemy_position_inputs.pawn_flags_ordered",
       "observation": "Pawn:IsRanged",
-      "source": "src/model/pawn_stats.py via src/loop/commands.py",
-      "status": "stock_static_projection_not_runtime_exact"
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
     },
     {
-      "carrier": null,
+      "carrier": "units[].avoiding_mines plus native_enemy_position_inputs.pawn_flags_ordered",
       "observation": "Pawn:IsAvoidingMines",
-      "source": "base false; Snowmine1/Snowmine2 true",
-      "status": "not_exported_stock_source_derivable"
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
     },
     {
       "carrier": "native_enemy_spawn_inputs.dangerous_tiles",
@@ -753,10 +753,10 @@
       "status": "direct_exact_current"
     },
     {
-      "carrier": "tiles[].item only",
+      "carrier": "tiles[].dangerous_item plus native_enemy_position_inputs.dangerous_item_tiles",
       "observation": "Board:IsDangerousItem",
-      "source": "embedded SpaceDamage fields are not exported",
-      "status": "insufficient_for_native_predicate"
+      "source": "src/bridge/modloader.lua",
+      "status": "direct_exact_current"
     }
   ],
   "property_strings": [
@@ -1067,23 +1067,13 @@
     "simulator_change_required": false,
     "simulator_version": 408,
     "source_file_count": 2,
-    "unresolved_count": 4
+    "unresolved_count": 2
   },
   "unresolved": [
     {
       "id": "candidate_time_board_snapshot",
       "question": "What are all observations at each future candidate's exact callback time?",
       "static_status": "The native meanings are exact, but a settled current bridge read is not a post-player-action, per-candidate enemy callback snapshot."
-    },
-    {
-      "id": "direct_dangerous_bridge_carriers",
-      "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?",
-      "static_status": "Board:IsDangerous is now exported exactly in the current-only native enemy-spawn payload. IsDangerousItem remains unavailable because item names do not expose the embedded SpaceDamage fields."
-    },
-    {
-      "id": "runtime_mutated_definition_flags",
-      "question": "Can runtime-mutated Ranged and AvoidingMines values be observed without static type assumptions?",
-      "static_status": "Native property access is exact. Ranged is currently a stock type projection and AvoidingMines is absent from the bridge."
     },
     {
       "id": "complete_enemy_phase_forecast",

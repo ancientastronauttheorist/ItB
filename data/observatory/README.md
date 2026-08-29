@@ -625,9 +625,9 @@ continues the base score replay through the exact shipped global
 `ScorePositioning` body. It also joins the exact `Breach.exe` callback wrapper
 and named integer invoker to the installed `lua5.1.dll` `lua_tointeger` body.
 Its raw SHA-256 is
-`b3c20127b504e9de2379fc582452cea5d9a294774edd26da06c8141157e705cf`;
+`39da06fce775a06c5a8aed53ba004fab89e911811edf11c13977d2b87c472bb2`;
 its canonical document SHA-256 is
-`959594546f80361f0417076ff30e676eec8ac2df26edc75d17bcdcf94f5ae80a`.
+`e6375c6d0ea6d8708db90e940aaefef35184315b81a6f9fd4233a11548b8d615`.
 
 The projected replay preserves the complete source order: Pod, grounded Hole,
 targeted danger score, Smoke, new Fire, spawning, generic mission danger,
@@ -722,9 +722,9 @@ The second dependent artifact,
 `native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json`,
 pins all 17 named Board/Pawn observations used by `ScorePositioning`, 22 native
 regions, and the exact current-state carrier matrix. Its raw SHA-256 is
-`c6d168464c067c92f7366a0acf4a12561f2949af4f5491593d0f900519b56479`;
+`5be65abbb996582666fca63fa6028431599627eeef24e4967cb524805de4ec8a`;
 its canonical document SHA-256 is
-`b994f0a9fe464d885d7675819666be93e94bb8cef0a9939fba93d6a01b57af0b`.
+`f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329`.
 
 `Board:IsDangerous` is a native tile flag plus two Point vectors, not
 `Board:IsEnvironmentDanger`. `Board:IsDangerousItem` tests item presence and
@@ -732,10 +732,18 @@ eight embedded `SpaceDamage` conditions: damage, non-`DIR_NONE` push, shield,
 fire, smoke, spawned Pawn, ACID, or frozen. Spawning is a tile flag or Point-
 vector membership. Distance to a selected-team Pawn is Manhattan under exact
 profile six; distance to a Building is Manhattan over the native cache rebuilt
-from every terrain-1 tile. Current bridge fields directly carry or exactly
-derive most observations, while the two dangerous predicates, live Ranged/
-AvoidingMines mutation, and the Board snapshot at each future callback remain
-explicitly unavailable or qualified. Verify it with:
+from every terrain-1 tile. Current bridge fields now directly carry both
+dangerous predicates and the live ordered Ranged/AvoidingMines values in
+addition to the earlier exact current observations. The immutable current-only
+receipt
+`captures/windows_build_13725832_owner_local_modified_20260829_mission_power_turn1_current_position_carriers.json`
+(SHA-256 `507a7cc3afc4a550174a1e83043a0cb2b9b65bc92c8112a0dbdb6a95b4c12a13`)
+seals a stable before/after bridge/native sandwich: all 64 item-danger booleans,
+ten ordered on-board Pawn flag records, no dangerous or dangerous-item points,
+and the same four ordinary spawn candidates. Its installed overlay identity is
+SHA-256 `42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec`
+at 396,449 bytes. The Board snapshot at each future callback remains explicitly
+unavailable. Verify the static boundary with:
 
 ```powershell
 python scripts/itb_observatory_enemy_position_observations.py verify `
@@ -745,8 +753,8 @@ python scripts/itb_observatory_enemy_position_observations.py verify `
 ```
 
 The native observation meanings and current-state carrier matrix are closed.
-Runtime/mod mutations and the candidate-time Board snapshot remain explicit
-inputs. For this exact Windows build, the observed callback-time x87 mode is
+The candidate-time Board snapshot remains an explicit input. For this exact
+Windows build, the observed callback-time x87 mode is
 nearest-even; a new process is still re-observed rather than assumed when its
 identity or control state is not bound. This local replay does not forecast the
 enemy tournament or replace the settled queue; the Rust simulator consumes the

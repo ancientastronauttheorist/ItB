@@ -638,6 +638,184 @@ def replay_pawn_is_flying(
     return (definition_flying or runtime_flying) and not pawn_is_dead
 
 
+def _bridge_point_sequence(value: Any, label: str) -> tuple[tuple[int, int], ...]:
+    if not isinstance(value, list):
+        raise EnemyPositionObservationsBoundaryError(
+            f"{label} must be a Point list"
+        )
+    points = tuple(
+        _point(item, f"{label}[{index}]")
+        for index, item in enumerate(value)
+    )
+    if len(set(points)) != len(points):
+        raise EnemyPositionObservationsBoundaryError(
+            f"{label} contains duplicate Points"
+        )
+    return points
+
+
+def bridge_native_enemy_position_observations(
+    bridge_data: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate exact current native inputs used by ``ScorePositioning``.
+
+    The result is intentionally current-only. It proves that a fresh bridge
+    state carries the direct native predicates without promoting that state to
+    the later enemy candidate callback time.
+    """
+    if not isinstance(bridge_data, Mapping):
+        raise EnemyPositionObservationsBoundaryError(
+            "bridge state must be a mapping"
+        )
+    position = bridge_data.get("native_enemy_position_inputs")
+    spawn = bridge_data.get("native_enemy_spawn_inputs")
+    if not isinstance(position, Mapping) or not isinstance(spawn, Mapping):
+        raise EnemyPositionObservationsBoundaryError(
+            "native enemy-position bridge inputs are unavailable"
+        )
+    if (
+        position.get("schema_version") != SCHEMA_VERSION
+        or position.get("current_snapshot_only") is not True
+        or position.get("dangerous_item_tiles_complete") is not True
+        or position.get("pawn_flags_ordered_complete") is not True
+        or spawn.get("schema_version") != SCHEMA_VERSION
+        or spawn.get("current_snapshot_only") is not True
+        or spawn.get("dangerous_tiles_complete") is not True
+    ):
+        raise EnemyPositionObservationsBoundaryError(
+            "native enemy-position bridge inputs are incomplete"
+        )
+
+    dangerous = _bridge_point_sequence(
+        spawn.get("dangerous_tiles"), "dangerous_tiles"
+    )
+    dangerous_items = _bridge_point_sequence(
+        position.get("dangerous_item_tiles"), "dangerous_item_tiles"
+    )
+    raw_tiles = bridge_data.get("tiles")
+    if not isinstance(raw_tiles, list):
+        raise EnemyPositionObservationsBoundaryError(
+            "bridge tiles must be a list"
+        )
+    tile_item_points: set[tuple[int, int]] = set()
+    tile_points: set[tuple[int, int]] = set()
+    for index, tile in enumerate(raw_tiles):
+        if not isinstance(tile, Mapping):
+            raise EnemyPositionObservationsBoundaryError(
+                f"bridge tile {index} must be a mapping"
+            )
+        point = _point(
+            [tile.get("x"), tile.get("y")],
+            f"bridge tile {index}",
+        )
+        if point in tile_points:
+            raise EnemyPositionObservationsBoundaryError(
+                "bridge tiles contain duplicate Points"
+            )
+        tile_points.add(point)
+        item_danger = tile.get("dangerous_item")
+        if type(item_danger) is not bool:
+            raise EnemyPositionObservationsBoundaryError(
+                "bridge tile dangerous_item must be Boolean"
+            )
+        if item_danger:
+            tile_item_points.add(point)
+    expected_points = {(x, y) for x in range(8) for y in range(8)}
+    if tile_points != expected_points:
+        raise EnemyPositionObservationsBoundaryError(
+            "bridge tiles must cover the complete 8x8 Board"
+        )
+    if tile_item_points != set(dangerous_items):
+        raise EnemyPositionObservationsBoundaryError(
+            "dangerous-item bridge carriers disagree"
+        )
+
+    raw_flags = position.get("pawn_flags_ordered")
+    if not isinstance(raw_flags, list):
+        raise EnemyPositionObservationsBoundaryError(
+            "pawn_flags_ordered must be a list"
+        )
+    pawn_flags: dict[int, dict[str, bool]] = {}
+    ordered_uids: list[int] = []
+    for index, entry in enumerate(raw_flags):
+        if not isinstance(entry, Mapping) or set(entry) != {
+            "uid",
+            "ranged",
+            "avoiding_mines",
+        }:
+            raise EnemyPositionObservationsBoundaryError(
+                f"pawn_flags_ordered[{index}] fields differ"
+            )
+        uid = _require_i32(entry["uid"], f"pawn_flags_ordered[{index}].uid")
+        ranged = entry["ranged"]
+        avoiding_mines = entry["avoiding_mines"]
+        if uid < 0 or type(ranged) is not bool or type(avoiding_mines) is not bool:
+            raise EnemyPositionObservationsBoundaryError(
+                f"pawn_flags_ordered[{index}] values differ"
+            )
+        if uid in pawn_flags:
+            raise EnemyPositionObservationsBoundaryError(
+                "pawn_flags_ordered contains duplicate UIDs"
+            )
+        ordered_uids.append(uid)
+        pawn_flags[uid] = {
+            "ranged": ranged,
+            "avoiding_mines": avoiding_mines,
+        }
+
+    raw_units = bridge_data.get("units")
+    if not isinstance(raw_units, list):
+        raise EnemyPositionObservationsBoundaryError(
+            "bridge units must be a list"
+        )
+    primary_uids: list[int] = []
+    for index, unit in enumerate(raw_units):
+        if not isinstance(unit, Mapping):
+            raise EnemyPositionObservationsBoundaryError(
+                f"bridge unit {index} must be a mapping"
+            )
+        if unit.get("is_extra_tile") is True:
+            continue
+        uid = _require_i32(unit.get("uid"), f"bridge unit {index}.uid")
+        ranged = unit.get("ranged")
+        avoiding_mines = unit.get("avoiding_mines")
+        if (
+            uid < 0
+            or type(ranged) is not int
+            or ranged not in (0, 1)
+            or type(avoiding_mines) is not bool
+        ):
+            raise EnemyPositionObservationsBoundaryError(
+                f"bridge unit {index} native position flags differ"
+            )
+        if uid in primary_uids:
+            raise EnemyPositionObservationsBoundaryError(
+                "bridge primary units contain duplicate UIDs"
+            )
+        primary_uids.append(uid)
+        if pawn_flags.get(uid) != {
+            "ranged": ranged == 1,
+            "avoiding_mines": avoiding_mines,
+        }:
+            raise EnemyPositionObservationsBoundaryError(
+                "pawn flag bridge carriers disagree"
+            )
+    if primary_uids != ordered_uids:
+        raise EnemyPositionObservationsBoundaryError(
+            "pawn flag order differs from the native Board pawn order"
+        )
+
+    return {
+        "dangerous_points": frozenset(dangerous),
+        "dangerous_item_points": frozenset(dangerous_items),
+        "pawn_flags": pawn_flags,
+        "pawn_order": tuple(ordered_uids),
+        "complete_for_current_score_positioning": True,
+        "current_snapshot_only": True,
+        "future_candidate_time": False,
+    }
+
+
 def _region_bytes(image: PEImage, raw: bytes, rva: int, size: int) -> bytes:
     try:
         offset = image.rva_span_to_file_offset(rva, size)
@@ -990,10 +1168,10 @@ def _carrier_matrix() -> list[dict[str, Any]]:
         {"observation": "Board:IsPawnTeam for team 1/6", "carrier": "occupied units[].team", "status": "exact_current_derivation_if_native_occupant_is_identified", "source": "native Pawn:IsTeam"},
         {"observation": "Board:GetDistanceToPawn for team 1/6", "carrier": "units[].{x,y,team}", "status": "exact_current_derivation", "source": "profile-six Manhattan replay"},
         {"observation": "Board:GetDistanceToBuilding", "carrier": "native building Point cache", "status": "exact_replay_from_explicit_cache", "source": "native terrain-1 cache builder"},
-        {"observation": "Pawn:IsRanged", "carrier": "units[].ranged", "status": "stock_static_projection_not_runtime_exact", "source": "src/model/pawn_stats.py via src/loop/commands.py"},
-        {"observation": "Pawn:IsAvoidingMines", "carrier": None, "status": "not_exported_stock_source_derivable", "source": "base false; Snowmine1/Snowmine2 true"},
+        {"observation": "Pawn:IsRanged", "carrier": "units[].ranged plus native_enemy_position_inputs.pawn_flags_ordered", "status": "direct_exact_current", "source": "src/bridge/modloader.lua"},
+        {"observation": "Pawn:IsAvoidingMines", "carrier": "units[].avoiding_mines plus native_enemy_position_inputs.pawn_flags_ordered", "status": "direct_exact_current", "source": "src/bridge/modloader.lua"},
         {"observation": "Board:IsDangerous", "carrier": "native_enemy_spawn_inputs.dangerous_tiles", "status": "direct_exact_current", "source": "src/bridge/modloader.lua"},
-        {"observation": "Board:IsDangerousItem", "carrier": "tiles[].item only", "status": "insufficient_for_native_predicate", "source": "embedded SpaceDamage fields are not exported"},
+        {"observation": "Board:IsDangerousItem", "carrier": "tiles[].dangerous_item plus native_enemy_position_inputs.dangerous_item_tiles", "status": "direct_exact_current", "source": "src/bridge/modloader.lua"},
     ]
 
 
@@ -1007,7 +1185,7 @@ def _findings() -> list[dict[str, str]]:
         {"id": "score_team_queries_are_simple", "classification": "fact", "claim": "For ScorePositioning's only queries, TEAM_PLAYER=1 requires exact team one and TEAM_ENEMY=6 accepts every actual team greater than or equal to six."},
         {"id": "pawn_distance_is_manhattan", "classification": "inference", "claim": "GetDistanceToPawn uses literal low profile six; exact traversal and wall bodies admit every valid cardinal neighbor at unit cost, so its minimum distance to a matching on-board Pawn is Manhattan and empty is INT_MAX."},
         {"id": "building_distance_uses_terrain_one_cache", "classification": "fact", "claim": "The native cache builder clears +0x2c44/+0x2c48 and appends every terrain-one Point; GetDistanceToBuilding returns minimum Manhattan distance over that explicit cache or INT_MAX when empty."},
-        {"id": "pawn_definition_flags_are_exact_but_not_all_live_carriers", "classification": "fact", "claim": "IsRanged is exact Lua integer equality with one; IsAvoidingMines is an exact Lua boolean; IsFlying combines its Lua property and runtime byte then rejects dead Pawns. The ordinary bridge directly exports only IsFlying."},
+        {"id": "pawn_definition_flags_are_exact_live_carriers", "classification": "fact", "claim": "IsRanged is exact Lua integer equality with one; IsAvoidingMines is an exact Lua boolean; IsFlying combines its Lua property and runtime byte then rejects dead Pawns. The current bridge now calls and exports all three live predicates without replacing them with stock type assumptions."},
         {"id": "no_solver_contradiction", "classification": "inference", "claim": "These findings refine prospective native enemy scoring inputs; the Rust solver still consumes the settled queue and no current simulator rule contradicts the boundary."},
     ]
 
@@ -1015,8 +1193,6 @@ def _findings() -> list[dict[str, str]]:
 def _unresolved() -> list[dict[str, str]]:
     return [
         {"id": "candidate_time_board_snapshot", "question": "What are all observations at each future candidate's exact callback time?", "static_status": "The native meanings are exact, but a settled current bridge read is not a post-player-action, per-candidate enemy callback snapshot."},
-        {"id": "direct_dangerous_bridge_carriers", "question": "Can current Board:IsDangerous and IsDangerousItem results be serialized directly?", "static_status": "Board:IsDangerous is now exported exactly in the current-only native enemy-spawn payload. IsDangerousItem remains unavailable because item names do not expose the embedded SpaceDamage fields."},
-        {"id": "runtime_mutated_definition_flags", "question": "Can runtime-mutated Ranged and AvoidingMines values be observed without static type assumptions?", "static_status": "Native property access is exact. Ranged is currently a stock type projection and AvoidingMines is absent from the bridge."},
         {"id": "complete_enemy_phase_forecast", "question": "Does this observation closure produce a full native enemy tournament?", "static_status": "No; concrete future callback payloads, candidate records, shared RNG state, and selector entry remain separate inputs."},
     ]
 
@@ -1156,8 +1332,8 @@ def _expected_shape() -> dict[str, Any]:
             "native_score_positioning_observation_semantics_complete": True,
             "current_state_carrier_matrix_complete": True,
             "prospective_board_observations_complete": False,
-            "direct_dangerous_bridge_carriers_complete": False,
-            "runtime_mutated_definition_flags_complete": False,
+            "direct_dangerous_bridge_carriers_complete": True,
+            "runtime_mutated_definition_flags_complete": True,
             "complete_enemy_phase_forecast": False,
             "simulator_change_required": False,
             "simulator_version": 408,

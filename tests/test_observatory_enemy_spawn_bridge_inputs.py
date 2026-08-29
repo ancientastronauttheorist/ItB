@@ -52,6 +52,46 @@ def _bridge_payload() -> dict:
     }
 
 
+def _bridge_payload_with_position_carriers() -> dict:
+    payload = _bridge_payload()
+    for tile in payload["tiles"]:
+        tile["dangerous_item"] = False
+    payload["native_enemy_position_inputs"] = {
+        "schema_version": 1,
+        "current_snapshot_only": True,
+        "dangerous_item_tiles_complete": True,
+        "dangerous_item_tiles": [],
+        "pawn_flags_ordered_complete": True,
+        "pawn_flags_ordered": [
+            {
+                "uid": 10,
+                "ranged": True,
+                "avoiding_mines": False,
+            },
+            {
+                "uid": 11,
+                "ranged": False,
+                "avoiding_mines": True,
+            },
+        ],
+    }
+    payload["units"] = [
+        {
+            "uid": 10,
+            "type": "Firefly1",
+            "ranged": 1,
+            "avoiding_mines": False,
+        },
+        {
+            "uid": 11,
+            "type": "Leaper1",
+            "ranged": 0,
+            "avoiding_mines": True,
+        },
+    ]
+    return payload
+
+
 def _block_values() -> dict[tuple[int, int], int]:
     return {(x, y): 0 for x in range(8) for y in range(8)}
 
@@ -206,7 +246,7 @@ def test_replay_rejects_incomplete_block_map_and_incomplete_board():
 
 
 def test_bridge_sandwich_combines_exact_native_capture_into_current_replay():
-    before = _bridge_payload()
+    before = _bridge_payload_with_position_carriers()
     before["timestamp"] = 100.0
     after = copy.deepcopy(before)
     after["timestamp"] = 101.0
@@ -223,12 +263,32 @@ def test_bridge_sandwich_combines_exact_native_capture_into_current_replay():
     assert result["bridge_state_identity"]["stable_across_native_capture"] is True
     assert len(result["bridge_state_identity"]["projection_sha256"]) == 64
     assert result["candidate_replay"]["pool_kind"] == "emergency_max_x_row"
+    assert result["position_observation_replay"] == {
+        "dangerous_points": [[5, 2]],
+        "dangerous_item_points": [],
+        "pawn_flags_ordered": [
+            {
+                "uid": 10,
+                "ranged": True,
+                "avoiding_mines": False,
+            },
+            {
+                "uid": 11,
+                "ranged": False,
+                "avoiding_mines": True,
+            },
+        ],
+        "complete_for_current_score_positioning": True,
+        "current_snapshot_only": True,
+        "future_candidate_time": False,
+    }
     assert result["integrity"] == {
         "bridge_refresh_sandwich": True,
         "bridge_projection_stable": True,
         "native_board_stable": True,
         "native_inputs_stable": True,
         "future_forecast": False,
+        "position_observation_carriers_complete": True,
     }
     assert validate_current_bridge_native_capture_artifact(result) == result
 

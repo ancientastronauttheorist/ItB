@@ -716,6 +716,16 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     }
     assert tests[
         "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "mission_power_turn1_current_position_carriers.json"
+    ] == {
+        '"position_observation_carriers_complete": true',
+        '"complete_for_current_score_positioning": true',
+        '"future_candidate_time": false',
+        "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec",
+    }
+    assert tests[
+        "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260822_"
         "spawn_coordinate_rng_receipt.json"
     ] == {
@@ -874,7 +884,9 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "query 6 matches actual team 6 or greater" in evidence
     assert "Profile-six Board:GetDistanceToPawn" in evidence
     assert "cache that is rebuilt by scanning every terrain-1 tile" in evidence
-    assert "17 qualified current-state mappings" in evidence
+    assert "17 current-state mappings" in evidence
+    assert "directly exports both dangerous predicates" in evidence
+    assert "validates all 64 Board:IsDangerousItem booleans" in evidence
     assert "Native observation meanings and the current carrier matrix are complete" in evidence
     tournament = next(
         item
@@ -1209,8 +1221,18 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "replay_board_is_pawn_team",
         "replay_distance_to_pawn",
         "replay_distance_to_building",
+        "bridge_native_enemy_position_observations",
         "build_enemy_position_observations_boundary",
         "validate_enemy_position_observations_boundary",
+    }
+    assert implementations["src/bridge/modloader.lua"] == {
+        "native_enemy_position_inputs",
+        "Board:IsDangerousItem(pt)",
+        "p:IsRanged()",
+        "p:IsAvoidingMines()",
+    }
+    assert implementations["src/loop/commands.py"] == {
+        'setdefault("ranged"'
     }
     assert implementations[
         "scripts/itb_observatory_enemy_position_observations.py"
@@ -1228,8 +1250,18 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "score_team_queries_are_simple",
         "pawn_distance_is_manhattan",
         "building_distance_uses_terrain_one_cache",
-        "pawn_definition_flags_are_exact_but_not_all_live_carriers",
+        "pawn_definition_flags_are_exact_live_carriers",
         "no_solver_contradiction",
+    }
+    assert implementations[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "mission_power_turn1_current_position_carriers.json"
+    ] == {
+        "position_observation_carriers_complete",
+        "complete_for_current_score_positioning",
+        "future_candidate_time",
+        "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec",
     }
 
     tests = {item["path"]: set(item["symbols"]) for item in record["tests"]}
@@ -1263,6 +1295,8 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert tests[
         "tests/test_observatory_enemy_position_observations_boundary.py"
     ] == {
+        "test_bridge_normalizer_closes_all_exact_current_native_position_carriers",
+        "test_bridge_normalizer_fails_closed_on_incomplete_or_disagreeing_carriers",
         "test_all_score_positioning_native_method_names_are_bound",
         "test_dangerous_replay_uses_tile_flag_and_two_independent_point_vectors",
         "test_each_dangerous_item_effect_is_independently_sufficient",
@@ -1270,6 +1304,16 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
         "test_distance_to_pawn_is_team_filtered_manhattan_and_empty_int_max",
         "test_carrier_matrix_keeps_native_danger_separate_from_environment_danger",
         "test_exact_install_rebuilds_native_source_and_carrier_join_when_available",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "mission_power_turn1_current_position_carriers.json"
+    ] == {
+        '"position_observation_carriers_complete": true',
+        '"complete_for_current_score_positioning": true',
+        '"future_candidate_time": false',
+        '"pawn_flags_ordered": [',
     }
     assert tests[
         "data/observatory/captures/"
@@ -1467,7 +1511,7 @@ def test_real_enemy_target_scoring_reconciles_static_and_runtime_boundaries():
     assert "native Pawn positioning helpers" in gaps
     assert "runtime-mutated Pawn score fields" in gaps
     assert "candidate-time Board snapshots" in gaps
-    assert "direct dangerous predicate carriers" in gaps
+    assert "direct dangerous predicate carriers" not in gaps
     assert "ScorePositioning observation semantics/current carrier matrix" in gaps
     assert "exact-build nearest-even integer conversion" in gaps
     assert "callback-time x87 control" not in gaps

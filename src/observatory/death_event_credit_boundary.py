@@ -135,6 +135,13 @@ POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
             "232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038"
         ),
     },
+    {
+        "id": "enemy_position_carriers_project_bridge",
+        "size": 396_449,
+        "sha256": (
+            "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec"
+        ),
+    },
 )
 
 
