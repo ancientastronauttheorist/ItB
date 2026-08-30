@@ -10,6 +10,12 @@ Recent unlocks: **Miner Inconvenience** is confirmed from Cataclysm run `2026070
 
 Current milestone: **70/70 proven and Steam-client-cache confirmed. The achievement hunt is complete.** Future work can focus on maintenance, regressions, and making the live bot more robust rather than chasing another unlock.
 
+New long-term track: the [full-decompile program](docs/full_decompile_program.md)
+extends the existing build-keyed Engine Observatory into a measurable
+whole-program reconstruction. Its first pipeline exports and independently
+verifies a normalized Ghidra function atlas without committing game binaries,
+disassembly, or bulk decompiler output.
+
 ### Lightning War retrospective
 
 **Lightning War** took roughly three weeks because it attacked the weakest part of the original architecture: the bot was strong at solving turns, but the achievement measured every second spent outside pause. The winning direction was to treat UI navigation as part of the speedrun, not as a wrapper around combat. The loop evolved toward a strict primitive: capture a visible screenshot, immediately pause with `Esc`, verify the pause menu visually, and only then let the LLM reason.

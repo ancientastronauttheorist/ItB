@@ -1016,12 +1016,15 @@ bridge-read boundary.
   the exact available array, and replay each selected pawn exactly. Advance
   prediction still needs those inputs before the call, and coordinates are
   scheduled outside this span.
-- **Selector-entry capsule ready, capture pending:** the separate v2 hardware
+- **Selector-entry capsule campaign complete:** the separate v2 hardware
   observer and strict validator bind the complete candidate-time Board/RNG
-  payload without code detours or pointer publication. Its exact module passed
-  a live dormant/unconsumed load check. No prepare or armed capture has run, so
-  this is not yet selector-time runtime evidence and does not relax the Rust
-  non-fabrication guard.
+  payload without code detours or pointer publication. Three counterbalanced
+  live triplets used nine distinct exact processes; every armed condition
+  captured one complete standard-selector capsule, reproduced the paired CRT
+  transition and selected coordinate, and restored cleanly. Control/dormant
+  outcomes drifted in all three triplets, so this is selector-time evidence but
+  not proof that a restored save plus fixed seed predicts future state. The
+  ordinary Rust non-fabrication guard therefore remains correct.
 
 ### Milestone 4: Hidden-state survey
 
@@ -1088,8 +1091,12 @@ Useful metrics include:
 
 ## Final recommendation
 
-The targeted offline map is now deep enough; do not broaden into full
-decompilation. The reversible owner campaign has completed the planned Lua RNG,
+The targeted Observatory map is deep enough for its original solver-focused
+charter. The separate whole-program expansion is now governed by
+`docs/full_decompile_program.md`; it must preserve the Observatory's build,
+provenance, evidence-class, and cleanup standards rather than turning this
+document into an unbounded native notebook. The reversible owner campaign has
+completed the planned Lua RNG,
 natural callback, bounded native RNG, `Spawner:NextPawn` span/replay,
 selected-queue, and fixed selected-SkillEffect materialization observations.
 The standard spawn-coordinate algorithm is now exact end to end when supplied
@@ -1109,15 +1116,15 @@ query/read-only Windows reader supplies the complete current Point-keyed
   projection. Ordinary planning still lacks the Board after future
   player/environment changes and the shared CRT state immediately before a
   future selector call, so it still cannot know the selected coordinate. A
-  content-addressed one-shot observer can now capture that exact selector-entry
-  Board/RNG capsule and has passed a live dormant/unconsumed load check. Its
-  exact-build trial runner, guarded local End Turn boundary, next-turn
-  correlation, exact snapshot consumer, and three-triplet counterbalanced
-  campaign sealer are now synthetically validated, but no armed capture has
-  run. Keep the current Rust non-fabrication rule. The next justified runtime
-  step is that matched control/dormant/armed capsule campaign under the same
-  reversible protocol; candidate construction and current-state carrier
-  integration no longer need another broad native investigation.
+  content-addressed one-shot observer captured that exact selector-entry
+  Board/RNG capsule in three counterbalanced live triplets. Each armed run
+  reproduced its paired selector transition and next bridge marker, and the
+  final cleanup restored the accepted 689-entry installation and sealed save
+  tree. Because control/dormant outcomes drifted in all three triplets, keep the
+  current Rust non-fabrication rule. Future runtime work should answer a named
+  whole-program ambiguity or a solver mismatch under the same reversible
+  protocol; candidate construction and current-state carrier integration no
+  longer need another broad native investigation.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

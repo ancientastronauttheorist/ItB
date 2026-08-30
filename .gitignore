@@ -9,6 +9,11 @@ venv/
 rust_solver/target/
 tmp/
 
+# Full-decompile local workbench. Ghidra projects, raw exports, decompiler text,
+# and proprietary game bytes stay local; only normalized build-keyed facts are
+# eligible for data/observatory/programs/.
+.local_decompile/
+
 # Live-run artifacts are intentionally local by default. Historical fixtures
 # already tracked in Git remain tracked; force-add a specific new artifact when
 # it should become part of the regression corpus.

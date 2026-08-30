@@ -4,6 +4,22 @@ This directory contains build-keyed, read-only evidence about installed
 Into the Breach implementations. It must not contain game binaries or
 proprietary decompiled source.
 
+The whole-program expansion is defined in
+`docs/full_decompile_program.md`. Normalized Ghidra function atlases and their
+publication rules live under `programs/`.
+
+## Whole-program native atlas
+
+`scripts/ghidra/ExportItbProgramFacts.java` exports every Ghidra-discovered
+mapped function as normalized TSV: entry RVA, body ranges and SHA-256, analysis
+name/source, thunk flag, and Ghidra-declared direct internal calls. It emits no bytes,
+disassembly, or decompiler text.
+
+`scripts/itb_program_facts.py build` verifies those ranges against the exact
+inventoried PE before creating a deterministic artifact under `programs/`.
+`verify` independently rechecks a committed atlas against the executable. See
+`programs/README.md` for commands and limitations.
+
 ## Installation inventories
 
 Create a deterministic inventory outside the installed game:
