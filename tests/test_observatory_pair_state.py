@@ -206,38 +206,29 @@ def test_session_sandbox_preserves_strategy_and_resets_execution_state(tmp_path)
     ) == 2
 
 
-def test_game_running_ignores_tasklist_no_match_diagnostic(monkeypatch):
-    class Result:
-        returncode = 0
-        stdout = (
-            'INFO: No tasks are running which match the specified criteria '
-            '"Breach.exe".\n'
-        )
-
+def test_game_running_accepts_empty_native_process_snapshot(monkeypatch):
     monkeypatch.setattr(pair_state.os, "name", "nt")
-    monkeypatch.setattr(pair_state.subprocess, "run", lambda *args, **kwargs: Result())
+    monkeypatch.setattr(pair_state, "windows_breach_process_ids", lambda: [])
     assert pair_state._game_running() is False
 
 
-def test_game_running_accepts_exact_csv_image_name(monkeypatch):
-    class Result:
-        returncode = 0
-        stdout = '"Breach.exe","3888","Console","4","123,456 K"\n'
-
+def test_game_running_accepts_native_process_snapshot_pid(monkeypatch):
     monkeypatch.setattr(pair_state.os, "name", "nt")
-    monkeypatch.setattr(pair_state.subprocess, "run", lambda *args, **kwargs: Result())
+    monkeypatch.setattr(pair_state, "windows_breach_process_ids", lambda: [3888])
     assert pair_state._game_running() is True
 
 
-def test_game_running_fails_closed_when_tasklist_fails(monkeypatch):
-    class Result:
-        returncode = 1
-        stdout = ""
-
+def test_game_running_fails_closed_when_native_process_snapshot_fails(monkeypatch):
     monkeypatch.setattr(pair_state.os, "name", "nt")
-    monkeypatch.setattr(pair_state.subprocess, "run", lambda *args, **kwargs: Result())
+    monkeypatch.setattr(
+        pair_state,
+        "windows_breach_process_ids",
+        lambda: (_ for _ in ()).throw(
+            pair_state.GameProcessIdentityError("native snapshot failed")
+        ),
+    )
 
-    with pytest.raises(pair_state.PairStateError, match="tasklist failed"):
+    with pytest.raises(pair_state.PairStateError, match="native snapshot failed"):
         pair_state._game_running()
 
 

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import csv
 import ctypes
 import hashlib
 import os
-import subprocess
 from ctypes import wintypes
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,10 +18,28 @@ EXPECTED_EXECUTABLE_SHA256 = (
 )
 EXPECTED_EXECUTABLE_SIZE = 5_530_112
 _WINDOWS_EPOCH_FILETIME = 116_444_736_000_000_000
+_TH32CS_SNAPPROCESS = 0x00000002
+_ERROR_NO_MORE_FILES = 18
+_MAX_PATH = 260
 
 
 class GameProcessIdentityError(RuntimeError):
     """Raised when a unique exact-build game process cannot be proven."""
+
+
+class _PROCESSENTRY32W(ctypes.Structure):
+    _fields_ = [
+        ("dwSize", wintypes.DWORD),
+        ("cntUsage", wintypes.DWORD),
+        ("th32ProcessID", wintypes.DWORD),
+        ("th32DefaultHeapID", ctypes.c_size_t),
+        ("th32ModuleID", wintypes.DWORD),
+        ("cntThreads", wintypes.DWORD),
+        ("th32ParentProcessID", wintypes.DWORD),
+        ("pcPriClassBase", wintypes.LONG),
+        ("dwFlags", wintypes.DWORD),
+        ("szExeFile", wintypes.WCHAR * _MAX_PATH),
+    ]
 
 
 def _stable_file_identity(path: Path) -> dict[str, Any]:
@@ -54,28 +70,63 @@ def _stable_file_identity(path: Path) -> dict[str, Any]:
     }
 
 
-def _tasklist_process_ids() -> list[int]:
-    if os.name != "nt":
+def windows_breach_process_ids() -> list[int]:
+    """Enumerate Breach.exe PIDs through the native Windows snapshot API."""
+    if os.name != "nt" or not hasattr(ctypes, "WinDLL"):
         raise GameProcessIdentityError("game process identity requires Windows")
-    try:
-        result = subprocess.run(
-            ["tasklist", "/FI", "IMAGENAME eq Breach.exe", "/FO", "CSV", "/NH"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=5,
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel32.Process32FirstW.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_PROCESSENTRY32W),
+    ]
+    kernel32.Process32FirstW.restype = wintypes.BOOL
+    kernel32.Process32NextW.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_PROCESSENTRY32W),
+    ]
+    kernel32.Process32NextW.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+
+    invalid_handle = ctypes.c_void_p(-1).value
+    snapshot = kernel32.CreateToolhelp32Snapshot(_TH32CS_SNAPPROCESS, 0)
+    if snapshot == invalid_handle:
+        raise GameProcessIdentityError(
+            "cannot enumerate Breach.exe processes: "
+            f"CreateToolhelp32Snapshot error {ctypes.get_last_error()}"
         )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise GameProcessIdentityError(f"cannot enumerate Breach.exe: {exc}") from exc
-    if result.returncode != 0:
-        raise GameProcessIdentityError("tasklist failed while enumerating Breach.exe")
     pids: set[int] = set()
-    for row in csv.reader(result.stdout.splitlines()):
-        if not row or row[0].casefold() != "breach.exe":
-            continue
-        if len(row) < 2 or not row[1].replace(",", "").isdigit():
-            raise GameProcessIdentityError("tasklist returned an invalid Breach.exe PID")
-        pids.add(int(row[1].replace(",", "")))
+    entry = _PROCESSENTRY32W()
+    entry.dwSize = ctypes.sizeof(_PROCESSENTRY32W)
+    try:
+        ctypes.set_last_error(0)
+        if not kernel32.Process32FirstW(snapshot, ctypes.byref(entry)):
+            raise GameProcessIdentityError(
+                "cannot enumerate Breach.exe processes: "
+                f"Process32FirstW error {ctypes.get_last_error()}"
+            )
+        while True:
+            if entry.szExeFile.casefold() == "breach.exe":
+                pid = int(entry.th32ProcessID)
+                if pid <= 0:
+                    raise GameProcessIdentityError(
+                        "Windows returned an invalid Breach.exe PID"
+                    )
+                pids.add(pid)
+            ctypes.set_last_error(0)
+            if kernel32.Process32NextW(snapshot, ctypes.byref(entry)):
+                continue
+            error = ctypes.get_last_error()
+            if error != _ERROR_NO_MORE_FILES:
+                raise GameProcessIdentityError(
+                    "cannot enumerate Breach.exe processes: "
+                    f"Process32NextW error {error}"
+                )
+            break
+    finally:
+        kernel32.CloseHandle(snapshot)
     return sorted(pids)
 
 
@@ -156,7 +207,7 @@ def _windows_process_details(pid: int) -> dict[str, Any]:
 def capture_windows_game_process_identity(executable: Path) -> dict[str, Any]:
     """Require one running exact-build Breach.exe and return its stable identity."""
     expected = validate_windows_game_executable(executable)
-    pids = _tasklist_process_ids()
+    pids = windows_breach_process_ids()
     if len(pids) != 1:
         raise GameProcessIdentityError(
             f"expected exactly one Breach.exe process, found {len(pids)}"

@@ -4,12 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import json
 import os
 import shutil
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
@@ -20,6 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.observatory.game_process_identity import (  # noqa: E402
+    GameProcessIdentityError,
+    windows_breach_process_ids,
+)
 from src.observatory.start_state_proof import (  # noqa: E402
     PROOF_KIND,
     SCHEMA_VERSION as PROOF_SCHEMA_VERSION,
@@ -228,21 +230,9 @@ def _game_running() -> bool:
     if os.name != "nt":
         return False
     try:
-        result = subprocess.run(
-            ["tasklist", "/FI", "IMAGENAME eq Breach.exe", "/FO", "CSV", "/NH"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
+        return bool(windows_breach_process_ids())
+    except GameProcessIdentityError as exc:
         raise PairStateError(f"cannot enumerate Breach.exe: {exc}") from exc
-    if result.returncode != 0:
-        raise PairStateError("tasklist failed while enumerating Breach.exe")
-    for row in csv.reader(result.stdout.splitlines()):
-        if row and row[0].casefold() == "breach.exe":
-            return True
-    return False
 
 
 def snapshot_state(args: argparse.Namespace) -> int:
@@ -463,7 +453,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "restore":
             return restore_state(args)
         return sandbox_session(args)
-    except (PairStateError, OSError, subprocess.SubprocessError) as exc:
+    except (PairStateError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

@@ -43,3 +43,31 @@ def test_missing_support_module_attempt_is_rejected_before_trial_and_restored():
     assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
         "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
     )
+
+
+def test_tasklist_timeout_attempt_fails_closed_and_final_restores():
+    condition = _load("tasklist_timeout_02_condition_lifecycle.json")
+    campaign = _load("tasklist_timeout_02_campaign_lifecycle.json")
+
+    timeout = (
+        "cannot enumerate Breach.exe: Command '['tasklist', '/FI', "
+        "'IMAGENAME eq Breach.exe', '/FO', 'CSV', '/NH']' timed out after 5 seconds"
+    )
+    assert condition["status"] == "rejected"
+    assert condition["valid_lifecycle"] is False
+    assert condition["native_continue"]["ack"] == (
+        "OK OBS_NATIVE_CONTINUE_REQUEST invoked=true"
+    )
+    assert condition["bridge_start"] is None
+    assert condition["trial"] is None
+    assert condition["errors"]["bridge_start"] == timeout
+    assert condition["errors"]["close"] == timeout
+    assert condition["close"] is None
+
+    assert campaign["status"] == "rejected"
+    assert campaign["condition_order"] == []
+    assert campaign["errors"]["final_restore"] == ""
+    assert campaign["final_restore"]["game_stopped"] is True
+    assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
+        "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+    )

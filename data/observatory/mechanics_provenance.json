@@ -1101,7 +1101,7 @@
         },
         {
           "classification": "fact",
-          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. One live lifecycle startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. No live capsule trial or End Turn has run."
+          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. The first live startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. A second startup passed the exact three-module preflight and acknowledged native Continue, but the external tasklist process enumerator exceeded its five-second timeout before bridge entry; no condition close method was proven, while the campaign final verifier found the game stopped and again reproduced the sealed tree. Process discovery now uses the native Windows process-snapshot API instead. No live capsule trial or End Turn has run."
         },
         {
           "classification": "fact",
@@ -1553,6 +1553,7 @@
         {
           "path": "tests/test_observatory_game_process_identity.py",
           "symbols": [
+            "test_native_process_snapshot_enumerates_only_breach_pids",
             "test_process_identity_binds_unique_pid_creation_time_and_exact_executable",
             "test_process_identity_rejects_multiple_processes_or_different_path"
           ]
@@ -1585,7 +1586,8 @@
         {
           "path": "tests/test_observatory_spawn_coordinate_capsule_diagnostics.py",
           "symbols": [
-            "test_missing_support_module_attempt_is_rejected_before_trial_and_restored"
+            "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
+            "test_tasklist_timeout_attempt_fails_closed_and_final_restores"
           ]
         },
         {

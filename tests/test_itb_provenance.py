@@ -895,6 +895,7 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_capsule_campaign_rejects_runtime_module_identity_drift",
     }
     assert tests["tests/test_observatory_game_process_identity.py"] == {
+        "test_native_process_snapshot_enumerates_only_breach_pids",
         "test_process_identity_binds_unique_pid_creation_time_and_exact_executable",
         "test_process_identity_rejects_multiple_processes_or_different_path",
     }
@@ -924,6 +925,7 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "tests/test_observatory_spawn_coordinate_capsule_diagnostics.py"
     ] == {
         "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
+        "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"

@@ -31,7 +31,7 @@ def test_launch_requires_empty_process_set_and_exact_executable(tmp_path, monkey
         "validate_windows_game_executable",
         lambda _path: expected,
     )
-    monkeypatch.setattr(lifecycle, "_tasklist_process_ids", lambda: [])
+    monkeypatch.setattr(lifecycle, "windows_breach_process_ids", lambda: [])
     monkeypatch.setattr(
         lifecycle.subprocess,
         "Popen",
@@ -52,7 +52,7 @@ def test_launch_rejects_an_existing_game_before_popen(tmp_path, monkeypatch):
         "validate_windows_game_executable",
         lambda _path: {"path": str(tmp_path / "Breach.exe")},
     )
-    monkeypatch.setattr(lifecycle, "_tasklist_process_ids", lambda: [99])
+    monkeypatch.setattr(lifecycle, "windows_breach_process_ids", lambda: [99])
     monkeypatch.setattr(
         lifecycle.subprocess,
         "Popen",
@@ -75,7 +75,7 @@ def test_wait_binds_the_launched_pid(tmp_path, monkeypatch):
     process_sets = iter(([], [4217]))
     monkeypatch.setattr(
         lifecycle,
-        "_tasklist_process_ids",
+        "windows_breach_process_ids",
         lambda: next(process_sets),
     )
     monkeypatch.setattr(
@@ -110,7 +110,7 @@ def test_graceful_close_targets_exact_identity_without_force(tmp_path, monkeypat
         "_post_close_message",
         lambda hwnd: posted.append(hwnd),
     )
-    monkeypatch.setattr(lifecycle, "_tasklist_process_ids", lambda: [])
+    monkeypatch.setattr(lifecycle, "windows_breach_process_ids", lambda: [])
 
     result = lifecycle.gracefully_close_exact_windows_game(
         tmp_path / "Breach.exe",

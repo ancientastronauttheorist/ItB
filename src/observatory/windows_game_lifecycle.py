@@ -13,9 +13,9 @@ from typing import Any, Mapping
 
 from src.observatory.game_process_identity import (
     GameProcessIdentityError,
-    _tasklist_process_ids,
     capture_windows_game_process_identity,
     validate_windows_game_executable,
+    windows_breach_process_ids,
 )
 
 
@@ -28,7 +28,7 @@ def launch_exact_windows_game(executable: Path) -> dict[str, Any]:
     if os.name != "nt":
         raise WindowsGameLifecycleError("Windows game launch requires Windows")
     identity = validate_windows_game_executable(executable)
-    existing = _tasklist_process_ids()
+    existing = windows_breach_process_ids()
     if existing:
         raise WindowsGameLifecycleError(
             f"refusing to launch while Breach.exe is already running: {existing}"
@@ -72,7 +72,7 @@ def wait_for_exact_windows_game_process(
     deadline = time.monotonic() + max(0.1, float(timeout))
     interval = max(0.02, float(poll_interval))
     while time.monotonic() < deadline:
-        pids = _tasklist_process_ids()
+        pids = windows_breach_process_ids()
         if not pids:
             time.sleep(interval)
             continue
@@ -190,7 +190,7 @@ def gracefully_close_exact_windows_game(
     deadline = time.monotonic() + max(0.1, float(timeout))
     interval = max(0.02, float(poll_interval))
     while time.monotonic() < deadline:
-        pids = _tasklist_process_ids()
+        pids = windows_breach_process_ids()
         if pid not in pids:
             if pids:
                 raise WindowsGameLifecycleError(
