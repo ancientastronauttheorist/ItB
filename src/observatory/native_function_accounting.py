@@ -132,6 +132,9 @@ _NATIVE_LUA_CCLOSURE_CALLBACK_ANALYSIS_KIND = (
 _NATIVE_LUA_CCLOSURE_SETFIELD_PUBLICATION_ANALYSIS_KIND = (
     "pe_native_lua_immediate_cclosure_setfield_publication_census"
 )
+_NATIVE_LUA_CCLOSURE_TABLE_SETTER_PUBLICATION_ANALYSIS_KIND = (
+    "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census"
+)
 _UPSTREAM_ADAPTERS: dict[str, Any] = {}
 
 
@@ -903,6 +906,165 @@ def _adapt_native_lua_cclosure_setfield_publication_census(
     }
 
 
+def _adapt_native_lua_cclosure_table_setter_publication_census(
+    document: Mapping[str, Any],
+    *,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    source_sha256: str,
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
+    json_pointer: str,
+    entry_rva: str,
+    atlas_record_identity: str,
+    support_class: str,
+    role: str | None,
+    label: str,
+) -> dict[str, Any]:
+    """Derive only exact static direct-table-setter publication role atoms."""
+    if support_class != "native_lua_role":
+        raise NativeFunctionAccountingError(
+            f"{label} direct table-setter publications prove only native Lua roles"
+        )
+    if role == "registered_lua_callable":
+        pointer_pattern = r"/registered_targets/(?:0|[1-9][0-9]*)"
+        pointer_description = "one registered callback target"
+        target_label = "registered callback target"
+        target_fields = {
+            "callback_entry_rva",
+            "callback_atlas_record_sha256",
+            "publication_site_count",
+            "builder_entry_rvas",
+            "setter_import_names",
+            "table_indices",
+            "upvalue_argument_kinds",
+        }
+        record_entry_field = "callback_entry_rva"
+        record_hash_field = "callback_atlas_record_sha256"
+    elif role == "registration_builder":
+        pointer_pattern = r"/builders/(?:0|[1-9][0-9]*)"
+        pointer_description = "one registration builder"
+        target_label = "registration builder"
+        target_fields = {
+            "builder_entry_rva",
+            "builder_atlas_record_sha256",
+            "publication_site_count",
+            "registered_callback_entry_rvas",
+            "setter_import_names",
+            "table_indices",
+            "upvalue_argument_kinds",
+        }
+        record_entry_field = "builder_entry_rva"
+        record_hash_field = "builder_atlas_record_sha256"
+    else:
+        raise NativeFunctionAccountingError(
+            f"{label} direct table-setter publications prove only the "
+            "registered_lua_callable or registration_builder role"
+        )
+    if re.fullmatch(pointer_pattern, json_pointer) is None:
+        raise NativeFunctionAccountingError(
+            f"{label}.json_pointer must point directly to {pointer_description}"
+        )
+
+    # Imports stay lazy because the publication modules use the accounting
+    # atlas-record helper while constructing their exact joins.
+    from src.observatory import native_lua_cclosure_callbacks as callbacks
+    from src.observatory import (
+        native_lua_cclosure_setfield_publications as setfield_publications,
+    )
+    from src.observatory import (
+        native_lua_cclosure_table_setter_publications as publications,
+    )
+    from src.observatory import native_lua_direct_calls as direct_calls_module
+
+    cache_key = (
+        _NATIVE_LUA_CCLOSURE_TABLE_SETTER_PUBLICATION_ANALYSIS_KIND,
+        source_sha256,
+    )
+    if cache_key not in verification_cache:
+        try:
+            direct_calls = direct_calls_module.build_native_lua_direct_call_census(
+                executable,
+                program_facts,
+                inventory=inventory,
+            )
+            callback_census = callbacks.build_native_lua_cclosure_callback_census(
+                executable,
+                direct_calls,
+                program_facts,
+                inventory=inventory,
+            )
+            setfield_census = (
+                setfield_publications.build_native_lua_cclosure_setfield_publication_census(
+                    executable,
+                    direct_calls,
+                    callback_census,
+                    program_facts,
+                    inventory=inventory,
+                )
+            )
+            verification = (
+                publications.validate_native_lua_cclosure_table_setter_publication_census(
+                    executable,
+                    document,
+                    direct_calls,
+                    callback_census,
+                    setfield_census,
+                    program_facts,
+                    inventory=inventory,
+                )
+            )
+        except (
+            direct_calls_module.NativeLuaDirectCallError,
+            callbacks.NativeLuaCClosureError,
+            setfield_publications.NativeLuaCClosurePublicationError,
+            publications.NativeLuaCClosureTableSetterPublicationError,
+        ) as exc:
+            raise NativeFunctionAccountingError(
+                f"{label} C-closure direct table-setter publication census "
+                f"failed exact binary verification: {exc}"
+            ) from exc
+        verification_cache[cache_key] = verification
+
+    target = _mapping(
+        _json_pointer(document, json_pointer, f"{label}.json_pointer"),
+        f"{label} pointed {target_label}",
+    )
+    _exact_keys(target, target_fields, f"{label} pointed {target_label}")
+    if (
+        target.get(record_entry_field) != entry_rva
+        or target.get(record_hash_field) != atlas_record_identity
+    ):
+        raise NativeFunctionAccountingError(
+            f"{label} {target_label} does not describe the exact atlas record"
+        )
+    publication_site_count = target.get("publication_site_count")
+    if type(publication_site_count) is not int or publication_site_count <= 0:
+        raise NativeFunctionAccountingError(
+            f"{label} {target_label} has no exact publication sites"
+        )
+    if role == "registered_lua_callable":
+        statement = (
+            "The exact executable contains a verified static fall-through path "
+            "that creates this immediate native C closure and passes it as the "
+            "value to direct lua_settable or lua_rawset; this does not prove a "
+            "Lua-visible name, global export, table identity, runtime execution, "
+            "reachability, or lifetime."
+        )
+    else:
+        statement = (
+            "The exact executable and atlas function contain one or more "
+            "verified static immediate-C-closure direct table-setter publication "
+            "paths; this does not prove ownership, a complete binding system, "
+            "runtime execution, reachability, or lifetime."
+        )
+    return {
+        "assertion": {"native_lua_role": role},
+        "evidence_class": "fact",
+        "statement": statement,
+    }
+
+
 _UPSTREAM_ADAPTERS[_NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND] = (
     _adapt_native_lua_direct_call_census
 )
@@ -912,6 +1074,9 @@ _UPSTREAM_ADAPTERS[_NATIVE_LUA_CCLOSURE_CALLBACK_ANALYSIS_KIND] = (
 _UPSTREAM_ADAPTERS[
     _NATIVE_LUA_CCLOSURE_SETFIELD_PUBLICATION_ANALYSIS_KIND
 ] = _adapt_native_lua_cclosure_setfield_publication_census
+_UPSTREAM_ADAPTERS[
+    _NATIVE_LUA_CCLOSURE_TABLE_SETTER_PUBLICATION_ANALYSIS_KIND
+] = _adapt_native_lua_cclosure_table_setter_publication_census
 
 
 def _upstream_references(

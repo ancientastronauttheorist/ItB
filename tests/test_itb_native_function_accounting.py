@@ -20,10 +20,10 @@ _COMMITTED_REGISTRY_CANONICAL_SHA256 = (
     "1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4"
 )
 _COMMITTED_ACCOUNTING_RAW_SHA256 = (
-    "147feaba792a06da19fa12876d0b58be4633f5ae917f243e447868d6fbbf80f1"
+    "4efa98c5691cd64efdab21387bf1eec52b9741565ed2f8a4aace47911d75d0a0"
 )
 _COMMITTED_ACCOUNTING_CANONICAL_SHA256 = (
-    "9f8739fe4a5c3bcfb9f10aeda9faf3333c96b3ea9ee130a00538aef87ce6dee5"
+    "acbe5468d196ec08906d2835582557d7c9735f26bce76fac4cb1b11b0c032716"
 )
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
@@ -556,6 +556,21 @@ def _write_setfield_publication_inputs(
     return executable, inventory, program_facts, direct_calls, callbacks, publications
 
 
+def _write_table_setter_publication_inputs(
+    tmp_path: Path,
+) -> tuple[Path, dict, dict, dict, dict, dict, dict]:
+    from tests.test_itb_native_lua_cclosure_table_setter_publications import (
+        _build as build_table_setter_publications,
+    )
+    from tests.test_itb_native_lua_cclosure_table_setter_publications import (
+        _write_inputs as write_table_setter_inputs,
+    )
+
+    inputs = write_table_setter_inputs(tmp_path)
+    publications = build_table_setter_publications(*inputs)
+    return (*inputs, publications)
+
+
 def _registry(program_facts: dict, claims: list[dict] | None = None) -> dict:
     from src.observatory.native_function_accounting import _canonical_sha256
 
@@ -848,6 +863,26 @@ def _bind_setfield_publication_census_source(
     )
 
 
+def _bind_table_setter_publication_census_source(
+    tmp_path: Path,
+    reference: dict,
+    census: dict,
+    *,
+    json_pointer: str = "/registered_targets/0",
+    support_class: str = "native_lua_role",
+    role: str | None = "registered_lua_callable",
+) -> None:
+    _bind_upstream_artifact_source(
+        tmp_path,
+        reference,
+        census,
+        filename="table-setter-publication-census.json",
+        json_pointer=json_pointer,
+        support_class=support_class,
+        role=role,
+    )
+
+
 def _l2_claim(
     program_facts: dict,
     evidence: dict,
@@ -919,6 +954,7 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
     assert result["method"]["registered_upstream_analysis_adapters"] == [
         "pe_native_lua_direct_import_call_census",
         "pe_native_lua_immediate_cclosure_callback_census",
+        "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
         "pe_native_lua_immediate_cclosure_setfield_publication_census",
     ]
     summary = result["summary"]
@@ -1029,6 +1065,7 @@ def test_committed_schema_v2_registry_and_accounting_identity():
     assert accounting["method"]["registered_upstream_analysis_adapters"] == [
         "pe_native_lua_direct_import_call_census",
         "pe_native_lua_immediate_cclosure_callback_census",
+        "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
         "pe_native_lua_immediate_cclosure_setfield_publication_census",
     ]
     assert accounting["summary"]["native_lua_boundary_state_counts"] == [
@@ -2704,6 +2741,403 @@ def test_setfield_publication_exact_binary_verification_is_cached_per_source(
     assert list(cache) == [
         (
             "pe_native_lua_immediate_cclosure_setfield_publication_census",
+            source_sha256,
+        )
+    ]
+
+
+def test_table_setter_publication_census_derives_registered_target_and_builder(
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    target_boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    builder_boundary = {"state": "roles", "roles": ["registration_builder"]}
+    target_reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        name="table-setter-target.json",
+        native_lua_boundary=target_boundary,
+    )
+    builder_reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        name="table-setter-builder.json",
+        native_lua_boundary=builder_boundary,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        target_reference,
+        publications,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        builder_reference,
+        publications,
+        json_pointer="/builders/0",
+        role="registration_builder",
+    )
+
+    result = _build(
+        tmp_path,
+        program_facts,
+        _registry(
+            program_facts,
+            [
+                _l2_claim(
+                    program_facts,
+                    builder_reference,
+                    entry=0,
+                    native_lua_boundary=builder_boundary,
+                ),
+                _l2_claim(
+                    program_facts,
+                    target_reference,
+                    entry=1,
+                    native_lua_boundary=target_boundary,
+                ),
+            ],
+        ),
+        executable,
+        inventory,
+    )
+
+    assert result["functions"][1]["review"]["native_lua_boundary"] == (
+        target_boundary
+    )
+    assert result["functions"][0]["review"]["native_lua_boundary"] == (
+        builder_boundary
+    )
+    assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 0},
+        {"native_lua_role": "lua_api_consumer", "functions": 0},
+        {"native_lua_role": "registered_lua_callable", "functions": 1},
+        {"native_lua_role": "registration_builder", "functions": 1},
+    ]
+
+
+@pytest.mark.parametrize(
+    ("entry", "role", "json_pointer", "message"),
+    [
+        (1, "registration_builder", "/registered_targets/0", "registration builder"),
+        (0, "registered_lua_callable", "/builders/0", "registered callback target"),
+        (
+            1,
+            "cclosure_callback_target",
+            "/registered_targets/0",
+            "registered_lua_callable or registration_builder",
+        ),
+        (
+            1,
+            "registered_lua_callable",
+            "/publications/0",
+            "registered callback target",
+        ),
+    ],
+)
+def test_table_setter_publication_census_rejects_cross_roles_and_pointers(
+    tmp_path: Path,
+    entry: int,
+    role: str,
+    json_pointer: str,
+    message: str,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    boundary = {"state": "roles", "roles": [role]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][entry],
+        native_lua_boundary=boundary,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+        json_pointer=json_pointer,
+        role=role,
+    )
+
+    with pytest.raises(NativeFunctionAccountingError, match=message):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=entry,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_table_setter_publication_census_rejects_non_role_support(
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+        support_class="ownership",
+        role=None,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only native Lua roles",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_table_setter_publication_adapter_rejects_tampered_whole_census(
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    publications["registered_targets"][0]["publication_site_count"] = 0
+    boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_structurally_plausible_table_setter_forgery_cannot_support_fact(
+    tmp_path: Path,
+):
+    from src.observatory.native_lua_cclosure_table_setter_publications import (
+        validate_native_lua_cclosure_table_setter_publication_structure,
+    )
+
+    (
+        executable,
+        inventory,
+        program_facts,
+        direct_calls,
+        callbacks,
+        setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    publication = publications["publications"][0]
+    publication["table_index"] = -4
+    publication["table_index_push"]["sha256"] = hashlib.sha256(
+        b"\x6a\xfc"
+    ).hexdigest()
+    publications["builders"][0]["table_indices"] = [-4]
+    publications["registered_targets"][0]["table_indices"] = [-4]
+    assert validate_native_lua_cclosure_table_setter_publication_structure(
+        publications,
+        direct_calls,
+        callbacks,
+        setfield,
+        program_facts,
+    )["status"] == "structurally_verified"
+    boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_table_setter_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_table_setter_exact_binary_verification_is_cached_per_source(
+    monkeypatch,
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        publications,
+    ) = _write_table_setter_publication_inputs(tmp_path)
+    from src.observatory import (
+        native_lua_cclosure_table_setter_publications as publication_module,
+    )
+
+    calls = 0
+    original = (
+        publication_module.validate_native_lua_cclosure_table_setter_publication_census
+    )
+
+    def counting_validator(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        publication_module,
+        "validate_native_lua_cclosure_table_setter_publication_census",
+        counting_validator,
+    )
+    source_sha256 = hashlib.sha256(
+        json.dumps(publications, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    cache: dict = {}
+    common = {
+        "executable": executable,
+        "inventory": inventory,
+        "program_facts": program_facts,
+        "source_sha256": source_sha256,
+        "verification_cache": cache,
+        "support_class": "native_lua_role",
+        "label": "cached direct table-setter publication census",
+    }
+    target = (
+        native_accounting._adapt_native_lua_cclosure_table_setter_publication_census(
+            publications,
+            json_pointer="/registered_targets/0",
+            entry_rva=program_facts["functions"][1]["entry_rva"],
+            atlas_record_identity=atlas_record_sha256(
+                program_facts["functions"][1]
+            ),
+            role="registered_lua_callable",
+            **common,
+        )
+    )
+    builder = (
+        native_accounting._adapt_native_lua_cclosure_table_setter_publication_census(
+            publications,
+            json_pointer="/builders/0",
+            entry_rva=program_facts["functions"][0]["entry_rva"],
+            atlas_record_identity=atlas_record_sha256(
+                program_facts["functions"][0]
+            ),
+            role="registration_builder",
+            **common,
+        )
+    )
+
+    assert target["assertion"] == {
+        "native_lua_role": "registered_lua_callable"
+    }
+    assert builder["assertion"] == {"native_lua_role": "registration_builder"}
+    assert calls == 1
+    assert list(cache) == [
+        (
+            "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
             source_sha256,
         )
     ]

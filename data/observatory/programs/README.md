@@ -322,8 +322,8 @@ registry's raw and canonical SHA-256 values are respectively
 `910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
 `1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
 The derived ledger's raw and canonical SHA-256 values are respectively
-`147feaba792a06da19fa12876d0b58be4633f5ae917f243e447868d6fbbf80f1` and
-`9f8739fe4a5c3bcfb9f10aeda9faf3333c96b3ea9ee130a00538aef87ce6dee5`.
+`4efa98c5691cd64efdab21387bf1eec52b9741565ed2f8a4aace47911d75d0a0` and
+`acbe5468d196ec08906d2835582557d7c9735f26bce76fac4cb1b11b0c032716`.
 Existing byte-identical deterministic output is reused; differing, reformatted,
 or concurrent output is never overwritten.
 

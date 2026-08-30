@@ -150,6 +150,13 @@ setter calls, or classify the remaining return/registry-reference paths. The
 artifact does not itself promote the empty review registry. See
 `programs/README.md` for exact commands and hashes.
 
+Accounting's direct-table-setter adapter independently rebuilds and
+exact-verifies the direct-call, callback, setfield, and table-setter chain. It
+derives only `registered_lua_callable` from one pointed callback aggregate or
+`registration_builder` from one pointed caller aggregate; every other role and
+pointer form fails closed. Adding the adapter does not promote the empty review
+registry.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation

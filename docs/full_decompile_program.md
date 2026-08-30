@@ -254,12 +254,12 @@ until core engine semantics are reconstructed.
   body, and 18,477 computed or unmapped call targets without silently changing
   the denominator. The direct-Lua census explains a decoder-backed subset of
   that omitted-call surface but does not rewrite the unchanged Ghidra omission
-  counter. The L0 ledger has three production upstream-analysis adapters,
+  counter. The L0 ledger has four production upstream-analysis adapters,
   narrowly limited to binary-reverified positive `lua_api_consumer`,
   `cclosure_callback_target`, `registered_lua_callable`, and
-  `registration_builder` support. The publication adapter accepts only a
-  direct callback aggregate for the registered-callable role or a direct caller
-  aggregate for the builder role. The empty registry still promotes nothing,
+  `registration_builder` support. Both publication adapters accept only a
+  direct callback aggregate for the registered-callable role or a direct
+  caller aggregate for the builder role. The empty registry still promotes nothing,
   and every other assertion fails closed until a kind-specific adapter can
   derive it from independently verified evidence. Closure construction alone
   still does not prove Lua-visible registration, and the broader registration
