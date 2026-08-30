@@ -1101,7 +1101,7 @@
         },
         {
           "classification": "fact",
-          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. The first live startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. A second startup passed the exact three-module preflight and acknowledged native Continue, but the external tasklist process enumerator exceeded its five-second timeout before bridge entry; no condition close method was proven, while the campaign final verifier found the game stopped and again reproduced the sealed tree. Process discovery now uses the native Windows process-snapshot API instead. A third startup reached an exact Mission_Power player turn with three live active player units, but the raw Lua bridge has no top-level active_mechs summary field; it closed through WM_CLOSE and final-restored the same tree. Readiness now derives the solver's active-player-actor count from the authoritative unit records, including weapon-bearing controllable allies. No live capsule trial or End Turn has run."
+          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. The first live startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. A second startup passed the exact three-module preflight and acknowledged native Continue, but the external tasklist process enumerator exceeded its five-second timeout before bridge entry; no condition close method was proven, while the campaign final verifier found the game stopped and again reproduced the sealed tree. Process discovery now uses the native Windows process-snapshot API instead. A third startup reached an exact Mission_Power player turn with three live active player units, but the raw Lua bridge has no top-level active_mechs summary field; it closed through WM_CLOSE and final-restored the same tree. Readiness now derives the solver's active-player-actor count from the authoritative unit records, including weapon-bearing controllable allies. A fourth startup crossed bridge readiness and entered auto_turn, but the directly imported runner inherited the Windows legacy output codec and raised before returning its reservation when a board description contained a Unicode arrow; the boundary aborted, its pause guard succeeded, the process closed through WM_CLOSE, and the same tree final-restored. Imported trials now configure UTF-8 before solver output, and mutable recording roots resolve at call time so the external artifact root is honored. No live capsule boundary has been prepared and no End Turn has run."
         },
         {
           "classification": "fact",
@@ -1528,7 +1528,10 @@
             "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
             "test_build_identity_preflight_blocks_before_any_session_action",
             "test_process_identity_preflight_blocks_before_any_session_action",
-            "test_start_state_preflight_blocks_before_any_session_action"
+            "test_start_state_preflight_blocks_before_any_session_action",
+            "test_imported_trial_configures_utf8_before_auto_turn",
+            "test_utf8_stdio_configuration_reconfigures_supported_streams",
+            "test_late_artifact_root_redirects_imported_recording_directory"
           ]
         },
         {
@@ -1591,7 +1594,8 @@
           "symbols": [
             "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
             "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
-            "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores"
+            "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores",
+            "test_imported_trial_stdio_attempt_aborts_and_final_restores"
           ]
         },
         {

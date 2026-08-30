@@ -3,10 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from scripts import itb_observatory_spawn_coordinate_capsule_trial as trial
+from src.loop import commands as loop_commands
 from src.observatory import spawn_coordinate_capsule_turn as turn
 from src.observatory.game_process_identity import GameProcessIdentityError
 from src.observatory.start_state_proof import (
@@ -396,3 +398,72 @@ def test_start_state_preflight_blocks_before_any_session_action(
         trial.run(_args(root, receipt, module, condition="control"))
 
     assert calls == []
+
+
+def test_imported_trial_configures_utf8_before_auto_turn(monkeypatch):
+    calls: list[str] = []
+    args = SimpleNamespace(
+        profile="Alpha",
+        time_limit=10.0,
+        max_wait=5.0,
+        allow_dirty_plan=False,
+        candidate_rank=None,
+        dirty_consent_id=None,
+        allow_protected_objective_loss=False,
+        allow_objective_loss=False,
+        allow_timeline_collapse=False,
+        allow_mech_loss=False,
+        frontier_diagnostics=True,
+    )
+    monkeypatch.delenv("ITB_LIGHTNING_LOCAL_END_TURN", raising=False)
+    monkeypatch.setattr(
+        trial,
+        "_configure_utf8_stdio",
+        lambda: calls.append("utf8"),
+    )
+    monkeypatch.setattr(
+        trial,
+        "cmd_auto_turn",
+        lambda **_kwargs: calls.append("auto_turn") or _reservation(),
+    )
+
+    assert trial._reserve_with_auto_turn(args) == _reservation()
+    assert calls == ["utf8", "auto_turn"]
+    assert "ITB_LIGHTNING_LOCAL_END_TURN" not in trial.os.environ
+
+
+def test_utf8_stdio_configuration_reconfigures_supported_streams():
+    class Stream:
+        def __init__(self):
+            self.calls: list[dict] = []
+
+        def reconfigure(self, **kwargs) -> None:
+            self.calls.append(kwargs)
+
+    stdout = Stream()
+    stderr = Stream()
+
+    trial._configure_utf8_stdio((stdout, stderr, object()))
+
+    expected = [{"encoding": "utf-8", "errors": "replace"}]
+    assert stdout.calls == expected
+    assert stderr.calls == expected
+
+
+def test_late_artifact_root_redirects_imported_recording_directory(
+    tmp_path,
+    monkeypatch,
+):
+    monkeypatch.setenv("ITB_ARTIFACT_ROOT", str(tmp_path))
+    monkeypatch.setattr(
+        loop_commands,
+        "RECORDING_DIR",
+        loop_commands._IMPORTED_RECORDING_DIR,
+    )
+
+    result = loop_commands._recording_dir(
+        SimpleNamespace(run_id="spawn-capsule-pair001-control")
+    )
+
+    assert result == tmp_path / "recordings" / "spawn-capsule-pair001-control"
+    assert result.is_dir()

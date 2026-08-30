@@ -882,6 +882,9 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_build_identity_preflight_blocks_before_any_session_action",
         "test_process_identity_preflight_blocks_before_any_session_action",
         "test_start_state_preflight_blocks_before_any_session_action",
+        "test_imported_trial_configures_utf8_before_auto_turn",
+        "test_utf8_stdio_configuration_reconfigures_supported_streams",
+        "test_late_artifact_root_redirects_imported_recording_directory",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign.py"
@@ -930,6 +933,7 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
         "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
         "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores",
+        "test_imported_trial_stdio_attempt_aborts_and_final_restores",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"

@@ -256,7 +256,17 @@ def _dispatch_confirmation(result: object) -> str | None:
     return dispatch.get("delivery_confirmation")
 
 
+def _configure_utf8_stdio(streams: tuple[object, ...] | None = None) -> None:
+    """Keep imported Windows trials able to print Unicode board summaries."""
+    selected = (sys.stdout, sys.stderr) if streams is None else streams
+    for stream in selected:
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def _reserve_with_auto_turn(args: argparse.Namespace) -> dict:
+    _configure_utf8_stdio()
     key = "ITB_LIGHTNING_LOCAL_END_TURN"
     prior = os.environ.get(key)
     os.environ[key] = "1"
@@ -553,10 +563,7 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for stream in (sys.stdout, sys.stderr):
-        reconfigure = getattr(stream, "reconfigure", None)
-        if callable(reconfigure):
-            reconfigure(encoding="utf-8", errors="replace")
+    _configure_utf8_stdio()
     args = _parser().parse_args(argv)
     try:
         code, trial = run(args)

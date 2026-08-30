@@ -1051,9 +1051,10 @@ occupancy, the Pawn path profile at entry, future Board state, and broader spawn
 call ordering remain explicit unresolved inputs; the validator therefore keeps
 `complete_future_forecast=false`.
 
-The matched runtime path is implemented and synthetically validated. Three live
-lifecycle startups have run, but no live capsule trial or End Turn has run.
-All three rejected attempts are preserved under
+The matched runtime path is implemented and synthetically validated. Four live
+lifecycle startups have run, but no live capsule boundary has been prepared and
+no End Turn has run.
+All four rejected attempts are preserved under
 `captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_diagnostics/`:
 the first exact process returned an error ACK because the previously cleaned-up
 Continue helper was not installed, then closed through `WM_CLOSE`; the second
@@ -1077,6 +1078,17 @@ and `43a5c8f22506f715bbb3e6252c60f6c34d5f6c56cb55502a82a13269bff251eb`;
 the third values are
 `299f51db573b3b4c68a93900cc1cca425f5052ed7d3f5886b18e1be16f1f5759`
 and `86a66bd0fa4343b3a226f430575f5c18e3dcd28e2eaa33b7acbf8cfcac42f396`.
+The fourth startup crossed bridge readiness and entered `auto_turn`, but the
+directly imported trial runner inherited the Windows legacy output codec and
+raised before returning its reservation when a board description contained
+`→`. The boundary aborted, the pause guard succeeded, the process closed through
+`WM_CLOSE`, and the save final-restored exactly. Imported trials now establish
+UTF-8 before solver output, and mutable recording roots are resolved at call time
+so the already-set external artifact root is honored. Its condition, campaign,
+and trial lifecycle SHA-256 values are respectively
+`ef94e724e8c12bf573f22ed10588a8e90de587e2a4d1e79e1b235dd4aefd1ac0`,
+`6202a30bec34e296232393d706608cb80bc6100dfb0ee951dbadd4f701a7ef05`, and
+`9a1108128160ba45edb40dee98bfbf301d54fbfbd110a7dc37f62e8e7a0b883c`.
 
 The one-condition trial runner
 `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module,

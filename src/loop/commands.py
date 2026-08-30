@@ -950,6 +950,7 @@ def _final_turn_pod_collection_weight_overlay(
 
 
 RECORDING_DIR = get_artifact_path("recordings")
+_IMPORTED_RECORDING_DIR = RECORDING_DIR
 _SAFE_PLAN_CANDIDATE_LIMIT = 10
 _SAFETY_WIDENING_TOP_K = 1000
 _PROTECTED_OBJECTIVE_SAFETY_WIDENING_TOP_K = 5000
@@ -1010,7 +1011,10 @@ def _atomic_json_write(filepath: Path, data: dict) -> None:
 def _recording_dir(session: RunSession) -> Path:
     """Get the recording directory for the current run."""
     run_id = session.run_id or "default"
-    run_dir = RECORDING_DIR / run_id
+    recording_root = RECORDING_DIR
+    if recording_root == _IMPORTED_RECORDING_DIR:
+        recording_root = get_artifact_path("recordings")
+    run_dir = recording_root / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     return run_dir
 
