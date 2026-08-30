@@ -152,6 +152,55 @@ against the executable. A pointed callback target can derive only the positive
 Lua-visible name or export, table/global storage, lifetime, ownership,
 `registered_lua_callable`, or a target for either unresolved computed argument.
 
+## Native Lua C-closure setfield publication census
+
+`scripts/itb_native_lua_cclosure_setfield_publications.py` starts from the
+exact direct-call and immediate-callback artifacts and re-verifies both against
+the installed executable. It accepts a publication only when a resolved
+zero-upvalue callback call is followed contiguously in the same atlas range by
+exact x86 encodings for `add esp,12`, `push imm32` key VA, `push -2`, a push of
+the same Lua-state register, and a direct `FF 15` call to imported
+`lua_setfield`. The key pointer must resolve to a bounded NUL-terminated
+printable-ASCII string.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_setfield_publications.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_setfield_publications.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json
+```
+
+The exact build has three accepted publications at closure/setter RVAs
+`0x002e6a8c`/`0x002e6a9d`, `0x002e6af9`/`0x002e6b0a`, and
+`0x002e6b66`/`0x002e6b77`. They store distinct callbacks at RVAs
+`0x002e6840`, `0x002e6880`, and `0x002e68b0` through the shared caller at
+`0x002e6900`; every key is exact text `__gc`. The remaining ten resolved
+callback sites stay unmatched rather than inheriting a publication claim.
+
+The artifact's pretty-printed file SHA-256 is
+`4f4b8a6bd5dbcdaf116e215d38a0c2784b10d731d02d1300c11796045ea4cd5f`;
+its canonical JSON SHA-256 is
+`b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6`.
+It proves only static storage of the newly created closure into the designated
+stack table field. It does not identify that table as a metatable, prove a
+global/module export, runtime execution, reachability, persistence, later
+contents, another setter form, or either unresolved callback target. Existing
+byte-identical output is reused; differing or concurrent output is preserved
+and rejected.
+
 ## Native function review accounting
 
 The program-facts atlas is also the immutable denominator for a separate

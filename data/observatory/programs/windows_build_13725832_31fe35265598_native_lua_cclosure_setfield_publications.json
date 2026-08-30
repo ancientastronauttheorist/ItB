@@ -1,0 +1,362 @@
+{
+  "analysis_kind": "pe_native_lua_immediate_cclosure_setfield_publication_census",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "builders": [
+    {
+      "builder_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "builder_entry_rva": "0x002e6900",
+      "key_texts": [
+        "__gc"
+      ],
+      "publication_site_count": 3,
+      "registered_callback_entry_rvas": [
+        "0x002e6840",
+        "0x002e6880",
+        "0x002e68b0"
+      ]
+    }
+  ],
+  "callback_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_callback_census",
+    "canonical_sha256": "cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003",
+    "resolved_immediate_callback_sites": 13
+  },
+  "decoder": {
+    "accepted_publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "method": {
+    "accepted_publication": "Immediately after one exactly resolved direct lua_pushcclosure call, the same atlas range must contain contiguous x86 instructions with bytes for add esp,12; push imm32 key VA; push -2; push the same Lua-state register; and an exact direct FF 15 lua_setfield import call. The pointed key must be a bounded NUL-terminated ASCII string.",
+    "callback_prerequisite_exactly_verified": true,
+    "not_claimed": [
+      "runtime reachability, execution, frequency, or persistence",
+      "the dynamic identity, ownership, or lifetime of the target table",
+      "global export, ordinary Lua lookup reachability, or later mutation",
+      "publication through lua_settable, lua_rawset, or indirect API calls",
+      "publication for unmatched or computed callback arguments",
+      "function ownership, subsystem, purpose, inputs, or outputs",
+      "source-level or behavioral equivalence"
+    ],
+    "partition": "Every resolved immediate callback site is retained exactly once as either an accepted setfield publication or an unmatched resolved site. Unmatched sites do not acquire a publication target.",
+    "publication_boundary": "The artifact publishes normalized RVAs, atlas and instruction hashes, the bounded field key, prerequisite identities, and aggregates. It omits instruction bytes, disassembly text, decompiler output, local paths, variables, and reconstructed source.",
+    "relation_semantics": "An accepted edge proves that the newly constructed C closure is the value immediately consumed by lua_setfield for one exact table index and key in this static instruction sequence."
+  },
+  "publications": [
+    {
+      "callback_atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002e6a8c",
+      "callback_entry_rva": "0x002e6840",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "cleanup_instruction": {
+        "rva": "0x002e6a92",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      "key_byte_length": 4,
+      "key_push": {
+        "rva": "0x002e6a95",
+        "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+        "size": 5
+      },
+      "key_rva": "0x0043bf84",
+      "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+      "key_text": "__gc",
+      "library": "lua5.1.dll",
+      "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+      "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+      "setter_call_rva": "0x002e6a9d",
+      "setter_iat_rva": "0x003d6520",
+      "setter_import_name": "lua_setfield",
+      "state_push": {
+        "rva": "0x002e6a9c",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "table_index": -2,
+      "table_index_push": {
+        "rva": "0x002e6a9a",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      }
+    },
+    {
+      "callback_atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002e6af9",
+      "callback_entry_rva": "0x002e6880",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "cleanup_instruction": {
+        "rva": "0x002e6aff",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      "key_byte_length": 4,
+      "key_push": {
+        "rva": "0x002e6b02",
+        "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+        "size": 5
+      },
+      "key_rva": "0x0043bf84",
+      "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+      "key_text": "__gc",
+      "library": "lua5.1.dll",
+      "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+      "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+      "setter_call_rva": "0x002e6b0a",
+      "setter_iat_rva": "0x003d6520",
+      "setter_import_name": "lua_setfield",
+      "state_push": {
+        "rva": "0x002e6b09",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "table_index": -2,
+      "table_index_push": {
+        "rva": "0x002e6b07",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      }
+    },
+    {
+      "callback_atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002e6b66",
+      "callback_entry_rva": "0x002e68b0",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "cleanup_instruction": {
+        "rva": "0x002e6b6c",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      "key_byte_length": 4,
+      "key_push": {
+        "rva": "0x002e6b6f",
+        "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+        "size": 5
+      },
+      "key_rva": "0x0043bf84",
+      "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+      "key_text": "__gc",
+      "library": "lua5.1.dll",
+      "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+      "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+      "setter_call_rva": "0x002e6b77",
+      "setter_iat_rva": "0x003d6520",
+      "setter_import_name": "lua_setfield",
+      "state_push": {
+        "rva": "0x002e6b76",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "table_index": -2,
+      "table_index_push": {
+        "rva": "0x002e6b74",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      }
+    }
+  ],
+  "registered_targets": [
+    {
+      "builder_entry_rvas": [
+        "0x002e6900"
+      ],
+      "callback_atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+      "callback_entry_rva": "0x002e6840",
+      "key_texts": [
+        "__gc"
+      ],
+      "publication_site_count": 1
+    },
+    {
+      "builder_entry_rvas": [
+        "0x002e6900"
+      ],
+      "callback_atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+      "callback_entry_rva": "0x002e6880",
+      "key_texts": [
+        "__gc"
+      ],
+      "publication_site_count": 1
+    },
+    {
+      "builder_entry_rvas": [
+        "0x002e6900"
+      ],
+      "callback_atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+      "callback_entry_rva": "0x002e68b0",
+      "key_texts": [
+        "__gc"
+      ],
+      "publication_site_count": 1
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "matched_setfield_publication_sites": 3,
+    "resolved_immediate_callback_sites": 13,
+    "schema_violations": 0,
+    "unique_key_texts": 1,
+    "unique_registered_callback_targets": 3,
+    "unique_registration_builders": 1,
+    "unmatched_resolved_callback_sites": 10
+  },
+  "unmatched_resolved_sites": [
+    {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_rva": "0x000579a2",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+      "caller_entry_rva": "0x00057970",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_rva": "0x002e67fa",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "caller_entry_rva": "0x002e67b0",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+      "callback_call_rva": "0x002e69f1",
+      "callback_entry_rva": "0x002e6c30",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "callback_call_rva": "0x002e6ba1",
+      "callback_entry_rva": "0x002ec220",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "callback_call_rva": "0x002e6bc2",
+      "callback_entry_rva": "0x002e67b0",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "49b7f40d8abcf95b754bf2efd4858ff562014b2e5d635f2ea1449cc6ce9b36db",
+      "callback_call_rva": "0x002e6c01",
+      "callback_entry_rva": "0x002e6810",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "ced5cc883286ebf3bdd45adbbd9c096f1a2a9ad97aa8bc98edf3f43f0bdc6423",
+      "callback_call_rva": "0x002ea533",
+      "callback_entry_rva": "0x002ea4b0",
+      "caller_atlas_record_sha256": "4ef06177a94fc20e9f22528fcd6202ba6853ba62cd93cdc695b0e45cd6a7e490",
+      "caller_entry_rva": "0x002ea4e0",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "callback_call_rva": "0x002eb086",
+      "callback_entry_rva": "0x002eb230",
+      "caller_atlas_record_sha256": "d87d07131a90edaf889b4876e6fd81ab91d0bee72a90d19ba40f150fba9ec8b8",
+      "caller_entry_rva": "0x002eb020",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "callback_call_rva": "0x002eb2a5",
+      "callback_entry_rva": "0x002eb230",
+      "caller_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "caller_entry_rva": "0x002eb230",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    },
+    {
+      "callback_atlas_record_sha256": "0730d8c5877defc7f4d781e836560f199df4ffb749613a41b361f2fd75447d72",
+      "callback_call_rva": "0x002ec328",
+      "callback_entry_rva": "0x002ec110",
+      "caller_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "caller_entry_rva": "0x002ec220",
+      "resolution": "no_exact_contiguous_setfield_publication"
+    }
+  ]
+}

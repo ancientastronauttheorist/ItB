@@ -91,6 +91,26 @@ callback chain against the executable and can derive only the positive
 future evidence that proves publication or registration beyond closure
 construction. See `programs/README.md` for exact commands, hashes, and limits.
 
+## Native Lua C-closure setfield publications
+
+`scripts/itb_native_lua_cclosure_setfield_publications.py` exact-verifies the
+direct-call and immediate-callback prerequisites, then accepts only one finite
+x86 fall-through grammar: zero-upvalue closure construction, caller cleanup,
+an immediate key pointer, table index `-2`, the same Lua-state register, and a
+direct `lua_setfield` import call. It partitions all 13 resolved callback sites
+into three exact table-field publications and ten unmatched sites. The three
+accepted paths share caller RVA `0x002e6900`, store three distinct callback
+targets under the exact bounded key `__gc`, and retain complete atlas and
+instruction hashes without publishing executable bytes.
+
+This proves static table-field storage of each newly constructed closure. It
+does not identify the dynamic table as a metatable, prove global or module
+export, establish runtime reachability or persistence, cover another setter
+API, or resolve either computed callback argument. The artifact is the narrow
+mechanical basis for future `registered_lua_callable` and
+`registration_builder` accounting adapters; it does not itself promote the
+empty review registry. See `programs/README.md` for exact commands and hashes.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation

@@ -219,7 +219,16 @@ until core engine semantics are reconstructed.
   table identities, runtime execution, or targets for computed arguments. Its
   accounting adapter exact-rebuilds the direct-call prerequisite and callback
   census before deriving only `cclosure_callback_target`; the stronger
-  `registered_lua_callable` role remains unproven.
+  `registered_lua_callable` role remains unproven by that callback-only
+  artifact.
+- [x] Prove the first bounded native Lua publication edges without relying on
+  string proximity or decompiler prose. An exact fall-through grammar joins
+  three zero-upvalue immediate closures to three direct `lua_setfield` calls in
+  caller RVA `0x002e6900`, storing distinct callback RVAs `0x002e6840`,
+  `0x002e6880`, and `0x002e68b0` under key `__gc`. Ten other resolved callback
+  sites remain explicitly unmatched. This proves static table-field storage,
+  not the table's metatable/global identity, runtime reachability, persistence,
+  or publication through another setter API.
 - [x] Upgrade the native review ledger to schema 2 with strict `unknown`,
   `none`, and `roles` boundary states plus independently supported,
   non-exclusive positive role atoms. The empty registry still leaves all
@@ -236,9 +245,10 @@ until core engine semantics are reconstructed.
   `cclosure_callback_target` support. The empty registry still promotes
   nothing, and every other assertion fails closed until a kind-specific adapter
   can derive it from independently verified evidence. In particular, closure
-  construction does not prove Lua-visible registration;
-  `registered_lua_callable` and `registration_builder` remain open
-  registration-graph work.
+  construction does not prove Lua-visible registration. The first three exact
+  setfield paths now provide bounded source evidence for
+  `registered_lua_callable` and `registration_builder`, but their accounting
+  adapters and the broader registration graph remain open work.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757
@@ -248,7 +258,10 @@ until core engine semantics are reconstructed.
   accepted chunks and explicitly leaves nine unrouted.
 - [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
   the census's host candidates, computed globals, loader assumptions, dynamic
-  code generation, and runtime reachability. Preliminary luabind-shaped
+  code generation, and runtime reachability. Extend the new exact setfield
+  foundation across separately proven `lua_settable`, `lua_rawset`, returned
+  closure, and descriptor-mediated paths without merging ambiguous stack
+  effects. Preliminary luabind-shaped
   pointer/name/builder candidates remain local research until every builder
   form and alternate compiler sequence has an exact, complete grammar.
 - [x] Produce and independently verify the exact-owner-build map-data grammar
