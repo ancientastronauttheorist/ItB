@@ -112,15 +112,20 @@ strictly verified against the exact PE and lives under
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
-1. Extend the existing 757-callback index into a complete function,
-   constructor, alias, global, and native-binding census across all 305 files.
-2. Parse all 377 map files into a versioned grammar and semantic inventory.
-3. Validate `resource.dat` structurally and inventory record paths, types,
+1. Maintain the compiler-verified complete function, environment-identifier,
+   callback, and static-load census for every accepted Lua-form owner-build
+   source. The current artifact compiles 529 chunks without executing them,
+   accounts for 915 function prototypes, and names nine statically unrouted
+   files.
+2. Join unresolved environment/member candidates and loader assumptions to
+   independently recovered native registration and bootstrap descriptors.
+3. Parse all 377 map files into a versioned grammar and semantic inventory.
+4. Validate `resource.dat` structurally and inventory record paths, types,
    extents, and payload hashes without committing payload bytes.
-4. Inventory the 12 OpenGL shader/header files and the FMOD bank interfaces.
-5. Join Lua definitions and call sites to native registrations and the program
+5. Inventory the 12 OpenGL shader/header files and the FMOD bank interfaces.
+6. Join Lua definitions and call sites to native registrations and the program
    atlas.
-6. Mark localization, presentation-only declarations, and dead aliases without
+7. Mark localization, presentation-only declarations, and dead aliases without
    confusing source indexing with behavior verification.
 
 ### C. Native state and subsystem reconstruction
@@ -178,7 +183,16 @@ until core engine semantics are reconstructed.
 ### M1 — Complete surface census
 
 - [ ] Classify every atlas function at L0/L1.
-- [ ] Produce full Lua function/global/native-binding census.
+- [x] Produce and independently verify the exact-owner-build compiled Lua
+  function/environment census: 529 chunks, 915 functions, 1,444 total
+  prototypes, 173,619 instructions, 2,686 environment identifiers, all 757
+  indexed callback definitions cross-checked, and all accepted/excluded source
+  files accounted. Its load model has 523 claim-labeled edges: 145 compiler/
+  source-derived facts and 378 explicit host assumptions. The model covers 520
+  accepted chunks and explicitly leaves nine unrouted.
+- [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
+  the census's host candidates, computed globals, loader assumptions, dynamic
+  code generation, and runtime reachability.
 - [ ] Produce complete map/data grammar census.
 - [x] Produce and independently verify the metadata-only `resource.dat`
   census: 2,854 contiguous unique records, with per-payload hashes and no asset

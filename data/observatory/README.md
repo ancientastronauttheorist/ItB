@@ -20,6 +20,25 @@ inventoried PE before creating a deterministic artifact under `programs/`.
 `verify` independently rechecks a committed atlas against the executable. See
 `programs/README.md` for commands and limitations.
 
+## Compiled Lua census
+
+`scripts/itb_lua_census.py` rebuilds the complete sealed installation
+inventory, compiles every accepted script and Lua-form map chunk with the
+inventoried 32-bit Lua 5.1 DLL, and parses the dumped chunks without executing
+game code. It pairs all compiled nested prototypes with lexical function spans,
+decodes identifier-only environment/member operations, cross-checks the 757-
+definition callback index, and builds a claim-labeled static load model.
+
+The normalized artifact under `lua/` contains 529 compiled chunks, 915 function
+prototypes, 173,619 instructions, and 2,686 environment identifiers. Its 523
+modeled edges comprise 145 compiler/source-derived edges and 378 explicitly
+labeled assumptions; together they cover 520 accepted files and leave nine
+explicitly unrouted in the model. Raw source, literal payloads, binary chunks,
+absolute paths, and the owner's Mod Loader overlay are excluded. See
+`lua/README.md` for exact build and verification commands and the boundary
+between compiler-backed facts, loader assumptions, native-binding candidates,
+and future semantic work.
+
 ## Resource archive census
 
 `scripts/itb_resource_inventory.py` parses `resources/resource.dat` without
