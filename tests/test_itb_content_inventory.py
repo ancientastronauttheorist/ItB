@@ -114,6 +114,9 @@ def test_inventory_rejects_change_between_format_inspection_and_hash(
 def test_inventory_is_deterministic_and_reads_steam_evidence(tmp_path: Path):
     steamapps = tmp_path / "Steam/steamapps"
     root = _installation(steamapps / "common")
+    (root / "resources").mkdir()
+    resource_archive = root / "resources/resource.dat"
+    resource_archive.write_bytes(b"opaque resource bytes")
     (steamapps / "appmanifest_590380.acf").write_text(
         '''
 "AppState"
@@ -144,6 +147,13 @@ def test_inventory_is_deterministic_and_reads_steam_evidence(tmp_path: Path):
         {"depot_id": "590381", "manifest": "abc", "size": 1234}
     ]
     assert first["native_libraries"][0]["path"] == "lua5.1.dll"
+    assert first["resource_archives"] == [
+        {
+            "path": "resources/resource.dat",
+            "size": len(b"opaque resource bytes"),
+            "sha256": hashlib.sha256(b"opaque resource bytes").hexdigest(),
+        }
+    ]
 
 
 def test_macos_app_bundle_layout_is_supported(tmp_path: Path):

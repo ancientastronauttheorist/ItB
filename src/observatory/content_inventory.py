@@ -14,7 +14,7 @@ import platform as host_platform
 import re
 import struct
 from collections.abc import Iterable, Mapping, Sequence
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -22,6 +22,7 @@ APP_ID = "590380"
 SCHEMA_VERSION = 1
 CONTENT_DIRS = ("scripts", "maps")
 NATIVE_SUFFIXES = (".dll", ".dylib", ".so")
+RESOURCE_ARCHIVE_PATHS = ("resources/resource.dat",)
 
 
 class InventoryError(RuntimeError):
@@ -73,10 +74,14 @@ def _stable_file_fingerprint(
     before = path.stat()
     digest = hashlib.sha256()
     with path.open("rb") as stream:
+        handle_before = os.fstat(stream.fileno())
+        _require_stable_file(path, before, handle_before)
         while chunk := stream.read(chunk_size):
             digest.update(chunk)
+        handle_after = os.fstat(stream.fileno())
+        _require_stable_file(path, handle_before, handle_after)
     after = path.stat()
-    _require_stable_file(path, before, after)
+    _require_stable_file(path, handle_after, after)
     return digest.hexdigest(), after
 
 
@@ -348,6 +353,22 @@ def inventory_native_libraries(
     ]
 
 
+def inventory_resource_archives(content_root: Path) -> list[dict[str, Any]]:
+    """Hash the known opaque resource archives relative to *content_root*."""
+    containment = content_root.resolve()
+    archives: list[dict[str, Any]] = []
+    for relative in RESOURCE_ARCHIVE_PATHS:
+        path = content_root.joinpath(*PurePosixPath(relative).parts)
+        if path.is_symlink():
+            raise InventoryError(f"resource archive is a symlink: {path}")
+        if not path.exists():
+            continue
+        if not path.is_file() or not path.resolve().is_relative_to(containment):
+            raise InventoryError(f"invalid resource archive path: {path}")
+        archives.append(_relative_record(path, content_root))
+    return archives
+
+
 _VDF_TOKEN = re.compile(r'"((?:\\.|[^"])*)"|([{}])')
 
 
@@ -493,6 +514,7 @@ def create_inventory(
         "content_root": content_root.relative_to(root).as_posix() or ".",
         "executable": executable,
         "native_libraries": inventory_native_libraries(root, exclude=executable_path),
+        "resource_archives": inventory_resource_archives(content_root),
         "steam": read_steam_evidence(root),
         "content": {
             name: build_manifest(content_root, name)
@@ -587,6 +609,8 @@ def _manifest_entries(inventory: Mapping[str, Any], collection: str) -> dict[str
         raw = inventory.get("content", {}).get(collection, {}).get("files", [])
     elif collection == "native_libraries":
         raw = inventory.get("native_libraries", [])
+    elif collection == "resource_archives":
+        raw = inventory.get("resource_archives", [])
     elif collection == "executable":
         executable = inventory.get("executable")
         raw = [executable] if isinstance(executable, Mapping) else []
@@ -611,7 +635,12 @@ def compare_inventories(
     """
     results: list[dict[str, Any]] = []
     platforms_differ = left.get("platform") != right.get("platform")
-    for collection in (*CONTENT_DIRS, "executable", "native_libraries"):
+    for collection in (
+        *CONTENT_DIRS,
+        "resource_archives",
+        "executable",
+        "native_libraries",
+    ):
         left_entries = _manifest_entries(left, collection)
         right_entries = _manifest_entries(right, collection)
         for path in sorted(set(left_entries) | set(right_entries), key=lambda item: (item.casefold(), item)):

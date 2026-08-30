@@ -34,9 +34,11 @@ The initial target is the currently installed Windows build:
 
 The accepted owner installation is not claimed to be a pristine Steam depot:
 it contains the normal local Mod Loader integration. The read-only baseline on
-2026-08-30 matched the sealed post-capsule inventory at all 689 inventoried
-entries, with zero changes or omissions. A clean-depot inventory can be added
-later without overwriting or weakening this owner-build provenance.
+2026-08-30 matched the sealed post-capsule inventory at all 689 then-inventoried
+entries, with zero changes or omissions. The full-decompile baseline additionally
+seals `resource.dat`, bringing the exact inventory to 690 entries. A clean-depot
+inventory can be added later without overwriting or weakening this owner-build
+provenance.
 
 The resource archive has a deterministic metadata grammar and 2,854 validated
 entries (2,703 PNG, 138 custom font records, and 13 TTF files). Its payloads
@@ -178,7 +180,10 @@ until core engine semantics are reconstructed.
 - [ ] Classify every atlas function at L0/L1.
 - [ ] Produce full Lua function/global/native-binding census.
 - [ ] Produce complete map/data grammar census.
-- [ ] Produce metadata-only resource archive and shader census.
+- [x] Produce and independently verify the metadata-only `resource.dat`
+  census: 2,854 contiguous unique records, with per-payload hashes and no asset
+  bytes committed.
+- [ ] Produce the plaintext shader and FMOD interface census.
 - [ ] Establish subsystem ownership and exclusion counts.
 
 ### M2 — Core runtime model

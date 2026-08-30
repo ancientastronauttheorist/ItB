@@ -20,6 +20,17 @@ inventoried PE before creating a deterministic artifact under `programs/`.
 `verify` independently rechecks a committed atlas against the executable. See
 `programs/README.md` for commands and limitations.
 
+## Resource archive census
+
+`scripts/itb_resource_inventory.py` parses `resources/resource.dat` without
+extracting it. The build step first rebuilds and exact-matches the sealed
+installation inventory, including its resource archive path, size, and hash.
+It then requires a strictly contiguous offset/record layout from the end of the
+table through EOF, canonical unique UTF-8 paths, valid PNG/TrueType signatures,
+and exact per-payload plus whole-archive hashes. Normalized
+path/offset/size/hash inventories live under `resources/`; no asset payload
+bytes are eligible for Git.
+
 ## Installation inventories
 
 Create a deterministic inventory outside the installed game:
@@ -31,11 +42,12 @@ python scripts/itb_content_inventory.py inventory \
   --output data/observatory/inventories/<snapshot>.json
 ```
 
-The tool hashes the native executable, shared libraries, and every regular file
-under `scripts/**` and `maps/**`. Paths are relative and slash-normalized.
-Filesystem timestamps and the absolute installation path are excluded.
-Symlinks are not followed. Steam build/depot evidence is accepted only when the
-adjacent app manifest names the exact inventoried directory.
+The tool hashes the native executable, shared libraries, known opaque resource
+archives, and every regular file under `scripts/**` and `maps/**`. Paths are
+relative and slash-normalized. Filesystem timestamps and the absolute
+installation path are excluded. Symlinks are not followed. Steam build/depot
+evidence is accepted only when the adjacent app manifest names the exact
+inventoried directory.
 
 The committed Windows snapshot is explicitly a modified local installation,
 not a vanilla-depot manifest. Its script tree includes the installed bridge and
