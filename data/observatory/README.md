@@ -123,6 +123,33 @@ derive only `registered_lua_callable` from one pointed callback aggregate or
 adapter do not themselves promote the empty review registry. See
 `programs/README.md` for exact commands and hashes.
 
+## Native Lua C-closure direct table-setter publications
+
+`scripts/itb_native_lua_cclosure_table_setter_publications.py` exact-verifies
+the direct-call, callback, and setfield-publication chain, then consumes only
+the setfield census's ten-site unmatched frontier. It accepts one further
+finite fall-through grammar: optional positive `add esp,imm8` cleanup, an exact
+signed immediate table index other than the definitely invalid `0` and `-1`
+forms, the same ABI-nonvolatile Lua-state register, and a direct `FF 15` call to
+imported `lua_settable` or `lua_rawset`. The newly constructed closure remains
+the setter's top-of-stack value; the pre-existing stack key is not guessed or
+named.
+
+The exact build partitions that frontier into four publications and six
+still-unmatched sites. Three use `lua_settable` and one uses `lua_rawset`; table
+indices are exactly `-10002` or `-3`, with three unique callback targets and
+four builders. A PE-free structural validator independently rechecks the prior
+frontier, signed x86 encodings, exact direct-setter joins, full partition,
+aggregates, and summary without treating document consistency as binary proof.
+
+This proves only that each static direct sequence hands the newly constructed
+closure to the named table setter as its value. It does not recover the stack
+key, identify the destination table, infer a global/module export or ordinary
+Lua lookup name, establish runtime reachability or persistence, cover indirect
+setter calls, or classify the remaining return/registry-reference paths. The
+artifact does not itself promote the empty review registry. See
+`programs/README.md` for exact commands and hashes.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation

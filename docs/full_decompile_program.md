@@ -119,9 +119,12 @@ semantic roles. `scripts/itb_native_lua_cclosure_callbacks.py` then resolves
 only the exact immediate callback arguments passed at direct
 `lua_pushcclosure` sites, and
 `scripts/itb_native_lua_cclosure_setfield_publications.py` proves the bounded
-subset immediately stored through one exact `lua_setfield` grammar. Accounting
-protocol schema 2 represents native/Lua roles as composable positive facts
-rather than a mutually exclusive enum.
+subset immediately stored through one exact `lua_setfield` grammar.
+`scripts/itb_native_lua_cclosure_table_setter_publications.py` then consumes
+only that artifact's unmatched frontier and proves the bounded subset passed
+directly to `lua_settable` or `lua_rawset`. Accounting protocol schema 2
+represents native/Lua roles as composable positive facts rather than a mutually
+exclusive enum.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -232,6 +235,14 @@ until core engine semantics are reconstructed.
   sites remain explicitly unmatched. This proves static table-field storage,
   not the table's metatable/global identity, runtime reachability, persistence,
   or publication through another setter API.
+- [x] Consume the ten-site unmatched setfield frontier with a second exact
+  direct-setter grammar. Four more callback sites hand the newly constructed
+  closure directly to `lua_settable` (three sites) or `lua_rawset` (one site)
+  using signed table indices `-10002` or `-3`; the result has three unique
+  callback targets and four builders. The six residual sites remain explicit.
+  This proves the closure is the setter value, not the existing stack key,
+  destination-table identity, global/module visibility, runtime execution, or
+  an indirect-setter path.
 - [x] Upgrade the native review ledger to schema 2 with strict `unknown`,
   `none`, and `roles` boundary states plus independently supported,
   non-exclusive positive role atoms. The empty registry still leaves all
@@ -262,10 +273,12 @@ until core engine semantics are reconstructed.
   accepted chunks and explicitly leaves nine unrouted.
 - [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
   the census's host candidates, computed globals, loader assumptions, dynamic
-  code generation, and runtime reachability. Extend the new exact setfield
-  foundation across separately proven `lua_settable`, `lua_rawset`, returned
-  closure, and descriptor-mediated paths without merging ambiguous stack
-  effects. Preliminary luabind-shaped
+  code generation, and runtime reachability. The exact setfield and direct
+  table-setter foundations now account for seven of 13 immediate callback
+  sites as static table publications. Extend the six-site residual frontier
+  across bounded indirect-`lua_settable`, returned-closure,
+  registry-reference, and descriptor-mediated paths without merging ambiguous
+  stack effects. Preliminary luabind-shaped
   pointer/name/builder candidates remain local research until every builder
   form and alternate compiler sequence has an exact, complete grammar.
 - [x] Produce and independently verify the exact-owner-build map-data grammar
