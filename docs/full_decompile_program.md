@@ -112,7 +112,10 @@ strictly verified against the exact PE and lives under
 `data/observatory/programs/`. `scripts/itb_native_function_accounting.py`
 builds a separate exact one-to-one review overlay; the atlas remains immutable
 and every semantic promotion must come from a hash-pinned analyst registry and
-exact-build repository evidence.
+exact-build repository evidence. `scripts/itb_native_lua_direct_calls.py`
+independently decodes every atlas body range and publishes exact direct
+`lua5.1.dll` IAT-call relations without treating those relations as exclusive
+semantic roles.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -196,14 +199,24 @@ until core engine semantics are reconstructed.
   subsystem value unknown, records zero L1/L2 promotions and zero exclusions,
   and keeps 685 Ghidra-thunk flags plus 26 repeated-body groups as explicitly
   non-promoting review candidates.
+- [x] Independently decode all 25,490 atlas ranges and 3,735,718 body bytes with
+  pinned Capstone 5.0.7, yielding 1,153,814 instructions and an exact census of
+  4,739 six-byte `FF 15` calls from 1,787 atlas functions to the 54 named
+  `lua5.1.dll` IAT slots. This is a positive direct-call relation only; it does
+  not claim runtime reachability, negative Lua-use results, ownership, or a
+  mutually exclusive registration/callback role.
 - [ ] Review exact boundaries, ownership, and immediate references to promote
   every first-party atlas function to at least L1 or record a fact-backed
   exclusion. Reconcile the 281,434 executable-section bytes outside discovered
   atlas bodies, focused boundary extents that do not exactly join an atlas
   body, and 18,477 computed or unmapped call targets without silently changing
-  the denominator. The L0 ledger currently has no production upstream-analysis
-  adapters, so promotions fail closed until narrow kind-specific adapters can
-  derive each supported assertion from independently verified artifacts.
+  the denominator. The direct-Lua census explains a decoder-backed subset of
+  that omitted-call surface but does not rewrite the unchanged Ghidra omission
+  counter. The L0 ledger currently has no production upstream-analysis adapters,
+  so promotions fail closed until narrow kind-specific adapters can derive each
+  supported assertion from independently verified artifacts. Before adapting
+  the direct-Lua relation, replace the mutually exclusive role field with a
+  non-exclusive model or prove a precedence rule.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757

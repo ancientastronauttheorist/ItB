@@ -43,6 +43,24 @@ unreachable, duplicate/thunk, and data-only exclusions also fail closed until
 their specialized proof contracts exist. See `programs/README.md` for the
 full registry/evidence contract, commands, and remaining atlas/callgraph gaps.
 
+## Native-to-Lua direct-call census
+
+`scripts/itb_native_lua_direct_calls.py` exact-verifies the native atlas, parses
+the PE import table, and independently decodes every atlas body byte with
+pinned Capstone 5.0.7. It retains only exact six-byte x86 `FF 15` calls whose
+absolute operand is one named `lua5.1.dll` IAT slot. The normalized artifact
+under `programs/` covers all 25,490 atlas ranges and 3,735,718 body bytes,
+records 1,153,814 decoded instructions, and identifies 4,739 direct Lua import
+calls in 1,787 atlas functions. All 54 named Lua imports have at least one
+retained call site.
+
+The result is a positive binary relation, not a semantic partition. It does not
+claim runtime reachability, ownership, registration roles, callback roles,
+indirect calls, or absence of Lua use outside a retained site. Direct API
+consumer, registration-builder, and registered-callable roles can overlap, so
+this tranche deliberately leaves the native-function review ledger unchanged.
+See `programs/README.md` for exact commands, hashes, and limitations.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation
