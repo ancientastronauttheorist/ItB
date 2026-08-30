@@ -22,9 +22,11 @@ from src.observatory.native_lua_direct_calls import (
     CALL_FORM as DIRECT_CALL_FORM,
     NativeLuaDirectCallError,
     SUPPORTED_CAPSTONE_VERSION,
+    STRUCTURE_VERIFICATION_KIND as DIRECT_CALL_STRUCTURE_VERIFICATION_KIND,
     _decoder,
     _load_executable,
     validate_native_lua_direct_call_census,
+    validate_native_lua_direct_call_structure,
 )
 
 
@@ -32,6 +34,9 @@ SCHEMA_VERSION = 1
 ANALYSIS_KIND = "pe_native_lua_immediate_cclosure_callback_census"
 VERIFICATION_KIND = (
     "pe_native_lua_immediate_cclosure_callback_census_verification"
+)
+STRUCTURE_VERIFICATION_KIND = (
+    "pe_native_lua_immediate_cclosure_callback_census_structure_verification"
 )
 LUA_LIBRARY = "lua5.1.dll"
 LUA_PUSHCLOSURE = "lua_pushcclosure"
@@ -97,6 +102,28 @@ def _rva(value: Any, label: str) -> int:
     if type(value) is not str or _RVA_RE.fullmatch(value) is None:
         raise NativeLuaCClosureError(f"{label} must be a canonical 32-bit RVA")
     return int(value, 16)
+
+
+def _exact_keys(
+    value: Mapping[str, Any], expected: set[str], label: str
+) -> None:
+    actual = set(value)
+    if actual != expected:
+        raise NativeLuaCClosureError(
+            f"{label} fields differ: expected {sorted(expected)}, got {sorted(actual)}"
+        )
+
+
+def _count(value: Any, label: str, *, positive: bool = False) -> int:
+    if type(value) is not int or value < 0 or (positive and value == 0):
+        raise NativeLuaCClosureError(f"{label} must be a non-negative count")
+    return value
+
+
+def _sha256(value: Any, label: str) -> str:
+    if type(value) is not str or _SHA256_RE.fullmatch(value) is None:
+        raise NativeLuaCClosureError(f"{label} must be a lowercase SHA-256")
+    return value
 
 
 def _hex(value: int) -> str:
@@ -557,6 +584,460 @@ def build_native_lua_cclosure_callback_census(
         raise NativeLuaCClosureError("callback site partitions disagree")
     _assert_publication_safe(result)
     return result
+
+
+def _instruction_structure(
+    value: Any,
+    label: str,
+) -> tuple[int, int, str]:
+    """Validate one publication-safe instruction fact without reading bytes."""
+    fact = _mapping(value, label)
+    _exact_keys(fact, {"rva", "size", "sha256"}, label)
+    return (
+        _rva(fact["rva"], f"{label}.rva"),
+        _count(fact["size"], f"{label}.size", positive=True),
+        _sha256(fact["sha256"], f"{label}.sha256"),
+    )
+
+
+def _register_push_sha256es() -> set[str]:
+    """Return the finite encodings for one-byte x86 register PUSHes."""
+    return {
+        hashlib.sha256(bytes([opcode])).hexdigest()
+        for opcode in range(0x50, 0x58)
+    }
+
+
+def _validate_register_push(
+    fact: tuple[int, int, str], label: str
+) -> None:
+    _rva_value, size, digest = fact
+    if size != 1 or digest not in _register_push_sha256es():
+        raise NativeLuaCClosureError(
+            f"{label} must be one exact x86 register PUSH encoding"
+        )
+
+
+def _validate_immediate_upvalue_push(
+    fact: tuple[int, int, str],
+    count: Any,
+    label: str,
+) -> None:
+    """Reconstruct the only accepted x86 PUSH encodings for a literal count."""
+    _rva_value, size, digest = fact
+    literal = _count(count, f"{label}.literal_upvalue_count")
+    if literal > 255:
+        raise NativeLuaCClosureError(
+            f"{label}.literal_upvalue_count is out of range"
+        )
+    if size == 2 and literal <= 127:
+        expected = hashlib.sha256(bytes([0x6A, literal])).hexdigest()
+    elif size == 5:
+        expected = hashlib.sha256(
+            b"\x68" + literal.to_bytes(4, "little")
+        ).hexdigest()
+    else:
+        raise NativeLuaCClosureError(
+            f"{label} is not a valid immediate upvalue PUSH encoding"
+        )
+    if digest != expected:
+        raise NativeLuaCClosureError(
+            f"{label}.sha256 does not reconstruct from literal upvalue count"
+        )
+
+
+def validate_native_lua_cclosure_callback_structure(
+    evidence: Mapping[str, Any],
+    direct_calls: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the complete published callback census without reading a PE.
+
+    This structural-only check first validates the complete direct-call census,
+    then proves all published joins and finite instruction encodings that can be
+    reconstructed from the documents.  It does *not* read executable bytes and
+    is not binary proof: instruction hashes for decoded state, memory, and
+    register-derived callback values remain bounded structural evidence only.
+    Use :func:`validate_native_lua_cclosure_callback_census` when executable
+    proof is required.
+    """
+    _validate_json_tree(evidence, "evidence")
+    _validate_json_tree(direct_calls, "direct_calls")
+    _validate_json_tree(program_facts, "program_facts")
+    evidence = _mapping(evidence, "evidence")
+    direct_calls = _mapping(direct_calls, "direct_calls")
+    facts = _mapping(program_facts, "program_facts")
+    try:
+        prerequisite = validate_native_lua_direct_call_structure(
+            direct_calls, facts
+        )
+    except NativeLuaDirectCallError as exc:
+        raise NativeLuaCClosureError(
+            f"direct-call structural prerequisite failed: {exc}"
+        ) from exc
+    if (
+        prerequisite.get("analysis_kind")
+        != DIRECT_CALL_STRUCTURE_VERIFICATION_KIND
+        or prerequisite.get("status") != "structurally_verified"
+    ):
+        raise NativeLuaCClosureError(
+            "direct-call structural prerequisite returned an unexpected result"
+        )
+
+    _exact_keys(
+        evidence,
+        {
+            "schema_version",
+            "analysis_kind",
+            "build_identity",
+            "atlas",
+            "direct_call_census",
+            "decoder",
+            "resolved_sites",
+            "unresolved_sites",
+            "callback_targets",
+            "method",
+            "summary",
+        },
+        "evidence",
+    )
+    if type(evidence["schema_version"]) is not int or evidence["schema_version"] != SCHEMA_VERSION:
+        raise NativeLuaCClosureError("unsupported native Lua callback schema")
+    if evidence["analysis_kind"] != ANALYSIS_KIND:
+        raise NativeLuaCClosureError("unexpected native Lua callback analysis kind")
+
+    identity = _mapping(facts.get("identity"), "program_facts.identity")
+    if evidence["build_identity"] != dict(identity) or evidence["build_identity"] != direct_calls.get("build_identity"):
+        raise NativeLuaCClosureError(
+            "callback census build identity does not match direct calls and program facts"
+        )
+    ghidra = _mapping(facts.get("ghidra"), "program_facts.ghidra")
+    image_base = _rva(ghidra.get("image_base"), "program_facts.ghidra.image_base")
+
+    direct_atlas = _mapping(direct_calls.get("atlas"), "direct_calls.atlas")
+    atlas = _mapping(evidence["atlas"], "evidence.atlas")
+    _exact_keys(atlas, {"analysis_kind", "canonical_sha256", "function_count"}, "evidence.atlas")
+    expected_atlas = {
+        "analysis_kind": direct_atlas.get("analysis_kind"),
+        "canonical_sha256": direct_atlas.get("canonical_sha256"),
+        "function_count": direct_atlas.get("function_count"),
+    }
+    if atlas != expected_atlas:
+        raise NativeLuaCClosureError("callback atlas identity or aggregate differs from direct calls")
+    _sha256(atlas["canonical_sha256"], "evidence.atlas.canonical_sha256")
+    _count(atlas["function_count"], "evidence.atlas.function_count")
+
+    direct_summary = _mapping(direct_calls.get("summary"), "direct_calls.summary")
+    direct_census = _mapping(evidence["direct_call_census"], "evidence.direct_call_census")
+    _exact_keys(
+        direct_census,
+        {
+            "analysis_kind",
+            "canonical_sha256",
+            "direct_lua_import_call_sites",
+            "lua_pushcclosure_call_sites",
+        },
+        "evidence.direct_call_census",
+    )
+    pushcclosure_calls = _pushcclosure_calls(direct_calls)
+    expected_direct_census = {
+        "analysis_kind": DIRECT_CALL_ANALYSIS_KIND,
+        "canonical_sha256": _canonical_sha256(direct_calls),
+        "direct_lua_import_call_sites": direct_summary.get("direct_lua_import_call_sites"),
+        "lua_pushcclosure_call_sites": len(pushcclosure_calls),
+    }
+    if direct_census != expected_direct_census:
+        raise NativeLuaCClosureError("callback direct-call census identity or aggregate differs")
+    _sha256(direct_census["canonical_sha256"], "evidence.direct_call_census.canonical_sha256")
+    _count(direct_census["direct_lua_import_call_sites"], "evidence.direct_call_census.direct_lua_import_call_sites")
+    _count(direct_census["lua_pushcclosure_call_sites"], "evidence.direct_call_census.lua_pushcclosure_call_sites")
+
+    decoder = _mapping(evidence["decoder"], "evidence.decoder")
+    _exact_keys(decoder, {"name", "version", "architecture", "mode_bits", "accepted_argument_form"}, "evidence.decoder")
+    if decoder != {
+        "name": "capstone",
+        "version": SUPPORTED_CAPSTONE_VERSION,
+        "architecture": "x86",
+        "mode_bits": 32,
+        "accepted_argument_form": CALLBACK_ARGUMENT_FORM,
+    }:
+        raise NativeLuaCClosureError("callback census decoder contract has drifted")
+    if _canonical_bytes(evidence["method"]) != _canonical_bytes(_METHOD):
+        raise NativeLuaCClosureError("callback census method contract has drifted")
+
+    functions_by_entry: dict[int, Mapping[str, Any]] = {}
+    for index, raw_function in enumerate(_array(facts.get("functions"), "program_facts.functions")):
+        function = _mapping(raw_function, f"program_facts.functions[{index}]")
+        entry = _rva(function.get("entry_rva"), f"program_facts.functions[{index}].entry_rva")
+        if entry in functions_by_entry:
+            raise NativeLuaCClosureError("program-facts atlas entries must be unique")
+        functions_by_entry[entry] = function
+
+    direct_by_call: dict[int, tuple[Mapping[str, Any], Mapping[str, Any]]] = {}
+    pushcclosure_callers: set[int] = set()
+    for direct_record, direct_call in pushcclosure_calls:
+        call_rva = _rva(direct_call.get("call_rva"), "direct lua_pushcclosure call_rva")
+        if call_rva in direct_by_call:
+            raise NativeLuaCClosureError("direct lua_pushcclosure calls must be unique")
+        direct_by_call[call_rva] = (direct_record, direct_call)
+        pushcclosure_callers.add(_rva(direct_record.get("entry_rva"), "direct lua_pushcclosure caller"))
+    direct_consumer_entries = {
+        _rva(_mapping(record, "direct_calls record").get("entry_rva"), "direct_calls record entry_rva")
+        for record in _array(direct_calls.get("records"), "direct_calls.records")
+    }
+
+    shared_keys = {
+        "caller_entry_rva",
+        "caller_atlas_record_sha256",
+        "call_rva",
+        "call_instruction_sha256",
+        "callback_push",
+        "state_push",
+        "library",
+        "import_name",
+        "iat_rva",
+    }
+    resolved_keys = shared_keys | {
+        "argument_form",
+        "upvalue_push",
+        "upvalue_argument_kind",
+        "literal_upvalue_count",
+        "callback_entry_rva",
+        "callback_atlas_record_sha256",
+        "self_callback",
+    }
+    unresolved_keys = shared_keys | {"callback_argument_kind", "resolution"}
+    seen_calls: set[int] = set()
+    previous_resolved = -1
+    previous_unresolved = -1
+    target_sites: dict[int, list[tuple[int, str]]] = defaultdict(list)
+
+    def validate_shared_site(
+        site: Mapping[str, Any], label: str
+    ) -> tuple[int, tuple[int, int, str], tuple[int, int, str], tuple[int, int]]:
+        call_rva = _rva(site["call_rva"], f"{label}.call_rva")
+        direct_pair = direct_by_call.get(call_rva)
+        if direct_pair is None:
+            raise NativeLuaCClosureError(f"{label}.call_rva is not a direct lua_pushcclosure call")
+        record, call = direct_pair
+        expected_caller = record.get("entry_rva")
+        expected_hash = record.get("atlas_record_sha256")
+        for key, expected in {
+            "caller_entry_rva": expected_caller,
+            "caller_atlas_record_sha256": expected_hash,
+            "call_instruction_sha256": call.get("instruction_sha256"),
+            "library": LUA_LIBRARY,
+            "import_name": LUA_PUSHCLOSURE,
+            "iat_rva": call.get("iat_rva"),
+        }.items():
+            if site[key] != expected:
+                raise NativeLuaCClosureError(f"{label}.{key} does not join the exact direct call")
+        caller_entry = _rva(record.get("entry_rva"), f"{label}.caller_entry_rva")
+        caller_function = functions_by_entry.get(caller_entry)
+        if caller_function is None:
+            raise NativeLuaCClosureError(f"{label}.caller_entry_rva is absent from atlas")
+        containing_ranges = []
+        for range_index, raw_range in enumerate(
+            _array(caller_function.get("ranges"), f"{label}.caller_ranges")
+        ):
+            body_range = _mapping(
+                raw_range, f"{label}.caller_ranges[{range_index}]"
+            )
+            start = _rva(
+                body_range.get("start_rva"),
+                f"{label}.caller_ranges[{range_index}].start_rva",
+            )
+            size = _count(
+                body_range.get("size"),
+                f"{label}.caller_ranges[{range_index}].size",
+                positive=True,
+            )
+            if start <= call_rva and call_rva + 6 <= start + size:
+                containing_ranges.append((start, size))
+        if len(containing_ranges) != 1:
+            raise NativeLuaCClosureError(
+                f"{label}.call_rva must lie in exactly one caller atlas range"
+            )
+        caller_range = containing_ranges[0]
+
+        def require_in_caller_range(
+            fact: tuple[int, int, str], fact_label: str
+        ) -> None:
+            start, size = caller_range
+            if fact[0] < start or fact[0] + fact[1] > start + size:
+                raise NativeLuaCClosureError(
+                    f"{fact_label} does not lie within the exact caller atlas range"
+                )
+
+        _sha256(site["caller_atlas_record_sha256"], f"{label}.caller_atlas_record_sha256")
+        _sha256(site["call_instruction_sha256"], f"{label}.call_instruction_sha256")
+        callback_push = _instruction_structure(site["callback_push"], f"{label}.callback_push")
+        state_push = _instruction_structure(site["state_push"], f"{label}.state_push")
+        require_in_caller_range(callback_push, f"{label}.callback_push")
+        require_in_caller_range(state_push, f"{label}.state_push")
+        if state_push[0] + state_push[1] != call_rva:
+            raise NativeLuaCClosureError(f"{label}.state_push is not contiguous with call_rva")
+        _validate_register_push(state_push, f"{label}.state_push")
+        if callback_push[0] + callback_push[1] != state_push[0]:
+            raise NativeLuaCClosureError(f"{label}.callback_push is not contiguous with state_push")
+        return call_rva, callback_push, state_push, caller_range
+
+    for index, raw_site in enumerate(_array(evidence["resolved_sites"], "evidence.resolved_sites")):
+        label = f"evidence.resolved_sites[{index}]"
+        site = _mapping(raw_site, label)
+        _exact_keys(site, resolved_keys, label)
+        call_rva, callback_push, _state_push, caller_range = validate_shared_site(
+            site, label
+        )
+        if call_rva <= previous_resolved or call_rva in seen_calls:
+            raise NativeLuaCClosureError("resolved callback sites must be unique and call-RVA ordered")
+        previous_resolved = call_rva
+        seen_calls.add(call_rva)
+        if site["argument_form"] != CALLBACK_ARGUMENT_FORM:
+            raise NativeLuaCClosureError(f"{label}.argument_form has drifted")
+        upvalue_push = _instruction_structure(site["upvalue_push"], f"{label}.upvalue_push")
+        if (
+            upvalue_push[0] < caller_range[0]
+            or upvalue_push[0] + upvalue_push[1]
+            > caller_range[0] + caller_range[1]
+        ):
+            raise NativeLuaCClosureError(
+                f"{label}.upvalue_push does not lie within the exact caller atlas range"
+            )
+        if upvalue_push[0] + upvalue_push[1] != callback_push[0]:
+            raise NativeLuaCClosureError(f"{label}.upvalue_push is not contiguous with callback_push")
+        upvalue_kind = site["upvalue_argument_kind"]
+        if upvalue_kind == "immediate":
+            _validate_immediate_upvalue_push(upvalue_push, site["literal_upvalue_count"], label)
+        elif upvalue_kind == "register":
+            if site["literal_upvalue_count"] is not None:
+                raise NativeLuaCClosureError(f"{label}.literal_upvalue_count must be null for register upvalue")
+            _validate_register_push(upvalue_push, f"{label}.upvalue_push")
+        elif upvalue_kind == "memory":
+            if site["literal_upvalue_count"] is not None:
+                raise NativeLuaCClosureError(f"{label}.literal_upvalue_count must be null for memory upvalue")
+        else:
+            raise NativeLuaCClosureError(f"{label}.upvalue_argument_kind is unsupported")
+        callback_entry = _rva(site["callback_entry_rva"], f"{label}.callback_entry_rva")
+        callback_function = functions_by_entry.get(callback_entry)
+        if callback_function is None or callback_function.get("thunk") is not False:
+            raise NativeLuaCClosureError(f"{label}.callback_entry_rva must be a non-thunk atlas entry")
+        expected_callback_hash = atlas_record_sha256(callback_function)
+        if site["callback_atlas_record_sha256"] != expected_callback_hash:
+            raise NativeLuaCClosureError(f"{label}.callback_atlas_record_sha256 does not match atlas")
+        _sha256(site["callback_atlas_record_sha256"], f"{label}.callback_atlas_record_sha256")
+        callback_va = image_base + callback_entry
+        if callback_va > 0xFFFFFFFF:
+            raise NativeLuaCClosureError(
+                f"{label}.callback_entry_rva overflows the x86 image VA"
+            )
+        expected_push = b"\x68" + callback_va.to_bytes(4, "little")
+        if callback_push[1] != 5 or callback_push[2] != hashlib.sha256(expected_push).hexdigest():
+            raise NativeLuaCClosureError(f"{label}.callback_push does not reconstruct from callback entry")
+        caller_entry = _rva(site["caller_entry_rva"], f"{label}.caller_entry_rva")
+        if type(site["self_callback"]) is not bool or site["self_callback"] != (callback_entry == caller_entry):
+            raise NativeLuaCClosureError(f"{label}.self_callback disagrees with callback and caller entries")
+        target_sites[callback_entry].append((caller_entry, expected_callback_hash))
+
+    for index, raw_site in enumerate(_array(evidence["unresolved_sites"], "evidence.unresolved_sites")):
+        label = f"evidence.unresolved_sites[{index}]"
+        site = _mapping(raw_site, label)
+        _exact_keys(site, unresolved_keys, label)
+        call_rva, callback_push, _state_push, _caller_range = validate_shared_site(
+            site, label
+        )
+        if call_rva <= previous_unresolved or call_rva in seen_calls:
+            raise NativeLuaCClosureError("unresolved callback sites must be unique and call-RVA ordered")
+        previous_unresolved = call_rva
+        seen_calls.add(call_rva)
+        kind = site["callback_argument_kind"]
+        if kind not in UNRESOLVED_ARGUMENT_KINDS:
+            raise NativeLuaCClosureError(f"{label}.callback_argument_kind is unsupported")
+        if site["resolution"] != "unresolved_non_immediate_callback":
+            raise NativeLuaCClosureError(f"{label}.resolution must preserve unresolved status")
+        if kind == "register":
+            _validate_register_push(callback_push, f"{label}.callback_push")
+
+    if seen_calls != set(direct_by_call):
+        raise NativeLuaCClosureError("resolved and unresolved callback sites do not exactly partition direct lua_pushcclosure calls")
+
+    callback_targets = _array(evidence["callback_targets"], "evidence.callback_targets")
+    expected_targets = []
+    for callback_entry in sorted(target_sites):
+        sites = target_sites[callback_entry]
+        expected_targets.append(
+            {
+                "callback_entry_rva": _hex(callback_entry),
+                "callback_atlas_record_sha256": sites[0][1],
+                "resolved_site_count": len(sites),
+                "caller_entry_rvas": sorted({_hex(caller) for caller, _hash in sites}),
+                "also_direct_lua_import_caller": callback_entry in direct_consumer_entries,
+                "also_pushcclosure_caller": callback_entry in pushcclosure_callers,
+            }
+        )
+    target_keys = {
+        "callback_entry_rva",
+        "callback_atlas_record_sha256",
+        "resolved_site_count",
+        "caller_entry_rvas",
+        "also_direct_lua_import_caller",
+        "also_pushcclosure_caller",
+    }
+    previous_target = -1
+    for index, raw_target in enumerate(callback_targets):
+        label = f"evidence.callback_targets[{index}]"
+        target = _mapping(raw_target, label)
+        _exact_keys(target, target_keys, label)
+        entry = _rva(target["callback_entry_rva"], f"{label}.callback_entry_rva")
+        if entry <= previous_target:
+            raise NativeLuaCClosureError("callback targets must be unique and callback-entry-RVA ordered")
+        previous_target = entry
+        _sha256(target["callback_atlas_record_sha256"], f"{label}.callback_atlas_record_sha256")
+        _count(target["resolved_site_count"], f"{label}.resolved_site_count", positive=True)
+        callers = _array(target["caller_entry_rvas"], f"{label}.caller_entry_rvas")
+        if not callers or any(type(item) is not str for item in callers) or callers != sorted(set(callers)):
+            raise NativeLuaCClosureError(f"{label}.caller_entry_rvas must be unique and ordered")
+        for caller_index, caller in enumerate(callers):
+            _rva(caller, f"{label}.caller_entry_rvas[{caller_index}]")
+        if type(target["also_direct_lua_import_caller"]) is not bool or type(target["also_pushcclosure_caller"]) is not bool:
+            raise NativeLuaCClosureError(f"{label} overlap fields must be boolean")
+    if callback_targets != expected_targets:
+        raise NativeLuaCClosureError("callback targets do not exactly aggregate resolved sites")
+
+    unresolved_sites = _array(evidence["unresolved_sites"], "evidence.unresolved_sites")
+    resolved_sites = _array(evidence["resolved_sites"], "evidence.resolved_sites")
+    unresolved_kinds = Counter(
+        _mapping(site, "unresolved callback site")["callback_argument_kind"]
+        for site in unresolved_sites
+    )
+    expected_summary = {
+        "direct_pushcclosure_call_sites": len(direct_by_call),
+        "resolved_immediate_callback_sites": len(resolved_sites),
+        "unresolved_callback_sites": len(unresolved_sites),
+        "unresolved_register_callback_sites": unresolved_kinds["register"],
+        "unresolved_memory_callback_sites": unresolved_kinds["memory"],
+        "unique_callback_targets": len(expected_targets),
+        "duplicate_callback_targets": sum(item["resolved_site_count"] > 1 for item in expected_targets),
+        "self_callback_sites": sum(bool(_mapping(site, "resolved callback site")["self_callback"]) for site in resolved_sites),
+        "callback_targets_with_direct_lua_import_calls": sum(bool(item["also_direct_lua_import_caller"]) for item in expected_targets),
+        "callback_targets_that_call_pushcclosure": sum(bool(item["also_pushcclosure_caller"]) for item in expected_targets),
+        "schema_violations": 0,
+    }
+    summary = _mapping(evidence["summary"], "evidence.summary")
+    _exact_keys(summary, set(expected_summary), "evidence.summary")
+    for key, value in summary.items():
+        _count(value, f"evidence.summary.{key}")
+    if summary != expected_summary:
+        raise NativeLuaCClosureError("callback summary aggregates or partitions disagree")
+    _assert_publication_safe(evidence)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "analysis_kind": STRUCTURE_VERIFICATION_KIND,
+        "status": "structurally_verified",
+        "build_identity": dict(identity),
+        "evidence_sha256": _canonical_sha256(evidence),
+        "summary": dict(summary),
+    }
 
 
 def validate_native_lua_cclosure_callback_census(

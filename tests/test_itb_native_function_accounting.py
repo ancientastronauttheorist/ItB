@@ -20,10 +20,10 @@ _COMMITTED_REGISTRY_CANONICAL_SHA256 = (
     "1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4"
 )
 _COMMITTED_ACCOUNTING_RAW_SHA256 = (
-    "dce9c1ca4be996040d07da3b6ae4ed12ee5bd1f9700a76c84c554edb052422cf"
+    "5933a073d0797a4d3dad9459a4cc320b6a139b934cc139dbb3f940d12cfa26c8"
 )
 _COMMITTED_ACCOUNTING_CANONICAL_SHA256 = (
-    "6fb65edc5c4bbf4cca7a8fd1063c13ab414fc866e8e5ad6ae6bc065a3ad8c5b5"
+    "7eeac18e0d9a8efe85f87e5e8d392ead3fdf70b958e683a4d86b13ff7f2cbd07"
 )
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
@@ -48,24 +48,29 @@ from src.observatory.native_lua_direct_calls import (
     build_native_lua_direct_call_census,
     validate_native_lua_direct_call_structure,
 )
+from src.observatory.native_lua_cclosure_callbacks import (
+    build_native_lua_cclosure_callback_census,
+    validate_native_lua_cclosure_callback_structure,
+)
 from src.observatory.program_facts import build_program_facts
 
 
 _IMAGE_BASE = 0x00400000
 _LUA_IAT_RVA = 0x00001190
+_CALLBACK_RVA = 0x00001040
 
 
 @pytest.fixture(autouse=True)
 def _install_synthetic_upstream_adapter(monkeypatch):
     def validate_synthetic_upstream(
         document,
-        target,
         *,
         executable,
         inventory,
         program_facts,
         source_sha256,
         verification_cache,
+        json_pointer,
         entry_rva,
         atlas_record_identity,
         support_class,
@@ -86,6 +91,18 @@ def _install_synthetic_upstream_adapter(monkeypatch):
             raise NativeFunctionAccountingError(
                 f"{label} synthetic upstream cache differs"
             )
+        native_accounting._direct_record_pointer(
+            json_pointer,
+            f"{label}.json_pointer",
+        )
+        target = native_accounting._mapping(
+            native_accounting._json_pointer(
+                document,
+                json_pointer,
+                f"{label}.json_pointer",
+            ),
+            f"{label} synthetic upstream target",
+        )
         if (
             set(document)
             != {"schema_version", "analysis_kind", "build_identity", "records"}
@@ -310,6 +327,108 @@ def _write_direct_lua_inputs(tmp_path: Path) -> tuple[Path, dict, dict, dict]:
     return executable, inventory, program_facts, census
 
 
+def _write_callback_inputs(
+    tmp_path: Path,
+) -> tuple[Path, dict, dict, dict, dict]:
+    code = (
+        b"\x6a\x02"
+        + b"\x68"
+        + struct.pack("<I", _IMAGE_BASE + _CALLBACK_RVA)
+        + b"\x50"
+        + b"\xff\x15"
+        + struct.pack("<I", _IMAGE_BASE + _LUA_IAT_RVA)
+        + b"\xc3"
+    )
+    data = bytearray(0xA00)
+    data[:2] = b"MZ"
+    struct.pack_into("<I", data, 0x3C, 0x80)
+    data[0x80:0x84] = b"PE\0\0"
+    struct.pack_into(
+        "<HHIIIHH", data, 0x84, 0x014C, 1, 0x12345678, 0, 0, 0xE0, 0x010F
+    )
+    optional = 0x98
+    struct.pack_into("<H", data, optional, 0x10B)
+    struct.pack_into("<I", data, optional + 16, 0x1020)
+    struct.pack_into("<I", data, optional + 28, _IMAGE_BASE)
+    struct.pack_into("<I", data, optional + 32, 0x1000)
+    struct.pack_into("<I", data, optional + 36, 0x200)
+    struct.pack_into("<I", data, optional + 56, 0x2000)
+    struct.pack_into("<I", data, optional + 60, 0x200)
+    struct.pack_into("<I", data, optional + 92, 16)
+    struct.pack_into("<II", data, optional + 104, 0x1100, 40)
+    section = optional + 0xE0
+    data[section : section + 8] = b".text\0\0\0"
+    struct.pack_into("<IIII", data, section + 8, 0x800, 0x1000, 0x800, 0x200)
+    struct.pack_into("<I", data, section + 36, 0x60000020)
+    data[0x220 : 0x220 + len(code)] = code
+    data[0x240:0x243] = b"\x31\xc0\xc3"
+    struct.pack_into("<IIIII", data, 0x300, 0x1180, 0, 0, 0x1140, _LUA_IAT_RVA)
+    data[0x340:0x34B] = b"lua5.1.dll\0"
+    struct.pack_into("<H", data, 0x360, 7)
+    data[0x362:0x373] = b"lua_pushcclosure\0"
+    struct.pack_into("<II", data, 0x380, 0x1160, 0)
+    struct.pack_into("<II", data, 0x390, 0x1160, 0)
+    raw = bytes(data)
+    executable = tmp_path / "Breach.exe"
+    executable.write_bytes(raw)
+    inventory = _inventory(raw)
+    inventory["label"] = "synthetic callback accounting adapter test"
+    inventory["native_libraries"] = [
+        {
+            "path": "lua5.1.dll",
+            "size": 7,
+            "sha256": "c" * 64,
+            "format": "pe",
+            "architecture": "x86",
+        }
+    ]
+    facts = tmp_path / "program.tsv"
+    caller_hash = hashlib.sha256(code).hexdigest()
+    callback_hash = hashlib.sha256(raw[0x240:0x243]).hexdigest()
+    facts.write_text(
+        "\n".join(
+            [
+                "meta\tformat_version\t1",
+                "meta\tghidra_version\t12.1.3",
+                "meta\tprogram_name\tBreach.exe",
+                "meta\tlanguage_id\tx86:LE:32:default",
+                "meta\tcompiler_spec_id\twindows",
+                "meta\timage_base\t0x00400000",
+                "meta\tfunction_count\t2",
+                "meta\trange_count\t2",
+                "meta\tdirect_internal_call_count\t0",
+                "meta\tomitted_call_target_count\t1",
+                (
+                    "function\t0x00001020\tcaller\tGlobal\tUSER_DEFINED\t0\t"
+                    f"{len(code)}\t{caller_hash}"
+                ),
+                (
+                    "function\t0x00001040\tcallback\tGlobal\tUSER_DEFINED\t0\t"
+                    f"3\t{callback_hash}"
+                ),
+                f"range\t0x00001020\t0x00001020\t{len(code)}",
+                "range\t0x00001040\t0x00001040\t3",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+    program_facts = build_program_facts(executable, facts, inventory=inventory)
+    direct_calls = build_native_lua_direct_call_census(
+        executable,
+        program_facts,
+        inventory=inventory,
+    )
+    callbacks = build_native_lua_cclosure_callback_census(
+        executable,
+        direct_calls,
+        program_facts,
+        inventory=inventory,
+    )
+    return executable, inventory, program_facts, direct_calls, callbacks
+
+
 def _registry(program_facts: dict, claims: list[dict] | None = None) -> dict:
     from src.observatory.native_function_accounting import _canonical_sha256
 
@@ -487,18 +606,20 @@ def _rewrite_evidence_chain(tmp_path: Path, reference: dict, mutate) -> None:
     reference["sha256"] = hashlib.sha256(review_payload).hexdigest()
 
 
-def _bind_direct_census_source(
+def _bind_upstream_artifact_source(
     tmp_path: Path,
     reference: dict,
-    census: dict,
+    artifact: dict,
     *,
+    filename: str,
+    json_pointer: str,
     support_class: str = "native_lua_role",
     role: str | None = "lua_api_consumer",
 ) -> None:
-    direct_relative = Path("evidence") / "direct-lua-census.json"
-    direct_payload = json.dumps(census, sort_keys=True).encode("utf-8")
-    (tmp_path / direct_relative).write_bytes(direct_payload)
-    direct_sha256 = hashlib.sha256(direct_payload).hexdigest()
+    artifact_relative = Path("evidence") / filename
+    artifact_payload = json.dumps(artifact, sort_keys=True).encode("utf-8")
+    (tmp_path / artifact_relative).write_bytes(artifact_payload)
+    artifact_sha256 = hashlib.sha256(artifact_payload).hexdigest()
 
     def bind(_review, support, _upstream):
         record = next(
@@ -508,9 +629,9 @@ def _bind_direct_census_source(
         )
         record["sources"] = [
             {
-                "path": direct_relative.as_posix(),
-                "sha256": direct_sha256,
-                "json_pointer": "/records/0",
+                "path": artifact_relative.as_posix(),
+                "sha256": artifact_sha256,
+                "json_pointer": json_pointer,
             }
         ]
 
@@ -518,7 +639,7 @@ def _bind_direct_census_source(
 
     # If the replaced source happened to be the helper's first source, its
     # generic repinning step used the synthetic document hash. Restore the
-    # independently hash-pinned direct census and propagate the support hash.
+    # independently hash-pinned artifact and propagate the support hash.
     review_path = tmp_path / reference["path"]
     review = json.loads(review_path.read_text(encoding="utf-8"))
     support_relative = Path(review["records"][0]["support"][0]["path"])
@@ -529,7 +650,7 @@ def _bind_direct_census_source(
         for item in support["records"]
         if item["support_class"] == support_class and item["role"] == role
     )
-    record["sources"][0]["sha256"] = direct_sha256
+    record["sources"][0]["sha256"] = artifact_sha256
     support_payload = json.dumps(support, sort_keys=True).encode("utf-8")
     support_path.write_bytes(support_payload)
     support_sha256 = hashlib.sha256(support_payload).hexdigest()
@@ -539,6 +660,45 @@ def _bind_direct_census_source(
     review_payload = json.dumps(review, sort_keys=True).encode("utf-8")
     review_path.write_bytes(review_payload)
     reference["sha256"] = hashlib.sha256(review_payload).hexdigest()
+
+
+def _bind_direct_census_source(
+    tmp_path: Path,
+    reference: dict,
+    census: dict,
+    *,
+    support_class: str = "native_lua_role",
+    role: str | None = "lua_api_consumer",
+) -> None:
+    _bind_upstream_artifact_source(
+        tmp_path,
+        reference,
+        census,
+        filename="direct-lua-census.json",
+        json_pointer="/records/0",
+        support_class=support_class,
+        role=role,
+    )
+
+
+def _bind_callback_census_source(
+    tmp_path: Path,
+    reference: dict,
+    census: dict,
+    *,
+    json_pointer: str = "/callback_targets/0",
+    support_class: str = "native_lua_role",
+    role: str | None = "cclosure_callback_target",
+) -> None:
+    _bind_upstream_artifact_source(
+        tmp_path,
+        reference,
+        census,
+        filename="callback-census.json",
+        json_pointer=json_pointer,
+        support_class=support_class,
+        role=role,
+    )
 
 
 def _l2_claim(
@@ -610,7 +770,8 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
         "unknown",
     ]
     assert result["method"]["registered_upstream_analysis_adapters"] == [
-        "pe_native_lua_direct_import_call_census"
+        "pe_native_lua_direct_import_call_census",
+        "pe_native_lua_immediate_cclosure_callback_census",
     ]
     summary = result["summary"]
     assert summary["atlas_functions"] == 2
@@ -663,6 +824,7 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
         )
     assert summary["native_lua_roles_are_nonexclusive"] is True
     assert summary["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 0},
         {"native_lua_role": "lua_api_consumer", "functions": 0},
         {"native_lua_role": "registered_lua_callable", "functions": 0},
         {"native_lua_role": "registration_builder", "functions": 0},
@@ -717,12 +879,19 @@ def test_committed_schema_v2_registry_and_accounting_identity():
     assert accounting["summary"]["level_L1"] == 0
     assert accounting["summary"]["level_L2"] == 0
     assert accounting["method"]["registered_upstream_analysis_adapters"] == [
-        "pe_native_lua_direct_import_call_census"
+        "pe_native_lua_direct_import_call_census",
+        "pe_native_lua_immediate_cclosure_callback_census",
     ]
     assert accounting["summary"]["native_lua_boundary_state_counts"] == [
         {"functions": 0, "native_lua_boundary_state": "none"},
         {"functions": 0, "native_lua_boundary_state": "roles"},
         {"functions": 25312, "native_lua_boundary_state": "unknown"},
+    ]
+    assert accounting["summary"]["native_lua_role_counts"] == [
+        {"functions": 0, "native_lua_role": "cclosure_callback_target"},
+        {"functions": 0, "native_lua_role": "lua_api_consumer"},
+        {"functions": 0, "native_lua_role": "registered_lua_callable"},
+        {"functions": 0, "native_lua_role": "registration_builder"},
     ]
     assert all(
         item["review"]["native_lua_boundary"]
@@ -751,6 +920,7 @@ def test_reviewed_l2_claim_requires_exact_pins_and_repo_local_identity_evidence(
         "roles": ["lua_api_consumer", "registered_lua_callable"],
     }
     assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 0},
         {"native_lua_role": "lua_api_consumer", "functions": 1},
         {"native_lua_role": "registered_lua_callable", "functions": 1},
         {"native_lua_role": "registration_builder", "functions": 0},
@@ -794,6 +964,7 @@ def test_reviewed_none_boundary_uses_whole_field_support(tmp_path: Path):
 
     assert result["functions"][0]["review"]["native_lua_boundary"] == native_lua_boundary
     assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 0},
         {"native_lua_role": "lua_api_consumer", "functions": 0},
         {"native_lua_role": "registered_lua_callable", "functions": 0},
         {"native_lua_role": "registration_builder", "functions": 0},
@@ -1133,6 +1304,7 @@ def test_direct_lua_census_derives_only_positive_consumer_role_end_to_end(
 
     assert result["functions"][0]["review"]["native_lua_boundary"] == boundary
     assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 0},
         {"native_lua_role": "lua_api_consumer", "functions": 1},
         {"native_lua_role": "registered_lua_callable", "functions": 0},
         {"native_lua_role": "registration_builder", "functions": 0},
@@ -1144,7 +1316,11 @@ def test_direct_lua_census_derives_only_positive_consumer_role_end_to_end(
 
 @pytest.mark.parametrize(
     "overclaimed_role",
-    ["registered_lua_callable", "registration_builder"],
+    [
+        "cclosure_callback_target",
+        "registered_lua_callable",
+        "registration_builder",
+    ],
 )
 def test_direct_lua_census_rejects_other_role_overclaim_end_to_end(
     tmp_path: Path,
@@ -1393,12 +1569,12 @@ def test_direct_lua_exact_binary_verification_is_cached_per_source(
 
     first = native_accounting._adapt_native_lua_direct_call_census(
         census,
-        census["records"][0],
+        json_pointer="/records/0",
         **kwargs,
     )
     second = native_accounting._adapt_native_lua_direct_call_census(
         census,
-        census["records"][0],
+        json_pointer="/records/0",
         **kwargs,
     )
 
@@ -1454,18 +1630,458 @@ def test_direct_lua_adapter_rejects_exclusion_support_without_interpretation():
     ):
         native_accounting._adapt_native_lua_direct_call_census(
             {},
-            {},
             executable=Path("missing.exe"),
             inventory={},
             program_facts={},
             source_sha256="0" * 64,
             verification_cache={},
+            json_pointer="/records/0",
             entry_rva="0x00001020",
             atlas_record_identity="0" * 64,
             support_class="exclusion",
             role=None,
             label="exclusion source",
         )
+
+
+def test_direct_lua_adapter_keeps_records_only_pointer_contract():
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="must point directly to one records entry",
+    ):
+        native_accounting._adapt_native_lua_direct_call_census(
+            {},
+            executable=Path("missing.exe"),
+            inventory={},
+            program_facts={},
+            source_sha256="0" * 64,
+            verification_cache={},
+            json_pointer="/callback_targets/0",
+            entry_rva="0x00001020",
+            atlas_record_identity="0" * 64,
+            support_class="native_lua_role",
+            role="lua_api_consumer",
+            label="wrong direct pointer",
+        )
+
+
+def test_callback_adapter_rejects_exclusion_support_without_interpretation():
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the cclosure_callback_target role",
+    ):
+        native_accounting._adapt_native_lua_cclosure_callback_census(
+            {},
+            executable=Path("missing.exe"),
+            inventory={},
+            program_facts={},
+            source_sha256="0" * 64,
+            verification_cache={},
+            json_pointer="/callback_targets/0",
+            entry_rva="0x00001020",
+            atlas_record_identity="0" * 64,
+            support_class="exclusion",
+            role=None,
+            label="callback exclusion source",
+        )
+
+
+def test_callback_census_derives_only_cclosure_target_end_to_end(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    boundary = {"state": "roles", "roles": ["cclosure_callback_target"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(tmp_path, reference, callbacks)
+
+    result = _build(
+        tmp_path,
+        program_facts,
+        _registry(
+            program_facts,
+            [
+                _l2_claim(
+                    program_facts,
+                    reference,
+                    entry=1,
+                    native_lua_boundary=boundary,
+                )
+            ],
+        ),
+        executable,
+        inventory,
+    )
+
+    assert result["functions"][1]["review"]["native_lua_boundary"] == boundary
+    assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "cclosure_callback_target", "functions": 1},
+        {"native_lua_role": "lua_api_consumer", "functions": 0},
+        {"native_lua_role": "registered_lua_callable", "functions": 0},
+        {"native_lua_role": "registration_builder", "functions": 0},
+    ]
+
+
+@pytest.mark.parametrize(
+    "overclaimed_role",
+    ["lua_api_consumer", "registered_lua_callable", "registration_builder"],
+)
+def test_callback_census_rejects_other_role_overclaims_end_to_end(
+    tmp_path: Path,
+    overclaimed_role: str,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    boundary = {"state": "roles", "roles": [overclaimed_role]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(
+        tmp_path,
+        reference,
+        callbacks,
+        role=overclaimed_role,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the cclosure_callback_target role",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize(
+    "support_class,native_lua_boundary",
+    [
+        ("boundary", {"state": "roles", "roles": ["cclosure_callback_target"]}),
+        ("ownership", {"state": "roles", "roles": ["cclosure_callback_target"]}),
+        (
+            "immediate_references",
+            {"state": "roles", "roles": ["cclosure_callback_target"]},
+        ),
+        (
+            "semantic_io",
+            {"state": "roles", "roles": ["cclosure_callback_target"]},
+        ),
+        ("native_lua_boundary", {"state": "none", "roles": []}),
+    ],
+)
+def test_callback_census_rejects_non_role_support_end_to_end(
+    tmp_path: Path,
+    support_class: str,
+    native_lua_boundary: dict,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=native_lua_boundary,
+    )
+    _bind_callback_census_source(
+        tmp_path,
+        reference,
+        callbacks,
+        support_class=support_class,
+        role=None,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the cclosure_callback_target role",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=native_lua_boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize(
+    "json_pointer",
+    [
+        "/resolved_sites/0",
+        "/unresolved_sites/0",
+        "/callback_targets/0/callback_entry_rva",
+        "/callback_targets",
+    ],
+)
+def test_callback_census_rejects_non_target_and_nested_pointers(
+    tmp_path: Path,
+    json_pointer: str,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    boundary = {"state": "roles", "roles": ["cclosure_callback_target"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(
+        tmp_path,
+        reference,
+        callbacks,
+        json_pointer=json_pointer,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="must point directly to one callback target",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_callback_census_rejects_a_target_for_another_function(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    boundary = {"state": "roles", "roles": ["cclosure_callback_target"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(tmp_path, reference, callbacks)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="does not describe the exact atlas record",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=0,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize("tamper", ["zero", "stale", "unrelated"])
+def test_callback_adapter_rejects_tampered_whole_census(
+    tmp_path: Path,
+    tamper: str,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    if tamper == "zero":
+        callbacks["callback_targets"][0]["resolved_site_count"] = 0
+    elif tamper == "stale":
+        callbacks["direct_call_census"]["canonical_sha256"] = "0" * 64
+    else:
+        callbacks["unresolved_sites"].append(
+            {
+                "caller_entry_rva": "0x00001020",
+                "resolution": "unresolved_non_immediate_callback",
+            }
+        )
+    boundary = {"state": "roles", "roles": ["cclosure_callback_target"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(tmp_path, reference, callbacks)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_structurally_plausible_callback_forgery_cannot_support_a_fact(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    callbacks["resolved_sites"][0]["literal_upvalue_count"] = 3
+    callbacks["resolved_sites"][0]["upvalue_push"]["sha256"] = hashlib.sha256(
+        b"\x6a\x03"
+    ).hexdigest()
+    assert validate_native_lua_cclosure_callback_structure(
+        callbacks,
+        direct_calls,
+        program_facts,
+    )["status"] == "structurally_verified"
+    boundary = {"state": "roles", "roles": ["cclosure_callback_target"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_callback_census_source(tmp_path, reference, callbacks)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_callback_exact_binary_verification_is_cached_per_source(
+    monkeypatch,
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, _direct, callbacks = (
+        _write_callback_inputs(tmp_path)
+    )
+    from src.observatory import native_lua_cclosure_callbacks as callback_module
+
+    calls = 0
+    original = callback_module.validate_native_lua_cclosure_callback_census
+
+    def counting_validator(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        callback_module,
+        "validate_native_lua_cclosure_callback_census",
+        counting_validator,
+    )
+    source_sha256 = hashlib.sha256(
+        json.dumps(callbacks, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    cache: dict = {}
+    kwargs = {
+        "executable": executable,
+        "inventory": inventory,
+        "program_facts": program_facts,
+        "source_sha256": source_sha256,
+        "verification_cache": cache,
+        "json_pointer": "/callback_targets/0",
+        "entry_rva": program_facts["functions"][1]["entry_rva"],
+        "atlas_record_identity": atlas_record_sha256(
+            program_facts["functions"][1]
+        ),
+        "support_class": "native_lua_role",
+        "role": "cclosure_callback_target",
+        "label": "cached callback census",
+    }
+
+    first = native_accounting._adapt_native_lua_cclosure_callback_census(
+        callbacks,
+        **kwargs,
+    )
+    second = native_accounting._adapt_native_lua_cclosure_callback_census(
+        callbacks,
+        **kwargs,
+    )
+
+    assert first == second
+    assert calls == 1
+    assert list(cache) == [
+        ("pe_native_lua_immediate_cclosure_callback_census", source_sha256)
+    ]
 
 
 def test_l0_cannot_publish_resolved_higher_level_dimensions(tmp_path: Path):

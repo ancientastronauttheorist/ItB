@@ -73,6 +73,7 @@ NATIVE_LUA_BOUNDARY_STATES = {
     "roles",
 }
 NATIVE_LUA_ROLES = {
+    "cclosure_callback_target",
     "lua_api_consumer",
     "registration_builder",
     "registered_lua_callable",
@@ -124,6 +125,9 @@ _SUPPORT_RECORD_FIELDS = {
 }
 _NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND = (
     "pe_native_lua_direct_import_call_census"
+)
+_NATIVE_LUA_CCLOSURE_CALLBACK_ANALYSIS_KIND = (
+    "pe_native_lua_immediate_cclosure_callback_census"
 )
 _UPSTREAM_ADAPTERS: dict[str, Any] = {}
 
@@ -600,13 +604,13 @@ def _support_assertion(
 
 def _adapt_native_lua_direct_call_census(
     document: Mapping[str, Any],
-    target: Mapping[str, Any],
     *,
     executable: Path,
     inventory: Mapping[str, Any],
     program_facts: Mapping[str, Any],
     source_sha256: str,
     verification_cache: dict[tuple[str, str], Mapping[str, Any]],
+    json_pointer: str,
     entry_rva: str,
     atlas_record_identity: str,
     support_class: str,
@@ -618,6 +622,7 @@ def _adapt_native_lua_direct_call_census(
         raise NativeFunctionAccountingError(
             f"{label} direct Lua calls prove only the lua_api_consumer role"
         )
+    _direct_record_pointer(json_pointer, f"{label}.json_pointer")
 
     # Keep evidence-kind validation adapter-local and avoid introducing a
     # module-load dependency cycle as the adapter set grows.
@@ -638,6 +643,11 @@ def _adapt_native_lua_direct_call_census(
                 f"{exc}"
             ) from exc
         verification_cache[cache_key] = verification
+
+    target = _mapping(
+        _json_pointer(document, json_pointer, f"{label}.json_pointer"),
+        f"{label} pointed direct-call record",
+    )
 
     if (
         target.get("entry_rva") != entry_rva
@@ -665,8 +675,96 @@ def _adapt_native_lua_direct_call_census(
     }
 
 
+def _adapt_native_lua_cclosure_callback_census(
+    document: Mapping[str, Any],
+    *,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    source_sha256: str,
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
+    json_pointer: str,
+    entry_rva: str,
+    atlas_record_identity: str,
+    support_class: str,
+    role: str | None,
+    label: str,
+) -> dict[str, Any]:
+    """Derive only a verified immediate C-closure-target role atom."""
+    if support_class != "native_lua_role" or role != "cclosure_callback_target":
+        raise NativeFunctionAccountingError(
+            f"{label} immediate C-closure callbacks prove only the "
+            "cclosure_callback_target role"
+        )
+    if re.fullmatch(r"/callback_targets/(?:0|[1-9][0-9]*)", json_pointer) is None:
+        raise NativeFunctionAccountingError(
+            f"{label}.json_pointer must point directly to one callback target"
+        )
+
+    # Both imports are lazy: the callback census imports accounting's atlas
+    # record helper, and the direct census is its exact binary prerequisite.
+    from src.observatory import native_lua_cclosure_callbacks as callbacks
+    from src.observatory import native_lua_direct_calls as direct_calls_module
+
+    cache_key = (_NATIVE_LUA_CCLOSURE_CALLBACK_ANALYSIS_KIND, source_sha256)
+    if cache_key not in verification_cache:
+        try:
+            direct_calls = direct_calls_module.build_native_lua_direct_call_census(
+                executable,
+                program_facts,
+                inventory=inventory,
+            )
+            verification = callbacks.validate_native_lua_cclosure_callback_census(
+                executable,
+                document,
+                direct_calls,
+                program_facts,
+                inventory=inventory,
+            )
+        except (
+            direct_calls_module.NativeLuaDirectCallError,
+            callbacks.NativeLuaCClosureError,
+        ) as exc:
+            raise NativeFunctionAccountingError(
+                f"{label} C-closure callback census failed exact binary "
+                f"verification: {exc}"
+            ) from exc
+        verification_cache[cache_key] = verification
+
+    target = _mapping(
+        _json_pointer(document, json_pointer, f"{label}.json_pointer"),
+        f"{label} pointed callback target",
+    )
+    if (
+        target.get("callback_entry_rva") != entry_rva
+        or target.get("callback_atlas_record_sha256")
+        != atlas_record_identity
+    ):
+        raise NativeFunctionAccountingError(
+            f"{label} callback target does not describe the exact atlas record"
+        )
+    resolved_site_count = target.get("resolved_site_count")
+    if type(resolved_site_count) is not int or resolved_site_count <= 0:
+        raise NativeFunctionAccountingError(
+            f"{label} callback target has no resolved immediate sites"
+        )
+    return {
+        "assertion": {"native_lua_role": "cclosure_callback_target"},
+        "evidence_class": "fact",
+        "statement": (
+            "The exact executable contains a verified direct "
+            "lua_pushcclosure site statically passing this exact atlas entry "
+            "as its immediate C callback target; this does not prove runtime "
+            "execution or Lua-visible registration."
+        ),
+    }
+
+
 _UPSTREAM_ADAPTERS[_NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND] = (
     _adapt_native_lua_direct_call_census
+)
+_UPSTREAM_ADAPTERS[_NATIVE_LUA_CCLOSURE_CALLBACK_ANALYSIS_KIND] = (
+    _adapt_native_lua_cclosure_callback_census
 )
 
 
@@ -706,7 +804,6 @@ def _upstream_references(
             )
         sha256 = _sha256(source["sha256"], f"{item_label}.sha256")
         pointer = _text(source["json_pointer"], f"{item_label}.json_pointer")
-        _direct_record_pointer(pointer, f"{item_label}.json_pointer")
         key = (relative.as_posix(), pointer)
         if key in seen:
             raise NativeFunctionAccountingError(
@@ -723,19 +820,15 @@ def _upstream_references(
                 f"{item_label} uses an unsupported upstream analysis kind: "
                 f"{upstream_kind}"
             )
-        target = _mapping(
-            _json_pointer(document, pointer, f"{item_label}.json_pointer"),
-            f"{item_label} pointed upstream record",
-        )
         derived = _mapping(
             adapter(
                 document,
-                target,
                 executable=executable,
                 inventory=inventory,
                 program_facts=program_facts,
                 source_sha256=sha256,
                 verification_cache=verification_cache,
+                json_pointer=pointer,
                 entry_rva=entry_rva,
                 atlas_record_identity=atlas_record_identity,
                 support_class=support_class,

@@ -37,15 +37,17 @@ promotions and zero reviewed exclusions. Ghidra's 685 thunk flags and 26
 repeated-body groups are retained only as non-promoting review candidates.
 Future claims must pass dedicated exact-dimensional review and typed-support
 records, then reach hash-pinned upstream evidence through a registered
-kind-specific adapter that derives the supported assertion. The sole
-production adapter exact-rebuilds the direct-Lua-call census against the
-installed executable and can derive only the positive `lua_api_consumer` role
-atom. The empty registry still promotes no function beyond L0. No name,
-namespace, address, body-size, duplicate-body, thunk, or Ghidra-call heuristic
-can change a level or classification; unreachable, duplicate/thunk, and
-data-only exclusions also fail closed until their specialized proof contracts
-exist. See `programs/README.md` for the full registry/evidence contract,
-commands, and remaining atlas/callgraph gaps.
+kind-specific adapter that derives the supported assertion. Two production
+adapters exact-rebuild their evidence against the installed executable: the
+direct-call census can derive only `lua_api_consumer`, and the immediate
+C-closure census can derive only `cclosure_callback_target`. Neither adapter
+proves registration, ownership, runtime execution, or another dimension. The
+empty registry still promotes no function beyond L0. No name, namespace,
+address, body-size, duplicate-body, thunk, or Ghidra-call heuristic can change
+a level or classification; unreachable, duplicate/thunk, and data-only
+exclusions also fail closed until their specialized proof contracts exist. See
+`programs/README.md` for the full registry/evidence contract, commands, and
+remaining atlas/callgraph gaps.
 
 ## Native-to-Lua direct-call census
 
@@ -61,10 +63,11 @@ retained call site.
 The result is a positive binary relation, not a semantic partition. It does not
 claim runtime reachability, ownership, registration roles, callback roles,
 indirect calls, or absence of Lua use outside a retained site. Direct API
-consumer, registration-builder, and registered-callable roles can overlap, so
-the census remains a separate positive relation. Accounting schema 2 can retain
-overlapping roles, and its narrowly allowlisted adapter can use an exact
-binary-reverified census record only for positive `lua_api_consumer` support.
+consumer, C-closure callback-target, registration-builder, and registered-
+callable roles can overlap, so the census remains a separate positive relation.
+Accounting schema 2 can retain overlapping roles, and its narrowly allowlisted
+adapter can use an exact binary-reverified census record only for positive
+`lua_api_consumer` support.
 It cannot infer absence, registration, callback status, ownership, or any other
 role or dimension. See `programs/README.md` for exact commands, hashes, and
 limitations.
@@ -82,7 +85,11 @@ targets also directly call Lua imports, and three targets also contain direct
 The artifact claims only that an atlas entry is statically passed as a closure
 callback argument. It does not infer a Lua-visible name, global registration,
 runtime execution, ownership, semantics, or a target for either computed
-argument. See `programs/README.md` for exact commands, hashes, and limits.
+argument. Accounting's callback adapter rebuilds the whole direct-call and
+callback chain against the executable and can derive only the positive
+`cclosure_callback_target` role. `registered_lua_callable` remains reserved for
+future evidence that proves publication or registration beyond closure
+construction. See `programs/README.md` for exact commands, hashes, and limits.
 
 ## Compiled Lua census
 

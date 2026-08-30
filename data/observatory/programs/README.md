@@ -94,9 +94,9 @@ executes at runtime, or that a function without a retained site never reaches
 Lua indirectly. Direct API consumer, registration-builder, and registered-Lua-
 callable relations can overlap. The census therefore publishes the positive
 call relation independently; accounting schema 2 can represent overlapping
-roles, and its sole production adapter exact-rebuilds this census against the
+roles, and its direct-call adapter exact-rebuilds this census against the
 installed executable before deriving only positive `lua_api_consumer` support.
-It does not infer a negative boundary, registration, callback status,
+It does not infer a negative boundary, C-closure target, registration,
 ownership, or another role.
 
 ## Native Lua C-closure callback census
@@ -145,6 +145,13 @@ arguments. Identical output is reused without writing, and differing or
 concurrently created output is preserved and rejected; verification also
 requires the deterministic pretty-printed bytes pinned above.
 
+The accounting adapter for this artifact first rebuilds the exact direct-call
+prerequisite, then rebuilds and canonical-compares the complete callback census
+against the executable. A pointed callback target can derive only the positive
+`cclosure_callback_target` role. It cannot derive runtime execution, a
+Lua-visible name or export, table/global storage, lifetime, ownership,
+`registered_lua_callable`, or a target for either unresolved computed argument.
+
 ## Native function review accounting
 
 The program-facts atlas is also the immutable denominator for a separate
@@ -189,8 +196,8 @@ registry's raw and canonical SHA-256 values are respectively
 `910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
 `1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
 The derived ledger's raw and canonical SHA-256 values are respectively
-`dce9c1ca4be996040d07da3b6ae4ed12ee5bd1f9700a76c84c554edb052422cf` and
-`6fb65edc5c4bbf4cca7a8fd1063c13ab414fc866e8e5ad6ae6bc065a3ad8c5b5`.
+`5933a073d0797a4d3dad9459a4cc320b6a139b934cc139dbb3f940d12cfa26c8` and
+`7eeac18e0d9a8efe85f87e5e8d392ead3fdf70b958e683a4d86b13ff7f2cbd07`.
 Existing byte-identical deterministic output is reused; differing, reformatted,
 or concurrent output is never overwritten.
 
@@ -224,14 +231,13 @@ Promotions use a fail-closed three-layer evidence contract:
 All paths, file hashes, JSON pointers, identities, and pointed records are
 verified on every build. Windows drive-relative paths, NTFS alternate data
 streams, reserved names, symlinks, junctions, and changed parent directories
-fail closed. The sole production adapter accepts the direct-Lua-call census,
-rebuilds and canonical-compares it against the exact executable once per
-source artifact per accounting build, and derives only the positive
-`lua_api_consumer` role atom. It cannot support `none`, another role, or any
-ownership, reference, semantic, boundary, or exclusion dimension. The empty
-registry therefore still leaves every function at L0. The C-closure callback
-census remains outside the adapter allowlist until its own exact contract can
-derive only the callback role that source proves.
+fail closed. Two production adapters accept the direct-Lua-call and immediate
+C-closure callback censuses. Each rebuilds and canonical-compares its complete
+evidence chain against the exact executable once per source artifact per
+accounting build. They derive only `lua_api_consumer` and
+`cclosure_callback_target`, respectively; neither can support `none`, another
+role, or any ownership, reference, semantic, boundary, or exclusion dimension.
+The empty registry therefore still leaves every function at L0.
 
 Only third-party and compiler-runtime exclusions have a generic v2 shape, and
 they still require typed ownership plus exclusion support through an

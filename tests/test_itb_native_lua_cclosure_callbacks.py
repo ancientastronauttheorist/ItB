@@ -21,6 +21,7 @@ from src.observatory.native_lua_cclosure_callbacks import (
     build_native_lua_cclosure_callback_census,
     encode_native_lua_cclosure_callback_census,
     validate_native_lua_cclosure_callback_census,
+    validate_native_lua_cclosure_callback_structure,
 )
 from src.observatory.native_lua_direct_calls import (
     build_native_lua_direct_call_census,
@@ -530,3 +531,272 @@ def test_committed_callback_census_identity_and_partitions():
                 walk(child)
 
     walk(artifact)
+
+
+def test_structure_validator_accepts_complete_synthetic_and_committed_censuses(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    verification = validate_native_lua_cclosure_callback_structure(
+        result, direct_calls, program_facts
+    )
+    assert verification["status"] == "structurally_verified"
+    assert verification["evidence_sha256"] == hashlib.sha256(
+        cclosure_callbacks._canonical_bytes(result)
+    ).hexdigest()
+
+    root = _REPO_ROOT / "data" / "observatory" / "programs"
+    committed = json.loads(
+        (root / "windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    committed_direct = json.loads(
+        (root / "windows_build_13725832_31fe35265598_native_lua_direct_call_census.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    committed_facts = json.loads(
+        (root / "windows_build_13725832_31fe35265598_program_facts.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert validate_native_lua_cclosure_callback_structure(
+        committed, committed_direct, committed_facts
+    )["status"] == "structurally_verified"
+
+
+def test_structure_validator_rejects_direct_and_atlas_identity_drift(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    wrong_direct = copy.deepcopy(result)
+    wrong_direct["direct_call_census"]["canonical_sha256"] = "0" * 64
+    with pytest.raises(NativeLuaCClosureError, match="direct-call census identity"):
+        validate_native_lua_cclosure_callback_structure(
+            wrong_direct, direct_calls, program_facts
+        )
+
+    wrong_atlas = copy.deepcopy(program_facts)
+    wrong_atlas["functions"][1]["name"] = "not-the-reviewed-atlas"
+    with pytest.raises(NativeLuaCClosureError, match="structural prerequisite"):
+        validate_native_lua_cclosure_callback_structure(
+            result, direct_calls, wrong_atlas
+        )
+
+
+def test_structure_validator_rejects_malformed_other_site_and_target(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    malformed_site = copy.deepcopy(result)
+    extra = copy.deepcopy(malformed_site["resolved_sites"][0])
+    extra["call_rva"] = "0x00001040"
+    malformed_site["resolved_sites"].append(extra)
+    with pytest.raises(NativeLuaCClosureError, match="direct lua_pushcclosure"):
+        validate_native_lua_cclosure_callback_structure(
+            malformed_site, direct_calls, program_facts
+        )
+
+    malformed_target = copy.deepcopy(result)
+    malformed_target["callback_targets"][0]["unrelated"] = True
+    with pytest.raises(NativeLuaCClosureError, match="fields differ"):
+        validate_native_lua_cclosure_callback_structure(
+            malformed_target, direct_calls, program_facts
+        )
+
+
+def test_structure_validator_rejects_duplicate_order_and_partition_holes(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    duplicate = copy.deepcopy(result)
+    duplicate["resolved_sites"].append(copy.deepcopy(duplicate["resolved_sites"][0]))
+    with pytest.raises(NativeLuaCClosureError, match="unique and call-RVA ordered"):
+        validate_native_lua_cclosure_callback_structure(
+            duplicate, direct_calls, program_facts
+        )
+
+    hole = copy.deepcopy(result)
+    hole["resolved_sites"] = []
+    with pytest.raises(NativeLuaCClosureError, match="exactly partition"):
+        validate_native_lua_cclosure_callback_structure(hole, direct_calls, program_facts)
+
+    unordered_target = copy.deepcopy(result)
+    unordered_target["callback_targets"].append(
+        copy.deepcopy(unordered_target["callback_targets"][0])
+    )
+    with pytest.raises(NativeLuaCClosureError, match="unique and callback-entry-RVA ordered"):
+        validate_native_lua_cclosure_callback_structure(
+            unordered_target, direct_calls, program_facts
+        )
+
+
+@pytest.mark.parametrize(
+    ("location", "value", "message"),
+    [
+        (("resolved_sites", 0, "caller_entry_rva"), "0x00001040", "exact direct call"),
+        (("resolved_sites", 0, "callback_atlas_record_sha256"), "0" * 64, "does not match atlas"),
+        (("resolved_sites", 0, "self_callback"), True, "self_callback disagrees"),
+        (("callback_targets", 0, "also_direct_lua_import_caller"), True, "do not exactly aggregate"),
+    ],
+)
+def test_structure_validator_rejects_caller_target_hash_self_and_overlap_drift(
+    tmp_path: Path,
+    location: tuple[object, ...],
+    value: object,
+    message: str,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+    tampered = copy.deepcopy(result)
+    destination: object = tampered
+    for key in location[:-1]:
+        destination = destination[key]  # type: ignore[index]
+    destination[location[-1]] = value  # type: ignore[index]
+
+    with pytest.raises(NativeLuaCClosureError, match=message):
+        validate_native_lua_cclosure_callback_structure(
+            tampered, direct_calls, program_facts
+        )
+
+
+def test_structure_validator_rejects_sequence_and_callback_push_hash_drift(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    wrong_sequence = copy.deepcopy(result)
+    wrong_sequence["resolved_sites"][0]["callback_push"]["rva"] = "0x00001025"
+    with pytest.raises(NativeLuaCClosureError, match="not contiguous"):
+        validate_native_lua_cclosure_callback_structure(
+            wrong_sequence, direct_calls, program_facts
+        )
+
+    wrong_hash = copy.deepcopy(result)
+    wrong_hash["resolved_sites"][0]["callback_push"]["sha256"] = "0" * 64
+    with pytest.raises(NativeLuaCClosureError, match="does not reconstruct"):
+        validate_native_lua_cclosure_callback_structure(
+            wrong_hash, direct_calls, program_facts
+        )
+
+    outside_caller_range = copy.deepcopy(result)
+    outside_caller_range["resolved_sites"][0]["callback_push"]["rva"] = (
+        "0x0000101f"
+    )
+    outside_caller_range["resolved_sites"][0]["callback_push"]["size"] = 8
+    with pytest.raises(NativeLuaCClosureError, match="exact caller atlas range"):
+        validate_native_lua_cclosure_callback_structure(
+            outside_caller_range, direct_calls, program_facts
+        )
+
+    wrong_state_push = copy.deepcopy(result)
+    wrong_state_push["resolved_sites"][0]["state_push"]["sha256"] = "0" * 64
+    with pytest.raises(NativeLuaCClosureError, match="exact x86 register PUSH"):
+        validate_native_lua_cclosure_callback_structure(
+            wrong_state_push, direct_calls, program_facts
+        )
+
+    wrong_upvalue_push = copy.deepcopy(result)
+    wrong_upvalue_push["resolved_sites"][0]["upvalue_push"]["sha256"] = "0" * 64
+    with pytest.raises(NativeLuaCClosureError, match="literal upvalue count"):
+        validate_native_lua_cclosure_callback_structure(
+            wrong_upvalue_push, direct_calls, program_facts
+        )
+
+
+def test_structure_validator_rejects_callback_image_va_overflow(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+    overflow_facts = copy.deepcopy(program_facts)
+    overflow_facts["functions"][1]["entry_rva"] = "0xffffffff"
+    overflow_direct = copy.deepcopy(direct_calls)
+    overflow_direct["atlas"]["canonical_sha256"] = (
+        cclosure_callbacks._canonical_sha256(overflow_facts)
+    )
+    overflow_evidence = copy.deepcopy(result)
+    overflow_evidence["atlas"]["canonical_sha256"] = overflow_direct["atlas"][
+        "canonical_sha256"
+    ]
+    overflow_evidence["direct_call_census"]["canonical_sha256"] = (
+        cclosure_callbacks._canonical_sha256(overflow_direct)
+    )
+    overflow_hash = atlas_record_sha256(overflow_facts["functions"][1])
+    overflow_evidence["resolved_sites"][0]["callback_entry_rva"] = "0xffffffff"
+    overflow_evidence["resolved_sites"][0]["callback_atlas_record_sha256"] = (
+        overflow_hash
+    )
+    overflow_evidence["callback_targets"][0]["callback_entry_rva"] = "0xffffffff"
+    overflow_evidence["callback_targets"][0]["callback_atlas_record_sha256"] = (
+        overflow_hash
+    )
+
+    with pytest.raises(NativeLuaCClosureError, match="overflows the x86 image VA"):
+        validate_native_lua_cclosure_callback_structure(
+            overflow_evidence, overflow_direct, overflow_facts
+        )
+
+
+def test_structure_validator_rejects_unresolved_target_invention_and_kind_drift(
+    tmp_path: Path,
+):
+    code = b"\x6a\x02\x53\x50\xff\x15" + struct.pack(
+        "<I", _IMAGE_BASE + _IAT_RVA
+    ) + b"\xc3"
+    executable, inventory, program_facts, direct_calls = _write_inputs(
+        tmp_path, code=code
+    )
+    result = _build(executable, inventory, program_facts, direct_calls)
+
+    invention = copy.deepcopy(result)
+    invention["unresolved_sites"][0]["callback_entry_rva"] = "0x00001040"
+    with pytest.raises(NativeLuaCClosureError, match="fields differ"):
+        validate_native_lua_cclosure_callback_structure(
+            invention, direct_calls, program_facts
+        )
+
+    unsupported = copy.deepcopy(result)
+    unsupported["unresolved_sites"][0]["callback_argument_kind"] = "immediate"
+    with pytest.raises(NativeLuaCClosureError, match="unsupported"):
+        validate_native_lua_cclosure_callback_structure(
+            unsupported, direct_calls, program_facts
+        )
+
+
+@pytest.mark.parametrize(
+    ("location", "value", "message"),
+    [
+        (("schema_version",), 2, "unsupported native Lua callback schema"),
+        (("method", "accepted_callback_edge"), "drift", "method contract"),
+        (("decoder", "version"), "5.0.8", "decoder contract"),
+    ],
+)
+def test_structure_validator_rejects_schema_method_and_decoder_drift(
+    tmp_path: Path,
+    location: tuple[str, ...],
+    value: object,
+    message: str,
+):
+    executable, inventory, program_facts, direct_calls = _write_inputs(tmp_path)
+    result = _build(executable, inventory, program_facts, direct_calls)
+    tampered = copy.deepcopy(result)
+    destination: object = tampered
+    for key in location[:-1]:
+        destination = destination[key]  # type: ignore[index]
+    destination[location[-1]] = value  # type: ignore[index]
+
+    with pytest.raises(NativeLuaCClosureError, match=message):
+        validate_native_lua_cclosure_callback_structure(
+            tampered, direct_calls, program_facts
+        )

@@ -216,7 +216,10 @@ until core engine semantics are reconstructed.
   identify 11 unique non-thunk atlas entries, include one self-edge, and prove
   real role overlap: all 11 targets directly call Lua imports and three also
   call `lua_pushcclosure`. The artifact does not infer registration names,
-  table identities, runtime execution, or targets for computed arguments.
+  table identities, runtime execution, or targets for computed arguments. Its
+  accounting adapter exact-rebuilds the direct-call prerequisite and callback
+  census before deriving only `cclosure_callback_target`; the stronger
+  `registered_lua_callable` role remains unproven.
 - [x] Upgrade the native review ledger to schema 2 with strict `unknown`,
   `none`, and `roles` boundary states plus independently supported,
   non-exclusive positive role atoms. The empty registry still leaves all
@@ -228,12 +231,14 @@ until core engine semantics are reconstructed.
   body, and 18,477 computed or unmapped call targets without silently changing
   the denominator. The direct-Lua census explains a decoder-backed subset of
   that omitted-call surface but does not rewrite the unchanged Ghidra omission
-  counter. The L0 ledger has one production upstream-analysis adapter, narrowly
-  limited to binary-reverified positive `lua_api_consumer` support from the
-  direct-call census. The empty registry still promotes nothing, and every
-  other assertion fails closed until a kind-specific adapter can derive it from
-  independently verified evidence. The callback relation still needs its own
-  whole-artifact validator and single-role adapter contract.
+  counter. The L0 ledger has two production upstream-analysis adapters,
+  narrowly limited to binary-reverified positive `lua_api_consumer` and
+  `cclosure_callback_target` support. The empty registry still promotes
+  nothing, and every other assertion fails closed until a kind-specific adapter
+  can derive it from independently verified evidence. In particular, closure
+  construction does not prove Lua-visible registration;
+  `registered_lua_callable` and `registration_builder` remain open
+  registration-graph work.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757
