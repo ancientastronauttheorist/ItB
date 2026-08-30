@@ -94,7 +94,10 @@ executes at runtime, or that a function without a retained site never reaches
 Lua indirectly. Direct API consumer, registration-builder, and registered-Lua-
 callable relations can overlap. The census therefore publishes the positive
 call relation independently; accounting schema 2 can represent overlapping
-roles, but no production adapter promotes this relation yet.
+roles, and its sole production adapter exact-rebuilds this census against the
+installed executable before deriving only positive `lua_api_consumer` support.
+It does not infer a negative boundary, registration, callback status,
+ownership, or another role.
 
 ## Native Lua C-closure callback census
 
@@ -186,8 +189,8 @@ registry's raw and canonical SHA-256 values are respectively
 `910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
 `1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
 The derived ledger's raw and canonical SHA-256 values are respectively
-`133cd4f98ae1ddb86f290eef3cfbc3799d1be305a17541798df5f400efd8fa8a` and
-`e55f1e8d85279e40689f9b362f3a6e37293ed21b7b363cd5fe704e1a591db86c`.
+`dce9c1ca4be996040d07da3b6ae4ed12ee5bd1f9700a76c84c554edb052422cf` and
+`6fb65edc5c4bbf4cca7a8fd1063c13ab414fc866e8e5ad6ae6bc065a3ad8c5b5`.
 Existing byte-identical deterministic output is reused; differing, reformatted,
 or concurrent output is never overwritten.
 
@@ -221,13 +224,14 @@ Promotions use a fail-closed three-layer evidence contract:
 All paths, file hashes, JSON pointers, identities, and pointed records are
 verified on every build. Windows drive-relative paths, NTFS alternate data
 streams, reserved names, symlinks, junctions, and changed parent directories
-fail closed. The production adapter allowlist is intentionally empty in this
-initial L0 tranche, so no registry promotion is accepted yet. The next review
-tranches must add narrow adapters for independently verified Observatory
-artifact kinds before adding claims. The direct-call and C-closure callback
-censuses are not adapters yet: schema 2 can retain their overlapping positive
-roles, but adapters still need exact whole-artifact structural validation and
-must derive only the one role each source actually proves.
+fail closed. The sole production adapter accepts the direct-Lua-call census,
+rebuilds and canonical-compares it against the exact executable once per
+source artifact per accounting build, and derives only the positive
+`lua_api_consumer` role atom. It cannot support `none`, another role, or any
+ownership, reference, semantic, boundary, or exclusion dimension. The empty
+registry therefore still leaves every function at L0. The C-closure callback
+census remains outside the adapter allowlist until its own exact contract can
+derive only the callback role that source proves.
 
 Only third-party and compiler-runtime exclusions have a generic v2 shape, and
 they still require typed ownership plus exclusion support through an

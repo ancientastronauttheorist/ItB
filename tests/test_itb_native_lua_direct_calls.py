@@ -23,6 +23,7 @@ from src.observatory.native_lua_direct_calls import (
     _assert_publication_safe,
     build_native_lua_direct_call_census,
     encode_native_lua_direct_call_census,
+    validate_native_lua_direct_call_structure,
     validate_native_lua_direct_call_census,
 )
 from src.observatory.program_facts import build_program_facts
@@ -242,6 +243,119 @@ def test_builds_exact_direct_call_relation_without_publishing_instruction_bytes(
         inventory=inventory,
     )
     assert verification["status"] == "verified"
+
+
+def test_structure_validator_checks_complete_census_against_whole_atlas(tmp_path: Path):
+    executable, _inventory_path, _program_path, inventory, program_facts = (
+        _write_inputs(tmp_path)
+    )
+    result = _build(executable, inventory, program_facts)
+
+    verification = validate_native_lua_direct_call_structure(result, program_facts)
+
+    assert verification["status"] == "structurally_verified"
+    assert verification["evidence_sha256"] == hashlib.sha256(
+        native_lua_direct_calls._canonical_bytes(result)
+    ).hexdigest()
+
+    wrong_atlas = copy.deepcopy(program_facts)
+    wrong_atlas["functions"][1]["name"] = "not-the-reviewed-atlas"
+    with pytest.raises(NativeLuaDirectCallError, match="atlas identity"):
+        validate_native_lua_direct_call_structure(result, wrong_atlas)
+
+
+def test_structure_validator_rejects_unrelated_record_and_import_aggregate_tampering(
+    tmp_path: Path,
+):
+    executable, _inventory_path, _program_path, inventory, program_facts = (
+        _write_inputs(tmp_path)
+    )
+    result = _build(executable, inventory, program_facts)
+
+    # The original selected record remains valid; the validator must still
+    # inspect an unrelated record rather than validating a convenient subset.
+    extra_record = copy.deepcopy(result["records"][0])
+    extra_record["entry_rva"] = "0x00001040"
+    extra_record["atlas_record_sha256"] = atlas_record_sha256(
+        program_facts["functions"][1]
+    )
+    extra_record["direct_lua_import_calls"][0]["call_rva"] = "0x00001040"
+    extra_record["direct_call_count"] = 0
+    malformed_other = copy.deepcopy(result)
+    malformed_other["records"].append(extra_record)
+    with pytest.raises(NativeLuaDirectCallError, match="direct_call_count"):
+        validate_native_lua_direct_call_structure(malformed_other, program_facts)
+
+    bad_aggregate = copy.deepcopy(result)
+    bad_aggregate["lua_imports"][0]["direct_call_sites"] = 2
+    with pytest.raises(NativeLuaDirectCallError, match="aggregates"):
+        validate_native_lua_direct_call_structure(bad_aggregate, program_facts)
+
+
+def test_structure_validator_rejects_call_order_duplicates_and_out_of_range_calls(
+    tmp_path: Path,
+):
+    executable, _inventory_path, _program_path, inventory, program_facts = (
+        _write_inputs(tmp_path)
+    )
+    result = _build(executable, inventory, program_facts)
+
+    duplicate = copy.deepcopy(result)
+    duplicate["records"][0]["direct_lua_import_calls"].append(
+        copy.deepcopy(duplicate["records"][0]["direct_lua_import_calls"][0])
+    )
+    duplicate["records"][0]["direct_call_count"] = 2
+    with pytest.raises(NativeLuaDirectCallError, match="unique and ordered"):
+        validate_native_lua_direct_call_structure(duplicate, program_facts)
+
+    outside = copy.deepcopy(result)
+    outside["records"][0]["direct_lua_import_calls"][0]["call_rva"] = "0x0000101f"
+    with pytest.raises(NativeLuaDirectCallError, match="outside its atlas body ranges"):
+        validate_native_lua_direct_call_structure(outside, program_facts)
+
+
+def test_structure_validator_binds_instruction_hash_to_declared_ff15_iat_call(
+    tmp_path: Path,
+):
+    executable, _inventory_path, _program_path, inventory, program_facts = (
+        _write_inputs(tmp_path)
+    )
+    result = _build(executable, inventory, program_facts)
+    wrong_hash = copy.deepcopy(result)
+    wrong_hash["records"][0]["direct_lua_import_calls"][0]["instruction_sha256"] = (
+        "0" * 64
+    )
+
+    with pytest.raises(NativeLuaDirectCallError, match="declared FF15 IAT call"):
+        validate_native_lua_direct_call_structure(wrong_hash, program_facts)
+
+
+@pytest.mark.parametrize(
+    ("location", "value", "message"),
+    [
+        (("schema_version",), 2, "unsupported native Lua direct-call schema"),
+        (("method", "accepted_edge"), "drift", "method contract"),
+        (("decoder", "version"), "5.0.8", "decoder contract"),
+    ],
+)
+def test_structure_validator_rejects_contract_drift(
+    tmp_path: Path,
+    location: tuple[str, ...],
+    value: object,
+    message: str,
+):
+    executable, _inventory_path, _program_path, inventory, program_facts = (
+        _write_inputs(tmp_path)
+    )
+    result = _build(executable, inventory, program_facts)
+    tampered = copy.deepcopy(result)
+    destination: object = tampered
+    for key in location[:-1]:
+        destination = destination[key]  # type: ignore[index]
+    destination[location[-1]] = value  # type: ignore[index]
+
+    with pytest.raises(NativeLuaDirectCallError, match=message):
+        validate_native_lua_direct_call_structure(tampered, program_facts)
 
 
 def test_non_call_iat_reference_is_not_promoted(tmp_path: Path):

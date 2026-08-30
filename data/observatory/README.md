@@ -37,13 +37,15 @@ promotions and zero reviewed exclusions. Ghidra's 685 thunk flags and 26
 repeated-body groups are retained only as non-promoting review candidates.
 Future claims must pass dedicated exact-dimensional review and typed-support
 records, then reach hash-pinned upstream evidence through a registered
-kind-specific adapter that derives the supported assertion. The initial
-production adapter allowlist is empty, so this tranche cannot promote a
-function beyond L0. No name, namespace, address, body-size, duplicate-body,
-thunk, or Ghidra-call heuristic can change a level or classification;
-unreachable, duplicate/thunk, and data-only exclusions also fail closed until
-their specialized proof contracts exist. See `programs/README.md` for the
-full registry/evidence contract, commands, and remaining atlas/callgraph gaps.
+kind-specific adapter that derives the supported assertion. The sole
+production adapter exact-rebuilds the direct-Lua-call census against the
+installed executable and can derive only the positive `lua_api_consumer` role
+atom. The empty registry still promotes no function beyond L0. No name,
+namespace, address, body-size, duplicate-body, thunk, or Ghidra-call heuristic
+can change a level or classification; unreachable, duplicate/thunk, and
+data-only exclusions also fail closed until their specialized proof contracts
+exist. See `programs/README.md` for the full registry/evidence contract,
+commands, and remaining atlas/callgraph gaps.
 
 ## Native-to-Lua direct-call census
 
@@ -61,8 +63,11 @@ claim runtime reachability, ownership, registration roles, callback roles,
 indirect calls, or absence of Lua use outside a retained site. Direct API
 consumer, registration-builder, and registered-callable roles can overlap, so
 the census remains a separate positive relation. Accounting schema 2 can retain
-overlapping roles, but its production adapter allowlist remains empty.
-See `programs/README.md` for exact commands, hashes, and limitations.
+overlapping roles, and its narrowly allowlisted adapter can use an exact
+binary-reverified census record only for positive `lua_api_consumer` support.
+It cannot infer absence, registration, callback status, ownership, or any other
+role or dimension. See `programs/README.md` for exact commands, hashes, and
+limitations.
 
 ## Native Lua C-closure callbacks
 

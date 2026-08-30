@@ -122,6 +122,9 @@ _SUPPORT_RECORD_FIELDS = {
     "statement",
     "sources",
 }
+_NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND = (
+    "pe_native_lua_direct_import_call_census"
+)
 _UPSTREAM_ADAPTERS: dict[str, Any] = {}
 
 
@@ -595,11 +598,87 @@ def _support_assertion(
     return {field: review[field] for field in fields}
 
 
+def _adapt_native_lua_direct_call_census(
+    document: Mapping[str, Any],
+    target: Mapping[str, Any],
+    *,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    source_sha256: str,
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
+    entry_rva: str,
+    atlas_record_identity: str,
+    support_class: str,
+    role: str | None,
+    label: str,
+) -> dict[str, Any]:
+    """Derive only the positive direct-Lua-consumer role atom."""
+    if support_class != "native_lua_role" or role != "lua_api_consumer":
+        raise NativeFunctionAccountingError(
+            f"{label} direct Lua calls prove only the lua_api_consumer role"
+        )
+
+    # Keep evidence-kind validation adapter-local and avoid introducing a
+    # module-load dependency cycle as the adapter set grows.
+    from src.observatory import native_lua_direct_calls as direct_calls
+
+    cache_key = (_NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND, source_sha256)
+    if cache_key not in verification_cache:
+        try:
+            verification = direct_calls.validate_native_lua_direct_call_census(
+                executable,
+                document,
+                program_facts,
+                inventory=inventory,
+            )
+        except direct_calls.NativeLuaDirectCallError as exc:
+            raise NativeFunctionAccountingError(
+                f"{label} direct Lua census failed exact binary verification: "
+                f"{exc}"
+            ) from exc
+        verification_cache[cache_key] = verification
+
+    if (
+        target.get("entry_rva") != entry_rva
+        or target.get("atlas_record_sha256") != atlas_record_identity
+    ):
+        raise NativeFunctionAccountingError(
+            f"{label} direct Lua census does not describe the exact atlas record"
+        )
+    calls = target.get("direct_lua_import_calls")
+    if type(calls) is not list or not calls:
+        raise NativeFunctionAccountingError(
+            f"{label} direct Lua census record has no retained direct calls"
+        )
+    if target.get("direct_call_count") != len(calls):
+        raise NativeFunctionAccountingError(
+            f"{label} direct Lua census call count differs"
+        )
+    return {
+        "assertion": {"native_lua_role": "lua_api_consumer"},
+        "evidence_class": "fact",
+        "statement": (
+            "The exact executable and atlas function contain at least one "
+            "verified direct call to a named Lua 5.1 import."
+        ),
+    }
+
+
+_UPSTREAM_ADAPTERS[_NATIVE_LUA_DIRECT_CALL_ANALYSIS_KIND] = (
+    _adapt_native_lua_direct_call_census
+)
+
+
 def _upstream_references(
     value: Any,
     *,
     label: str,
     repo_root: Path,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
     atlas_identity: Mapping[str, Any],
     entry_rva: str,
     atlas_record_identity: str,
@@ -635,13 +714,6 @@ def _upstream_references(
             )
         seen.add(key)
         document = _read_repo_json(repo_root, relative, sha256)
-        if (
-            type(document.get("schema_version")) is not int
-            or document.get("schema_version") != SCHEMA_VERSION
-        ):
-            raise NativeFunctionAccountingError(
-                f"{item_label} has an unsupported upstream schema"
-            )
         upstream_kind = _text(
             document.get("analysis_kind"), f"{item_label}.analysis_kind"
         )
@@ -651,11 +723,6 @@ def _upstream_references(
                 f"{item_label} uses an unsupported upstream analysis kind: "
                 f"{upstream_kind}"
             )
-        if not _array(document.get("records"), f"{item_label}.records"):
-            raise NativeFunctionAccountingError(
-                f"{item_label}.records must be non-empty"
-            )
-        _identity_matches(document, atlas_identity, item_label)
         target = _mapping(
             _json_pointer(document, pointer, f"{item_label}.json_pointer"),
             f"{item_label} pointed upstream record",
@@ -664,6 +731,11 @@ def _upstream_references(
             adapter(
                 document,
                 target,
+                executable=executable,
+                inventory=inventory,
+                program_facts=program_facts,
+                source_sha256=sha256,
+                verification_cache=verification_cache,
                 entry_rva=entry_rva,
                 atlas_record_identity=atlas_record_identity,
                 support_class=support_class,
@@ -718,6 +790,10 @@ def _support_references(
     *,
     label: str,
     repo_root: Path,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
     atlas_identity: Mapping[str, Any],
     entry_rva: str,
     atlas_record_identity: str,
@@ -838,6 +914,10 @@ def _support_references(
             target["sources"],
             label=f"{item_label}.sources",
             repo_root=repo_root,
+            executable=executable,
+            inventory=inventory,
+            program_facts=program_facts,
+            verification_cache=verification_cache,
             atlas_identity=atlas_identity,
             entry_rva=entry_rva,
             atlas_record_identity=atlas_record_identity,
@@ -898,6 +978,10 @@ def _evidence_references(
     *,
     label: str,
     repo_root: Path,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
     atlas_identity: Mapping[str, Any],
     entry_rva: str,
     atlas_record_identity: str,
@@ -947,6 +1031,10 @@ def _evidence_references(
             target["support"],
             label=f"{item_label}.support",
             repo_root=repo_root,
+            executable=executable,
+            inventory=inventory,
+            program_facts=program_facts,
+            verification_cache=verification_cache,
             atlas_identity=atlas_identity,
             entry_rva=entry_rva,
             atlas_record_identity=atlas_record_identity,
@@ -1100,6 +1188,10 @@ def _normalize_claims(
     *,
     functions_by_entry: Mapping[str, Mapping[str, Any]],
     repo_root: Path,
+    executable: Path,
+    inventory: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+    verification_cache: dict[tuple[str, str], Mapping[str, Any]],
     atlas_identity: Mapping[str, Any],
 ) -> dict[str, dict[str, Any]]:
     claims: dict[str, dict[str, Any]] = {}
@@ -1218,6 +1310,10 @@ def _normalize_claims(
             claim["evidence"],
             label=f"{label}.evidence",
             repo_root=repo_root,
+            executable=executable,
+            inventory=inventory,
+            program_facts=program_facts,
+            verification_cache=verification_cache,
             atlas_identity=atlas_identity,
             entry_rva=entry,
             atlas_record_identity=expected_record_sha256,
@@ -1368,10 +1464,17 @@ def build_native_function_accounting(
         previous_entry = entry
         functions_by_entry[entry] = function
 
+    upstream_verification_cache: dict[
+        tuple[str, str], Mapping[str, Any]
+    ] = {}
     claims = _normalize_claims(
         registry,
         functions_by_entry=functions_by_entry,
         repo_root=repo_root,
+        executable=executable,
+        inventory=inventory,
+        program_facts=program_facts,
+        verification_cache=upstream_verification_cache,
         atlas_identity=atlas_identity,
     )
     calls = _array(

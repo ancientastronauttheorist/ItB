@@ -207,7 +207,10 @@ until core engine semantics are reconstructed.
   4,739 six-byte `FF 15` calls from 1,787 atlas functions to the 54 named
   `lua5.1.dll` IAT slots. This is a positive direct-call relation only; it does
   not claim runtime reachability, negative Lua-use results, ownership, or a
-  mutually exclusive registration/callback role.
+  mutually exclusive registration/callback role. Its accounting adapter
+  exact-rebuilds and compares the whole census against the installed executable
+  before deriving only positive `lua_api_consumer` support; it cannot support
+  absence, another role, or another review dimension.
 - [x] Partition all 15 direct `lua_pushcclosure` sites into 13 exact immediate
   callback edges and two unresolved computed arguments. The resolved sites
   identify 11 unique non-thunk atlas entries, include one self-edge, and prove
@@ -225,11 +228,12 @@ until core engine semantics are reconstructed.
   body, and 18,477 computed or unmapped call targets without silently changing
   the denominator. The direct-Lua census explains a decoder-backed subset of
   that omitted-call surface but does not rewrite the unchanged Ghidra omission
-  counter. The L0 ledger currently has no production upstream-analysis adapters,
-  so promotions fail closed until narrow kind-specific adapters can derive each
-  supported assertion from independently verified artifacts. The next adapter
-  tranche must validate whole-artifact structure and derive only the positive
-  role atom each direct-call or callback relation actually proves.
+  counter. The L0 ledger has one production upstream-analysis adapter, narrowly
+  limited to binary-reverified positive `lua_api_consumer` support from the
+  direct-call census. The empty registry still promotes nothing, and every
+  other assertion fails closed until a kind-specific adapter can derive it from
+  independently verified evidence. The callback relation still needs its own
+  whole-artifact validator and single-role adapter contract.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757

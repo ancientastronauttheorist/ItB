@@ -20,10 +20,10 @@ _COMMITTED_REGISTRY_CANONICAL_SHA256 = (
     "1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4"
 )
 _COMMITTED_ACCOUNTING_RAW_SHA256 = (
-    "133cd4f98ae1ddb86f290eef3cfbc3799d1be305a17541798df5f400efd8fa8a"
+    "dce9c1ca4be996040d07da3b6ae4ed12ee5bd1f9700a76c84c554edb052422cf"
 )
 _COMMITTED_ACCOUNTING_CANONICAL_SHA256 = (
-    "e55f1e8d85279e40689f9b362f3a6e37293ed21b7b363cd5fe704e1a591db86c"
+    "6fb65edc5c4bbf4cca7a8fd1063c13ab414fc866e8e5ad6ae6bc065a3ad8c5b5"
 )
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
@@ -44,7 +44,15 @@ from src.observatory.native_function_accounting import (
     encode_native_function_accounting,
     validate_native_function_accounting,
 )
+from src.observatory.native_lua_direct_calls import (
+    build_native_lua_direct_call_census,
+    validate_native_lua_direct_call_structure,
+)
 from src.observatory.program_facts import build_program_facts
+
+
+_IMAGE_BASE = 0x00400000
+_LUA_IAT_RVA = 0x00001190
 
 
 @pytest.fixture(autouse=True)
@@ -53,12 +61,49 @@ def _install_synthetic_upstream_adapter(monkeypatch):
         document,
         target,
         *,
+        executable,
+        inventory,
+        program_facts,
+        source_sha256,
+        verification_cache,
         entry_rva,
         atlas_record_identity,
         support_class,
         role,
         label,
     ):
+        if not executable.is_file() or inventory["executable"]["path"] != "Breach.exe":
+            raise NativeFunctionAccountingError(
+                f"{label} synthetic upstream build context differs"
+            )
+        if source_sha256 != hashlib.sha256(
+            json.dumps(document, sort_keys=True).encode("utf-8")
+        ).hexdigest():
+            raise NativeFunctionAccountingError(
+                f"{label} synthetic upstream source identity differs"
+            )
+        if not isinstance(verification_cache, dict):
+            raise NativeFunctionAccountingError(
+                f"{label} synthetic upstream cache differs"
+            )
+        if (
+            set(document)
+            != {"schema_version", "analysis_kind", "build_identity", "records"}
+            or document["schema_version"] != 2
+            or document["analysis_kind"] != "synthetic_native_function_analysis"
+        ):
+            raise NativeFunctionAccountingError(
+                f"{label} synthetic upstream document differs"
+            )
+        native_accounting._identity_matches(
+            document,
+            program_facts["identity"],
+            label,
+        )
+        if not isinstance(document["records"], list) or not document["records"]:
+            raise NativeFunctionAccountingError(
+                f"{label} synthetic upstream records must be non-empty"
+            )
         expected_fields = {
             "entry_rva",
             "atlas_record_sha256",
@@ -183,6 +228,86 @@ def _write_inputs(tmp_path: Path, *, first_thunk: int = 0) -> tuple[Path, dict, 
     facts = tmp_path / "program.tsv"
     facts.write_text(_facts(data, first_thunk=first_thunk), encoding="utf-8", newline="\n")
     return executable, inventory, build_program_facts(executable, facts, inventory=inventory)
+
+
+def _write_direct_lua_inputs(tmp_path: Path) -> tuple[Path, dict, dict, dict]:
+    data = bytearray(0xA00)
+    data[:2] = b"MZ"
+    struct.pack_into("<I", data, 0x3C, 0x80)
+    data[0x80:0x84] = b"PE\0\0"
+    struct.pack_into(
+        "<HHIIIHH", data, 0x84, 0x014C, 1, 0x12345678, 0, 0, 0xE0, 0x010F
+    )
+    optional = 0x98
+    struct.pack_into("<H", data, optional, 0x10B)
+    struct.pack_into("<I", data, optional + 16, 0x1020)
+    struct.pack_into("<I", data, optional + 28, _IMAGE_BASE)
+    struct.pack_into("<I", data, optional + 32, 0x1000)
+    struct.pack_into("<I", data, optional + 36, 0x200)
+    struct.pack_into("<I", data, optional + 56, 0x2000)
+    struct.pack_into("<I", data, optional + 60, 0x200)
+    struct.pack_into("<I", data, optional + 92, 16)
+    struct.pack_into("<II", data, optional + 104, 0x1100, 40)
+    section = optional + 0xE0
+    data[section : section + 8] = b".text\0\0\0"
+    struct.pack_into("<IIII", data, section + 8, 0x800, 0x1000, 0x800, 0x200)
+    struct.pack_into("<I", data, section + 36, 0x60000020)
+    code = b"\xff\x15" + struct.pack("<I", _IMAGE_BASE + _LUA_IAT_RVA) + b"\xc3"
+    data[0x220:0x227] = code
+    data[0x240:0x242] = b"\x90\xc3"
+    struct.pack_into("<IIIII", data, 0x300, 0x1180, 0, 0, 0x1140, _LUA_IAT_RVA)
+    data[0x340:0x34B] = b"lua5.1.dll\0"
+    struct.pack_into("<H", data, 0x360, 7)
+    data[0x362:0x36D] = b"lua_gettop\0"
+    struct.pack_into("<II", data, 0x380, 0x1160, 0)
+    struct.pack_into("<II", data, 0x390, 0x1160, 0)
+    raw = bytes(data)
+    executable = tmp_path / "Breach.exe"
+    executable.write_bytes(raw)
+    inventory = _inventory(raw)
+    inventory["label"] = "synthetic direct Lua accounting adapter test"
+    inventory["native_libraries"] = [
+        {
+            "path": "lua5.1.dll",
+            "size": 7,
+            "sha256": "c" * 64,
+            "format": "pe",
+            "architecture": "x86",
+        }
+    ]
+    facts = tmp_path / "program.tsv"
+    first = hashlib.sha256(code).hexdigest()
+    second = hashlib.sha256(raw[0x240:0x242]).hexdigest()
+    facts.write_text(
+        "\n".join(
+            [
+                "meta\tformat_version\t1",
+                "meta\tghidra_version\t12.1.3",
+                "meta\tprogram_name\tBreach.exe",
+                "meta\tlanguage_id\tx86:LE:32:default",
+                "meta\tcompiler_spec_id\twindows",
+                "meta\timage_base\t0x00400000",
+                "meta\tfunction_count\t2",
+                "meta\trange_count\t2",
+                "meta\tdirect_internal_call_count\t0",
+                "meta\tomitted_call_target_count\t1",
+                f"function\t0x00001020\tcaller\tGlobal\tUSER_DEFINED\t0\t7\t{first}",
+                f"function\t0x00001040\tother\tGlobal\tUSER_DEFINED\t0\t2\t{second}",
+                "range\t0x00001020\t0x00001020\t7",
+                "range\t0x00001040\t0x00001040\t2",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+    program_facts = build_program_facts(executable, facts, inventory=inventory)
+    census = build_native_lua_direct_call_census(
+        executable,
+        program_facts,
+        inventory=inventory,
+    )
+    return executable, inventory, program_facts, census
 
 
 def _registry(program_facts: dict, claims: list[dict] | None = None) -> dict:
@@ -362,6 +487,60 @@ def _rewrite_evidence_chain(tmp_path: Path, reference: dict, mutate) -> None:
     reference["sha256"] = hashlib.sha256(review_payload).hexdigest()
 
 
+def _bind_direct_census_source(
+    tmp_path: Path,
+    reference: dict,
+    census: dict,
+    *,
+    support_class: str = "native_lua_role",
+    role: str | None = "lua_api_consumer",
+) -> None:
+    direct_relative = Path("evidence") / "direct-lua-census.json"
+    direct_payload = json.dumps(census, sort_keys=True).encode("utf-8")
+    (tmp_path / direct_relative).write_bytes(direct_payload)
+    direct_sha256 = hashlib.sha256(direct_payload).hexdigest()
+
+    def bind(_review, support, _upstream):
+        record = next(
+            item
+            for item in support["records"]
+            if item["support_class"] == support_class and item["role"] == role
+        )
+        record["sources"] = [
+            {
+                "path": direct_relative.as_posix(),
+                "sha256": direct_sha256,
+                "json_pointer": "/records/0",
+            }
+        ]
+
+    _rewrite_evidence_chain(tmp_path, reference, bind)
+
+    # If the replaced source happened to be the helper's first source, its
+    # generic repinning step used the synthetic document hash. Restore the
+    # independently hash-pinned direct census and propagate the support hash.
+    review_path = tmp_path / reference["path"]
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    support_relative = Path(review["records"][0]["support"][0]["path"])
+    support_path = tmp_path / support_relative
+    support = json.loads(support_path.read_text(encoding="utf-8"))
+    record = next(
+        item
+        for item in support["records"]
+        if item["support_class"] == support_class and item["role"] == role
+    )
+    record["sources"][0]["sha256"] = direct_sha256
+    support_payload = json.dumps(support, sort_keys=True).encode("utf-8")
+    support_path.write_bytes(support_payload)
+    support_sha256 = hashlib.sha256(support_payload).hexdigest()
+    for item in review["records"][0]["support"]:
+        if item["path"] == support_relative.as_posix():
+            item["sha256"] = support_sha256
+    review_payload = json.dumps(review, sort_keys=True).encode("utf-8")
+    review_path.write_bytes(review_payload)
+    reference["sha256"] = hashlib.sha256(review_payload).hexdigest()
+
+
 def _l2_claim(
     program_facts: dict,
     evidence: dict,
@@ -406,7 +585,12 @@ def _build(
 
 def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
     tmp_path: Path,
+    monkeypatch,
 ):
+    monkeypatch.delitem(
+        native_accounting._UPSTREAM_ADAPTERS,
+        "synthetic_native_function_analysis",
+    )
     executable, inventory, program_facts = _write_inputs(tmp_path, first_thunk=1)
     registry = _registry(program_facts)
 
@@ -424,6 +608,9 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
     assert [item["review"]["ownership"] for item in result["functions"]] == [
         "unknown",
         "unknown",
+    ]
+    assert result["method"]["registered_upstream_analysis_adapters"] == [
+        "pe_native_lua_direct_import_call_census"
     ]
     summary = result["summary"]
     assert summary["atlas_functions"] == 2
@@ -529,6 +716,9 @@ def test_committed_schema_v2_registry_and_accounting_identity():
     assert accounting["summary"]["level_L0"] == 25312
     assert accounting["summary"]["level_L1"] == 0
     assert accounting["summary"]["level_L2"] == 0
+    assert accounting["method"]["registered_upstream_analysis_adapters"] == [
+        "pe_native_lua_direct_import_call_census"
+    ]
     assert accounting["summary"]["native_lua_boundary_state_counts"] == [
         {"functions": 0, "native_lua_boundary_state": "none"},
         {"functions": 0, "native_lua_boundary_state": "roles"},
@@ -907,6 +1097,375 @@ def test_upstream_analysis_is_allowlisted_and_derives_the_assertion(
         match="different structured assertion",
     ):
         _build(tmp_path, program_facts, registry, executable, inventory)
+
+
+def test_direct_lua_census_derives_only_positive_consumer_role_end_to_end(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    boundary = {"state": "roles", "roles": ["lua_api_consumer"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=boundary,
+    )
+    _bind_direct_census_source(tmp_path, reference, census)
+
+    result = _build(
+        tmp_path,
+        program_facts,
+        _registry(
+            program_facts,
+            [
+                _l2_claim(
+                    program_facts,
+                    reference,
+                    native_lua_boundary=boundary,
+                )
+            ],
+        ),
+        executable,
+        inventory,
+    )
+
+    assert result["functions"][0]["review"]["native_lua_boundary"] == boundary
+    assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "lua_api_consumer", "functions": 1},
+        {"native_lua_role": "registered_lua_callable", "functions": 0},
+        {"native_lua_role": "registration_builder", "functions": 0},
+    ]
+    assert "pe_native_lua_direct_import_call_census" in result["method"][
+        "registered_upstream_analysis_adapters"
+    ]
+
+
+@pytest.mark.parametrize(
+    "overclaimed_role",
+    ["registered_lua_callable", "registration_builder"],
+)
+def test_direct_lua_census_rejects_other_role_overclaim_end_to_end(
+    tmp_path: Path,
+    overclaimed_role: str,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    boundary = {"state": "roles", "roles": [overclaimed_role]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=boundary,
+    )
+    _bind_direct_census_source(
+        tmp_path,
+        reference,
+        census,
+        role=overclaimed_role,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the lua_api_consumer role",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize(
+    "support_class,native_lua_boundary",
+    [
+        ("boundary", {"state": "roles", "roles": ["lua_api_consumer"]}),
+        ("ownership", {"state": "roles", "roles": ["lua_api_consumer"]}),
+        (
+            "immediate_references",
+            {"state": "roles", "roles": ["lua_api_consumer"]},
+        ),
+        ("semantic_io", {"state": "roles", "roles": ["lua_api_consumer"]}),
+        ("native_lua_boundary", {"state": "none", "roles": []}),
+    ],
+)
+def test_direct_lua_census_rejects_non_role_support_end_to_end(
+    tmp_path: Path,
+    support_class: str,
+    native_lua_boundary: dict,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=native_lua_boundary,
+    )
+    _bind_direct_census_source(
+        tmp_path,
+        reference,
+        census,
+        support_class=support_class,
+        role=None,
+    )
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the lua_api_consumer role",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        native_lua_boundary=native_lua_boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize(
+    "tamper",
+    ["whole_atlas", "unrelated_record", "zero_call_selected_record"],
+)
+def test_direct_lua_adapter_validates_the_whole_census_before_deriving(
+    tmp_path: Path,
+    tamper: str,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    if tamper == "whole_atlas":
+        census["atlas"]["canonical_sha256"] = "0" * 64
+    elif tamper == "unrelated_record":
+        unrelated = copy.deepcopy(census["records"][0])
+        unrelated["entry_rva"] = program_facts["functions"][1]["entry_rva"]
+        unrelated["atlas_record_sha256"] = atlas_record_sha256(
+            program_facts["functions"][1]
+        )
+        unrelated["direct_lua_import_calls"][0]["call_rva"] = (
+            program_facts["functions"][1]["entry_rva"]
+        )
+        census["records"].append(unrelated)
+    else:
+        census["records"][0]["direct_lua_import_calls"] = []
+        census["records"][0]["direct_call_count"] = 0
+        census["records"][0]["import_names"] = []
+
+    boundary = {"state": "roles", "roles": ["lua_api_consumer"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=boundary,
+    )
+    _bind_direct_census_source(tmp_path, reference, census)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_structurally_consistent_fabricated_census_cannot_support_a_fact(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    census["records"][0]["direct_lua_import_calls"][0]["call_rva"] = (
+        "0x00001021"
+    )
+    assert validate_native_lua_direct_call_structure(
+        census,
+        program_facts,
+    )["status"] == "structurally_verified"
+
+    boundary = {"state": "roles", "roles": ["lua_api_consumer"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=boundary,
+    )
+    _bind_direct_census_source(tmp_path, reference, census)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="failed exact binary verification",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_direct_lua_exact_binary_verification_is_cached_per_source(
+    monkeypatch,
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    from src.observatory import native_lua_direct_calls as direct_calls
+
+    calls = 0
+    original = direct_calls.validate_native_lua_direct_call_census
+
+    def counting_validator(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        direct_calls,
+        "validate_native_lua_direct_call_census",
+        counting_validator,
+    )
+    source_sha256 = hashlib.sha256(
+        json.dumps(census, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    cache: dict = {}
+    kwargs = {
+        "executable": executable,
+        "inventory": inventory,
+        "program_facts": program_facts,
+        "source_sha256": source_sha256,
+        "verification_cache": cache,
+        "entry_rva": program_facts["functions"][0]["entry_rva"],
+        "atlas_record_identity": atlas_record_sha256(
+            program_facts["functions"][0]
+        ),
+        "support_class": "native_lua_role",
+        "role": "lua_api_consumer",
+        "label": "cached direct census",
+    }
+
+    first = native_accounting._adapt_native_lua_direct_call_census(
+        census,
+        census["records"][0],
+        **kwargs,
+    )
+    second = native_accounting._adapt_native_lua_direct_call_census(
+        census,
+        census["records"][0],
+        **kwargs,
+    )
+
+    assert first == second
+    assert calls == 1
+    assert list(cache) == [
+        ("pe_native_lua_direct_import_call_census", source_sha256)
+    ]
+
+
+def test_direct_lua_adapter_rejects_a_pointed_record_for_another_function(
+    tmp_path: Path,
+):
+    executable, inventory, program_facts, census = _write_direct_lua_inputs(
+        tmp_path
+    )
+    boundary = {"state": "roles", "roles": ["lua_api_consumer"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_direct_census_source(tmp_path, reference, census)
+
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="does not describe the exact atlas record",
+    ):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_direct_lua_adapter_rejects_exclusion_support_without_interpretation():
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="prove only the lua_api_consumer role",
+    ):
+        native_accounting._adapt_native_lua_direct_call_census(
+            {},
+            {},
+            executable=Path("missing.exe"),
+            inventory={},
+            program_facts={},
+            source_sha256="0" * 64,
+            verification_cache={},
+            entry_rva="0x00001020",
+            atlas_record_identity="0" * 64,
+            support_class="exclusion",
+            role=None,
+            label="exclusion source",
+        )
 
 
 def test_l0_cannot_publish_resolved_higher_level_dimensions(tmp_path: Path):
