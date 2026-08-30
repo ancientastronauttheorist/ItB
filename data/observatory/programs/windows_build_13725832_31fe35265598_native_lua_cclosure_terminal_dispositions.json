@@ -1,0 +1,571 @@
+{
+  "analysis_kind": "pe_native_lua_cclosure_terminal_disposition_census",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "callback_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_callback_census",
+    "canonical_sha256": "cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003"
+  },
+  "callback_targets": [
+    {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_entry_rvas": [
+        "0x00057970",
+        "0x002e67b0"
+      ],
+      "disposition_kinds": [
+        "lua_callback_single_result",
+        "registry_reference_holder"
+      ],
+      "disposition_site_count": 2
+    },
+    {
+      "callback_atlas_record_sha256": "0730d8c5877defc7f4d781e836560f199df4ffb749613a41b361f2fd75447d72",
+      "callback_entry_rva": "0x002ec110",
+      "caller_entry_rvas": [
+        "0x002ec220"
+      ],
+      "disposition_kinds": [
+        "lua_callback_single_result"
+      ],
+      "disposition_site_count": 1
+    }
+  ],
+  "callers": [
+    {
+      "callback_entry_rvas": [
+        "0x002eaa50"
+      ],
+      "caller_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+      "caller_entry_rva": "0x00057970",
+      "disposition_kinds": [
+        "registry_reference_holder"
+      ],
+      "disposition_site_count": 1
+    },
+    {
+      "callback_entry_rvas": [
+        "0x002eaa50"
+      ],
+      "caller_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "caller_entry_rva": "0x002e67b0",
+      "disposition_kinds": [
+        "lua_callback_single_result"
+      ],
+      "disposition_site_count": 1
+    },
+    {
+      "callback_entry_rvas": [
+        "0x002ec110"
+      ],
+      "caller_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "caller_entry_rva": "0x002ec220",
+      "disposition_kinds": [
+        "lua_callback_single_result"
+      ],
+      "disposition_site_count": 1
+    }
+  ],
+  "decoder": {
+    "accepted_disposition_kinds": [
+      "lua_callback_single_result",
+      "registry_reference_holder"
+    ],
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "return_epilogue_kinds": [
+      "seh_saved_edi_esi_ebx_frame",
+      "simple_saved_edi_esi_ebp"
+    ],
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "dispositions": [
+    {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x000579a2",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+      "caller_entry_rva": "0x00057970",
+      "disposition_kind": "registry_reference_holder",
+      "holder_register": "ebx",
+      "initial_reference_sentinel": -2,
+      "literal_upvalue_count": 2,
+      "registry_index": -10000,
+      "returned_register": "ebx",
+      "reviewed_sequence": [
+        {
+          "role": "first_reference_push",
+          "rva": "0x00057975",
+          "sha256": "32462fcfcf991828d8566add9c2df292182af62b1b77d272a57a535c852e3c08",
+          "size": 3
+        },
+        {
+          "role": "load_state_edi",
+          "rva": "0x00057978",
+          "sha256": "5e76f40e2b05c5d612a534535d37158a791a0c71f5be52573a807083a6b5b0c7",
+          "size": 2
+        },
+        {
+          "role": "load_holder_ebx",
+          "rva": "0x0005797a",
+          "sha256": "57ff03e26abab83cf46384bfae912a4b8a5efe37fac2dd2623e4199584f948d0",
+          "size": 2
+        },
+        {
+          "role": "first_registry_index",
+          "rva": "0x0005797c",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "first_state_push",
+          "rva": "0x00057981",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "first_rawgeti",
+          "rva": "0x00057982",
+          "sha256": "160f577683307532d8abc4be0c257f09706cf1dcfd49970c79367b41f574b457",
+          "size": 6
+        },
+        {
+          "role": "load_second_reference_owner",
+          "rva": "0x00057988",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3
+        },
+        {
+          "role": "second_reference_push",
+          "rva": "0x0005798b",
+          "sha256": "46c95d44729980e7b6073dc8c2f8ea58d535b687282f83dcbcfb7a70364ba6a3",
+          "size": 3
+        },
+        {
+          "role": "second_registry_index",
+          "rva": "0x0005798e",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "second_state_push",
+          "rva": "0x00057993",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "second_rawgeti",
+          "rva": "0x00057994",
+          "sha256": "160f577683307532d8abc4be0c257f09706cf1dcfd49970c79367b41f574b457",
+          "size": 6
+        },
+        {
+          "role": "upvalue_count_two",
+          "rva": "0x0005799a",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2
+        },
+        {
+          "role": "callback_push",
+          "rva": "0x0005799c",
+          "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+          "size": 5
+        },
+        {
+          "role": "closure_state_push",
+          "rva": "0x000579a1",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "pushcclosure",
+          "rva": "0x000579a2",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        },
+        {
+          "role": "top_index_minus_one",
+          "rva": "0x000579a8",
+          "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+          "size": 2
+        },
+        {
+          "role": "pushvalue_state",
+          "rva": "0x000579aa",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "store_holder_state",
+          "rva": "0x000579ab",
+          "sha256": "125dcfb80ec95889b2d37e5e84ccb9cee03f02178079d203f48671b12b8ce3c5",
+          "size": 2
+        },
+        {
+          "role": "store_holder_noref",
+          "rva": "0x000579ad",
+          "sha256": "db2e020be4d84dbe76e16a9b16de8bef7e0bfe8f7c81f2fc421e4bbdbfc2ffb1",
+          "size": 7
+        },
+        {
+          "role": "pushvalue",
+          "rva": "0x000579b4",
+          "sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "size": 6
+        },
+        {
+          "role": "ref_registry_index",
+          "rva": "0x000579ba",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "ref_state_push",
+          "rva": "0x000579bf",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "luaL_ref",
+          "rva": "0x000579c0",
+          "sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "size": 6
+        },
+        {
+          "role": "settop_index_minus_two",
+          "rva": "0x000579c6",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "role": "settop_state_push",
+          "rva": "0x000579c8",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "store_holder_reference",
+          "rva": "0x000579c9",
+          "sha256": "c8d3d87e50d91c155193aa2357358891b1bb3df95ac11133622c9d1f80d0415b",
+          "size": 3
+        },
+        {
+          "role": "lua_settop",
+          "rva": "0x000579cc",
+          "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "size": 6
+        },
+        {
+          "role": "argument_cleanup",
+          "rva": "0x000579d2",
+          "sha256": "62b2c8f7d2bf2b6e5d6ad732a425cae17914f5252bb142d710a7bea0fc9be02f",
+          "size": 3
+        },
+        {
+          "role": "return_holder",
+          "rva": "0x000579d5",
+          "sha256": "a51914475e973a2f049d7292f473d0d53f50a376607ef6c5b90e56c9fc5f0263",
+          "size": 2
+        },
+        {
+          "role": "restore_edi",
+          "rva": "0x000579d7",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "role": "restore_ebx",
+          "rva": "0x000579d8",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "role": "restore_ebp",
+          "rva": "0x000579d9",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "role": "return",
+          "rva": "0x000579da",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "state_register": "edi",
+      "upvalue_argument_kind": "immediate"
+    },
+    {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002e67fa",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "caller_callback_target_witness": {
+        "callback_target_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+        "callback_target_entry_rva": "0x002e67b0",
+        "construction_call_rva": "0x002e6bc2",
+        "constructor_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "constructor_entry_rva": "0x002e6900"
+      },
+      "caller_entry_rva": "0x002e67b0",
+      "disposition_kind": "lua_callback_single_result",
+      "epilogue_kind": "simple_saved_edi_esi_ebp",
+      "literal_upvalue_count": 2,
+      "result_count": 1,
+      "reviewed_sequence": [
+        {
+          "role": "closure_argument_cleanup",
+          "rva": "0x002e6800",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "role": "lua_result_count_one",
+          "rva": "0x002e6803",
+          "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+          "size": 5
+        },
+        {
+          "role": "restore_edi",
+          "rva": "0x002e6808",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "role": "restore_esi",
+          "rva": "0x002e6809",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "role": "restore_ebp",
+          "rva": "0x002e680a",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "role": "return",
+          "rva": "0x002e680b",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "upvalue_argument_kind": "immediate"
+    },
+    {
+      "callback_atlas_record_sha256": "0730d8c5877defc7f4d781e836560f199df4ffb749613a41b361f2fd75447d72",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002ec328",
+      "callback_entry_rva": "0x002ec110",
+      "caller_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "caller_callback_target_witness": {
+        "callback_target_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+        "callback_target_entry_rva": "0x002ec220",
+        "construction_call_rva": "0x002e6ba1",
+        "constructor_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "constructor_entry_rva": "0x002e6900"
+      },
+      "caller_entry_rva": "0x002ec220",
+      "disposition_kind": "lua_callback_single_result",
+      "epilogue_kind": "seh_saved_edi_esi_ebx_frame",
+      "literal_upvalue_count": 1,
+      "result_count": 1,
+      "reviewed_sequence": [
+        {
+          "role": "closure_and_prior_argument_cleanup",
+          "rva": "0x002ec32e",
+          "sha256": "1a5f71897cd223c8bdf60fd5720ca96071247601ec6592d580ade82702a621b0",
+          "size": 3
+        },
+        {
+          "role": "lua_result_count_one",
+          "rva": "0x002ec331",
+          "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+          "size": 5
+        },
+        {
+          "role": "load_seh_predecessor",
+          "rva": "0x002ec336",
+          "sha256": "8e81546ef4243a57a23e0303dbaed167417036896f5e97eb18e204ea6331bae0",
+          "size": 3
+        },
+        {
+          "role": "restore_seh_head",
+          "rva": "0x002ec339",
+          "sha256": "abfc2e5808656f2897610be3e6f32164afebce4617b7f868b5386720810fbfc5",
+          "size": 7
+        },
+        {
+          "role": "discard_seh_record",
+          "rva": "0x002ec340",
+          "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+          "size": 1
+        },
+        {
+          "role": "restore_edi",
+          "rva": "0x002ec341",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "role": "restore_esi",
+          "rva": "0x002ec342",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "role": "restore_ebx",
+          "rva": "0x002ec343",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "role": "restore_frame_stack",
+          "rva": "0x002ec344",
+          "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+          "size": 2
+        },
+        {
+          "role": "restore_ebp",
+          "rva": "0x002ec346",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "role": "return",
+          "rva": "0x002ec347",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "upvalue_argument_kind": "immediate"
+    }
+  ],
+  "method": {
+    "accepted_dispositions": "A prior-unmatched immediate lua_pushcclosure site is retained only when it matches one complete reviewed x86 sequence. A single-result callback tail must be contiguous through mov eax,1 and an enumerated epilogue, and its caller must independently be an exact callback target. The registry holder must match the complete two-rawgeti upvalue, pushvalue, luaL_ref, lua_settop, holder-store, cleanup, and return sequence.",
+    "boundary": "Published facts are normalized RVAs, finite instruction hashes, exact prerequisite joins, reviewed sequence roles, and deterministic aggregates.",
+    "not_claimed": [
+      "runtime reachability, execution, frequency, persistence, or lifetime",
+      "a Lua-visible name, global export, ordinary lookup, or table identity",
+      "behavioral or source equivalence beyond the exact terminal sequence",
+      "ownership, purpose, inputs, outputs, or completeness for other closure forms",
+      "registry-reference validity after the reviewed constructor returns"
+    ],
+    "partition": "Every site in the table-setter artifact's still-unmatched frontier occurs exactly once as a retained disposition or a still-unmatched site.",
+    "table_setter_prerequisite_exactly_verified": true
+  },
+  "schema_version": 1,
+  "still_unmatched_resolved_sites": [
+    {
+      "callback_atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+      "callback_call_rva": "0x002e69f1",
+      "callback_entry_rva": "0x002e6c30",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_reviewed_terminal_disposition"
+    },
+    {
+      "callback_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "callback_call_rva": "0x002e6ba1",
+      "callback_entry_rva": "0x002ec220",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_reviewed_terminal_disposition"
+    },
+    {
+      "callback_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "callback_call_rva": "0x002e6bc2",
+      "callback_entry_rva": "0x002e67b0",
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "resolution": "no_exact_reviewed_terminal_disposition"
+    }
+  ],
+  "summary": {
+    "lua_callback_single_result_sites": 2,
+    "matched_terminal_disposition_sites": 3,
+    "prior_unmatched_resolved_callback_sites": 6,
+    "registry_reference_holder_sites": 1,
+    "schema_violations": 0,
+    "still_unmatched_resolved_callback_sites": 3,
+    "unique_disposition_callback_targets": 2,
+    "unique_disposition_callers": 3
+  },
+  "table_setter_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+    "canonical_sha256": "a6333ffefd9c9d0ed42bea28b9f5a6e82afff58fc7adb26293c34b5589cb5fa9",
+    "still_unmatched_resolved_callback_sites": 6
+  }
+}

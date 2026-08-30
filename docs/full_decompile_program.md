@@ -122,9 +122,14 @@ only the exact immediate callback arguments passed at direct
 subset immediately stored through one exact `lua_setfield` grammar.
 `scripts/itb_native_lua_cclosure_table_setter_publications.py` then consumes
 only that artifact's unmatched frontier and proves the bounded subset passed
-directly to `lua_settable` or `lua_rawset`. Accounting protocol schema 2
-represents native/Lua roles as composable positive facts rather than a mutually
-exclusive enum.
+directly to `lua_settable` or `lua_rawset`.
+`scripts/itb_native_lua_cclosure_indirect_settable_publications.py` proves the
+three staged-register `lua_settable` paths with an exact CFG, dominance, and
+all-path ESI-preservation proof, while
+`scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently
+classifies the two single-result returns and one registry-reference holder.
+Accounting protocol schema 2 represents native/Lua roles as composable
+positive facts rather than a mutually exclusive enum.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -243,6 +248,22 @@ until core engine semantics are reconstructed.
   This proves the closure is the setter value, not the existing stack key,
   destination-table identity, global/module visibility, runtime execution, or
   an indirect-setter path.
+- [x] Prove the three staged-register `lua_settable` publications in the
+  six-site residual frontier. One exact caller-entry CFG has 260 instructions
+  and 265 edges; the `lua_settable` IAT stage dominates every setter and later
+  callback, no ESI writer lies on any stage-to-setter path, and alternate atlas
+  or declared direct entries into the dominated region are rejected. This
+  relies explicitly on the 32-bit Windows cdecl ESI-preservation and atlas-entry
+  premises and still does not identify the stack key, table, Lua-visible name,
+  runtime execution, or lifetime.
+- [x] Close the immediate-closure disposition partition for all 13 resolved
+  callback sites. In parallel with the indirect-setter proof, an exact terminal
+  grammar classifies two closures as the sole conditional Lua callback result
+  and one as a registry-referenced closure holder. Together the artifacts prove
+  ten static table publications, two single-result returns, and one registry
+  holder, with no site silently dropped or multiply classified. The return and
+  registry facts do not themselves prove later invocation, ordinary Lua lookup,
+  naming, reachability, ownership, or reference lifetime.
 - [x] Upgrade the native review ledger to schema 2 with strict `unknown`,
   `none`, and `roles` boundary states plus independently supported,
   non-exclusive positive role atoms. The empty registry still leaves all
@@ -273,14 +294,16 @@ until core engine semantics are reconstructed.
   accepted chunks and explicitly leaves nine unrouted.
 - [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
   the census's host candidates, computed globals, loader assumptions, dynamic
-  code generation, and runtime reachability. The exact setfield and direct
-  table-setter foundations now account for seven of 13 immediate callback
-  sites as static table publications. Extend the six-site residual frontier
-  across bounded indirect-`lua_settable`, returned-closure,
-  registry-reference, and descriptor-mediated paths without merging ambiguous
-  stack effects. Preliminary luabind-shaped
-  pointer/name/builder candidates remain local research until every builder
-  form and alternate compiler sequence has an exact, complete grammar.
+  code generation, and runtime reachability. The immediate closure frontier is
+  now completely dispositioned: ten of 13 sites are static table publications,
+  two return the closure as one conditional Lua result, and one stores a
+  registry reference in a returned holder. Continue from these exact edges to
+  recover destination-table/key identities, Lua-visible names, consumers of
+  the returned closures and holder, descriptor/bootstrap ownership, and actual
+  runtime reachability without merging conditional paths or ABI assumptions.
+  Preliminary luabind-shaped pointer/name/builder candidates remain local
+  research until every builder form and alternate compiler sequence has an
+  exact, complete grammar.
 - [x] Produce and independently verify the exact-owner-build map-data grammar
   census: all 376 chunks strictly parsed without execution, 8,915 unique
   in-bounds explicit tile records, ten tile schemas, 25 zone keys, and 32 tag

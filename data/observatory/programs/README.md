@@ -278,6 +278,116 @@ persistence, cover indirect setter calls, or classify the remaining closure
 return and registry-reference dispositions. Existing byte-identical output is
 reused; differing or concurrent output is preserved and rejected.
 
+## Native Lua C-closure indirect `lua_settable` publication census
+
+`scripts/itb_native_lua_cclosure_indirect_settable_publications.py`
+exact-verifies the complete direct-table-setter prerequisite and starts only
+from its six still-unmatched resolved callback sites. It accepts the exact x86
+Windows form in which the first callback is followed by a unique
+`mov esi,[lua_settable IAT]` stage and each retained callback has a contiguous
+positive aligned cleanup, signed valid table-index push, matching
+ABI-nonvolatile state push, and `call esi` tail.
+
+The builder decodes the complete caller-entry range into a normalized CFG,
+rejects unsupported transfers, recomputes reachability and dominators, and
+requires the setter stage to dominate every setter call and every later
+callback. It also rejects an ESI write on any stage-to-setter path and audits
+alternate atlas entries and declared direct calls into the dominated region.
+Calls use the explicit 32-bit Windows cdecl premise that ESI is callee-saved;
+unmodeled indirect, exception, or fabricated interior entries remain a stated
+atlas-entry assumption. The PE-free validator checks the stored graph and
+recomputes all graph proofs, but cannot derive branch or register-write
+semantics from instruction hashes.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_indirect_settable_publications.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_indirect_settable_publications.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json
+```
+
+The exact artifact proves callback/setter pairs
+`0x002e69f1`/`0x002e6a03`, `0x002e6ba1`/`0x002e6bb0`, and
+`0x002e6bc2`/`0x002e6bd1`. Their table indices are `-3`, `-10002`, and
+`-10002`; they cover three callback targets, one builder, and one setter stage.
+The retained CFG has 260 nodes and 265 edges, with 294 total
+stage-to-setter-path nodes. The other three residual sites remain explicit.
+
+The artifact's pretty-printed file SHA-256 is
+`cd87cf7e5b6edd3595a11b1d06accb965680baed3d85533fbf4c347ec1153710`;
+its canonical JSON SHA-256 is
+`50790f8372d90ab11e44a483a39bd575e5af10ceb037c1aa557e4ebf801ac682`.
+It proves only conditional static `lua_settable` consumption of each closure,
+not a key, destination-table identity, Lua-visible name, runtime execution, or
+lifetime. Existing byte-identical output is reused; differing or concurrent
+output is preserved and rejected.
+
+## Native Lua C-closure terminal-disposition census
+
+`scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently
+starts from the same six-site direct-table-setter residual frontier and accepts
+only three complete reviewed sequences. Two variants end immediately in
+`eax = 1` plus an enumerated native epilogue; their callers independently join
+the callback census as constructed native callbacks, bounding the claim to a
+conditional single-Lua-result closure return. The holder variant reconstructs
+two same-state registry lookups supplying the closure's upvalues, exact closure
+duplication, `luaL_ref(L,-10000)`, same-holder state/reference stores,
+`lua_settop(L,-2)`, and return of that holder.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_terminal_dispositions.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_terminal_dispositions.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json
+```
+
+The exact dispositions are a registry-reference holder at callback call
+`0x000579a2` and single-result closure returns at `0x002e67fa` and
+`0x002ec328`. The artifact leaves exactly the three indirect-setter calls
+unmatched, making the two artifacts complementary six-site partitions. Its
+pretty-printed file SHA-256 is
+`99644fed0a247caa45ee914375d2969377d9913fcf825a56d3fdecc671228731`;
+its canonical JSON SHA-256 is
+`74b762e486611a6dc71325276d9e8e92b7894de30f99bacf9e301e894c85bb85`.
+It does not prove runtime execution, Lua-visible naming or ordinary lookup,
+registry-reference lifetime, ownership, or source/behavioral equivalence.
+Existing byte-identical output is reused; differing or concurrent output is
+preserved and rejected.
+
 ## Native function review accounting
 
 The program-facts atlas is also the immutable denominator for a separate

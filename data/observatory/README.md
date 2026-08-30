@@ -157,6 +157,48 @@ derives only `registered_lua_callable` from one pointed callback aggregate or
 pointer form fails closed. Adding the adapter does not promote the empty review
 registry.
 
+## Native Lua C-closure indirect `lua_settable` publications
+
+`scripts/itb_native_lua_cclosure_indirect_settable_publications.py` consumes
+the direct-table-setter artifact's six residual sites and proves three further
+static publications through a staged `lua_settable` import in `ESI`. The exact
+grammar requires the unique `mov esi,[lua_settable IAT]` stage, a contiguous
+cleanup/index/state/`call esi` tail, caller-entry reachability, stage dominance
+of every setter and later callback, and no ESI writer on any stage-to-setter
+path. The accepted indices are `-3` and `-10002`.
+
+The artifact retains one normalized 260-node/265-edge caller CFG plus exact
+dominance, path, atlas-entry, declared-direct-entry, instruction-hash, and
+decoded ESI-write witnesses. Calls rely on the explicit 32-bit Windows cdecl
+premise that `ESI` is callee-preserved. Exact rebuilding is required to derive
+branch semantics and write classifications; the PE-free validator checks the
+stored graph and recomputes its reachability/dominance claims but cannot turn
+hashes into binary proof. Unmodeled indirect, exception, or fabricated
+interior entries remain an explicit atlas-entry assumption.
+
+This proves three conditional static setter edges, not the stack key,
+destination table, Lua-visible name, global/module export, runtime execution,
+or lifetime. The three terminal-disposition sites remain unmatched in this
+artifact. See `programs/README.md` for exact commands and hashes.
+
+## Native Lua C-closure terminal dispositions
+
+`scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently
+consumes the same six-site residual frontier and recognizes three complete,
+reviewed terminal forms. Two closures are followed contiguously by `eax = 1`
+and an exact enumerated epilogue; each caller independently joins the callback
+census as a native Lua callback target, so the closure is conditionally the
+single returned Lua result. The third closure is duplicated, passed to
+`luaL_ref` at registry index `-10000`, stored with the same Lua state in a
+returned two-word holder, and then removed from the Lua stack.
+
+The exact artifact leaves only the three indirect-setter sites unmatched, so
+the indirect and terminal artifacts form complementary partitions of the
+direct-setter residual frontier. These facts do not establish runtime
+reachability, an ordinary Lua lookup path or name, registry-reference lifetime,
+ownership, or source/behavioral equivalence. See `programs/README.md` for exact
+commands and hashes.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation
