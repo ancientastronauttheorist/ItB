@@ -20,10 +20,10 @@ _COMMITTED_REGISTRY_CANONICAL_SHA256 = (
     "1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4"
 )
 _COMMITTED_ACCOUNTING_RAW_SHA256 = (
-    "4efa98c5691cd64efdab21387bf1eec52b9741565ed2f8a4aace47911d75d0a0"
+    "1e262a170c8bd2c93da168bebdd7f163f9a0b89e0a47ef99c9b807bd19781550"
 )
 _COMMITTED_ACCOUNTING_CANONICAL_SHA256 = (
-    "acbe5468d196ec08906d2835582557d7c9735f26bce76fac4cb1b11b0c032716"
+    "da45da1dc7c53a1898a5707c968f394a1903ed3aca472e69f1c6a522e6337148"
 )
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
@@ -571,6 +571,21 @@ def _write_table_setter_publication_inputs(
     return (*inputs, publications)
 
 
+def _write_indirect_settable_publication_inputs(
+    tmp_path: Path,
+) -> tuple[Path, dict, dict, dict, dict, dict, dict, dict]:
+    from tests.test_itb_native_lua_cclosure_indirect_settable_publications import (
+        _build as build_indirect_settable_publications,
+    )
+    from tests.test_itb_native_lua_cclosure_indirect_settable_publications import (
+        _write_inputs as write_indirect_settable_inputs,
+    )
+
+    inputs = write_indirect_settable_inputs(tmp_path)
+    publications = build_indirect_settable_publications(inputs)
+    return (*inputs, publications)
+
+
 def _registry(program_facts: dict, claims: list[dict] | None = None) -> dict:
     from src.observatory.native_function_accounting import _canonical_sha256
 
@@ -883,6 +898,26 @@ def _bind_table_setter_publication_census_source(
     )
 
 
+def _bind_indirect_settable_publication_census_source(
+    tmp_path: Path,
+    reference: dict,
+    census: dict,
+    *,
+    json_pointer: str = "/registered_targets/0",
+    support_class: str = "native_lua_role",
+    role: str | None = "registered_lua_callable",
+) -> None:
+    _bind_upstream_artifact_source(
+        tmp_path,
+        reference,
+        census,
+        filename="indirect-settable-publication-census.json",
+        json_pointer=json_pointer,
+        support_class=support_class,
+        role=role,
+    )
+
+
 def _l2_claim(
     program_facts: dict,
     evidence: dict,
@@ -955,6 +990,7 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
         "pe_native_lua_direct_import_call_census",
         "pe_native_lua_immediate_cclosure_callback_census",
         "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+        "pe_native_lua_immediate_cclosure_indirect_settable_publication_census",
         "pe_native_lua_immediate_cclosure_setfield_publication_census",
     ]
     summary = result["summary"]
@@ -1066,6 +1102,7 @@ def test_committed_schema_v2_registry_and_accounting_identity():
         "pe_native_lua_direct_import_call_census",
         "pe_native_lua_immediate_cclosure_callback_census",
         "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+        "pe_native_lua_immediate_cclosure_indirect_settable_publication_census",
         "pe_native_lua_immediate_cclosure_setfield_publication_census",
     ]
     assert accounting["summary"]["native_lua_boundary_state_counts"] == [
@@ -3138,6 +3175,373 @@ def test_table_setter_exact_binary_verification_is_cached_per_source(
     assert list(cache) == [
         (
             "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+            source_sha256,
+        )
+    ]
+
+
+def test_indirect_settable_publication_census_derives_registered_target_and_builder(
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        _direct_setters,
+        publications,
+    ) = _write_indirect_settable_publication_inputs(tmp_path)
+    target_boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    builder_boundary = {"state": "roles", "roles": ["registration_builder"]}
+    target_reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        name="indirect-settable-target.json",
+        native_lua_boundary=target_boundary,
+    )
+    builder_reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        name="indirect-settable-builder.json",
+        native_lua_boundary=builder_boundary,
+    )
+    _bind_indirect_settable_publication_census_source(
+        tmp_path, target_reference, publications
+    )
+    _bind_indirect_settable_publication_census_source(
+        tmp_path,
+        builder_reference,
+        publications,
+        json_pointer="/builders/0",
+        role="registration_builder",
+    )
+
+    result = _build(
+        tmp_path,
+        program_facts,
+        _registry(
+            program_facts,
+            [
+                _l2_claim(
+                    program_facts,
+                    builder_reference,
+                    entry=0,
+                    native_lua_boundary=builder_boundary,
+                ),
+                _l2_claim(
+                    program_facts,
+                    target_reference,
+                    entry=1,
+                    native_lua_boundary=target_boundary,
+                ),
+            ],
+        ),
+        executable,
+        inventory,
+    )
+
+    assert result["functions"][1]["review"]["native_lua_boundary"] == (
+        target_boundary
+    )
+    assert result["functions"][0]["review"]["native_lua_boundary"] == (
+        builder_boundary
+    )
+
+
+@pytest.mark.parametrize(
+    ("entry", "role", "json_pointer", "message"),
+    [
+        (1, "registration_builder", "/registered_targets/0", "registration builder"),
+        (0, "registered_lua_callable", "/builders/0", "registered callback target"),
+        (
+            1,
+            "cclosure_callback_target",
+            "/registered_targets/0",
+            "registered_lua_callable or registration_builder",
+        ),
+        (
+            1,
+            "registered_lua_callable",
+            "/publications/0",
+            "registered callback target",
+        ),
+        (
+            1,
+            "registered_lua_callable",
+            "/registered_targets/00",
+            "registered callback target",
+        ),
+    ],
+)
+def test_indirect_settable_publication_census_rejects_overclaims_and_pointers(
+    tmp_path: Path,
+    entry: int,
+    role: str,
+    json_pointer: str,
+    message: str,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        _direct_setters,
+        publications,
+    ) = _write_indirect_settable_publication_inputs(tmp_path)
+    boundary = {"state": "roles", "roles": [role]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][entry],
+        native_lua_boundary=boundary,
+    )
+    _bind_indirect_settable_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+        json_pointer=json_pointer,
+        role=role,
+    )
+
+    with pytest.raises(NativeFunctionAccountingError, match=message):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=entry,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_indirect_settable_publication_census_rejects_non_role_support_and_wrong_atlas(
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        _direct_setters,
+        publications,
+    ) = _write_indirect_settable_publication_inputs(tmp_path)
+    boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_indirect_settable_publication_census_source(
+        tmp_path,
+        reference,
+        publications,
+        support_class="ownership",
+        role=None,
+    )
+    with pytest.raises(NativeFunctionAccountingError, match="prove only native Lua roles"):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+    publications["registered_targets"][0]["callback_atlas_record_sha256"] = "0" * 64
+    _bind_indirect_settable_publication_census_source(tmp_path, reference, publications)
+    with pytest.raises(NativeFunctionAccountingError, match="failed exact binary verification"):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+@pytest.mark.parametrize("tamper", ["count", "structural_forgery"])
+def test_indirect_settable_publication_adapter_rejects_tamper_and_binary_different_forgery(
+    tmp_path: Path,
+    tamper: str,
+):
+    from src.observatory.native_lua_cclosure_indirect_settable_publications import (
+        validate_native_lua_cclosure_indirect_settable_publication_structure,
+    )
+
+    (
+        executable,
+        inventory,
+        program_facts,
+        direct_calls,
+        callbacks,
+        setfield,
+        direct_setters,
+        publications,
+    ) = _write_indirect_settable_publication_inputs(tmp_path)
+    if tamper == "count":
+        publications["registered_targets"][0]["publication_site_count"] = 0
+    else:
+        publication = publications["publications"][0]
+        publication["table_index"] = -4
+        publication["table_index_push"]["sha256"] = hashlib.sha256(b"\x6a\xfc").hexdigest()
+        table_push_rva = publication["table_index_push"]["rva"]
+        witness = next(
+            item
+            for item in publication["esi_preservation_witness"]
+            if item["rva"] == table_push_rva
+        )
+        witness["sha256"] = publication["table_index_push"]["sha256"]
+        publications["builders"][0]["table_indices"] = [-4]
+        publications["registered_targets"][0]["table_indices"] = [-4]
+        assert validate_native_lua_cclosure_indirect_settable_publication_structure(
+            publications,
+            direct_calls,
+            callbacks,
+            setfield,
+            direct_setters,
+            program_facts,
+        )["status"] == "structurally_verified"
+    boundary = {"state": "roles", "roles": ["registered_lua_callable"]}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][1],
+        native_lua_boundary=boundary,
+    )
+    _bind_indirect_settable_publication_census_source(tmp_path, reference, publications)
+    with pytest.raises(NativeFunctionAccountingError, match="failed exact binary verification"):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(
+                program_facts,
+                [
+                    _l2_claim(
+                        program_facts,
+                        reference,
+                        entry=1,
+                        native_lua_boundary=boundary,
+                    )
+                ],
+            ),
+            executable,
+            inventory,
+        )
+
+
+def test_indirect_settable_exact_binary_verification_is_cached_per_source(
+    monkeypatch,
+    tmp_path: Path,
+):
+    (
+        executable,
+        inventory,
+        program_facts,
+        _direct,
+        _callbacks,
+        _setfield,
+        _direct_setters,
+        publications,
+    ) = _write_indirect_settable_publication_inputs(tmp_path)
+    from src.observatory import (
+        native_lua_cclosure_indirect_settable_publications as publication_module,
+    )
+
+    calls = 0
+    original = publication_module.validate_native_lua_cclosure_indirect_settable_publication_census
+
+    def counting_validator(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        publication_module,
+        "validate_native_lua_cclosure_indirect_settable_publication_census",
+        counting_validator,
+    )
+    source_sha256 = hashlib.sha256(
+        json.dumps(publications, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    cache: dict = {}
+    common = {
+        "executable": executable,
+        "inventory": inventory,
+        "program_facts": program_facts,
+        "source_sha256": source_sha256,
+        "verification_cache": cache,
+        "support_class": "native_lua_role",
+        "label": "cached indirect-settable publication census",
+    }
+    target = native_accounting._adapt_native_lua_cclosure_indirect_settable_publication_census(
+        publications,
+        json_pointer="/registered_targets/0",
+        entry_rva=program_facts["functions"][1]["entry_rva"],
+        atlas_record_identity=atlas_record_sha256(program_facts["functions"][1]),
+        role="registered_lua_callable",
+        **common,
+    )
+    builder = native_accounting._adapt_native_lua_cclosure_indirect_settable_publication_census(
+        publications,
+        json_pointer="/builders/0",
+        entry_rva=program_facts["functions"][0]["entry_rva"],
+        atlas_record_identity=atlas_record_sha256(program_facts["functions"][0]),
+        role="registration_builder",
+        **common,
+    )
+
+    assert target["assertion"] == {"native_lua_role": "registered_lua_callable"}
+    assert builder["assertion"] == {"native_lua_role": "registration_builder"}
+    for derived in (target, builder):
+        assert "conditional static staged lua_settable edge" in derived["statement"]
+        assert "ESI-preservation" in derived["statement"]
+        assert "atlas-entry" in derived["statement"]
+        assert "table identity" in derived["statement"]
+        assert "runtime execution" in derived["statement"]
+        assert "lifetime" in derived["statement"]
+    assert "Lua-visible name" in target["statement"]
+    assert calls == 1
+    assert list(cache) == [
+        (
+            "pe_native_lua_immediate_cclosure_indirect_settable_publication_census",
             source_sha256,
         )
     ]

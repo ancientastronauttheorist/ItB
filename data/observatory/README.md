@@ -37,12 +37,14 @@ promotions and zero reviewed exclusions. Ghidra's 685 thunk flags and 26
 repeated-body groups are retained only as non-promoting review candidates.
 Future claims must pass dedicated exact-dimensional review and typed-support
 records, then reach hash-pinned upstream evidence through a registered
-kind-specific adapter that derives the supported assertion. Three production
+kind-specific adapter that derives the supported assertion. Five production
 adapters exact-rebuild their evidence against the installed executable: the
 direct-call census can derive only `lua_api_consumer`, the immediate C-closure
 census can derive only `cclosure_callback_target`, and the setfield-publication
 census can derive only `registered_lua_callable` for a pointed callback target
-or `registration_builder` for a pointed caller aggregate. None proves a global
+or `registration_builder` for a pointed caller aggregate. The direct and staged
+indirect table-setter publication censuses derive those same two role atoms
+from their own exact publication aggregates. None proves a global
 export, table identity, runtime execution, ownership, lifetime, or another
 dimension. The empty registry still promotes no function beyond L0. No name,
 namespace, address, body-size, duplicate-body, thunk, or Ghidra-call

@@ -432,8 +432,8 @@ registry's raw and canonical SHA-256 values are respectively
 `910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
 `1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
 The derived ledger's raw and canonical SHA-256 values are respectively
-`4efa98c5691cd64efdab21387bf1eec52b9741565ed2f8a4aace47911d75d0a0` and
-`acbe5468d196ec08906d2835582557d7c9735f26bce76fac4cb1b11b0c032716`.
+`1e262a170c8bd2c93da168bebdd7f163f9a0b89e0a47ef99c9b807bd19781550` and
+`da45da1dc7c53a1898a5707c968f394a1903ed3aca472e69f1c6a522e6337148`.
 Existing byte-identical deterministic output is reused; differing, reformatted,
 or concurrent output is never overwritten.
 
@@ -467,8 +467,9 @@ Promotions use a fail-closed three-layer evidence contract:
 All paths, file hashes, JSON pointers, identities, and pointed records are
 verified on every build. Windows drive-relative paths, NTFS alternate data
 streams, reserved names, symlinks, junctions, and changed parent directories
-fail closed. Three production adapters accept the direct-Lua-call, immediate
-C-closure callback, and setfield-publication censuses. Each rebuilds and
+fail closed. Five production adapters accept the direct-Lua-call, immediate
+C-closure callback, setfield-publication, direct-table-setter-publication, and
+staged-indirect-settable-publication censuses. Each rebuilds and
 canonical-compares its complete evidence chain against the exact executable
 once per source artifact per accounting build. They derive only
 `lua_api_consumer`, `cclosure_callback_target`, and the role-specific
