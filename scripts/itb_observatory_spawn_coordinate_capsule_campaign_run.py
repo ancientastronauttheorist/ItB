@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -53,7 +54,17 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--wait-poll-interval", type=float, default=0.20)
     parser.add_argument("--candidate-rank", type=int, default=None)
     parser.add_argument("--allow-dirty-plan", action="store_true")
-    parser.add_argument("--dirty-consent-id", default=None)
+    parser.add_argument(
+        "--dirty-consent-id",
+        default=None,
+        help="Rejected for nine-condition campaigns; use --dirty-consent-map.",
+    )
+    parser.add_argument(
+        "--dirty-consent-map",
+        type=Path,
+        default=None,
+        help="Create-only reviewed map containing one exact consent ID per condition.",
+    )
     parser.add_argument("--allow-protected-objective-loss", action="store_true")
     parser.add_argument("--allow-objective-loss", action="store_true")
     parser.add_argument("--allow-timeline-collapse", action="store_true")
@@ -138,7 +149,76 @@ def _write_create_only(path: Path, value: object) -> None:
         os.fsync(handle.fileno())
 
 
-def _condition_args(args: argparse.Namespace, pair_name: str, condition: str) -> argparse.Namespace:
+def _condition_keys() -> list[str]:
+    return [
+        f"{pair_name}/{condition}"
+        for pair_name, order in PAIR_SPECS.items()
+        for condition in order
+    ]
+
+
+def _load_dirty_consent_map(path: Path) -> dict[str, str]:
+    candidate = Path(os.path.abspath(path.expanduser()))
+    if candidate.is_symlink() or not candidate.is_file():
+        raise CapsuleCampaignRunError(
+            f"dirty consent map is not a regular file: {candidate}"
+        )
+    try:
+        value = json.loads(candidate.read_text(encoding="utf-8", errors="strict"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CapsuleCampaignRunError(f"dirty consent map is invalid: {exc}") from exc
+    if not isinstance(value, dict) or set(value) != {
+        "schema_version",
+        "kind",
+        "conditions",
+    }:
+        raise CapsuleCampaignRunError("dirty consent map envelope differs")
+    if (
+        value.get("schema_version") != 1
+        or value.get("kind")
+        != "observatory_spawn_coordinate_capsule_dirty_consent_map"
+    ):
+        raise CapsuleCampaignRunError("dirty consent map identity differs")
+    conditions = value.get("conditions")
+    expected = set(_condition_keys())
+    if not isinstance(conditions, dict) or set(conditions) != expected:
+        raise CapsuleCampaignRunError(
+            "dirty consent map must contain exactly the nine campaign conditions"
+        )
+    for key, token in conditions.items():
+        if not isinstance(token, str) or re.fullmatch(r"[0-9a-f]{16}", token) is None:
+            raise CapsuleCampaignRunError(
+                f"dirty consent map token is invalid for {key}"
+            )
+    return dict(conditions)
+
+
+def _dirty_consent_ids(args: argparse.Namespace) -> dict[str, str]:
+    if args.dirty_consent_id is not None:
+        raise CapsuleCampaignRunError(
+            "a single dirty consent ID cannot authorize nine isolated conditions; "
+            "use --dirty-consent-map"
+        )
+    if args.allow_dirty_plan:
+        if args.dirty_consent_map is None:
+            raise CapsuleCampaignRunError(
+                "--allow-dirty-plan requires --dirty-consent-map"
+            )
+        return _load_dirty_consent_map(args.dirty_consent_map)
+    if args.dirty_consent_map is not None:
+        raise CapsuleCampaignRunError(
+            "--dirty-consent-map requires --allow-dirty-plan"
+        )
+    return {}
+
+
+def _condition_args(
+    args: argparse.Namespace,
+    pair_name: str,
+    condition: str,
+    dirty_consent_ids: dict[str, str],
+) -> argparse.Namespace:
+    condition_key = f"{pair_name}/{condition}"
     return argparse.Namespace(
         artifact_root=args.artifact_root,
         pair_id=f"spawn-capsule-pair{pair_name[-3:]}",
@@ -158,7 +238,7 @@ def _condition_args(args: argparse.Namespace, pair_name: str, condition: str) ->
         wait_poll_interval=args.wait_poll_interval,
         candidate_rank=args.candidate_rank,
         allow_dirty_plan=args.allow_dirty_plan,
-        dirty_consent_id=args.dirty_consent_id,
+        dirty_consent_id=dirty_consent_ids.get(condition_key),
         allow_protected_objective_loss=args.allow_protected_objective_loss,
         allow_objective_loss=args.allow_objective_loss,
         allow_timeline_collapse=args.allow_timeline_collapse,
@@ -225,6 +305,7 @@ def _import_create_only(source: Path, destination: Path) -> None:
 def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     artifact_root = _external_empty_root(args.artifact_root)
     args.artifact_root = artifact_root
+    dirty_consent_ids = _dirty_consent_ids(args)
     repository_campaign_root = _fresh_repository_path(
         args.repository_campaign_root,
         "repository campaign root",
@@ -249,7 +330,12 @@ def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             for condition in order:
                 try:
                     code, receipt = condition_runner.run(
-                        _condition_args(args, pair_name, condition)
+                        _condition_args(
+                            args,
+                            pair_name,
+                            condition,
+                            dirty_consent_ids,
+                        )
                     )
                     lifecycle = receipt.get("lifecycle_output")
                     if (

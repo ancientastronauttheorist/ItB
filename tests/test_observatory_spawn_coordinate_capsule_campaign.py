@@ -509,6 +509,16 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
                     f"capsules={finish_counts['capsule_count']} complete=true"
                 ),
                 "abort_ack": None,
+                "end_turn_status": "OK",
+                "end_turn_bridge": True,
+                "end_turn_ack": (
+                    "OK END_TURN phase=combat_player method=observatory_native"
+                ),
+                "delivery_confirmation": "delivered_confirmed",
+                "retry_allowed": False,
+                "end_turn_plan_id": f"plan-{capture_id}",
+                "end_turn_plan_source": "auto_turn",
+                "end_turn_delivery_mode": "external",
             }
             if armed:
                 boundary.update(
@@ -540,7 +550,7 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
             )
             session_path = condition_dir / "session.json"
             trial = {
-                "schema_version": 2,
+                "schema_version": 3,
                 "kind": "observatory_spawn_coordinate_capsule_turn_trial",
                 "created_at": trial_created_at,
                 "pair_id": pair_id,
@@ -561,22 +571,15 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
                 "valid_trial": True,
                 "module_sha256": EXPECTED_MODULE_SHA256,
                 "build_receipt_sha256": EXPECTED_BUILD_RECEIPT_SHA256,
-                "pre_dispatch_turn": 1,
+                "pre_end_turn_turn": 1,
                 "auto_turn": {
-                    "status": "PLAN",
+                    "status": "ok",
                     "turn": 1,
                     "actions_completed": 3,
                     "desyncs_detected": 0,
-                    "end_turn_plan_id": f"plan-{capture_id}",
-                    "end_turn_plan_source": "lightning_loop",
-                    "end_turn_delivery_mode": "local",
-                    "local_end_turn_reserved": True,
-                },
-                "dispatch": {
-                    "status": "DISPATCHED",
-                    "dispatch": {
-                        "delivery_confirmation": "delivered_confirmed"
-                    },
+                    "post_phase": "combat_player",
+                    "grid_power": "2/7",
+                    "observatory_native_rng_boundary": boundary,
                 },
                 "boundary": boundary,
                 "outcome": {
@@ -605,21 +608,12 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
                     else None
                 ),
                 "snapshot_consumed_from_bridge": True,
-                "pause_guard": {
-                    "status": "OK",
-                    "pause_verified": True,
-                    "safe_to_think": True,
-                },
                 "errors": {
-                    "reservation": "",
-                    "pre_dispatch": "",
-                    "dispatch": "",
-                    "wait": "",
-                    "finish": "",
+                    "runner": "",
+                    "outcome": "",
                     "analysis": "",
                     "snapshot_consume": "",
                     "abort": "",
-                    "pause": "",
                 },
             }
             trial_path = condition_dir / "trial.json"

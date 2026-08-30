@@ -33,7 +33,7 @@ from src.observatory.start_state_proof import (
 )
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 RECEIPT_KIND = "observatory_spawn_coordinate_capsule_hw_campaign_receipt"
 TRIAL_KIND = "observatory_spawn_coordinate_capsule_turn_trial"
 LIFECYCLE_KIND = "observatory_spawn_coordinate_capsule_condition_lifecycle"
@@ -62,15 +62,11 @@ EXPECTED_CLAIMS = {
     "complete_future_forecast": False,
 }
 ERROR_FIELDS = {
-    "reservation",
-    "pre_dispatch",
-    "dispatch",
-    "wait",
-    "finish",
+    "runner",
+    "outcome",
     "analysis",
     "snapshot_consume",
     "abort",
-    "pause",
 }
 LIFECYCLE_ERROR_FIELDS = {
     "restore",
@@ -363,15 +359,13 @@ def _validate_trial(
             "valid_trial",
             "module_sha256",
             "build_receipt_sha256",
-            "pre_dispatch_turn",
+            "pre_end_turn_turn",
             "auto_turn",
-            "dispatch",
             "boundary",
             "outcome",
             "snapshot",
             "analysis",
             "snapshot_consumed_from_bridge",
-            "pause_guard",
             "errors",
         },
         f"{pair_name} {condition} trial",
@@ -388,7 +382,7 @@ def _validate_trial(
         or trial.get("module_sha256") != EXPECTED_MODULE_SHA256
         or trial.get("build_receipt_sha256")
         != EXPECTED_BUILD_RECEIPT_SHA256
-        or type(trial.get("pre_dispatch_turn")) is not int
+        or type(trial.get("pre_end_turn_turn")) is not int
         or trial.get("snapshot_consumed_from_bridge") is not True
     ):
         raise SpawnCoordinateCapsuleCampaignError(
@@ -452,47 +446,20 @@ def _validate_trial(
 
     auto = _mapping(trial.get("auto_turn"), f"{pair_name} {condition} auto_turn")
     if (
-        auto.get("status") != "PLAN"
-        or auto.get("local_end_turn_reserved") is not True
-        or auto.get("end_turn_plan_source") != "lightning_loop"
-        or auto.get("end_turn_delivery_mode") != "local"
-        or type(auto.get("end_turn_plan_id")) is not str
-        or not auto.get("end_turn_plan_id")
-        or auto.get("turn") != trial.get("pre_dispatch_turn")
+        auto.get("status") != "ok"
+        or auto.get("turn") != trial.get("pre_end_turn_turn")
+        or auto.get("actions_completed") != 3
         or auto.get("desyncs_detected") != 0
+        or auto.get("post_phase") != "combat_player"
     ):
         raise SpawnCoordinateCapsuleCampaignError(
-            f"{pair_name} {condition} End Turn reservation differs"
-        )
-    dispatch = _mapping(
-        trial.get("dispatch"), f"{pair_name} {condition} dispatch"
-    )
-    delivery = _mapping(
-        dispatch.get("dispatch"), f"{pair_name} {condition} delivery"
-    )
-    if (
-        dispatch.get("status") != "DISPATCHED"
-        or delivery.get("delivery_confirmation") != "delivered_confirmed"
-    ):
-        raise SpawnCoordinateCapsuleCampaignError(
-            f"{pair_name} {condition} End Turn delivery differs"
+            f"{pair_name} {condition} native auto_turn differs"
         )
     errors = _mapping(trial.get("errors"), f"{pair_name} {condition} errors")
     _exact_keys(errors, ERROR_FIELDS, f"{pair_name} {condition} errors")
     if any(errors.values()):
         raise SpawnCoordinateCapsuleCampaignError(
             f"{pair_name} {condition} trial has errors"
-        )
-    pause = _mapping(
-        trial.get("pause_guard"), f"{pair_name} {condition} pause guard"
-    )
-    if (
-        pause.get("status") not in {"OK", "PAUSED"}
-        or pause.get("pause_verified") is not True
-        or pause.get("safe_to_think") is not True
-    ):
-        raise SpawnCoordinateCapsuleCampaignError(
-            f"{pair_name} {condition} pause guard differs"
         )
     _metadata_digest(
         trial.get("outcome"),
@@ -510,6 +477,14 @@ def _validate_trial(
         "prepare_ack",
         "finish_ack",
         "abort_ack",
+        "end_turn_status",
+        "end_turn_bridge",
+        "end_turn_ack",
+        "delivery_confirmation",
+        "retry_allowed",
+        "end_turn_plan_id",
+        "end_turn_plan_source",
+        "end_turn_delivery_mode",
     }
     armed_boundary = {
         "snapshot_sha256",
@@ -537,6 +512,17 @@ def _validate_trial(
         or boundary.get("state") != "complete"
         or boundary.get("prepare_ack") != expected_prepare
         or boundary.get("abort_ack") is not None
+        or boundary.get("end_turn_status") != "OK"
+        or boundary.get("end_turn_bridge") is not True
+        or boundary.get("end_turn_ack")
+        != "OK END_TURN phase=combat_player method=observatory_native"
+        or boundary.get("delivery_confirmation") != "delivered_confirmed"
+        or boundary.get("retry_allowed") is not False
+        or type(boundary.get("end_turn_plan_id")) is not str
+        or not boundary.get("end_turn_plan_id")
+        or boundary.get("end_turn_plan_source") != "auto_turn"
+        or boundary.get("end_turn_delivery_mode") != "external"
+        or auto.get("observatory_native_rng_boundary") != boundary
     ):
         raise SpawnCoordinateCapsuleCampaignError(
             f"{pair_name} {condition} boundary differs"
@@ -852,7 +838,7 @@ def _validate_lifecycle(
         bridge_start.get("mission_id") != "Mission_Power"
         or bridge_start.get("phase") != "combat_player"
         or type(bridge_start.get("turn")) is not int
-        or bridge_start.get("turn") != trial.get("pre_dispatch_turn")
+        or bridge_start.get("turn") != trial.get("pre_end_turn_turn")
         or type(bridge_start.get("active_mechs")) is not int
         or bridge_start.get("active_mechs") <= 0
         or lifecycle.get("bridge_start_sha256") != bridge_start_sha256
@@ -1173,7 +1159,9 @@ def build_spawn_coordinate_capsule_campaign_receipt(
                     f"{pair_name} {condition} lifecycle baseline differs"
                 )
             session_file = str(trial["session_file"])
-            plan_id = str(_mapping(trial["auto_turn"], "auto_turn")["end_turn_plan_id"])
+            plan_id = str(
+                _mapping(trial["boundary"], "boundary")["end_turn_plan_id"]
+            )
             created = _created_at(trial, f"{pair_name} {condition}")
             if (
                 session_file in session_files
@@ -1376,7 +1364,7 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             "condition_orders": [pair["condition_order"] for pair in pairs],
             "fixed_seed": 324508639,
             "mission_id": "Mission_Power",
-            "dispatch_boundary": "reserved_local_end_turn_through_next_player_turn",
+            "dispatch_boundary": "synchronous_reviewed_native_end_turn",
             "fresh_process_count": len(process_identities),
             "all_process_identities_distinct": len(process_identities) == 9,
             "process_executable_sha256": EXPECTED_PROCESS_EXECUTABLE_SHA256,

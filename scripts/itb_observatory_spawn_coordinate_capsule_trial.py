@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Run one guarded selector-entry Board/RNG capsule trial.
+"""Run one fresh-process selector-entry Board/RNG capsule trial.
 
-This runner deliberately separates the solver's opaque local End Turn
-reservation from its actual click.  The capsule is prepared only after every
-player actor is spent and the reservation is durable, remains active through
-the guarded local dispatcher and enemy transition, then restores before the
-game is paused again.
+The capsule is prepared only after every player actor is spent.  The already
+validated exact-build game-flow helper then performs one synchronous native
+End Turn, after which the observer is restored before the post-turn state is
+captured.  The enclosing condition runner gracefully closes the process.
 """
 
 from __future__ import annotations
@@ -14,7 +13,6 @@ import argparse
 import json
 import os
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -29,11 +27,7 @@ from src.bridge.protocol import (  # noqa: E402
     read_state,
     refresh_bridge_state_fresh,
 )
-from src.loop.commands import (  # noqa: E402
-    cmd_auto_turn,
-    cmd_dispatch_end_turn,
-    cmd_lightning_snap_pause,
-)
+from src.loop.commands import cmd_auto_turn  # noqa: E402
 from src.observatory.game_process_identity import (  # noqa: E402
     GameProcessIdentityError,
     capture_windows_game_process_identity,
@@ -180,29 +174,15 @@ def _auto_summary(result: object) -> dict:
             "score",
             "re_solves",
             "desyncs_detected",
-            "bridge_ack",
-            "end_turn_plan_id",
-            "end_turn_plan_source",
-            "end_turn_delivery_mode",
-            "local_end_turn_reserved",
+            "post_phase",
+            "grid_power",
+            "observatory_native_rng_boundary",
             "error",
             "blocking",
             "retry_allowed",
         )
         if key in result
     }
-
-
-def _reservation_valid(result: object) -> bool:
-    return bool(
-        isinstance(result, dict)
-        and result.get("status") == "PLAN"
-        and result.get("local_end_turn_reserved") is True
-        and result.get("end_turn_plan_source") == "lightning_loop"
-        and result.get("end_turn_delivery_mode") == "local"
-        and isinstance(result.get("end_turn_plan_id"), str)
-        and result.get("end_turn_plan_id")
-    )
 
 
 def _fresh_state(timeout: float = 5.0) -> dict:
@@ -214,48 +194,6 @@ def _fresh_state(timeout: float = 5.0) -> dict:
     return value
 
 
-def _wait_for_next_player_turn(
-    pre_turn: int,
-    *,
-    max_wait: float,
-    wait_poll_interval: float,
-) -> dict:
-    deadline = time.monotonic() + max(0.1, float(max_wait))
-    wait_poll_interval = max(0.05, float(wait_poll_interval))
-    last: dict | None = None
-    while time.monotonic() < deadline:
-        try:
-            state = _fresh_state(timeout=min(5.0, max(0.1, deadline - time.monotonic())))
-        except BridgeError:
-            time.sleep(wait_poll_interval)
-            continue
-        last = state
-        turn = state.get("turn")
-        if (
-            state.get("mission_id") == "Mission_Power"
-            and state.get("phase") == "combat_player"
-            and type(turn) is int
-            and turn > pre_turn
-        ):
-            return state
-        if state.get("in_active_mission") is False:
-            raise BridgeError("capsule trial mission ended before the next player turn")
-        time.sleep(wait_poll_interval)
-    raise TimeoutError(
-        "capsule trial next player turn timeout; last phase="
-        f"{last.get('phase') if isinstance(last, dict) else None}"
-    )
-
-
-def _dispatch_confirmation(result: object) -> str | None:
-    if not isinstance(result, dict):
-        return None
-    dispatch = result.get("dispatch")
-    if not isinstance(dispatch, dict):
-        return None
-    return dispatch.get("delivery_confirmation")
-
-
 def _configure_utf8_stdio(streams: tuple[object, ...] | None = None) -> None:
     """Keep imported Windows trials able to print Unicode board summaries."""
     selected = (sys.stdout, sys.stderr) if streams is None else streams
@@ -265,11 +203,16 @@ def _configure_utf8_stdio(streams: tuple[object, ...] | None = None) -> None:
             reconfigure(encoding="utf-8", errors="replace")
 
 
-def _reserve_with_auto_turn(args: argparse.Namespace) -> dict:
+def _run_with_native_boundary(
+    args: argparse.Namespace,
+    boundary: SpawnCoordinateCapsuleTurnBoundary,
+) -> dict:
     _configure_utf8_stdio()
+    # An inherited Lightning environment would turn the direct native result
+    # into an opaque local reservation.  Isolate this scientific runner from
+    # that unrelated UI-delivery mode and restore the caller's environment.
     key = "ITB_LIGHTNING_LOCAL_END_TURN"
-    prior = os.environ.get(key)
-    os.environ[key] = "1"
+    prior = os.environ.pop(key, None)
     try:
         return cmd_auto_turn(
             profile=args.profile,
@@ -283,12 +226,23 @@ def _reserve_with_auto_turn(args: argparse.Namespace) -> dict:
             allow_timeline_collapse=args.allow_timeline_collapse,
             allow_mech_loss=args.allow_mech_loss,
             frontier_diagnostics=args.frontier_diagnostics,
+            _observatory_native_rng_boundary=boundary,
         )
     finally:
-        if prior is None:
-            os.environ.pop(key, None)
-        else:
+        if prior is not None:
             os.environ[key] = prior
+
+
+def _outcome_valid(outcome: object, pre_turn: object) -> bool:
+    return bool(
+        isinstance(outcome, dict)
+        and outcome.get("mission_id") == "Mission_Power"
+        and outcome.get("phase") == "combat_player"
+        and outcome.get("in_active_mission") is True
+        and type(pre_turn) is int
+        and type(outcome.get("turn")) is int
+        and outcome.get("turn") > pre_turn
+    )
 
 
 def run(args: argparse.Namespace) -> tuple[int, dict]:
@@ -339,101 +293,49 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
     )
 
     auto_result: dict | None = None
-    dispatch_result: dict | None = None
     outcome: dict | None = None
     analysis: dict | None = None
-    pause_result: dict | None = None
     errors = {
-        "reservation": "",
-        "pre_dispatch": "",
-        "dispatch": "",
-        "wait": "",
-        "finish": "",
+        "runner": "",
+        "outcome": "",
         "analysis": "",
         "snapshot_consume": "",
         "abort": "",
-        "pause": "",
     }
     pre_turn: int | None = None
     try:
-        auto_result = _reserve_with_auto_turn(args)
-        if not _reservation_valid(auto_result):
-            errors["reservation"] = "auto_turn did not create an opaque local reservation"
+        auto_result = _run_with_native_boundary(args, boundary)
+        if isinstance(auto_result, dict) and type(auto_result.get("turn")) is int:
+            pre_turn = auto_result["turn"]
+        if (
+            not isinstance(auto_result, dict)
+            or auto_result.get("status") != "ok"
+            or auto_result.get("desyncs_detected") != 0
+            or auto_result.get("post_phase") != "combat_player"
+            or boundary.state != "complete"
+            or auto_result.get("observatory_native_rng_boundary")
+            != boundary.summary()
+        ):
+            errors["runner"] = (
+                "auto_turn did not complete one exact native capsule boundary"
+            )
         else:
-            pre_state = _fresh_state()
-            pre_turn_value = pre_state.get("turn")
-            if (
-                pre_state.get("mission_id") != "Mission_Power"
-                or pre_state.get("phase") != "combat_player"
-                or type(pre_turn_value) is not int
-            ):
-                errors["pre_dispatch"] = "fresh pre-dispatch mission state differs"
-            else:
-                pre_turn = pre_turn_value
-                boundary.before_dispatch()
-                try:
-                    dispatch_result = cmd_dispatch_end_turn(
-                        execute=True,
-                        _allow_reserved_local_plan=True,
-                    )
-                except Exception as exc:
-                    errors["dispatch"] = str(exc)
-                confirmation = _dispatch_confirmation(dispatch_result)
-                if not errors["dispatch"] and (
-                    not isinstance(dispatch_result, dict)
-                    or dispatch_result.get("status") != "DISPATCHED"
-                    or confirmation != "delivered_confirmed"
-                ):
-                    errors["dispatch"] = "guarded local End Turn was not confirmed"
-                if not errors["dispatch"]:
-                    try:
-                        outcome = _wait_for_next_player_turn(
-                            pre_turn,
-                            max_wait=args.max_wait,
-                            wait_poll_interval=args.wait_poll_interval,
-                        )
-                    except Exception as exc:
-                        errors["wait"] = str(exc)
-                accepted = not errors["dispatch"] and not errors["wait"]
-                try:
-                    boundary.after_dispatch(
-                        {
-                            "status": "OK" if accepted else "STOPPED",
-                            "delivery_confirmation": confirmation,
-                        }
-                    )
-                except Exception as exc:
-                    errors["finish"] = str(exc)
-    except Exception as exc:
-        if boundary.state in {"prepare_pending", "prepared"}:
             try:
-                boundary.after_dispatch(
-                    {
-                        "status": "STOPPED",
-                        "delivery_confirmation": _dispatch_confirmation(
-                            dispatch_result
-                        ),
-                    }
-                )
-            except Exception as finish_exc:
-                errors["finish"] = str(finish_exc)
-        target = "pre_dispatch" if auto_result is not None else "reservation"
-        if not errors[target]:
-            errors[target] = str(exc)
+                outcome = _fresh_state()
+                if not _outcome_valid(outcome, pre_turn):
+                    raise BridgeError(
+                        "post-trial state is not the next Mission_Power player turn"
+                    )
+            except Exception as exc:
+                errors["outcome"] = str(exc)
+                outcome = None
+    except Exception as exc:
+        errors["runner"] = str(exc)
     finally:
         try:
             boundary.abort()
         except Exception as exc:
             errors["abort"] = str(exc)
-        try:
-            pause_result = cmd_lightning_snap_pause(
-                f"spawn_capsule_{args.capture_id}",
-                note="post_spawn_coordinate_capsule_trial_restore_guard",
-                run_seconds=0.0,
-                include_ocr=True,
-            )
-        except Exception as exc:
-            errors["pause"] = str(exc)
 
     if outcome is not None:
         _write(outcome_output, outcome)
@@ -464,28 +366,23 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
                 errors["snapshot_consume"] = str(exc)
 
     auto_summary = _auto_summary(auto_result)
-    pause_ok = bool(
-        isinstance(pause_result, dict)
-        and pause_result.get("status") in {"OK", "PAUSED"}
-        and pause_result.get("pause_verified") is True
-        and pause_result.get("safe_to_think") is True
-    )
     valid = bool(
         not any(errors.values())
-        and _reservation_valid(auto_result)
-        and isinstance(dispatch_result, dict)
-        and dispatch_result.get("status") == "DISPATCHED"
-        and _dispatch_confirmation(dispatch_result) == "delivered_confirmed"
-        and outcome is not None
+        and isinstance(auto_result, dict)
+        and auto_result.get("status") == "ok"
+        and auto_result.get("desyncs_detected") == 0
+        and auto_result.get("post_phase") == "combat_player"
+        and auto_result.get("observatory_native_rng_boundary")
+        == boundary.summary()
+        and _outcome_valid(outcome, pre_turn)
         and boundary.state == "complete"
-        and pause_ok
         and (
             (args.condition != "armed" and boundary.snapshot is None)
             or (analysis is not None and analysis.get("status") == "correlated")
         )
     )
     trial = {
-        "schema_version": 2,
+        "schema_version": 3,
         "kind": "observatory_spawn_coordinate_capsule_turn_trial",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "pair_id": args.pair_id,
@@ -506,9 +403,8 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         "valid_trial": valid,
         "module_sha256": module_sha256,
         "build_receipt_sha256": build_receipt_sha256,
-        "pre_dispatch_turn": pre_turn,
+        "pre_end_turn_turn": pre_turn,
         "auto_turn": auto_summary,
-        "dispatch": dispatch_result,
         "boundary": boundary.summary(),
         "outcome": (
             {
@@ -551,7 +447,6 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
                 and not errors["snapshot_consume"]
             )
         ),
-        "pause_guard": pause_result,
         "errors": errors,
     }
     _write(trial_output, trial)

@@ -58,23 +58,28 @@ def _args(
     )
 
 
-def _reservation() -> dict:
+def _native_end_turn() -> dict:
     return {
-        "status": "PLAN",
-        "turn": 1,
-        "actions_completed": 3,
-        "desyncs_detected": 0,
-        "local_end_turn_reserved": True,
+        "status": "OK",
+        "bridge": True,
+        "ack": "OK END_TURN phase=combat_player method=observatory_native",
+        "delivery_confirmation": "delivered_confirmed",
+        "retry_allowed": False,
         "end_turn_plan_id": "plan-001",
-        "end_turn_plan_source": "lightning_loop",
-        "end_turn_delivery_mode": "local",
+        "end_turn_plan_source": "auto_turn",
+        "end_turn_delivery_mode": "external",
     }
 
 
-def _dispatch() -> dict:
+def _auto_result(boundary_summary: dict) -> dict:
     return {
-        "status": "DISPATCHED",
-        "dispatch": {"delivery_confirmation": "delivered_confirmed"},
+        "status": "ok",
+        "turn": 1,
+        "actions_completed": 3,
+        "desyncs_detected": 0,
+        "post_phase": "combat_player",
+        "grid_power": "2/7",
+        "observatory_native_rng_boundary": boundary_summary,
     }
 
 
@@ -156,22 +161,16 @@ def _inputs(tmp_path: Path, monkeypatch):
     return root, receipt, module
 
 
-def test_control_trial_prepares_only_after_reservation_and_finishes_before_pause(
+def test_control_trial_wraps_exact_native_end_turn_and_captures_next_turn(
     tmp_path,
     monkeypatch,
 ):
     root, receipt, module = _inputs(tmp_path, monkeypatch)
     calls: list[str] = []
-    states = iter([_state(1), _state(2)])
-    monkeypatch.setattr(
-        trial,
-        "_reserve_with_auto_turn",
-        lambda _args: calls.append("reserve") or _reservation(),
-    )
     monkeypatch.setattr(
         trial,
         "_fresh_state",
-        lambda **_kwargs: calls.append("fresh") or next(states),
+        lambda **_kwargs: calls.append("fresh") or _state(2),
     )
     monkeypatch.setattr(
         turn,
@@ -183,17 +182,16 @@ def test_control_trial_prepares_only_after_reservation_and_finishes_before_pause
         "finish_observatory_spawn_coordinate_capsule",
         lambda *_args: calls.append("finish") or ("finished", None),
     )
-    monkeypatch.setattr(
-        trial,
-        "cmd_dispatch_end_turn",
-        lambda **_kwargs: calls.append("dispatch") or _dispatch(),
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: calls.append("pause")
-        or {"status": "OK", "pause_verified": True, "safe_to_think": True},
-    )
+
+    def auto_turn(**kwargs):
+        calls.append("auto_turn")
+        boundary = kwargs["_observatory_native_rng_boundary"]
+        boundary.before_end_turn()
+        calls.append("native_end_turn")
+        summary = boundary.after_end_turn(_native_end_turn())
+        return _auto_result(summary)
+
+    monkeypatch.setattr(trial, "cmd_auto_turn", auto_turn)
 
     code, result = trial.run(
         _args(root, receipt, module, condition="control")
@@ -205,13 +203,11 @@ def test_control_trial_prepares_only_after_reservation_and_finishes_before_pause
     assert len(result["start_state"]["tree_sha256"]) == 64
     assert result["boundary"]["state"] == "complete"
     assert calls == [
-        "reserve",
-        "fresh",
+        "auto_turn",
         "prepare",
-        "dispatch",
-        "fresh",
+        "native_end_turn",
         "finish",
-        "pause",
+        "fresh",
     ]
     assert json.loads((root / "control" / "outcome.json").read_text())["turn"] == 2
 
@@ -225,10 +221,8 @@ def test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot(
         "summary": {"draw_record_count": 1, "capsule_count": 1},
         "integrity": {"complete": True},
     }
-    states = iter([_state(1), _state(2)])
     calls: list[str] = []
-    monkeypatch.setattr(trial, "_reserve_with_auto_turn", lambda _args: _reservation())
-    monkeypatch.setattr(trial, "_fresh_state", lambda **_kwargs: next(states))
+    monkeypatch.setattr(trial, "_fresh_state", lambda **_kwargs: _state(2))
     monkeypatch.setattr(
         turn,
         "prepare_observatory_spawn_coordinate_capsule",
@@ -239,16 +233,14 @@ def test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot(
         "finish_observatory_spawn_coordinate_capsule",
         lambda *_args: ("finished", snapshot),
     )
-    monkeypatch.setattr(trial, "cmd_dispatch_end_turn", lambda **_kwargs: _dispatch())
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: {
-            "status": "OK",
-            "pause_verified": True,
-            "safe_to_think": True,
-        },
-    )
+
+    def auto_turn(**kwargs):
+        boundary = kwargs["_observatory_native_rng_boundary"]
+        boundary.before_end_turn()
+        summary = boundary.after_end_turn(_native_end_turn())
+        return _auto_result(summary)
+
+    monkeypatch.setattr(trial, "cmd_auto_turn", auto_turn)
     monkeypatch.setattr(
         trial,
         "correlate_spawn_coordinate_capsule_snapshot",
@@ -273,7 +265,7 @@ def test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot(
     assert (root / "armed" / "analysis.json").is_file()
 
 
-def test_rejected_reservation_never_prepares_or_dispatches_and_still_pauses(
+def test_rejected_auto_turn_never_prepares_native_boundary(
     tmp_path,
     monkeypatch,
 ):
@@ -281,24 +273,14 @@ def test_rejected_reservation_never_prepares_or_dispatches_and_still_pauses(
     calls: list[str] = []
     monkeypatch.setattr(
         trial,
-        "_reserve_with_auto_turn",
-        lambda _args: {"status": "SAFETY_BLOCKED", "blocking": True},
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_dispatch_end_turn",
-        lambda **_kwargs: calls.append("dispatch"),
+        "cmd_auto_turn",
+        lambda **_kwargs: calls.append("auto_turn")
+        or {"status": "SAFETY_BLOCKED", "blocking": True},
     )
     monkeypatch.setattr(
         turn,
         "prepare_observatory_spawn_coordinate_capsule",
         lambda *_args: calls.append("prepare"),
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: calls.append("pause")
-        or {"status": "OK", "pause_verified": True, "safe_to_think": True},
     )
 
     code, result = trial.run(
@@ -307,8 +289,8 @@ def test_rejected_reservation_never_prepares_or_dispatches_and_still_pauses(
 
     assert code == 2
     assert result["status"] == "rejected"
-    assert result["errors"]["reservation"]
-    assert calls == ["pause"]
+    assert result["errors"]["runner"]
+    assert calls == ["auto_turn"]
     assert not (root / "dormant" / "outcome.json").exists()
 
 
@@ -329,13 +311,8 @@ def test_build_identity_preflight_blocks_before_any_session_action(
     )
     monkeypatch.setattr(
         trial,
-        "_reserve_with_auto_turn",
-        lambda _args: calls.append("reserve"),
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: calls.append("pause"),
+        "_run_with_native_boundary",
+        lambda *_args: calls.append("run"),
     )
 
     with pytest.raises(SpawnCoordinateCapsuleHwError, match="wrong capsule build"):
@@ -357,13 +334,8 @@ def test_process_identity_preflight_blocks_before_any_session_action(
     monkeypatch.setattr(trial, "capture_windows_game_process_identity", reject)
     monkeypatch.setattr(
         trial,
-        "_reserve_with_auto_turn",
-        lambda _args: calls.append("reserve"),
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: calls.append("pause"),
+        "_run_with_native_boundary",
+        lambda *_args: calls.append("run"),
     )
 
     with pytest.raises(GameProcessIdentityError, match="stale game process"):
@@ -385,13 +357,8 @@ def test_start_state_preflight_blocks_before_any_session_action(
     monkeypatch.setattr(trial, "validate_start_state_verification_proof", reject)
     monkeypatch.setattr(
         trial,
-        "_reserve_with_auto_turn",
-        lambda _args: calls.append("reserve"),
-    )
-    monkeypatch.setattr(
-        trial,
-        "cmd_lightning_snap_pause",
-        lambda *_args, **_kwargs: calls.append("pause"),
+        "_run_with_native_boundary",
+        lambda *_args: calls.append("run"),
     )
 
     with pytest.raises(StartStateProofError, match="wrong restored tree"):
@@ -400,7 +367,9 @@ def test_start_state_preflight_blocks_before_any_session_action(
     assert calls == []
 
 
-def test_imported_trial_configures_utf8_before_auto_turn(monkeypatch):
+def test_imported_trial_isolates_local_delivery_env_and_passes_native_boundary(
+    monkeypatch,
+):
     calls: list[str] = []
     args = SimpleNamespace(
         profile="Alpha",
@@ -415,21 +384,26 @@ def test_imported_trial_configures_utf8_before_auto_turn(monkeypatch):
         allow_mech_loss=False,
         frontier_diagnostics=True,
     )
-    monkeypatch.delenv("ITB_LIGHTNING_LOCAL_END_TURN", raising=False)
+    boundary = object()
+    monkeypatch.setenv("ITB_LIGHTNING_LOCAL_END_TURN", "inherited")
     monkeypatch.setattr(
         trial,
         "_configure_utf8_stdio",
         lambda: calls.append("utf8"),
     )
-    monkeypatch.setattr(
-        trial,
-        "cmd_auto_turn",
-        lambda **_kwargs: calls.append("auto_turn") or _reservation(),
-    )
+    def auto_turn(**kwargs):
+        calls.append("auto_turn")
+        assert "ITB_LIGHTNING_LOCAL_END_TURN" not in trial.os.environ
+        assert kwargs["_observatory_native_rng_boundary"] is boundary
+        return {"status": "SAFETY_BLOCKED"}
 
-    assert trial._reserve_with_auto_turn(args) == _reservation()
+    monkeypatch.setattr(trial, "cmd_auto_turn", auto_turn)
+
+    assert trial._run_with_native_boundary(args, boundary) == {
+        "status": "SAFETY_BLOCKED"
+    }
     assert calls == ["utf8", "auto_turn"]
-    assert "ITB_LIGHTNING_LOCAL_END_TURN" not in trial.os.environ
+    assert trial.os.environ["ITB_LIGHTNING_LOCAL_END_TURN"] == "inherited"
 
 
 def test_utf8_stdio_configuration_reconfigures_supported_streams():

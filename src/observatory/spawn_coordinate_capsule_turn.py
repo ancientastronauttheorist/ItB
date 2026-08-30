@@ -1,11 +1,10 @@
-"""Fail-closed boundary around one locally dispatched capsule trial End Turn.
+"""Fail-closed boundary around one native capsule-trial End Turn.
 
-The ordinary ``auto_turn`` flow emits an End Turn plan before the guarded UI
-click is consumed.  A native selector observer must therefore remain armed
-across the later local dispatcher, not merely across plan creation.  This state
-machine prepares only after the solver has spent every player actor and issued
-an opaque local reservation, then restores immediately after the dispatcher
-has delivered the click and the caller observes the next player turn.
+The condition launcher loads the exact-build game-flow helper while entering
+the restored timeline.  ``auto_turn`` invokes this boundary only after every
+player actor is spent.  The boundary then seeds and optionally arms the capsule
+observer, requires one synchronous reviewed native End Turn, and restores the
+observer before control returns to the ordinary post-turn read.
 """
 
 from __future__ import annotations
@@ -24,6 +23,9 @@ from src.bridge.protocol import (
 
 
 _CAPTURE_ID = re.compile(r"[a-z][a-z0-9_.-]{0,95}\Z")
+_NATIVE_END_TURN_ACK = (
+    "OK END_TURN phase=combat_player method=observatory_native"
+)
 
 
 class SpawnCoordinateCapsuleTurnError(RuntimeError):
@@ -42,7 +44,7 @@ def _canonical_sha256(value: object) -> str:
 
 
 class SpawnCoordinateCapsuleTurnBoundary:
-    """Seed, optionally arm, dispatch once, and restore one capsule observer."""
+    """Seed, optionally arm, deliver once natively, and restore the observer."""
 
     def __init__(self, *, condition: str, capture_id: str) -> None:
         if condition not in {"control", "dormant", "armed"}:
@@ -60,6 +62,14 @@ class SpawnCoordinateCapsuleTurnBoundary:
         self.finish_ack: str | None = None
         self.abort_ack: str | None = None
         self.snapshot: dict[str, Any] | None = None
+        self.end_turn_status: object = None
+        self.end_turn_bridge: object = None
+        self.end_turn_ack: object = None
+        self.delivery_confirmation: object = None
+        self.retry_allowed: object = None
+        self.end_turn_plan_id: object = None
+        self.end_turn_plan_source: object = None
+        self.end_turn_delivery_mode: object = None
 
     @property
     def armed(self) -> bool:
@@ -68,8 +78,8 @@ class SpawnCoordinateCapsuleTurnBoundary:
             "prepared",
         }
 
-    def before_dispatch(self) -> dict[str, Any]:
-        """Prepare after an opaque local End Turn reservation already exists."""
+    def before_end_turn(self) -> dict[str, Any]:
+        """Prepare immediately before ``auto_turn`` authorizes End Turn."""
         if self.state != "ready":
             raise SpawnCoordinateCapsuleTurnError(
                 f"spawn-coordinate capsule cannot prepare from state {self.state}"
@@ -83,28 +93,27 @@ class SpawnCoordinateCapsuleTurnBoundary:
             self.state = "prepared"
         except Exception as exc:
             restore_error = self._abort_if_prepared()
-            message = f"spawn-coordinate capsule pre-dispatch boundary failed: {exc}"
+            message = f"spawn-coordinate capsule pre-End-Turn boundary failed: {exc}"
             if restore_error is not None:
                 message += f"; observer restore also failed: {restore_error}"
             raise SpawnCoordinateCapsuleTurnError(message) from exc
         return self.summary()
 
-    def after_dispatch(self, dispatch_result: object) -> dict[str, Any]:
-        """Restore after confirmed dispatch and the caller's transition wait."""
+    def after_end_turn(self, end_turn_result: object) -> dict[str, Any]:
+        """Restore after the synchronous native player/enemy/player cycle."""
         if self.state != "prepared":
             raise SpawnCoordinateCapsuleTurnError(
                 f"spawn-coordinate capsule cannot finish from state {self.state}"
             )
-        status = (
-            dispatch_result.get("status")
-            if isinstance(dispatch_result, Mapping)
-            else None
-        )
-        delivery = (
-            dispatch_result.get("delivery_confirmation")
-            if isinstance(dispatch_result, Mapping)
-            else None
-        )
+        result = end_turn_result if isinstance(end_turn_result, Mapping) else {}
+        self.end_turn_status = result.get("status")
+        self.end_turn_bridge = result.get("bridge")
+        self.end_turn_ack = result.get("ack")
+        self.delivery_confirmation = result.get("delivery_confirmation")
+        self.retry_allowed = result.get("retry_allowed")
+        self.end_turn_plan_id = result.get("end_turn_plan_id")
+        self.end_turn_plan_source = result.get("end_turn_plan_source")
+        self.end_turn_delivery_mode = result.get("end_turn_delivery_mode")
         try:
             self.finish_ack, self.snapshot = (
                 finish_observatory_spawn_coordinate_capsule(
@@ -119,12 +128,19 @@ class SpawnCoordinateCapsuleTurnBoundary:
             if restore_error is not None:
                 message += f"; abort restore also failed: {restore_error}"
             raise SpawnCoordinateCapsuleTurnError(message) from exc
-        accepted = status == "OK" and delivery == "delivered_confirmed"
-        self.state = "complete" if accepted else "rejected"
-        return self.summary(
-            dispatch_status=status,
-            delivery_confirmation=delivery,
+        accepted = bool(
+            self.end_turn_status == "OK"
+            and self.end_turn_bridge is True
+            and self.end_turn_ack == _NATIVE_END_TURN_ACK
+            and self.delivery_confirmation == "delivered_confirmed"
+            and self.retry_allowed is False
+            and isinstance(self.end_turn_plan_id, str)
+            and self.end_turn_plan_id
+            and self.end_turn_plan_source == "auto_turn"
+            and self.end_turn_delivery_mode == "external"
         )
+        self.state = "complete" if accepted else "rejected"
+        return self.summary()
 
     def abort(self) -> dict[str, Any]:
         """Restore a prepared boundary without dispatching or publishing evidence."""
@@ -150,12 +166,7 @@ class SpawnCoordinateCapsuleTurnBoundary:
             self.state = "restore_failed"
             return exc
 
-    def summary(
-        self,
-        *,
-        dispatch_status: object = None,
-        delivery_confirmation: object = None,
-    ) -> dict[str, Any]:
+    def summary(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "condition": self.condition,
             "capture_id": self.capture_id,
@@ -163,11 +174,15 @@ class SpawnCoordinateCapsuleTurnBoundary:
             "prepare_ack": self.prepare_ack,
             "finish_ack": self.finish_ack,
             "abort_ack": self.abort_ack,
+            "end_turn_status": self.end_turn_status,
+            "end_turn_bridge": self.end_turn_bridge,
+            "end_turn_ack": self.end_turn_ack,
+            "delivery_confirmation": self.delivery_confirmation,
+            "retry_allowed": self.retry_allowed,
+            "end_turn_plan_id": self.end_turn_plan_id,
+            "end_turn_plan_source": self.end_turn_plan_source,
+            "end_turn_delivery_mode": self.end_turn_delivery_mode,
         }
-        if dispatch_status is not None:
-            result["dispatch_status"] = dispatch_status
-        if delivery_confirmation is not None:
-            result["delivery_confirmation"] = delivery_confirmation
         if self.snapshot is not None:
             summary = self.snapshot.get("summary")
             integrity = self.snapshot.get("integrity")

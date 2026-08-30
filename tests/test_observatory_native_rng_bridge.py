@@ -392,6 +392,21 @@ def test_native_continue_startup_request_is_fixed_and_one_shot(
     assert "consume_observatory_native_continue_startup_request" in MODLOADER
     assert 'rawget(gameflow, "continue_saved_timeline")' in MODLOADER
     assert "_native_continue_startup_requested" in MODLOADER
+    startup = MODLOADER.index(
+        "local function consume_observatory_native_continue_startup_request"
+    )
+    cleanup = MODLOADER.index("-- Clean up stale files from previous session", startup)
+    startup_block = MODLOADER[startup:cleanup]
+    assert startup_block.index('rawget(gameflow, "continue_saved_timeline")') < (
+        startup_block.index("_observatory_native_gameflow = gameflow")
+    )
+
+    end_turn = MODLOADER.index('elseif cmd == "END_TURN" then')
+    native_rng_seed = MODLOADER.index('elseif cmd == "OBS_NATIVE_RNG_SEED" then')
+    end_turn_block = MODLOADER[end_turn:native_rng_seed]
+    assert end_turn_block.index('rawget(gameflow, "end_player_turn")') < (
+        end_turn_block.index("_observatory_native_gameflow = nil")
+    )
 
 
 @pytest.mark.parametrize(
