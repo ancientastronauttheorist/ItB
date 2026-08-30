@@ -65,6 +65,20 @@ def _proof(tmp_path) -> dict:
     }
 
 
+def _runtime_modules(tmp_path) -> dict:
+    return {
+        role: {
+            "path": str((tmp_path / f"{role}.dll").resolve()),
+            "size": index,
+            "sha256": str(index) * 64,
+        }
+        for index, role in enumerate(
+            ("capsule_observer", "continue_helper", "rng_seed_helper"),
+            start=1,
+        )
+    }
+
+
 def _patch_success(tmp_path, monkeypatch, calls: list[str]) -> None:
     continue_request = tmp_path / "native-continue.request"
     monkeypatch.setattr(
@@ -95,6 +109,11 @@ def _patch_success(tmp_path, monkeypatch, calls: list[str]) -> None:
         condition,
         "validate_spawn_coordinate_capsule_build_identity",
         lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        condition,
+        "validate_capsule_runtime_modules",
+        lambda *_args, **_kwargs: _runtime_modules(tmp_path),
     )
     monkeypatch.setattr(
         condition.pair_state,
@@ -293,3 +312,26 @@ def test_native_continue_ack_rejects_an_error_generation(tmp_path, monkeypatch):
             poll_interval=0.02,
         )
     assert not ack.exists()
+
+
+def test_condition_support_module_preflight_blocks_before_restore(
+    tmp_path,
+    monkeypatch,
+):
+    args = _args(tmp_path)
+    calls: list[str] = []
+    _patch_success(tmp_path, monkeypatch, calls)
+    monkeypatch.setattr(
+        condition,
+        "validate_capsule_runtime_modules",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            condition.CapsuleRuntimeModuleError("continue helper is missing")
+        ),
+    )
+
+    with pytest.raises(
+        condition.CapsuleRuntimeModuleError,
+        match="continue helper is missing",
+    ):
+        condition.run(args)
+    assert calls == []

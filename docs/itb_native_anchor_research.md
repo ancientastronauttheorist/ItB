@@ -166,11 +166,13 @@ The durable artifacts are:
   process/start-state preflight, post-actor local End Turn reservation, prepare-
   through-next-turn lifetime, fail-closed restoration, verified pause, and exact
   bridge snapshot consumption;
-- `src/observatory/game_process_identity.py`,
+- `src/observatory/capsule_runtime_modules.py`,
+  `src/observatory/game_process_identity.py`,
   `src/observatory/start_state_proof.py`, and
   `src/observatory/windows_game_lifecycle.py` for exact Windows PID/creation-
-  FILETIME identity, stopped-game save-tree proof, exact launch, and graceful
-  same-process `WM_CLOSE` without a force-kill fallback;
+  FILETIME identity, exact installed observer/Continue/RNG-seed identities,
+  stopped-game save-tree proof, exact launch, and graceful same-process
+  `WM_CLOSE` without a force-kill fallback;
 - `scripts/itb_observatory_spawn_coordinate_capsule_condition.py` and
   `scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py` for the
   restore/prove/session/Continue/launch/ACK/bridge/trial/close condition lifecycle,
@@ -180,7 +182,9 @@ The durable artifacts are:
   exact three-triplet counterbalancing, rebuilt native/bridge correlation,
   semantic neutrality comparison, process/start-state/lifecycle proofs,
   observer-restoration checks, final-save-restore proof, and immutable campaign
-  sealing; this full path is synthetically validated but has not run live;
+  sealing; this full path is synthetically validated, while the first live
+  lifecycle startup was rejected before bridge entry or End Turn because the
+  cleaned-up Continue helper was absent, then closed and final-restored exactly;
 - `data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json`
   for the exact path API bindings and constants, Board search vtable, 12
   reviewed region hashes, four direct call edges, and the Road Runner

@@ -644,7 +644,9 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "fail-closed trial runner, condition lifecycle" in evidence
     assert "require its exact startup ACK" in evidence
     assert "finally restore the original save" in evidence
-    assert "no live condition has run" in evidence
+    assert "installed capsule observer, Continue helper, RNG-seed helper" in evidence
+    assert "cleaned-up Continue helper was absent" in evidence
+    assert "No live capsule trial or End Turn has run" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
         for item in record["implementations"]
@@ -684,6 +686,9 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert implementations["src/observatory/game_process_identity.py"] == {
         "capture_windows_game_process_identity",
         "validate_windows_game_executable",
+    }
+    assert implementations["src/observatory/capsule_runtime_modules.py"] == {
+        "validate_capsule_runtime_modules",
     }
     assert implementations["src/observatory/start_state_proof.py"] == {
         "start_state_manifest_sha256",
@@ -887,10 +892,15 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_capsule_campaign_rejects_reused_process_identity",
         "test_capsule_campaign_rejects_forced_process_termination",
         "test_capsule_campaign_rejects_native_continue_ack_drift",
+        "test_capsule_campaign_rejects_runtime_module_identity_drift",
     }
     assert tests["tests/test_observatory_game_process_identity.py"] == {
         "test_process_identity_binds_unique_pid_creation_time_and_exact_executable",
         "test_process_identity_rejects_multiple_processes_or_different_path",
+    }
+    assert tests["tests/test_observatory_capsule_runtime_modules.py"] == {
+        "test_runtime_module_preflight_binds_all_exact_installed_files",
+        "test_runtime_module_preflight_rejects_missing_or_misplaced_support",
     }
     assert tests["tests/test_observatory_start_state_proof.py"] == {
         "test_start_state_proof_binds_exact_tree_before_process_start",
@@ -908,6 +918,12 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_condition_recovers_exact_launched_identity_for_close_when_wait_fails",
         "test_native_continue_ack_requires_a_fresh_exact_generation",
         "test_native_continue_ack_rejects_an_error_generation",
+        "test_condition_support_module_preflight_blocks_before_restore",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_diagnostics.py"
+    ] == {
+        "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"

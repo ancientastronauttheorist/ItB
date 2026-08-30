@@ -1,0 +1,91 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external",
+  "bridge_start": null,
+  "bridge_start_sha256": null,
+  "build_identity": {
+    "build_receipt_sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "module_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9"
+  },
+  "capture_id": "spawn-capsule-pair001-control",
+  "capture_track": "owner_local_modified",
+  "close": {
+    "closed_at": "2026-08-30T02:12:18.141234+00:00",
+    "creation_filetime": 134325295325195217,
+    "exited": true,
+    "forced_termination": false,
+    "method": "WM_CLOSE",
+    "pid": 9776,
+    "requested_at": "2026-08-30T02:12:17.740691+00:00",
+    "window_handles": [
+      20908618
+    ]
+  },
+  "condition": "control",
+  "condition_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external\\pair001\\control",
+  "created_at": "2026-08-30T02:12:18.141498+00:00",
+  "errors": {
+    "bridge_start": "native Continue startup ACK differs: 'ERROR: Observatory native Continue cannot load callback game-flow helper: The specified module could not be found.'",
+    "close": "",
+    "continue_arm": "",
+    "continue_cleanup": "",
+    "launch": "",
+    "process": "",
+    "restore": "",
+    "session": "",
+    "session_cleanup": "",
+    "start_state": "",
+    "trial": ""
+  },
+  "kind": "observatory_spawn_coordinate_capsule_condition_lifecycle",
+  "launch": {
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "launcher_pid": 9776,
+    "requested_at": "2026-08-30T02:12:12.518564+00:00"
+  },
+  "native_continue": {
+    "ack": null,
+    "armed": true,
+    "cleaned_after_failure": false,
+    "consumed": false,
+    "request_path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\itb_bridge\\itb_observatory_native_continue.request"
+  },
+  "pair_id": "spawn-capsule-pair001",
+  "process_identity": {
+    "created_at": "2026-08-30T02:12:12.519522+00:00",
+    "creation_filetime": 134325295325195217,
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "kind": "observatory_windows_game_process_identity",
+    "pid": 9776,
+    "schema_version": 1
+  },
+  "restore": {
+    "file_count": 32,
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "total_bytes": 2436295,
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+  },
+  "schema_version": 1,
+  "session": {
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external\\pair001\\control\\session.json",
+    "sha256": "eef9cb41dad4ace7944843f1da4392086d4efdcb1d898c5ecc16568fd67a5eb2",
+    "source_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\sessions\\active_session.json",
+    "source_sha256": "7713d617f726a718952df0c8c8b9ceb68e0c940db1e81a0e25934641e06c70ca"
+  },
+  "start_state": {
+    "game_stopped": true,
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external\\pair001\\control\\start_state_proof.json",
+    "sha256": "dbb5883539b50896e8530581071fc6d6e0c81d510b902660e6f913b78fd36a1d",
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "verified_at": "2026-08-30T02:12:12.014424+00:00"
+  },
+  "status": "rejected",
+  "trial": null,
+  "valid_lifecycle": false
+}

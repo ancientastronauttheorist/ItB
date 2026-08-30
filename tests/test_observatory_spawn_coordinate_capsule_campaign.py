@@ -15,6 +15,7 @@ from src.observatory.msvc_rng_replay import (
 from src.observatory.game_process_identity import (
     EXPECTED_EXECUTABLE_SIZE as EXPECTED_PROCESS_EXECUTABLE_SIZE,
 )
+from src.observatory.capsule_runtime_modules import EXPECTED_RUNTIME_MODULES
 from src.observatory.spawn_coordinate_capsule_campaign import (
     BREAKPOINT_PLAN,
     BUILD_RECEIPT,
@@ -169,6 +170,14 @@ def _lifecycle(
             "executable_size": EXPECTED_PROCESS_EXECUTABLE_SIZE,
             "module_sha256": EXPECTED_MODULE_SHA256,
             "build_receipt_sha256": EXPECTED_BUILD_RECEIPT_SHA256,
+        },
+        "runtime_modules": {
+            role: {
+                "path": str((repo / "scripts" / expected["filename"]).resolve()),
+                "size": expected["size"],
+                "sha256": expected["sha256"],
+            }
+            for role, expected in EXPECTED_RUNTIME_MODULES.items()
         },
         "restore": {
             "manifest_sha256": start_state_proof["manifest_sha256"],
@@ -664,6 +673,7 @@ def test_synthetic_capsule_campaign_seals_board_rng_and_neutrality(tmp_path):
     assert receipt["campaign"]["all_start_states_match"] is True
     assert receipt["campaign"]["all_lifecycles_complete"] is True
     assert receipt["campaign"]["all_processes_gracefully_closed"] is True
+    assert receipt["campaign"]["all_runtime_modules_exact"] is True
     assert receipt["restore"]["save_restoration_pending"] is False
     assert receipt["restore"]["cleanup_receipt_pending"] is True
     assert any(
@@ -780,6 +790,23 @@ def test_capsule_campaign_rejects_native_continue_ack_drift(tmp_path):
     with pytest.raises(
         SpawnCoordinateCapsuleCampaignError,
         match="native Continue differs",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_rejects_runtime_module_identity_drift(tmp_path):
+    repo, campaign = _prepare_campaign(tmp_path)
+    lifecycle_path = campaign / "pair001" / "control" / "lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+    lifecycle["runtime_modules"]["continue_helper"]["sha256"] = "0" * 64
+    _write(lifecycle_path, lifecycle)
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="continue_helper identity differs",
     ):
         build_spawn_coordinate_capsule_campaign_receipt(
             campaign,

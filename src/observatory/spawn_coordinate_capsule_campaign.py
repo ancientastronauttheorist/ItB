@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from src.observatory.rng_trial_outcome import compare_rng_trial_outcomes
+from src.observatory.capsule_runtime_modules import EXPECTED_RUNTIME_MODULES
 from src.observatory.game_process_identity import (
     EXPECTED_EXECUTABLE_SHA256 as EXPECTED_PROCESS_EXECUTABLE_SHA256,
     EXPECTED_EXECUTABLE_SIZE as EXPECTED_PROCESS_EXECUTABLE_SIZE,
@@ -637,6 +638,7 @@ def _validate_lifecycle(
             "artifact_root",
             "condition_root",
             "build_identity",
+            "runtime_modules",
             "restore",
             "start_state",
             "session",
@@ -695,6 +697,30 @@ def _validate_lifecycle(
         or build.get("build_receipt_sha256") != EXPECTED_BUILD_RECEIPT_SHA256
     ):
         raise SpawnCoordinateCapsuleCampaignError(f"{label} build identity differs")
+
+    runtime_modules = _mapping(
+        lifecycle.get("runtime_modules"), f"{label} runtime modules"
+    )
+    _exact_keys(
+        runtime_modules,
+        set(EXPECTED_RUNTIME_MODULES),
+        f"{label} runtime modules",
+    )
+    scripts_dir = Path(str(process_identity.get("executable_path"))).parent / "scripts"
+    for role, expected in EXPECTED_RUNTIME_MODULES.items():
+        identity = _mapping(runtime_modules.get(role), f"{label} {role}")
+        _exact_keys(identity, {"path", "size", "sha256"}, f"{label} {role}")
+        expected_path = scripts_dir / str(expected["filename"])
+        if (
+            not Path(str(identity.get("path"))).is_absolute()
+            or os.path.normcase(str(identity.get("path")))
+            != os.path.normcase(str(expected_path))
+            or identity.get("size") != expected["size"]
+            or identity.get("sha256") != expected["sha256"]
+        ):
+            raise SpawnCoordinateCapsuleCampaignError(
+                f"{label} {role} identity differs"
+            )
 
     manifest = _mapping(
         start_state_proof.get("manifest"), f"{label} start-state manifest"
@@ -1361,6 +1387,7 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             "bridge_start_sha256": bridge_start_sha256,
             "all_lifecycles_complete": True,
             "all_processes_gracefully_closed": True,
+            "all_runtime_modules_exact": True,
         },
         "pairs": pairs,
         "results": {
@@ -1381,7 +1408,7 @@ def build_spawn_coordinate_capsule_campaign_receipt(
                 "Every one-shot observer cleared its debug registers, removed its vectored exception handler, released the pinned executable, preserved every seam, published no pointer, and modified no executable bytes.",
                 "All nine trials used distinct Windows process identities bound to the exact attested Breach.exe path, size, and SHA-256.",
                 "Before each fresh process started, the game was stopped and the live save file set and bytes exactly matched the same sealed start-state manifest.",
-                "Each trial consumed the one-shot native Continue request, began from the same fresh bridge state and isolated source session, and ended by gracefully closing that exact process without forced termination.",
+                "Each trial used the exact installed capsule observer, Continue helper, and RNG-seed helper; consumed the one-shot native Continue request; began from the same fresh bridge state and isolated source session; and ended by gracefully closing that exact process without forced termination.",
             ],
             "not_proven": [
                 "Transient dead non-corpse occupancy at selector entry.",

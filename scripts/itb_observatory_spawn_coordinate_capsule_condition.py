@@ -23,6 +23,10 @@ from scripts import itb_observatory_pair_state as pair_state  # noqa: E402
 from scripts import itb_observatory_spawn_coordinate_capsule_trial as trial_runner  # noqa: E402
 from src.bridge import protocol as bridge_protocol  # noqa: E402
 from src.loop import session as loop_session  # noqa: E402
+from src.observatory.capsule_runtime_modules import (  # noqa: E402
+    CapsuleRuntimeModuleError,
+    validate_capsule_runtime_modules,
+)
 from src.observatory.game_process_identity import (  # noqa: E402
     GameProcessIdentityError,
     capture_windows_game_process_identity,
@@ -209,6 +213,10 @@ def _preflight(args: argparse.Namespace) -> dict[str, Any]:
     module = _absolute_regular(args.module, "capsule module")
     build_receipt = _absolute_regular(args.build_receipt, "capsule build receipt")
     executable_identity = validate_windows_game_executable(args.executable)
+    runtime_modules = validate_capsule_runtime_modules(
+        Path(executable_identity["path"]),
+        module,
+    )
     build = load_json_object(build_receipt, "capsule build receipt")
     module_sha256 = stable_file_sha256(module)
     build_receipt_sha256 = stable_file_sha256(build_receipt)
@@ -231,6 +239,7 @@ def _preflight(args: argparse.Namespace) -> dict[str, Any]:
         "build_receipt_sha256": build_receipt_sha256,
         "executable": Path(executable_identity["path"]),
         "executable_identity": executable_identity,
+        "runtime_modules": runtime_modules,
     }
 
 
@@ -598,6 +607,7 @@ def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             "module_sha256": preflight["module_sha256"],
             "build_receipt_sha256": preflight["build_receipt_sha256"],
         },
+        "runtime_modules": preflight["runtime_modules"],
         "restore": (
             {
                 "manifest_sha256": start_state["manifest_sha256"],
@@ -672,6 +682,7 @@ def main(argv: list[str] | None = None) -> int:
         return code
     except (
         bridge_protocol.BridgeError,
+        CapsuleRuntimeModuleError,
         CapsuleConditionError,
         GameProcessIdentityError,
         OSError,

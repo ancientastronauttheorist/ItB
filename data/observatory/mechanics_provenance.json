@@ -1101,7 +1101,7 @@
         },
         {
           "classification": "fact",
-          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, module, and receipt before any session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated; no live condition has run."
+          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. One live lifecycle startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. No live capsule trial or End Turn has run."
         },
         {
           "classification": "fact",
@@ -1184,6 +1184,12 @@
             "capture_live_native_spawn_inputs",
             "combine_current_bridge_native_capture",
             "validate_current_bridge_native_capture_artifact"
+          ]
+        },
+        {
+          "path": "src/observatory/capsule_runtime_modules.py",
+          "symbols": [
+            "validate_capsule_runtime_modules"
           ]
         },
         {
@@ -1533,7 +1539,15 @@
             "test_capsule_campaign_rejects_counterbalance_order_drift",
             "test_capsule_campaign_rejects_reused_process_identity",
             "test_capsule_campaign_rejects_forced_process_termination",
-            "test_capsule_campaign_rejects_native_continue_ack_drift"
+            "test_capsule_campaign_rejects_native_continue_ack_drift",
+            "test_capsule_campaign_rejects_runtime_module_identity_drift"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_capsule_runtime_modules.py",
+          "symbols": [
+            "test_runtime_module_preflight_binds_all_exact_installed_files",
+            "test_runtime_module_preflight_rejects_missing_or_misplaced_support"
           ]
         },
         {
@@ -1564,7 +1578,14 @@
             "test_condition_closes_process_when_trial_rejects",
             "test_condition_recovers_exact_launched_identity_for_close_when_wait_fails",
             "test_native_continue_ack_requires_a_fresh_exact_generation",
-            "test_native_continue_ack_rejects_an_error_generation"
+            "test_native_continue_ack_rejects_an_error_generation",
+            "test_condition_support_module_preflight_blocks_before_restore"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_diagnostics.py",
+          "symbols": [
+            "test_missing_support_module_attempt_is_rejected_before_trial_and_restored"
           ]
         },
         {

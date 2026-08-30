@@ -1051,8 +1051,18 @@ occupancy, the Pawn path profile at entry, future Board state, and broader spawn
 call ordering remain explicit unresolved inputs; the validator therefore keeps
 `complete_future_forecast=false`.
 
-The matched runtime path is implemented and synthetically validated, but it has
-not yet been executed live. The one-condition trial runner
+The matched runtime path is implemented and synthetically validated. One live
+lifecycle startup has run, but no live capsule trial or End Turn has run. That
+attempt is preserved under
+`captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_diagnostics/`:
+the exact process returned an error ACK because the previously cleaned-up
+Continue helper was not installed, then closed through `WM_CLOSE`, and the
+campaign-level final restore reproduced the sealed save tree. The condition and
+campaign lifecycle SHA-256 values are respectively
+`03cfc134c11d6c828ab24f2bbca5758d8b482a02e3feb0f1e83713953620c0af` and
+`3d6fb1ce0f4b997463b6978689d2bd54e578a03fd64c76d702396a4846533569`.
+
+The one-condition trial runner
 `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module,
 receipt, or Windows executable other than the exact content-addressed build
 before touching the isolated session. It also requires an exact stopped-game
@@ -1068,12 +1078,14 @@ copied snapshot is removed from the bridge only after that correlation and
 immutable artifact writes succeed.
 
 `scripts/itb_observatory_spawn_coordinate_capsule_condition.py` owns the full
-reversible lifecycle for one condition. With the game stopped, it restores and
-byte-verifies the exact baseline save, publishes the start-state proof, creates
-a no-authority session sandbox, arms the fixed native Continue startup request,
-launches the exact executable, binds the launched process identity, requires the
-exact startup ACK, waits for the same initial `Mission_Power` bridge state, and
-runs the trial. It then
+reversible lifecycle for one condition. Before restoring or launching, it
+requires the exact capsule observer, Continue helper, and RNG-seed helper at
+their content-addressed names in the executable's `scripts` directory. With the
+game stopped, it then restores and byte-verifies the exact baseline save,
+publishes the start-state proof, creates a no-authority session sandbox, arms the
+fixed native Continue startup request, launches the exact executable, binds the
+launched process identity, requires the exact startup ACK, waits for the same
+initial `Mission_Power` bridge state, and runs the trial. It then
 releases only its own session lock and closes that same process through
 `WM_CLOSE`; PID/path replacement, a forced termination, or a process left
 running rejects the lifecycle.
@@ -1085,9 +1097,10 @@ three triplets with these counterbalanced orders:
 `dormant,armed,control`. Every condition must contain only its trial, outcome,
 start-state proof, isolated session, and lifecycle, plus the armed snapshot and
 rebuilt correlation. It proves nine distinct process identities, one exact
-executable and starting save tree, exact per-condition restore/launch/Continue/
-bridge/trial/close chains, and a campaign-level stopped-game restore after the
-ninth condition. It rejects condition-order drift, extra files, digest drift,
+executable, one exact installed three-module set, and one starting save tree;
+exact per-condition restore/launch/Continue/bridge/trial/close chains; and a
+campaign-level stopped-game restore after the ninth condition. It rejects
+condition-order drift, extra files, digest drift,
 incomplete restoration, observer-output leakage from control/dormant conditions,
 any native/bridge coordinate disagreement, or any semantic whole-game
 difference.
