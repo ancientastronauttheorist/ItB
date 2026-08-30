@@ -20,8 +20,10 @@ from typing import Any
 from src.observatory.native_function_accounting import atlas_record_sha256
 from src.observatory.native_lua_cclosure_callbacks import (
     ANALYSIS_KIND as CALLBACK_ANALYSIS_KIND,
+    STRUCTURE_VERIFICATION_KIND as CALLBACK_STRUCTURE_VERIFICATION_KIND,
     NativeLuaCClosureError,
     validate_native_lua_cclosure_callback_census,
+    validate_native_lua_cclosure_callback_structure,
 )
 from src.observatory.native_lua_direct_calls import (
     ANALYSIS_KIND as DIRECT_CALL_ANALYSIS_KIND,
@@ -38,6 +40,10 @@ SCHEMA_VERSION = 1
 ANALYSIS_KIND = "pe_native_lua_immediate_cclosure_setfield_publication_census"
 VERIFICATION_KIND = (
     "pe_native_lua_immediate_cclosure_setfield_publication_census_verification"
+)
+STRUCTURE_VERIFICATION_KIND = (
+    "pe_native_lua_immediate_cclosure_setfield_publication_census_"
+    "structure_verification"
 )
 LUA_LIBRARY = "lua5.1.dll"
 LUA_SETFIELD = "lua_setfield"
@@ -110,6 +116,31 @@ def _rva(value: Any, label: str) -> int:
             f"{label} must be a canonical 32-bit RVA"
         )
     return int(value, 16)
+
+
+def _exact_keys(
+    value: Mapping[str, Any], expected: set[str], label: str
+) -> None:
+    if set(value) != expected:
+        raise NativeLuaCClosurePublicationError(
+            f"{label} fields differ: expected {sorted(expected)}, got {sorted(value)}"
+        )
+
+
+def _count(value: Any, label: str, *, positive: bool = False) -> int:
+    if type(value) is not int or value < 0 or (positive and value == 0):
+        raise NativeLuaCClosurePublicationError(
+            f"{label} must be a non-negative count"
+        )
+    return value
+
+
+def _sha256(value: Any, label: str) -> str:
+    if type(value) is not str or _SHA256_RE.fullmatch(value) is None:
+        raise NativeLuaCClosurePublicationError(
+            f"{label} must be a lowercase SHA-256"
+        )
+    return value
 
 
 def _hex(value: int) -> str:
@@ -732,6 +763,625 @@ def validate_native_lua_cclosure_setfield_publication_census(
         ),
         "evidence_sha256": _canonical_sha256(rebuilt),
         "summary": dict(_mapping(rebuilt["summary"], "summary")),
+    }
+
+
+def _instruction_structure(value: Any, label: str) -> tuple[int, int, str]:
+    """Validate one normalized instruction fact without reading PE bytes."""
+    fact = _mapping(value, label)
+    _exact_keys(fact, {"rva", "size", "sha256"}, label)
+    return (
+        _rva(fact["rva"], f"{label}.rva"),
+        _count(fact["size"], f"{label}.size", positive=True),
+        _sha256(fact["sha256"], f"{label}.sha256"),
+    )
+
+
+def _instruction_sha256(encoded: bytes) -> str:
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _register_push_sha256es() -> set[str]:
+    return {
+        _instruction_sha256(bytes([opcode])) for opcode in range(0x50, 0x58)
+    }
+
+
+def _require_register_push(fact: tuple[int, int, str], label: str) -> None:
+    _rva_value, size, digest = fact
+    if size != 1 or digest not in _register_push_sha256es():
+        raise NativeLuaCClosurePublicationError(
+            f"{label} must be one exact x86 register PUSH encoding"
+        )
+
+
+def validate_native_lua_cclosure_setfield_publication_structure(
+    evidence: Mapping[str, Any],
+    direct_calls: Mapping[str, Any],
+    callback_census: Mapping[str, Any],
+    program_facts: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the whole publication artifact without reading an executable.
+
+    This first validates the complete callback structural prerequisite, then
+    checks every published join, partition, and finite x86 encoding derivable
+    from the documents.  It is not binary proof: the key pointer's file bytes
+    and decoded control-flow/instruction existence at the published RVAs still
+    require :func:`validate_native_lua_cclosure_setfield_publication_census`.
+    """
+    for value, label in (
+        (evidence, "evidence"),
+        (direct_calls, "direct_calls"),
+        (callback_census, "callback_census"),
+        (program_facts, "program_facts"),
+    ):
+        _validate_json_tree(value, label)
+    evidence = _mapping(evidence, "evidence")
+    direct_calls = _mapping(direct_calls, "direct_calls")
+    callback_census = _mapping(callback_census, "callback_census")
+    facts = _mapping(program_facts, "program_facts")
+    try:
+        callback_verification = validate_native_lua_cclosure_callback_structure(
+            callback_census, direct_calls, facts
+        )
+    except NativeLuaCClosureError as exc:
+        raise NativeLuaCClosurePublicationError(
+            f"callback structural prerequisite failed: {exc}"
+        ) from exc
+    if (
+        callback_verification.get("analysis_kind")
+        != CALLBACK_STRUCTURE_VERIFICATION_KIND
+        or callback_verification.get("status") != "structurally_verified"
+    ):
+        raise NativeLuaCClosurePublicationError(
+            "callback structural prerequisite returned an unexpected result"
+        )
+
+    _exact_keys(
+        evidence,
+        {
+            "schema_version",
+            "analysis_kind",
+            "build_identity",
+            "atlas",
+            "direct_call_census",
+            "callback_census",
+            "decoder",
+            "publications",
+            "unmatched_resolved_sites",
+            "builders",
+            "registered_targets",
+            "method",
+            "summary",
+        },
+        "evidence",
+    )
+    if type(evidence["schema_version"]) is not int or evidence["schema_version"] != SCHEMA_VERSION:
+        raise NativeLuaCClosurePublicationError(
+            "unsupported native Lua setfield publication schema"
+        )
+    if evidence["analysis_kind"] != ANALYSIS_KIND:
+        raise NativeLuaCClosurePublicationError(
+            "unexpected native Lua setfield publication analysis kind"
+        )
+    identity = _mapping(facts.get("identity"), "program_facts.identity")
+    if (
+        evidence["build_identity"] != dict(identity)
+        or evidence["build_identity"] != callback_census.get("build_identity")
+        or evidence["build_identity"] != direct_calls.get("build_identity")
+    ):
+        raise NativeLuaCClosurePublicationError(
+            "publication build identity does not match prerequisites and program facts"
+        )
+    ghidra = _mapping(facts.get("ghidra"), "program_facts.ghidra")
+    image_base = _rva(ghidra.get("image_base"), "program_facts.ghidra.image_base")
+
+    direct_atlas = _mapping(direct_calls.get("atlas"), "direct_calls.atlas")
+    atlas = _mapping(evidence["atlas"], "evidence.atlas")
+    _exact_keys(
+        atlas,
+        {"analysis_kind", "canonical_sha256", "function_count"},
+        "evidence.atlas",
+    )
+    expected_atlas = {
+        "analysis_kind": direct_atlas.get("analysis_kind"),
+        "canonical_sha256": direct_atlas.get("canonical_sha256"),
+        "function_count": direct_atlas.get("function_count"),
+    }
+    if atlas != expected_atlas:
+        raise NativeLuaCClosurePublicationError(
+            "publication atlas identity or aggregate differs from direct calls"
+        )
+    _sha256(atlas["canonical_sha256"], "evidence.atlas.canonical_sha256")
+    _count(atlas["function_count"], "evidence.atlas.function_count")
+
+    direct_census = _mapping(
+        evidence["direct_call_census"], "evidence.direct_call_census"
+    )
+    _exact_keys(
+        direct_census,
+        {"analysis_kind", "canonical_sha256"},
+        "evidence.direct_call_census",
+    )
+    if direct_census != {
+        "analysis_kind": DIRECT_CALL_ANALYSIS_KIND,
+        "canonical_sha256": _canonical_sha256(direct_calls),
+    }:
+        raise NativeLuaCClosurePublicationError(
+            "publication direct-call prerequisite identity differs"
+        )
+    _sha256(
+        direct_census["canonical_sha256"],
+        "evidence.direct_call_census.canonical_sha256",
+    )
+
+    callback_summary = _mapping(
+        callback_census.get("summary"), "callback_census.summary"
+    )
+    callback_identity = _mapping(
+        evidence["callback_census"], "evidence.callback_census"
+    )
+    _exact_keys(
+        callback_identity,
+        {
+            "analysis_kind",
+            "canonical_sha256",
+            "resolved_immediate_callback_sites",
+        },
+        "evidence.callback_census",
+    )
+    expected_callback_identity = {
+        "analysis_kind": CALLBACK_ANALYSIS_KIND,
+        "canonical_sha256": _canonical_sha256(callback_census),
+        "resolved_immediate_callback_sites": callback_summary.get(
+            "resolved_immediate_callback_sites"
+        ),
+    }
+    if callback_identity != expected_callback_identity:
+        raise NativeLuaCClosurePublicationError(
+            "publication callback prerequisite identity or aggregate differs"
+        )
+    _sha256(
+        callback_identity["canonical_sha256"],
+        "evidence.callback_census.canonical_sha256",
+    )
+    _count(
+        callback_identity["resolved_immediate_callback_sites"],
+        "evidence.callback_census.resolved_immediate_callback_sites",
+    )
+
+    decoder = _mapping(evidence["decoder"], "evidence.decoder")
+    _exact_keys(
+        decoder,
+        {
+            "name",
+            "version",
+            "architecture",
+            "mode_bits",
+            "accepted_publication_form",
+        },
+        "evidence.decoder",
+    )
+    if decoder != {
+        "name": "capstone",
+        "version": SUPPORTED_CAPSTONE_VERSION,
+        "architecture": "x86",
+        "mode_bits": 32,
+        "accepted_publication_form": PUBLICATION_FORM,
+    }:
+        raise NativeLuaCClosurePublicationError(
+            "publication decoder contract has drifted"
+        )
+    if _canonical_bytes(evidence["method"]) != _canonical_bytes(_METHOD):
+        raise NativeLuaCClosurePublicationError(
+            "publication method contract has drifted"
+        )
+
+    functions = _atlas_functions(facts)
+    resolved_by_call: dict[int, Mapping[str, Any]] = {}
+    for index, raw_site in enumerate(
+        _array(callback_census.get("resolved_sites"), "callback_census.resolved_sites")
+    ):
+        site = _mapping(raw_site, f"callback_census.resolved_sites[{index}]")
+        call_rva = _rva(site.get("call_rva"), "callback resolved call_rva")
+        if call_rva in resolved_by_call:
+            raise NativeLuaCClosurePublicationError(
+                "callback resolved call RVAs must be unique"
+            )
+        resolved_by_call[call_rva] = site
+    setfield_calls = _direct_setfield_calls(direct_calls)
+
+    publication_keys = {
+        "publication_form",
+        "caller_entry_rva",
+        "caller_atlas_record_sha256",
+        "callback_call_rva",
+        "callback_call_instruction_sha256",
+        "callback_entry_rva",
+        "callback_atlas_record_sha256",
+        "cleanup_instruction",
+        "key_push",
+        "key_rva",
+        "key_text",
+        "key_byte_length",
+        "key_sha256",
+        "table_index",
+        "table_index_push",
+        "state_push",
+        "setter_call_rva",
+        "setter_call_instruction_sha256",
+        "library",
+        "setter_import_name",
+        "setter_iat_rva",
+    }
+    unmatched_keys = {
+        "caller_entry_rva",
+        "caller_atlas_record_sha256",
+        "callback_call_rva",
+        "callback_entry_rva",
+        "callback_atlas_record_sha256",
+        "resolution",
+    }
+    seen_calls: set[int] = set()
+    previous_publication = -1
+    by_builder: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    by_target: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+
+    def source_site(site: Mapping[str, Any], label: str) -> tuple[int, Mapping[str, Any], tuple[int, int]]:
+        callback_call = _rva(site["callback_call_rva"], f"{label}.callback_call_rva")
+        source = resolved_by_call.get(callback_call)
+        if source is None:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.callback_call_rva is not a resolved callback site"
+            )
+        for key in (
+            "caller_entry_rva",
+            "caller_atlas_record_sha256",
+            "callback_entry_rva",
+            "callback_atlas_record_sha256",
+        ):
+            if site[key] != source.get(key):
+                raise NativeLuaCClosurePublicationError(
+                    f"{label}.{key} does not join the exact callback site"
+                )
+        caller_entry = _rva(site["caller_entry_rva"], f"{label}.caller_entry_rva")
+        caller = functions.get(caller_entry)
+        if caller is None:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.caller_entry_rva is absent from the atlas"
+            )
+        if site["caller_atlas_record_sha256"] != atlas_record_sha256(caller):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.caller_atlas_record_sha256 does not match atlas"
+            )
+        ranges = []
+        for range_index, raw_range in enumerate(
+            _array(caller.get("ranges"), f"{label}.caller_ranges")
+        ):
+            body_range = _mapping(raw_range, f"{label}.caller_ranges[{range_index}]")
+            start = _rva(
+                body_range.get("start_rva"),
+                f"{label}.caller_ranges[{range_index}].start_rva",
+            )
+            size = _count(
+                body_range.get("size"),
+                f"{label}.caller_ranges[{range_index}].size",
+                positive=True,
+            )
+            if start <= callback_call and callback_call + 6 <= start + size:
+                ranges.append((start, size))
+        if len(ranges) != 1:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.callback_call_rva must lie in one caller atlas range"
+            )
+        return callback_call, source, ranges[0]
+
+    def require_range(
+        fact: tuple[int, int, str], caller_range: tuple[int, int], label: str
+    ) -> None:
+        if fact[0] < caller_range[0] or fact[0] + fact[1] > caller_range[0] + caller_range[1]:
+            raise NativeLuaCClosurePublicationError(
+                f"{label} does not lie within the exact caller atlas range"
+            )
+
+    for index, raw_publication in enumerate(
+        _array(evidence["publications"], "evidence.publications")
+    ):
+        label = f"evidence.publications[{index}]"
+        publication = _mapping(raw_publication, label)
+        _exact_keys(publication, publication_keys, label)
+        callback_call, source, caller_range = source_site(publication, label)
+        if (
+            source.get("upvalue_argument_kind") != "immediate"
+            or source.get("literal_upvalue_count") != 0
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label} source must preserve the exact zero-upvalue acceptance gate"
+            )
+        if callback_call <= previous_publication or callback_call in seen_calls:
+            raise NativeLuaCClosurePublicationError(
+                "publications must be unique and callback-call-RVA ordered"
+            )
+        previous_publication = callback_call
+        seen_calls.add(callback_call)
+        if publication["publication_form"] != PUBLICATION_FORM:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.publication_form has drifted"
+            )
+        if publication["callback_call_instruction_sha256"] != source.get(
+            "call_instruction_sha256"
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.callback_call_instruction_sha256 does not join callback"
+            )
+        _sha256(
+            publication["callback_call_instruction_sha256"],
+            f"{label}.callback_call_instruction_sha256",
+        )
+        callback_entry = _rva(
+            publication["callback_entry_rva"], f"{label}.callback_entry_rva"
+        )
+        callback = functions.get(callback_entry)
+        if callback is None or callback.get("thunk") is not False:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.callback_entry_rva must be a non-thunk atlas entry"
+            )
+        if publication["callback_atlas_record_sha256"] != atlas_record_sha256(callback):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.callback_atlas_record_sha256 does not match atlas"
+            )
+
+        cleanup = _instruction_structure(
+            publication["cleanup_instruction"], f"{label}.cleanup_instruction"
+        )
+        key_push = _instruction_structure(publication["key_push"], f"{label}.key_push")
+        table_push = _instruction_structure(
+            publication["table_index_push"], f"{label}.table_index_push"
+        )
+        state_push = _instruction_structure(
+            publication["state_push"], f"{label}.state_push"
+        )
+        for fact, fact_label in (
+            (cleanup, f"{label}.cleanup_instruction"),
+            (key_push, f"{label}.key_push"),
+            (table_push, f"{label}.table_index_push"),
+            (state_push, f"{label}.state_push"),
+        ):
+            require_range(fact, caller_range, fact_label)
+        if (
+            cleanup != (
+                callback_call + 6,
+                3,
+                _instruction_sha256(b"\x83\xc4\x0c"),
+            )
+            or key_push[0] != cleanup[0] + cleanup[1]
+            or table_push[0] != key_push[0] + key_push[1]
+            or state_push[0] != table_push[0] + table_push[1]
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label} publication instructions are not the exact contiguous sequence"
+            )
+        if publication["table_index"] != -2 or table_push[1:] != (
+            2,
+            _instruction_sha256(b"\x6a\xfe"),
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.table_index_push does not reconstruct table index -2"
+            )
+        _require_register_push(state_push, f"{label}.state_push")
+        source_state = _instruction_structure(
+            source.get("state_push"), f"{label}.callback_state_push"
+        )
+        if state_push[2] != source_state[2]:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.state_push does not match callback state register"
+            )
+
+        key_rva = _rva(publication["key_rva"], f"{label}.key_rva")
+        key_text = publication["key_text"]
+        if (
+            type(key_text) is not str
+            or not key_text
+            or len(key_text) > MAX_KEY_BYTES
+            or "\0" in key_text
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.key_text must be bounded non-empty ASCII"
+            )
+        try:
+            key_bytes = key_text.encode("ascii")
+        except UnicodeEncodeError as exc:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.key_text must be printable ASCII"
+            ) from exc
+        if any(byte < 0x20 or byte > 0x7E for byte in key_bytes):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.key_text must be printable ASCII"
+            )
+        if (
+            publication["key_byte_length"] != len(key_bytes)
+            or publication["key_sha256"] != _instruction_sha256(key_bytes)
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label} key text, length, or SHA-256 disagrees"
+            )
+        _sha256(publication["key_sha256"], f"{label}.key_sha256")
+        key_va = image_base + key_rva
+        if key_va > 0xFFFFFFFF:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.key_rva overflows the x86 image VA"
+            )
+        if key_push[1:] != (
+            5,
+            _instruction_sha256(b"\x68" + key_va.to_bytes(4, "little")),
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.key_push does not reconstruct from key_rva"
+            )
+
+        setter_call = _rva(
+            publication["setter_call_rva"], f"{label}.setter_call_rva"
+        )
+        expected_setter = setfield_calls.get(setter_call)
+        if expected_setter is None or expected_setter[0].get("entry_rva") != publication["caller_entry_rva"]:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.setter_call_rva does not join the exact direct lua_setfield call"
+            )
+        direct_setter = expected_setter[1]
+        if (
+            publication["library"] != LUA_LIBRARY
+            or publication["setter_import_name"] != LUA_SETFIELD
+            or publication["setter_iat_rva"] != direct_setter.get("iat_rva")
+            or publication["setter_call_instruction_sha256"]
+            != direct_setter.get("instruction_sha256")
+            or setter_call != state_push[0] + state_push[1]
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label} setter fields do not join the exact direct lua_setfield call"
+            )
+        setter_iat = _rva(
+            publication["setter_iat_rva"], f"{label}.setter_iat_rva"
+        )
+        setter_va = image_base + setter_iat
+        if setter_va > 0xFFFFFFFF:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.setter_iat_rva overflows the x86 image VA"
+            )
+        if publication["setter_call_instruction_sha256"] != _instruction_sha256(
+            b"\xff\x15" + setter_va.to_bytes(4, "little")
+        ):
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.setter_call_instruction_sha256 does not reconstruct from IAT"
+            )
+        if setter_call + 6 > caller_range[0] + caller_range[1]:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.setter_call_rva does not lie within the exact caller atlas range"
+            )
+        by_builder[publication["caller_entry_rva"]].append(publication)
+        by_target[publication["callback_entry_rva"]].append(publication)
+
+    previous_unmatched = -1
+    for index, raw_unmatched in enumerate(
+        _array(evidence["unmatched_resolved_sites"], "evidence.unmatched_resolved_sites")
+    ):
+        label = f"evidence.unmatched_resolved_sites[{index}]"
+        unmatched = _mapping(raw_unmatched, label)
+        _exact_keys(unmatched, unmatched_keys, label)
+        callback_call, _source, _caller_range = source_site(unmatched, label)
+        if callback_call <= previous_unmatched or callback_call in seen_calls:
+            raise NativeLuaCClosurePublicationError(
+                "unmatched resolved sites must be unique and callback-call-RVA ordered"
+            )
+        previous_unmatched = callback_call
+        seen_calls.add(callback_call)
+        if unmatched["resolution"] != UNMATCHED_RESOLUTION:
+            raise NativeLuaCClosurePublicationError(
+                f"{label}.resolution must preserve unmatched status"
+            )
+
+    if seen_calls != set(resolved_by_call):
+        raise NativeLuaCClosurePublicationError(
+            "publication and unmatched sites do not exactly partition resolved callbacks"
+        )
+
+    expected_builders = [
+        {
+            "builder_entry_rva": entry,
+            "builder_atlas_record_sha256": items[0]["caller_atlas_record_sha256"],
+            "publication_site_count": len(items),
+            "registered_callback_entry_rvas": sorted(
+                {item["callback_entry_rva"] for item in items}
+            ),
+            "key_texts": sorted({item["key_text"] for item in items}),
+        }
+        for entry, items in sorted(
+            by_builder.items(), key=lambda item: _rva(item[0], "builder entry")
+        )
+    ]
+    expected_targets = [
+        {
+            "callback_entry_rva": entry,
+            "callback_atlas_record_sha256": items[0][
+                "callback_atlas_record_sha256"
+            ],
+            "publication_site_count": len(items),
+            "builder_entry_rvas": sorted(
+                {item["caller_entry_rva"] for item in items}
+            ),
+            "key_texts": sorted({item["key_text"] for item in items}),
+        }
+        for entry, items in sorted(
+            by_target.items(), key=lambda item: _rva(item[0], "callback entry")
+        )
+    ]
+
+    builder_keys = {
+        "builder_entry_rva",
+        "builder_atlas_record_sha256",
+        "publication_site_count",
+        "registered_callback_entry_rvas",
+        "key_texts",
+    }
+    for index, raw_builder in enumerate(
+        _array(evidence["builders"], "evidence.builders")
+    ):
+        builder = _mapping(raw_builder, f"evidence.builders[{index}]")
+        _exact_keys(builder, builder_keys, f"evidence.builders[{index}]")
+    if evidence["builders"] != expected_builders:
+        raise NativeLuaCClosurePublicationError(
+            "builders do not exactly aggregate publication sites"
+        )
+    target_keys = {
+        "callback_entry_rva",
+        "callback_atlas_record_sha256",
+        "publication_site_count",
+        "builder_entry_rvas",
+        "key_texts",
+    }
+    for index, raw_target in enumerate(
+        _array(evidence["registered_targets"], "evidence.registered_targets")
+    ):
+        target = _mapping(raw_target, f"evidence.registered_targets[{index}]")
+        _exact_keys(target, target_keys, f"evidence.registered_targets[{index}]")
+    if evidence["registered_targets"] != expected_targets:
+        raise NativeLuaCClosurePublicationError(
+            "registered targets do not exactly aggregate publication sites"
+        )
+
+    publications = _array(evidence["publications"], "evidence.publications")
+    unmatched_sites = _array(
+        evidence["unmatched_resolved_sites"], "evidence.unmatched_resolved_sites"
+    )
+    expected_summary = {
+        "resolved_immediate_callback_sites": len(resolved_by_call),
+        "matched_setfield_publication_sites": len(publications),
+        "unmatched_resolved_callback_sites": len(unmatched_sites),
+        "unique_registered_callback_targets": len(expected_targets),
+        "unique_registration_builders": len(expected_builders),
+        "unique_key_texts": len(
+            {
+                _mapping(item, "publication")["key_text"]
+                for item in publications
+            }
+        ),
+        "schema_violations": 0,
+    }
+    summary = _mapping(evidence["summary"], "evidence.summary")
+    _exact_keys(summary, set(expected_summary), "evidence.summary")
+    for key, value in summary.items():
+        _count(value, f"evidence.summary.{key}")
+    if summary != expected_summary:
+        raise NativeLuaCClosurePublicationError(
+            "publication summary aggregates or partitions disagree"
+        )
+    _assert_publication_safe(evidence)
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "analysis_kind": STRUCTURE_VERIFICATION_KIND,
+        "status": "structurally_verified",
+        "build_identity": dict(identity),
+        "evidence_sha256": _canonical_sha256(evidence),
+        "summary": dict(summary),
     }
 
 

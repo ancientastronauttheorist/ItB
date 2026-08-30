@@ -117,8 +117,11 @@ independently decodes every atlas body range and publishes exact direct
 `lua5.1.dll` IAT-call relations without treating those relations as exclusive
 semantic roles. `scripts/itb_native_lua_cclosure_callbacks.py` then resolves
 only the exact immediate callback arguments passed at direct
-`lua_pushcclosure` sites. Accounting protocol schema 2 represents native/Lua
-roles as composable positive facts rather than a mutually exclusive enum.
+`lua_pushcclosure` sites, and
+`scripts/itb_native_lua_cclosure_setfield_publications.py` proves the bounded
+subset immediately stored through one exact `lua_setfield` grammar. Accounting
+protocol schema 2 represents native/Lua roles as composable positive facts
+rather than a mutually exclusive enum.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -240,15 +243,16 @@ until core engine semantics are reconstructed.
   body, and 18,477 computed or unmapped call targets without silently changing
   the denominator. The direct-Lua census explains a decoder-backed subset of
   that omitted-call surface but does not rewrite the unchanged Ghidra omission
-  counter. The L0 ledger has two production upstream-analysis adapters,
-  narrowly limited to binary-reverified positive `lua_api_consumer` and
-  `cclosure_callback_target` support. The empty registry still promotes
-  nothing, and every other assertion fails closed until a kind-specific adapter
-  can derive it from independently verified evidence. In particular, closure
-  construction does not prove Lua-visible registration. The first three exact
-  setfield paths now provide bounded source evidence for
-  `registered_lua_callable` and `registration_builder`, but their accounting
-  adapters and the broader registration graph remain open work.
+  counter. The L0 ledger has three production upstream-analysis adapters,
+  narrowly limited to binary-reverified positive `lua_api_consumer`,
+  `cclosure_callback_target`, `registered_lua_callable`, and
+  `registration_builder` support. The publication adapter accepts only a
+  direct callback aggregate for the registered-callable role or a direct caller
+  aggregate for the builder role. The empty registry still promotes nothing,
+  and every other assertion fails closed until a kind-specific adapter can
+  derive it from independently verified evidence. Closure construction alone
+  still does not prove Lua-visible registration, and the broader registration
+  graph remains open work.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757

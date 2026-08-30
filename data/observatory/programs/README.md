@@ -163,6 +163,13 @@ the same Lua-state register, and a direct `FF 15` call to imported
 `lua_setfield`. The key pointer must resolve to a bounded NUL-terminated
 printable-ASCII string.
 
+The public PE-free structural validator checks the complete callback
+prerequisite, publication/unmatched partition, atlas and direct-setter joins,
+reconstructible instruction hashes, aggregates, and summary without opening an
+executable. That result is suitable for offline document composition only: it
+cannot verify the pointed key bytes or decoded control flow, so it is not a
+substitute for the exact `verify` command below.
+
 Build and verify the normalized artifact with:
 
 ```powershell
@@ -200,6 +207,18 @@ global/module export, runtime execution, reachability, persistence, later
 contents, another setter form, or either unresolved callback target. Existing
 byte-identical output is reused; differing or concurrent output is preserved
 and rejected.
+
+The accounting adapter for this artifact rebuilds the exact direct-call and
+immediate-callback prerequisites, then exact-verifies and compares the complete
+publication census against the executable. A direct
+`/registered_targets/N` pointer can derive only the positive
+`registered_lua_callable` role for that callback atlas record; a direct
+`/builders/N` pointer can derive only the positive `registration_builder` role
+for that caller atlas record. Every other pointer, role, and review dimension
+is rejected. These roles mean only verified static closure construction and
+table-field storage along the accepted fall-through path; they do not imply a
+global/module export, table identity, runtime execution, reachability,
+ownership, persistence, or a complete registration system.
 
 ## Native function review accounting
 
@@ -245,8 +264,8 @@ registry's raw and canonical SHA-256 values are respectively
 `910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
 `1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
 The derived ledger's raw and canonical SHA-256 values are respectively
-`5933a073d0797a4d3dad9459a4cc320b6a139b934cc139dbb3f940d12cfa26c8` and
-`7eeac18e0d9a8efe85f87e5e8d392ead3fdf70b958e683a4d86b13ff7f2cbd07`.
+`147feaba792a06da19fa12876d0b58be4633f5ae917f243e447868d6fbbf80f1` and
+`9f8739fe4a5c3bcfb9f10aeda9faf3333c96b3ea9ee130a00538aef87ce6dee5`.
 Existing byte-identical deterministic output is reused; differing, reformatted,
 or concurrent output is never overwritten.
 
@@ -280,13 +299,15 @@ Promotions use a fail-closed three-layer evidence contract:
 All paths, file hashes, JSON pointers, identities, and pointed records are
 verified on every build. Windows drive-relative paths, NTFS alternate data
 streams, reserved names, symlinks, junctions, and changed parent directories
-fail closed. Two production adapters accept the direct-Lua-call and immediate
-C-closure callback censuses. Each rebuilds and canonical-compares its complete
-evidence chain against the exact executable once per source artifact per
-accounting build. They derive only `lua_api_consumer` and
-`cclosure_callback_target`, respectively; neither can support `none`, another
-role, or any ownership, reference, semantic, boundary, or exclusion dimension.
-The empty registry therefore still leaves every function at L0.
+fail closed. Three production adapters accept the direct-Lua-call, immediate
+C-closure callback, and setfield-publication censuses. Each rebuilds and
+canonical-compares its complete evidence chain against the exact executable
+once per source artifact per accounting build. They derive only
+`lua_api_consumer`, `cclosure_callback_target`, and the role-specific
+`registered_lua_callable` or `registration_builder` facts described above.
+None can support `none`, an unlisted role, or any ownership, reference,
+semantic, boundary, or exclusion dimension. The empty registry therefore still
+leaves every function at L0.
 
 Only third-party and compiler-runtime exclusions have a generic v2 shape, and
 they still require typed ownership plus exclusion support through an

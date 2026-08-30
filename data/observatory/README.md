@@ -37,14 +37,17 @@ promotions and zero reviewed exclusions. Ghidra's 685 thunk flags and 26
 repeated-body groups are retained only as non-promoting review candidates.
 Future claims must pass dedicated exact-dimensional review and typed-support
 records, then reach hash-pinned upstream evidence through a registered
-kind-specific adapter that derives the supported assertion. Two production
+kind-specific adapter that derives the supported assertion. Three production
 adapters exact-rebuild their evidence against the installed executable: the
-direct-call census can derive only `lua_api_consumer`, and the immediate
-C-closure census can derive only `cclosure_callback_target`. Neither adapter
-proves registration, ownership, runtime execution, or another dimension. The
-empty registry still promotes no function beyond L0. No name, namespace,
-address, body-size, duplicate-body, thunk, or Ghidra-call heuristic can change
-a level or classification; unreachable, duplicate/thunk, and data-only
+direct-call census can derive only `lua_api_consumer`, the immediate C-closure
+census can derive only `cclosure_callback_target`, and the setfield-publication
+census can derive only `registered_lua_callable` for a pointed callback target
+or `registration_builder` for a pointed caller aggregate. None proves a global
+export, table identity, runtime execution, ownership, lifetime, or another
+dimension. The empty registry still promotes no function beyond L0. No name,
+namespace, address, body-size, duplicate-body, thunk, or Ghidra-call
+heuristic can change a level or classification; unreachable, duplicate/thunk,
+and data-only
 exclusions also fail closed until their specialized proof contracts exist. See
 `programs/README.md` for the full registry/evidence contract, commands, and
 remaining atlas/callgraph gaps.
@@ -103,13 +106,22 @@ accepted paths share caller RVA `0x002e6900`, store three distinct callback
 targets under the exact bounded key `__gc`, and retain complete atlas and
 instruction hashes without publishing executable bytes.
 
+The module also exposes a PE-free whole-artifact structural validator for
+offline composition checks. It revalidates the callback prerequisite, complete
+partition, atlas/direct-call joins, reconstructible x86 hashes, aggregates, and
+summary, but deliberately does not treat document consistency as binary proof;
+key bytes and decoded control flow still require exact executable verification.
+
 This proves static table-field storage of each newly constructed closure. It
 does not identify the dynamic table as a metatable, prove global or module
 export, establish runtime reachability or persistence, cover another setter
-API, or resolve either computed callback argument. The artifact is the narrow
-mechanical basis for future `registered_lua_callable` and
-`registration_builder` accounting adapters; it does not itself promote the
-empty review registry. See `programs/README.md` for exact commands and hashes.
+API, or resolve either computed callback argument. Accounting's
+setfield-publication adapter rebuilds the direct-call and callback prerequisites
+and exact-verifies the whole publication census against the executable. It can
+derive only `registered_lua_callable` from one pointed callback aggregate or
+`registration_builder` from one pointed caller aggregate. The artifact and
+adapter do not themselves promote the empty review registry. See
+`programs/README.md` for exact commands and hashes.
 
 ## Compiled Lua census
 

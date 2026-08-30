@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from scripts import itb_native_lua_cclosure_setfield_publications
+import src.observatory.native_lua_cclosure_setfield_publications as setfield_publications
 from src.observatory.native_function_accounting import atlas_record_sha256
 from src.observatory.native_lua_cclosure_callbacks import (
     build_native_lua_cclosure_callback_census,
@@ -23,6 +24,7 @@ from src.observatory.native_lua_cclosure_setfield_publications import (
     build_native_lua_cclosure_setfield_publication_census,
     encode_native_lua_cclosure_setfield_publication_census,
     validate_native_lua_cclosure_setfield_publication_census,
+    validate_native_lua_cclosure_setfield_publication_structure,
 )
 from src.observatory.native_lua_direct_calls import (
     build_native_lua_direct_call_census,
@@ -502,3 +504,221 @@ def test_committed_setfield_publication_census_identity_and_partition():
                 walk(child)
 
     walk(artifact)
+
+
+def test_structure_validator_accepts_synthetic_and_committed_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+
+    def no_binary_read(*args, **kwargs):
+        raise AssertionError("structural validation must not read the PE")
+
+    monkeypatch.setattr(setfield_publications, "_load_executable", no_binary_read)
+    assert validate_native_lua_cclosure_setfield_publication_structure(
+        result, inputs[3], inputs[4], inputs[2]
+    )["status"] == "structurally_verified"
+
+    root = _REPO_ROOT / "data" / "observatory" / "programs"
+    artifact = json.loads(
+        (
+            root
+            / "windows_build_13725832_31fe35265598_"
+            "native_lua_cclosure_setfield_publications.json"
+        ).read_text(encoding="utf-8")
+    )
+    direct = json.loads(
+        (
+            root / "windows_build_13725832_31fe35265598_native_lua_direct_call_census.json"
+        ).read_text(encoding="utf-8")
+    )
+    callbacks = json.loads(
+        (
+            root / "windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json"
+        ).read_text(encoding="utf-8")
+    )
+    facts = json.loads(
+        (root / "windows_build_13725832_31fe35265598_program_facts.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert validate_native_lua_cclosure_setfield_publication_structure(
+        artifact, direct, callbacks, facts
+    )["status"] == "structurally_verified"
+
+
+def test_structure_validator_rejects_prerequisite_identity_and_partition_drift(
+    tmp_path: Path,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+
+    bad_identity = copy.deepcopy(result)
+    bad_identity["callback_census"]["canonical_sha256"] = "0" * 64
+    with pytest.raises(NativeLuaCClosurePublicationError, match="prerequisite identity"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_identity, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_callbacks = copy.deepcopy(inputs[4])
+    bad_callbacks["method"]["accepted_callback_edge"] = "drift"
+    with pytest.raises(NativeLuaCClosurePublicationError, match="structural prerequisite"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            result, inputs[3], bad_callbacks, inputs[2]
+        )
+
+    hole = copy.deepcopy(result)
+    hole["publications"] = []
+    with pytest.raises(NativeLuaCClosurePublicationError, match="exactly partition"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            hole, inputs[3], inputs[4], inputs[2]
+        )
+
+    duplicate = copy.deepcopy(result)
+    duplicate["unmatched_resolved_sites"].append(
+        {
+            "caller_entry_rva": duplicate["publications"][0]["caller_entry_rva"],
+            "caller_atlas_record_sha256": duplicate["publications"][0][
+                "caller_atlas_record_sha256"
+            ],
+            "callback_call_rva": duplicate["publications"][0]["callback_call_rva"],
+            "callback_entry_rva": duplicate["publications"][0]["callback_entry_rva"],
+            "callback_atlas_record_sha256": duplicate["publications"][0][
+                "callback_atlas_record_sha256"
+            ],
+            "resolution": "no_exact_contiguous_setfield_publication",
+        }
+    )
+    with pytest.raises(NativeLuaCClosurePublicationError, match="unique and callback-call-RVA"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            duplicate, inputs[3], inputs[4], inputs[2]
+        )
+
+
+def test_structure_validator_preserves_zero_upvalue_acceptance_gate(
+    tmp_path: Path,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+    callbacks = copy.deepcopy(inputs[4])
+    callback_site = callbacks["resolved_sites"][0]
+    callback_site["literal_upvalue_count"] = 1
+    callback_site["upvalue_push"]["sha256"] = hashlib.sha256(
+        b"\x6a\x01"
+    ).hexdigest()
+    forged = copy.deepcopy(result)
+    forged["callback_census"]["canonical_sha256"] = (
+        setfield_publications._canonical_sha256(callbacks)
+    )
+
+    with pytest.raises(
+        NativeLuaCClosurePublicationError,
+        match="zero-upvalue acceptance gate",
+    ):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            forged, inputs[3], callbacks, inputs[2]
+        )
+
+
+@pytest.mark.parametrize(
+    ("location", "value", "message"),
+    [
+        (("caller_entry_rva",), "0x00001080", "exact callback site"),
+        (("callback_atlas_record_sha256",), "0" * 64, "exact callback site"),
+        (("setter_call_rva",), "0x00001028", "direct lua_setfield"),
+        (("setter_call_instruction_sha256",), "0" * 64, "setter fields"),
+    ],
+)
+def test_structure_validator_rejects_callback_and_setter_join_drift(
+    tmp_path: Path,
+    location: tuple[str, ...],
+    value: object,
+    message: str,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+    tampered = copy.deepcopy(result)
+    tampered["publications"][0][location[0]] = value
+
+    with pytest.raises(NativeLuaCClosurePublicationError, match=message):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            tampered, inputs[3], inputs[4], inputs[2]
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "member", "value", "message"),
+    [
+        ("cleanup_instruction", "sha256", "0" * 64, "exact contiguous"),
+        ("key_push", "sha256", "0" * 64, "key_push does not reconstruct"),
+        ("table_index_push", "sha256", "0" * 64, "table_index_push"),
+        ("state_push", "sha256", "0" * 64, "exact x86 register PUSH"),
+    ],
+)
+def test_structure_validator_rejects_reconstructed_instruction_drift(
+    tmp_path: Path,
+    field: str,
+    member: str,
+    value: object,
+    message: str,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+    tampered = copy.deepcopy(result)
+    tampered["publications"][0][field][member] = value
+
+    with pytest.raises(NativeLuaCClosurePublicationError, match=message):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            tampered, inputs[3], inputs[4], inputs[2]
+        )
+
+
+def test_structure_validator_rejects_key_range_aggregate_and_contract_drift(
+    tmp_path: Path,
+):
+    inputs = _write_inputs(tmp_path)
+    result = _build(*inputs)
+
+    bad_key = copy.deepcopy(result)
+    bad_key["publications"][0]["key_text"] = "other"
+    with pytest.raises(NativeLuaCClosurePublicationError, match="key text, length, or SHA"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_key, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_range = copy.deepcopy(result)
+    bad_range["publications"][0]["state_push"]["rva"] = "0x00001000"
+    with pytest.raises(NativeLuaCClosurePublicationError, match="exact caller atlas range"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_range, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_builder = copy.deepcopy(result)
+    bad_builder["builders"][0]["publication_site_count"] = 2
+    with pytest.raises(NativeLuaCClosurePublicationError, match="builders do not exactly aggregate"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_builder, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_contract = copy.deepcopy(result)
+    bad_contract["decoder"]["version"] = "5.0.8"
+    with pytest.raises(NativeLuaCClosurePublicationError, match="decoder contract"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_contract, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_schema = copy.deepcopy(result)
+    bad_schema["schema_version"] = 2
+    with pytest.raises(NativeLuaCClosurePublicationError, match="unsupported native Lua"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_schema, inputs[3], inputs[4], inputs[2]
+        )
+
+    bad_method = copy.deepcopy(result)
+    bad_method["method"]["accepted_publication"] = "drift"
+    with pytest.raises(NativeLuaCClosurePublicationError, match="method contract"):
+        validate_native_lua_cclosure_setfield_publication_structure(
+            bad_method, inputs[3], inputs[4], inputs[2]
+        )
