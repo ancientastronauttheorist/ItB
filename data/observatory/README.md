@@ -1051,9 +1051,9 @@ occupancy, the Pawn path profile at entry, future Board state, and broader spawn
 call ordering remain explicit unresolved inputs; the validator therefore keeps
 `complete_future_forecast=false`.
 
-The matched runtime path is implemented and synthetically validated. Two live
+The matched runtime path is implemented and synthetically validated. Three live
 lifecycle startups have run, but no live capsule trial or End Turn has run.
-Both rejected attempts are preserved under
+All three rejected attempts are preserved under
 `captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_diagnostics/`:
 the first exact process returned an error ACK because the previously cleaned-up
 Continue helper was not installed, then closed through `WM_CLOSE`; the second
@@ -1062,13 +1062,21 @@ the external `tasklist.exe` process enumerator exceeded its five-second timeout
 before bridge entry. Its condition could not prove a close method, while the
 campaign final verifier found the game stopped and reproduced the sealed save
 tree. The lifecycle now uses the native Windows process-snapshot API instead of
-that external command. The first condition and campaign lifecycle SHA-256 values
-are respectively
+that external command. The third startup then reached an exact `Mission_Power`
+player turn with three live active player units, but exposed that the raw Lua
+bridge intentionally has no top-level `active_mechs` summary field; it closed
+cleanly through `WM_CLOSE` and final-restored the same tree. Readiness now derives
+the existing solver actor count from authoritative bridge unit records, including
+weapon-bearing controllable allies. The first condition and campaign lifecycle
+SHA-256 values are respectively
 `03cfc134c11d6c828ab24f2bbca5758d8b482a02e3feb0f1e83713953620c0af` and
 `3d6fb1ce0f4b997463b6978689d2bd54e578a03fd64c76d702396a4846533569`;
 the second values are
 `f48b367889a3c39131d39795fecf973fe20aacb38e552fdfd31483d2c0572ac2`
-and `43a5c8f22506f715bbb3e6252c60f6c34d5f6c56cb55502a82a13269bff251eb`.
+and `43a5c8f22506f715bbb3e6252c60f6c34d5f6c56cb55502a82a13269bff251eb`;
+the third values are
+`299f51db573b3b4c68a93900cc1cca425f5052ed7d3f5886b18e1be16f1f5759`
+and `86a66bd0fa4343b3a226f430575f5c18e3dcd28e2eaa33b7acbf8cfcac42f396`.
 
 The one-condition trial runner
 `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module,

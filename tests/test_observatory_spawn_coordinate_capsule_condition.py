@@ -314,6 +314,114 @@ def test_native_continue_ack_rejects_an_error_generation(tmp_path, monkeypatch):
     assert not ack.exists()
 
 
+def test_active_player_actor_count_derives_missing_raw_summary_field():
+    state = {
+        "units": [
+            {
+                "team": 1,
+                "hp": 3,
+                "active": True,
+                "mech": True,
+                "weapons": [],
+            },
+            {
+                "team": 1,
+                "hp": 2,
+                "active": True,
+                "mech": False,
+                "weapons": ["ArchiveArtillery"],
+            },
+            {
+                "team": 1,
+                "hp": 2,
+                "active": False,
+                "mech": True,
+                "weapons": ["Prime_Punchmech"],
+            },
+            {
+                "team": 6,
+                "hp": 3,
+                "active": True,
+                "mech": False,
+                "weapons": ["FireflyAtk1"],
+            },
+        ]
+    }
+
+    assert condition._active_player_actor_count(state) == 2
+    assert condition._active_player_actor_count(
+        {"active_mechs": 3, "units": []}
+    ) == 3
+
+
+def test_active_player_actor_count_fails_closed_on_malformed_player_unit():
+    assert condition._active_player_actor_count(
+        {
+            "units": [
+                {
+                    "team": 1,
+                    "hp": 3,
+                    "active": True,
+                    "mech": True,
+                }
+            ]
+        }
+    ) is None
+
+
+def test_bridge_start_derives_active_actors_from_raw_bridge_units(
+    tmp_path,
+    monkeypatch,
+):
+    identity = {
+        "pid": 4217,
+        "creation_filetime": 133_800_000_000_000_000,
+        "executable_path": str(tmp_path / "Breach.exe"),
+    }
+    monkeypatch.setattr(
+        condition,
+        "capture_windows_game_process_identity",
+        lambda _path: identity,
+    )
+    monkeypatch.setattr(
+        condition.bridge_protocol,
+        "refresh_bridge_state_fresh",
+        lambda **_kwargs: True,
+    )
+    monkeypatch.setattr(
+        condition.bridge_protocol,
+        "read_state",
+        lambda: {
+            "mission_id": "Mission_Power",
+            "phase": "combat_player",
+            "turn": 1,
+            "in_active_mission": True,
+            "units": [
+                {
+                    "team": 1,
+                    "hp": 3,
+                    "active": True,
+                    "mech": True,
+                    "weapons": ["Prime_Punchmech"],
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        condition.bridge_protocol,
+        "NATIVE_CONTINUE_REQUEST_FILE",
+        tmp_path / "consumed.request",
+    )
+
+    result = condition._wait_for_bridge_start(
+        identity,
+        max_wait=0.5,
+        poll_interval=0.01,
+    )
+
+    assert result["active_mechs"] == 1
+
+
 def test_condition_support_module_preflight_blocks_before_restore(
     tmp_path,
     monkeypatch,

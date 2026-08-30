@@ -279,31 +279,68 @@ def _wait_for_bridge_start(
         if not isinstance(state, dict):
             time.sleep(interval)
             continue
-        last = state
+        active_player_actors = _active_player_actor_count(state)
+        normalized = dict(state)
+        if active_player_actors is not None:
+            normalized["active_mechs"] = active_player_actors
+        last = normalized
         if (
-            state.get("mission_id") == "Mission_Power"
-            and state.get("phase") == "combat_player"
-            and type(state.get("turn")) is int
-            and type(state.get("active_mechs")) is int
-            and state.get("active_mechs") > 0
+            normalized.get("mission_id") == "Mission_Power"
+            and normalized.get("phase") == "combat_player"
+            and type(normalized.get("turn")) is int
+            and type(normalized.get("active_mechs")) is int
+            and normalized.get("active_mechs") > 0
         ):
             if bridge_protocol.NATIVE_CONTINUE_REQUEST_FILE.exists():
                 raise CapsuleConditionError(
                     "native Continue request remains after Mission_Power loaded"
                 )
-            return state
-        if state.get("in_active_mission") is False and state.get("phase") not in {
+            return normalized
+        if normalized.get("in_active_mission") is False and normalized.get("phase") not in {
             "main_menu",
             "loading",
         }:
             raise CapsuleConditionError(
-                f"native Continue reached unexpected phase {state.get('phase')!r}"
+                "native Continue reached unexpected phase "
+                f"{normalized.get('phase')!r}"
             )
         time.sleep(interval)
+    last_summary = _bridge_summary(last) if isinstance(last, dict) else None
     raise CapsuleConditionError(
         "native Continue did not reach a ready Mission_Power player turn; "
-        f"last phase={last.get('phase') if isinstance(last, dict) else None!r}"
+        f"last={last_summary!r}"
     )
+
+
+def _active_player_actor_count(state: dict[str, Any]) -> int | None:
+    """Derive the solver's active actor count from authoritative bridge units."""
+    raw_count = state.get("active_mechs")
+    if raw_count is not None:
+        return raw_count if type(raw_count) is int and raw_count >= 0 else None
+    units = state.get("units")
+    if not isinstance(units, list):
+        return None
+    count = 0
+    for unit in units:
+        if not isinstance(unit, dict):
+            return None
+        if unit.get("team") != 1:
+            continue
+        hp = unit.get("hp")
+        active = unit.get("active")
+        mech = unit.get("mech", unit.get("is_mech"))
+        weapons = unit.get("weapons")
+        if (
+            type(hp) is not int
+            or type(active) is not bool
+            or type(mech) is not bool
+            or not isinstance(weapons, list)
+            or not all(type(weapon) is str for weapon in weapons)
+        ):
+            return None
+        if hp > 0 and active and (mech or any(weapons)):
+            count += 1
+    return count
 
 
 def _bridge_summary(state: dict[str, Any]) -> dict[str, Any]:

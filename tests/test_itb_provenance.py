@@ -920,12 +920,16 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_native_continue_ack_requires_a_fresh_exact_generation",
         "test_native_continue_ack_rejects_an_error_generation",
         "test_condition_support_module_preflight_blocks_before_restore",
+        "test_active_player_actor_count_derives_missing_raw_summary_field",
+        "test_active_player_actor_count_fails_closed_on_malformed_player_unit",
+        "test_bridge_start_derives_active_actors_from_raw_bridge_units",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_diagnostics.py"
     ] == {
         "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
         "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
+        "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"

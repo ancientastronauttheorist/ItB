@@ -71,3 +71,31 @@ def test_tasklist_timeout_attempt_fails_closed_and_final_restores():
     assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
         "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
     )
+
+
+def test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores():
+    condition = _load("missing_raw_active_mechs_03_condition_lifecycle.json")
+    campaign = _load("missing_raw_active_mechs_03_campaign_lifecycle.json")
+
+    assert condition["status"] == "rejected"
+    assert condition["valid_lifecycle"] is False
+    assert condition["native_continue"]["ack"] == (
+        "OK OBS_NATIVE_CONTINUE_REQUEST invoked=true"
+    )
+    assert condition["bridge_start"] is None
+    assert condition["trial"] is None
+    assert condition["errors"]["bridge_start"] == (
+        "native Continue did not reach a ready Mission_Power player turn; "
+        "last phase='combat_player'"
+    )
+    assert condition["close"]["method"] == "WM_CLOSE"
+    assert condition["close"]["exited"] is True
+    assert condition["close"]["forced_termination"] is False
+
+    assert campaign["status"] == "rejected"
+    assert campaign["condition_order"] == []
+    assert campaign["errors"]["final_restore"] == ""
+    assert campaign["final_restore"]["game_stopped"] is True
+    assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
+        "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+    )
