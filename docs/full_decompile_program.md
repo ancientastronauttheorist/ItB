@@ -119,7 +119,9 @@ strictly verified against the exact PE and lives under
    files.
 2. Join unresolved environment/member candidates and loader assumptions to
    independently recovered native registration and bootstrap descriptors.
-3. Parse all 377 map files into a versioned grammar and semantic inventory.
+3. Maintain the strict, non-executing grammar and structural/domain census for
+   all 376 map-data chunks, joined to the separately scoped `maphelper.lua`
+   bootstrap evidence.
 4. Validate `resource.dat` structurally and inventory record paths, types,
    extents, and payload hashes without committing payload bytes.
 5. Inventory the 12 OpenGL shader/header files and the FMOD bank interfaces.
@@ -193,7 +195,11 @@ until core engine semantics are reconstructed.
 - [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
   the census's host candidates, computed globals, loader assumptions, dynamic
   code generation, and runtime reachability.
-- [ ] Produce complete map/data grammar census.
+- [x] Produce and independently verify the exact-owner-build map-data grammar
+  census: all 376 chunks strictly parsed without execution, 8,915 unique
+  in-bounds explicit tile records, ten tile schemas, 25 zone keys, and 32 tag
+  values. Per-map coordinate layouts and raw source remain outside Git;
+  numeric field meanings and native consumer behavior remain explicit gaps.
 - [x] Produce and independently verify the metadata-only `resource.dat`
   census: 2,854 contiguous unique records, with per-payload hashes and no asset
   bytes committed.

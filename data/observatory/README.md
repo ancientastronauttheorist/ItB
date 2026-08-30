@@ -39,6 +39,25 @@ absolute paths, and the owner's Mod Loader overlay are excluded. See
 between compiler-backed facts, loader assumptions, native-binding candidates,
 and future semantic work.
 
+## Static map-data census
+
+`scripts/itb_map_census.py` rebuilds and exact-matches the sealed installation
+inventory, joins every map-directory file to the compiled Lua census, then
+parses all `.map` chunks with a strict declarative-data parser that never
+executes Lua. Context validation rejects unknown fields, mixed table shapes,
+duplicate keys or coordinates, out-of-bounds points, name/global mismatches,
+unbounded input/allocation shapes, unpublishable string domains, and currently
+unsupported nonempty source tables. The map command reruns the full Lua census
+verifier before accepting compiled-status claims from that prerequisite.
+
+The normalized artifact under `maps/` accounts for all 376 map-data chunks,
+8,915 explicit unique in-bounds tile records, ten tile-field schemas, 25 zone
+keys, and 32 tags. It contains source identity hashes, structural counts, and
+small aggregate domains, but no layout-derived hashes, raw source,
+per-map tag membership, or coordinate layouts. See `maps/README.md` for exact
+build/verification commands and the boundary between observed grammar facts
+and unresolved native consumer semantics.
+
 ## Resource archive census
 
 `scripts/itb_resource_inventory.py` parses `resources/resource.dat` without
