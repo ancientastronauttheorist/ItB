@@ -1101,7 +1101,7 @@
         },
         {
           "classification": "fact",
-          "statement": "A fail-closed trial runner and offline campaign sealer now preflight the exact content-addressed module and receipt before any session action, reserve local End Turn only after all player actors are spent, keep the observer prepared through confirmed dispatch and the next player-turn bridge state, restore before a verified pause, consume only the exact copied snapshot, and require three counterbalanced control/dormant/armed triplets with matched whole-game outcomes. The orchestration is synthetically validated; no live condition has run."
+          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, module, and receipt before any session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated; no live condition has run."
         },
         {
           "classification": "fact",
@@ -1187,6 +1187,29 @@
           ]
         },
         {
+          "path": "src/observatory/game_process_identity.py",
+          "symbols": [
+            "capture_windows_game_process_identity",
+            "validate_windows_game_executable"
+          ]
+        },
+        {
+          "path": "src/observatory/start_state_proof.py",
+          "symbols": [
+            "start_state_manifest_sha256",
+            "start_state_tree_sha256",
+            "validate_start_state_verification_proof"
+          ]
+        },
+        {
+          "path": "src/observatory/windows_game_lifecycle.py",
+          "symbols": [
+            "launch_exact_windows_game",
+            "wait_for_exact_windows_game_process",
+            "gracefully_close_exact_windows_game"
+          ]
+        },
+        {
           "path": "src/observatory/spawn_coordinate_capsule_hw.py",
           "symbols": [
             "validate_spawn_coordinate_capsule_build_identity",
@@ -1223,6 +1246,26 @@
         },
         {
           "path": "scripts/itb_observatory_spawn_coordinate_capsule_trial.py",
+          "symbols": [
+            "run"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_pair_state.py",
+          "symbols": [
+            "build_start_state_verification_proof",
+            "restore_state",
+            "sandbox_session"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_spawn_coordinate_capsule_condition.py",
+          "symbols": [
+            "run"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py",
           "symbols": [
             "run"
           ]
@@ -1477,7 +1520,9 @@
           "symbols": [
             "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
             "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
-            "test_build_identity_preflight_blocks_before_any_session_action"
+            "test_build_identity_preflight_blocks_before_any_session_action",
+            "test_process_identity_preflight_blocks_before_any_session_action",
+            "test_start_state_preflight_blocks_before_any_session_action"
           ]
         },
         {
@@ -1485,7 +1530,49 @@
           "symbols": [
             "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
             "test_capsule_campaign_rejects_semantic_outcome_drift",
-            "test_capsule_campaign_rejects_counterbalance_order_drift"
+            "test_capsule_campaign_rejects_counterbalance_order_drift",
+            "test_capsule_campaign_rejects_reused_process_identity",
+            "test_capsule_campaign_rejects_forced_process_termination",
+            "test_capsule_campaign_rejects_native_continue_ack_drift"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_game_process_identity.py",
+          "symbols": [
+            "test_process_identity_binds_unique_pid_creation_time_and_exact_executable",
+            "test_process_identity_rejects_multiple_processes_or_different_path"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_start_state_proof.py",
+          "symbols": [
+            "test_start_state_proof_binds_exact_tree_before_process_start",
+            "test_start_state_proof_rejects_verification_after_process_start"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_windows_game_lifecycle.py",
+          "symbols": [
+            "test_launch_requires_empty_process_set_and_exact_executable",
+            "test_graceful_close_targets_exact_identity_without_force"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_condition.py",
+          "symbols": [
+            "test_condition_runs_restore_to_graceful_close_in_exact_order",
+            "test_condition_closes_process_when_trial_rejects",
+            "test_condition_recovers_exact_launched_identity_for_close_when_wait_fails",
+            "test_native_continue_ack_requires_a_fresh_exact_generation",
+            "test_native_continue_ack_rejects_an_error_generation"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py",
+          "symbols": [
+            "test_campaign_run_uses_counterbalanced_order_restores_imports_and_seals",
+            "test_campaign_run_stops_after_rejection_but_attempts_final_restore",
+            "test_campaign_run_attempts_final_restore_when_condition_raises"
           ]
         },
         {

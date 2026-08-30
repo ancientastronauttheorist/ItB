@@ -162,14 +162,25 @@ The durable artifacts are:
   for exact in-process module enumeration and the strict dormant, unconsumed,
   unarmed load ACK before any prepare/seed command or snapshot;
 - `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` plus
-  `src/observatory/spawn_coordinate_capsule_turn.py` for exact-build preflight,
-  post-actor local End Turn reservation, prepare-through-next-turn lifetime,
-  fail-closed restoration, verified pause, and exact bridge snapshot
-  consumption;
-- `src/observatory/spawn_coordinate_capsule_campaign.py` plus its CLI for exact
-  three-triplet counterbalancing, rebuilt native/bridge correlation, semantic
-  neutrality comparison, observer-restoration checks, and immutable campaign
-  sealing; this path is synthetically validated but has not run live;
+  `src/observatory/spawn_coordinate_capsule_turn.py` for exact build/executable/
+  process/start-state preflight, post-actor local End Turn reservation, prepare-
+  through-next-turn lifetime, fail-closed restoration, verified pause, and exact
+  bridge snapshot consumption;
+- `src/observatory/game_process_identity.py`,
+  `src/observatory/start_state_proof.py`, and
+  `src/observatory/windows_game_lifecycle.py` for exact Windows PID/creation-
+  FILETIME identity, stopped-game save-tree proof, exact launch, and graceful
+  same-process `WM_CLOSE` without a force-kill fallback;
+- `scripts/itb_observatory_spawn_coordinate_capsule_condition.py` and
+  `scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py` for the
+  restore/prove/session/Continue/launch/ACK/bridge/trial/close condition lifecycle,
+  nine-condition counterbalanced execution, final stopped-game save restore,
+  create-only byte-identical repository import, and sealing;
+- `src/observatory/spawn_coordinate_capsule_campaign.py` plus its sealer CLI for
+  exact three-triplet counterbalancing, rebuilt native/bridge correlation,
+  semantic neutrality comparison, process/start-state/lifecycle proofs,
+  observer-restoration checks, final-save-restore proof, and immutable campaign
+  sealing; this full path is synthetically validated but has not run live;
 - `data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json`
   for the exact path API bindings and constants, Board search vtable, 12
   reviewed region hashes, four direct call edges, and the Road Runner

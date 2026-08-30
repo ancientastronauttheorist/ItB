@@ -8,6 +8,16 @@ import pytest
 
 from scripts import itb_observatory_spawn_coordinate_capsule_trial as trial
 from src.observatory import spawn_coordinate_capsule_turn as turn
+from src.observatory.game_process_identity import GameProcessIdentityError
+from src.observatory.start_state_proof import (
+    MANIFEST_KIND,
+    MANIFEST_SCHEMA_VERSION,
+    PROOF_KIND,
+    SCHEMA_VERSION as START_STATE_SCHEMA_VERSION,
+    StartStateProofError,
+    start_state_manifest_sha256,
+    start_state_tree_sha256,
+)
 from src.observatory.spawn_coordinate_capsule_hw import SpawnCoordinateCapsuleHwError
 
 
@@ -25,6 +35,8 @@ def _args(
         capture_id=f"spawn-capsule-pair001-{condition}",
         build_receipt=receipt,
         module=module,
+        executable=root.parent / "Breach.exe",
+        start_state_proof=condition_root / "start_state_proof.json",
         trial_output=condition_root / "trial.json",
         outcome_output=condition_root / "outcome.json",
         snapshot_output=(condition_root / "snapshot.json" if condition == "armed" else None),
@@ -81,12 +93,63 @@ def _inputs(tmp_path: Path, monkeypatch):
     module = tmp_path / "observer.dll"
     receipt.write_text("{}", encoding="utf-8")
     module.write_bytes(b"capsule-module")
+    files = [
+        {
+            "relative_path": "profile_Alpha/saveData.lua",
+            "size": 4,
+            "sha256": "1" * 64,
+        }
+    ]
+    manifest = {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "kind": MANIFEST_KIND,
+        "capture_track": "owner_local_modified",
+        "profile": "Alpha",
+        "file_count": 1,
+        "total_bytes": 4,
+        "files": files,
+        "tree_sha256": start_state_tree_sha256(files),
+    }
+    proof = {
+        "schema_version": START_STATE_SCHEMA_VERSION,
+        "kind": PROOF_KIND,
+        "verified_at": "2024-12-31T23:59:59+00:00",
+        "game_stopped": True,
+        "save_root": str((tmp_path / "save").resolve()),
+        "snapshot_root": str((tmp_path / "snapshot").resolve()),
+        "manifest_sha256": start_state_manifest_sha256(manifest),
+        "manifest": manifest,
+    }
+    for condition in ("control", "dormant", "armed"):
+        condition_root = root / condition
+        condition_root.mkdir()
+        (condition_root / "start_state_proof.json").write_text(
+            json.dumps(proof),
+            encoding="utf-8",
+        )
     monkeypatch.setenv("ITB_ARTIFACT_ROOT", str(root))
     monkeypatch.setenv("ITB_SESSION_FILE", str(root / "session.json"))
+    (root / "session.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(
         trial,
         "validate_spawn_coordinate_capsule_build_identity",
         lambda *_args, **_kwargs: {},
+    )
+    monkeypatch.setattr(
+        trial,
+        "capture_windows_game_process_identity",
+        lambda _path: {
+            "schema_version": 1,
+            "kind": "observatory_windows_game_process_identity",
+            "pid": 4217,
+            "creation_filetime": 133_800_000_000_000_000,
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "executable_path": str((root.parent / "Breach.exe").resolve()),
+            "executable_size": 5_530_112,
+            "executable_sha256": (
+                "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9"
+            ),
+        },
     )
     return root, receipt, module
 
@@ -136,6 +199,8 @@ def test_control_trial_prepares_only_after_reservation_and_finishes_before_pause
 
     assert code == 0
     assert result["valid_trial"] is True
+    assert result["process_identity"]["pid"] == 4217
+    assert len(result["start_state"]["tree_sha256"]) == 64
     assert result["boundary"]["state"] == "complete"
     assert calls == [
         "reserve",
@@ -272,6 +337,62 @@ def test_build_identity_preflight_blocks_before_any_session_action(
     )
 
     with pytest.raises(SpawnCoordinateCapsuleHwError, match="wrong capsule build"):
+        trial.run(_args(root, receipt, module, condition="control"))
+
+    assert calls == []
+
+
+def test_process_identity_preflight_blocks_before_any_session_action(
+    tmp_path,
+    monkeypatch,
+):
+    root, receipt, module = _inputs(tmp_path, monkeypatch)
+    calls: list[str] = []
+
+    def reject(_path):
+        raise GameProcessIdentityError("stale game process")
+
+    monkeypatch.setattr(trial, "capture_windows_game_process_identity", reject)
+    monkeypatch.setattr(
+        trial,
+        "_reserve_with_auto_turn",
+        lambda _args: calls.append("reserve"),
+    )
+    monkeypatch.setattr(
+        trial,
+        "cmd_lightning_snap_pause",
+        lambda *_args, **_kwargs: calls.append("pause"),
+    )
+
+    with pytest.raises(GameProcessIdentityError, match="stale game process"):
+        trial.run(_args(root, receipt, module, condition="control"))
+
+    assert calls == []
+
+
+def test_start_state_preflight_blocks_before_any_session_action(
+    tmp_path,
+    monkeypatch,
+):
+    root, receipt, module = _inputs(tmp_path, monkeypatch)
+    calls: list[str] = []
+
+    def reject(*_args, **_kwargs):
+        raise StartStateProofError("wrong restored tree")
+
+    monkeypatch.setattr(trial, "validate_start_state_verification_proof", reject)
+    monkeypatch.setattr(
+        trial,
+        "_reserve_with_auto_turn",
+        lambda _args: calls.append("reserve"),
+    )
+    monkeypatch.setattr(
+        trial,
+        "cmd_lightning_snap_pause",
+        lambda *_args, **_kwargs: calls.append("pause"),
+    )
+
+    with pytest.raises(StartStateProofError, match="wrong restored tree"):
         trial.run(_args(root, receipt, module, condition="control"))
 
     assert calls == []

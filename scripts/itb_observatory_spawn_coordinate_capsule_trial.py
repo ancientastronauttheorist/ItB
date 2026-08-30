@@ -34,6 +34,10 @@ from src.loop.commands import (  # noqa: E402
     cmd_dispatch_end_turn,
     cmd_lightning_snap_pause,
 )
+from src.observatory.game_process_identity import (  # noqa: E402
+    GameProcessIdentityError,
+    capture_windows_game_process_identity,
+)
 from src.observatory.spawn_coordinate_capsule_hw import (  # noqa: E402
     SpawnCoordinateCapsuleHwError,
     correlate_spawn_coordinate_capsule_snapshot,
@@ -42,6 +46,10 @@ from src.observatory.spawn_coordinate_capsule_hw import (  # noqa: E402
 from src.observatory.spawn_coordinate_capsule_turn import (  # noqa: E402
     SpawnCoordinateCapsuleTurnBoundary,
     SpawnCoordinateCapsuleTurnError,
+)
+from src.observatory.start_state_proof import (  # noqa: E402
+    StartStateProofError,
+    validate_start_state_verification_proof,
 )
 from src.observatory.trace_store import (  # noqa: E402
     TraceStoreError,
@@ -61,6 +69,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--capture-id", required=True)
     parser.add_argument("--build-receipt", type=Path, required=True)
     parser.add_argument("--module", type=Path, required=True)
+    parser.add_argument("--executable", type=Path, required=True)
+    parser.add_argument("--start-state-proof", type=Path, required=True)
     parser.add_argument("--trial-output", type=Path, required=True)
     parser.add_argument("--outcome-output", type=Path, required=True)
     parser.add_argument("--snapshot-output", type=Path)
@@ -113,8 +123,10 @@ def _session_file(root: Path) -> Path:
     resolved = path.resolve()
     if not resolved.is_relative_to(root):
         raise OSError("ITB_SESSION_FILE must be inside ITB_ARTIFACT_ROOT")
-    if resolved.exists() or resolved.is_symlink():
-        raise OSError(f"ITB_SESSION_FILE must be fresh: {resolved}")
+    if resolved.is_symlink() or not resolved.is_file():
+        raise OSError(
+            f"ITB_SESSION_FILE must be an existing isolated session: {resolved}"
+        )
     return resolved
 
 
@@ -124,6 +136,17 @@ def _output(path: Path, root: Path, label: str) -> Path:
         raise OSError(f"{label} must be inside ITB_ARTIFACT_ROOT")
     if candidate.exists() or candidate.is_symlink():
         raise OSError(f"{label} already exists: {candidate}")
+    return candidate
+
+
+def _input(path: Path, root: Path, label: str) -> Path:
+    candidate = Path(os.path.abspath(path.expanduser()))
+    if (
+        candidate.is_symlink()
+        or not candidate.is_file()
+        or not candidate.is_relative_to(root)
+    ):
+        raise OSError(f"{label} must be a regular file inside ITB_ARTIFACT_ROOT")
     return candidate
 
 
@@ -261,6 +284,11 @@ def _reserve_with_auto_turn(args: argparse.Namespace) -> dict:
 def run(args: argparse.Namespace) -> tuple[int, dict]:
     root = _artifact_root()
     session_file = _session_file(root)
+    start_state_proof_path = _input(
+        args.start_state_proof,
+        root,
+        "start-state proof",
+    )
     trial_output = _output(args.trial_output, root, "trial output")
     outcome_output = _output(args.outcome_output, root, "outcome output")
     snapshot_output = None
@@ -289,6 +317,12 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         observed_module_sha256=module_sha256,
         observed_build_receipt_sha256=build_receipt_sha256,
     )
+    process_identity = capture_windows_game_process_identity(args.executable)
+    start_state_proof = validate_start_state_verification_proof(
+        load_json_object(start_state_proof_path, "start-state proof"),
+        process_identity=process_identity,
+    )
+    start_state_proof_sha256 = stable_file_sha256(start_state_proof_path)
     boundary = SpawnCoordinateCapsuleTurnBoundary(
         condition=args.condition,
         capture_id=args.capture_id,
@@ -441,7 +475,7 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         )
     )
     trial = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "observatory_spawn_coordinate_capsule_turn_trial",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "pair_id": args.pair_id,
@@ -450,6 +484,14 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
         "capture_track": "owner_local_modified",
         "artifact_root": str(root),
         "session_file": str(session_file),
+        "process_identity": process_identity,
+        "start_state": {
+            "path": str(start_state_proof_path),
+            "sha256": start_state_proof_sha256,
+            "verified_at": start_state_proof["verified_at"],
+            "manifest_sha256": start_state_proof["manifest_sha256"],
+            "tree_sha256": start_state_proof["manifest"]["tree_sha256"],
+        },
         "status": "complete" if valid else "rejected",
         "valid_trial": valid,
         "module_sha256": module_sha256,
@@ -522,9 +564,11 @@ def main(argv: list[str] | None = None) -> int:
         return code
     except (
         BridgeError,
+        GameProcessIdentityError,
         OSError,
         SpawnCoordinateCapsuleHwError,
         SpawnCoordinateCapsuleTurnError,
+        StartStateProofError,
         TraceStoreError,
         ValueError,
     ) as exc:

@@ -11,8 +11,21 @@ import os
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.observatory.start_state_proof import (  # noqa: E402
+    PROOF_KIND,
+    SCHEMA_VERSION as PROOF_SCHEMA_VERSION,
+    start_state_manifest_sha256,
+    validate_start_state_verification_proof,
+)
 
 
 SCHEMA_VERSION = 1
@@ -41,6 +54,13 @@ def _parser() -> argparse.ArgumentParser:
     verify = commands.add_parser("verify")
     verify.add_argument("--save-root", type=Path, required=True)
     verify.add_argument("--snapshot-root", type=Path, required=True)
+    prove = commands.add_parser(
+        "prove",
+        help="publish an exact verification while the game is stopped",
+    )
+    prove.add_argument("--save-root", type=Path, required=True)
+    prove.add_argument("--snapshot-root", type=Path, required=True)
+    prove.add_argument("--proof-output", type=Path, required=True)
     restore = commands.add_parser("restore")
     restore.add_argument("--save-root", type=Path, required=True)
     restore.add_argument("--snapshot-root", type=Path, required=True)
@@ -207,13 +227,18 @@ def _load_manifest(snapshot_root: Path) -> dict[str, Any]:
 def _game_running() -> bool:
     if os.name != "nt":
         return False
-    result = subprocess.run(
-        ["tasklist", "/FI", "IMAGENAME eq Breach.exe", "/FO", "CSV", "/NH"],
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=5,
-    )
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq Breach.exe", "/FO", "CSV", "/NH"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise PairStateError(f"cannot enumerate Breach.exe: {exc}") from exc
+    if result.returncode != 0:
+        raise PairStateError("tasklist failed while enumerating Breach.exe")
     for row in csv.reader(result.stdout.splitlines()):
         if row and row[0].casefold() == "breach.exe":
             return True
@@ -261,9 +286,12 @@ def snapshot_state(args: argparse.Namespace) -> int:
     return 0
 
 
-def verify_state(args: argparse.Namespace) -> int:
-    save_root = _resolved_root(args.save_root, "save root")
-    snapshot_root = _resolved_root(args.snapshot_root, "snapshot root")
+def _verify_exact_state(
+    save_root_value: Path,
+    snapshot_root_value: Path,
+) -> tuple[Path, Path, dict[str, Any]]:
+    save_root = _resolved_root(save_root_value, "save root")
+    snapshot_root = _resolved_root(snapshot_root_value, "snapshot root")
     manifest = _load_manifest(snapshot_root)
     expected_paths = [entry["relative_path"] for entry in manifest["files"]]
     live_paths = _relative_files(save_root, manifest["profile"])
@@ -272,9 +300,63 @@ def verify_state(args: argparse.Namespace) -> int:
     live_entries = _entries_for(save_root, live_paths)
     if live_entries != manifest["files"]:
         raise PairStateError("live save bytes differ from the snapshot")
+    return save_root, snapshot_root, manifest
+
+
+def build_start_state_verification_proof(
+    save_root_value: Path,
+    snapshot_root_value: Path,
+) -> dict[str, Any]:
+    """Prove exact save bytes while no Breach.exe process exists."""
+    if _game_running():
+        raise PairStateError("close Into the Breach before proving start state")
+    save_root, snapshot_root, manifest = _verify_exact_state(
+        save_root_value,
+        snapshot_root_value,
+    )
+    if _game_running():
+        raise PairStateError("Into the Breach started during start-state proof")
+    proof = {
+        "schema_version": PROOF_SCHEMA_VERSION,
+        "kind": PROOF_KIND,
+        "verified_at": datetime.now(timezone.utc).isoformat(),
+        "game_stopped": True,
+        "save_root": str(save_root),
+        "snapshot_root": str(snapshot_root),
+        "manifest_sha256": start_state_manifest_sha256(manifest),
+        "manifest": manifest,
+    }
+    return validate_start_state_verification_proof(proof)
+
+
+def verify_state(args: argparse.Namespace) -> int:
+    _save_root, _snapshot_root, manifest = _verify_exact_state(
+        args.save_root,
+        args.snapshot_root,
+    )
     print(
         f"verified files={manifest['file_count']} bytes={manifest['total_bytes']} "
         f"tree_sha256={manifest['tree_sha256']}"
+    )
+    return 0
+
+
+def prove_state(args: argparse.Namespace) -> int:
+    proof = build_start_state_verification_proof(
+        args.save_root,
+        args.snapshot_root,
+    )
+    output = Path(os.path.abspath(args.proof_output.expanduser()))
+    if output.parent == output:
+        raise PairStateError("proof output cannot be a filesystem root")
+    if output.exists() or output.is_symlink():
+        raise PairStateError(f"proof output already exists: {output}")
+    if not output.parent.is_dir() or output.parent.is_symlink():
+        raise PairStateError(f"proof output parent is unavailable: {output.parent}")
+    _write_create_only_json(output, proof)
+    print(
+        f"proof={output} manifest_sha256={proof['manifest_sha256']} "
+        f"tree_sha256={proof['manifest']['tree_sha256']}"
     )
     return 0
 
@@ -376,6 +458,8 @@ def main(argv: list[str] | None = None) -> int:
             return snapshot_state(args)
         if args.command == "verify":
             return verify_state(args)
+        if args.command == "prove":
+            return prove_state(args)
         if args.command == "restore":
             return restore_state(args)
         return sandbox_session(args)

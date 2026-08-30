@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,9 @@ import pytest
 from src.observatory.msvc_rng_replay import (
     advance_state,
     result_from_advanced_state,
+)
+from src.observatory.game_process_identity import (
+    EXPECTED_EXECUTABLE_SIZE as EXPECTED_PROCESS_EXECUTABLE_SIZE,
 )
 from src.observatory.spawn_coordinate_capsule_campaign import (
     BREAKPOINT_PLAN,
@@ -35,6 +39,14 @@ from src.observatory.spawn_coordinate_capsule_hw import (
     EXPECTED_SPAWN_BOUNDARY_SHA256,
     EXPECTED_STANDARD_PREBYTES_SHA256,
     correlate_spawn_coordinate_capsule_snapshot,
+)
+from src.observatory.start_state_proof import (
+    MANIFEST_KIND,
+    MANIFEST_SCHEMA_VERSION,
+    PROOF_KIND,
+    SCHEMA_VERSION as START_STATE_SCHEMA_VERSION,
+    start_state_manifest_sha256,
+    start_state_tree_sha256,
 )
 
 
@@ -62,6 +74,207 @@ def _object_sha256(value: object) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def _process_identity(repo: Path, *, pid: int, created_at: str) -> dict:
+    parsed = datetime.fromisoformat(created_at)
+    creation_filetime = (
+        int(parsed.timestamp()) * 10_000_000 + 116_444_736_000_000_000
+    )
+    return {
+        "schema_version": 1,
+        "kind": "observatory_windows_game_process_identity",
+        "pid": pid,
+        "creation_filetime": creation_filetime,
+        "created_at": datetime.fromtimestamp(
+            (creation_filetime - 116_444_736_000_000_000) / 10_000_000.0,
+            tz=timezone.utc,
+        ).isoformat(),
+        "executable_path": str((repo / "Breach.exe").resolve()),
+        "executable_size": EXPECTED_PROCESS_EXECUTABLE_SIZE,
+        "executable_sha256": EXPECTED_EXECUTABLE_SHA256,
+    }
+
+
+def _start_state_proof(repo: Path, *, verified_at: str) -> dict:
+    files = [
+        {"relative_path": "log.txt", "size": 3, "sha256": "1" * 64},
+        {
+            "relative_path": "profile_Alpha/saveData.lua",
+            "size": 4,
+            "sha256": "2" * 64,
+        },
+    ]
+    manifest = {
+        "schema_version": MANIFEST_SCHEMA_VERSION,
+        "kind": MANIFEST_KIND,
+        "capture_track": "owner_local_modified",
+        "profile": "Alpha",
+        "file_count": len(files),
+        "total_bytes": 7,
+        "files": files,
+        "tree_sha256": start_state_tree_sha256(files),
+    }
+    return {
+        "schema_version": START_STATE_SCHEMA_VERSION,
+        "kind": PROOF_KIND,
+        "verified_at": verified_at,
+        "game_stopped": True,
+        "save_root": str((repo / "live-save").resolve()),
+        "snapshot_root": str((repo / "sealed-start-state").resolve()),
+        "manifest_sha256": start_state_manifest_sha256(manifest),
+        "manifest": manifest,
+    }
+
+
+def _lifecycle(
+    repo: Path,
+    campaign: Path,
+    condition_dir: Path,
+    *,
+    pair_id: str,
+    condition: str,
+    capture_id: str,
+    minute: int,
+    process_identity: dict,
+    start_state_proof: dict,
+    session_path: Path,
+    trial_path: Path,
+) -> dict:
+    bridge_start = {
+        "mission_id": "Mission_Power",
+        "phase": "combat_player",
+        "turn": 1,
+        "active_mechs": 3,
+        "master_seed": 324508639,
+        "region_id": "synthetic-region",
+        "timeline_fingerprint": "3" * 64,
+        "ai_seed_fingerprint": "4" * 64,
+    }
+    manifest = start_state_proof["manifest"]
+    return {
+        "schema_version": 1,
+        "kind": "observatory_spawn_coordinate_capsule_condition_lifecycle",
+        "created_at": f"2026-08-29T12:{minute:02d}:42+00:00",
+        "pair_id": pair_id,
+        "condition": condition,
+        "capture_id": capture_id,
+        "capture_track": "owner_local_modified",
+        "status": "complete",
+        "valid_lifecycle": True,
+        "artifact_root": str(campaign),
+        "condition_root": str(condition_dir),
+        "build_identity": {
+            "executable_sha256": EXPECTED_EXECUTABLE_SHA256,
+            "executable_size": EXPECTED_PROCESS_EXECUTABLE_SIZE,
+            "module_sha256": EXPECTED_MODULE_SHA256,
+            "build_receipt_sha256": EXPECTED_BUILD_RECEIPT_SHA256,
+        },
+        "restore": {
+            "manifest_sha256": start_state_proof["manifest_sha256"],
+            "tree_sha256": manifest["tree_sha256"],
+            "file_count": manifest["file_count"],
+            "total_bytes": manifest["total_bytes"],
+        },
+        "start_state": {
+            "path": str(condition_dir / "start_state_proof.json"),
+            "sha256": _file_sha256(condition_dir / "start_state_proof.json"),
+            "verified_at": start_state_proof["verified_at"],
+            "manifest_sha256": start_state_proof["manifest_sha256"],
+            "tree_sha256": manifest["tree_sha256"],
+            "game_stopped": True,
+        },
+        "session": {
+            "path": str(session_path),
+            "sha256": _file_sha256(session_path),
+            "source_path": str((repo / "source-session.json").resolve()),
+            "source_sha256": "5" * 64,
+        },
+        "native_continue": {
+            "request_path": str((repo / "native-continue.request").resolve()),
+            "armed": True,
+            "consumed": True,
+            "ack": "OK OBS_NATIVE_CONTINUE_REQUEST invoked=true",
+            "cleaned_after_failure": False,
+        },
+        "launch": {
+            "requested_at": f"2026-08-29T12:{minute:02d}:05+00:00",
+            "launcher_pid": process_identity["pid"],
+            "executable_path": process_identity["executable_path"],
+            "executable_size": EXPECTED_PROCESS_EXECUTABLE_SIZE,
+            "executable_sha256": EXPECTED_EXECUTABLE_SHA256,
+        },
+        "process_identity": process_identity,
+        "bridge_start": bridge_start,
+        "bridge_start_sha256": _object_sha256(bridge_start),
+        "trial": {
+            "path": str(trial_path),
+            "sha256": _file_sha256(trial_path),
+            "status": "complete",
+            "valid_trial": True,
+        },
+        "close": {
+            "method": "WM_CLOSE",
+            "requested_at": f"2026-08-29T12:{minute:02d}:40+00:00",
+            "closed_at": f"2026-08-29T12:{minute:02d}:41+00:00",
+            "pid": process_identity["pid"],
+            "creation_filetime": process_identity["creation_filetime"],
+            "window_handles": [20_000 + process_identity["pid"]],
+            "exited": True,
+            "forced_termination": False,
+        },
+        "errors": {
+            "restore": "",
+            "start_state": "",
+            "session": "",
+            "session_cleanup": "",
+            "continue_arm": "",
+            "launch": "",
+            "process": "",
+            "bridge_start": "",
+            "trial": "",
+            "close": "",
+            "continue_cleanup": "",
+        },
+    }
+
+
+def _campaign_lifecycle(repo: Path, campaign: Path) -> dict:
+    order = [
+        f"{pair_name}/{condition}"
+        for pair_name, conditions in PAIR_SPECS.items()
+        for condition in conditions
+    ]
+    condition_receipts = []
+    for key in order:
+        pair_name, condition = key.split("/", 1)
+        path = campaign / pair_name / condition / "lifecycle.json"
+        condition_receipts.append(
+            {
+                "pair": pair_name,
+                "condition": condition,
+                "lifecycle_sha256": _file_sha256(path),
+            }
+        )
+    return {
+        "schema_version": 1,
+        "kind": "observatory_spawn_coordinate_capsule_campaign_lifecycle",
+        "created_at": "2026-08-29T13:00:01+00:00",
+        "capture_track": "owner_local_modified",
+        "status": "complete",
+        "valid_campaign": True,
+        "artifact_root": str(campaign),
+        "condition_order": order,
+        "conditions": condition_receipts,
+        "final_restore": _start_state_proof(
+            repo,
+            verified_at="2026-08-29T13:00:00+00:00",
+        ),
+        "errors": {
+            "conditions": "",
+            "final_restore": "",
+        },
+    }
 
 
 def _draw(kind: str, seq: int, raw_rng: int) -> dict:
@@ -302,16 +515,39 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
                     }
                 )
             minute = pair_index * 10 + timestamps[condition]
+            start_state_path = condition_dir / "start_state_proof.json"
+            start_state_proof = _start_state_proof(
+                repo,
+                verified_at=f"2026-08-29T12:{minute:02d}:00+00:00",
+            )
+            _write(start_state_path, start_state_proof)
+            trial_created_at = f"2026-08-29T12:{minute:02d}:30+00:00"
+            process_identity = _process_identity(
+                repo,
+                pid=10_000
+                + pair_index * 3
+                + ("control", "dormant", "armed").index(condition),
+                created_at=f"2026-08-29T12:{minute:02d}:10+00:00",
+            )
+            session_path = condition_dir / "session.json"
             trial = {
-                "schema_version": 1,
+                "schema_version": 2,
                 "kind": "observatory_spawn_coordinate_capsule_turn_trial",
-                "created_at": f"2026-08-29T12:{minute:02d}:00+00:00",
+                "created_at": trial_created_at,
                 "pair_id": pair_id,
                 "condition": condition,
                 "capture_id": capture_id,
                 "capture_track": "owner_local_modified",
                 "artifact_root": str(campaign),
-                "session_file": str(campaign / f"session-{capture_id}.json"),
+                "session_file": str(session_path),
+                "process_identity": process_identity,
+                "start_state": {
+                    "path": str(start_state_path),
+                    "sha256": _file_sha256(start_state_path),
+                    "verified_at": start_state_proof["verified_at"],
+                    "manifest_sha256": start_state_proof["manifest_sha256"],
+                    "tree_sha256": start_state_proof["manifest"]["tree_sha256"],
+                },
                 "status": "complete",
                 "valid_trial": True,
                 "module_sha256": EXPECTED_MODULE_SHA256,
@@ -377,8 +613,33 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
                     "pause": "",
                 },
             }
-            _write(condition_dir / "trial.json", trial)
+            trial_path = condition_dir / "trial.json"
+            _write(trial_path, trial)
+            _write(
+                session_path,
+                {"run_id": f"synthetic-{capture_id}", "mission_index": 0},
+            )
+            _write(
+                condition_dir / "lifecycle.json",
+                _lifecycle(
+                    repo,
+                    campaign,
+                    condition_dir,
+                    pair_id=pair_id,
+                    condition=condition,
+                    capture_id=capture_id,
+                    minute=minute,
+                    process_identity=process_identity,
+                    start_state_proof=start_state_proof,
+                    session_path=session_path,
+                    trial_path=trial_path,
+                ),
+            )
         base_minute += 1
+    _write(
+        campaign / "campaign_lifecycle.json",
+        _campaign_lifecycle(repo, campaign),
+    )
     return repo, campaign
 
 
@@ -399,6 +660,11 @@ def test_synthetic_capsule_campaign_seals_board_rng_and_neutrality(tmp_path):
     assert receipt["results"]["all_armed_observations_match"] is True
     assert receipt["results"]["all_semantic_outcomes_match"] is True
     assert receipt["campaign"]["condition_orders"] == list(PAIR_SPECS.values())
+    assert receipt["campaign"]["fresh_process_count"] == 9
+    assert receipt["campaign"]["all_start_states_match"] is True
+    assert receipt["campaign"]["all_lifecycles_complete"] is True
+    assert receipt["campaign"]["all_processes_gracefully_closed"] is True
+    assert receipt["restore"]["save_restoration_pending"] is False
     assert receipt["restore"]["cleanup_receipt_pending"] is True
     assert any(
         "complete future spawn forecast" in claim.lower()
@@ -417,6 +683,10 @@ def test_capsule_campaign_rejects_semantic_outcome_drift(tmp_path):
     trial = json.loads(trial_path.read_text(encoding="utf-8"))
     trial["outcome"]["sha256"] = _file_sha256(outcome_path)
     _write(trial_path, trial)
+    lifecycle_path = condition_dir / "lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+    lifecycle["trial"]["sha256"] = _file_sha256(trial_path)
+    _write(lifecycle_path, lifecycle)
 
     with pytest.raises(
         SpawnCoordinateCapsuleCampaignError,
@@ -430,14 +700,86 @@ def test_capsule_campaign_rejects_semantic_outcome_drift(tmp_path):
 
 def test_capsule_campaign_rejects_counterbalance_order_drift(tmp_path):
     repo, campaign = _prepare_campaign(tmp_path)
-    trial_path = campaign / "pair003" / "control" / "trial.json"
+    trial_path = campaign / "pair003" / "dormant" / "trial.json"
     trial = json.loads(trial_path.read_text(encoding="utf-8"))
-    trial["created_at"] = "2026-08-29T12:20:00+00:00"
+    trial["created_at"] = "2026-08-29T12:25:30+00:00"
     _write(trial_path, trial)
+    lifecycle_path = trial_path.parent / "lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+    lifecycle["trial"]["sha256"] = _file_sha256(trial_path)
+    lifecycle["close"]["requested_at"] = "2026-08-29T12:25:40+00:00"
+    lifecycle["close"]["closed_at"] = "2026-08-29T12:25:41+00:00"
+    lifecycle["created_at"] = "2026-08-29T12:25:42+00:00"
+    _write(lifecycle_path, lifecycle)
 
     with pytest.raises(
         SpawnCoordinateCapsuleCampaignError,
         match="condition order differs",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_rejects_reused_process_identity(tmp_path):
+    repo, campaign = _prepare_campaign(tmp_path)
+    source_path = campaign / "pair001" / "control" / "trial.json"
+    target_path = campaign / "pair002" / "control" / "trial.json"
+    source_proof_path = source_path.parent / "start_state_proof.json"
+    target_proof_path = target_path.parent / "start_state_proof.json"
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    target = json.loads(target_path.read_text(encoding="utf-8"))
+    source_proof = json.loads(source_proof_path.read_text(encoding="utf-8"))
+    _write(target_proof_path, source_proof)
+    target["process_identity"] = source["process_identity"]
+    target["start_state"].update(
+        {
+            "sha256": _file_sha256(target_proof_path),
+            "verified_at": source_proof["verified_at"],
+            "manifest_sha256": source_proof["manifest_sha256"],
+            "tree_sha256": source_proof["manifest"]["tree_sha256"],
+        }
+    )
+    _write(target_path, target)
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="process identity was reused",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_rejects_forced_process_termination(tmp_path):
+    repo, campaign = _prepare_campaign(tmp_path)
+    lifecycle_path = campaign / "pair001" / "control" / "lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+    lifecycle["close"]["forced_termination"] = True
+    _write(lifecycle_path, lifecycle)
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="close differs",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_rejects_native_continue_ack_drift(tmp_path):
+    repo, campaign = _prepare_campaign(tmp_path)
+    lifecycle_path = campaign / "pair001" / "control" / "lifecycle.json"
+    lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+    lifecycle["native_continue"]["ack"] = "ERROR: Continue failed"
+    _write(lifecycle_path, lifecycle)
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="native Continue differs",
     ):
         build_spawn_coordinate_capsule_campaign_receipt(
             campaign,

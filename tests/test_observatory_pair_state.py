@@ -44,6 +44,22 @@ def test_snapshot_verify_and_restore_exact_profile(tmp_path, monkeypatch, capsys
     assert pair_state.main(
         ["verify", "--save-root", str(save_root), "--snapshot-root", str(snapshot_root)]
     ) == 0
+    proof_output = tmp_path / "start-state-proof.json"
+    assert pair_state.main(
+        [
+            "prove",
+            "--save-root",
+            str(save_root),
+            "--snapshot-root",
+            str(snapshot_root),
+            "--proof-output",
+            str(proof_output),
+        ]
+    ) == 0
+    proof = json.loads(proof_output.read_text(encoding="utf-8"))
+    assert proof["game_stopped"] is True
+    assert proof["manifest"] == manifest
+    assert len(proof["manifest_sha256"]) == 64
 
     save_data = save_root / "profile_Alpha" / "saveData.lua"
     save_data.write_text("changed\n", encoding="utf-8")
@@ -109,6 +125,27 @@ def test_snapshot_refuses_running_game_or_existing_output(
     ) == 2
 
 
+def test_start_state_proof_refuses_a_running_game(tmp_path, monkeypatch):
+    save_root = _save_root(tmp_path)
+    snapshot_root = tmp_path / "snapshot"
+    monkeypatch.setattr(pair_state, "_game_running", lambda: False)
+    assert pair_state.main(
+        [
+            "snapshot",
+            "--save-root",
+            str(save_root),
+            "--output-root",
+            str(snapshot_root),
+            "--capture-track",
+            "owner_local_modified",
+        ]
+    ) == 0
+    monkeypatch.setattr(pair_state, "_game_running", lambda: True)
+
+    with pytest.raises(pair_state.PairStateError, match="before proving"):
+        pair_state.build_start_state_verification_proof(save_root, snapshot_root)
+
+
 def test_session_sandbox_preserves_strategy_and_resets_execution_state(tmp_path):
     source = tmp_path / "active_session.json"
     output = tmp_path / "pair_control_session.json"
@@ -171,6 +208,7 @@ def test_session_sandbox_preserves_strategy_and_resets_execution_state(tmp_path)
 
 def test_game_running_ignores_tasklist_no_match_diagnostic(monkeypatch):
     class Result:
+        returncode = 0
         stdout = (
             'INFO: No tasks are running which match the specified criteria '
             '"Breach.exe".\n'
@@ -183,11 +221,24 @@ def test_game_running_ignores_tasklist_no_match_diagnostic(monkeypatch):
 
 def test_game_running_accepts_exact_csv_image_name(monkeypatch):
     class Result:
+        returncode = 0
         stdout = '"Breach.exe","3888","Console","4","123,456 K"\n'
 
     monkeypatch.setattr(pair_state.os, "name", "nt")
     monkeypatch.setattr(pair_state.subprocess, "run", lambda *args, **kwargs: Result())
     assert pair_state._game_running() is True
+
+
+def test_game_running_fails_closed_when_tasklist_fails(monkeypatch):
+    class Result:
+        returncode = 1
+        stdout = ""
+
+    monkeypatch.setattr(pair_state.os, "name", "nt")
+    monkeypatch.setattr(pair_state.subprocess, "run", lambda *args, **kwargs: Result())
+
+    with pytest.raises(pair_state.PairStateError, match="tasklist failed"):
+        pair_state._game_running()
 
 
 @pytest.mark.parametrize("relative", ("../outside", "/absolute", "a/../../outside"))

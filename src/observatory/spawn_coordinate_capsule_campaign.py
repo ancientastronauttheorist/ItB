@@ -6,11 +6,17 @@ import hashlib
 import json
 import os
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from src.observatory.rng_trial_outcome import compare_rng_trial_outcomes
+from src.observatory.game_process_identity import (
+    EXPECTED_EXECUTABLE_SHA256 as EXPECTED_PROCESS_EXECUTABLE_SHA256,
+    EXPECTED_EXECUTABLE_SIZE as EXPECTED_PROCESS_EXECUTABLE_SIZE,
+    IDENTITY_KIND as PROCESS_IDENTITY_KIND,
+    SCHEMA_VERSION as PROCESS_IDENTITY_SCHEMA_VERSION,
+)
 from src.observatory.spawn_coordinate_capsule_hw import (
     CORRELATION_KIND,
     EXPECTED_BUILD_RECEIPT_SHA256,
@@ -20,11 +26,19 @@ from src.observatory.spawn_coordinate_capsule_hw import (
     validate_spawn_coordinate_capsule_build_identity,
     validate_spawn_coordinate_capsule_snapshot,
 )
+from src.observatory.start_state_proof import (
+    StartStateProofError,
+    validate_start_state_verification_proof,
+)
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 RECEIPT_KIND = "observatory_spawn_coordinate_capsule_hw_campaign_receipt"
 TRIAL_KIND = "observatory_spawn_coordinate_capsule_turn_trial"
+LIFECYCLE_KIND = "observatory_spawn_coordinate_capsule_condition_lifecycle"
+CAMPAIGN_LIFECYCLE_KIND = (
+    "observatory_spawn_coordinate_capsule_campaign_lifecycle"
+)
 BUILD_RECEIPT = Path("data/observatory/native") / (
     "itb_observatory_spawn_coordinate_capsule_hw_observer_"
     f"{EXPECTED_MODULE_SHA256}.dll.receipt.json"
@@ -57,6 +71,20 @@ ERROR_FIELDS = {
     "abort",
     "pause",
 }
+LIFECYCLE_ERROR_FIELDS = {
+    "restore",
+    "start_state",
+    "session",
+    "session_cleanup",
+    "continue_arm",
+    "launch",
+    "process",
+    "bridge_start",
+    "trial",
+    "close",
+    "continue_cleanup",
+}
+_WINDOWS_EPOCH_FILETIME = 116_444_736_000_000_000
 
 
 class SpawnCoordinateCapsuleCampaignError(RuntimeError):
@@ -150,6 +178,28 @@ def _exact_children(root: Path, expected: set[str], *, directories: bool) -> Non
         )
 
 
+def _exact_campaign_root(root: Path) -> None:
+    if root.is_symlink() or not root.is_dir():
+        raise SpawnCoordinateCapsuleCampaignError(f"campaign path is invalid: {root}")
+    directories = {
+        item.name for item in root.iterdir() if item.is_dir() and not item.is_symlink()
+    }
+    files = {
+        item.name for item in root.iterdir() if item.is_file() and not item.is_symlink()
+    }
+    symlinks_or_other = {
+        item.name
+        for item in root.iterdir()
+        if item.is_symlink() or (not item.is_dir() and not item.is_file())
+    }
+    if (
+        directories != set(PAIR_SPECS)
+        or files != {"campaign_lifecycle.json"}
+        or symlinks_or_other
+    ):
+        raise SpawnCoordinateCapsuleCampaignError("campaign root children differ")
+
+
 def _artifact(path: Path, repository_root: Path) -> dict[str, Any]:
     resolved = path.resolve()
     repo = repository_root.resolve()
@@ -163,21 +213,76 @@ def _artifact(path: Path, repository_root: Path) -> dict[str, Any]:
     return {"path": relative, "sha256": _sha256(data), "size": len(data)}
 
 
-def _created_at(trial: Mapping[str, Any], label: str) -> datetime:
-    value = trial.get("created_at")
+def _timestamp(value: object, label: str) -> datetime:
     if type(value) is not str:
-        raise SpawnCoordinateCapsuleCampaignError(f"{label} created_at is invalid")
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} timestamp is invalid")
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
         raise SpawnCoordinateCapsuleCampaignError(
-            f"{label} created_at is invalid"
+            f"{label} timestamp is invalid"
         ) from exc
     if parsed.tzinfo is None:
         raise SpawnCoordinateCapsuleCampaignError(
-            f"{label} created_at has no timezone"
+            f"{label} timestamp has no timezone"
         )
     return parsed
+
+
+def _created_at(trial: Mapping[str, Any], label: str) -> datetime:
+    return _timestamp(trial.get("created_at"), f"{label} created_at")
+
+
+def _validate_process_identity(
+    value: object,
+    *,
+    trial_created_at: datetime,
+    label: str,
+) -> Mapping[str, Any]:
+    identity = _mapping(value, f"{label} process identity")
+    _exact_keys(
+        identity,
+        {
+            "schema_version",
+            "kind",
+            "pid",
+            "creation_filetime",
+            "created_at",
+            "executable_path",
+            "executable_size",
+            "executable_sha256",
+        },
+        f"{label} process identity",
+    )
+    pid = identity.get("pid")
+    creation_filetime = identity.get("creation_filetime")
+    executable_path = Path(str(identity.get("executable_path")))
+    process_created_at = _timestamp(
+        identity.get("created_at"), f"{label} process created_at"
+    )
+    expected_created_at = datetime.fromtimestamp(
+        (int(creation_filetime) - _WINDOWS_EPOCH_FILETIME) / 10_000_000.0,
+        tz=timezone.utc,
+    ) if type(creation_filetime) is int else None
+    if (
+        identity.get("schema_version") != PROCESS_IDENTITY_SCHEMA_VERSION
+        or identity.get("kind") != PROCESS_IDENTITY_KIND
+        or type(pid) is not int
+        or pid <= 0
+        or type(creation_filetime) is not int
+        or creation_filetime <= _WINDOWS_EPOCH_FILETIME
+        or process_created_at != expected_created_at
+        or process_created_at > trial_created_at
+        or not executable_path.is_absolute()
+        or executable_path.name.casefold() != "breach.exe"
+        or identity.get("executable_size") != EXPECTED_PROCESS_EXECUTABLE_SIZE
+        or identity.get("executable_sha256")
+        != EXPECTED_PROCESS_EXECUTABLE_SHA256
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{label} process identity differs"
+        )
+    return identity
 
 
 def _metadata_digest(
@@ -189,6 +294,15 @@ def _metadata_digest(
     if value.get("sha256") != _sha256(_stable_bytes(artifact_path, label)):
         raise SpawnCoordinateCapsuleCampaignError(f"{label} digest differs")
     return value
+
+
+def _lower_sha256(value: object) -> bool:
+    return bool(
+        type(value) is str
+        and len(value) == 64
+        and value.lower() == value
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _validate_build_identity(
@@ -226,7 +340,7 @@ def _validate_trial(
     pair_name: str,
     condition: str,
     condition_dir: Path,
-) -> None:
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
     suffix = pair_name[-3:]
     pair_id = f"spawn-capsule-pair{suffix}"
     capture_id = f"{pair_id}-{condition}"
@@ -242,6 +356,8 @@ def _validate_trial(
             "capture_track",
             "artifact_root",
             "session_file",
+            "process_identity",
+            "start_state",
             "status",
             "valid_trial",
             "module_sha256",
@@ -277,7 +393,51 @@ def _validate_trial(
         raise SpawnCoordinateCapsuleCampaignError(
             f"{pair_name} {condition} trial identity differs"
         )
-    _created_at(trial, f"{pair_name} {condition}")
+    trial_created_at = _created_at(trial, f"{pair_name} {condition}")
+    process_identity = _validate_process_identity(
+        trial.get("process_identity"),
+        trial_created_at=trial_created_at,
+        label=f"{pair_name} {condition}",
+    )
+    start_state_path = condition_dir / "start_state_proof.json"
+    start_state_proof = _load(
+        start_state_path,
+        f"{pair_name} {condition} start-state proof",
+    )
+    try:
+        start_state_proof = validate_start_state_verification_proof(
+            start_state_proof,
+            process_identity=process_identity,
+        )
+    except StartStateProofError as exc:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{pair_name} {condition} start-state proof differs: {exc}"
+        ) from exc
+    start_state_metadata = _metadata_digest(
+        trial.get("start_state"),
+        start_state_path,
+        f"{pair_name} {condition} start-state proof",
+    )
+    _exact_keys(
+        start_state_metadata,
+        {"path", "sha256", "verified_at", "manifest_sha256", "tree_sha256"},
+        f"{pair_name} {condition} start-state metadata",
+    )
+    if (
+        not Path(str(start_state_metadata.get("path"))).is_absolute()
+        or start_state_metadata.get("verified_at")
+        != start_state_proof.get("verified_at")
+        or start_state_metadata.get("manifest_sha256")
+        != start_state_proof.get("manifest_sha256")
+        or start_state_metadata.get("tree_sha256")
+        != _mapping(
+            start_state_proof.get("manifest"),
+            f"{pair_name} {condition} start-state manifest",
+        ).get("tree_sha256")
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{pair_name} {condition} start-state metadata differs"
+        )
     artifact_root = Path(str(trial.get("artifact_root")))
     session_file = Path(str(trial.get("session_file")))
     if (
@@ -446,6 +606,404 @@ def _validate_trial(
             raise SpawnCoordinateCapsuleCampaignError(
                 f"{pair_name} {condition} published observer output"
             )
+    return process_identity, start_state_proof
+
+
+def _validate_lifecycle(
+    lifecycle: Mapping[str, Any],
+    *,
+    trial: Mapping[str, Any],
+    process_identity: Mapping[str, Any],
+    start_state_proof: Mapping[str, Any],
+    pair_name: str,
+    condition: str,
+    condition_dir: Path,
+) -> tuple[str, str]:
+    label = f"{pair_name} {condition} lifecycle"
+    pair_id = f"spawn-capsule-pair{pair_name[-3:]}"
+    capture_id = f"{pair_id}-{condition}"
+    _exact_keys(
+        lifecycle,
+        {
+            "schema_version",
+            "kind",
+            "created_at",
+            "pair_id",
+            "condition",
+            "capture_id",
+            "capture_track",
+            "status",
+            "valid_lifecycle",
+            "artifact_root",
+            "condition_root",
+            "build_identity",
+            "restore",
+            "start_state",
+            "session",
+            "native_continue",
+            "launch",
+            "process_identity",
+            "bridge_start",
+            "bridge_start_sha256",
+            "trial",
+            "close",
+            "errors",
+        },
+        label,
+    )
+    lifecycle_created_at = _timestamp(
+        lifecycle.get("created_at"), f"{label} created_at"
+    )
+    artifact_root = Path(str(lifecycle.get("artifact_root")))
+    external_condition_root = Path(str(lifecycle.get("condition_root")))
+    try:
+        external_relative = external_condition_root.relative_to(artifact_root)
+    except ValueError as exc:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{label} external roots differ"
+        ) from exc
+    if (
+        lifecycle.get("schema_version") != 1
+        or lifecycle.get("kind") != LIFECYCLE_KIND
+        or lifecycle.get("pair_id") != pair_id
+        or lifecycle.get("condition") != condition
+        or lifecycle.get("capture_id") != capture_id
+        or lifecycle.get("capture_track") != "owner_local_modified"
+        or lifecycle.get("status") != "complete"
+        or lifecycle.get("valid_lifecycle") is not True
+        or not artifact_root.is_absolute()
+        or not external_condition_root.is_absolute()
+        or external_relative.as_posix() != f"{pair_name}/{condition}"
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} identity differs")
+
+    build = _mapping(lifecycle.get("build_identity"), f"{label} build identity")
+    _exact_keys(
+        build,
+        {
+            "executable_sha256",
+            "executable_size",
+            "module_sha256",
+            "build_receipt_sha256",
+        },
+        f"{label} build identity",
+    )
+    if (
+        build.get("executable_sha256") != EXPECTED_PROCESS_EXECUTABLE_SHA256
+        or build.get("executable_size") != EXPECTED_PROCESS_EXECUTABLE_SIZE
+        or build.get("module_sha256") != EXPECTED_MODULE_SHA256
+        or build.get("build_receipt_sha256") != EXPECTED_BUILD_RECEIPT_SHA256
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} build identity differs")
+
+    manifest = _mapping(
+        start_state_proof.get("manifest"), f"{label} start-state manifest"
+    )
+    restore = _mapping(lifecycle.get("restore"), f"{label} restore")
+    _exact_keys(
+        restore,
+        {"manifest_sha256", "tree_sha256", "file_count", "total_bytes"},
+        f"{label} restore",
+    )
+    if (
+        restore.get("manifest_sha256") != start_state_proof.get("manifest_sha256")
+        or restore.get("tree_sha256") != manifest.get("tree_sha256")
+        or restore.get("file_count") != manifest.get("file_count")
+        or restore.get("total_bytes") != manifest.get("total_bytes")
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} restore differs")
+
+    start_state = _metadata_digest(
+        lifecycle.get("start_state"),
+        condition_dir / "start_state_proof.json",
+        f"{label} start-state proof",
+    )
+    _exact_keys(
+        start_state,
+        {
+            "path",
+            "sha256",
+            "verified_at",
+            "manifest_sha256",
+            "tree_sha256",
+            "game_stopped",
+        },
+        f"{label} start state",
+    )
+    if (
+        not Path(str(start_state.get("path"))).is_absolute()
+        or start_state.get("verified_at") != start_state_proof.get("verified_at")
+        or start_state.get("manifest_sha256")
+        != start_state_proof.get("manifest_sha256")
+        or start_state.get("tree_sha256") != manifest.get("tree_sha256")
+        or start_state.get("game_stopped") is not True
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} start state differs")
+
+    session = _metadata_digest(
+        lifecycle.get("session"),
+        condition_dir / "session.json",
+        f"{label} session",
+    )
+    _exact_keys(
+        session,
+        {"path", "sha256", "source_path", "source_sha256"},
+        f"{label} session",
+    )
+    if (
+        trial.get("session_file") != session.get("path")
+        or not Path(str(session.get("path"))).is_absolute()
+        or not Path(str(session.get("source_path"))).is_absolute()
+        or not _lower_sha256(session.get("source_sha256"))
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} session differs")
+
+    native_continue = _mapping(
+        lifecycle.get("native_continue"), f"{label} native Continue"
+    )
+    _exact_keys(
+        native_continue,
+        {"request_path", "armed", "consumed", "ack", "cleaned_after_failure"},
+        f"{label} native Continue",
+    )
+    if (
+        not Path(str(native_continue.get("request_path"))).is_absolute()
+        or native_continue.get("armed") is not True
+        or native_continue.get("consumed") is not True
+        or native_continue.get("ack")
+        != "OK OBS_NATIVE_CONTINUE_REQUEST invoked=true"
+        or native_continue.get("cleaned_after_failure") is not False
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} native Continue differs")
+
+    launch = _mapping(lifecycle.get("launch"), f"{label} launch")
+    _exact_keys(
+        launch,
+        {
+            "requested_at",
+            "launcher_pid",
+            "executable_path",
+            "executable_size",
+            "executable_sha256",
+        },
+        f"{label} launch",
+    )
+    launch_requested_at = _timestamp(
+        launch.get("requested_at"), f"{label} launch requested_at"
+    )
+    process_created_at = _timestamp(
+        process_identity.get("created_at"), f"{label} process created_at"
+    )
+    if (
+        launch.get("launcher_pid") != process_identity.get("pid")
+        or os.path.normcase(str(launch.get("executable_path")))
+        != os.path.normcase(str(process_identity.get("executable_path")))
+        or launch.get("executable_size") != EXPECTED_PROCESS_EXECUTABLE_SIZE
+        or launch.get("executable_sha256") != EXPECTED_PROCESS_EXECUTABLE_SHA256
+        or launch_requested_at > process_created_at
+        or lifecycle.get("process_identity") != process_identity
+        or trial.get("process_identity") != process_identity
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} process binding differs")
+
+    bridge_start = _mapping(lifecycle.get("bridge_start"), f"{label} bridge start")
+    _exact_keys(
+        bridge_start,
+        {
+            "mission_id",
+            "phase",
+            "turn",
+            "active_mechs",
+            "master_seed",
+            "region_id",
+            "timeline_fingerprint",
+            "ai_seed_fingerprint",
+        },
+        f"{label} bridge start",
+    )
+    bridge_start_sha256 = _object_sha256(bridge_start)
+    if (
+        bridge_start.get("mission_id") != "Mission_Power"
+        or bridge_start.get("phase") != "combat_player"
+        or type(bridge_start.get("turn")) is not int
+        or bridge_start.get("turn") != trial.get("pre_dispatch_turn")
+        or type(bridge_start.get("active_mechs")) is not int
+        or bridge_start.get("active_mechs") <= 0
+        or lifecycle.get("bridge_start_sha256") != bridge_start_sha256
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} bridge start differs")
+
+    trial_metadata = _metadata_digest(
+        lifecycle.get("trial"),
+        condition_dir / "trial.json",
+        f"{label} trial",
+    )
+    _exact_keys(
+        trial_metadata,
+        {"path", "sha256", "status", "valid_trial"},
+        f"{label} trial",
+    )
+    if (
+        not Path(str(trial_metadata.get("path"))).is_absolute()
+        or trial_metadata.get("status") != "complete"
+        or trial_metadata.get("valid_trial") is not True
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} trial differs")
+
+    close = _mapping(lifecycle.get("close"), f"{label} close")
+    _exact_keys(
+        close,
+        {
+            "method",
+            "requested_at",
+            "closed_at",
+            "pid",
+            "creation_filetime",
+            "window_handles",
+            "exited",
+            "forced_termination",
+        },
+        f"{label} close",
+    )
+    close_requested_at = _timestamp(
+        close.get("requested_at"), f"{label} close requested_at"
+    )
+    closed_at = _timestamp(close.get("closed_at"), f"{label} closed_at")
+    handles = close.get("window_handles")
+    if (
+        close.get("method") != "WM_CLOSE"
+        or close.get("pid") != process_identity.get("pid")
+        or close.get("creation_filetime")
+        != process_identity.get("creation_filetime")
+        or not isinstance(handles, list)
+        or not handles
+        or any(type(hwnd) is not int or hwnd <= 0 for hwnd in handles)
+        or len(handles) != len(set(handles))
+        or close.get("exited") is not True
+        or close.get("forced_termination") is not False
+        or close_requested_at < _created_at(trial, f"{label} trial")
+        or closed_at < close_requested_at
+        or lifecycle_created_at < closed_at
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} close differs")
+
+    errors = _mapping(lifecycle.get("errors"), f"{label} errors")
+    _exact_keys(errors, LIFECYCLE_ERROR_FIELDS, f"{label} errors")
+    if any(errors.values()):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} has errors")
+    return str(session["source_sha256"]), bridge_start_sha256
+
+
+def _validate_campaign_lifecycle(
+    value: Mapping[str, Any],
+    *,
+    campaign_root: Path,
+    condition_lifecycles: Mapping[str, Mapping[str, Any]],
+    start_state_tree_sha256: str,
+    start_state_manifest_sha256: str,
+) -> Mapping[str, Any]:
+    _exact_keys(
+        value,
+        {
+            "schema_version",
+            "kind",
+            "created_at",
+            "capture_track",
+            "status",
+            "valid_campaign",
+            "artifact_root",
+            "condition_order",
+            "conditions",
+            "final_restore",
+            "errors",
+        },
+        "campaign lifecycle",
+    )
+    created_at = _timestamp(value.get("created_at"), "campaign lifecycle created_at")
+    artifact_root = Path(str(value.get("artifact_root")))
+    expected_order = [
+        f"{pair_name}/{condition}"
+        for pair_name, order in PAIR_SPECS.items()
+        for condition in order
+    ]
+    if (
+        value.get("schema_version") != 1
+        or value.get("kind") != CAMPAIGN_LIFECYCLE_KIND
+        or value.get("capture_track") != "owner_local_modified"
+        or value.get("status") != "complete"
+        or value.get("valid_campaign") is not True
+        or not artifact_root.is_absolute()
+        or value.get("condition_order") != expected_order
+    ):
+        raise SpawnCoordinateCapsuleCampaignError("campaign lifecycle identity differs")
+    conditions = value.get("conditions")
+    if not isinstance(conditions, list) or len(conditions) != len(expected_order):
+        raise SpawnCoordinateCapsuleCampaignError(
+            "campaign lifecycle condition count differs"
+        )
+    latest_condition_at: datetime | None = None
+    for expected_key, condition_value in zip(expected_order, conditions, strict=True):
+        condition = _mapping(condition_value, "campaign lifecycle condition")
+        _exact_keys(
+            condition,
+            {"pair", "condition", "lifecycle_sha256"},
+            "campaign lifecycle condition",
+        )
+        pair_name, condition_name = expected_key.split("/", 1)
+        lifecycle = condition_lifecycles.get(expected_key)
+        if lifecycle is None:
+            raise SpawnCoordinateCapsuleCampaignError(
+                "campaign lifecycle condition is unavailable"
+            )
+        lifecycle_path = campaign_root / pair_name / condition_name / "lifecycle.json"
+        if (
+            condition.get("pair") != pair_name
+            or condition.get("condition") != condition_name
+            or condition.get("lifecycle_sha256")
+            != _sha256(_stable_bytes(lifecycle_path, expected_key))
+        ):
+            raise SpawnCoordinateCapsuleCampaignError(
+                f"campaign lifecycle condition differs: {expected_key}"
+            )
+        condition_created_at = _timestamp(
+            lifecycle.get("created_at"), f"{expected_key} lifecycle created_at"
+        )
+        if latest_condition_at is None or condition_created_at > latest_condition_at:
+            latest_condition_at = condition_created_at
+
+    try:
+        final_restore = validate_start_state_verification_proof(
+            value.get("final_restore")
+        )
+    except StartStateProofError as exc:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"campaign final restore differs: {exc}"
+        ) from exc
+    final_verified_at = _timestamp(
+        final_restore.get("verified_at"), "campaign final restore verified_at"
+    )
+    final_manifest = _mapping(
+        final_restore.get("manifest"), "campaign final restore manifest"
+    )
+    if (
+        final_restore.get("manifest_sha256") != start_state_manifest_sha256
+        or final_manifest.get("tree_sha256") != start_state_tree_sha256
+        or latest_condition_at is None
+        or final_verified_at <= latest_condition_at
+        or created_at < final_verified_at
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(
+            "campaign final restore ordering or tree differs"
+        )
+    errors = _mapping(value.get("errors"), "campaign lifecycle errors")
+    _exact_keys(
+        errors,
+        {"conditions", "final_restore"},
+        "campaign lifecycle errors",
+    )
+    if any(errors.values()):
+        raise SpawnCoordinateCapsuleCampaignError("campaign lifecycle has errors")
+    return final_restore
 
 
 def _capsule_observation(analysis: Mapping[str, Any]) -> dict[str, Any]:
@@ -487,7 +1045,7 @@ def build_spawn_coordinate_capsule_campaign_receipt(
     """Validate three counterbalanced triplets and return their receipt."""
     root = campaign_root.resolve()
     repo = repository_root.resolve()
-    _exact_children(root, set(PAIR_SPECS), directories=True)
+    _exact_campaign_root(root)
     build_path = repo / BUILD_RECEIPT
     plan_path = repo / BREAKPOINT_PLAN
     build, _plan = _validate_build_identity(build_path, plan_path)
@@ -500,6 +1058,13 @@ def build_spawn_coordinate_capsule_campaign_receipt(
     session_files: set[str] = set()
     plan_ids: set[str] = set()
     created_times: set[datetime] = set()
+    process_identities: set[tuple[int, int]] = set()
+    process_executable_paths: set[str] = set()
+    start_state_tree_sha256: str | None = None
+    start_state_manifest_sha256: str | None = None
+    source_session_sha256: str | None = None
+    bridge_start_sha256: str | None = None
+    condition_lifecycles: dict[str, Mapping[str, Any]] = {}
     for pair_name, expected_order in PAIR_SPECS.items():
         pair_dir = root / pair_name
         _exact_children(pair_dir, {"control", "dormant", "armed"}, directories=True)
@@ -508,19 +1073,79 @@ def build_spawn_coordinate_capsule_campaign_receipt(
         artifacts: dict[str, dict[str, Any]] = {}
         for condition in ("control", "dormant", "armed"):
             condition_dir = pair_dir / condition
-            expected_files = {"trial.json", "outcome.json"}
+            expected_files = {
+                "trial.json",
+                "outcome.json",
+                "start_state_proof.json",
+                "session.json",
+                "lifecycle.json",
+            }
             if condition == "armed":
                 expected_files |= {"snapshot.json", "analysis.json"}
             _exact_children(condition_dir, expected_files, directories=False)
             trial = _load(
                 condition_dir / "trial.json", f"{pair_name} {condition} trial"
             )
-            _validate_trial(
+            process_identity, start_state_proof = _validate_trial(
                 trial,
                 pair_name=pair_name,
                 condition=condition,
                 condition_dir=condition_dir,
             )
+            process_key = (
+                int(process_identity["pid"]),
+                int(process_identity["creation_filetime"]),
+            )
+            if process_key in process_identities:
+                raise SpawnCoordinateCapsuleCampaignError(
+                    f"{pair_name} {condition} process identity was reused"
+                )
+            process_identities.add(process_key)
+            process_executable_paths.add(
+                os.path.normcase(str(process_identity["executable_path"]))
+            )
+            start_manifest = _mapping(
+                start_state_proof["manifest"],
+                f"{pair_name} {condition} start-state manifest",
+            )
+            observed_tree_sha256 = str(start_manifest["tree_sha256"])
+            observed_manifest_sha256 = str(start_state_proof["manifest_sha256"])
+            if start_state_tree_sha256 is None:
+                start_state_tree_sha256 = observed_tree_sha256
+                start_state_manifest_sha256 = observed_manifest_sha256
+            elif (
+                observed_tree_sha256 != start_state_tree_sha256
+                or observed_manifest_sha256 != start_state_manifest_sha256
+            ):
+                raise SpawnCoordinateCapsuleCampaignError(
+                    f"{pair_name} {condition} start-state tree differs"
+                )
+            lifecycle = _load(
+                condition_dir / "lifecycle.json",
+                f"{pair_name} {condition} lifecycle",
+            )
+            condition_lifecycles[f"{pair_name}/{condition}"] = lifecycle
+            observed_source_session_sha256, observed_bridge_start_sha256 = (
+                _validate_lifecycle(
+                    lifecycle,
+                    trial=trial,
+                    process_identity=process_identity,
+                    start_state_proof=start_state_proof,
+                    pair_name=pair_name,
+                    condition=condition,
+                    condition_dir=condition_dir,
+                )
+            )
+            if source_session_sha256 is None:
+                source_session_sha256 = observed_source_session_sha256
+                bridge_start_sha256 = observed_bridge_start_sha256
+            elif (
+                observed_source_session_sha256 != source_session_sha256
+                or observed_bridge_start_sha256 != bridge_start_sha256
+            ):
+                raise SpawnCoordinateCapsuleCampaignError(
+                    f"{pair_name} {condition} lifecycle baseline differs"
+                )
             session_file = str(trial["session_file"])
             plan_id = str(_mapping(trial["auto_turn"], "auto_turn")["end_turn_plan_id"])
             created = _created_at(trial, f"{pair_name} {condition}")
@@ -545,6 +1170,15 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             )
             artifacts[f"{condition}_outcome"] = _artifact(
                 condition_dir / "outcome.json", repo
+            )
+            artifacts[f"{condition}_start_state_proof"] = _artifact(
+                condition_dir / "start_state_proof.json", repo
+            )
+            artifacts[f"{condition}_session"] = _artifact(
+                condition_dir / "session.json", repo
+            )
+            artifacts[f"{condition}_lifecycle"] = _artifact(
+                condition_dir / "lifecycle.json", repo
             )
 
         actual_order = [
@@ -671,6 +1305,24 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             }
         )
 
+    if len(process_executable_paths) != 1:
+        raise SpawnCoordinateCapsuleCampaignError(
+            "campaign process executable paths differ"
+        )
+    assert start_state_tree_sha256 is not None
+    assert start_state_manifest_sha256 is not None
+    campaign_lifecycle = _load(
+        root / "campaign_lifecycle.json",
+        "campaign lifecycle",
+    )
+    final_restore = _validate_campaign_lifecycle(
+        campaign_lifecycle,
+        campaign_root=root,
+        condition_lifecycles=condition_lifecycles,
+        start_state_tree_sha256=start_state_tree_sha256,
+        start_state_manifest_sha256=start_state_manifest_sha256,
+    )
+
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": RECEIPT_KIND,
@@ -699,6 +1351,16 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             "fixed_seed": 324508639,
             "mission_id": "Mission_Power",
             "dispatch_boundary": "reserved_local_end_turn_through_next_player_turn",
+            "fresh_process_count": len(process_identities),
+            "all_process_identities_distinct": len(process_identities) == 9,
+            "process_executable_sha256": EXPECTED_PROCESS_EXECUTABLE_SHA256,
+            "start_state_tree_sha256": start_state_tree_sha256,
+            "start_state_manifest_sha256": start_state_manifest_sha256,
+            "all_start_states_match": True,
+            "source_session_sha256": source_session_sha256,
+            "bridge_start_sha256": bridge_start_sha256,
+            "all_lifecycles_complete": True,
+            "all_processes_gracefully_closed": True,
         },
         "pairs": pairs,
         "results": {
@@ -717,6 +1379,9 @@ def build_spawn_coordinate_capsule_campaign_receipt(
                 "Each native selected coordinate matched the ordered spawning markers exposed by the fresh bridge state on the following player turn.",
                 "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets.",
                 "Every one-shot observer cleared its debug registers, removed its vectored exception handler, released the pinned executable, preserved every seam, published no pointer, and modified no executable bytes.",
+                "All nine trials used distinct Windows process identities bound to the exact attested Breach.exe path, size, and SHA-256.",
+                "Before each fresh process started, the game was stopped and the live save file set and bytes exactly matched the same sealed start-state manifest.",
+                "Each trial consumed the one-shot native Continue request, began from the same fresh bridge state and isolated source session, and ended by gracefully closing that exact process without forced termination.",
             ],
             "not_proven": [
                 "Transient dead non-corpse occupancy at selector entry.",
@@ -748,12 +1413,19 @@ def build_spawn_coordinate_capsule_campaign_receipt(
         },
         "restore": {
             "install_restoration_pending": True,
-            "save_restoration_pending": True,
+            "save_restoration_pending": False,
             "cleanup_receipt_pending": True,
+            "final_restore_verified_at": final_restore["verified_at"],
+            "final_restore_manifest_sha256": final_restore["manifest_sha256"],
+            "final_restore_tree_sha256": final_restore["manifest"]["tree_sha256"],
         },
         "supporting_artifacts": {
             "observer_build_receipt": _artifact(build_path, repo),
             "hardware_breakpoint_plan": _artifact(plan_path, repo),
+            "campaign_lifecycle": _artifact(
+                root / "campaign_lifecycle.json",
+                repo,
+            ),
         },
     }
 

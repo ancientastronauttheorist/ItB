@@ -1051,59 +1051,79 @@ occupancy, the Pawn path profile at entry, future Board state, and broader spawn
 call ordering remain explicit unresolved inputs; the validator therefore keeps
 `complete_future_forecast=false`.
 
-The matched runtime path is now implemented and synthetically validated, but it
-has not been executed live. The one-condition runner
-`scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module
-or receipt other than the exact content-addressed build before touching the
-session. It asks `auto_turn` to spend the player actors and reserve an opaque
-local End Turn, prepares the requested control/dormant/armed boundary only after
-that reservation exists, invokes the existing guarded local dispatcher, and
-keeps the boundary alive until a fresh `Mission_Power` player turn with a larger
-turn number is visible. It then finishes/restores the observer before taking and
-verifying a pause screenshot. An armed trial is accepted only when its native
-selected-coordinate order exactly matches the bridge's next-turn spawning
-markers; the copied snapshot is removed from the bridge only after that
-correlation and immutable artifact writes succeed.
+The matched runtime path is implemented and synthetically validated, but it has
+not yet been executed live. The one-condition trial runner
+`scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module,
+receipt, or Windows executable other than the exact content-addressed build
+before touching the isolated session. It also requires an exact stopped-game
+start-state proof that predates the bound `Breach.exe` PID/creation FILETIME. It
+asks `auto_turn` to spend the player actors and reserve an opaque local End Turn,
+prepares the requested control/dormant/armed boundary only after that reservation
+exists, invokes the existing guarded local dispatcher, and keeps the boundary
+alive until a fresh `Mission_Power` player turn with a larger turn number is
+visible. It then finishes/restores the observer before taking and verifying a
+pause screenshot. An armed trial is accepted only when its native selected-
+coordinate order exactly matches the bridge's next-turn spawning markers; the
+copied snapshot is removed from the bridge only after that correlation and
+immutable artifact writes succeed.
+
+`scripts/itb_observatory_spawn_coordinate_capsule_condition.py` owns the full
+reversible lifecycle for one condition. With the game stopped, it restores and
+byte-verifies the exact baseline save, publishes the start-state proof, creates
+a no-authority session sandbox, arms the fixed native Continue startup request,
+launches the exact executable, binds the launched process identity, requires the
+exact startup ACK, waits for the same initial `Mission_Power` bridge state, and
+runs the trial. It then
+releases only its own session lock and closes that same process through
+`WM_CLOSE`; PID/path replacement, a forced termination, or a process left
+running rejects the lifecycle.
 
 The offline sealer
 `scripts/itb_observatory_spawn_coordinate_capsule_campaign.py` accepts exactly
 three triplets with these counterbalanced orders:
 `control,dormant,armed`; `armed,control,dormant`; and
-`dormant,armed,control`. Each condition directory must contain only its trial
-and outcome, plus the armed snapshot and rebuilt correlation. The sealer rejects
-condition-order drift, extra files, digest drift, incomplete restoration,
-observer-output leakage from control/dormant conditions, any native/bridge
-coordinate disagreement, or any semantic whole-game difference. It preserves
-the unresolved forecast inputs and leaves installation/save restoration pending
-until a separate cleanup receipt closes them.
+`dormant,armed,control`. Every condition must contain only its trial, outcome,
+start-state proof, isolated session, and lifecycle, plus the armed snapshot and
+rebuilt correlation. It proves nine distinct process identities, one exact
+executable and starting save tree, exact per-condition restore/launch/Continue/
+bridge/trial/close chains, and a campaign-level stopped-game restore after the
+ninth condition. It rejects condition-order drift, extra files, digest drift,
+incomplete restoration, observer-output leakage from control/dormant conditions,
+any native/bridge coordinate disagreement, or any semantic whole-game
+difference.
 
-For the eventual reversible campaign, use a different fresh session file and a
-fresh restored game process for every condition. Capture outside the repository
-first; after all nine trials validate, copy only the exact condition trees into
-the intended `data/observatory/captures/` campaign directory and seal them:
+`scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py` conducts all
+nine lifecycles, attempts the final baseline restore even after an early rejected
+condition, writes the campaign lifecycle, and only then imports a byte-identical
+tree into a fresh repository destination and seals it. It never overwrites an
+existing campaign or receipt and never force-kills the game. The sealed receipt
+therefore closes save restoration itself; exact installation cleanup remains
+pending for the separate cleanup receipt.
+
+Create the baseline only while the game is stopped, then run the campaign from
+fresh external and repository destinations:
 
 ```powershell
-$env:ITB_ARTIFACT_ROOT = "<absolute external capsule campaign root>"
-$env:ITB_SESSION_FILE = "<artifact root>\<fresh condition session>.json"
-python scripts/itb_observatory_spawn_coordinate_capsule_trial.py `
-  --pair-id spawn-capsule-pair001 `
-  --condition control `
-  --capture-id spawn-capsule-pair001-control `
+python scripts/itb_observatory_pair_state.py snapshot `
+  --save-root "<Into The Breach save root>" `
+  --output-root "<fresh external baseline root>" `
+  --capture-track owner_local_modified
+
+python scripts/itb_observatory_pair_state.py verify `
+  --save-root "<Into The Breach save root>" `
+  --snapshot-root "<external baseline root>"
+
+python scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py `
+  --artifact-root "<fresh external campaign root>" `
+  --repository-campaign-root "data/observatory/captures/<fresh capsule campaign>" `
+  --receipt-output "data/observatory/captures/<fresh capsule receipt>.json" `
+  --save-root "<Into The Breach save root>" `
+  --snapshot-root "<external baseline root>" `
+  --source-session sessions/active_session.json `
+  --executable "<Into the Breach>/Breach.exe" `
   --build-receipt data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json `
-  --module "<installed exact capsule DLL>" `
-  --trial-output "<artifact root>\pair001\control\trial.json" `
-  --outcome-output "<artifact root>\pair001\control\outcome.json"
-
-python scripts/itb_observatory_spawn_coordinate_capsule_campaign.py `
-  --campaign-root "data/observatory/captures/<capsule campaign>" `
-  --output "data/observatory/captures/<capsule campaign receipt>.json"
+  --module "<installed exact capsule DLL>"
 ```
-
-The armed invocation additionally requires `--snapshot-output` and
-`--analysis-output` paths in its armed condition directory. The campaign sealer
-proves distinct session files, plan IDs, and timestamps; the required process
-restart and save restore between conditions remain external operational gates
-until a process/save orchestration receipt records them.
 
 Capture and verify the current-only joined artifact with:
 

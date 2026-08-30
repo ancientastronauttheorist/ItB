@@ -641,7 +641,9 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "all 64 tile and pointer-free occupancy records" in evidence
     assert "state=dormant consumed=false armed=false" in evidence
     assert "dormant deployment only" in evidence
-    assert "fail-closed trial runner and offline campaign sealer" in evidence
+    assert "fail-closed trial runner, condition lifecycle" in evidence
+    assert "require its exact startup ACK" in evidence
+    assert "finally restore the original save" in evidence
     assert "no live condition has run" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
@@ -679,6 +681,20 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "combine_current_bridge_native_capture",
         "validate_current_bridge_native_capture_artifact",
     }
+    assert implementations["src/observatory/game_process_identity.py"] == {
+        "capture_windows_game_process_identity",
+        "validate_windows_game_executable",
+    }
+    assert implementations["src/observatory/start_state_proof.py"] == {
+        "start_state_manifest_sha256",
+        "start_state_tree_sha256",
+        "validate_start_state_verification_proof",
+    }
+    assert implementations["src/observatory/windows_game_lifecycle.py"] == {
+        "launch_exact_windows_game",
+        "wait_for_exact_windows_game_process",
+        "gracefully_close_exact_windows_game",
+    }
     assert implementations[
         "src/observatory/spawn_coordinate_capsule_hw.py"
     ] == {
@@ -707,6 +723,17 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     ] == {"build_observer"}
     assert implementations[
         "scripts/itb_observatory_spawn_coordinate_capsule_trial.py"
+    ] == {"run"}
+    assert implementations["scripts/itb_observatory_pair_state.py"] == {
+        "build_start_state_verification_proof",
+        "restore_state",
+        "sandbox_session",
+    }
+    assert implementations[
+        "scripts/itb_observatory_spawn_coordinate_capsule_condition.py"
+    ] == {"run"}
+    assert implementations[
+        "scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py"
     ] == {"run"}
     assert implementations[
         "scripts/itb_observatory_spawn_coordinate_capsule_campaign.py"
@@ -848,6 +875,8 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
         "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
         "test_build_identity_preflight_blocks_before_any_session_action",
+        "test_process_identity_preflight_blocks_before_any_session_action",
+        "test_start_state_preflight_blocks_before_any_session_action",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign.py"
@@ -855,6 +884,37 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
         "test_capsule_campaign_rejects_semantic_outcome_drift",
         "test_capsule_campaign_rejects_counterbalance_order_drift",
+        "test_capsule_campaign_rejects_reused_process_identity",
+        "test_capsule_campaign_rejects_forced_process_termination",
+        "test_capsule_campaign_rejects_native_continue_ack_drift",
+    }
+    assert tests["tests/test_observatory_game_process_identity.py"] == {
+        "test_process_identity_binds_unique_pid_creation_time_and_exact_executable",
+        "test_process_identity_rejects_multiple_processes_or_different_path",
+    }
+    assert tests["tests/test_observatory_start_state_proof.py"] == {
+        "test_start_state_proof_binds_exact_tree_before_process_start",
+        "test_start_state_proof_rejects_verification_after_process_start",
+    }
+    assert tests["tests/test_observatory_windows_game_lifecycle.py"] == {
+        "test_launch_requires_empty_process_set_and_exact_executable",
+        "test_graceful_close_targets_exact_identity_without_force",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_condition.py"
+    ] == {
+        "test_condition_runs_restore_to_graceful_close_in_exact_order",
+        "test_condition_closes_process_when_trial_rejects",
+        "test_condition_recovers_exact_launched_identity_for_close_when_wait_fails",
+        "test_native_continue_ack_requires_a_fresh_exact_generation",
+        "test_native_continue_ack_rejects_an_error_generation",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"
+    ] == {
+        "test_campaign_run_uses_counterbalanced_order_restores_imports_and_seals",
+        "test_campaign_run_stops_after_rejection_but_attempts_final_restore",
+        "test_campaign_run_attempts_final_restore_when_condition_raises",
     }
     assert tests[
         "tests/test_observatory_enemy_spawn_candidate_boundary.py"
