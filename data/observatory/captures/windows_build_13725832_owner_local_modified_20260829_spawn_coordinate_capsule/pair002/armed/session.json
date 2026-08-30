@@ -1,0 +1,3301 @@
+{
+  "run_id": "20260630_084844_192-observatory-pair002_armed",
+  "squad": "Bombermechs",
+  "achievement_targets": [
+    "Hold the Door"
+  ],
+  "difficulty": 3,
+  "current_island": "",
+  "current_mission": "Mission_Power",
+  "islands_completed": [],
+  "mission_index": 25,
+  "last_mission_turn": 1,
+  "current_turn": 1,
+  "phase": "combat_player",
+  "active_solution": {
+    "actions": [
+      {
+        "mech_uid": 0,
+        "mech_type": "PunchMech",
+        "move_to": [
+          3,
+          2
+        ],
+        "weapon": "Prime_Punchmech_B",
+        "target": [
+          2,
+          2
+        ],
+        "description": "PunchMech, fire Titan Fist at F6"
+      },
+      {
+        "mech_uid": 1,
+        "mech_type": "IgniteMech",
+        "move_to": [
+          3,
+          6
+        ],
+        "weapon": "Ranged_Ignite",
+        "target": [
+          3,
+          4
+        ],
+        "description": "IgniteMech, move C5\u2192B5, fire Ignite at D5"
+      },
+      {
+        "mech_uid": 2,
+        "mech_type": "HornetMech",
+        "move_to": [
+          5,
+          5
+        ],
+        "weapon": "Vek_Hornet",
+        "target": [
+          5,
+          4
+        ],
+        "description": "HornetMech, move B6\u2192C3, fire Needle Shot at D3"
+      }
+    ],
+    "score": -97657.71403428487,
+    "turn": 1,
+    "input_fingerprint": "0:3,2:6|1248:4,5:4|1249:4,3:6|1250:5,2:4|1251:4,2:5|1252:6,5:2|1253:4,4:5|1296:2,2:1|1:3,5:4|2:2,6:5"
+  },
+  "actions_executed": 0,
+  "buildings_lost": 0,
+  "mechs_destroyed": 0,
+  "enemies_killed": 0,
+  "turns_played": 0,
+  "decisions": [
+    {
+      "actions": [
+        "PierceMech, move F5\u00e2\u2020\u2019D4, fire AP Cannon at D3",
+        "ExchangeMech, move G6\u00e2\u2020\u2019E5, fire Force Swap at E6 and D4",
+        "BomblingMech, move D4\u00e2\u2020\u2019C6"
+      ],
+      "label": "solve",
+      "score": 121817.85714285713,
+      "timestamp": "2026-06-30T09:00:37.883289",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move F5\u00e2\u2020\u2019D4, fire AP Cannon at D3",
+        "ExchangeMech, move G6\u00e2\u2020\u2019E5, fire Force Swap at E6 and D4",
+        "BomblingMech, move D4\u00e2\u2020\u2019C5, fire Bomb Dispenser at C1"
+      ],
+      "label": "solve",
+      "score": 121767.85714285713,
+      "timestamp": "2026-06-30T09:01:14.210552",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 111767.85714285713,
+      "timestamp": "2026-06-30T09:02:21.665621",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move E6\u00e2\u2020\u2019E7, fire AP Cannon at E6",
+        "BomblingMech, move C5\u00e2\u2020\u2019B3",
+        "ExchangeMech, fire Force Swap at F5 and D3"
+      ],
+      "label": "solve",
+      "score": 132637.85714285713,
+      "timestamp": "2026-06-30T09:04:18.553635",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, move C5\u00e2\u2020\u2019B3",
+        "ExchangeMech, move E4\u00e2\u2020\u2019E5, fire Force Swap at F5 and D3"
+      ],
+      "label": "solve",
+      "score": 132655.35714285713,
+      "timestamp": "2026-06-30T09:05:28.797293",
+      "turn": 2
+    },
+    {
+      "label": "note",
+      "message": "Post-enemy T2 investigation: grid loss was B6 bridge (2,6) losing 1 HP. Pre-end targeted_tiles included (2,6), but read/get_threatened_buildings showed 0 threats because swapped Moth uid=1242 at F5 had unresolved/blank queued target. Treat force-swapped Moth target summaries as unsafe; audit live targeted_tiles against building tiles before End Turn.",
+      "timestamp": "2026-06-30T09:10:42.140662",
+      "turn": 3
+    },
+    {
+      "block": {
+        "actual_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 8,
+          "buildings_alive": 6,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 5,
+          "enemy_hp_total": 11,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 4,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 0,
+          "mech_hp": [
+            {
+              "hp": 3,
+              "max_hp": 3,
+              "type": "PierceMech",
+              "uid": 0
+            },
+            {
+              "hp": 3,
+              "max_hp": 3,
+              "type": "BomblingMech",
+              "uid": 1
+            },
+            {
+              "hp": 2,
+              "max_hp": 2,
+              "type": "ExchangeMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 8,
+          "mechs_acid": [],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_Train",
+          "mission_kill_limit": 0,
+          "mission_kill_target": 0,
+          "mission_kills_done": 0,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "objective_building_hp_total": 0,
+          "objective_building_targets": [],
+          "objective_buildings_alive": 0,
+          "objective_buildings_targeted": 0,
+          "pods_present": 1,
+          "protected_objective_units": [
+            {
+              "alive": true,
+              "frozen": false,
+              "hp": 1,
+              "max_hp": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "team": 1,
+              "type": "Train_Pawn",
+              "uid": 1240
+            }
+          ],
+          "protected_objective_units_alive": 1,
+          "protected_objective_units_frozen": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 1,
+          "spawn_points": 0,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 3,
+          "turn": 3,
+          "victory_turns": 2
+        },
+        "blocking": true,
+        "created_at": "2026-06-30T09:07:13.420206",
+        "deltas": {
+          "building_hp_diff": -1,
+          "buildings_alive_diff": 0,
+          "enemies_alive_diff": 0,
+          "grid_power_diff": -1,
+          "mech_hp_diff": [
+            {
+              "actual_hp": 3,
+              "diff": 0,
+              "predicted_hp": 3,
+              "type": "PierceMech",
+              "uid": 0
+            },
+            {
+              "actual_hp": 3,
+              "diff": 1,
+              "predicted_hp": 2,
+              "type": "BomblingMech",
+              "uid": 1
+            },
+            {
+              "actual_hp": 2,
+              "diff": 0,
+              "predicted_hp": 2,
+              "type": "ExchangeMech",
+              "uid": 2
+            }
+          ],
+          "mech_status_diff": [],
+          "pods_present_diff": 1,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "unexpected_events": [
+            "Grid power dropped by 1 unexpectedly"
+          ]
+        },
+        "id": "20260630_084844_192_m00_t02_post_enemy",
+        "mission_index": 0,
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "predicted_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 9,
+          "buildings_alive": 6,
+          "buildings_destroyed_by_enemies": 0,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 5,
+          "enemies_killed_by_enemy_phase": 0,
+          "enemies_killed_by_player": 0,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 0,
+          "enemy_hp_total": 11,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 5,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 1,
+          "mech_hp": [
+            {
+              "hp": 3,
+              "max_hp": 3,
+              "type": "PierceMech",
+              "uid": 0
+            },
+            {
+              "hp": 2,
+              "max_hp": 3,
+              "type": "BomblingMech",
+              "uid": 1
+            },
+            {
+              "hp": 2,
+              "max_hp": 2,
+              "type": "ExchangeMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 7,
+          "mechs_acid": [],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_Train",
+          "mission_kill_limit": 0,
+          "mission_kill_target": 0,
+          "mission_kills_by_enemy_phase": 0,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done": 0,
+          "mission_kills_done_projected": 0,
+          "mission_kills_total_projected": 0,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mission_mountains_destroyed_projected": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "objective_building_hp_total": 0,
+          "objective_building_targets": [],
+          "objective_buildings_alive": 0,
+          "objective_buildings_targeted": 0,
+          "pods_collected": 1,
+          "pods_present": 0,
+          "protected_objective_units": [
+            {
+              "alive": true,
+              "frozen": false,
+              "hp": 1,
+              "max_hp": 1,
+              "pos": [
+                4,
+                2
+              ],
+              "team": 1,
+              "type": "Train_Pawn",
+              "uid": 1240
+            }
+          ],
+          "protected_objective_units_alive": 1,
+          "protected_objective_units_frozen": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 0,
+          "spawn_points": 1,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 3,
+          "turn": 3,
+          "victory_turns": 1
+        },
+        "reason": null,
+        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260630_084844_192\\m00_turn_02_post_enemy.json",
+        "resolve_reason": "Investigated T2 grid loss: B6 bridge (2,6) was in live targeted_tiles before End Turn and lost 1 HP. The manual Force Swap left Moth uid=1242 at F5 with unresolved/blank queued target, so get_threatened_buildings missed the live B6 marker. Actual board is known from fresh read; continue with targeted_tiles-vs-building audit before future End Turns.",
+        "resolved_at": "2026-06-30T09:10:49.650315",
+        "run_id": "20260630_084844_192",
+        "source": "record_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "triggers": [
+          {
+            "details": "Predicted grid 5, actual 4 (-1)",
+            "severity": "high",
+            "tier": 1,
+            "trigger": "grid_power_drop_unexpected"
+          }
+        ],
+        "turn": 2
+      },
+      "label": "resolve_post_enemy_block",
+      "timestamp": "2026-06-30T09:10:49.650341",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move E7\u00e2\u2020\u2019C8, fire AP Cannon at C7",
+        "BomblingMech, repair",
+        "ExchangeMech, move E5\u00e2\u2020\u2019G6, fire Force Swap at G7 and F3"
+      ],
+      "label": "solve",
+      "score": 114019.4642857143,
+      "timestamp": "2026-06-30T09:11:18.828882",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech",
+        "ExchangeMech, move E5\u00e2\u2020\u2019G6, fire Force Swap at G7 and F3"
+      ],
+      "label": "solve",
+      "score": 113769.4642857143,
+      "timestamp": "2026-06-30T09:12:00.977070",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "ExchangeMech, move D6\u00e2\u2020\u2019E5, fire Force Swap at F5 and C2",
+        "PierceMech, move C5\u00e2\u2020\u2019B2, fire AP Cannon at C2",
+        "BomblingMech, move C2\u00e2\u2020\u2019C1, repair"
+      ],
+      "label": "solve",
+      "score": 148196.42857142858,
+      "timestamp": "2026-06-30T09:20:37.866746",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D2\u00e2\u2020\u2019C1"
+      ],
+      "label": "solve",
+      "score": 124021.42857142858,
+      "timestamp": "2026-06-30T09:22:26.519177",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move C1\u00e2\u2020\u2019A2, repair",
+        "PierceMech, move B2\u00e2\u2020\u2019E1, fire AP Cannon at E2",
+        "ExchangeMech, fire Force Swap at F4 and C2"
+      ],
+      "label": "solve",
+      "score": 145730.59523809538,
+      "timestamp": "2026-06-30T09:24:17.687603",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at C2",
+        "BomblingMech, move C1\u00e2\u2020\u2019D1, repair"
+      ],
+      "label": "solve",
+      "score": -15592.739883377437,
+      "timestamp": "2026-06-30T09:28:13.529069",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move B2\u00e2\u2020\u2019B1, fire AP Cannon at C1"
+      ],
+      "label": "solve",
+      "score": -26501.9065500441,
+      "timestamp": "2026-06-30T09:34:34.031743",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at C5",
+        "ExchangeMech, move B7\u00e2\u2020\u2019A6, fire Force Swap at B6 and G2",
+        "BomblingMech, move G2\u00e2\u2020\u2019D2"
+      ],
+      "label": "solve",
+      "score": 103350.0,
+      "timestamp": "2026-06-30T09:57:34.187806",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D2\u00e2\u2020\u2019F1, fire Bomb Dispenser at F5",
+        "PierceMech, fire AP Cannon at D6",
+        "ExchangeMech, fire Force Swap at B6 and G2"
+      ],
+      "label": "solve",
+      "score": 111309.88095238093,
+      "timestamp": "2026-06-30T10:00:07.128201",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at D6",
+        "ExchangeMech, fire Force Swap at B6 and G2",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 111309.88095238093,
+      "timestamp": "2026-06-30T10:00:52.849782",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move C3\u00e2\u2020\u2019C2, fire AP Cannon at D2",
+        "BomblingMech, move F1\u00e2\u2020\u2019E3, fire Bomb Dispenser at A3",
+        "ExchangeMech, move A6\u00e2\u2020\u2019A4, fire Force Swap at A3 and E6"
+      ],
+      "label": "solve",
+      "score": 125349.28571428571,
+      "timestamp": "2026-06-30T10:03:08.009067",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "ExchangeMech, move A6\u00e2\u2020\u2019A4, fire Force Swap at A3 and E6",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 124149.28571428571,
+      "timestamp": "2026-06-30T10:04:17.519729",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "ExchangeMech, move A4\u00e2\u2020\u2019B2, fire Force Swap at E3 and G2",
+        "BomblingMech, move G2\u00e2\u2020\u2019H4, fire Bomb Dispenser at C4",
+        "PierceMech, move C2\u00e2\u2020\u2019C3, fire AP Cannon at C4"
+      ],
+      "label": "solve",
+      "score": 114639.46428571429,
+      "timestamp": "2026-06-30T10:06:27.670771",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move F3\u00e2\u2020\u2019G1, fire Force Swap at G2 and C2",
+        "PierceMech, fire AP Cannon at F2"
+      ],
+      "label": "solve",
+      "score": 119423.57142857143,
+      "timestamp": "2026-06-30T10:07:03.961662",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at C4",
+        "BomblingMech, move E5\u00e2\u2020\u2019F3, fire Bomb Dispenser at F5",
+        "ExchangeMech, fire Force Swap at F5 and E2",
+        "Terraformer, fire Terraformer at E4"
+      ],
+      "label": "solve",
+      "score": 148171.42857142858,
+      "timestamp": "2026-06-30T10:27:54.320834",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "Terraformer, fire Terraformer at E2",
+        "PierceMech, fire AP Cannon at C4",
+        "BomblingMech, move E5\u00e2\u2020\u2019F3",
+        "ExchangeMech, move F6\u00e2\u2020\u2019D5, fire Force Swap at D4 and F3"
+      ],
+      "label": "solve",
+      "score": 141021.42857142858,
+      "timestamp": "2026-06-30T10:28:34.250774",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019C7, fire AP Cannon at C6",
+        "ExchangeMech, move D5\u00e2\u2020\u2019C4, fire Force Swap at D4 and E2",
+        "BomblingMech, move E2\u00e2\u2020\u2019F3",
+        "Terraformer, fire Terraformer at E4"
+      ],
+      "label": "solve",
+      "score": 156868.0952380954,
+      "timestamp": "2026-06-30T10:32:53.094400",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019C7, fire AP Cannon at C6",
+        "BomblingMech, move D4\u00e2\u2020\u2019F3",
+        "ExchangeMech, move D5\u00e2\u2020\u2019D2, fire Force Swap at E2 and F3",
+        "Terraformer, fire Terraformer at E4"
+      ],
+      "label": "solve",
+      "score": 151923.9285714287,
+      "timestamp": "2026-06-30T10:33:35.853001",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "Terraformer, fire Terraformer at F3",
+        "ExchangeMech, move D2\u00e2\u2020\u2019D4, fire Force Swap at E4 and C7",
+        "BomblingMech, move E2\u00e2\u2020\u2019C3, fire Bomb Dispenser at C6",
+        "PierceMech, move E4\u00e2\u2020\u2019C4, fire AP Cannon at C5"
+      ],
+      "label": "solve",
+      "score": 157661.42857142858,
+      "timestamp": "2026-06-30T10:35:41.863854",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move E4\u00e2\u2020\u2019F3",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 162038.92857142858,
+      "timestamp": "2026-06-30T10:37:01.589762",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move D4\u00e2\u2020\u2019C6, fire Force Swap at C7 and C3",
+        "Terraformer, fire Terraformer at D3",
+        "PierceMech, move F3\u00e2\u2020\u2019E4, repair"
+      ],
+      "label": "solve",
+      "score": 167451.42857142858,
+      "timestamp": "2026-06-30T10:38:28.350695",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, move G6\u00e2\u2020\u2019F7",
+        "ExchangeMech, move D5\u00e2\u2020\u2019E5, fire Force Swap at F5 and C4",
+        "PierceMech, move C4\u00e2\u2020\u2019D1, fire AP Cannon at C1"
+      ],
+      "label": "solve",
+      "score": 122853.57142857142,
+      "timestamp": "2026-06-30T10:46:13.079942",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ExchangeMech, move E5\u00e2\u2020\u2019F4, fire Force Swap at E4 and D1",
+        "BomblingMech, fire Bomb Dispenser at F5",
+        "PierceMech, move E4\u00e2\u2020\u2019E5, fire AP Cannon at F5"
+      ],
+      "label": "solve",
+      "score": 130623.57142857158,
+      "timestamp": "2026-06-30T10:48:36.682837",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move E4\u00e2\u2020\u2019E5, fire AP Cannon at F5",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 130623.57142857158,
+      "timestamp": "2026-06-30T10:49:53.552243",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move E5\u00e2\u2020\u2019C3, fire AP Cannon at D3",
+        "BomblingMech, fire Bomb Dispenser at F5",
+        "ExchangeMech, move F4\u00e2\u2020\u2019E5, fire Force Swap at F5 and B3"
+      ],
+      "label": "solve",
+      "score": 132928.92857142855,
+      "timestamp": "2026-06-30T10:51:48.480335",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "ExchangeMech, move F4\u00e2\u2020\u2019E5, fire Force Swap at F5 and B3",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 132928.92857142855,
+      "timestamp": "2026-06-30T10:53:05.284106",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech",
+        "ExchangeMech, fire Force Swap at E4 and C3",
+        "PierceMech, move E4\u00e2\u2020\u2019C6, fire AP Cannon at C5"
+      ],
+      "label": "solve",
+      "score": 129084.10714285716,
+      "timestamp": "2026-06-30T10:54:51.861523",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, move E4\u00e2\u2020\u2019H3, fire AP Cannon at G3"
+      ],
+      "label": "solve",
+      "score": 124650.35714285716,
+      "timestamp": "2026-06-30T10:56:08.130573",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Razor Bay T4: post-action audit found B4 targeted after web-status desync recovery; all mechs spent and Reset Turn did not reset, so accepting forced building hit to finish mission from known board.",
+      "timestamp": "2026-06-30T10:59:19.488519",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "Trapped_Building, fire Area Blast at E2",
+        "Trapped_Building",
+        "PierceMech, move D5\u00e2\u2020\u2019D3",
+        "BomblingMech, move G5\u00e2\u2020\u2019F3, fire Bomb Dispenser at C3",
+        "ExchangeMech, fire Force Swap at E7 and C3"
+      ],
+      "label": "solve",
+      "score": 173703.57142857142,
+      "timestamp": "2026-06-30T11:09:06.673722",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "Trapped_Building",
+        "PierceMech, move D5\u00e2\u2020\u2019D3",
+        "BomblingMech, move G5\u00e2\u2020\u2019F3, fire Bomb Dispenser at C3",
+        "ExchangeMech, fire Force Swap at E7 and C3"
+      ],
+      "label": "solve",
+      "score": 172803.57142857142,
+      "timestamp": "2026-06-30T11:10:20.131770",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ExchangeMech, fire Force Swap at E7 and C3",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 172803.57142857142,
+      "timestamp": "2026-06-30T11:12:30.670369",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "Trapped_Building",
+        "PierceMech, fire AP Cannon at E3",
+        "BomblingMech, move G3\u00e2\u2020\u2019F3, repair",
+        "ExchangeMech"
+      ],
+      "label": "solve",
+      "score": 167578.5714285715,
+      "timestamp": "2026-06-30T11:15:11.341735",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "Trapped_Building",
+        "PierceMech, repair",
+        "BomblingMech, repair",
+        "ExchangeMech, move E6\u00e2\u2020\u2019C5, fire Force Swap at C4 and D3"
+      ],
+      "label": "solve",
+      "score": 161041.07142857142,
+      "timestamp": "2026-06-30T11:19:00.729635",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "Trapped_Building",
+        "BomblingMech, move F3\u00e2\u2020\u2019G2, fire Bomb Dispenser at C2",
+        "ExchangeMech, move C5\u00e2\u2020\u2019B5, fire Force Swap at B4 and C2",
+        "PierceMech, move C4\u00e2\u2020\u2019B2, fire AP Cannon at C2"
+      ],
+      "label": "solve",
+      "score": 156678.57142857142,
+      "timestamp": "2026-06-30T11:23:16.522303",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 156203.57142857142,
+      "timestamp": "2026-06-30T11:24:13.028476",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "R.S.T. mission pick: visible Rust District preview chosen over Disintegration mites and Restricted wind; prioritizing normal spawn markers for Hold the Door.",
+      "timestamp": "2026-06-30T11:28:39.443631",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, move F5\u00e2\u2020\u2019C4, fire AP Cannon at C5",
+        "BomblingMech, move D6\u00e2\u2020\u2019D8, fire Bomb Dispenser at D1",
+        "ExchangeMech, move F7\u00e2\u2020\u2019E8, fire Force Swap at D8 and D1"
+      ],
+      "label": "solve",
+      "score": 135225.0,
+      "timestamp": "2026-06-30T11:33:15.297120",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "DeployUnit_Bomby, move D1\u00e2\u2020\u2019C3",
+        "ExchangeMech, move F7\u00e2\u2020\u2019E8, fire Force Swap at D8 and C3"
+      ],
+      "label": "solve",
+      "score": 125375.0,
+      "timestamp": "2026-06-30T11:34:14.563249",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move C3\u00e2\u2020\u2019E3, repair",
+        "ExchangeMech, move E8\u00e2\u2020\u2019F7, fire Force Swap at F6 and C4",
+        "PierceMech, move F6\u00e2\u2020\u2019E4, fire AP Cannon at D4"
+      ],
+      "label": "solve",
+      "score": 139059.1666666668,
+      "timestamp": "2026-06-30T11:36:05.291484",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move F6\u00e2\u2020\u2019E4, fire AP Cannon at D4"
+      ],
+      "label": "solve",
+      "score": 139059.1666666668,
+      "timestamp": "2026-06-30T11:37:02.647560",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move E4\u00e2\u2020\u2019G5",
+        "BomblingMech, move E3\u00e2\u2020\u2019F2, repair",
+        "ExchangeMech, move F7\u00e2\u2020\u2019F5, fire Force Swap at G5 and C6"
+      ],
+      "label": "solve",
+      "score": 142082.5,
+      "timestamp": "2026-06-30T11:38:27.719835",
+      "turn": 3
+    },
+    {
+      "label": "note",
+      "message": "Rust District T3 pre-End-Turn: simple audit saw B5 targeted by Hornet at C5, but threat_audit OK because C5 is lethal lightning and kills attacker before attacks; proceeding.",
+      "timestamp": "2026-06-30T11:41:23.538269",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, move F2\u00e2\u2020\u2019E4, repair",
+        "PierceMech, move C6\u00e2\u2020\u2019D2, fire AP Cannon at E2",
+        "ExchangeMech, move F5\u00e2\u2020\u2019E5, fire Force Swap at E4 and C5"
+      ],
+      "label": "solve",
+      "score": 138805.0,
+      "timestamp": "2026-06-30T11:42:21.367543",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "ExchangeMech, move E6\u00e2\u2020\u2019D4, fire Force Swap at C4 and B6",
+        "BomblingMech, move C4\u00e2\u2020\u2019D2",
+        "PierceMech, move C5\u00e2\u2020\u2019D3, fire AP Cannon at D2"
+      ],
+      "label": "solve",
+      "score": 108600.0,
+      "timestamp": "2026-06-30T11:47:42.217129",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019B5, fire AP Cannon at B6",
+        "BomblingMech, move B7\u00e2\u2020\u2019D8, fire Bomb Dispenser at D3",
+        "ExchangeMech, move E6\u00e2\u2020\u2019E3, fire Force Swap at D3 and E2"
+      ],
+      "label": "solve",
+      "score": 107325.0,
+      "timestamp": "2026-06-30T11:48:11.788106",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ExchangeMech, move E6\u00e2\u2020\u2019D4, fire Force Swap at C4 and B6",
+        "BomblingMech, move C4\u00e2\u2020\u2019D2",
+        "PierceMech, move C5\u00e2\u2020\u2019D3, fire AP Cannon at D2"
+      ],
+      "label": "solve",
+      "score": 108600.0,
+      "timestamp": "2026-06-30T11:48:41.712393",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move D3\u00e2\u2020\u2019C2, fire AP Cannon at D2",
+        "BomblingMech, fire Bomb Dispenser at D3",
+        "ExchangeMech, fire Force Swap at D3 and B6"
+      ],
+      "label": "solve",
+      "score": 131554.16666666663,
+      "timestamp": "2026-06-30T11:50:58.280235",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, move D1\u00e2\u2020\u2019C2, repair",
+        "PierceMech, move D3\u00e2\u2020\u2019D5, fire AP Cannon at D4",
+        "ExchangeMech, move D3\u00e2\u2020\u2019E5, fire Force Swap at D5 and E7"
+      ],
+      "label": "solve",
+      "score": 129202.49999999996,
+      "timestamp": "2026-06-30T11:51:15.725102",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move D3\u00e2\u2020\u2019C2, fire AP Cannon at D2",
+        "BomblingMech, fire Bomb Dispenser at D3",
+        "ExchangeMech, fire Force Swap at D3 and B6"
+      ],
+      "label": "solve",
+      "score": 131554.16666666663,
+      "timestamp": "2026-06-30T11:51:38.946455",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "ExchangeMech, fire Force Swap at D3 and B6",
+        "DeployUnit_Bomby"
+      ],
+      "label": "solve",
+      "score": 131554.16666666663,
+      "timestamp": "2026-06-30T11:53:01.231960",
+      "turn": 2
+    },
+    {
+      "label": "note",
+      "message": "HQ T2 pre-End-Turn: simple audit saw D7 targeted by Hornet at E7; formal threat_audit OK because FireflyBoss projectile hits the Hornet before it fires. Reset Turn UI unavailable after bridge actions; proceeding.",
+      "timestamp": "2026-06-30T11:56:10.625099",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "ExchangeMech, move D4\u00e2\u2020\u2019C4, fire Force Swap at C3 and D1",
+        "BomblingMech, move C3\u00e2\u2020\u2019E3, repair",
+        "PierceMech, move C2\u00e2\u2020\u2019E2, fire AP Cannon at E3"
+      ],
+      "label": "solve",
+      "score": 126737.5,
+      "timestamp": "2026-06-30T11:57:06.953067",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, repair",
+        "BomblingMech, move D1\u00e2\u2020\u2019E1, repair",
+        "ExchangeMech, move D4\u00e2\u2020\u2019D3, fire Force Swap at C3 and E1"
+      ],
+      "label": "solve",
+      "score": 126715.0,
+      "timestamp": "2026-06-30T11:57:53.085021",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, move C3\u00e2\u2020\u2019C5",
+        "PierceMech, move C2\u00e2\u2020\u2019C3, fire AP Cannon at D3",
+        "ExchangeMech, move E3\u00e2\u2020\u2019D5, fire Force Swap at C5 and F7"
+      ],
+      "label": "solve",
+      "score": 123705.0,
+      "timestamp": "2026-06-30T12:01:20.806611",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, move C3\u00e2\u2020\u2019C5",
+        "PierceMech, move C2\u00e2\u2020\u2019C3, fire AP Cannon at D3",
+        "ExchangeMech, move E3\u00e2\u2020\u2019D5, fire Force Swap at C5 and F7"
+      ],
+      "label": "solve",
+      "score": 123705.0,
+      "timestamp": "2026-06-30T12:03:34.399846",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, move C3\u00e2\u2020\u2019C5",
+        "PierceMech, move C2\u00e2\u2020\u2019C3, fire AP Cannon at D3",
+        "ExchangeMech, move E3\u00e2\u2020\u2019D5, fire Force Swap at C5 and F7"
+      ],
+      "label": "solve",
+      "score": 123705.0,
+      "timestamp": "2026-06-30T12:06:41.809770",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "HQ T4 pre-End-Turn: simple audit saw B3 targeted by Hornet at B2; formal threat_audit OK because FireflyBoss projectile hits the Hornet before it fires. Leader survival objective loss accepted for Hold the Door run with tower/grid/pilots protected.",
+      "timestamp": "2026-06-30T12:08:26.491300",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Archive Island 2 mission pick: Remembrance Point selected for Hold the Door because preview shows normal spawn markers and enough spawn-blocking density; high threat accepted because only roughly four more blocks are needed.",
+      "timestamp": "2026-06-30T12:17:51.258652",
+      "turn": 0
+    },
+    {
+      "actions": [
+        "BomblingMech, move F6\u00e2\u2020\u2019F5",
+        "ExchangeMech, move B5\u00e2\u2020\u2019B2, fire Force Swap at C2 and E5",
+        "PierceMech, fire AP Cannon at D2"
+      ],
+      "label": "solve",
+      "score": 131907.71427551337,
+      "timestamp": "2026-06-30T12:22:01.975265",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move F6\u00e2\u2020\u2019F5",
+        "ExchangeMech, move B5\u00e2\u2020\u2019B2, fire Force Swap at C2 and E5",
+        "PierceMech, fire AP Cannon at D2"
+      ],
+      "label": "solve",
+      "score": 131907.71427551337,
+      "timestamp": "2026-06-30T12:24:53.656563",
+      "turn": 1
+    },
+    {
+      "label": "note",
+      "message": "Archive Remembrance Point T1 dirty consent 48e8d1df71dbc0b2 executed: all actions verified; post-action threat audit still has G4 threatened by Mosquito, matching the reviewed grid/building HP loss 7->6. D6 retargeted nonbuilding. Proceeding under dirty-plan consent.",
+      "timestamp": "2026-06-30T12:25:26.671792",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move F5\u00e2\u2020\u2019G5",
+        "ExchangeMech, move B2\u00e2\u2020\u2019C1, fire Force Swap at C2 and E7",
+        "PierceMech, move E7\u00e2\u2020\u2019F7, fire AP Cannon at F6"
+      ],
+      "label": "solve",
+      "score": 131669.85714304456,
+      "timestamp": "2026-06-30T12:28:04.328574",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, move F5\u00e2\u2020\u2019G5",
+        "ExchangeMech, move B2\u00e2\u2020\u2019C1, fire Force Swap at C2 and E7",
+        "PierceMech, move E7\u00e2\u2020\u2019F7, fire AP Cannon at F6"
+      ],
+      "label": "solve",
+      "score": 131669.85714304456,
+      "timestamp": "2026-06-30T12:30:14.694903",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at F6"
+      ],
+      "label": "solve",
+      "score": 128603.19047637789,
+      "timestamp": "2026-06-30T12:30:45.326469",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at F6"
+      ],
+      "label": "solve",
+      "score": 128603.19047637789,
+      "timestamp": "2026-06-30T12:31:00.813774",
+      "turn": 2
+    },
+    {
+      "label": "note",
+      "message": "Archive Remembrance Point T2 dirty consent a78acee4d4ec8363 completed after fresh post-desync read/solve: Pierce shot verified; D6 remains threatened by Scarab1, matching reviewed grid/building HP loss 6->5. Proceeding under dirty-plan consent.",
+      "timestamp": "2026-06-30T12:31:15.663644",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, move G5\u00e2\u2020\u2019F5",
+        "PierceMech, move F7\u00e2\u2020\u2019F6, fire AP Cannon at F5",
+        "ExchangeMech, fire Force Swap at B1 and D2"
+      ],
+      "label": "solve",
+      "score": 153663.78572486129,
+      "timestamp": "2026-06-30T12:33:54.410512",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, move G5\u00e2\u2020\u2019F5",
+        "PierceMech, move F7\u00e2\u2020\u2019F6, fire AP Cannon at F5",
+        "ExchangeMech, fire Force Swap at B1 and D2"
+      ],
+      "label": "solve",
+      "score": 153663.78572486129,
+      "timestamp": "2026-06-30T12:35:29.209617",
+      "turn": 3
+    },
+    {
+      "label": "note",
+      "message": "Archive Remembrance Point T3 dirty consent 1236afeceeb8cc35 executed: all actions verified; F8 and D6 retargeted nonbuilding, C4 remains threatened by Mosquito1, matching reviewed grid/building HP loss 5->4. Objective battery preserved.",
+      "timestamp": "2026-06-30T12:35:51.992815",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move F6\u00e2\u2020\u2019H5, fire AP Cannon at G5",
+        "BomblingMech",
+        "ExchangeMech, fire Force Swap at D1 and B3"
+      ],
+      "label": "solve",
+      "score": 115223.07144340448,
+      "timestamp": "2026-06-30T12:38:30.938963",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, move F6\u00e2\u2020\u2019H5, fire AP Cannon at G5",
+        "BomblingMech",
+        "ExchangeMech, fire Force Swap at D1 and B3"
+      ],
+      "label": "solve",
+      "score": 115223.07144340448,
+      "timestamp": "2026-06-30T12:40:00.398184",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech",
+        "ExchangeMech, fire Force Swap at D1 and B3"
+      ],
+      "label": "solve",
+      "score": 114061.82144340448,
+      "timestamp": "2026-06-30T12:40:34.280066",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech",
+        "ExchangeMech, fire Force Swap at D1 and B3"
+      ],
+      "label": "solve",
+      "score": 114061.82144340448,
+      "timestamp": "2026-06-30T12:40:56.450677",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Archive Remembrance Point T4 final pre-End-Turn: research gate drained. Formal threat audit WARN has G6 covered by attacker_will_die_to_fire; remaining unresolved attacks all target same 1-HP D6 building, matching reviewed dirty consent 4011e954f2722551 / 7bdf48bc0172684e ordinary building loss and grid 5->4. Objective battery preserved; proceeding.",
+      "timestamp": "2026-06-30T12:50:02.356356",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Archive Remembrance Point result: Region Secured. Emergency Batteries protected, fire objective missed at 7/8, grid remains 5/7, no additional spawn blocks observed. Continuing toward Hold the Door target.",
+      "timestamp": "2026-06-30T12:52:20.419233",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "ExchangeMech, move C7\u00e2\u2020\u2019E6, fire Force Swap at E5 and B3",
+        "BomblingMech, move B3\u00e2\u2020\u2019C3",
+        "PierceMech, move C5\u00e2\u2020\u2019D5, fire AP Cannon at E5"
+      ],
+      "label": "solve",
+      "score": 161957.14285714284,
+      "timestamp": "2026-06-30T12:56:32.787988",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ExchangeMech, move C7\u00e2\u2020\u2019E6, fire Force Swap at E5 and B3",
+        "BomblingMech, move B3\u00e2\u2020\u2019B4",
+        "PierceMech, move C5\u00e2\u2020\u2019D5, fire AP Cannon at E5"
+      ],
+      "label": "solve",
+      "score": 153107.14285714284,
+      "timestamp": "2026-06-30T12:56:51.273188",
+      "turn": 1
+    },
+    {
+      "label": "note",
+      "message": "Archive Archivist Hall T1 choice: taking Hold-the-Door rank-0 line over clean rank 144 because rank 0 blocks 1 spawn, destroys the Dam, preserves grid/buildings, and keeps mech damage at 1/4 under the mission objective.",
+      "timestamp": "2026-06-30T12:57:04.442825",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ExchangeMech, move C7\u00e2\u2020\u2019E6, fire Force Swap at E5 and B3",
+        "BomblingMech, move B3\u00e2\u2020\u2019C3",
+        "PierceMech, move C5\u00e2\u2020\u2019D5, fire AP Cannon at E5"
+      ],
+      "label": "solve",
+      "score": 161957.14285714284,
+      "timestamp": "2026-06-30T12:58:24.972329",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E6\u00e2\u2020\u2019E7, fire Force Swap at F7 and D5",
+        "PierceMech, move F7\u00e2\u2020\u2019E6, fire AP Cannon at E5"
+      ],
+      "label": "solve",
+      "score": 153344.07160472882,
+      "timestamp": "2026-06-30T13:01:32.949227",
+      "turn": 2
+    },
+    {
+      "label": "note",
+      "message": "Archive Archivist Hall T2 dirty frontier reviewed: no clean candidate among 10000. Best line consent 80583cfcca846eb3 predicts grid 5->3, building HP 10->8, no building destroyed, no objective/pod loss, mechs alive, mech damage remains 1/4, destroys Dam already done, and blocks 1 spawn. Standing dirty consent applies if live re-solve matches exact token.",
+      "timestamp": "2026-06-30T13:02:05.000566",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E6\u00e2\u2020\u2019E7, fire Force Swap at F7 and D5",
+        "PierceMech, move F7\u00e2\u2020\u2019E6, fire AP Cannon at E5"
+      ],
+      "label": "solve",
+      "score": 153344.07160472882,
+      "timestamp": "2026-06-30T13:04:39.152169",
+      "turn": 2
+    },
+    {
+      "label": "note",
+      "message": "Archive Archivist Hall T2 final pre-End-Turn: exact dirty line 80583cfcca846eb3 executed. Fresh read shows all mechs DONE, only D3 ordinary building threatened by D2 Totem; formal audit WARN matches/is less severe than reviewed grid 5->3, building HP 10->8 consent. No objective/pod/mech survival issue; proceeding.",
+      "timestamp": "2026-06-30T13:05:36.881213",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E7\u00e2\u2020\u2019F6, fire Force Swap at E6 and D2",
+        "PierceMech, move D2\u00e2\u2020\u2019G2, fire AP Cannon at F2"
+      ],
+      "label": "solve",
+      "score": 135038.92857142858,
+      "timestamp": "2026-06-30T13:07:43.755833",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E7\u00e2\u2020\u2019F6, fire Force Swap at E6 and D2",
+        "PierceMech, move D2\u00e2\u2020\u2019G2, fire AP Cannon at F2"
+      ],
+      "label": "solve",
+      "score": 135038.92857142858,
+      "timestamp": "2026-06-30T13:09:09.667652",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move D2\u00e2\u2020\u2019G2, fire AP Cannon at F2"
+      ],
+      "label": "solve",
+      "score": 127838.92857142858,
+      "timestamp": "2026-06-30T13:09:39.031968",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move D2\u00e2\u2020\u2019G2, fire AP Cannon at F2"
+      ],
+      "label": "solve",
+      "score": 127838.92857142858,
+      "timestamp": "2026-06-30T13:09:51.630463",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at F2",
+        "ExchangeMech, move F6\u00e2\u2020\u2019E7, fire Force Swap at D7 and C3",
+        "BomblingMech, repair"
+      ],
+      "label": "solve",
+      "score": 99421.42857142858,
+      "timestamp": "2026-06-30T13:10:31.543483",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, fire AP Cannon at F2",
+        "ExchangeMech, move F6\u00e2\u2020\u2019E7, fire Force Swap at D7 and C3",
+        "BomblingMech, repair"
+      ],
+      "label": "solve",
+      "score": 99421.42857142858,
+      "timestamp": "2026-06-30T13:10:42.660809",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, repair"
+      ],
+      "label": "solve",
+      "score": 87471.42857142858,
+      "timestamp": "2026-06-30T13:11:05.652738",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, repair"
+      ],
+      "label": "solve",
+      "score": 87471.42857142858,
+      "timestamp": "2026-06-30T13:11:15.733078",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Archive Archivist Hall result: Region Secured, both objectives completed, grid 3/7. Solver accounting added 3 spawn blocks in this mission, but achievements sync still shows Hold the Door incomplete and save tracker Squad_Bomber_2=0; continuing to seek remaining blocks before end of Island 2.",
+      "timestamp": "2026-06-30T13:13:19.564107",
+      "turn": 4
+    },
+    {
+      "label": "note",
+      "message": "Archive final side mission choice: selecting Exhibits Archive / air-support preview. It shows Defensive Shields Active, three normal spawn markers, and bonus Take less than 3 Grid Damage. Hold the Door remains incomplete after Archivist Hall, so this mission should supply the remaining block(s).",
+      "timestamp": "2026-06-30T13:15:29.313597",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "BomblingMech, move D6\u00e2\u2020\u2019C4, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D4, fire AP Cannon at C4",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 92954.28571428571,
+      "timestamp": "2026-06-30T13:17:50.605193",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D6\u00e2\u2020\u2019D4, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 94317.714413711,
+      "timestamp": "2026-06-30T13:18:08.938278",
+      "turn": 1
+    },
+    {
+      "label": "note",
+      "message": "Archive Exhibits Archive T1 dirty achievement line reviewed: candidate rank 0 / consent 47ccfa3ea5aa8adf blocks 1 spawn, predicts grid 3->2, building HP 10->9, no building destroyed, no objective/pod loss, mechs alive, mech HP 8->7. Taking it because Hold the Door remains incomplete and this may be the threshold block.",
+      "timestamp": "2026-06-30T13:18:33.373123",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D6\u00e2\u2020\u2019D4, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 94317.714413711,
+      "timestamp": "2026-06-30T13:18:50.057669",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D4\u00e2\u2020\u2019C4, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D4, fire AP Cannon at C4",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 92954.28571428571,
+      "timestamp": "2026-06-30T13:20:37.130459",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 94317.714413711,
+      "timestamp": "2026-06-30T13:20:52.643122",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, fire Bomb Dispenser at H4",
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019H5, fire Force Swap at H4 and F2"
+      ],
+      "label": "solve",
+      "score": 94317.714413711,
+      "timestamp": "2026-06-30T13:21:28.794518",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019C2, fire AP Cannon at D2",
+        "DeployUnit_Bomby, move H4\u00e2\u2020\u2019G5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019G6, fire Force Swap at G5 and B4"
+      ],
+      "label": "solve",
+      "score": 79764.28571428571,
+      "timestamp": "2026-06-30T13:24:23.766149",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "DeployUnit_Bomby, move H4\u00e2\u2020\u2019G5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019G6, fire Force Swap at G5 and F2"
+      ],
+      "label": "solve",
+      "score": 94417.714413711,
+      "timestamp": "2026-06-30T13:24:51.152621",
+      "turn": 1
+    },
+    {
+      "label": "note",
+      "message": "Archive Exhibits Archive T1 recovery dirty line reviewed: candidate rank 0 / consent 61ab5734e89a2792 after Bombling deployed Walking Bomb. It blocks 1 spawn with Walking Bomb movement, predicts grid 3->2, building HP 10->9, no building destroyed, no objective/pod loss, mechs alive, mech HP 8->7.",
+      "timestamp": "2026-06-30T13:25:10.553182",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "DeployUnit_Bomby, move H4\u00e2\u2020\u2019G5",
+        "ExchangeMech, move F6\u00e2\u2020\u2019G6, fire Force Swap at G5 and F2"
+      ],
+      "label": "solve",
+      "score": 94417.714413711,
+      "timestamp": "2026-06-30T13:25:24.478552",
+      "turn": 1
+    },
+    {
+      "label": "note",
+      "message": "Archive Exhibits Archive T1 final pre-End-Turn: exact dirty recovery line 61ab5734e89a2792 executed. Fresh read shows all actions DONE, Walking Bomb at F2 after swap, only ordinary B5 building threatened by B4 Totem. Formal audit WARN matches reviewed grid 3->2 / building HP 10->9 / no building destroyed consent; proceeding to bank 1 spawn block.",
+      "timestamp": "2026-06-30T13:26:04.022539",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "BomblingMech, move D3\u00e2\u2020\u2019C1, fire Bomb Dispenser at C4",
+        "PierceMech, move D6\u00e2\u2020\u2019D2, fire AP Cannon at E2",
+        "ExchangeMech, move G6\u00e2\u2020\u2019G4, fire Force Swap at F4 and C4"
+      ],
+      "label": "solve",
+      "score": 66778.57142857143,
+      "timestamp": "2026-06-30T13:28:23.243499",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "BomblingMech, move D3\u00e2\u2020\u2019C1, fire Bomb Dispenser at C4",
+        "PierceMech, move D6\u00e2\u2020\u2019D2, fire AP Cannon at E2",
+        "ExchangeMech, move G6\u00e2\u2020\u2019G4, fire Force Swap at F4 and C4"
+      ],
+      "label": "solve",
+      "score": 66778.57142857143,
+      "timestamp": "2026-06-30T13:29:48.586522",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move D6\u00e2\u2020\u2019D2, fire AP Cannon at E2",
+        "DeployUnit_Bomby, move C4\u00e2\u2020\u2019D5",
+        "ExchangeMech, move G6\u00e2\u2020\u2019D6, fire Force Swap at D5 and F4"
+      ],
+      "label": "solve",
+      "score": 69511.90476190475,
+      "timestamp": "2026-06-30T13:32:21.948857",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move D6\u00e2\u2020\u2019D2, fire AP Cannon at E2",
+        "DeployUnit_Bomby, move C4\u00e2\u2020\u2019D5",
+        "ExchangeMech, move G6\u00e2\u2020\u2019D6, fire Force Swap at D5 and F4"
+      ],
+      "label": "solve",
+      "score": 69511.90476190475,
+      "timestamp": "2026-06-30T13:33:38.842316",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move D2\u00e2\u2020\u2019B2, fire AP Cannon at C2",
+        "BomblingMech, repair",
+        "ExchangeMech, move D6\u00e2\u2020\u2019D4, fire Force Swap at E4 and B2"
+      ],
+      "label": "solve",
+      "score": 87948.57142857143,
+      "timestamp": "2026-06-30T13:35:45.270185",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move D2\u00e2\u2020\u2019B2, fire AP Cannon at C2",
+        "BomblingMech, repair",
+        "ExchangeMech, move D6\u00e2\u2020\u2019D4, fire Force Swap at E4 and B2"
+      ],
+      "label": "solve",
+      "score": 87948.57142857143,
+      "timestamp": "2026-06-30T13:37:05.629317",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, repair",
+        "BomblingMech, move C1\u00e2\u2020\u2019C3, repair",
+        "ExchangeMech, move D4\u00e2\u2020\u2019B3, fire Force Swap at C3 and D3"
+      ],
+      "label": "solve",
+      "score": 77173.57142857143,
+      "timestamp": "2026-06-30T13:38:06.805693",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PierceMech, repair",
+        "BomblingMech, move C1\u00e2\u2020\u2019C3, repair",
+        "ExchangeMech, move D4\u00e2\u2020\u2019B3, fire Force Swap at C3 and D3"
+      ],
+      "label": "solve",
+      "score": 77173.57142857143,
+      "timestamp": "2026-06-30T13:38:18.912062",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "ArchiveArtillery, move D6\u00e2\u2020\u2019D7, fire Old Earth Artillery at D3",
+        "PierceMech, move E6\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move D4\u00e2\u2020\u2019E5, fire Force Swap at F5 and G2",
+        "BomblingMech, move G2\u00e2\u2020\u2019E1"
+      ],
+      "label": "solve",
+      "score": 37771.42857142858,
+      "timestamp": "2026-06-30T13:51:27.434887",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "ArchiveArtillery, move D6\u00e2\u2020\u2019D7, fire Old Earth Artillery at D3",
+        "PierceMech, move E6\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move D4\u00e2\u2020\u2019E5, fire Force Swap at F5 and G2",
+        "BomblingMech, move G2\u00e2\u2020\u2019E1"
+      ],
+      "label": "solve",
+      "score": 37771.42857142858,
+      "timestamp": "2026-06-30T13:53:09.613406",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PierceMech, move D6\u00e2\u2020\u2019C5, fire AP Cannon at C6",
+        "ArchiveArtillery, move D7\u00e2\u2020\u2019E7, fire Old Earth Artillery at C7",
+        "BomblingMech, repair",
+        "ExchangeMech, fire Force Swap at F5 and G2"
+      ],
+      "label": "solve",
+      "score": 60858.0952380952,
+      "timestamp": "2026-06-30T13:55:42.862860",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move D6\u00e2\u2020\u2019C5, fire AP Cannon at C6",
+        "ArchiveArtillery, move D7\u00e2\u2020\u2019E7, fire Old Earth Artillery at C7",
+        "BomblingMech, repair",
+        "ExchangeMech, fire Force Swap at F5 and G2"
+      ],
+      "label": "solve",
+      "score": 60858.0952380952,
+      "timestamp": "2026-06-30T13:57:39.639160",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019F6, fire AP Cannon at F5",
+        "ArchiveArtillery, move E7\u00e2\u2020\u2019F7, fire Old Earth Artillery at F4",
+        "BomblingMech, repair",
+        "ExchangeMech, move E5\u00e2\u2020\u2019D4, fire Force Swap at D3 and E1"
+      ],
+      "label": "solve",
+      "score": 127356.42857142858,
+      "timestamp": "2026-06-30T14:00:15.680545",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "PierceMech, move C5\u00e2\u2020\u2019F6, fire AP Cannon at F5",
+        "ArchiveArtillery, move E7\u00e2\u2020\u2019F7, fire Old Earth Artillery at F4",
+        "BomblingMech, repair",
+        "ExchangeMech, move E5\u00e2\u2020\u2019D4, fire Force Swap at D3 and E1"
+      ],
+      "label": "solve",
+      "score": 127356.42857142858,
+      "timestamp": "2026-06-30T14:02:07.453636",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E5\u00e2\u2020\u2019D4, fire Force Swap at D3 and E1"
+      ],
+      "label": "solve",
+      "score": 124516.42857142858,
+      "timestamp": "2026-06-30T14:05:15.924853",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, repair",
+        "ExchangeMech, move E5\u00e2\u2020\u2019D4, fire Force Swap at D3 and E1"
+      ],
+      "label": "solve",
+      "score": 124516.42857142858,
+      "timestamp": "2026-06-30T14:06:23.513624",
+      "turn": 3
+    },
+    {
+      "actions": [
+        "BomblingMech, move D3\u00e2\u2020\u2019F4",
+        "PierceMech, move F6\u00e2\u2020\u2019D6, fire AP Cannon at D5",
+        "ExchangeMech, move D3\u00e2\u2020\u2019C5, fire Force Swap at B5 and F4",
+        "ArchiveArtillery, fire Old Earth Artillery at F5"
+      ],
+      "label": "solve",
+      "score": 114516.42857142858,
+      "timestamp": "2026-06-30T14:07:51.871117",
+      "turn": 4
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T17:08:51.250176",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T17:09:37.841279",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T17:10:27.786092",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T17:20:16.257602",
+      "turn": 1
+    },
+    {
+      "block": {
+        "actual_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 7,
+          "buildings_alive": 6,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 6,
+          "enemy_hp_total": 20,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 2,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 2,
+          "mech_hp": [
+            {
+              "hp": 4,
+              "max_hp": 6,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "hp": 4,
+              "max_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 13,
+          "mechs_acid": [
+            {
+              "pos": [
+                3,
+                2
+              ],
+              "type": "PunchMech",
+              "uid": 0
+            }
+          ],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [
+            {
+              "pos": [
+                3,
+                6
+              ],
+              "type": "IgniteMech",
+              "uid": 1
+            }
+          ],
+          "mission_id": "Mission_Power",
+          "mission_kill_limit": 6,
+          "mission_kill_target": 0,
+          "mission_kills_done": 1,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "objective_building_hp_total": 2,
+          "objective_building_targets": [
+            {
+              "pos": [
+                1,
+                5
+              ],
+              "target": [
+                1,
+                6
+              ],
+              "type": "Mosquito2",
+              "uid": 1248
+            }
+          ],
+          "objective_buildings_alive": 2,
+          "objective_buildings_targeted": 1,
+          "pods_present": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 1,
+          "spawn_points": 1,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 4,
+          "train_objective_value": null,
+          "turn": 2,
+          "victory_turns": 3
+        },
+        "blocking": true,
+        "created_at": "2026-08-21T17:21:52.634326",
+        "deltas": {
+          "building_hp_diff": 0,
+          "buildings_alive_diff": 0,
+          "destroy_objective_units_alive_diff": 0,
+          "emergent_enemy_pod_losses": [],
+          "enemies_alive_diff": 1,
+          "grid_power_diff": 0,
+          "mech_hp_diff": [
+            {
+              "actual_hp": 4,
+              "diff": 0,
+              "predicted_hp": 4,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "actual_hp": 4,
+              "diff": 0,
+              "predicted_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "actual_hp": 5,
+              "diff": 0,
+              "predicted_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_status_diff": [
+            {
+              "actual_count": 1,
+              "cleared": [],
+              "key": "mechs_acid",
+              "predicted_count": 1,
+              "status": "ACID",
+              "unexpected": []
+            },
+            {
+              "actual_count": 1,
+              "cleared": [],
+              "key": "mechs_webbed",
+              "next_turn_web_grapples": [],
+              "predicted_count": 0,
+              "status": "Web",
+              "unexpected": [
+                {
+                  "pos": [
+                    3,
+                    6
+                  ],
+                  "type": "IgniteMech",
+                  "uid": 1
+                }
+              ],
+              "unexplained_unexpected": [
+                {
+                  "pos": [
+                    3,
+                    6
+                  ],
+                  "type": "IgniteMech",
+                  "uid": 1
+                }
+              ]
+            }
+          ],
+          "next_turn_web_grapples": [],
+          "pods_present_diff": 0,
+          "pods_present_unexplained_diff": 0,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "protected_objective_units_webbed_diff": 0,
+          "unexpected_events": [
+            "IgniteMech gained unexpected Web status"
+          ]
+        },
+        "id": "20260630_084844_192_m13_t01_post_enemy",
+        "mission_index": 13,
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "predicted_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 7,
+          "buildings_alive": 6,
+          "buildings_destroyed_by_enemies": 1,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 5,
+          "enemies_killed_by_enemy_phase": 1,
+          "enemies_killed_by_player": 1,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 2,
+          "enemy_hp_total": 19,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 2,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 2,
+          "mech_hp": [
+            {
+              "hp": 4,
+              "max_hp": 6,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "hp": 4,
+              "max_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 13,
+          "mechs_acid": [
+            {
+              "pos": [
+                3,
+                2
+              ],
+              "type": "PunchMech",
+              "uid": 0
+            }
+          ],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_Power",
+          "mission_kill_limit": 6,
+          "mission_kill_target": 0,
+          "mission_kills_by_enemy_phase": 1,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done": 1,
+          "mission_kills_done_projected": 1,
+          "mission_kills_planned": 1,
+          "mission_kills_total_projected": 1,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mission_mountains_destroyed_projected": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "objective_building_hp_total": 2,
+          "objective_building_targets": [],
+          "objective_buildings_alive": 2,
+          "objective_buildings_targeted": 0,
+          "pods_collected": 0,
+          "pods_present": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 1,
+          "spawn_points": 0,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 4,
+          "train_objective_value": null,
+          "turn": 2,
+          "unit_deaths_by_enemy_phase": 1,
+          "unit_deaths_by_player": 1,
+          "unit_deaths_by_spawn_block": 0,
+          "unit_deaths_total_projected": 2,
+          "victory_turns": 3
+        },
+        "reason": null,
+        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260630_084844_192\\m13_turn_01_post_enemy.json",
+        "resolve_reason": "Matched Observatory control run was byte-restored to the sealed turn-1 baseline; the discarded outcome exposed an enemy-count and Spider web/status forecast gap, preserved in pair-004 control evidence, and is not being advanced.",
+        "resolved_at": "2026-08-21T17:23:34.401529",
+        "run_id": "20260630_084844_192",
+        "source": "record_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "triggers": [
+          {
+            "details": "Grid power at 2 (critical)",
+            "severity": "high",
+            "tier": 6,
+            "trigger": "grid_critical"
+          }
+        ],
+        "turn": 1
+      },
+      "label": "resolve_post_enemy_block",
+      "timestamp": "2026-08-21T17:23:34.401584",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T17:23:59.396540",
+      "turn": 1
+    },
+    {
+      "block": {
+        "actual_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 7,
+          "buildings_alive": 6,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 6,
+          "enemy_hp_total": 20,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 2,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 2,
+          "mech_hp": [
+            {
+              "hp": 4,
+              "max_hp": 6,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "hp": 4,
+              "max_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 13,
+          "mechs_acid": [
+            {
+              "pos": [
+                3,
+                2
+              ],
+              "type": "PunchMech",
+              "uid": 0
+            }
+          ],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [
+            {
+              "pos": [
+                3,
+                6
+              ],
+              "type": "IgniteMech",
+              "uid": 1
+            }
+          ],
+          "mission_id": "Mission_Power",
+          "mission_kill_limit": 6,
+          "mission_kill_target": 0,
+          "mission_kills_done": 1,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": true,
+          "objective_building_hp_total": 2,
+          "objective_building_targets": [
+            {
+              "pos": [
+                1,
+                5
+              ],
+              "target": [
+                1,
+                6
+              ],
+              "type": "Mosquito2",
+              "uid": 1248
+            }
+          ],
+          "objective_buildings_alive": 2,
+          "objective_buildings_targeted": 1,
+          "pods_present": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 1,
+          "spawn_points": 1,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 4,
+          "train_objective_value": null,
+          "turn": 2,
+          "victory_turns": 3
+        },
+        "blocking": true,
+        "created_at": "2026-08-21T17:26:07.667472",
+        "deltas": {
+          "building_hp_diff": 0,
+          "buildings_alive_diff": 0,
+          "destroy_objective_units_alive_diff": 0,
+          "emergent_enemy_pod_losses": [],
+          "enemies_alive_diff": 1,
+          "grid_power_diff": 0,
+          "mech_hp_diff": [
+            {
+              "actual_hp": 4,
+              "diff": 0,
+              "predicted_hp": 4,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "actual_hp": 4,
+              "diff": 0,
+              "predicted_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "actual_hp": 5,
+              "diff": 0,
+              "predicted_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_status_diff": [
+            {
+              "actual_count": 1,
+              "cleared": [],
+              "key": "mechs_acid",
+              "predicted_count": 1,
+              "status": "ACID",
+              "unexpected": []
+            },
+            {
+              "actual_count": 1,
+              "cleared": [],
+              "key": "mechs_webbed",
+              "next_turn_web_grapples": [],
+              "predicted_count": 0,
+              "status": "Web",
+              "unexpected": [
+                {
+                  "pos": [
+                    3,
+                    6
+                  ],
+                  "type": "IgniteMech",
+                  "uid": 1
+                }
+              ],
+              "unexplained_unexpected": [
+                {
+                  "pos": [
+                    3,
+                    6
+                  ],
+                  "type": "IgniteMech",
+                  "uid": 1
+                }
+              ]
+            }
+          ],
+          "next_turn_web_grapples": [],
+          "pods_present_diff": 0,
+          "pods_present_unexplained_diff": 0,
+          "protected_objective_units_alive_diff": 0,
+          "protected_objective_units_frozen_diff": 0,
+          "protected_objective_units_webbed_diff": 0,
+          "unexpected_events": [
+            "IgniteMech gained unexpected Web status"
+          ]
+        },
+        "id": "20260630_084844_192_m14_t01_post_enemy",
+        "mission_index": 14,
+        "next_step": "Investigate the enemy-phase prediction miss before solving or advancing another final-island turn.",
+        "predicted_outcome": {
+          "bigbomb_alive": false,
+          "building_hp_total": 7,
+          "buildings_alive": 6,
+          "buildings_destroyed_by_enemies": 1,
+          "destroy_objective_units": [],
+          "destroy_objective_units_alive": 0,
+          "enemies_alive": 5,
+          "enemies_killed_by_enemy_phase": 1,
+          "enemies_killed_by_player": 1,
+          "enemies_killed_by_spawn_block": 0,
+          "enemies_killed_total_projected": 2,
+          "enemy_hp_total": 19,
+          "freeze_building_target": null,
+          "freeze_buildings": [],
+          "freeze_buildings_alive": null,
+          "freeze_buildings_frozen": null,
+          "freeze_buildings_thawed": null,
+          "grid_power": 2,
+          "is_infinite_spawn": true,
+          "mech_damage_objective_limit": null,
+          "mech_damage_taken_total": 2,
+          "mech_hp": [
+            {
+              "hp": 4,
+              "max_hp": 6,
+              "type": "PunchMech",
+              "uid": 0
+            },
+            {
+              "hp": 4,
+              "max_hp": 4,
+              "type": "IgniteMech",
+              "uid": 1
+            },
+            {
+              "hp": 5,
+              "max_hp": 5,
+              "type": "HornetMech",
+              "uid": 2
+            }
+          ],
+          "mech_hp_total": 13,
+          "mechs_acid": [
+            {
+              "pos": [
+                3,
+                2
+              ],
+              "type": "PunchMech",
+              "uid": 0
+            }
+          ],
+          "mechs_alive": 3,
+          "mechs_disabled": [],
+          "mechs_fire": [],
+          "mechs_infected": [],
+          "mechs_on_danger": [],
+          "mechs_webbed": [],
+          "mission_id": "Mission_Power",
+          "mission_kill_limit": 6,
+          "mission_kill_target": 0,
+          "mission_kills_by_enemy_phase": 1,
+          "mission_kills_by_player": 0,
+          "mission_kills_by_spawn_block": 0,
+          "mission_kills_done": 1,
+          "mission_kills_done_projected": 1,
+          "mission_kills_planned": 1,
+          "mission_kills_total_projected": 1,
+          "mission_mountain_target": 0,
+          "mission_mountain_tiles": [],
+          "mission_mountains_destroyed": 0,
+          "mission_mountains_destroyed_projected": 0,
+          "mites_remaining": 0,
+          "mites_status_tracked": false,
+          "objective_building_hp_total": 2,
+          "objective_building_targets": [],
+          "objective_buildings_alive": 2,
+          "objective_buildings_targeted": 0,
+          "pods_collected": 0,
+          "pods_present": 1,
+          "protected_objective_units": [],
+          "protected_objective_units_alive": 0,
+          "protected_objective_units_frozen": 0,
+          "protected_objective_units_webbed": 0,
+          "pylon_hp_total": null,
+          "pylons_alive": null,
+          "remaining_spawns": 1,
+          "spawn_points": 0,
+          "terraform_grass_remaining": null,
+          "terraform_grass_tiles": [],
+          "total_turns": 4,
+          "train_objective_value": null,
+          "turn": 2,
+          "unit_deaths_by_enemy_phase": 1,
+          "unit_deaths_by_player": 1,
+          "unit_deaths_by_spawn_block": 0,
+          "unit_deaths_total_projected": 2,
+          "victory_turns": 3
+        },
+        "reason": null,
+        "record_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\recordings\\20260630_084844_192\\m14_turn_01_post_enemy.json",
+        "resolve_reason": "Matched Observatory exact-hook run was byte-restored to the sealed turn-1 baseline; the discarded outcome exposed the preserved mission-14 enemy-count and Spider web/status forecast gap and will not be advanced.",
+        "resolved_at": "2026-08-21T17:47:36.231896",
+        "run_id": "20260630_084844_192",
+        "source": "record_post_enemy",
+        "status": "INVESTIGATE_POST_ENEMY",
+        "triggers": [
+          {
+            "details": "Grid power at 2 (critical)",
+            "severity": "high",
+            "tier": 6,
+            "trigger": "grid_critical"
+          }
+        ],
+        "turn": 1
+      },
+      "label": "resolve_post_enemy_block",
+      "timestamp": "2026-08-21T17:47:36.231917",
+      "turn": 2
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T19:51:11.610032",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T19:51:45.032717",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T19:54:26.357623",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T19:54:45.821709",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:01:46.744979",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:02:08.491592",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:03:40.995651",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:03:58.747511",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:06:23.653069",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:06:50.061673",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:07:08.311624",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:08:39.342591",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:09:01.118638",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:11:34.686143",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:11:53.611244",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:13:32.467047",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:13:54.182193",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:16:02.620113",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:16:21.565503",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:17:52.559199",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:19:28.571359",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:22:40.543588",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:23:02.621588",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-21T20:26:53.556368",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-22T04:20:38.087429",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-22T04:21:47.211600",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-22T04:24:07.768370",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-24T16:27:25.524841",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-24T16:28:07.836744",
+      "turn": 1
+    },
+    {
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u00e2\u2020\u2019B5, fire Ignite at D5",
+        "HornetMech, move B6\u00e2\u2020\u2019C3, fire Needle Shot at D3"
+      ],
+      "label": "solve",
+      "score": -97657.71403428487,
+      "timestamp": "2026-08-24T16:31:09.691622",
+      "turn": 1
+    },
+    {
+      "timestamp": "2026-08-29T23:04:09.171107",
+      "turn": 1,
+      "label": "solve",
+      "score": -97657.71403428487,
+      "actions": [
+        "PunchMech, fire Titan Fist at F6",
+        "IgniteMech, move C5\u2192B5, fire Ignite at D5",
+        "HornetMech, move B6\u2192C3, fire Needle Shot at D3"
+      ]
+    }
+  ],
+  "lightning_route_probe_cache": [],
+  "recorded_post_enemy_turns": [],
+  "post_enemy_block": null,
+  "held_end_turn_block": null,
+  "end_turn_plan_ledger": {
+    "version": 1,
+    "mission_index": 25,
+    "mission_id": "Mission_Power",
+    "turn": 1,
+    "status": "delivered_confirmed",
+    "source": "auto_turn",
+    "delivery_mode": "external",
+    "plan_id": "500b86e03ea55548",
+    "issued_at": "2026-08-29T23:04:17.239183",
+    "direct_bridge_delivery": true,
+    "delivery_recorded_at": "2026-08-29T23:04:32.186273"
+  },
+  "dirty_consent_used": [
+    "c1876b9fba3ab289"
+  ],
+  "tags": [
+    "achievement"
+  ],
+  "failure_events_this_run": [
+    {
+      "asymmetry": [],
+      "categories": [
+        "status"
+      ],
+      "confidence": 0.4,
+      "context": {
+        "action_index": 2,
+        "mech_uid": 0,
+        "phase": "move",
+        "sub_action": "move",
+        "target": [
+          2,
+          2
+        ],
+        "turn": 2,
+        "weapon": "Brute_PierceShot"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "status|Brute_PierceShot|move",
+      "subcategory": null,
+      "top_category": "status",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "damage_amount"
+      ],
+      "confidence": 0.4,
+      "context": {
+        "action_index": 0,
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          3,
+          1
+        ],
+        "turn": 4,
+        "weapon": "Brute_PierceShot"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "damage_amount|Brute_PierceShot|attack",
+      "subcategory": null,
+      "top_category": "damage_amount",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "push_dir",
+        "status"
+      ],
+      "confidence": 0.4,
+      "context": {
+        "action_index": 1,
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          7,
+          4
+        ],
+        "turn": 4,
+        "weapon": "Science_TC_SwapOther"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "push_dir|Science_TC_SwapOther|attack",
+      "subcategory": null,
+      "top_category": "push_dir",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "terrain"
+      ],
+      "confidence": 0.3,
+      "context": {
+        "action_index": 2,
+        "mech_uid": 0,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          3,
+          3
+        ],
+        "turn": 1,
+        "weapon": "Brute_PierceShot"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "terrain|Brute_PierceShot|attack",
+      "subcategory": null,
+      "top_category": "terrain",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "click_miss"
+      ],
+      "confidence": 0.8,
+      "context": {
+        "action_index": 1,
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          2,
+          3
+        ],
+        "turn": 3,
+        "weapon": "Science_TC_SwapOther"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 1,
+      "signature": "click_miss|Science_TC_SwapOther|attack",
+      "subcategory": null,
+      "top_category": "click_miss",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "status"
+      ],
+      "confidence": 0.4,
+      "context": {
+        "action_index": 1,
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          1,
+          4
+        ],
+        "turn": 4,
+        "weapon": "Science_TC_SwapOther"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "status|Science_TC_SwapOther|attack",
+      "subcategory": null,
+      "top_category": "status",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "spawn"
+      ],
+      "confidence": 0.3,
+      "context": {
+        "action_index": 0,
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          4,
+          0
+        ],
+        "turn": 1,
+        "weapon": "Ranged_DeployBomb"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "spawn|Ranged_DeployBomb|attack",
+      "subcategory": null,
+      "top_category": "spawn",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "push_dir"
+      ],
+      "confidence": 0.4,
+      "context": {
+        "action_index": 2,
+        "mech_uid": 2,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          3,
+          1
+        ],
+        "turn": 1,
+        "weapon": "Science_TC_SwapOther"
+      },
+      "frequency": 1,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "push_dir|Science_TC_SwapOther|attack",
+      "subcategory": null,
+      "top_category": "push_dir",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "spawn"
+      ],
+      "confidence": 0.3,
+      "context": {
+        "action_index": 0,
+        "mech_uid": 1,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          4,
+          5
+        ],
+        "turn": 2,
+        "weapon": "Ranged_DeployBomb"
+      },
+      "frequency": 1,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "spawn|Ranged_DeployBomb|attack",
+      "subcategory": null,
+      "top_category": "spawn",
+      "topology": null,
+      "version": 1
+    },
+    {
+      "asymmetry": [],
+      "categories": [
+        "spawn"
+      ],
+      "confidence": 0.3,
+      "context": {
+        "action_index": 1,
+        "mech_uid": 1551,
+        "phase": "attack",
+        "sub_action": "attack",
+        "target": [
+          4,
+          2
+        ],
+        "turn": 3,
+        "weapon": "Archive_ArtShot"
+      },
+      "frequency": 0,
+      "model_gap": false,
+      "proposed_tier": 4,
+      "signature": "spawn|Archive_ArtShot|attack",
+      "subcategory": null,
+      "top_category": "spawn",
+      "topology": null,
+      "version": 1
+    }
+  ],
+  "disabled_actions": [],
+  "research_queue": [
+    {
+      "attempts": 1,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "last_kind": "mech",
+      "mission_id": "Mission_Train",
+      "research_id": "a92eed7cbfdf",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Pierce+Mech&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Pierce+Mech"
+          },
+          "target_name": "Pierce Mech"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 6,
+            "name": "Pierce Mech"
+          },
+          "unit_status": {
+            "confidence": 1.0,
+            "kind": "mech",
+            "pilot_name": "Aidan Nguyen",
+            "weapon_slot_count": 1
+          }
+        },
+        "source": "vision"
+      },
+      "slot": 1,
+      "status": "done",
+      "terrain_id": null,
+      "type": "PierceMech"
+    },
+    {
+      "attempts": 1,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "last_kind": "mech",
+      "mission_id": "Mission_Train",
+      "research_id": "48b966f51071",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Bombling+Mech&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Bombling+Mech"
+          },
+          "target_name": "Bombling Mech"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 3,
+            "name": "Bombling Mech"
+          },
+          "unit_status": {
+            "confidence": 1.0,
+            "kind": "mech",
+            "pilot_name": "Zera",
+            "weapon_slot_count": 1
+          }
+        },
+        "source": "vision"
+      },
+      "slot": 1,
+      "status": "done",
+      "terrain_id": null,
+      "type": "BomblingMech"
+    },
+    {
+      "attempts": 1,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "last_kind": "mech",
+      "mission_id": "Mission_Train",
+      "research_id": "38728b41b5cc",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Exchange+Mech&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Exchange+Mech"
+          },
+          "target_name": "Exchange Mech"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 3,
+            "name": "Exchange Mech"
+          },
+          "unit_status": {
+            "confidence": 0.8,
+            "kind": "mech",
+            "pilot_name": null,
+            "weapon_slot_count": 1
+          }
+        },
+        "source": "vision"
+      },
+      "slot": 1,
+      "status": "done",
+      "terrain_id": null,
+      "type": "ExchangeMech"
+    },
+    {
+      "attempts": 0,
+      "diff_actual": true,
+      "diff_field": "status.web",
+      "diff_predicted": false,
+      "first_seen_turn": 2,
+      "kind": "behavior_novelty",
+      "mission_id": "Mission_ForestFire",
+      "result": {
+        "diff_actual": true,
+        "diff_field": "status.web",
+        "diff_predicted": false,
+        "reason": "low_severity_known_type",
+        "source": "auto_resolved"
+      },
+      "severity": "low",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "Totem2"
+    },
+    {
+      "attempts": 0,
+      "diff_actual": 1,
+      "diff_field": "hp",
+      "diff_predicted": 2,
+      "first_seen_turn": 4,
+      "kind": "behavior_novelty",
+      "mission_id": "Mission_ForestFire",
+      "result": {
+        "diff_actual": 1,
+        "diff_field": "hp",
+        "diff_predicted": 2,
+        "reason": "low_severity_known_type",
+        "source": "auto_resolved"
+      },
+      "severity": "low",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "Shaman2"
+    },
+    {
+      "attempts": 1,
+      "diff_actual": [
+        7,
+        4
+      ],
+      "diff_field": "pos",
+      "diff_predicted": [
+        5,
+        6
+      ],
+      "first_seen_turn": 4,
+      "kind": "behavior_novelty",
+      "last_kind": "enemy",
+      "mission_id": "Mission_ForestFire",
+      "research_id": "7b7caf8bab0a",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scorpion&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scorpion"
+          },
+          "target_name": "Scorpion"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 3,
+            "name": "Scorpion"
+          },
+          "unit_status": {
+            "confidence": 1.0,
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0
+          }
+        },
+        "source": "vision"
+      },
+      "severity": "medium",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "Scorpion1"
+    },
+    {
+      "attempts": 1,
+      "diff_actual": [
+        5,
+        6
+      ],
+      "diff_field": "pos",
+      "diff_predicted": [
+        7,
+        4
+      ],
+      "first_seen_turn": 4,
+      "kind": "behavior_novelty",
+      "last_kind": "enemy",
+      "mission_id": "Mission_ForestFire",
+      "research_id": "532b53eae5e4",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Scarab&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Scarab"
+          },
+          "target_name": "Scarab"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 3,
+            "name": "Scarab"
+          },
+          "unit_status": {
+            "confidence": 1.0,
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0
+          }
+        },
+        "source": "vision"
+      },
+      "severity": "medium",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "Scarab1"
+    },
+    {
+      "attempts": 1,
+      "diff_actual": "absent",
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "first_seen_turn": 1,
+      "kind": "behavior_novelty",
+      "last_kind": "enemy",
+      "mission_id": "Mission_Airstrike",
+      "research_id": "28ab986d7ada",
+      "result": {
+        "community_queries": {
+          "queries": {
+            "reddit": "https://www.reddit.com/r/IntoTheBreach/search/?q=Walking+Bomb&restrict_sr=1",
+            "steam_forum": "https://steamcommunity.com/app/590380/discussions/search/?q=Walking+Bomb"
+          },
+          "target_name": "Walking Bomb"
+        },
+        "mismatches": [],
+        "parsed": {
+          "name_tag": {
+            "class_icons": [
+              "temporary_unit",
+              "self_destruct",
+              "flying_or_hover",
+              "no_attack"
+            ],
+            "confidence": 0.8,
+            "hp": 0,
+            "move": 3,
+            "name": "Walking Bomb"
+          },
+          "unit_status": {
+            "confidence": 1.0,
+            "kind": "enemy",
+            "pilot_name": null,
+            "weapon_slot_count": 0
+          }
+        },
+        "source": "vision"
+      },
+      "severity": "medium",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "DeployUnit_Bomby"
+    },
+    {
+      "attempts": 1,
+      "diff_actual": "absent",
+      "diff_field": "missing_in_actual",
+      "diff_predicted": "present",
+      "first_seen_turn": 3,
+      "kind": "behavior_novelty",
+      "last_kind": "enemy",
+      "mission_id": "Mission_Artillery",
+      "research_id": "7728923f1dbe",
+      "result": {
+        "attempts": 1,
+        "diff_actual": "absent",
+        "diff_field": "missing_in_actual",
+        "diff_predicted": "present",
+        "kind": "behavior_novelty",
+        "reason": "research_next reports NO_WORK; live bridge read parses SpiderlingEgg1 without requires_research",
+        "source": "manual_resolved"
+      },
+      "severity": "medium",
+      "slot": null,
+      "status": "done",
+      "terrain_id": null,
+      "type": "SpiderlingEgg1"
+    },
+    {
+      "attempts": 0,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "mission_id": "Mission_Power",
+      "result": null,
+      "slot": 1,
+      "status": "pending",
+      "terrain_id": null,
+      "type": "PunchMech"
+    },
+    {
+      "attempts": 0,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "mission_id": "Mission_Power",
+      "result": null,
+      "slot": 1,
+      "status": "pending",
+      "terrain_id": null,
+      "type": "IgniteMech"
+    },
+    {
+      "attempts": 0,
+      "first_seen_turn": 0,
+      "kind": "mech_weapon",
+      "mission_id": "Mission_Power",
+      "result": null,
+      "slot": 1,
+      "status": "pending",
+      "terrain_id": null,
+      "type": "HornetMech"
+    }
+  ],
+  "diagnosis_queue": [],
+  "last_terrain_fingerprint": {
+    "hash": "03e76ee1500681be",
+    "classes": "mmggmgggmbggggbgmbgbbggggggbbggmgggggggggggggggggggmmgggggmwwmgg",
+    "mission_index": 25,
+    "turn": 1
+  },
+  "terrain_stage_change_pending": false
+}

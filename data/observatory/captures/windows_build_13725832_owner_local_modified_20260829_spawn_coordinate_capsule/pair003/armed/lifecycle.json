@@ -1,0 +1,122 @@
+{
+  "artifact_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008",
+  "bridge_start": {
+    "active_mechs": 3,
+    "ai_seed_fingerprint": null,
+    "master_seed": 664577925,
+    "mission_id": "Mission_Power",
+    "phase": "combat_player",
+    "region_id": null,
+    "timeline_fingerprint": null,
+    "turn": 1
+  },
+  "bridge_start_sha256": "58e1a119f5fde20dd51da43496a4e14a5c4707d344294d301b53debfcb983be9",
+  "build_identity": {
+    "build_receipt_sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "module_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9"
+  },
+  "capture_id": "spawn-capsule-pair003-armed",
+  "capture_track": "owner_local_modified",
+  "close": {
+    "closed_at": "2026-08-30T04:07:28.720294+00:00",
+    "creation_filetime": 134325364027223978,
+    "exited": true,
+    "forced_termination": false,
+    "method": "WM_CLOSE",
+    "pid": 6424,
+    "requested_at": "2026-08-30T04:07:28.083594+00:00",
+    "window_handles": [
+      69536682
+    ]
+  },
+  "condition": "armed",
+  "condition_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\armed",
+  "created_at": "2026-08-30T04:07:28.720595+00:00",
+  "errors": {
+    "bridge_start": "",
+    "close": "",
+    "continue_arm": "",
+    "continue_cleanup": "",
+    "launch": "",
+    "process": "",
+    "restore": "",
+    "session": "",
+    "session_cleanup": "",
+    "start_state": "",
+    "trial": ""
+  },
+  "kind": "observatory_spawn_coordinate_capsule_condition_lifecycle",
+  "launch": {
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "launcher_pid": 6424,
+    "requested_at": "2026-08-30T04:06:42.721517+00:00"
+  },
+  "native_continue": {
+    "ack": "OK OBS_NATIVE_CONTINUE_REQUEST invoked=true",
+    "armed": true,
+    "cleaned_after_failure": false,
+    "consumed": true,
+    "request_path": "C:\\Users\\BMO\\Documents\\My Games\\Into The Breach\\itb_bridge\\itb_observatory_native_continue.request"
+  },
+  "pair_id": "spawn-capsule-pair003",
+  "process_identity": {
+    "created_at": "2026-08-30T04:06:42.722398+00:00",
+    "creation_filetime": 134325364027223978,
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "kind": "observatory_windows_game_process_identity",
+    "pid": 6424,
+    "schema_version": 1
+  },
+  "restore": {
+    "file_count": 32,
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "total_bytes": 2436295,
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+  },
+  "runtime_modules": {
+    "capsule_observer": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll",
+      "sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+      "size": 28672
+    },
+    "continue_helper": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\itb_observatory_continue_e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a.dll",
+      "sha256": "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a",
+      "size": 78848
+    },
+    "rng_seed_helper": {
+      "path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\scripts\\itb_observatory_rng_seed_bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787.dll",
+      "sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787",
+      "size": 73728
+    }
+  },
+  "schema_version": 1,
+  "session": {
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\armed\\session.json",
+    "sha256": "b8a41e58b546d52fec3930214b0db8124944518894d0f4df63b5329a8e82ee80",
+    "source_path": "C:\\Users\\BMO\\Documents\\code\\Codex\\ItB\\sessions\\active_session.json",
+    "source_sha256": "7713d617f726a718952df0c8c8b9ceb68e0c940db1e81a0e25934641e06c70ca"
+  },
+  "start_state": {
+    "game_stopped": true,
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\armed\\start_state_proof.json",
+    "sha256": "229f479c53b53633c874aebc200be744b41dd9e5d2da6bc335852f1c626afb43",
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "verified_at": "2026-08-30T04:06:42.665618+00:00"
+  },
+  "status": "complete",
+  "trial": {
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\armed\\trial.json",
+    "sha256": "eb20ea24ea925282965ac1056d2c992967c0f312a69e3390fd9427323c2fb173",
+    "status": "complete",
+    "valid_trial": true
+  },
+  "valid_lifecycle": true
+}

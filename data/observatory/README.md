@@ -1037,24 +1037,51 @@ fallback or DR2 standard selector draw. The strict validator rejects incomplete
 maps, reordered or duplicate points, torn/restoration state, pointer leakage,
 RNG-transition drift, or candidate/draw disagreement.
 
-The separate bridge controller was live-loaded into one fresh owner-track game
-process without preparing a condition. The immutable dormant-load receipt
+The separate bridge controller was first live-loaded into one fresh owner-track
+game process without preparing a condition. The immutable dormant-load receipt
 `captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`
 (SHA-256 `5d3b03a5f191ab2bbf26d5c416d2e83b9e468dc1385c470b6c888374a5ab3435`)
 binds the exact module, plan, build receipt, installed Mod Loader, process module
 enumeration, and ACK `state=dormant consumed=false armed=false`. No prepare or
 seed command ran, no breakpoint/VEH was armed, and no snapshot existed. This
 proves a safely deployable dormant boundary, not a selector-time runtime
-capture. A matched control/dormant/armed capture is still required before any
-Board/RNG capsule is promoted as game evidence. Transient dead/non-corpse
-occupancy, the Pawn path profile at entry, future Board state, and broader spawn
-call ordering remain explicit unresolved inputs; the validator therefore keeps
-`complete_future_forecast=false`.
+capture. The later campaign below supplies the required armed evidence.
 
-The matched runtime path is implemented and synthetically validated. Four live
-lifecycle startups have run, but no live capsule boundary has been prepared and
-no End Turn has run.
-All four rejected attempts are preserved under
+The immutable campaign receipt
+`captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json`
+(SHA-256 `c529484cd2bb1061ef2e3f3ccce80a61e5b9df94815b38ffcb8aa682ab7ef2a1`)
+now seals three complete counterbalanced control/dormant/armed triplets. All
+nine fresh processes began from the same 32-file save tree, used the exact
+attested executable and three runtime modules, consumed native Continue,
+executed the same three verified player actions, dispatched End Turn through
+the synchronous reviewed native boundary, reached the next player turn, closed
+gracefully without forced termination, and final-restored the save tree. The
+receipt also binds nine isolated solver sessions and all 45 board/solve-input/
+solve/threat-audit/resist-probe recording files.
+
+Each armed trial captured exactly one complete standard-selector capsule. The
+selector-entry Board carriers and ordered candidate vector were byte-identical
+across all three observations (SHA-256
+`5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a`
+and `3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d`).
+The exact shared-RNG transitions differed: `0xecb653b5 -> 9054 ->
+0xa35eb7a4` selected index 4 and `[6,5]`; `0x9fff3779 -> 4432 ->
+0x91501c58` selected index 2 and `[5,4]`; and `0x30f73531 -> 14069 ->
+0xb6f50330` selected index 4 and `[6,5]`. Every coordinate matched the
+following bridge spawn marker. Every observer restored its debug registers,
+VEH, file handle, and exact seam bytes and published no address or pointer.
+
+This is exact selector-time capture and replay evidence, but it is not a
+whole-game neutrality proof. Control versus dormant outcomes already selected
+different next spawn coordinates in all three unarmed comparisons, so a
+restored save plus fixed seed did not stabilize the shared stream before the
+selector. Armed differences therefore cannot isolate an observer effect.
+Transient dead/non-corpse occupancy, the Pawn path profile at entry, a complete
+future forecast from ordinary solver input, and pristine-depot behavior remain
+explicitly unproven. Rust continues to consume authoritative settled spawn
+markers; no simulator change or version bump follows.
+
+The seven rejected development attempts are preserved under
 `captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_diagnostics/`:
 the first exact process returned an error ACK because the previously cleaned-up
 Continue helper was not installed, then closed through `WM_CLOSE`; the second
@@ -1089,6 +1116,16 @@ and trial lifecycle SHA-256 values are respectively
 `ef94e724e8c12bf573f22ed10588a8e90de587e2a4d1e79e1b235dd4aefd1ac0`,
 `6202a30bec34e296232393d706608cb80bc6100dfb0ee951dbadd4f701a7ef05`, and
 `9a1108128160ba45edb40dee98bfbf301d54fbfbd110a7dc37f62e8e7a0b883c`.
+Three further attempts reached the reviewed dirty frontier but could not create
+the required opaque reservation: the first exposed the exact one-shot consent
+requirement and failed closed when synthetic Escape input was denied; the next
+proved that posting Escape was not enough to visually verify the black-window
+pause state; and the third proved the calibrated pause-button fallback could
+not acquire the global cursor. All three aborted before capsule preparation or
+End Turn, closed through `WM_CLOSE`, and final-restored the same save tree. The
+successful campaign removes those global-input dependencies by consuming the
+reviewed dirty consent per condition and dispatching End Turn synchronously
+through the exact build-pinned native helper.
 
 The one-condition trial runner
 `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module,
@@ -1124,22 +1161,32 @@ three triplets with these counterbalanced orders:
 `control,dormant,armed`; `armed,control,dormant`; and
 `dormant,armed,control`. Every condition must contain only its trial, outcome,
 start-state proof, isolated session, and lifecycle, plus the armed snapshot and
-rebuilt correlation. It proves nine distinct process identities, one exact
+rebuilt correlation. Its campaign-level `recordings` tree must contain exactly
+one run directory per isolated session and exactly one board, solve input,
+solve result, threat audit, and resist probe for that mission/turn. It proves
+nine distinct process identities, one exact
 executable, one exact installed three-module set, and one starting save tree;
 exact per-condition restore/launch/Continue/bridge/trial/close chains; and a
 campaign-level stopped-game restore after the ninth condition. It rejects
 condition-order drift, extra files, digest drift,
 incomplete restoration, observer-output leakage from control/dormant conditions,
-any native/bridge coordinate disagreement, or any semantic whole-game
-difference.
+or any native/bridge coordinate disagreement. Whole-game semantic differences
+are sealed losslessly and prevent a neutrality claim; complete unarmed
+control/dormant drift is reported separately from armed differences.
 
 `scripts/itb_observatory_spawn_coordinate_capsule_campaign_run.py` conducts all
 nine lifecycles, attempts the final baseline restore even after an early rejected
 condition, writes the campaign lifecycle, and only then imports a byte-identical
 tree into a fresh repository destination and seals it. It never overwrites an
 existing campaign or receipt and never force-kills the game. The sealed receipt
-therefore closes save restoration itself; exact installation cleanup remains
-pending for the separate cleanup receipt.
+therefore closes save restoration itself. The matching cleanup receipt
+`captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_cleanup_receipt.json`
+closes its remaining installation fields: the active Mod Loader is restored to
+SHA-256 `5af8e809...abf22d`, all three experimental DLLs are absent, the
+installation matches all 689 entries in the prior accepted owner-local restore,
+the bridge has no Observatory residue, the same 32-file save tree still matches,
+and `Breach.exe` is stopped. Exact removed bytes remain in recoverable owner
+staging.
 
 Create the baseline only while the game is stopped, then run the campaign from
 fresh external and repository destinations:

@@ -646,7 +646,11 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "finally restore the original save" in evidence
     assert "installed capsule observer, Continue helper, RNG-seed helper" in evidence
     assert "cleaned-up Continue helper was absent" in evidence
-    assert "No live capsule trial or End Turn has run" in evidence
+    assert "completed capsule campaign seals three counterbalanced" in evidence
+    assert "nine isolated solver sessions" in evidence
+    assert "exactly 45 bound recording files" in evidence
+    assert "Control versus dormant outcomes already drifted" in evidence
+    assert "cleanup receipt closes the campaign's remaining" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
         for item in record["implementations"]
@@ -839,6 +843,28 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     }
     assert tests[
         "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "spawn_coordinate_capsule_receipt.json"
+    ] == {
+        "selector_entry_board_rng_capsule_captured",
+        "not_proven_unarmed_baseline_drift",
+        "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+        "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d",
+        "recording_artifact_count",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "spawn_coordinate_capsule_cleanup_receipt.json"
+    ] == {
+        "observatory_spawn_coordinate_capsule_cleanup_receipt",
+        "remaining_experimental_file_count",
+        "file_set_and_bytes_match_pre_experiment",
+        "changed_from_prior_accepted_restore",
+        "game_process_running",
+    }
+    assert tests[
+        "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260822_"
         "spawn_coordinate_rng_receipt.json"
     ] == {
@@ -877,20 +903,26 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_trial.py"
     ] == {
-        "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
+        "test_control_trial_wraps_exact_native_end_turn_and_captures_next_turn",
         "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
+        "test_rejected_auto_turn_never_prepares_native_boundary",
         "test_build_identity_preflight_blocks_before_any_session_action",
         "test_process_identity_preflight_blocks_before_any_session_action",
         "test_start_state_preflight_blocks_before_any_session_action",
-        "test_imported_trial_configures_utf8_before_auto_turn",
+        "test_imported_trial_isolates_local_delivery_env_and_passes_native_boundary",
         "test_utf8_stdio_configuration_reconfigures_supported_streams",
         "test_late_artifact_root_redirects_imported_recording_directory",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign.py"
     ] == {
+        "test_committed_spawn_coordinate_capsule_campaign_rebuilds_exactly",
+        "test_committed_spawn_coordinate_capsules_replay_exact_rng_and_selection",
+        "test_spawn_coordinate_capsule_cleanup_closes_restore_and_binds_artifacts",
         "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
-        "test_capsule_campaign_rejects_semantic_outcome_drift",
+        "test_capsule_campaign_seals_unarmed_baseline_drift_without_claiming_neutrality",
+        "test_capsule_campaign_rejects_unbound_recording_directory",
+        "test_capsule_campaign_rejects_recording_identity_drift",
         "test_capsule_campaign_rejects_counterbalance_order_drift",
         "test_capsule_campaign_rejects_reused_process_identity",
         "test_capsule_campaign_rejects_forced_process_termination",
@@ -934,6 +966,7 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
         "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores",
         "test_imported_trial_stdio_attempt_aborts_and_final_restores",
+        "test_dirty_reservation_input_attempts_abort_before_boundary_and_restore",
     }
     assert tests[
         "tests/test_observatory_spawn_coordinate_capsule_campaign_run.py"
@@ -972,8 +1005,8 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "Standard candidate source order" in gaps
     assert "emergency greatest-x-row construction" in gaps
     assert "recovered exactly post hoc" in gaps
-    assert "pass an exact dormant/unconsumed live-load check" in gaps
-    assert "no matched armed runtime capsule has been captured" in gaps
+    assert "completed three counterbalanced live triplets" in gaps
+    assert "cannot isolate whole-game observer neutrality" in gaps
     assert "complete coordinate-candidate construction/filtering" not in gaps
     assert "spawn-coordinate selection, and the coordinate RNG call order" not in gaps
 

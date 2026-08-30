@@ -143,3 +143,75 @@ def test_imported_trial_stdio_attempt_aborts_and_final_restores():
     assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
         "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
     )
+
+
+def test_dirty_reservation_input_attempts_abort_before_boundary_and_restore():
+    cases = {
+        "dirty_reservation_sendinput_05": {
+            "status": "ERROR",
+            "reason": "esc_pause_failed_after_snapshot",
+            "backend": "win32_sendinput",
+            "control": "pause_menu_escape",
+            "error": "SendInput sent 0/2 events; WinError 5",
+        },
+        "dirty_reservation_postmessage_06": {
+            "status": "BLOCKED",
+            "reason": "pause_not_verified_after_snapshot",
+            "backend": "win32_postmessage",
+            "control": "pause_menu_escape",
+            "error": None,
+        },
+        "dirty_reservation_pause_button_07": {
+            "status": "ERROR",
+            "reason": "esc_pause_failed_after_snapshot",
+            "backend": None,
+            "control": "pause",
+            "error": (
+                "pyautogui click failed: PyAutoGUI fail-safe triggered from "
+                "mouse moving to a corner of the screen. To disable this "
+                "fail-safe, set pyautogui.FAILSAFE to False. DISABLING "
+                "FAIL-SAFE IS NOT RECOMMENDED."
+            ),
+        },
+    }
+
+    for prefix, expected in cases.items():
+        condition = _load(f"{prefix}_condition_lifecycle.json")
+        campaign = _load(f"{prefix}_campaign_lifecycle.json")
+        trial = _load(f"{prefix}_trial.json")
+
+        assert trial["status"] == "rejected"
+        assert trial["auto_turn"] == {
+            "score": -97657.71403428487,
+            "status": "SAFETY_BLOCKED",
+            "turn": 1,
+        }
+        assert trial["errors"]["reservation"] == (
+            "auto_turn did not create an opaque local reservation"
+        )
+        assert trial["boundary"]["state"] == "aborted"
+        assert trial["boundary"]["prepare_ack"] is None
+        assert trial["dispatch"] is None
+        assert trial["snapshot"] is None
+        guard = trial["pause_guard"]
+        assert guard["status"] == expected["status"]
+        assert guard["reason"] == expected["reason"]
+        assert guard["safe_to_think"] is False
+        assert guard["pause_verified"] is False
+        assert guard["pause_click"].get("backend") == expected["backend"]
+        assert guard["pause_click"]["control"] == expected["control"]
+        assert guard["pause_click"].get("error") == expected["error"]
+
+        assert condition["status"] == "rejected"
+        assert condition["errors"]["trial"] == "capsule trial was rejected"
+        assert condition["close"]["method"] == "WM_CLOSE"
+        assert condition["close"]["exited"] is True
+        assert condition["close"]["forced_termination"] is False
+
+        assert campaign["status"] == "rejected"
+        assert campaign["condition_order"] == []
+        assert campaign["errors"]["final_restore"] == ""
+        assert campaign["final_restore"]["game_stopped"] is True
+        assert campaign["final_restore"]["manifest"]["tree_sha256"] == (
+            "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+        )

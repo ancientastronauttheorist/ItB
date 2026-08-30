@@ -1,0 +1,1230 @@
+{
+  "attack_order": [
+    1248,
+    1249,
+    1251,
+    1352
+  ],
+  "difficulty": 3,
+  "env_type": "unknown",
+  "environment_danger": [],
+  "environment_danger_v2": [],
+  "environment_freeze": [],
+  "grid_power": 4,
+  "grid_power_max": 7,
+  "in_active_mission": true,
+  "island_map_debug": "skipped: in active mission",
+  "island_map_game_seen": "table",
+  "island_map_probe": "scope_alive",
+  "master_seed": 664577925,
+  "mission_id": "Mission_Power",
+  "mission_kill_limit": 6,
+  "mission_kills_done": 1,
+  "mission_seeds": {
+    "region1": {
+      "ai_seed": 21843,
+      "mission": "Mission2",
+      "state": 0,
+      "turn": 1
+    },
+    "region5": {
+      "ai_seed": 927153813,
+      "mission": "Mission1",
+      "state": 4,
+      "turn": 0
+    }
+  },
+  "native_enemy_position_inputs": {
+    "current_snapshot_only": true,
+    "dangerous_item_tiles": [],
+    "dangerous_item_tiles_complete": true,
+    "pawn_flags_ordered": [
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 0
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 1
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 2
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 1248
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": true,
+        "uid": 1249
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": true,
+        "uid": 1250
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": true,
+        "uid": 1251
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 1252
+      },
+      {
+        "avoiding_mines": false,
+        "ranged": false,
+        "uid": 1352
+      }
+    ],
+    "pawn_flags_ordered_complete": true,
+    "schema_version": 1
+  },
+  "native_enemy_spawn_inputs": {
+    "block_spawn_values_complete": false,
+    "current_snapshot_only": true,
+    "dangerous_tiles": [],
+    "dangerous_tiles_complete": true,
+    "enemy_zone_ordered": [
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        5,
+        4
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        6,
+        5
+      ],
+      [
+        7,
+        2
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        7,
+        4
+      ],
+      [
+        7,
+        5
+      ]
+    ],
+    "enemy_zone_ordered_complete": true,
+    "existing_spawn_marker_vector_complete": false,
+    "ground_blocked_tiles": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3,
+        2
+      ],
+      [
+        7,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        3
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        0,
+        4
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        6,
+        4
+      ],
+      [
+        7,
+        4
+      ],
+      [
+        1,
+        5
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        7,
+        5
+      ],
+      [
+        1,
+        6
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        3,
+        7
+      ]
+    ],
+    "ground_blocked_tiles_complete": true,
+    "schema_version": 1
+  },
+  "phase": "combat_player",
+  "remaining_spawns": 1,
+  "spawning_tiles": [
+    [
+      5,
+      4
+    ]
+  ],
+  "targeted_tiles": [
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      1,
+      6
+    ],
+    [
+      4,
+      6
+    ]
+  ],
+  "tile_shields_live": false,
+  "tile_shields_static_baseline": false,
+  "tiles": [
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 1,
+      "y": 0
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 2,
+      "y": 0
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 0
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 0
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 7,
+      "y": 0
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "terrain": "building",
+      "terrain_id": 1,
+      "x": 1,
+      "y": 1
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "terrain": "building",
+      "terrain_id": 1,
+      "x": 2,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "pod": true,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 7,
+      "y": 1
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 0,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 1,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 2,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 2
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 7,
+      "y": 2
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 0,
+      "y": 3
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 1,
+      "y": 3
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "terrain": "building",
+      "terrain_id": 1,
+      "x": 2,
+      "y": 3
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "rubble",
+      "terrain_id": 2,
+      "x": 3,
+      "y": 3
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 3
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 3
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 6,
+      "y": 3
+    },
+    {
+      "acid": true,
+      "dangerous_item": false,
+      "terrain": "water",
+      "terrain_id": 3,
+      "x": 7,
+      "y": 3
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 1,
+      "y": 4
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "objective_name": "Mission_Power",
+      "terrain": "building",
+      "terrain_id": 1,
+      "unique_building": true,
+      "x": 2,
+      "y": 4
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "fire": true,
+      "terrain": "building",
+      "terrain_id": 1,
+      "x": 3,
+      "y": 4
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 4
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 4
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 6,
+      "y": 4
+    },
+    {
+      "acid": true,
+      "dangerous_item": false,
+      "terrain": "water",
+      "terrain_id": 3,
+      "x": 7,
+      "y": 4
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 0,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 1,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 2,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "smoke": true,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 5
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 7,
+      "y": 5
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "building_hp": 1,
+      "dangerous_item": false,
+      "objective_name": "Mission_Power",
+      "smoke": true,
+      "terrain": "building",
+      "terrain_id": 1,
+      "unique_building": true,
+      "x": 1,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 2,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 7,
+      "y": 6
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 0,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 1,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 2,
+      "y": 7
+    },
+    {
+      "building_hp": 2,
+      "dangerous_item": false,
+      "population": 1,
+      "terrain": "mountain",
+      "terrain_id": 4,
+      "x": 3,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 4,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 5,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 6,
+      "y": 7
+    },
+    {
+      "dangerous_item": false,
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 7,
+      "y": 7
+    }
+  ],
+  "timestamp": 1788062673,
+  "total_turns": 4,
+  "turn": 2,
+  "units": [
+    {
+      "acid": true,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 5,
+      "burrower": false,
+      "corpse": true,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "hp": 4,
+      "infected": false,
+      "jumper": false,
+      "massive": true,
+      "max_hp": 3,
+      "mech": true,
+      "minor": false,
+      "move": 5,
+      "pilot_id": "Pilot_Detritus",
+      "pilot_level": 2,
+      "pilot_skills": [
+        "skill1=9",
+        "skill2=8"
+      ],
+      "powered": true,
+      "pushable": true,
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 1,
+      "type": "PunchMech",
+      "uid": 0,
+      "void_shock_immune": false,
+      "weapons": [
+        "Prime_Punchmech"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 3,
+      "y": 2
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 4,
+      "burrower": false,
+      "corpse": true,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": true,
+      "guarding": false,
+      "hp": 4,
+      "infected": false,
+      "jumper": false,
+      "massive": true,
+      "max_hp": 3,
+      "mech": true,
+      "minor": false,
+      "move": 4,
+      "pilot_id": "Pilot_Archive",
+      "pilot_level": 2,
+      "pilot_skills": [
+        "skill1=4",
+        "skill2=12"
+      ],
+      "powered": true,
+      "pushable": true,
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 1,
+      "type": "IgniteMech",
+      "uid": 1,
+      "void_shock_immune": false,
+      "weapons": [
+        "Ranged_Ignite"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": true
+      },
+      "x": 3,
+      "y": 6
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 4,
+      "burrower": false,
+      "corpse": true,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": true,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "hp": 5,
+      "infected": false,
+      "jumper": false,
+      "massive": true,
+      "max_hp": 2,
+      "mech": true,
+      "minor": false,
+      "move": 4,
+      "pilot_id": "Pilot_HornetMech",
+      "pilot_level": 2,
+      "pilot_skills": [
+        "skill1=4"
+      ],
+      "powered": true,
+      "pushable": true,
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 1,
+      "type": "HornetMech",
+      "uid": 2,
+      "void_shock_immune": false,
+      "weapons": [
+        "Vek_Hornet"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 5,
+      "y": 5
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 4,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": true,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": true,
+      "hp": 4,
+      "infected": false,
+      "jumper": false,
+      "max_hp": 4,
+      "mech": false,
+      "minor": false,
+      "move": 4,
+      "powered": true,
+      "pushable": true,
+      "queued_origin": [
+        4,
+        5
+      ],
+      "queued_target": [
+        0,
+        5
+      ],
+      "queued_target_normalized": true,
+      "queued_target_raw": [
+        3,
+        5
+      ],
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "Mosquito2",
+      "uid": 1248,
+      "void_shock_immune": false,
+      "weapon_damage": 3,
+      "weapon_push": 0,
+      "weapon_target_behind": false,
+      "weapons": [
+        "MosquitoAtk2"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 1,
+      "y": 5
+    },
+    {
+      "acid": true,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 3,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": true,
+      "hp": 5,
+      "infected": false,
+      "jumper": false,
+      "massive": true,
+      "max_hp": 6,
+      "mech": false,
+      "minor": false,
+      "move": 3,
+      "powered": true,
+      "pushable": true,
+      "queued_origin": [
+        4,
+        3
+      ],
+      "queued_target": [
+        2,
+        3
+      ],
+      "queued_target_normalized": true,
+      "queued_target_raw": [
+        3,
+        3
+      ],
+      "ranged": 1,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "FireflyBoss",
+      "uid": 1249,
+      "void_shock_immune": false,
+      "weapon_damage": 4,
+      "weapon_push": 0,
+      "weapon_target_behind": false,
+      "weapons": [
+        "FireflyAtkB"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 3,
+      "y": 3
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 2,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": false,
+      "hp": 3,
+      "infected": false,
+      "jumper": false,
+      "max_hp": 4,
+      "mech": false,
+      "minor": false,
+      "move": 2,
+      "powered": true,
+      "pushable": true,
+      "queued_origin": [
+        5,
+        2
+      ],
+      "ranged": 1,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "Spider2",
+      "uid": 1250,
+      "void_shock_immune": true,
+      "weapon_damage": 0,
+      "weapon_push": 0,
+      "weapon_target_behind": false,
+      "weapons": [
+        "SpiderAtk2"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 4,
+      "y": 3
+    },
+    {
+      "acid": true,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 2,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": true,
+      "hp": 5,
+      "infected": false,
+      "jumper": false,
+      "max_hp": 5,
+      "mech": false,
+      "minor": false,
+      "move": 2,
+      "powered": true,
+      "pushable": true,
+      "queued_origin": [
+        4,
+        2
+      ],
+      "queued_target": [
+        2,
+        1
+      ],
+      "queued_target_normalized": true,
+      "queued_target_raw": [
+        3,
+        2
+      ],
+      "ranged": 1,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "Centipede2",
+      "uid": 1251,
+      "void_shock_immune": false,
+      "weapon_damage": 2,
+      "weapon_push": 0,
+      "weapon_target_behind": false,
+      "weapons": [
+        "CentipedeAtk2"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 3,
+      "y": 1
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 2,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": true,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": false,
+      "hp": 2,
+      "infected": false,
+      "jumper": false,
+      "max_hp": 2,
+      "mech": false,
+      "minor": false,
+      "move": 2,
+      "powered": true,
+      "pushable": true,
+      "queued_origin": [
+        6,
+        5
+      ],
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "Jelly_Explode1",
+      "uid": 1252,
+      "void_shock_immune": true,
+      "weapons": [],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 4,
+      "y": 5
+    },
+    {
+      "acid": false,
+      "active": false,
+      "avoiding_mines": false,
+      "base_move": 0,
+      "burrower": false,
+      "corpse": false,
+      "corpse_on_death": false,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "grappled": false,
+      "guarding": false,
+      "has_queued_attack": true,
+      "hp": 1,
+      "infected": false,
+      "jumper": false,
+      "max_hp": 1,
+      "mech": false,
+      "minor": true,
+      "move": 0,
+      "powered": true,
+      "pushable": true,
+      "ranged": 0,
+      "shield": false,
+      "stable": false,
+      "team": 6,
+      "type": "WebbEgg1",
+      "uid": 1352,
+      "void_shock_immune": true,
+      "weapon_damage": 0,
+      "weapon_push": 0,
+      "weapon_target_behind": false,
+      "weapons": [
+        "WebeggHatch1"
+      ],
+      "web": false,
+      "web_probes": {
+        "IsGrappled": false
+      },
+      "x": 4,
+      "y": 6
+    }
+  ]
+}

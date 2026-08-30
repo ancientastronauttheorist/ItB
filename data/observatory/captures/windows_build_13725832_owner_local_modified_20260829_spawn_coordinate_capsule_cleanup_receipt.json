@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "kind": "observatory_spawn_coordinate_capsule_cleanup_receipt",
+  "capture_track": "owner_local_modified",
+  "sealed_at_utc": "2026-08-30T04:39:12Z",
+  "repository_base_commit": "eed2b0cd29323be04b879efd900d42b5653b6253",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifest": "8335438558621014449",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "lua_dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4"
+  },
+  "campaign_evidence": {
+    "receipt": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json",
+      "size": 51713,
+      "sha256": "c529484cd2bb1061ef2e3f3ccce80a61e5b9df94815b38ffcb8aa682ab7ef2a1"
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json",
+      "size": 5473,
+      "sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62"
+    },
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json",
+      "size": 4635,
+      "sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1"
+    }
+  },
+  "supersedes_pending_state": {
+    "receipt": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json",
+    "fields": [
+      "restore.install_restoration_pending",
+      "restore.cleanup_receipt_pending"
+    ],
+    "prior_value": true,
+    "resolved": true
+  },
+  "install_restore": {
+    "prior_accepted_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_enemy_materialized_effect_hw_restore_20260824.json",
+      "size": 125467,
+      "sha256": "1722cf568457f252a52627ad91bf79d2a48113b29deaf43a6f7bd6eb70978e48"
+    },
+    "post_cleanup_inventory": {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_post_spawn_coordinate_capsule_restore_20260829.json",
+      "size": 125465,
+      "sha256": "86d4eea67c80eda99a7370c7aea52e39862fe4beb4227849313b11e82efa1847"
+    },
+    "inventory_summary": {
+      "entry_count": 689,
+      "script_count": 305,
+      "map_count": 377,
+      "native_library_count": 6,
+      "executable_count": 1,
+      "changed_from_prior_accepted_restore": 0,
+      "missing_from_prior_accepted_restore": 0
+    },
+    "installed_modloader_before_sha256": "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c",
+    "installed_modloader_after_sha256": "5af8e809e6ed036084c84caed97f6a51a84785db2c2c0ee0c150da99adabf22d",
+    "experimental_dll_count": 3,
+    "experimental_dll_byte_count": 181248,
+    "remaining_experimental_file_count": 0,
+    "recoverable_owner_staging": {
+      "preserved": true,
+      "experimental_modloader_sha256": "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c",
+      "continue_helper_sha256": "e0c6766f6d2150616fc10224fa2d1d53c051a7171fd2e107267f1383a4fcc91a",
+      "rng_seed_helper_sha256": "bd6501c701b8c5f21dbaec309573ab654c7cf01a5705423e2c0ee554dd0e2787",
+      "capsule_observer_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9"
+    }
+  },
+  "save_restore": {
+    "pre_experiment_manifest": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_pre_experiment_save_manifest.json",
+      "size": 6645,
+      "sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+      "file_count": 32,
+      "byte_count": 2436295,
+      "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+    },
+    "final_live_tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "file_set_and_bytes_match_pre_experiment": true
+  },
+  "bridge_cleanup": {
+    "armed_snapshot_count_archived": 3,
+    "solver_recording_artifact_count_archived": 45,
+    "remaining_observatory_file_count": 0
+  },
+  "terminal_state": {
+    "game_process_running": false,
+    "spawn_coordinate_capsule_observer_installed": false,
+    "continue_helper_installed": false,
+    "rng_seed_helper_installed": false,
+    "experimental_modloader_installed": false
+  },
+  "claims": {
+    "proven": [
+      "The active owner save file set and bytes match the byte-exact 32-file pre-experiment snapshot.",
+      "The prior installed Mod Loader was restored byte-exactly and all three Observatory DLLs were removed from the active installation.",
+      "The post-cleanup installation matches all 689 entries in the prior accepted owner-local restore inventory.",
+      "No Observatory output or request remains in the active bridge and Breach.exe is stopped.",
+      "The removed runtime modules and experimental loader remain byte-exact in recoverable owner staging.",
+      "This receipt closes the campaign receipt's pending installation-cleanup fields."
+    ],
+    "not_proven": [
+      "Pristine Steam depot behavior; the campaign remains owner-local-modified.",
+      "That files outside the explicitly inventoried installation, save, bridge, and recoverable-staging roots were unchanged.",
+      "A stable selector-entry RNG state or future spawn coordinate from ordinary solver input."
+    ]
+  }
+}

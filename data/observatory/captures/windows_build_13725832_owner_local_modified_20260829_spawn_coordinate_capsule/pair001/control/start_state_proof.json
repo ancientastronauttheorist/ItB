@@ -1,0 +1,180 @@
+{
+  "game_stopped": true,
+  "kind": "observatory_rng_trial_start_state_verification",
+  "manifest": {
+    "capture_track": "owner_local_modified",
+    "file_count": 32,
+    "files": [
+      {
+        "relative_path": "log.txt",
+        "sha256": "5dd3e73c122eb593a872f4e47d919348f642c2ef72d72f3bf13ad7a816fa759c",
+        "size": 11731
+      },
+      {
+        "relative_path": "profile_Alpha/abandon_chemical_field_20260601_004909/active_session.json",
+        "sha256": "e78b5a597682e7e8c99b74364059184d78b53e8b44cec19bf8c612b860e29f73",
+        "size": 79242
+      },
+      {
+        "relative_path": "profile_Alpha/abandon_chemical_field_20260601_004909/saveData.lua",
+        "sha256": "d50ac0e19130a393175bfb36d0649f9f79f7f7be51e10ebda433fa4e1402dd2c",
+        "size": 30780
+      },
+      {
+        "relative_path": "profile_Alpha/abandon_chemical_field_20260601_004909/undoSave.lua",
+        "sha256": "1ccff6832a7d94e10982cf48499dd85942a3968f2eb3a42111fc3cc252159088",
+        "size": 30801
+      },
+      {
+        "relative_path": "profile_Alpha/archived_failed_immortal_20260531_181704/saveData.lua",
+        "sha256": "5bf584e4360900741277562a88576def9e3dcde3e8c9644014adfb4d0faccd5f",
+        "size": 23777
+      },
+      {
+        "relative_path": "profile_Alpha/archived_failed_immortal_20260531_181704/undoSave.lua",
+        "sha256": "9d8cb0f815047104d0b0caf15a697a3fd92bd573a57d88ea28c7cb2331068ac7",
+        "size": 23798
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/profile.lua",
+        "sha256": "0cf44aa314ef239b4461e51a36f604cda6d8248f89eb7ab48b1e375126c1670b",
+        "size": 135467
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/profile.lua.backup",
+        "sha256": "0c11bf2592900602fba36806f8f80bd0bd58c56655830072b8962180a4a1e87b",
+        "size": 135467
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/saveData.lua",
+        "sha256": "c3321f656a6b61eb4e81488096b9935e4336611ff64c6676796470dc347598e7",
+        "size": 29301
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/saveData.lua.backup",
+        "sha256": "c8740cc0d3c2a10caf27538727d2bee9f8d44db6a68d4f045ca7026cea7e5e08",
+        "size": 27716
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/undoSave.lua",
+        "sha256": "e4d1331675ff0ee455417fe6eab609355a2363ff08b4b3e6710bfc2edd9e66bc",
+        "size": 29322
+      },
+      {
+        "relative_path": "profile_Alpha/kia_result_archived_20260601_001820/undoSave.lua.backup",
+        "sha256": "09c65323a3677382febe623fed6f183326896dee95a0fa2bc20cfe7f72bc2bbe",
+        "size": 27737
+      },
+      {
+        "relative_path": "profile_Alpha/pre_primeleap_t2_20260531_182850/saveData.lua",
+        "sha256": "a520afb805bce86e17483f4df9f4e19cfa14162f7589352a31dfd5e25943256b",
+        "size": 27934
+      },
+      {
+        "relative_path": "profile_Alpha/pre_primeleap_t2_20260531_182850/undoSave.lua",
+        "sha256": "31b9c0ee7693ce22bff5e350694472be2ae65e3e03cc9d132caed18652b17d14",
+        "size": 27955
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua",
+        "sha256": "1322bcf80a356b636757d01e1c3c4f48c67de4a2955ae2422ca07ce552cf8725",
+        "size": 218727
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.backup",
+        "sha256": "e33686e12f9a007ac90f6682943980ee2c22459d618cf6e3148a042dbade146f",
+        "size": 218727
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.before_current_restore_20260628_022633",
+        "sha256": "4162d2b21d653d53560790adc537e063f32e739f82695481a0fa9068c9aa97ae",
+        "size": 186077
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.before_lets_walk_restore_20260628_022346",
+        "sha256": "4162d2b21d653d53560790adc537e063f32e739f82695481a0fa9068c9aa97ae",
+        "size": 186077
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.before_profile_backup_restore_20260628_022835",
+        "sha256": "75ff1eee77c4f1788225213d172b9950304b77f949ebef81ac64946e2fdec87c",
+        "size": 189087
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.before_region6_repair_20260624_1835",
+        "sha256": "e787fc491a714dd1b8cd1882cbb29af7f140e1bea7c2375674251d692eabffea",
+        "size": 180425
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.before_undosave_repair_20260624_1830",
+        "sha256": "e787fc491a714dd1b8cd1882cbb29af7f140e1bea7c2375674251d692eabffea",
+        "size": 180425
+      },
+      {
+        "relative_path": "profile_Alpha/profile.lua.recovery_before_restore_20260624_182137",
+        "sha256": "0eae265dea7c4114d517ad70be5915308995bcb64d2a65af0edc7c1b4a5b0e51",
+        "size": 180455
+      },
+      {
+        "relative_path": "profile_Alpha/recovery_before_saveData_restore_20260623_152231/undoSave.lua",
+        "sha256": "ae4ff67f8f83808e383863e74bdb30cc844ca8e81b8175efb9d3069d82965de6",
+        "size": 25282
+      },
+      {
+        "relative_path": "profile_Alpha/saveData.lua",
+        "sha256": "5a7d59c58a181ca160aac718299332490699e89f62a2074d8a7447ba4cb7ac08",
+        "size": 30700
+      },
+      {
+        "relative_path": "profile_Alpha/saveData.lua.before_clear_undosave_20260628_022744",
+        "sha256": "07d6e1d47b603c215a6cd66914feba90fc7cfad5394ee9638699c474338ebc98",
+        "size": 38610
+      },
+      {
+        "relative_path": "profile_Alpha/saveData.lua.before_region6_repair_20260624_1835",
+        "sha256": "324fa55e1476415114fe40597feb7c69fc0e50138d1e138594caf99fa92f3ec4",
+        "size": 29851
+      },
+      {
+        "relative_path": "profile_Alpha/saveData.lua.before_undosave_repair_20260624_1830",
+        "sha256": "cced885e494c9d4a41dc8b9983ea9fb74789f3e3e84f504a81cc54ae5ad66afa",
+        "size": 29873
+      },
+      {
+        "relative_path": "profile_Alpha/undoSave.lua",
+        "sha256": "951d62ee9183030e3ff360e96debc98f850a82f6bf384580fa57b9a9c1ec6862",
+        "size": 30721
+      },
+      {
+        "relative_path": "profile_Alpha/undoSave.lua.backup",
+        "sha256": "6a34ffc0f7d16554e5e563e0e7474f72e362c466fd62009c7da6e8c7cc674e6c",
+        "size": 30312
+      },
+      {
+        "relative_path": "profile_Alpha/undoSave.lua.before_lets_walk_restore_20260628_022346",
+        "sha256": "07d6e1d47b603c215a6cd66914feba90fc7cfad5394ee9638699c474338ebc98",
+        "size": 38610
+      },
+      {
+        "relative_path": "settings.lua",
+        "sha256": "a4a7abd4225e9f62b8e39137f15a7d0e79f4047664ca35856c74f5a59274b7c6",
+        "size": 1257
+      },
+      {
+        "relative_path": "steam_autocloud.vdf",
+        "sha256": "1fb5db1131d549f41d604f25bf8ba02baaab79dd2727b267e2266d9bbbb0077e",
+        "size": 51
+      }
+    ],
+    "kind": "observatory_rng_trial_start_state",
+    "profile": "Alpha",
+    "schema_version": 1,
+    "total_bytes": 2436295,
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+  },
+  "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+  "save_root": "C:\\Users\\BMO\\Documents\\My Games\\Into the Breach",
+  "schema_version": 1,
+  "snapshot_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\start_state",
+  "verified_at": "2026-08-30T04:01:18.258327+00:00"
+}

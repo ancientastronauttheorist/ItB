@@ -1,0 +1,86 @@
+{
+  "bridge": {
+    "mission_id": "Mission_Power",
+    "phase": "combat_player",
+    "spawning_tiles": [
+      [
+        6,
+        5
+      ]
+    ],
+    "turn": 2
+  },
+  "capture_id": "spawn-capsule-pair001-armed",
+  "claims": {
+    "candidate_vector_pairing_exact": true,
+    "complete_future_forecast": false,
+    "pawn_path_profile_at_entry_resolved": false,
+    "selector_entry_board_carriers_captured": true,
+    "shared_rng_state_exact": true,
+    "transient_dead_noncorpse_occupancy_resolved": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "position_observations_boundary_sha256": "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "scheduler_prebytes_sha256": "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7",
+    "selector_entry_prebytes_sha256": "19bad2162e08fd3b256f0af4024c51343feb7827eb43fd73dcfea11a662668d8",
+    "selector_fallback_prebytes_sha256": "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6",
+    "selector_region_sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+    "selector_standard_prebytes_sha256": "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011",
+    "spawn_candidate_boundary_sha256": "9f6785d16f6c1102a7fd6e52d656b1438a12b1a3f216cbb99e5cadd269f53b3f"
+  },
+  "integrity": {
+    "addresses_or_pointers_published": false,
+    "candidate_error_count": 0,
+    "capsule_error_count": 0,
+    "complete": true,
+    "debug_registers_armed": false,
+    "debug_registers_cleared": true,
+    "executable_bytes_modified": false,
+    "executable_file_released": true,
+    "overflow_count": 0,
+    "pairing_error_count": 0,
+    "pointer_fault_count": 0,
+    "rng_error_count": 0,
+    "seam_bytes_unchanged": true,
+    "state": "restored",
+    "torn_capsule_count": 0,
+    "torn_record_count": 0,
+    "transition_mismatch_count": 0,
+    "unexpected_breakpoint_count": 0,
+    "veh_installed": false,
+    "veh_removed": true,
+    "wrong_thread_count": 0
+  },
+  "kind": "spawn_coordinate_capsule_hw_correlation",
+  "native": {
+    "capsule_board_turns": [
+      1
+    ],
+    "capsule_count": 1,
+    "raw_rng_sequence": [
+      9054
+    ],
+    "selected_spawn_coordinates": [
+      [
+        6,
+        5
+      ]
+    ],
+    "selector_kinds": [
+      "selector_standard_draw"
+    ]
+  },
+  "reasons": [],
+  "schema_version": 1,
+  "snapshot_evidence_sha256": "86f6a1169f397d818fce622c3e34653c1f02106d56ca8af09fe72d87cc39d5cd",
+  "status": "correlated"
+}

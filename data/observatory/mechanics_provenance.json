@@ -1097,11 +1097,19 @@
         },
         {
           "classification": "fact",
-          "statement": "The exact v2 module was enumerated inside one fresh owner-local-modified game process and the separate bridge controller returned state=dormant consumed=false armed=false. No prepare or seed command ran, no VEH or debug register was armed, and no capsule snapshot existed. This proves dormant deployment only; no selector-time runtime capsule has been captured."
+          "statement": "The exact v2 module was first enumerated inside one fresh owner-local-modified game process and the separate bridge controller returned state=dormant consumed=false armed=false. No prepare or seed command ran, no VEH or debug register was armed, and no capsule snapshot existed. That receipt proves dormant deployment only; the later nine-condition campaign supplies selector-time runtime evidence."
         },
         {
           "classification": "fact",
-          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. The first live startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. A second startup passed the exact three-module preflight and acknowledged native Continue, but the external tasklist process enumerator exceeded its five-second timeout before bridge entry; no condition close method was proven, while the campaign final verifier found the game stopped and again reproduced the sealed tree. Process discovery now uses the native Windows process-snapshot API instead. A third startup reached an exact Mission_Power player turn with three live active player units, but the raw Lua bridge has no top-level active_mechs summary field; it closed through WM_CLOSE and final-restored the same tree. Readiness now derives the solver's active-player-actor count from the authoritative unit records, including weapon-bearing controllable allies. A fourth startup crossed bridge readiness and entered auto_turn, but the directly imported runner inherited the Windows legacy output codec and raised before returning its reservation when a board description contained a Unicode arrow; the boundary aborted, its pause guard succeeded, the process closed through WM_CLOSE, and the same tree final-restored. Imported trials now configure UTF-8 before solver output, and mutable recording roots resolve at call time so the external artifact root is honored. No live capsule boundary has been prepared and no End Turn has run."
+          "statement": "A fail-closed trial runner, condition lifecycle, and nine-condition campaign conductor now preflight the exact executable, installed capsule observer, Continue helper, RNG-seed helper, and build receipt before any save restore or session action; prove an identical sealed save tree while the game is stopped; bind each trial to a distinct Windows PID plus creation time; consume the one-shot native Continue request and require its exact startup ACK; reserve local End Turn only after all player actors are spent; keep the observer prepared through confirmed dispatch and the next player-turn bridge state; restore before a verified pause; consume only the exact copied snapshot; recover the exact launched identity for graceful close after a process-wait failure; gracefully close the same process without forced termination; and finally restore the original save even after a raised condition before importing and sealing three counterbalanced control/dormant/armed triplets. The full orchestration is synthetically validated. The first live startup was rejected before bridge entry, capsule preparation, or End Turn when the exact process reported that the cleaned-up Continue helper was absent; it then closed through WM_CLOSE and the campaign final-restored the sealed 32-file save tree exactly. A second startup passed the exact three-module preflight and acknowledged native Continue, but the external tasklist process enumerator exceeded its five-second timeout before bridge entry; no condition close method was proven, while the campaign final verifier found the game stopped and again reproduced the sealed tree. Process discovery now uses the native Windows process-snapshot API instead. A third startup reached an exact Mission_Power player turn with three live active player units, but the raw Lua bridge has no top-level active_mechs summary field; it closed through WM_CLOSE and final-restored the same tree. Readiness now derives the solver's active-player-actor count from the authoritative unit records, including weapon-bearing controllable allies. A fourth startup crossed bridge readiness and entered auto_turn, but the directly imported runner inherited the Windows legacy output codec and raised before returning its reservation when a board description contained a Unicode arrow; the boundary aborted, its pause guard succeeded, the process closed through WM_CLOSE, and the same tree final-restored. Imported trials now configure UTF-8 before solver output, and mutable recording roots resolve at call time so the external artifact root is honored. At that stage no live capsule boundary had been prepared and no End Turn had run."
+        },
+        {
+          "classification": "fact",
+          "statement": "The completed capsule campaign seals three counterbalanced control/dormant/armed triplets from nine distinct exact Windows processes and the same 32-file start tree. Native Continue and the synchronous reviewed native End Turn boundary succeeded in every condition; every process closed gracefully, the final save tree matched exactly, and nine isolated solver sessions contributed exactly 45 bound recording files. Each armed run captured one complete standard-selector capsule. All three selector-entry Board carrier hashes equal 5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a and all candidate-vector hashes equal 3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d. Exact shared-RNG transitions selected [6,5], [5,4], and [6,5], each matching the next bridge marker, and every observer restored without seam mutation or pointer publication. Control versus dormant outcomes already drifted in all three triplets, so the receipt explicitly classifies whole-game neutrality as not proven because the unarmed baseline is unstable."
+        },
+        {
+          "classification": "fact",
+          "statement": "The capsule cleanup receipt closes the campaign's remaining installation state. The baseline Mod Loader was restored byte-exactly, the capsule observer plus Continue and RNG-seed helpers were removed, no Observatory bridge residue remained, the post-cleanup installation matched all 689 entries in the prior accepted owner-local restore, the same 32-file save tree re-verified exactly, and Breach.exe was stopped. The removed modules and experimental loader remain byte-exact in recoverable owner staging."
         },
         {
           "classification": "fact",
@@ -1325,7 +1333,7 @@
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
         "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, and selector-time CRT state remain unavailable to ordinary solver input. A content-addressed atomic Board/RNG capsule observer, exact-build live trial runner, and counterbalanced campaign sealer now exist and pass an exact dormant/unconsumed live-load check plus static and synthetic orchestration checks, but no matched armed runtime capsule has been captured. Current ordered zone, both dangerous predicates, ground blocking, live Pawn Ranged/AvoidingMines flags, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, and selector-time CRT state remain unavailable to ordinary solver input. The content-addressed atomic Board/RNG capsule observer has now completed three counterbalanced live triplets: all three armed selector entries share exact Board carriers and candidate-vector hashes, and their exact RNG transitions replay the following bridge marker. The selector states differ, while all three unarmed control/dormant comparisons also drift, so the campaign cannot isolate whole-game observer neutrality or turn the restored save plus fixed seed into a stable prospective input. Current ordered zone, both dangerous predicates, ground blocking, live Pawn Ranged/AvoidingMines flags, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1467,6 +1475,26 @@
           ]
         },
         {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json",
+          "symbols": [
+            "selector_entry_board_rng_capsule_captured",
+            "not_proven_unarmed_baseline_drift",
+            "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+            "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d",
+            "recording_artifact_count"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_cleanup_receipt.json",
+          "symbols": [
+            "observatory_spawn_coordinate_capsule_cleanup_receipt",
+            "remaining_experimental_file_count",
+            "file_set_and_bytes_match_pre_experiment",
+            "changed_from_prior_accepted_restore",
+            "game_process_running"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
           "symbols": [
             "\"classification\":\"spawn_coordinate_direct_rng_resolved_shared_presentation_stream_blocks_stable_prediction\"",
@@ -1524,12 +1552,13 @@
         {
           "path": "tests/test_observatory_spawn_coordinate_capsule_trial.py",
           "symbols": [
-            "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
+            "test_control_trial_wraps_exact_native_end_turn_and_captures_next_turn",
             "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
+            "test_rejected_auto_turn_never_prepares_native_boundary",
             "test_build_identity_preflight_blocks_before_any_session_action",
             "test_process_identity_preflight_blocks_before_any_session_action",
             "test_start_state_preflight_blocks_before_any_session_action",
-            "test_imported_trial_configures_utf8_before_auto_turn",
+            "test_imported_trial_isolates_local_delivery_env_and_passes_native_boundary",
             "test_utf8_stdio_configuration_reconfigures_supported_streams",
             "test_late_artifact_root_redirects_imported_recording_directory"
           ]
@@ -1537,8 +1566,13 @@
         {
           "path": "tests/test_observatory_spawn_coordinate_capsule_campaign.py",
           "symbols": [
+            "test_committed_spawn_coordinate_capsule_campaign_rebuilds_exactly",
+            "test_committed_spawn_coordinate_capsules_replay_exact_rng_and_selection",
+            "test_spawn_coordinate_capsule_cleanup_closes_restore_and_binds_artifacts",
             "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
-            "test_capsule_campaign_rejects_semantic_outcome_drift",
+            "test_capsule_campaign_seals_unarmed_baseline_drift_without_claiming_neutrality",
+            "test_capsule_campaign_rejects_unbound_recording_directory",
+            "test_capsule_campaign_rejects_recording_identity_drift",
             "test_capsule_campaign_rejects_counterbalance_order_drift",
             "test_capsule_campaign_rejects_reused_process_identity",
             "test_capsule_campaign_rejects_forced_process_termination",
@@ -1595,7 +1629,8 @@
             "test_missing_support_module_attempt_is_rejected_before_trial_and_restored",
             "test_tasklist_timeout_attempt_fails_closed_and_final_restores",
             "test_missing_raw_active_mechs_attempt_fails_closed_and_final_restores",
-            "test_imported_trial_stdio_attempt_aborts_and_final_restores"
+            "test_imported_trial_stdio_attempt_aborts_and_final_restores",
+            "test_dirty_reservation_input_attempts_abort_before_boundary_and_restore"
           ]
         },
         {

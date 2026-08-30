@@ -1,0 +1,1160 @@
+{
+  "capsules": [
+    {
+      "block_spawn_values": [
+        {
+          "value": 0,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 0,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 1,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 2,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 3,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 4,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 5,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 6,
+          "y": 7
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 0
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 1
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 2
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 3
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 4
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 5
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 6
+        },
+        {
+          "value": 0,
+          "x": 7,
+          "y": 7
+        }
+      ],
+      "board_height": 8,
+      "board_turn": 1,
+      "board_width": 8,
+      "dangerous_points_a": [],
+      "dangerous_points_b": [],
+      "draw_seq": 0,
+      "pawn_id": 1353,
+      "pawn_team": 6,
+      "raw_rng": 4432,
+      "rng_state_after": "0x91501c58",
+      "rng_state_before": "0x9fff3779",
+      "selected_index": 2,
+      "selected_x": 5,
+      "selected_y": 4,
+      "selector_kind": "selector_standard_draw",
+      "seq": 0,
+      "spawn_markers": [],
+      "tiles": [
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 0,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 0,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 0,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 0,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 0,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 0,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 1,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 1,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 1,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 1,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 1,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1248
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 1,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 1,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 1,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 2,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 2,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 2,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 2,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 2,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 2,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 2,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 2,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 3,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1251
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 3,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            0
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 3,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1249
+          ],
+          "pod_state": 0,
+          "terrain": 2,
+          "x": 3,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 1,
+          "x": 3,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 3,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 3,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 3,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 1,
+          "terrain": 0,
+          "x": 4,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1250
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1252
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            1352
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 4,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 1,
+          "occupant_ids": [
+            2
+          ],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 5,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 2
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 6,
+          "y": 3
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 6,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 6,
+          "y": 7
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 7,
+          "y": 0
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 7,
+          "y": 1
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 7,
+          "y": 2
+        },
+        {
+          "acid": true,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 3,
+          "x": 7,
+          "y": 3
+        },
+        {
+          "acid": true,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 3,
+          "x": 7,
+          "y": 4
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 4,
+          "x": 7,
+          "y": 5
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 7,
+          "y": 6
+        },
+        {
+          "acid": false,
+          "dangerous_flag": false,
+          "item_present": false,
+          "occupancy_count": 0,
+          "occupant_ids": [],
+          "pod_state": 0,
+          "terrain": 0,
+          "x": 7,
+          "y": 7
+        }
+      ]
+    }
+  ],
+  "capture_id": "spawn-capsule-pair002-armed",
+  "draw_records": [
+    {
+      "candidate_count": 5,
+      "candidates": [
+        {
+          "x": 5,
+          "y": 2
+        },
+        {
+          "x": 5,
+          "y": 3
+        },
+        {
+          "x": 5,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 2
+        },
+        {
+          "x": 6,
+          "y": 5
+        }
+      ],
+      "kind": "selector_standard_draw",
+      "raw_rng": 4432,
+      "rng_quotient": 886,
+      "selected_index": 2,
+      "selected_x": 5,
+      "selected_y": 4,
+      "seq": 0
+    }
+  ],
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "position_observations_boundary_sha256": "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "scheduler_prebytes_sha256": "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7",
+    "selector_entry_prebytes_sha256": "19bad2162e08fd3b256f0af4024c51343feb7827eb43fd73dcfea11a662668d8",
+    "selector_fallback_prebytes_sha256": "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6",
+    "selector_region_sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+    "selector_standard_prebytes_sha256": "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011",
+    "spawn_candidate_boundary_sha256": "9f6785d16f6c1102a7fd6e52d656b1438a12b1a3f216cbb99e5cadd269f53b3f"
+  },
+  "integrity": {
+    "addresses_or_pointers_published": false,
+    "candidate_error_count": 0,
+    "capsule_error_count": 0,
+    "complete": true,
+    "debug_registers_armed": false,
+    "debug_registers_cleared": true,
+    "executable_bytes_modified": false,
+    "executable_file_released": true,
+    "overflow_count": 0,
+    "pairing_error_count": 0,
+    "pointer_fault_count": 0,
+    "rng_error_count": 0,
+    "seam_bytes_unchanged": true,
+    "state": "restored",
+    "torn_capsule_count": 0,
+    "torn_record_count": 0,
+    "transition_mismatch_count": 0,
+    "unexpected_breakpoint_count": 0,
+    "veh_installed": false,
+    "veh_removed": true,
+    "wrong_thread_count": 0
+  },
+  "kind": "native_spawn_coordinate_capsule_hw_observer_snapshot",
+  "observer_version": "observatory-spawn-coordinate-capsule-hw-observer/2",
+  "schema_version": 1,
+  "summary": {
+    "capsule_count": 1,
+    "capsule_entry_count": 1,
+    "draw_record_count": 1,
+    "last_capsule_sequence": 0,
+    "last_draw_sequence": 0,
+    "scheduler_count": 0,
+    "selector_count": 1,
+    "selector_fallback_count": 0,
+    "selector_standard_count": 1,
+    "thread_count": 1
+  }
+}

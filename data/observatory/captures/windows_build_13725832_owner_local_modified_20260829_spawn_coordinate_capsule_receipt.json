@@ -1,0 +1,941 @@
+{
+  "build_identity": {
+    "architecture": "x86",
+    "boundary_map_canonical_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "hardware_breakpoint_plan_sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+    "inventory_canonical_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "module_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+    "position_observations_boundary_sha256": "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "rng_state_owner_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    "spawn_candidate_boundary_sha256": "9f6785d16f6c1102a7fd6e52d656b1438a12b1a3f216cbb99e5cadd269f53b3f"
+  },
+  "campaign": {
+    "all_lifecycles_complete": true,
+    "all_process_identities_distinct": true,
+    "all_processes_gracefully_closed": true,
+    "all_recordings_bound_to_sessions": true,
+    "all_runtime_modules_exact": true,
+    "all_start_states_match": true,
+    "bridge_start_sha256": "58e1a119f5fde20dd51da43496a4e14a5c4707d344294d301b53debfcb983be9",
+    "condition_orders": [
+      [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      [
+        "dormant",
+        "armed",
+        "control"
+      ]
+    ],
+    "conditions": [
+      "control",
+      "dormant",
+      "armed"
+    ],
+    "dispatch_boundary": "synchronous_reviewed_native_end_turn",
+    "fixed_seed": 324508639,
+    "fresh_process_count": 9,
+    "mission_id": "Mission_Power",
+    "pair_count": 3,
+    "process_executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "recording_artifact_count": 45,
+    "recording_run_count": 9,
+    "source_session_sha256": "7713d617f726a718952df0c8c8b9ceb68e0c940db1e81a0e25934641e06c70ca",
+    "start_state_manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "start_state_tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45"
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "not_proven": [
+      "Transient dead non-corpse occupancy at selector entry.",
+      "The selected pawn's complete native path profile at selector entry.",
+      "A complete future spawn forecast from ordinary solver input; these captures expose native selector-time state, not all prior scheduling inputs.",
+      "Pristine-depot behavior; this is the attested owner-local-modified Windows build.",
+      "Whole-game capsule-observer neutrality; separate-process unarmed baselines already drifted, so armed outcome differences do not isolate an observer effect.",
+      "A stable selector-entry shared RNG state or selected coordinate from the restored save and fixed seed alone."
+    ],
+    "proven": [
+      "Every armed trial paired each selector-entry Board carrier capsule with the exact shared native RNG transition, candidate vector, selected index, and selected coordinate.",
+      "Each native selected coordinate matched the ordered spawning markers exposed by the fresh bridge state on the following player turn.",
+      "All three armed trials captured byte-identical selector-entry Board carriers and ordered candidate vectors; selector-entry RNG transitions and selected indexes are reported separately rather than assumed stable.",
+      "Every one-shot observer cleared its debug registers, removed its vectored exception handler, released the pinned executable, preserved every seam, published no pointer, and modified no executable bytes.",
+      "All nine trials used distinct Windows process identities bound to the exact attested Breach.exe path, size, and SHA-256.",
+      "Before each fresh process started, the game was stopped and the live save file set and bytes exactly matched the same sealed start-state manifest.",
+      "Each trial used the exact installed capsule observer, Continue helper, and RNG-seed helper; consumed the one-shot native Continue request; began from the same fresh bridge state and isolated source session; and ended by gracefully closing that exact process without forced termination.",
+      "All nine solver recording directories were bound to their isolated session run IDs, mission indexes, and pre-End-Turn turns; every board, solve input, solve result, threat audit, and resist probe was sealed into the campaign receipt.",
+      "Unarmed control-versus-dormant outcomes diverged in 3 of 3 triplets, so a restored save plus the fixed seed did not produce a stable upstream RNG position."
+    ]
+  },
+  "kind": "observatory_spawn_coordinate_capsule_hw_campaign_receipt",
+  "pairs": [
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/analysis.json",
+          "sha256": "9bfdfda72d39b7aa64fd5379b45043eed739712659f55174795e9041a0dc3a9b",
+          "size": 3049
+        },
+        "armed_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/lifecycle.json",
+          "sha256": "0df8b88ac4f44abeb289c2a04d526acb8b2396a87579372d6548fd3e616149a2",
+          "size": 5398
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/outcome.json",
+          "sha256": "2de13a0d7234a1338a67289c3af82a1bbf45dd184c9522ba4dc977b69c6dce1c",
+          "size": 22034
+        },
+        "armed_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_armed/m25_turn_01_board.json",
+          "sha256": "aa0e849c9834fea034dc385610806de8b6f639e48b4ebc979ae0fa10ee878408",
+          "size": 38421
+        },
+        "armed_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_armed/resist_probe.jsonl",
+          "sha256": "2e196b91d194b9ddeceddf60c4256d967cc698c4700014c9054580205859a036",
+          "size": 2434
+        },
+        "armed_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_armed/m25_turn_01_solve.json",
+          "sha256": "4a60fa93459c28e05efa1677251890dd0ad90f6f49abaca67497e85f2fb57d31",
+          "size": 169219
+        },
+        "armed_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_armed/m25_turn_01_solve_input.json",
+          "sha256": "b239f3acdea704f7430efce683a22023999cf92a4a795fa321093f0a649f1427",
+          "size": 36664
+        },
+        "armed_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_armed/m25_turn_01_threat_audit.json",
+          "sha256": "5e55faa855dcc99c6a06af96b01d77427a290bcd778a046edb9c824958a87a43",
+          "size": 2760
+        },
+        "armed_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/session.json",
+          "sha256": "24fb2aaba646306d02688d56aa0a49c16b883057430154f14aee1a4820a61602",
+          "size": 106769
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/snapshot.json",
+          "sha256": "49740161819ff192983238012591185baefbe1cbc3ace2c426ee3a3a762af01a",
+          "size": 25621
+        },
+        "armed_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/start_state_proof.json",
+          "sha256": "6e86125a268a1313f60b863c2ba86018b2f091f7629901ef472543b964f7cb8c",
+          "size": 7433
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/armed/trial.json",
+          "sha256": "1ed6a21dd7917216106a2247a08320604872e789d6c6fd8efa2a9cb245ae2057",
+          "size": 5345
+        },
+        "control_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/lifecycle.json",
+          "sha256": "9fea0cff54a04353639c9a864d79c56c947e3a70c1f478379387f9b530e8a5ed",
+          "size": 5407
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/outcome.json",
+          "sha256": "a42b5cada43af0e2d0f87b1e7a6793006f9bf5888d24fafb450330476ad78b1d",
+          "size": 22031
+        },
+        "control_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_board.json",
+          "sha256": "c67d3b226072c72bde434f97b7fa3e468cd68425b558fb9af012225acc9b369e",
+          "size": 38423
+        },
+        "control_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/resist_probe.jsonl",
+          "sha256": "94ae5dd265ea8c6bf8a5a00afed38546462bb790924a590694a0d03e3269d756",
+          "size": 2440
+        },
+        "control_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_solve.json",
+          "sha256": "83c71aa6f219480837d1be66344c517b4bc735c247fe8eb1f735647f217f56cd",
+          "size": 169216
+        },
+        "control_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_solve_input.json",
+          "sha256": "d8e4efd7467f7911fb8030d8b00edd974c2ebdd74b9d05e921a885de72762e1c",
+          "size": 36666
+        },
+        "control_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_threat_audit.json",
+          "sha256": "1334519b6e4ebedcbbd2f93a7d85fd7675a4da88ba1c1aee035894fd5f0094c6",
+          "size": 2762
+        },
+        "control_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/session.json",
+          "sha256": "ea71b698a10f7250a476f5d3be712dda5eb407408d2a441f4db9c1edccf76b1b",
+          "size": 106771
+        },
+        "control_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/start_state_proof.json",
+          "sha256": "322e2c1e7d7193d2537658d58561e8b8b910257436e4308e12480b9c0d405a6b",
+          "size": 7433
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/trial.json",
+          "sha256": "e8bff32515c2a3f33a9c6b90e2bfa788fdf70595eade8c7c33cdedbb38ce69da",
+          "size": 4123
+        },
+        "dormant_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/dormant/lifecycle.json",
+          "sha256": "6de90d7cdfee42a1d58347adb363d68e90808f1840394adcbaf7319f081045be",
+          "size": 5407
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/dormant/outcome.json",
+          "sha256": "f07fb359eb4255475719f8c378ab8b4d3ce5b709e099390348772c26fb0e155a",
+          "size": 22031
+        },
+        "dormant_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_dormant/m25_turn_01_board.json",
+          "sha256": "8d1921d67dc7a5405604c18a74a6dbc4476da6642a01fec04ff4e5f68086a7ca",
+          "size": 38423
+        },
+        "dormant_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_dormant/resist_probe.jsonl",
+          "sha256": "e01466b600492d042903498e8f4d23bd2f9e82b4478e8d4328f6aa85a7d70daa",
+          "size": 2440
+        },
+        "dormant_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_dormant/m25_turn_01_solve.json",
+          "sha256": "a8e3a1d2570c4a8d3c56f96925dd0c644eda07e94bec0b37dff6ef85655f9b45",
+          "size": 169222
+        },
+        "dormant_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_dormant/m25_turn_01_solve_input.json",
+          "sha256": "f2ff0fd38364730e1814e3b93a2e11410fbc3a718b9740a4b384a80ef3603610",
+          "size": 36666
+        },
+        "dormant_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_dormant/m25_turn_01_threat_audit.json",
+          "sha256": "b13c6491a12e827e0cb417bfe301f92ab709dfa17fa449986936c16c708277a4",
+          "size": 2762
+        },
+        "dormant_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/dormant/session.json",
+          "sha256": "04fb6b47e7bb3bf28dc0085263478cc97d1e98d491e34f43a6dedf9eb37abe1c",
+          "size": 106771
+        },
+        "dormant_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/dormant/start_state_proof.json",
+          "sha256": "0347dcd70485599200fe88074292e6935f23d8776e6594c7c4acb85015fb14c0",
+          "size": 7433
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/dormant/trial.json",
+          "sha256": "37a59a15913c879b4f9bf92afe60392124a07b014171872ef558afafacfdf431",
+          "size": 4123
+        }
+      },
+      "condition_order": [
+        "control",
+        "dormant",
+        "armed"
+      ],
+      "observation": {
+        "capsule_count": 1,
+        "capsules": [
+          {
+            "board_carriers_sha256": "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+            "board_turn": 1,
+            "candidate_vector_sha256": "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d",
+            "pawn_id": 1353,
+            "pawn_team": 6,
+            "raw_rng": 9054,
+            "rng_state_after": "0xa35eb7a4",
+            "rng_state_before": "0xecb653b5",
+            "selected": [
+              6,
+              5
+            ],
+            "selected_index": 4,
+            "selector_kind": "selector_standard_draw"
+          }
+        ],
+        "observation_sha256": "352af64f57f77a3ffc8f5b51db5efc0248aa2886eaca54c5d228e5cfc8ec1916"
+      },
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair001",
+      "pair_id": "spawn-capsule-pair001",
+      "whole_game_outcome": {
+        "control_armed": {
+          "capture_id": "spawn-capsule-pair001-armed",
+          "control_semantic_sha256": "18d4b110f9b2499307df10cb974a8161b2b85f829c5b93df24b4bad395d68849",
+          "control_state_sha256": "25f971072787ab72f953c5414442e320b6532a1f3a1ce7f9f85d5e6db1db24df",
+          "difference_count": 5,
+          "differences": [
+            {
+              "control": 5,
+              "exact_hook": 6,
+              "kind": "value",
+              "path": "/spawning_tiles/0/0"
+            },
+            {
+              "control": 4,
+              "exact_hook": 5,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            },
+            {
+              "control": true,
+              "exact_hook": false,
+              "kind": "value",
+              "path": "/units/0/active"
+            },
+            {
+              "control": true,
+              "exact_hook": false,
+              "kind": "value",
+              "path": "/units/1/active"
+            },
+            {
+              "control": true,
+              "exact_hook": false,
+              "kind": "value",
+              "path": "/units/2/active"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "ccea3c01ccb23053c57f604bbab2ea0cc42fb8fadff585bd8865151573445983",
+          "exact_hook_state_sha256": "019f052ba2057d3e40671118552a9dd2b4264ea67af1afbbee2af9e62a794bd8",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        },
+        "control_dormant": {
+          "capture_id": "spawn-capsule-pair001-dormant",
+          "control_semantic_sha256": "18d4b110f9b2499307df10cb974a8161b2b85f829c5b93df24b4bad395d68849",
+          "control_state_sha256": "25f971072787ab72f953c5414442e320b6532a1f3a1ce7f9f85d5e6db1db24df",
+          "difference_count": 2,
+          "differences": [
+            {
+              "control": 5,
+              "exact_hook": 6,
+              "kind": "value",
+              "path": "/spawning_tiles/0/0"
+            },
+            {
+              "control": 4,
+              "exact_hook": 2,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "8e4a02b144cbabeaa8cdac925f3a3cf20b645c62aab2739114a9c67344b0a63d",
+          "exact_hook_state_sha256": "7940695fa237e419b8507ecec363e2b9129807ef58f1481a1ec27307eafe082a",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        }
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/analysis.json",
+          "sha256": "af02d26b15a23838297f8c8ad860dc8caee0aa5d1de3c33a0ed38316deef4ba3",
+          "size": 3049
+        },
+        "armed_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/lifecycle.json",
+          "sha256": "09f42be1423be118cd361bc66d8bc6ab38cd236b265bac24a71f9456431d9a6a",
+          "size": 5394
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/outcome.json",
+          "sha256": "ebd1c8161f1ef2d358223f699b14d513c4fd286e4677c4f64051027447c99534",
+          "size": 22034
+        },
+        "armed_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_armed/m25_turn_01_board.json",
+          "sha256": "55661b1a032324e40be568535d2740e9f1a4d36d57bcf4f4145e09b4fa4ac0e2",
+          "size": 38421
+        },
+        "armed_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_armed/resist_probe.jsonl",
+          "sha256": "3093337f03ab80a339b06479ba9bb26616105b5ae272d079323850c3efbe75e9",
+          "size": 2434
+        },
+        "armed_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_armed/m25_turn_01_solve.json",
+          "sha256": "58338bcce468e46285096a4b545cec865df4ef2d6d52dba3780392c525613e48",
+          "size": 169219
+        },
+        "armed_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_armed/m25_turn_01_solve_input.json",
+          "sha256": "acf7d47c4137cef6525bab8fe71413246a16fa45c639a9c74131475cec650906",
+          "size": 36664
+        },
+        "armed_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_armed/m25_turn_01_threat_audit.json",
+          "sha256": "2d69c269a67995941cb875441db40702752e8c3d62db4e69ab660c962dd7d469",
+          "size": 2760
+        },
+        "armed_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/session.json",
+          "sha256": "d0beccb16c8818d9c4b066a46ed18bc0f6518d07c31276fbc02e791acec4b83c",
+          "size": 106769
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/snapshot.json",
+          "sha256": "1d34db2b89cf5bf285eafc6412d45a9fd8fd0960d74d829a2e620b988a43d0de",
+          "size": 25620
+        },
+        "armed_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/start_state_proof.json",
+          "sha256": "d658a0ca957278acd8cbe3ad15e95551624f09a9559ba3b1dd82916cef2fac65",
+          "size": 7433
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/armed/trial.json",
+          "sha256": "13998ae2ed07617886b905b8c3b7ba7715606601d1a395e5d5dc1c71ff108c9b",
+          "size": 5344
+        },
+        "control_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/lifecycle.json",
+          "sha256": "e785aaac427c7e87086a9a1bf7ed940a9608a90802d18bb4886daa7185641614",
+          "size": 5407
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/outcome.json",
+          "sha256": "a1dcd4e61cb203aa8bd95d224812a50cf01a8aa763b59648bcfb192a5868dd12",
+          "size": 22034
+        },
+        "control_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_board.json",
+          "sha256": "34d3c423c62ca758ef08e723370d9b32844e3d7008a539bd9c2b3723cdc96450",
+          "size": 38423
+        },
+        "control_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/resist_probe.jsonl",
+          "sha256": "4c0bcafa84890f4c14959de1ad730a4372f18b70123a8820332751ff95702871",
+          "size": 2440
+        },
+        "control_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_solve.json",
+          "sha256": "314f3900606b1c4144f0b080a3c6c382bce4a8002d66908870db172b199982a9",
+          "size": 169222
+        },
+        "control_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_solve_input.json",
+          "sha256": "ba319dd363e529aa458328161b9f6e60f95a3b08a80ecb9a0fd44e44cf2fdd6b",
+          "size": 36666
+        },
+        "control_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_threat_audit.json",
+          "sha256": "97c6b30b2413456e17c4bf787f91ea54c07ec04fb582396cd1fd5e4f92ff3c5f",
+          "size": 2762
+        },
+        "control_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/session.json",
+          "sha256": "b08d7bfddcf8beb0c6b8a9a4debe95291c5bb55de1c8c768c781682449a982f5",
+          "size": 106771
+        },
+        "control_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/start_state_proof.json",
+          "sha256": "83bb20ff5b41c5f35887b85cfb5506f8c5a5f8d04d596fed9780e922c6beecdd",
+          "size": 7433
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/trial.json",
+          "sha256": "3c310f07b11fd83ebc33107ae554312a4fdfee14b757a79b786d25929dd42287",
+          "size": 4123
+        },
+        "dormant_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/dormant/lifecycle.json",
+          "sha256": "ec74123d2f26ff6fb525d0ded922a674d94495a4359a06d141e7862e415fb554",
+          "size": 5407
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/dormant/outcome.json",
+          "sha256": "479eea98d982fb6c6c7e63253e7e21506291145146954c7501e598be0559dd47",
+          "size": 22034
+        },
+        "dormant_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_dormant/m25_turn_01_board.json",
+          "sha256": "aa35ccd70f85bdb14ebefb1c7bded8a6ed32cbe5a4659f52e62cfe6d065537a0",
+          "size": 38423
+        },
+        "dormant_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_dormant/resist_probe.jsonl",
+          "sha256": "dc3cf76e85d5a440216532f855a4c7d967ea73e315709a7e701e3e9a63cbd0b1",
+          "size": 2440
+        },
+        "dormant_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_dormant/m25_turn_01_solve.json",
+          "sha256": "04440d9058d25030c6ee05e9fe38bcc933eee45bb15548b875bc7961816ae17c",
+          "size": 169220
+        },
+        "dormant_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_dormant/m25_turn_01_solve_input.json",
+          "sha256": "07a510a970a972edc360dfe814dc54778e9bb7711b56cfeb9ba9cb91f17d8755",
+          "size": 36666
+        },
+        "dormant_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_dormant/m25_turn_01_threat_audit.json",
+          "sha256": "f50fdeee9c33e5a05a9c85e531934c955473ee4f63122d202a801c56203f8a37",
+          "size": 2762
+        },
+        "dormant_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/dormant/session.json",
+          "sha256": "d4d125fe4496703c74669a74233d1a0c6e744bbb3b30f04ed825e77e7d677f16",
+          "size": 106771
+        },
+        "dormant_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/dormant/start_state_proof.json",
+          "sha256": "d290514cd4b33432c5d889e9c10d6351124e3daecd959606daca91c315a86433",
+          "size": 7433
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/dormant/trial.json",
+          "sha256": "b34a2044e8ddf678047cd83d819edc4172237b6fab9184f1794b33a853305d07",
+          "size": 4123
+        }
+      },
+      "condition_order": [
+        "armed",
+        "control",
+        "dormant"
+      ],
+      "observation": {
+        "capsule_count": 1,
+        "capsules": [
+          {
+            "board_carriers_sha256": "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+            "board_turn": 1,
+            "candidate_vector_sha256": "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d",
+            "pawn_id": 1353,
+            "pawn_team": 6,
+            "raw_rng": 4432,
+            "rng_state_after": "0x91501c58",
+            "rng_state_before": "0x9fff3779",
+            "selected": [
+              5,
+              4
+            ],
+            "selected_index": 2,
+            "selector_kind": "selector_standard_draw"
+          }
+        ],
+        "observation_sha256": "31fbf8db16a60c1089cf3abe5e544ae484c02683694797da65f4ff0681f70a78"
+      },
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair002",
+      "pair_id": "spawn-capsule-pair002",
+      "whole_game_outcome": {
+        "control_armed": {
+          "capture_id": "spawn-capsule-pair002-armed",
+          "control_semantic_sha256": "81918fe74367b26722ffecbf6feaaa78a49140c25699e9b0e9bc6c1d0f16dce2",
+          "control_state_sha256": "45b53e4c1495ff735b1e3a3540e195a70064e6578418f9a9766cfe42b94dca5b",
+          "difference_count": 1,
+          "differences": [
+            {
+              "control": 3,
+              "exact_hook": 4,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "bbf19785ba82d5c32e0e57bd037c824dd70422885534c057288e577d05567e93",
+          "exact_hook_state_sha256": "e0f85ccd258bc83fac114689828da10d7656a7998c990f7f4fd982df9e0d3f0d",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        },
+        "control_dormant": {
+          "capture_id": "spawn-capsule-pair002-dormant",
+          "control_semantic_sha256": "81918fe74367b26722ffecbf6feaaa78a49140c25699e9b0e9bc6c1d0f16dce2",
+          "control_state_sha256": "45b53e4c1495ff735b1e3a3540e195a70064e6578418f9a9766cfe42b94dca5b",
+          "difference_count": 1,
+          "differences": [
+            {
+              "control": 3,
+              "exact_hook": 2,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "dd82cbe618ee7b85a8f86e448392b29d22e82b8c1c0fe0dde7c6f915a665eee7",
+          "exact_hook_state_sha256": "b9eea475b50011b360537c2654bf4271984cd3ba7d885119f60a86ccc0807a80",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        }
+      }
+    },
+    {
+      "artifacts": {
+        "armed_analysis": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/analysis.json",
+          "sha256": "32643bd1e383006a09dc0fb4bff8f7ec3338b31b39ee80ad3c659448041a7f59",
+          "size": 3050
+        },
+        "armed_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/lifecycle.json",
+          "sha256": "08ce2cfaf170e1ac20c438c3ec52c45c0bb9a0294f3069b04421e8ed1a951cd4",
+          "size": 5395
+        },
+        "armed_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/outcome.json",
+          "sha256": "4ce7a83f01136c427ce920299795f8172ec45e8fd95990d44aad8ca975a39eb3",
+          "size": 22034
+        },
+        "armed_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_armed/m25_turn_01_board.json",
+          "sha256": "6f8039aaa4ceda22d5e3b9baa9b7cfbf4f5b4da7a41151a132b509b0334af145",
+          "size": 38421
+        },
+        "armed_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_armed/resist_probe.jsonl",
+          "sha256": "14cec78a221b57cb7e02f78ff1d478f2ebd8c1d2ab6d5fecfdebc400cad73353",
+          "size": 2434
+        },
+        "armed_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_armed/m25_turn_01_solve.json",
+          "sha256": "ac279a907208a828264736cadd17600c98b99d8fdcaff08c9403b5eda95c032c",
+          "size": 169216
+        },
+        "armed_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_armed/m25_turn_01_solve_input.json",
+          "sha256": "27f0d4ff15d78a421248f7373d640be1d64c14dc1aaa6bc63274410c2ccbb9de",
+          "size": 36664
+        },
+        "armed_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_armed/m25_turn_01_threat_audit.json",
+          "sha256": "6abf1efd9b9de76763e428b2896266d5998634e8e7527c0e3bf4a8ad4b1074d3",
+          "size": 2760
+        },
+        "armed_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/session.json",
+          "sha256": "b8a41e58b546d52fec3930214b0db8124944518894d0f4df63b5329a8e82ee80",
+          "size": 106769
+        },
+        "armed_snapshot": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/snapshot.json",
+          "sha256": "d11b0e207f73ee669fb248c7bbc32900520c934aec2e113d11309022d7b440f9",
+          "size": 25623
+        },
+        "armed_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/start_state_proof.json",
+          "sha256": "229f479c53b53633c874aebc200be744b41dd9e5d2da6bc335852f1c626afb43",
+          "size": 7433
+        },
+        "armed_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/armed/trial.json",
+          "sha256": "eb20ea24ea925282965ac1056d2c992967c0f312a69e3390fd9427323c2fb173",
+          "size": 5344
+        },
+        "control_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/lifecycle.json",
+          "sha256": "207a9431aa6bb2b7187032fe617ecdf7de142cdaa6bd61daabb11835bc59ace3",
+          "size": 5410
+        },
+        "control_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/outcome.json",
+          "sha256": "ee81ddb4ec10c56136feab5c7839329fdc4a84dffff91e53f6440c978f476af9",
+          "size": 22034
+        },
+        "control_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_board.json",
+          "sha256": "a77517d252ac15d49ebc7d5e65a73c07bcf6c8757cbef5246c89ada24d48c2d1",
+          "size": 38423
+        },
+        "control_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/resist_probe.jsonl",
+          "sha256": "9d2cf65ebdcc5c7756c6a38f80be4f598ffaf6ace71057824bd73386464ef7c6",
+          "size": 2440
+        },
+        "control_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_solve.json",
+          "sha256": "2c79ec613c1056444d04521b1077a656db35b8369ed73988dfa8624003e9543a",
+          "size": 169220
+        },
+        "control_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_solve_input.json",
+          "sha256": "3ba8a9eb079daf702baafdf4bcc04dfd7797cf4d4b2778b24f72b09eb2b3fd91",
+          "size": 36666
+        },
+        "control_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_threat_audit.json",
+          "sha256": "834d40d842353f0f64417dd64b9f3d4dd4fcd7ef20594a44471ccc5d95a9fc06",
+          "size": 2762
+        },
+        "control_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/session.json",
+          "sha256": "b112162fac8ca450e18316635eae8c2b4f930747bf58ad8dbee428b437a9e8bd",
+          "size": 106771
+        },
+        "control_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/start_state_proof.json",
+          "sha256": "cc327aa8c93899f1854c0d6571feed70ef174686d229531a17ab69bd99285f03",
+          "size": 7433
+        },
+        "control_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/trial.json",
+          "sha256": "96e0ae6f5c41aa525c9724fa59c5fdda163bdeb99067f9b5119f1b50f5e56675",
+          "size": 4124
+        },
+        "dormant_lifecycle": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/dormant/lifecycle.json",
+          "sha256": "f4682c07cae5a7d995b7f724ebe41624865493fa305dbe4cb2454c05abde3abd",
+          "size": 5408
+        },
+        "dormant_outcome": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/dormant/outcome.json",
+          "sha256": "0e60fff86f680bdf0b85b3fa284eba7d2bc2a29e655f74ffed1f50a4c6a14645",
+          "size": 22034
+        },
+        "dormant_recording_board": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_dormant/m25_turn_01_board.json",
+          "sha256": "807dafd1f9631db6439657620aee04409bca113d0daed40d8d6fe68ecc3ba26a",
+          "size": 38423
+        },
+        "dormant_recording_resist_probe": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_dormant/resist_probe.jsonl",
+          "sha256": "7cb4556f2f7b93cf348ba7823f8c1f3fe0bed48ed43a7b4c3e06ae87a492381d",
+          "size": 2440
+        },
+        "dormant_recording_solve": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_dormant/m25_turn_01_solve.json",
+          "sha256": "d3cec18bd63e71425130938d295d1972773cd9ab0ef665caf74ba45abc54986b",
+          "size": 169220
+        },
+        "dormant_recording_solve_input": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_dormant/m25_turn_01_solve_input.json",
+          "sha256": "5c483a15c391baea971bd9cdba01741c93c5dd4071e494b1a9de057b22bfbec2",
+          "size": 36666
+        },
+        "dormant_recording_threat_audit": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_dormant/m25_turn_01_threat_audit.json",
+          "sha256": "e5a380d3d5d6fcef2be1a066d1087437718c69a5588ffc1cbda665f06edd4a43",
+          "size": 2762
+        },
+        "dormant_session": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/dormant/session.json",
+          "sha256": "8330986fa102a0f8c07a39dc0706cf58fde4c53bde52a458f02d20af619c928c",
+          "size": 106771
+        },
+        "dormant_start_state_proof": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/dormant/start_state_proof.json",
+          "sha256": "169747924e3cfc04e61700ccead33609b28aab9dbe7557894860712f746a7d8d",
+          "size": 7433
+        },
+        "dormant_trial": {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/dormant/trial.json",
+          "sha256": "5ad1f37cf244af8a12239276a3b3fb54fa30d1a37cd0bf7b3a343fa1b787ec36",
+          "size": 4123
+        }
+      },
+      "condition_order": [
+        "dormant",
+        "armed",
+        "control"
+      ],
+      "observation": {
+        "capsule_count": 1,
+        "capsules": [
+          {
+            "board_carriers_sha256": "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+            "board_turn": 1,
+            "candidate_vector_sha256": "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d",
+            "pawn_id": 1353,
+            "pawn_team": 6,
+            "raw_rng": 14069,
+            "rng_state_after": "0xb6f50330",
+            "rng_state_before": "0x30f73531",
+            "selected": [
+              6,
+              5
+            ],
+            "selected_index": 4,
+            "selector_kind": "selector_standard_draw"
+          }
+        ],
+        "observation_sha256": "e91d68e3da98ddff6c9686586b74b5e8ca70205dbe177b3bac8c2c0e7a207834"
+      },
+      "observer_integrity": {
+        "addresses_or_pointers_published": false,
+        "complete": true,
+        "debug_registers_cleared": true,
+        "executable_bytes_modified": false,
+        "executable_file_released": true,
+        "seam_bytes_unchanged": true,
+        "state": "restored",
+        "veh_removed": true
+      },
+      "pair": "pair003",
+      "pair_id": "spawn-capsule-pair003",
+      "whole_game_outcome": {
+        "control_armed": {
+          "capture_id": "spawn-capsule-pair003-armed",
+          "control_semantic_sha256": "81918fe74367b26722ffecbf6feaaa78a49140c25699e9b0e9bc6c1d0f16dce2",
+          "control_state_sha256": "73687e29feb1d512c90de7382446388a61ddaa1b9945d459b07a1435a366145d",
+          "difference_count": 2,
+          "differences": [
+            {
+              "control": 5,
+              "exact_hook": 6,
+              "kind": "value",
+              "path": "/spawning_tiles/0/0"
+            },
+            {
+              "control": 3,
+              "exact_hook": 5,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "ccea3c01ccb23053c57f604bbab2ea0cc42fb8fadff585bd8865151573445983",
+          "exact_hook_state_sha256": "38a606de0e0ae83c0acc4ce701b7f1ead5e821ef91b4891784e2b27a3b0c5a1e",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        },
+        "control_dormant": {
+          "capture_id": "spawn-capsule-pair003-dormant",
+          "control_semantic_sha256": "81918fe74367b26722ffecbf6feaaa78a49140c25699e9b0e9bc6c1d0f16dce2",
+          "control_state_sha256": "73687e29feb1d512c90de7382446388a61ddaa1b9945d459b07a1435a366145d",
+          "difference_count": 2,
+          "differences": [
+            {
+              "control": 5,
+              "exact_hook": 6,
+              "kind": "value",
+              "path": "/spawning_tiles/0/0"
+            },
+            {
+              "control": 3,
+              "exact_hook": 2,
+              "kind": "value",
+              "path": "/spawning_tiles/0/1"
+            }
+          ],
+          "differences_truncated": false,
+          "exact_hook_semantic_sha256": "cba8179a62b2bdeadb28822f9d40f5e4b88b1a11b93c4b1d7b3d4b13258dafbc",
+          "exact_hook_state_sha256": "37da15c7ff7050cc4bd9cba47a30757af10fc34e5bc8522b3abcfad252d3ab99",
+          "ignored_top_level_fields": [
+            "timestamp"
+          ],
+          "kind": "observatory_rng_trial_outcome_comparison",
+          "schema_version": 1,
+          "status": "mismatched"
+        }
+      }
+    }
+  ],
+  "restore": {
+    "cleanup_receipt_pending": true,
+    "final_restore_manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "final_restore_tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "final_restore_verified_at": "2026-08-30T04:08:10.934276+00:00",
+    "install_restoration_pending": true,
+    "save_restoration_pending": false
+  },
+  "results": {
+    "all_armed_observations_match": false,
+    "all_fixed_scenario_outcomes_match": false,
+    "all_semantic_outcomes_match": false,
+    "armed_observation_sha256s": [
+      "352af64f57f77a3ffc8f5b51db5efc0248aa2886eaca54c5d228e5cfc8ec1916",
+      "31fbf8db16a60c1089cf3abe5e544ae484c02683694797da65f4ff0681f70a78",
+      "e91d68e3da98ddff6c9686586b74b5e8ca70205dbe177b3bac8c2c0e7a207834"
+    ],
+    "capsule_counts": [
+      1,
+      1,
+      1
+    ],
+    "classification": "selector_entry_board_rng_capsule_captured",
+    "complete_restored_snapshots": 3,
+    "control_armed_mismatch_count": 3,
+    "control_dormant_mismatch_count": 3,
+    "draw_counts": [
+      1,
+      1,
+      1
+    ],
+    "neutrality_status": "not_proven_unarmed_baseline_drift",
+    "semantic_sha256": null,
+    "stable_armed_observation_sha256": null,
+    "stable_board_carriers_sha256": "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a",
+    "stable_candidate_vector_sha256": "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d"
+  },
+  "schema_version": 3,
+  "solver_conformance": {
+    "capture_backed_test": "test_committed_spawn_coordinate_capsule_campaign_rebuilds_exactly",
+    "offline_model": "src.observatory.spawn_coordinate_capsule_hw.validate_spawn_coordinate_capsule_snapshot",
+    "reason": "The Rust simulator consumes authoritative settled spawn markers; the capsule does not yet expose every earlier native scheduling input needed for prospective forecasting.",
+    "resolved_rule": "At each observed spawn selector, pair the exact selector-entry Board carriers and shared MSVC RNG transition with the ordered candidate vector and chosen coordinate",
+    "rust_change_required": false,
+    "simulator_version_bump_required": false
+  },
+  "supporting_artifacts": {
+    "campaign_lifecycle": {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/campaign_lifecycle.json",
+      "sha256": "001b17b428f99d316ab164a6d2c296eef0073a3d50cdf4479f56d2e62c0e5ca0",
+      "size": 9934
+    },
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json",
+      "sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+      "size": 4635
+    },
+    "observer_build_receipt": {
+      "path": "data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json",
+      "sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+      "size": 5473
+    }
+  }
+}

@@ -52,6 +52,14 @@ from src.observatory.start_state_proof import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CAPTURE_ROOT = ROOT / "data" / "observatory" / "captures" / (
+    "windows_build_13725832_owner_local_modified_20260829_"
+    "spawn_coordinate_capsule"
+)
+CAPTURE_RECEIPT = CAPTURE_ROOT.with_name(CAPTURE_ROOT.name + "_receipt.json")
+CLEANUP_RECEIPT = CAPTURE_ROOT.with_name(
+    CAPTURE_ROOT.name + "_cleanup_receipt.json"
+)
 
 
 def _write(path: Path, value: object) -> None:
@@ -75,6 +83,153 @@ def _object_sha256(value: object) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def test_committed_spawn_coordinate_capsule_campaign_rebuilds_exactly():
+    receipt = json.loads(CAPTURE_RECEIPT.read_text(encoding="utf-8"))
+    rebuilt = build_spawn_coordinate_capsule_campaign_receipt(
+        CAPTURE_ROOT,
+        repository_root=ROOT,
+    )
+
+    assert rebuilt == receipt
+    assert _file_sha256(CAPTURE_RECEIPT) == (
+        "c529484cd2bb1061ef2e3f3ccce80a61e5b9df94815b38ffcb8aa682ab7ef2a1"
+    )
+    assert receipt["results"] == {
+        "all_armed_observations_match": False,
+        "all_fixed_scenario_outcomes_match": False,
+        "all_semantic_outcomes_match": False,
+        "armed_observation_sha256s": [
+            "352af64f57f77a3ffc8f5b51db5efc0248aa2886eaca54c5d228e5cfc8ec1916",
+            "31fbf8db16a60c1089cf3abe5e544ae484c02683694797da65f4ff0681f70a78",
+            "e91d68e3da98ddff6c9686586b74b5e8ca70205dbe177b3bac8c2c0e7a207834",
+        ],
+        "capsule_counts": [1, 1, 1],
+        "classification": "selector_entry_board_rng_capsule_captured",
+        "complete_restored_snapshots": 3,
+        "control_armed_mismatch_count": 3,
+        "control_dormant_mismatch_count": 3,
+        "draw_counts": [1, 1, 1],
+        "neutrality_status": "not_proven_unarmed_baseline_drift",
+        "semantic_sha256": None,
+        "stable_armed_observation_sha256": None,
+        "stable_board_carriers_sha256": (
+            "5fb3354f837979a17e37a4a368f5c3dbc1459ba44b16f3f21b21e55ba026871a"
+        ),
+        "stable_candidate_vector_sha256": (
+            "3c9733ff4d200282228073e351866fc7eead975aeec471d2214ab00e6bf5950d"
+        ),
+    }
+    assert receipt["campaign"]["fresh_process_count"] == 9
+    assert receipt["campaign"]["recording_run_count"] == 9
+    assert receipt["campaign"]["recording_artifact_count"] == 45
+    assert sum(len(pair["artifacts"]) for pair in receipt["pairs"]) == 96
+    assert all(
+        pair["whole_game_outcome"][condition]["status"] == "mismatched"
+        and pair["whole_game_outcome"][condition]["differences_truncated"]
+        is False
+        for pair in receipt["pairs"]
+        for condition in ("control_dormant", "control_armed")
+    )
+
+
+def test_committed_spawn_coordinate_capsules_replay_exact_rng_and_selection():
+    receipt = json.loads(CAPTURE_RECEIPT.read_text(encoding="utf-8"))
+    expected = [
+        ("0xecb653b5", 9054, "0xa35eb7a4", 4, [6, 5]),
+        ("0x9fff3779", 4432, "0x91501c58", 2, [5, 4]),
+        ("0x30f73531", 14069, "0xb6f50330", 4, [6, 5]),
+    ]
+
+    for pair, (before, raw_rng, after, selected_index, selected) in zip(
+        receipt["pairs"],
+        expected,
+        strict=True,
+    ):
+        capsule = pair["observation"]["capsules"][0]
+        advanced = advance_state(int(before, 16))
+        assert f"0x{advanced:08x}" == after
+        assert result_from_advanced_state(advanced) == raw_rng
+        assert capsule["rng_state_before"] == before
+        assert capsule["raw_rng"] == raw_rng
+        assert capsule["rng_state_after"] == after
+        assert capsule["selected_index"] == selected_index
+        assert capsule["selected"] == selected
+        assert capsule["selector_kind"] == "selector_standard_draw"
+        assert pair["observer_integrity"]["state"] == "restored"
+        assert pair["observer_integrity"]["seam_bytes_unchanged"] is True
+
+
+def test_spawn_coordinate_capsule_cleanup_closes_restore_and_binds_artifacts():
+    cleanup = json.loads(CLEANUP_RECEIPT.read_text(encoding="utf-8"))
+
+    assert cleanup["kind"] == "observatory_spawn_coordinate_capsule_cleanup_receipt"
+    assert cleanup["supersedes_pending_state"]["resolved"] is True
+    assert cleanup["install_restore"]["inventory_summary"] == {
+        "changed_from_prior_accepted_restore": 0,
+        "entry_count": 689,
+        "executable_count": 1,
+        "map_count": 377,
+        "missing_from_prior_accepted_restore": 0,
+        "native_library_count": 6,
+        "script_count": 305,
+    }
+    assert cleanup["install_restore"]["remaining_experimental_file_count"] == 0
+    assert cleanup["bridge_cleanup"]["remaining_observatory_file_count"] == 0
+    assert cleanup["save_restore"][
+        "file_set_and_bytes_match_pre_experiment"
+    ] is True
+    assert cleanup["terminal_state"] == {
+        "continue_helper_installed": False,
+        "experimental_modloader_installed": False,
+        "game_process_running": False,
+        "rng_seed_helper_installed": False,
+        "spawn_coordinate_capsule_observer_installed": False,
+    }
+    for section, key in (
+        ("campaign_evidence", "receipt"),
+        ("campaign_evidence", "observer_build_receipt"),
+        ("campaign_evidence", "hardware_breakpoint_plan"),
+        ("install_restore", "prior_accepted_inventory"),
+        ("install_restore", "post_cleanup_inventory"),
+        ("save_restore", "pre_experiment_manifest"),
+    ):
+        artifact = cleanup[section][key]
+        path = ROOT / artifact["path"]
+        assert path.stat().st_size == artifact["size"]
+        assert _file_sha256(path) == artifact["sha256"]
+
+    inventory = json.loads(
+        (
+            ROOT
+            / cleanup["install_restore"]["post_cleanup_inventory"]["path"]
+        ).read_text(encoding="utf-8")
+    )
+    scripts = {
+        item["path"]: item
+        for item in inventory["content"]["scripts"]["files"]
+    }
+    assert scripts["scripts/modloader.lua"] == {
+        "path": "scripts/modloader.lua",
+        "sha256": (
+            "5af8e809e6ed036084c84caed97f6a51"
+            "a84785db2c2c0ee0c150da99adabf22d"
+        ),
+        "size": 315686,
+    }
+    assert all(
+        "observatory" not in item["path"].lower()
+        for item in inventory["native_libraries"]
+    )
+    manifest = json.loads(
+        (
+            ROOT / cleanup["save_restore"]["pre_experiment_manifest"]["path"]
+        ).read_text(encoding="utf-8")
+    )
+    assert manifest["tree_sha256"] == cleanup["save_restore"][
+        "final_live_tree_sha256"
+    ]
 
 
 def _process_identity(repo: Path, *, pid: int, created_at: str) -> dict:

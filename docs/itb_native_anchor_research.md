@@ -36,19 +36,22 @@ record control word `0x027F` (nearest-even). All control/dormant/armed outcomes
 match, and every debug register, VEH, file handle, and image seam is restored.
 A later coordinate hardware observer resolves the standard selector's ordered
 candidates, direct shared-RNG caller, and modulo rule. Three same-process
-   coordinate/RNG captures show that the selector ordinal is not stable under a
-   restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
-   environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
-   observer neutrality, complete upstream replay, runtime inputs for the special
-   coordinate paths, and broader selected-action paths remain unresolved. A new
-   content-addressed v2 observer now captures the complete selector-entry
-   Board/RNG carrier set without detours or pointer publication. Its reproducible
-   scalar hot path is attested and the exact module passed a live
-   dormant/unconsumed/unarmed load check, but no prepare or armed capsule capture
-   has run. One complete Firefly1 runtime candidate payload plus selector-entry
-   state is already sealed by the earlier campaign; ordinary prospective
-   delivery and equivalent payloads for other shapes remain unresolved. Native
-   score adjustment around that payload is no longer
+coordinate/RNG captures show that the selector ordinal is not stable under a
+restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
+environment-XP, and Lua draws share the upstream stream. The content-addressed
+v2 observer has now completed three counterbalanced live triplets. Every armed
+trial captures one exact selector-entry Board/RNG capsule without detours or
+pointer publication; all three have byte-identical Board carriers and candidate
+vectors, and exact RNG replay selects the following bridge marker. The three
+selector-entry RNG states differ, and all three unarmed control/dormant
+comparisons also choose different coordinates, so whole-game observer
+neutrality and a stable future state from save plus fixed seed remain unproven.
+Complete upstream replay, runtime inputs for the special coordinate paths, and
+broader selected-action paths remain unresolved. One complete Firefly1 runtime
+candidate payload plus selector-entry state is already sealed by the earlier
+enemy campaign; ordinary prospective delivery and equivalent payloads for
+other shapes remain unresolved. Native score adjustment around that payload is
+no longer
 anonymous: a later exact-build continuation names the
 injured/health/weapon/history/priority fields and closes the positioning clamp
 and target-score modifier arithmetic. The post-callback record tournament is
@@ -161,6 +164,18 @@ The durable artifacts are:
 - `data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`
   for exact in-process module enumeration and the strict dormant, unconsumed,
   unarmed load ACK before any prepare/seed command or snapshot;
+- `data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json`
+  for three complete counterbalanced control/dormant/armed triplets, nine
+  distinct exact processes and isolated sessions, 45 sealed solver recording
+  artifacts, three exact selector-entry Board/RNG capsules, byte-identical
+  Board carriers and candidate vectors, exact RNG-to-coordinate replay, clean
+  observer restoration, exact final save restoration, and the explicit
+  `not_proven_unarmed_baseline_drift` neutrality classification;
+- `data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_cleanup_receipt.json`
+  for the byte-exact baseline Mod Loader restore, removal of all three active
+  experimental DLLs, a post-cleanup inventory identical across all 689 entries
+  to the prior accepted owner-local restore, empty bridge residue, the still-
+  exact 32-file save tree, stopped game, and recoverable owner staging;
 - `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` plus
   `src/observatory/spawn_coordinate_capsule_turn.py` for exact build/executable/
   process/start-state preflight, post-actor local End Turn reservation, prepare-
@@ -1027,14 +1042,25 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    terrain, ACID, and existing-marker gates are exact. Candidate-time
    `Board:IsDangerous`, BlockSpawn values, and the future pre-call CRT state
    remain unavailable inputs, not unknown native semantics.
-   **Selector-entry capsule implementation complete; runtime capture pending:**
-   the v2 observer copies Board width/height/turn, Pawn ID/team, all 64 tile and
-   pointer-free occupancy records, the full Point-keyed `BlockSpawn` map,
-   spawn/danger vectors, exact shared CRT state, and the paired selector draw.
-   Two `/Brepro` builds match byte-for-byte, and the 5,946-byte scalar hot
-   section has no calls, APIs, or x87/MMX/SSE/AVX instructions. The exact module
-   passed a live owner-process load check in state `dormant`, `consumed=false`,
-   `armed=false`; no matched control/dormant/armed capsule has yet been run.
+   **Selector-entry capsule runtime capture complete:** the v2 observer copies
+   Board width/height/turn, Pawn ID/team, all 64 tile and pointer-free occupancy
+   records, the full Point-keyed `BlockSpawn` map, spawn/danger vectors, exact
+   shared CRT state, and the paired selector draw. Two `/Brepro` builds match
+   byte-for-byte, and the 5,946-byte scalar hot section has no calls, APIs, or
+   x87/MMX/SSE/AVX instructions. Three counterbalanced live triplets used nine
+   distinct exact processes and the same sealed 32-file save tree. Every armed
+   run captured one complete standard-selector capsule; all three Board carrier
+   hashes are `5fb3354f...26871a`, all three ordered candidate-vector hashes are
+   `3c9733ff...950d`, and exact transitions from `0xecb653b5`, `0x9fff3779`,
+   and `0x30f73531` select `[6,5]`, `[5,4]`, and `[6,5]` respectively. All
+   coordinates match the next bridge marker and every observer restores cleanly.
+   Control/dormant outcomes already drift in 3/3 triplets, so the campaign does
+   not claim whole-game observer neutrality or a stable selector-entry state
+   from the restored save and fixed seed. It seals all nine sessions and 45
+   solver recordings and final-restores the save tree exactly. The matching
+   cleanup receipt restores the baseline Mod Loader, removes the three active
+   runtime DLLs, matches the prior accepted 689-entry installation, leaves no
+   bridge residue, re-verifies the same save tree, and proves the game stopped.
 4. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620

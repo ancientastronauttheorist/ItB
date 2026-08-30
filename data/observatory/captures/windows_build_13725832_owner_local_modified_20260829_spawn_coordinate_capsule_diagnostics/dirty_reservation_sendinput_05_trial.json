@@ -1,0 +1,1209 @@
+{
+  "analysis": null,
+  "artifact_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005",
+  "auto_turn": {
+    "score": -97657.71403428487,
+    "status": "SAFETY_BLOCKED",
+    "turn": 1
+  },
+  "boundary": {
+    "abort_ack": null,
+    "capture_id": "spawn-capsule-pair001-control",
+    "condition": "control",
+    "finish_ack": null,
+    "prepare_ack": null,
+    "state": "aborted"
+  },
+  "build_receipt_sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+  "capture_id": "spawn-capsule-pair001-control",
+  "capture_track": "owner_local_modified",
+  "condition": "control",
+  "created_at": "2026-08-30T03:04:38.309852+00:00",
+  "dispatch": null,
+  "errors": {
+    "abort": "",
+    "analysis": "",
+    "dispatch": "",
+    "finish": "",
+    "pause": "",
+    "pre_dispatch": "",
+    "reservation": "auto_turn did not create an opaque local reservation",
+    "snapshot_consume": "",
+    "wait": ""
+  },
+  "kind": "observatory_spawn_coordinate_capsule_turn_trial",
+  "module_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+  "outcome": null,
+  "pair_id": "spawn-capsule-pair001",
+  "pause_guard": {
+    "capture_result": {
+      "pruned_screenshots": 0,
+      "rect": "806,237,1296,759",
+      "screenshot_cap": 90,
+      "screenshot_path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\run_notes\\lightning_war_smoke_2026-08-29\\screenshots\\001_spawn_capsule_spawn_capsule_pair001_control.png",
+      "status": "OK"
+    },
+    "evidence_ui": {
+      "confidence": 0.2,
+      "dark_overlay_fraction": 1.0,
+      "ocr": {
+        "error": "macOS OCR unavailable: No module named 'objc'",
+        "status": "UNAVAILABLE"
+      },
+      "recommended_control": null,
+      "scores": {
+        "bottom_continue_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            855,
+            602,
+            1155,
+            698
+          ],
+          "pixels": 28800,
+          "score": 0.0
+        },
+        "bottom_continue_panel_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            735,
+            470,
+            885,
+            511
+          ],
+          "pixels": 6150,
+          "score": 0.0
+        },
+        "deployment_screen": {
+          "crop": [
+            240,
+            86,
+            980,
+            616
+          ],
+          "pixels": 392200,
+          "score": 0.0,
+          "yellow": 0
+        },
+        "island_complete_leave": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            511,
+            643,
+            771,
+            711
+          ],
+          "pixels": 17680,
+          "score": 0.0
+        },
+        "island_map": {
+          "colored": 0,
+          "crop": [
+            420,
+            163,
+            1120,
+            664
+          ],
+          "green": 0,
+          "pixels": 350700,
+          "red": 0,
+          "score": 0.0
+        },
+        "kia_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            486,
+            383,
+            846,
+            469
+          ],
+          "pixels": 30960,
+          "score": 0.0
+        },
+        "mech_loadout_screen": {
+          "header": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              140,
+              135,
+              800,
+              203
+            ],
+            "pixels": 44880,
+            "score": 0.0
+          },
+          "install": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              410,
+              433,
+              520,
+              529
+            ],
+            "pixels": 10560,
+            "score": 0.0
+          },
+          "score": 0.0,
+          "storage": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              875,
+              221,
+              1025,
+              567
+            ],
+            "pixels": 51900,
+            "score": 0.0
+          },
+          "test_mech": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              710,
+              567,
+              860,
+              616
+            ],
+            "pixels": 7350,
+            "score": 0.0
+          }
+        },
+        "mission_preview_dialogue": {
+          "card": {
+            "blue": 0,
+            "bright": 0,
+            "crop": [
+              250,
+              336,
+              1060,
+              567
+            ],
+            "dark_fraction": 1.0,
+            "pixels": 187110,
+            "red": 0
+          },
+          "dialogue": {
+            "blue": 0,
+            "bright": 0,
+            "crop": [
+              130,
+              158,
+              1150,
+              274
+            ],
+            "dark_fraction": 1.0,
+            "pixels": 118320,
+            "red": 0
+          },
+          "score": 0.2
+        },
+        "mission_preview_panel": {
+          "crop": [
+            555,
+            325,
+            1075,
+            575
+          ],
+          "pixels": 130000,
+          "score": 0.0,
+          "yellow": 0
+        },
+        "new_game_setup_back": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            181,
+            41,
+            401,
+            118
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "new_game_setup_back_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            690,
+            217,
+            820,
+            259
+          ],
+          "pixels": 5460,
+          "score": 0.0
+        },
+        "new_game_setup_start": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            895,
+            41,
+            1115,
+            118
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "new_game_setup_start_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            791,
+            217,
+            921,
+            259
+          ],
+          "pixels": 5460,
+          "score": 0.0
+        },
+        "options_close": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            710,
+            616,
+            1070,
+            693
+          ],
+          "pixels": 27720,
+          "score": 0.0
+        },
+        "options_header": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            140,
+            52,
+            360,
+            129
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "pause_menu": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            331,
+            193,
+            651,
+            289
+          ],
+          "pixels": 30720,
+          "score": 0.0
+        },
+        "paused_deployment_underlay": {
+          "active_mission_under_pause": false,
+          "board_right": {
+            "blue": 0,
+            "crop": [
+              970,
+              308,
+              1260,
+              693
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 111650
+          },
+          "bottom_left": {
+            "blue": 0,
+            "crop": [
+              0,
+              514,
+              360,
+              720
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 74160
+          },
+          "header": {
+            "blue": 0,
+            "crop": [
+              5,
+              33,
+              530,
+              125
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 48300
+          },
+          "left_mechs": {
+            "blue": 0,
+            "crop": [
+              0,
+              154,
+              180,
+              720
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 101880
+          },
+          "remaining": {
+            "blue": 0,
+            "crop": [
+              5,
+              125,
+              250,
+              173
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 11760
+          },
+          "right_objectives": {
+            "blue": 0,
+            "crop": [
+              1000,
+              120,
+              1270,
+              356
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 63720
+          },
+          "score": 0.0,
+          "signal_count": 0,
+          "signals": {
+            "active_mission_header": false,
+            "board_right": false,
+            "bottom_left": false,
+            "header": false,
+            "left_mechs": false,
+            "remaining": false,
+            "right_objectives": false
+          },
+          "visible": false
+        },
+        "perfect_island_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            666,
+            466,
+            1026,
+            591
+          ],
+          "pixels": 45000,
+          "score": 0.0
+        },
+        "perfect_reward_choice": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            732,
+            399,
+            902,
+            505
+          ],
+          "pixels": 18020,
+          "score": 0.0
+        },
+        "pod_open_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            890,
+            339,
+            1140,
+            426
+          ],
+          "pixels": 21750,
+          "score": 0.0
+        },
+        "promotion_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            516,
+            450,
+            816,
+            546
+          ],
+          "pixels": 28800,
+          "score": 0.0
+        },
+        "reward_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            851,
+            585,
+            1151,
+            671
+          ],
+          "pixels": 25800,
+          "score": 0.0
+        },
+        "system_privacy_prompt": {
+          "checks": {
+            "button_gray": 0.0,
+            "card_mid_dark": 0.0,
+            "icon_blue": 0.0,
+            "icon_color": 0.0,
+            "inner_mid_dark": 0.0,
+            "text_bright": 0.0
+          },
+          "kind": "macos_screen_audio_privacy_prompt",
+          "matched": false,
+          "regions": {
+            "buttons": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                512,
+                396,
+                742,
+                461
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 14950,
+              "red_icon_fraction": 0.0
+            },
+            "card": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                493,
+                155,
+                755,
+                479
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 84888,
+              "red_icon_fraction": 0.0
+            },
+            "icon": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                512,
+                176,
+                582,
+                241
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 4550,
+              "red_icon_fraction": 0.0
+            },
+            "inner": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                518,
+                176,
+                736,
+                464
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 62784,
+              "red_icon_fraction": 0.0
+            },
+            "text": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                518,
+                252,
+                736,
+                389
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 29866,
+              "red_icon_fraction": 0.0
+            }
+          },
+          "relaxed_score": 0.0,
+          "score": 0.0,
+          "status": "OK",
+          "strict_score": 0.0
+        },
+        "title_continue": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            40,
+            207,
+            300,
+            275
+          ],
+          "pixels": 17680,
+          "score": 0.0
+        },
+        "title_new_game": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            40,
+            269,
+            300,
+            336
+          ],
+          "pixels": 17420,
+          "score": 0.0
+        },
+        "title_new_game_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            0,
+            128,
+            148,
+            160
+          ],
+          "pixels": 4736,
+          "score": 0.0
+        },
+        "title_options_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            0,
+            149,
+            148,
+            181
+          ],
+          "pixels": 4736,
+          "score": 0.0
+        }
+      },
+      "status": "OK",
+      "visible_ui": "island_map_or_unknown"
+    },
+    "game_budget": {
+      "game_seconds": null,
+      "game_status": "UNKNOWN",
+      "game_timer": "",
+      "max_game_seconds": 1800,
+      "max_game_timer": "0:30:00"
+    },
+    "include_ocr": true,
+    "initial_screenshot_path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\run_notes\\lightning_war_smoke_2026-08-29\\screenshots\\001_spawn_capsule_spawn_capsule_pair001_control.png",
+    "initial_ui": {
+      "confidence": 0.2,
+      "dark_overlay_fraction": 1.0,
+      "ocr": {
+        "error": "macOS OCR unavailable: No module named 'objc'",
+        "status": "UNAVAILABLE"
+      },
+      "recommended_control": null,
+      "scores": {
+        "bottom_continue_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            855,
+            602,
+            1155,
+            698
+          ],
+          "pixels": 28800,
+          "score": 0.0
+        },
+        "bottom_continue_panel_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            735,
+            470,
+            885,
+            511
+          ],
+          "pixels": 6150,
+          "score": 0.0
+        },
+        "deployment_screen": {
+          "crop": [
+            240,
+            86,
+            980,
+            616
+          ],
+          "pixels": 392200,
+          "score": 0.0,
+          "yellow": 0
+        },
+        "island_complete_leave": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            511,
+            643,
+            771,
+            711
+          ],
+          "pixels": 17680,
+          "score": 0.0
+        },
+        "island_map": {
+          "colored": 0,
+          "crop": [
+            420,
+            163,
+            1120,
+            664
+          ],
+          "green": 0,
+          "pixels": 350700,
+          "red": 0,
+          "score": 0.0
+        },
+        "kia_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            486,
+            383,
+            846,
+            469
+          ],
+          "pixels": 30960,
+          "score": 0.0
+        },
+        "mech_loadout_screen": {
+          "header": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              140,
+              135,
+              800,
+              203
+            ],
+            "pixels": 44880,
+            "score": 0.0
+          },
+          "install": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              410,
+              433,
+              520,
+              529
+            ],
+            "pixels": 10560,
+            "score": 0.0
+          },
+          "score": 0.0,
+          "storage": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              875,
+              221,
+              1025,
+              567
+            ],
+            "pixels": 51900,
+            "score": 0.0
+          },
+          "test_mech": {
+            "border": 0,
+            "bright": 0,
+            "crop": [
+              710,
+              567,
+              860,
+              616
+            ],
+            "pixels": 7350,
+            "score": 0.0
+          }
+        },
+        "mission_preview_dialogue": {
+          "card": {
+            "blue": 0,
+            "bright": 0,
+            "crop": [
+              250,
+              336,
+              1060,
+              567
+            ],
+            "dark_fraction": 1.0,
+            "pixels": 187110,
+            "red": 0
+          },
+          "dialogue": {
+            "blue": 0,
+            "bright": 0,
+            "crop": [
+              130,
+              158,
+              1150,
+              274
+            ],
+            "dark_fraction": 1.0,
+            "pixels": 118320,
+            "red": 0
+          },
+          "score": 0.2
+        },
+        "mission_preview_panel": {
+          "crop": [
+            555,
+            325,
+            1075,
+            575
+          ],
+          "pixels": 130000,
+          "score": 0.0,
+          "yellow": 0
+        },
+        "new_game_setup_back": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            181,
+            41,
+            401,
+            118
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "new_game_setup_back_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            690,
+            217,
+            820,
+            259
+          ],
+          "pixels": 5460,
+          "score": 0.0
+        },
+        "new_game_setup_start": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            895,
+            41,
+            1115,
+            118
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "new_game_setup_start_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            791,
+            217,
+            921,
+            259
+          ],
+          "pixels": 5460,
+          "score": 0.0
+        },
+        "options_close": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            710,
+            616,
+            1070,
+            693
+          ],
+          "pixels": 27720,
+          "score": 0.0
+        },
+        "options_header": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            140,
+            52,
+            360,
+            129
+          ],
+          "pixels": 16940,
+          "score": 0.0
+        },
+        "pause_menu": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            331,
+            193,
+            651,
+            289
+          ],
+          "pixels": 30720,
+          "score": 0.0
+        },
+        "paused_deployment_underlay": {
+          "active_mission_under_pause": false,
+          "board_right": {
+            "blue": 0,
+            "crop": [
+              970,
+              308,
+              1260,
+              693
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 111650
+          },
+          "bottom_left": {
+            "blue": 0,
+            "crop": [
+              0,
+              514,
+              360,
+              720
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 74160
+          },
+          "header": {
+            "blue": 0,
+            "crop": [
+              5,
+              33,
+              530,
+              125
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 48300
+          },
+          "left_mechs": {
+            "blue": 0,
+            "crop": [
+              0,
+              154,
+              180,
+              720
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 101880
+          },
+          "remaining": {
+            "blue": 0,
+            "crop": [
+              5,
+              125,
+              250,
+              173
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 11760
+          },
+          "right_objectives": {
+            "blue": 0,
+            "crop": [
+              1000,
+              120,
+              1270,
+              356
+            ],
+            "over20": 0,
+            "over35": 0,
+            "over50": 0,
+            "pixels": 63720
+          },
+          "score": 0.0,
+          "signal_count": 0,
+          "signals": {
+            "active_mission_header": false,
+            "board_right": false,
+            "bottom_left": false,
+            "header": false,
+            "left_mechs": false,
+            "remaining": false,
+            "right_objectives": false
+          },
+          "visible": false
+        },
+        "perfect_island_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            666,
+            466,
+            1026,
+            591
+          ],
+          "pixels": 45000,
+          "score": 0.0
+        },
+        "perfect_reward_choice": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            732,
+            399,
+            902,
+            505
+          ],
+          "pixels": 18020,
+          "score": 0.0
+        },
+        "pod_open_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            890,
+            339,
+            1140,
+            426
+          ],
+          "pixels": 21750,
+          "score": 0.0
+        },
+        "promotion_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            516,
+            450,
+            816,
+            546
+          ],
+          "pixels": 28800,
+          "score": 0.0
+        },
+        "reward_panel": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            851,
+            585,
+            1151,
+            671
+          ],
+          "pixels": 25800,
+          "score": 0.0
+        },
+        "system_privacy_prompt": {
+          "checks": {
+            "button_gray": 0.0,
+            "card_mid_dark": 0.0,
+            "icon_blue": 0.0,
+            "icon_color": 0.0,
+            "inner_mid_dark": 0.0,
+            "text_bright": 0.0
+          },
+          "kind": "macos_screen_audio_privacy_prompt",
+          "matched": false,
+          "regions": {
+            "buttons": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                512,
+                396,
+                742,
+                461
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 14950,
+              "red_icon_fraction": 0.0
+            },
+            "card": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                493,
+                155,
+                755,
+                479
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 84888,
+              "red_icon_fraction": 0.0
+            },
+            "icon": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                512,
+                176,
+                582,
+                241
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 4550,
+              "red_icon_fraction": 0.0
+            },
+            "inner": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                518,
+                176,
+                736,
+                464
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 62784,
+              "red_icon_fraction": 0.0
+            },
+            "text": {
+              "blue_icon_fraction": 0.0,
+              "box": [
+                518,
+                252,
+                736,
+                389
+              ],
+              "bright_text_fraction": 0.0,
+              "button_gray_fraction": 0.0,
+              "mid_dark_fraction": 0.0,
+              "pixels": 29866,
+              "red_icon_fraction": 0.0
+            }
+          },
+          "relaxed_score": 0.0,
+          "score": 0.0,
+          "status": "OK",
+          "strict_score": 0.0
+        },
+        "title_continue": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            40,
+            207,
+            300,
+            275
+          ],
+          "pixels": 17680,
+          "score": 0.0
+        },
+        "title_new_game": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            40,
+            269,
+            300,
+            336
+          ],
+          "pixels": 17420,
+          "score": 0.0
+        },
+        "title_new_game_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            0,
+            128,
+            148,
+            160
+          ],
+          "pixels": 4736,
+          "score": 0.0
+        },
+        "title_options_windows": {
+          "border": 0,
+          "bright": 0,
+          "crop": [
+            0,
+            149,
+            148,
+            181
+          ],
+          "pixels": 4736,
+          "score": 0.0
+        }
+      },
+      "status": "OK",
+      "visible_ui": "island_map_or_unknown"
+    },
+    "label": "spawn_capsule_spawn-capsule-pair001-control",
+    "live_burst_seconds": 0.677,
+    "next_step": "Stay paused and inspect screenshot_path/evidence_ui before choosing any combat, inspection, map, reward, or shop action.",
+    "note_written": true,
+    "notes_path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\run_notes\\lightning_war_smoke_2026-08-29\\notes.md",
+    "pause_click": {
+      "backend": "win32_sendinput",
+      "control": "pause_menu_escape",
+      "description": "Pause menu Escape resume",
+      "error": "SendInput sent 0/2 events; WinError 5",
+      "focus": {
+        "foreground_ok": false,
+        "hwnd": 130550224,
+        "process_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+        "status": "OK",
+        "title": "Into the Breach",
+        "win_error": 18
+      },
+      "key": "esc",
+      "status": "ERROR"
+    },
+    "pause_toggle_policy": "escape_only",
+    "pause_verified": false,
+    "pause_verify": null,
+    "reason": "esc_pause_failed_after_snapshot",
+    "resume_click": null,
+    "run_seconds": 0.0,
+    "safe_to_think": false,
+    "screenshot_path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\run_notes\\lightning_war_smoke_2026-08-29\\screenshots\\001_spawn_capsule_spawn_capsule_pair001_control.png",
+    "status": "ERROR",
+    "visible_timer": null
+  },
+  "pre_dispatch_turn": null,
+  "process_identity": {
+    "created_at": "2026-08-30T03:03:53.212697+00:00",
+    "creation_filetime": 134325326332126972,
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "kind": "observatory_windows_game_process_identity",
+    "pid": 16936,
+    "schema_version": 1
+  },
+  "schema_version": 2,
+  "session_file": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\pair001\\control\\session.json",
+  "snapshot": null,
+  "snapshot_consumed_from_bridge": true,
+  "start_state": {
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry005\\pair001\\control\\start_state_proof.json",
+    "sha256": "29f0b30369161d23cda4657556404a288f4ebf17fffe096aaf2098e88b75c542",
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "verified_at": "2026-08-30T03:03:53.160133+00:00"
+  },
+  "status": "rejected",
+  "valid_trial": false
+}

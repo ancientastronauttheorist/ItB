@@ -1,0 +1,89 @@
+{
+  "analysis": null,
+  "artifact_root": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008",
+  "auto_turn": {
+    "actions_completed": 3,
+    "desyncs_detected": 0,
+    "grid_power": "4/7",
+    "observatory_native_rng_boundary": {
+      "abort_ack": null,
+      "capture_id": "spawn-capsule-pair003-dormant",
+      "condition": "dormant",
+      "delivery_confirmation": "delivered_confirmed",
+      "end_turn_ack": "OK END_TURN phase=combat_player method=observatory_native",
+      "end_turn_bridge": true,
+      "end_turn_delivery_mode": "external",
+      "end_turn_plan_id": "a47b54456f058b74",
+      "end_turn_plan_source": "auto_turn",
+      "end_turn_status": "OK",
+      "finish_ack": "OK OBS_SPAWN_CAPSULE_FINISH condition=dormant capture=spawn-capsule-pair003-dormant draws=0 scheduler=0 fallback=0 standard=0 selectors=0 capsules=0 complete=true",
+      "prepare_ack": "OK OBS_SPAWN_CAPSULE_PREPARE condition=dormant capture=spawn-capsule-pair003-dormant seed=324508639 armed=false",
+      "retry_allowed": false,
+      "state": "complete"
+    },
+    "post_phase": "combat_player",
+    "re_solves": 0,
+    "score": -97657.71403428487,
+    "status": "ok",
+    "turn": 1
+  },
+  "boundary": {
+    "abort_ack": null,
+    "capture_id": "spawn-capsule-pair003-dormant",
+    "condition": "dormant",
+    "delivery_confirmation": "delivered_confirmed",
+    "end_turn_ack": "OK END_TURN phase=combat_player method=observatory_native",
+    "end_turn_bridge": true,
+    "end_turn_delivery_mode": "external",
+    "end_turn_plan_id": "a47b54456f058b74",
+    "end_turn_plan_source": "auto_turn",
+    "end_turn_status": "OK",
+    "finish_ack": "OK OBS_SPAWN_CAPSULE_FINISH condition=dormant capture=spawn-capsule-pair003-dormant draws=0 scheduler=0 fallback=0 standard=0 selectors=0 capsules=0 complete=true",
+    "prepare_ack": "OK OBS_SPAWN_CAPSULE_PREPARE condition=dormant capture=spawn-capsule-pair003-dormant seed=324508639 armed=false",
+    "retry_allowed": false,
+    "state": "complete"
+  },
+  "build_receipt_sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+  "capture_id": "spawn-capsule-pair003-dormant",
+  "capture_track": "owner_local_modified",
+  "condition": "dormant",
+  "created_at": "2026-08-30T04:06:41.164118+00:00",
+  "errors": {
+    "abort": "",
+    "analysis": "",
+    "outcome": "",
+    "runner": "",
+    "snapshot_consume": ""
+  },
+  "kind": "observatory_spawn_coordinate_capsule_turn_trial",
+  "module_sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+  "outcome": {
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\dormant\\outcome.json",
+    "sha256": "0e60fff86f680bdf0b85b3fa284eba7d2bc2a29e655f74ffed1f50a4c6a14645"
+  },
+  "pair_id": "spawn-capsule-pair003",
+  "pre_end_turn_turn": 1,
+  "process_identity": {
+    "created_at": "2026-08-30T04:06:00.664934+00:00",
+    "creation_filetime": 134325363606649340,
+    "executable_path": "B:\\SteamLibrary\\steamapps\\common\\Into the Breach\\Breach.exe",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "kind": "observatory_windows_game_process_identity",
+    "pid": 8808,
+    "schema_version": 1
+  },
+  "schema_version": 3,
+  "session_file": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\dormant\\session.json",
+  "snapshot": null,
+  "snapshot_consumed_from_bridge": true,
+  "start_state": {
+    "manifest_sha256": "9132c801f2d245b652e771c39668756c35954267e498565f38dd1056da4b6e23",
+    "path": "C:\\Users\\BMO\\Documents\\itb_observatory_spawn_capsule_20260829_aacff8cf\\campaign_external_retry008\\pair003\\dormant\\start_state_proof.json",
+    "sha256": "169747924e3cfc04e61700ccead33609b28aab9dbe7557894860712f746a7d8d",
+    "tree_sha256": "4606b1c2668cde873e0d325ca1a77ed6215270815f65bea983d529e7a150af45",
+    "verified_at": "2026-08-30T04:06:00.616926+00:00"
+  },
+  "status": "complete",
+  "valid_trial": true
+}
