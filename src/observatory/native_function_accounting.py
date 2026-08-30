@@ -24,7 +24,7 @@ from src.observatory.program_facts import (
 )
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 ANALYSIS_KIND = "pe_native_function_accounting"
 VERIFICATION_KIND = "pe_native_function_accounting_verification"
 REGISTRY_KIND = "pe_native_function_review_registry"
@@ -67,9 +67,12 @@ SUBSYSTEMS = {
     "compiler_runtime",
     "third_party",
 }
-NATIVE_LUA_BOUNDARIES = {
+NATIVE_LUA_BOUNDARY_STATES = {
     "unknown",
     "none",
+    "roles",
+}
+NATIVE_LUA_ROLES = {
     "lua_api_consumer",
     "registration_builder",
     "registered_lua_callable",
@@ -91,6 +94,7 @@ SUPPORT_CLASSES = {
     "immediate_references",
     "semantic_io",
     "native_lua_boundary",
+    "native_lua_role",
     "exclusion",
 }
 _REVIEW_RECORD_FIELDS = {
@@ -112,6 +116,7 @@ _SUPPORT_RECORD_FIELDS = {
     "entry_rva",
     "atlas_record_sha256",
     "support_class",
+    "role",
     "assertion_sha256",
     "evidence_class",
     "statement",
@@ -164,6 +169,43 @@ def _optional_text(value: Any, label: str) -> str | None:
     if value is None:
         return None
     return _text(value, label)
+
+
+def _unknown_native_lua_boundary() -> dict[str, Any]:
+    return {"state": "unknown", "roles": []}
+
+
+def _native_lua_boundary(value: Any, label: str) -> dict[str, Any]:
+    boundary = _mapping(value, label)
+    _exact_keys(boundary, {"state", "roles"}, label)
+    state = _text(boundary["state"], f"{label}.state")
+    if state not in NATIVE_LUA_BOUNDARY_STATES:
+        raise NativeFunctionAccountingError(
+            f"{label}.state is unsupported: {state}"
+        )
+    roles = _array(boundary["roles"], f"{label}.roles")
+    normalized_roles = [
+        _text(role, f"{label}.roles[{index}]")
+        for index, role in enumerate(roles)
+    ]
+    if any(role not in NATIVE_LUA_ROLES for role in normalized_roles):
+        unknown = sorted(set(normalized_roles) - NATIVE_LUA_ROLES)
+        raise NativeFunctionAccountingError(
+            f"{label}.roles has unsupported role(s): {unknown}"
+        )
+    if normalized_roles != sorted(set(normalized_roles)):
+        raise NativeFunctionAccountingError(
+            f"{label}.roles must be unique and canonically sorted"
+        )
+    if state == "roles" and not normalized_roles:
+        raise NativeFunctionAccountingError(
+            f"{label}.roles state requires at least one positive role"
+        )
+    if state in {"unknown", "none"} and normalized_roles:
+        raise NativeFunctionAccountingError(
+            f"{label}.{state} state cannot publish positive roles"
+        )
+    return {"state": state, "roles": normalized_roles}
 
 
 def _rva(value: Any, label: str) -> str:
@@ -520,13 +562,29 @@ def _direct_record_pointer(pointer: str, label: str) -> None:
 def _support_assertion(
     review: Mapping[str, Any],
     support_class: str,
+    *,
+    role: str | None = None,
 ) -> dict[str, Any]:
+    boundary = _native_lua_boundary(
+        review["native_lua_boundary"], "review.native_lua_boundary"
+    )
+    if support_class == "native_lua_role":
+        if role is None or role not in boundary["roles"]:
+            raise NativeFunctionAccountingError(
+                "native_lua_role support must bind one reviewed positive role"
+            )
+        return {"native_lua_role": role}
+    if support_class == "native_lua_boundary":
+        if role is not None or boundary["state"] != "none":
+            raise NativeFunctionAccountingError(
+                "native_lua_boundary support only proves a reviewed none state"
+            )
+        return {"native_lua_boundary": boundary}
     fields_by_class = {
         "boundary": ("boundary_status",),
         "ownership": ("ownership",),
         "immediate_references": ("reference_status",),
         "semantic_io": ("subsystem", "purpose", "inputs_outputs"),
-        "native_lua_boundary": ("native_lua_boundary",),
         "exclusion": ("exclusion",),
     }
     fields = fields_by_class.get(support_class)
@@ -546,11 +604,12 @@ def _upstream_references(
     entry_rva: str,
     atlas_record_identity: str,
     support_class: str,
+    role: str | None,
     expected_assertion: Mapping[str, Any],
     claim_evidence_class: str,
     support_evidence_path: PurePosixPath,
     review_evidence_path: PurePosixPath,
-) -> list[dict[str, str]]:
+) -> list[dict[str, Any]]:
     raw_sources = _array(value, label)
     if not raw_sources:
         raise NativeFunctionAccountingError(f"{label} must be non-empty")
@@ -608,6 +667,7 @@ def _upstream_references(
                 entry_rva=entry_rva,
                 atlas_record_identity=atlas_record_identity,
                 support_class=support_class,
+                role=role,
                 label=item_label,
             ),
             f"{item_label} adapter result",
@@ -665,20 +725,21 @@ def _support_references(
     required_classes: set[str],
     claim_evidence_class: str,
     expected_review: Mapping[str, Any],
-) -> list[dict[str, str]]:
+) -> list[dict[str, Any]]:
     raw_support = _array(value, label)
     if not raw_support:
         raise NativeFunctionAccountingError(f"{label} must be non-empty")
-    normalized: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str]] = set()
+    normalized: list[dict[str, Any]] = []
+    seen: set[tuple[str, str | None, str, str]] = set()
     observed_classes: set[str] = set()
+    observed_roles: set[str] = set()
     evidence_strength = {"hypothesis": 0, "inference": 1, "fact": 2}
     for index, raw_item in enumerate(raw_support):
         item_label = f"{label}[{index}]"
         item = _mapping(raw_item, item_label)
         _exact_keys(
             item,
-            {"support_class", "path", "sha256", "json_pointer"},
+            {"support_class", "role", "path", "sha256", "json_pointer"},
             item_label,
         )
         support_class = _text(
@@ -688,6 +749,21 @@ def _support_references(
             raise NativeFunctionAccountingError(
                 f"{item_label}.support_class is unsupported: {support_class}"
             )
+        role = item["role"]
+        if support_class == "native_lua_role":
+            role = _text(role, f"{item_label}.role")
+            boundary = _native_lua_boundary(
+                expected_review["native_lua_boundary"],
+                "review.native_lua_boundary",
+            )
+            if boundary["state"] != "roles" or role not in boundary["roles"]:
+                raise NativeFunctionAccountingError(
+                    f"{item_label}.role is not a reviewed positive role"
+                )
+        elif role is not None:
+            raise NativeFunctionAccountingError(
+                f"{item_label}.role must be null outside native_lua_role support"
+            )
         relative = _safe_repo_path(item["path"], f"{item_label}.path")
         if relative == review_evidence_path:
             raise NativeFunctionAccountingError(
@@ -696,7 +772,7 @@ def _support_references(
         sha256 = _sha256(item["sha256"], f"{item_label}.sha256")
         pointer = _text(item["json_pointer"], f"{item_label}.json_pointer")
         _direct_record_pointer(pointer, f"{item_label}.json_pointer")
-        key = (support_class, relative.as_posix(), pointer)
+        key = (support_class, role, relative.as_posix(), pointer)
         if key in seen:
             raise NativeFunctionAccountingError(
                 f"duplicate support evidence reference: {key}"
@@ -729,8 +805,12 @@ def _support_references(
             raise NativeFunctionAccountingError(
                 f"{item_label} support class differs from its source record"
             )
+        if target["role"] != role:
+            raise NativeFunctionAccountingError(
+                f"{item_label} role differs from its source record"
+            )
         expected_assertion_sha256 = _canonical_sha256(
-            _support_assertion(expected_review, support_class)
+            _support_assertion(expected_review, support_class, role=role)
         )
         if (
             _sha256(
@@ -762,15 +842,21 @@ def _support_references(
             entry_rva=entry_rva,
             atlas_record_identity=atlas_record_identity,
             support_class=support_class,
-            expected_assertion=_support_assertion(expected_review, support_class),
+            role=role,
+            expected_assertion=_support_assertion(
+                expected_review, support_class, role=role
+            ),
             claim_evidence_class=claim_evidence_class,
             support_evidence_path=relative,
             review_evidence_path=review_evidence_path,
         )
         observed_classes.add(support_class)
+        if support_class == "native_lua_role":
+            observed_roles.add(role)
         normalized.append(
             {
                 "support_class": support_class,
+                "role": role,
                 "path": relative.as_posix(),
                 "sha256": sha256,
                 "json_pointer": pointer,
@@ -782,10 +868,23 @@ def _support_references(
             f"{sorted(required_classes - observed_classes)}, "
             f"unexpected={sorted(observed_classes - required_classes)}"
         )
+    expected_roles = set(
+        _native_lua_boundary(
+            expected_review["native_lua_boundary"],
+            "review.native_lua_boundary",
+        )["roles"]
+    )
+    if observed_roles != expected_roles:
+        raise NativeFunctionAccountingError(
+            f"{label} native Lua roles differ; missing="
+            f"{sorted(expected_roles - observed_roles)}, unexpected="
+            f"{sorted(observed_roles - expected_roles)}"
+        )
     if normalized != sorted(
         normalized,
         key=lambda item: (
             item["support_class"],
+            "" if item["role"] is None else item["role"],
             item["path"],
             item["json_pointer"],
         ),
@@ -917,7 +1016,10 @@ def _derive_level(review: Mapping[str, Any]) -> str:
         not in {"unknown", "compiler_runtime", "third_party"}
         and review["purpose"] is not None
         and review["inputs_outputs"] is not None
-        and review["native_lua_boundary"] != "unknown"
+        and _native_lua_boundary(
+            review["native_lua_boundary"], "review.native_lua_boundary"
+        )["state"]
+        != "unknown"
     ):
         level = "L2"
     return level
@@ -933,7 +1035,7 @@ def _validate_authoritative_dimensions(
             "subsystem": "unknown",
             "purpose": None,
             "inputs_outputs": None,
-            "native_lua_boundary": "unknown",
+            "native_lua_boundary": _unknown_native_lua_boundary(),
             "reference_status": "atlas_declared_direct_only",
             "exclusion": "none",
         }
@@ -942,14 +1044,14 @@ def _validate_authoritative_dimensions(
             "subsystem": "unknown",
             "purpose": None,
             "inputs_outputs": None,
-            "native_lua_boundary": "unknown",
+            "native_lua_boundary": _unknown_native_lua_boundary(),
             "exclusion": "none",
         }
     elif achieved_level == "EXCLUDED":
         expected = {
             "purpose": None,
             "inputs_outputs": None,
-            "native_lua_boundary": "unknown",
+            "native_lua_boundary": _unknown_native_lua_boundary(),
             "reference_status": "atlas_declared_direct_only",
         }
     else:
@@ -966,14 +1068,28 @@ def _validate_authoritative_dimensions(
         )
 
 
-def _required_support_classes(achieved_level: str) -> set[str]:
+def _required_support_classes(
+    review: Mapping[str, Any],
+    achieved_level: str,
+) -> set[str]:
     required = {"boundary"}
     if achieved_level in {"L1", "L2", "EXCLUDED"}:
         required.add("ownership")
     if achieved_level in {"L1", "L2"}:
         required.add("immediate_references")
     if achieved_level == "L2":
-        required.update({"semantic_io", "native_lua_boundary"})
+        required.add("semantic_io")
+        native_lua_boundary = _native_lua_boundary(
+            review["native_lua_boundary"], "review.native_lua_boundary"
+        )
+        if native_lua_boundary["state"] == "none":
+            required.add("native_lua_boundary")
+        elif native_lua_boundary["state"] == "roles":
+            required.add("native_lua_role")
+        else:  # pragma: no cover - _derive_level excludes unknown for L2
+            raise NativeFunctionAccountingError(
+                "L2 requires a reviewed native/Lua boundary state"
+            )
     if achieved_level == "EXCLUDED":
         required.add("exclusion")
     return required
@@ -1037,7 +1153,7 @@ def _normalize_claims(
         )
         ownership = _text(claim["ownership"], f"{label}.ownership")
         subsystem = _text(claim["subsystem"], f"{label}.subsystem")
-        native_lua_boundary = _text(
+        native_lua_boundary = _native_lua_boundary(
             claim["native_lua_boundary"], f"{label}.native_lua_boundary"
         )
         reference_status = _text(
@@ -1054,7 +1170,6 @@ def _normalize_claims(
             (boundary_status, BOUNDARY_STATUSES, "boundary_status"),
             (ownership, OWNERSHIPS, "ownership"),
             (subsystem, SUBSYSTEMS, "subsystem"),
-            (native_lua_boundary, NATIVE_LUA_BOUNDARIES, "native_lua_boundary"),
             (reference_status, REFERENCE_STATUSES, "reference_status"),
             (exclusion, EXCLUSIONS, "exclusion"),
             (evidence_class, EVIDENCE_CLASSES, "evidence_class"),
@@ -1107,7 +1222,7 @@ def _normalize_claims(
             entry_rva=entry,
             atlas_record_identity=expected_record_sha256,
             expected_review=expected_evidence_review,
-            required_support_classes=_required_support_classes(achieved_level),
+            required_support_classes=_required_support_classes(review, achieved_level),
         )
         review["achieved_level"] = achieved_level
         claims[entry] = review
@@ -1122,7 +1237,7 @@ def _default_review() -> dict[str, Any]:
         "subsystem": "unknown",
         "purpose": None,
         "inputs_outputs": None,
-        "native_lua_boundary": "unknown",
+        "native_lua_boundary": _unknown_native_lua_boundary(),
         "reference_status": "atlas_declared_direct_only",
         "exclusion": "none",
         "evidence_class": "unresolved",
@@ -1158,7 +1273,10 @@ def _validate_registry(
         {"schema_version", "analysis_kind", "atlas_canonical_sha256", "claims"},
         "registry",
     )
-    if type(registry["schema_version"]) is not int or registry["schema_version"] != 1:
+    if (
+        type(registry["schema_version"]) is not int
+        or registry["schema_version"] != SCHEMA_VERSION
+    ):
         raise NativeFunctionAccountingError("unsupported review registry schema")
     if registry["analysis_kind"] != REGISTRY_KIND:
         raise NativeFunctionAccountingError("review registry kind differs")
@@ -1279,7 +1397,8 @@ def build_native_function_accounting(
     ownership_counts: Counter[str] = Counter()
     subsystem_counts: Counter[str] = Counter()
     boundary_status_counts: Counter[str] = Counter()
-    native_lua_boundary_counts: Counter[str] = Counter()
+    native_lua_boundary_state_counts: Counter[str] = Counter()
+    native_lua_role_counts: Counter[str] = Counter()
     reference_status_counts: Counter[str] = Counter()
     exclusion_counts: Counter[str] = Counter()
     evidence_class_counts: Counter[str] = Counter()
@@ -1306,7 +1425,12 @@ def build_native_function_accounting(
         ownership_counts[review["ownership"]] += 1
         subsystem_counts[review["subsystem"]] += 1
         boundary_status_counts[review["boundary_status"]] += 1
-        native_lua_boundary_counts[review["native_lua_boundary"]] += 1
+        native_lua_boundary = _native_lua_boundary(
+            review["native_lua_boundary"], "review.native_lua_boundary"
+        )
+        native_lua_boundary_state_counts[native_lua_boundary["state"]] += 1
+        for role in native_lua_boundary["roles"]:
+            native_lua_role_counts[role] += 1
         reference_status_counts[review["reference_status"]] += 1
         exclusion_counts[review["exclusion"]] += 1
         evidence_class_counts[review["evidence_class"]] += 1
@@ -1378,6 +1502,15 @@ def build_native_function_accounting(
             "registered_upstream_analysis_adapters": sorted(_UPSTREAM_ADAPTERS),
             "promotions_fail_closed_without_an_upstream_adapter": True,
             "heuristics_affect_review_or_level": False,
+            "native_lua_boundary_model": (
+                "A boundary has state unknown, none, or roles. Roles are sorted "
+                "positive facts and may overlap; their absence is not inferred "
+                "unless state is reviewed none."
+            ),
+            "native_lua_role_support": (
+                "Each reviewed positive role needs one exact native_lua_role "
+                "support atom; the atom set must equal the reviewed role set."
+            ),
             "level_rules": {
                 "L0": "exact atlas location and body identity only",
                 "L1": (
@@ -1386,7 +1519,8 @@ def build_native_function_accounting(
                 ),
                 "L2": (
                     "L1 plus first-party subsystem, purpose, inputs/outputs, "
-                    "and native/Lua-boundary classification"
+                    "and a reviewed native/Lua boundary state with positive, "
+                    "non-exclusive roles where applicable"
                 ),
                 "EXCLUDED": (
                     "reviewed exact boundary and fact evidence for a supported "
@@ -1438,11 +1572,16 @@ def build_native_function_accounting(
                 field="subsystem",
                 categories=SUBSYSTEMS,
             ),
-            "native_lua_boundary_counts": _count_partition(
-                native_lua_boundary_counts,
-                field="native_lua_boundary",
-                categories=NATIVE_LUA_BOUNDARIES,
+            "native_lua_boundary_state_counts": _count_partition(
+                native_lua_boundary_state_counts,
+                field="native_lua_boundary_state",
+                categories=NATIVE_LUA_BOUNDARY_STATES,
             ),
+            "native_lua_role_counts": [
+                {"native_lua_role": role, "functions": native_lua_role_counts[role]}
+                for role in sorted(NATIVE_LUA_ROLES)
+            ],
+            "native_lua_roles_are_nonexclusive": True,
             "reference_status_counts": _count_partition(
                 reference_status_counts,
                 field="reference_status",
@@ -1479,7 +1618,7 @@ def build_native_function_accounting(
         ("boundary status", boundary_status_counts),
         ("ownership", ownership_counts),
         ("subsystem", subsystem_counts),
-        ("native/Lua boundary", native_lua_boundary_counts),
+        ("native/Lua boundary state", native_lua_boundary_state_counts),
         ("reference status", reference_status_counts),
         ("exclusion", exclusion_counts),
         ("evidence class", evidence_class_counts),

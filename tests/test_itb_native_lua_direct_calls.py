@@ -8,6 +8,7 @@ import json
 import re
 import struct
 from pathlib import Path
+from types import SimpleNamespace
 
 import capstone
 import pytest
@@ -397,6 +398,44 @@ def test_cli_build_verify_and_replacement_identity(monkeypatch, tmp_path: Path):
         )
         == 0
     )
+    deterministic = output.read_bytes()
+    output.write_text(json.dumps(evidence), encoding="utf-8")
+    reformatted = output.read_bytes()
+    assert reformatted != deterministic
+    assert (
+        itb_native_lua_direct_calls.main(
+            [
+                "verify",
+                "--executable",
+                str(executable),
+                "--inventory",
+                str(inventory_path),
+                "--program-facts",
+                str(program_path),
+                "--evidence",
+                str(output),
+            ]
+        )
+        == 1
+    )
+    assert (
+        itb_native_lua_direct_calls.main(
+            [
+                "build",
+                "--executable",
+                str(executable),
+                "--inventory",
+                str(inventory_path),
+                "--program-facts",
+                str(program_path),
+                "--output",
+                str(output),
+            ]
+        )
+        == 1
+    )
+    assert output.read_bytes() == reformatted
+    output.write_bytes(deterministic)
 
     foreign = copy.deepcopy(evidence)
     foreign["build_identity"]["build_id"] = "another-build"
@@ -541,6 +580,37 @@ def test_cli_rejects_symlinked_input_when_supported(tmp_path: Path):
         )
         == 1
     )
+
+
+def test_cli_json_reader_rechecks_parent_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    source = tmp_path / "input.json"
+    source.write_text('{"value":1}', encoding="utf-8")
+    parent = source.parent
+    observed = parent.lstat()
+
+    def stale_parent_chain(_path, _label):
+        return [
+            (
+                parent,
+                SimpleNamespace(
+                    st_mode=observed.st_mode,
+                    st_dev=observed.st_dev,
+                    st_ino=observed.st_ino + 1,
+                ),
+            )
+        ]
+
+    monkeypatch.setattr(
+        itb_native_lua_direct_calls,
+        "_require_real_parent_chain",
+        stale_parent_chain,
+    )
+
+    with pytest.raises(NativeLuaDirectCallError, match="changed while"):
+        itb_native_lua_direct_calls._read_json_object(source, "input")
 
 
 def test_committed_census_identity_partitions_and_publication_boundary():

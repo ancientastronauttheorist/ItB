@@ -80,8 +80,12 @@ def _same_stat(left: os.stat_result, right: os.stat_result) -> bool:
     )
 
 
-def _require_real_parent_chain(path: Path, label: str) -> None:
+def _require_real_parent_chain(
+    path: Path,
+    label: str,
+) -> list[tuple[Path, os.stat_result]]:
     current = Path(os.path.abspath(path)).parent
+    chain: list[tuple[Path, os.stat_result]] = []
     while True:
         try:
             info = current.lstat()
@@ -97,14 +101,19 @@ def _require_real_parent_chain(path: Path, label: str) -> None:
             raise NativeLuaDirectCallError(
                 f"{label} parent chain contains a link/reparse entry"
             )
+        chain.append((current, info))
         parent = current.parent
         if parent == current:
-            return
+            return chain
         current = parent
 
 
-def _read_json_object(path: Path, label: str) -> dict[str, Any]:
-    _require_real_parent_chain(path, label)
+def _read_json_document(
+    path: Path,
+    label: str,
+) -> tuple[dict[str, Any], bytes]:
+    path = Path(os.path.abspath(path))
+    parent_chain = _require_real_parent_chain(path, label)
     try:
         link_before = path.lstat()
         path_before = path.stat()
@@ -134,8 +143,27 @@ def _read_json_object(path: Path, label: str) -> dict[str, Any]:
         link_after = path.lstat()
     except OSError as exc:
         raise NativeLuaDirectCallError(f"{label} changed while being read") from exc
+    parents_changed = False
+    for parent, parent_before in parent_chain:
+        try:
+            parent_after = parent.lstat()
+        except OSError:
+            parents_changed = True
+            break
+        if (
+            stat.S_ISLNK(parent_after.st_mode)
+            or _is_reparse(parent_after)
+            or not stat.S_ISDIR(parent_after.st_mode)
+            or any(
+                getattr(parent_before, field) != getattr(parent_after, field)
+                for field in _DIRECTORY_ID_FIELDS
+            )
+        ):
+            parents_changed = True
+            break
     if (
         len(payload) != handle_before.st_size
+        or parents_changed
         or not _same_stat(handle_before, handle_after)
         or not _same_stat(handle_after, path_after)
         or not _same_stat(link_before, link_after)
@@ -154,6 +182,11 @@ def _read_json_object(path: Path, label: str) -> dict[str, Any]:
         raise NativeLuaDirectCallError(f"{label} is not UTF-8") from exc
     if not isinstance(value, dict):
         raise NativeLuaDirectCallError(f"{label} must contain a JSON object")
+    return value, payload
+
+
+def _read_json_object(path: Path, label: str) -> dict[str, Any]:
+    value, _payload = _read_json_document(path, label)
     return value
 
 
@@ -268,7 +301,9 @@ def _write_evidence_atomically(
         if destination.is_symlink() or not destination.is_file():
             raise NativeLuaDirectCallError("refusing to replace non-regular output")
         try:
-            existing = _read_json_object(destination, "existing output")
+            existing, existing_payload = _read_json_document(
+                destination, "existing output"
+            )
             existing_identity = _replacement_identity(existing, "existing output")
         except (NativeLuaDirectCallError, json.JSONDecodeError) as exc:
             raise NativeLuaDirectCallError(
@@ -282,8 +317,18 @@ def _write_evidence_atomically(
             raise NativeLuaDirectCallError(
                 "refusing to overwrite differing direct-call evidence"
             )
-        confirmation = _read_json_object(destination, "existing output confirmation")
-        if _canonical_bytes(confirmation) != _canonical_bytes(result):
+        expected_payload = rendered.encode("utf-8")
+        if existing_payload != expected_payload:
+            raise NativeLuaDirectCallError(
+                "existing direct-call evidence is not deterministically encoded"
+            )
+        confirmation, confirmation_payload = _read_json_document(
+            destination, "existing output confirmation"
+        )
+        if (
+            _canonical_bytes(confirmation) != _canonical_bytes(result)
+            or confirmation_payload != expected_payload
+        ):
             raise NativeLuaDirectCallError(
                 "existing direct-call evidence changed during comparison"
             )
@@ -337,7 +382,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 _write_evidence_atomically(args.output, rendered, result)
         else:
-            evidence = _read_json_object(args.evidence, "evidence")
+            evidence, evidence_payload = _read_json_document(
+                args.evidence, "evidence"
+            )
+            if evidence_payload != encode_native_lua_direct_call_census(
+                evidence
+            ).encode("utf-8"):
+                raise NativeLuaDirectCallError(
+                    "evidence is not deterministically encoded"
+                )
             result = validate_native_lua_direct_call_census(
                 args.executable,
                 evidence,

@@ -21,7 +21,9 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 from src.observatory.native_function_accounting import (  # noqa: E402
     ANALYSIS_KIND,
+    SCHEMA_VERSION,
     NativeFunctionAccountingError,
+    _canonical_bytes,
     build_native_function_accounting,
     encode_native_function_accounting,
     validate_native_function_accounting,
@@ -77,7 +79,40 @@ def _is_reparse(info: os.stat_result) -> bool:
     return bool(attributes & marker)
 
 
-def _read_json_object(path: Path, label: str) -> dict[str, Any]:
+def _require_real_parent_chain(
+    path: Path,
+    label: str,
+) -> list[tuple[Path, os.stat_result]]:
+    current = Path(os.path.abspath(path)).parent
+    chain: list[tuple[Path, os.stat_result]] = []
+    while True:
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            raise NativeFunctionAccountingError(
+                f"{label} parent chain cannot be inspected"
+            ) from exc
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or _is_reparse(info)
+            or not stat.S_ISDIR(info.st_mode)
+        ):
+            raise NativeFunctionAccountingError(
+                f"{label} parent chain contains a link/reparse entry"
+            )
+        chain.append((current, info))
+        parent = current.parent
+        if parent == current:
+            return chain
+        current = parent
+
+
+def _read_json_document(
+    path: Path,
+    label: str,
+) -> tuple[dict[str, Any], bytes]:
+    path = Path(os.path.abspath(path))
+    parent_chain = _require_real_parent_chain(path, label)
     try:
         link_before = path.lstat()
         before = path.stat()
@@ -111,10 +146,34 @@ def _read_json_object(path: Path, label: str) -> dict[str, Any]:
             handle_after = os.fstat(stream.fileno())
     except OSError as exc:
         raise NativeFunctionAccountingError(f"{label} could not be read") from exc
-    after = path.stat()
-    link_after = path.lstat()
+    try:
+        after = path.stat()
+        link_after = path.lstat()
+    except OSError as exc:
+        raise NativeFunctionAccountingError(
+            f"{label} changed while being read"
+        ) from exc
+    parents_changed = False
+    for parent, parent_before in parent_chain:
+        try:
+            parent_after = parent.lstat()
+        except OSError:
+            parents_changed = True
+            break
+        if (
+            stat.S_ISLNK(parent_after.st_mode)
+            or _is_reparse(parent_after)
+            or not stat.S_ISDIR(parent_after.st_mode)
+            or any(
+                getattr(parent_before, field) != getattr(parent_after, field)
+                for field in _DIRECTORY_ID_FIELDS
+            )
+        ):
+            parents_changed = True
+            break
     if (
-        any(
+        parents_changed
+        or any(
             getattr(handle_before, field) != getattr(handle_after, field)
             or getattr(handle_after, field) != getattr(after, field)
             or getattr(link_before, field) != getattr(link_after, field)
@@ -137,6 +196,11 @@ def _read_json_object(path: Path, label: str) -> dict[str, Any]:
         raise NativeFunctionAccountingError(
             f"{label} must contain a JSON object"
         )
+    return value, payload
+
+
+def _read_json_object(path: Path, label: str) -> dict[str, Any]:
+    value, _payload = _read_json_document(path, label)
     return value
 
 
@@ -231,7 +295,7 @@ def _replacement_identity(
 ) -> bytes:
     if (
         type(value.get("schema_version")) is not int
-        or value.get("schema_version") != 1
+        or value.get("schema_version") != SCHEMA_VERSION
     ):
         raise NativeFunctionAccountingError(
             f"{label} has an invalid native-accounting schema"
@@ -302,7 +366,9 @@ def _write_evidence_atomically(output: Path, rendered: str) -> None:
                 "refusing to replace non-regular output"
             )
         try:
-            existing = _read_json_object(destination, "existing output")
+            existing, existing_payload = _read_json_document(
+                destination, "existing output"
+            )
         except (
             NativeFunctionAccountingError,
             OSError,
@@ -322,6 +388,27 @@ def _write_evidence_atomically(output: Path, rendered: str) -> None:
             raise NativeFunctionAccountingError(
                 "refusing to replace a different native-accounting identity"
             )
+        if _canonical_bytes(existing) != _canonical_bytes(rendered_value):
+            raise NativeFunctionAccountingError(
+                "refusing to overwrite differing native-accounting evidence"
+            )
+        expected_payload = rendered.encode("utf-8")
+        if existing_payload != expected_payload:
+            raise NativeFunctionAccountingError(
+                "existing native-accounting evidence is not deterministically encoded"
+            )
+        confirmation, confirmation_payload = _read_json_document(
+            destination, "existing output confirmation"
+        )
+        if (
+            _canonical_bytes(confirmation) != _canonical_bytes(rendered_value)
+            or confirmation_payload != expected_payload
+        ):
+            raise NativeFunctionAccountingError(
+                "existing native-accounting evidence changed during comparison"
+            )
+        _recheck_output_root(configured_root, output_root, root_before)
+        return
 
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=f".{output.name}.",
@@ -334,7 +421,17 @@ def _write_evidence_atomically(output: Path, rendered: str) -> None:
             stream.flush()
             os.fsync(stream.fileno())
         _recheck_output_root(configured_root, output_root, root_before)
-        os.replace(temporary_name, destination)
+        try:
+            os.link(temporary_name, destination)
+        except FileExistsError as exc:
+            raise NativeFunctionAccountingError(
+                "output appeared concurrently; refusing to overwrite it"
+            ) from exc
+        except OSError as exc:
+            raise NativeFunctionAccountingError(
+                "could not publish output without overwriting a destination"
+            ) from exc
+        os.unlink(temporary_name)
         _recheck_output_root(configured_root, output_root, root_before)
     except Exception:
         try:
@@ -364,7 +461,15 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 _write_evidence_atomically(args.output, rendered)
         else:
-            evidence = _read_json_object(args.evidence, "evidence")
+            evidence, evidence_payload = _read_json_document(
+                args.evidence, "evidence"
+            )
+            if evidence_payload != encode_native_function_accounting(
+                evidence
+            ).encode("utf-8"):
+                raise NativeFunctionAccountingError(
+                    "evidence is not deterministically encoded"
+                )
             result = validate_native_function_accounting(
                 args.executable,
                 evidence,

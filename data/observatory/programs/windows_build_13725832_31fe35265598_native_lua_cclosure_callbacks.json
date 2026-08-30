@@ -1,0 +1,662 @@
+{
+  "analysis_kind": "pe_native_lua_immediate_cclosure_callback_census",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "callback_targets": [
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": true,
+      "callback_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "callback_entry_rva": "0x002e67b0",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "49b7f40d8abcf95b754bf2efd4858ff562014b2e5d635f2ea1449cc6ce9b36db",
+      "callback_entry_rva": "0x002e6810",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+      "callback_entry_rva": "0x002e6840",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+      "callback_entry_rva": "0x002e6880",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+      "callback_entry_rva": "0x002e68b0",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+      "callback_entry_rva": "0x002e6c30",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "ced5cc883286ebf3bdd45adbbd9c096f1a2a9ad97aa8bc98edf3f43f0bdc6423",
+      "callback_entry_rva": "0x002ea4b0",
+      "caller_entry_rvas": [
+        "0x002ea4e0"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_entry_rvas": [
+        "0x00057970",
+        "0x002e67b0"
+      ],
+      "resolved_site_count": 2
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": true,
+      "callback_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "callback_entry_rva": "0x002eb230",
+      "caller_entry_rvas": [
+        "0x002eb020",
+        "0x002eb230"
+      ],
+      "resolved_site_count": 2
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": false,
+      "callback_atlas_record_sha256": "0730d8c5877defc7f4d781e836560f199df4ffb749613a41b361f2fd75447d72",
+      "callback_entry_rva": "0x002ec110",
+      "caller_entry_rvas": [
+        "0x002ec220"
+      ],
+      "resolved_site_count": 1
+    },
+    {
+      "also_direct_lua_import_caller": true,
+      "also_pushcclosure_caller": true,
+      "callback_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "callback_entry_rva": "0x002ec220",
+      "caller_entry_rvas": [
+        "0x002e6900"
+      ],
+      "resolved_site_count": 1
+    }
+  ],
+  "decoder": {
+    "accepted_argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608",
+    "direct_lua_import_call_sites": 4739,
+    "lua_pushcclosure_call_sites": 15
+  },
+  "method": {
+    "accepted_callback_edge": "The final three contiguous instructions before an exact direct lua_pushcclosure import call must be PUSH instructions for the upvalue count, callback, and Lua-state arguments. The callback instruction must be exact x86 opcode 68 with one image VA, the Lua-state instruction must be a one-byte register PUSH, and the VA must equal one atlas entry.",
+    "direct_call_prerequisite_exactly_verified": true,
+    "not_claimed": [
+      "runtime reachability, callback execution, or call frequency",
+      "Lua-visible registration, exported name, table identity, or lifetime",
+      "targets for register- or memory-sourced callback arguments",
+      "indirect or computed lua_pushcclosure calls",
+      "function ownership, subsystem, purpose, inputs, or outputs",
+      "exclusive native-to-Lua roles",
+      "source-level or behavioral equivalence"
+    ],
+    "publication_boundary": "The artifact publishes RVAs, canonical atlas hashes, instruction hashes and sizes, normalized argument forms, and counts. It omits instruction bytes, disassembly text, decompiler output, local paths, variables, and reconstructed source.",
+    "relation_semantics": "A resolved edge proves only that one atlas entry is statically passed as the C-closure callback argument at one decoded call site.",
+    "unresolved_partition": "Every other direct lua_pushcclosure site in this build is retained only when its immediately passed callback argument is register- or memory-sourced. No target is inferred for either form."
+  },
+  "resolved_sites": [
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x000579a2",
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_entry_rva": "0x002eaa50",
+      "callback_push": {
+        "rva": "0x0005799c",
+        "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+      "caller_entry_rva": "0x00057970",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 2,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x000579a1",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x0005799a",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e67fa",
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_entry_rva": "0x002eaa50",
+      "callback_push": {
+        "rva": "0x002e67f4",
+        "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "caller_entry_rva": "0x002e67b0",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 2,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e67f9",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e67f2",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e69f1",
+      "callback_atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+      "callback_entry_rva": "0x002e6c30",
+      "callback_push": {
+        "rva": "0x002e69eb",
+        "sha256": "af5f277a5f2cdca7db5519be56370a7262b408308652c505efb52c3a6da9abfe",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": null,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e69f0",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "register",
+      "upvalue_push": {
+        "rva": "0x002e69ea",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6a8c",
+      "callback_atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+      "callback_entry_rva": "0x002e6840",
+      "callback_push": {
+        "rva": "0x002e6a86",
+        "sha256": "fa6de6e57e8c52334b61840202b802998e69195d00c9193db49c6fcbf267de3d",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6a8b",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6a84",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6af9",
+      "callback_atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+      "callback_entry_rva": "0x002e6880",
+      "callback_push": {
+        "rva": "0x002e6af3",
+        "sha256": "5c672359fc90ca1e50ea49640b1b3c8af40443a3cd5b926e2a41658202c4faa8",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6af8",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6af1",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6b66",
+      "callback_atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+      "callback_entry_rva": "0x002e68b0",
+      "callback_push": {
+        "rva": "0x002e6b60",
+        "sha256": "88e2af70e98bddb923d768bd066028d99d2dd844d597bb3fcb2416a563ce36ae",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6b65",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6b5e",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6ba1",
+      "callback_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "callback_entry_rva": "0x002ec220",
+      "callback_push": {
+        "rva": "0x002e6b9b",
+        "sha256": "18936899ec24ae045baa682aeb08121fdaf57dc0e1264b365cf6c8fd4c18b402",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6ba0",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6b99",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6bc2",
+      "callback_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "callback_entry_rva": "0x002e67b0",
+      "callback_push": {
+        "rva": "0x002e6bbc",
+        "sha256": "40c68e0a8ebe689089feb45239a1251c32678af8b5f42223f7df396a4d266c92",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6bc1",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6bba",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6c01",
+      "callback_atlas_record_sha256": "49b7f40d8abcf95b754bf2efd4858ff562014b2e5d635f2ea1449cc6ce9b36db",
+      "callback_entry_rva": "0x002e6810",
+      "callback_push": {
+        "rva": "0x002e6bfb",
+        "sha256": "a1a71a1eef8f0d8c8dbfa99870cfe392f61df53572217e7bac3e2891d44dad0a",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "caller_entry_rva": "0x002e6900",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002e6c00",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002e6bf9",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002ea533",
+      "callback_atlas_record_sha256": "ced5cc883286ebf3bdd45adbbd9c096f1a2a9ad97aa8bc98edf3f43f0bdc6423",
+      "callback_entry_rva": "0x002ea4b0",
+      "callback_push": {
+        "rva": "0x002ea52d",
+        "sha256": "0c5bb0b932a478617cb71e8c1731d6bce10a0b8c099b440273202573476aa1c3",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "4ef06177a94fc20e9f22528fcd6202ba6853ba62cd93cdc695b0e45cd6a7e490",
+      "caller_entry_rva": "0x002ea4e0",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 0,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002ea532",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002ea52b",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002eb086",
+      "callback_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "callback_entry_rva": "0x002eb230",
+      "callback_push": {
+        "rva": "0x002eb080",
+        "sha256": "90fe38173d5e7fccb123125191941d0450a1a8216467482f4be89ae014a80c4e",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "d87d07131a90edaf889b4876e6fd81ab91d0bee72a90d19ba40f150fba9ec8b8",
+      "caller_entry_rva": "0x002eb020",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 2,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002eb085",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002eb07e",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002eb2a5",
+      "callback_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "callback_entry_rva": "0x002eb230",
+      "callback_push": {
+        "rva": "0x002eb29f",
+        "sha256": "90fe38173d5e7fccb123125191941d0450a1a8216467482f4be89ae014a80c4e",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "4110b4e8c89e4c8995fe4035d8f252a845b0fb872d540a9f82cccf1951551cef",
+      "caller_entry_rva": "0x002eb230",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 2,
+      "self_callback": true,
+      "state_push": {
+        "rva": "0x002eb2a4",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002eb29d",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      }
+    },
+    {
+      "argument_form": "x86_cdecl_pushes_n_callback_imm32_state_register",
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002ec328",
+      "callback_atlas_record_sha256": "0730d8c5877defc7f4d781e836560f199df4ffb749613a41b361f2fd75447d72",
+      "callback_entry_rva": "0x002ec110",
+      "callback_push": {
+        "rva": "0x002ec322",
+        "sha256": "0124b62d59869009d5c74bc793729e36363ba526826aa157b8882428499202d5",
+        "size": 5
+      },
+      "caller_atlas_record_sha256": "0a87de73eb07e2a7776979f50e7918cd2f4378491f8608182676383e6e03cc93",
+      "caller_entry_rva": "0x002ec220",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "literal_upvalue_count": 1,
+      "self_callback": false,
+      "state_push": {
+        "rva": "0x002ec327",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      "upvalue_argument_kind": "immediate",
+      "upvalue_push": {
+        "rva": "0x002ec320",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2
+      }
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "callback_targets_that_call_pushcclosure": 3,
+    "callback_targets_with_direct_lua_import_calls": 11,
+    "direct_pushcclosure_call_sites": 15,
+    "duplicate_callback_targets": 2,
+    "resolved_immediate_callback_sites": 13,
+    "schema_violations": 0,
+    "self_callback_sites": 1,
+    "unique_callback_targets": 11,
+    "unresolved_callback_sites": 2,
+    "unresolved_memory_callback_sites": 1,
+    "unresolved_register_callback_sites": 1
+  },
+  "unresolved_sites": [
+    {
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002e6545",
+      "callback_argument_kind": "register",
+      "callback_push": {
+        "rva": "0x002e6543",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      "caller_atlas_record_sha256": "d4d44322b341adc34bd6fc10382458ceed9b883f45960c205eb4ea70b58d5292",
+      "caller_entry_rva": "0x002e6520",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "resolution": "unresolved_non_immediate_callback",
+      "state_push": {
+        "rva": "0x002e6544",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      }
+    },
+    {
+      "call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "call_rva": "0x002ea85e",
+      "callback_argument_kind": "memory",
+      "callback_push": {
+        "rva": "0x002ea85a",
+        "sha256": "6a1b670c386387c414e992c915a246cf3698e9d8f80487245b4ed98672f7cfeb",
+        "size": 3
+      },
+      "caller_atlas_record_sha256": "f325fd434c226798d70dcb82ce08868f9ea8589f52ee4c5ce63459d80124689b",
+      "caller_entry_rva": "0x002ea820",
+      "iat_rva": "0x003d64a0",
+      "import_name": "lua_pushcclosure",
+      "library": "lua5.1.dll",
+      "resolution": "unresolved_non_immediate_callback",
+      "state_push": {
+        "rva": "0x002ea85d",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      }
+    }
+  ]
+}

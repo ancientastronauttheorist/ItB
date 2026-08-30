@@ -26,8 +26,10 @@ inventoried PE before creating a deterministic artifact under `programs/`.
 from the exact-verified program atlas and a separately hash-pinned analyst
 registry. The normalized artifact under `programs/` has exactly one record for
 each of the 25,312 atlas functions and recomputes complete partitions for
-level, boundary status, ownership, subsystem, native/Lua boundary, immediate
-reference status, evidence class, and exclusion.
+level, boundary status, ownership, subsystem, native/Lua boundary state,
+immediate-reference status, evidence class, and exclusion. Schema 2 separately
+counts positive native/Lua roles because those roles can overlap and therefore
+do not form a partition.
 
 The initial ledger intentionally records all 25,312 functions at L0 and leaves
 all ownership/subsystem classifications unresolved; it has zero L1/L2
@@ -58,8 +60,24 @@ The result is a positive binary relation, not a semantic partition. It does not
 claim runtime reachability, ownership, registration roles, callback roles,
 indirect calls, or absence of Lua use outside a retained site. Direct API
 consumer, registration-builder, and registered-callable roles can overlap, so
-this tranche deliberately leaves the native-function review ledger unchanged.
+the census remains a separate positive relation. Accounting schema 2 can retain
+overlapping roles, but its production adapter allowlist remains empty.
 See `programs/README.md` for exact commands, hashes, and limitations.
+
+## Native Lua C-closure callbacks
+
+`scripts/itb_native_lua_cclosure_callbacks.py` exact-verifies the atlas and
+direct-call census, then accepts only an immediate callback VA in one pinned
+x86 `lua_pushcclosure` argument form. It partitions all 15 direct sites into 13
+exact immediate callback edges and two unresolved computed arguments. The 13
+edges resolve to 11 unique non-thunk atlas entries; one is a self-edge, all 11
+targets also directly call Lua imports, and three targets also contain direct
+`lua_pushcclosure` call sites.
+
+The artifact claims only that an atlas entry is statically passed as a closure
+callback argument. It does not infer a Lua-visible name, global registration,
+runtime execution, ownership, semantics, or a target for either computed
+argument. See `programs/README.md` for exact commands, hashes, and limits.
 
 ## Compiled Lua census
 

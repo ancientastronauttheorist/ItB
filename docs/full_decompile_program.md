@@ -115,7 +115,10 @@ and every semantic promotion must come from a hash-pinned analyst registry and
 exact-build repository evidence. `scripts/itb_native_lua_direct_calls.py`
 independently decodes every atlas body range and publishes exact direct
 `lua5.1.dll` IAT-call relations without treating those relations as exclusive
-semantic roles.
+semantic roles. `scripts/itb_native_lua_cclosure_callbacks.py` then resolves
+only the exact immediate callback arguments passed at direct
+`lua_pushcclosure` sites. Accounting protocol schema 2 represents native/Lua
+roles as composable positive facts rather than a mutually exclusive enum.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -205,6 +208,16 @@ until core engine semantics are reconstructed.
   `lua5.1.dll` IAT slots. This is a positive direct-call relation only; it does
   not claim runtime reachability, negative Lua-use results, ownership, or a
   mutually exclusive registration/callback role.
+- [x] Partition all 15 direct `lua_pushcclosure` sites into 13 exact immediate
+  callback edges and two unresolved computed arguments. The resolved sites
+  identify 11 unique non-thunk atlas entries, include one self-edge, and prove
+  real role overlap: all 11 targets directly call Lua imports and three also
+  call `lua_pushcclosure`. The artifact does not infer registration names,
+  table identities, runtime execution, or targets for computed arguments.
+- [x] Upgrade the native review ledger to schema 2 with strict `unknown`,
+  `none`, and `roles` boundary states plus independently supported,
+  non-exclusive positive role atoms. The empty registry still leaves all
+  25,312 functions at L0; the representation change does not promote facts.
 - [ ] Review exact boundaries, ownership, and immediate references to promote
   every first-party atlas function to at least L1 or record a fact-backed
   exclusion. Reconcile the 281,434 executable-section bytes outside discovered
@@ -214,9 +227,9 @@ until core engine semantics are reconstructed.
   that omitted-call surface but does not rewrite the unchanged Ghidra omission
   counter. The L0 ledger currently has no production upstream-analysis adapters,
   so promotions fail closed until narrow kind-specific adapters can derive each
-  supported assertion from independently verified artifacts. Before adapting
-  the direct-Lua relation, replace the mutually exclusive role field with a
-  non-exclusive model or prove a precedence rule.
+  supported assertion from independently verified artifacts. The next adapter
+  tranche must validate whole-artifact structure and derive only the positive
+  role atom each direct-call or callback relation actually proves.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757
@@ -226,7 +239,9 @@ until core engine semantics are reconstructed.
   accepted chunks and explicitly leaves nine unrouted.
 - [ ] Recover the complete native Lua-registration/bootstrap graph and resolve
   the census's host candidates, computed globals, loader assumptions, dynamic
-  code generation, and runtime reachability.
+  code generation, and runtime reachability. Preliminary luabind-shaped
+  pointer/name/builder candidates remain local research until every builder
+  form and alternate compiler sequence has an exact, complete grammar.
 - [x] Produce and independently verify the exact-owner-build map-data grammar
   census: all 376 chunks strictly parsed without execution, 8,915 unique
   in-bounds explicit tile records, ten tile schemas, 25 zone keys, and 32 tag

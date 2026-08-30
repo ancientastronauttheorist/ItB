@@ -83,17 +83,64 @@ Lua imports has at least one retained site. Its pretty-printed file SHA-256 is
 the verifier's canonical JSON SHA-256 is
 `07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608`.
 
-Publication is immutable: an identical existing artifact is re-read and
-reused without writing, while differing evidence or a concurrently created
-destination is preserved and rejected rather than overwritten.
+Publication is immutable: a byte-identical, deterministically encoded existing
+artifact is re-read and reused without writing, while differing evidence or a
+concurrently created destination is preserved and rejected rather than
+overwritten.
 
 This is complete only over the recorded atlas ranges and accepted `FF 15` call
 form. It does not prove that the atlas discovered every function, that a call
 executes at runtime, or that a function without a retained site never reaches
 Lua indirectly. Direct API consumer, registration-builder, and registered-Lua-
 callable relations can overlap. The census therefore publishes the positive
-call relation independently and does not force it into the review ledger's
-currently mutually exclusive native/Lua classification.
+call relation independently; accounting schema 2 can represent overlapping
+roles, but no production adapter promotes this relation yet.
+
+## Native Lua C-closure callback census
+
+`scripts/itb_native_lua_cclosure_callbacks.py` exact-verifies the atlas and
+direct-call census, stably rereads the executable, and re-decodes each owning
+atlas range with pinned Capstone 5.0.7. It accepts a callback edge only when the
+final three contiguous instructions before a direct `lua_pushcclosure` import
+call are argument pushes and the callback argument is exact x86 `68 imm32`
+whose image VA equals one non-thunk atlas entry.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_callbacks.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_callbacks.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json
+```
+
+The exact build has 15 direct `lua_pushcclosure` sites. Thirteen statically
+pass an immediate callback address, resolving to 11 unique non-thunk atlas
+entries; two reused targets account for the duplicate edges. The remaining
+register- and memory-sourced callback arguments stay explicitly unresolved.
+One resolved site passes its own containing function, all 11 callback targets
+also directly call at least one Lua import, and three of those targets also
+call `lua_pushcclosure`. Those overlaps are mechanical facts, not exclusive
+semantic classifications.
+
+The artifact's pretty-printed file SHA-256 is
+`9cb573f3cf5831a93c53ee0d673666d853c7e2515eb5d2f24546099f59154579`;
+its canonical JSON SHA-256 is
+`cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003`.
+It does not claim runtime execution, a Lua-visible name, table identity,
+registration lifetime, ownership, semantics, or targets for the two computed
+arguments. Identical output is reused without writing, and differing or
+concurrently created output is preserved and rejected; verification also
+requires the deterministic pretty-printed bytes pinned above.
 
 ## Native function review accounting
 
@@ -134,12 +181,26 @@ It separately exposes 685 Ghidra-thunk flags and 26 repeated-body groups
 covering 64 functions as review candidates. Those candidates never change a
 review field, level, ownership, or exclusion.
 
+The ledger and empty registry now use accounting protocol schema 2. The
+registry's raw and canonical SHA-256 values are respectively
+`910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d` and
+`1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4`.
+The derived ledger's raw and canonical SHA-256 values are respectively
+`133cd4f98ae1ddb86f290eef3cfbc3799d1be305a17541798df5f400efd8fa8a` and
+`e55f1e8d85279e40689f9b362f3a6e37293ed21b7b363cd5fe704e1a591db86c`.
+Existing byte-identical deterministic output is reused; differing, reformatted,
+or concurrent output is never overwritten.
+
 Every future registry claim must be in increasing RVA order and pin the
 canonical hash of the complete atlas function record. Levels are derived
 rather than trusted. L1 requires a reviewed exact boundary, resolved
 ownership, reviewed immediate references, and fact/inference evidence; L2
 also requires first-party subsystem, purpose, inputs/outputs, and native/Lua
-boundary classifications. L0 records cannot publish resolved L1/L2 fields,
+boundary evidence. The boundary is a strict object with state `unknown`,
+`none`, or `roles`; positive roles are sorted, independently supported, and
+non-exclusive. `none` requires comprehensive whole-field support, while every
+positive role requires an exact `native_lua_role` support atom. L0 records
+cannot publish resolved L1/L2 fields,
 and L1 records cannot publish the L2-only fields, so hypothesis or partial
 claims cannot silently alter the authoritative ownership/subsystem partitions.
 
@@ -163,12 +224,12 @@ streams, reserved names, symlinks, junctions, and changed parent directories
 fail closed. The production adapter allowlist is intentionally empty in this
 initial L0 tranche, so no registry promotion is accepted yet. The next review
 tranches must add narrow adapters for independently verified Observatory
-artifact kinds before adding claims. The native-to-Lua direct-call census is
-not such an adapter yet: its mechanically proven relation overlaps the
-registration-builder and registered-callable roles, so promotion first needs a
-non-exclusive role model or a separately proven precedence rule.
+artifact kinds before adding claims. The direct-call and C-closure callback
+censuses are not adapters yet: schema 2 can retain their overlapping positive
+roles, but adapters still need exact whole-artifact structural validation and
+must derive only the one role each source actually proves.
 
-Only third-party and compiler-runtime exclusions have a generic v1 shape, and
+Only third-party and compiler-runtime exclusions have a generic v2 shape, and
 they still require typed ownership plus exclusion support through an
 allowlisted adapter. `unreachable`, `duplicate_thunk`, and `data_only` fail
 closed until specialized proofs exist: complete roots/reachability for the

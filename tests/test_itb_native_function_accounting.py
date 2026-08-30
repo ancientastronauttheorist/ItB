@@ -8,10 +8,23 @@ import json
 import struct
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
+_COMMITTED_REGISTRY_RAW_SHA256 = (
+    "910320d150e7aa6977ce08fcaa9a71823f82f181624efd7a59932a5e7d55910d"
+)
+_COMMITTED_REGISTRY_CANONICAL_SHA256 = (
+    "1f3226a6939b21126bc7e3514b4ef9784590935c5ef6017b7e025c83b994f3c4"
+)
+_COMMITTED_ACCOUNTING_RAW_SHA256 = (
+    "133cd4f98ae1ddb86f290eef3cfbc3799d1be305a17541798df5f400efd8fa8a"
+)
+_COMMITTED_ACCOUNTING_CANONICAL_SHA256 = (
+    "e55f1e8d85279e40689f9b362f3a6e37293ed21b7b363cd5fe704e1a591db86c"
+)
 sys.path.insert(0, str(_REPO_ROOT / "scripts"))
 
 import itb_native_function_accounting  # noqa: E402
@@ -43,12 +56,14 @@ def _install_synthetic_upstream_adapter(monkeypatch):
         entry_rva,
         atlas_record_identity,
         support_class,
+        role,
         label,
     ):
         expected_fields = {
             "entry_rva",
             "atlas_record_sha256",
             "support_class",
+            "role",
             "evidence_class",
             "statement",
             "observed",
@@ -61,6 +76,7 @@ def _install_synthetic_upstream_adapter(monkeypatch):
             target["entry_rva"] != entry_rva
             or target["atlas_record_sha256"] != atlas_record_identity
             or target["support_class"] != support_class
+            or target["role"] != role
         ):
             raise NativeFunctionAccountingError(
                 f"{label} synthetic upstream identity differs"
@@ -173,7 +189,7 @@ def _registry(program_facts: dict, claims: list[dict] | None = None) -> dict:
     from src.observatory.native_function_accounting import _canonical_sha256
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "analysis_kind": "pe_native_function_review_registry",
         "atlas_canonical_sha256": _canonical_sha256(program_facts),
         "claims": [] if claims is None else claims,
@@ -186,19 +202,25 @@ def _write_evidence(
     function: dict,
     *,
     name: str = "review.json",
+    native_lua_boundary: dict | None = None,
 ) -> dict:
     relative = Path("evidence") / name
     path = tmp_path / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     entry_rva = function["entry_rva"]
     record_sha256 = atlas_record_sha256(function)
+    if native_lua_boundary is None:
+        native_lua_boundary = {
+            "state": "roles",
+            "roles": ["lua_api_consumer", "registered_lua_callable"],
+        }
     review_fields = {
         "boundary_status": "reviewed_exact",
         "ownership": "first_party",
         "subsystem": "player_action",
         "purpose": "Records a reviewed native player action boundary.",
         "inputs_outputs": "Consumes an action request and returns its result.",
-        "native_lua_boundary": "registered_lua_callable",
+        "native_lua_boundary": native_lua_boundary,
         "reference_status": "reviewed_immediate",
         "exclusion": "none",
         "evidence_class": "fact",
@@ -207,26 +229,34 @@ def _write_evidence(
     support_path = tmp_path / support_relative
     upstream_relative = relative.with_name(f"{relative.stem}.upstream.json")
     upstream_path = tmp_path / upstream_relative
-    support_classes = [
-        "boundary",
-        "immediate_references",
-        "native_lua_boundary",
-        "ownership",
-        "semantic_io",
+    support_specs = [
+        ("boundary", None),
+        ("immediate_references", None),
+        ("ownership", None),
+        ("semantic_io", None),
     ]
+    if native_lua_boundary["state"] == "none":
+        support_specs.append(("native_lua_boundary", None))
+    else:
+        support_specs.extend(
+            ("native_lua_role", role)
+            for role in native_lua_boundary["roles"]
+        )
+    support_specs.sort(key=lambda item: (item[0], "" if item[1] is None else item[1]))
     upstream_records = [
         {
             "entry_rva": entry_rva,
             "atlas_record_sha256": record_sha256,
             "support_class": support_class,
+            "role": role,
             "evidence_class": "fact",
             "statement": f"Synthetic decoded {support_class} observation.",
-            "observed": _support_assertion(review_fields, support_class),
+            "observed": _support_assertion(review_fields, support_class, role=role),
         }
-        for support_class in support_classes
+        for support_class, role in support_specs
     ]
     upstream_document = {
-        "schema_version": 1,
+        "schema_version": 2,
         "analysis_kind": "synthetic_native_function_analysis",
         "build_identity": identity,
         "records": upstream_records,
@@ -241,8 +271,9 @@ def _write_evidence(
             "entry_rva": entry_rva,
             "atlas_record_sha256": record_sha256,
             "support_class": support_class,
+            "role": role,
             "assertion_sha256": _canonical_sha256(
-                _support_assertion(review_fields, support_class)
+                _support_assertion(review_fields, support_class, role=role)
             ),
             "evidence_class": "fact",
             "statement": f"Synthetic reviewed {support_class} support.",
@@ -254,10 +285,10 @@ def _write_evidence(
                 }
             ],
         }
-        for index, support_class in enumerate(support_classes)
+        for index, (support_class, role) in enumerate(support_specs)
     ]
     support_document = {
-        "schema_version": 1,
+        "schema_version": 2,
         "analysis_kind": SUPPORT_EVIDENCE_KIND,
         "build_identity": identity,
         "records": support_records,
@@ -268,14 +299,15 @@ def _write_evidence(
     support = [
         {
             "support_class": support_class,
+            "role": role,
             "path": support_relative.as_posix(),
             "sha256": support_sha256,
             "json_pointer": f"/records/{index}",
         }
-        for index, support_class in enumerate(support_classes)
+        for index, (support_class, role) in enumerate(support_specs)
     ]
     document = {
-        "schema_version": 1,
+        "schema_version": 2,
         "analysis_kind": REVIEW_EVIDENCE_KIND,
         "build_identity": identity,
         "records": [
@@ -330,8 +362,19 @@ def _rewrite_evidence_chain(tmp_path: Path, reference: dict, mutate) -> None:
     reference["sha256"] = hashlib.sha256(review_payload).hexdigest()
 
 
-def _l2_claim(program_facts: dict, evidence: dict, *, entry: int = 0) -> dict:
+def _l2_claim(
+    program_facts: dict,
+    evidence: dict,
+    *,
+    entry: int = 0,
+    native_lua_boundary: dict | None = None,
+) -> dict:
     function = program_facts["functions"][entry]
+    if native_lua_boundary is None:
+        native_lua_boundary = {
+            "state": "roles",
+            "roles": ["lua_api_consumer", "registered_lua_callable"],
+        }
     return {
         "entry_rva": function["entry_rva"],
         "atlas_record_sha256": atlas_record_sha256(function),
@@ -341,7 +384,7 @@ def _l2_claim(program_facts: dict, evidence: dict, *, entry: int = 0) -> dict:
         "subsystem": "player_action",
         "purpose": "Records a reviewed native player action boundary.",
         "inputs_outputs": "Consumes an action request and returns its result.",
-        "native_lua_boundary": "registered_lua_callable",
+        "native_lua_boundary": native_lua_boundary,
         "reference_status": "reviewed_immediate",
         "exclusion": "none",
         "evidence_class": "fact",
@@ -408,7 +451,10 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
         "boundary_status_counts": ("boundary_status", "atlas_analysis_only"),
         "ownership_counts": ("ownership", "unknown"),
         "subsystem_counts": ("subsystem", "unknown"),
-        "native_lua_boundary_counts": ("native_lua_boundary", "unknown"),
+        "native_lua_boundary_state_counts": (
+            "native_lua_boundary_state",
+            "unknown",
+        ),
         "reference_status_counts": (
             "reference_status",
             "atlas_declared_direct_only",
@@ -428,10 +474,71 @@ def test_empty_registry_is_deterministic_exact_and_never_heuristically_promotes(
             for category, count in partition.items()
             if category != expected_category
         )
+    assert summary["native_lua_roles_are_nonexclusive"] is True
+    assert summary["native_lua_role_counts"] == [
+        {"native_lua_role": "lua_api_consumer", "functions": 0},
+        {"native_lua_role": "registered_lua_callable", "functions": 0},
+        {"native_lua_role": "registration_builder", "functions": 0},
+    ]
     assert result["review_candidates"]["affects_review_or_level"] is False
     assert result["review_candidates"]["ghidra_thunk_flagged_entry_rvas"] == [
         "0x00001020"
     ]
+
+
+def test_committed_schema_v2_registry_and_accounting_identity():
+    programs = _REPO_ROOT / "data" / "observatory" / "programs"
+    registry_path = programs / (
+        "windows_build_13725832_31fe35265598_"
+        "native_function_review_registry.json"
+    )
+    accounting_path = programs / (
+        "windows_build_13725832_31fe35265598_native_function_accounting.json"
+    )
+
+    def read_and_hash(path: Path) -> tuple[bytes, dict, str]:
+        payload = path.read_bytes()
+        value = json.loads(payload)
+        canonical = (
+            json.dumps(
+                value,
+                ensure_ascii=False,
+                allow_nan=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            + "\n"
+        ).encode("utf-8")
+        return payload, value, hashlib.sha256(canonical).hexdigest()
+
+    registry_payload, registry, registry_canonical = read_and_hash(registry_path)
+    accounting_payload, accounting, accounting_canonical = read_and_hash(
+        accounting_path
+    )
+    assert hashlib.sha256(registry_payload).hexdigest() == (
+        _COMMITTED_REGISTRY_RAW_SHA256
+    )
+    assert registry_canonical == _COMMITTED_REGISTRY_CANONICAL_SHA256
+    assert hashlib.sha256(accounting_payload).hexdigest() == (
+        _COMMITTED_ACCOUNTING_RAW_SHA256
+    )
+    assert accounting_canonical == _COMMITTED_ACCOUNTING_CANONICAL_SHA256
+    assert registry["schema_version"] == accounting["schema_version"] == 2
+    assert registry["claims"] == []
+    assert len(accounting["functions"]) == 25312
+    assert accounting["summary"]["level_L0"] == 25312
+    assert accounting["summary"]["level_L1"] == 0
+    assert accounting["summary"]["level_L2"] == 0
+    assert accounting["summary"]["native_lua_boundary_state_counts"] == [
+        {"functions": 0, "native_lua_boundary_state": "none"},
+        {"functions": 0, "native_lua_boundary_state": "roles"},
+        {"functions": 25312, "native_lua_boundary_state": "unknown"},
+    ]
+    assert all(
+        item["review"]["native_lua_boundary"]
+        == {"state": "unknown", "roles": []}
+        for item in accounting["functions"]
+    )
 
 
 def test_reviewed_l2_claim_requires_exact_pins_and_repo_local_identity_evidence(
@@ -449,6 +556,15 @@ def test_reviewed_l2_claim_requires_exact_pins_and_repo_local_identity_evidence(
     assert result["summary"]["level_L0"] == 1
     review = result["functions"][0]["review"]
     assert review["achieved_level"] == "L2"
+    assert review["native_lua_boundary"] == {
+        "state": "roles",
+        "roles": ["lua_api_consumer", "registered_lua_callable"],
+    }
+    assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "lua_api_consumer", "functions": 1},
+        {"native_lua_role": "registered_lua_callable", "functions": 1},
+        {"native_lua_role": "registration_builder", "functions": 0},
+    ]
     assert review["evidence"] == [reference]
     assert validate_native_function_accounting(
         executable,
@@ -458,6 +574,186 @@ def test_reviewed_l2_claim_requires_exact_pins_and_repo_local_identity_evidence(
         inventory=inventory,
         repo_root=tmp_path,
     )["status"] == "verified"
+
+
+def test_reviewed_none_boundary_uses_whole_field_support(tmp_path: Path):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    native_lua_boundary = {"state": "none", "roles": []}
+    reference = _write_evidence(
+        tmp_path,
+        program_facts["identity"],
+        program_facts["functions"][0],
+        native_lua_boundary=native_lua_boundary,
+    )
+    result = _build(
+        tmp_path,
+        program_facts,
+        _registry(
+            program_facts,
+            [
+                _l2_claim(
+                    program_facts,
+                    reference,
+                    native_lua_boundary=native_lua_boundary,
+                )
+            ],
+        ),
+        executable,
+        inventory,
+    )
+
+    assert result["functions"][0]["review"]["native_lua_boundary"] == native_lua_boundary
+    assert result["summary"]["native_lua_role_counts"] == [
+        {"native_lua_role": "lua_api_consumer", "functions": 0},
+        {"native_lua_role": "registered_lua_callable", "functions": 0},
+        {"native_lua_role": "registration_builder", "functions": 0},
+    ]
+
+
+@pytest.mark.parametrize(
+    "native_lua_boundary, message",
+    [
+        ("registered_lua_callable", "must be an object"),
+        ({"state": "unknown", "roles": ["lua_api_consumer"]}, "cannot publish"),
+        ({"state": "none", "roles": ["lua_api_consumer"]}, "cannot publish"),
+        ({"state": "roles", "roles": []}, "requires at least one"),
+        (
+            {
+                "state": "roles",
+                "roles": ["registered_lua_callable", "lua_api_consumer"],
+            },
+            "unique and canonically sorted",
+        ),
+        ({"state": "roles", "roles": ["not_a_role"]}, "unsupported role"),
+    ],
+)
+def test_native_lua_boundary_v2_is_strict(
+    tmp_path: Path,
+    native_lua_boundary,
+    message: str,
+):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    reference = _write_evidence(
+        tmp_path, program_facts["identity"], program_facts["functions"][0]
+    )
+    claim = _l2_claim(program_facts, reference)
+    claim["native_lua_boundary"] = native_lua_boundary
+
+    with pytest.raises(NativeFunctionAccountingError, match=message):
+        _build(
+            tmp_path,
+            program_facts,
+            _registry(program_facts, [claim]),
+            executable,
+            inventory,
+        )
+
+
+def test_native_lua_role_atoms_must_equal_the_reviewed_role_set(tmp_path: Path):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    reference = _write_evidence(
+        tmp_path, program_facts["identity"], program_facts["functions"][0]
+    )
+    registry = _registry(program_facts, [_l2_claim(program_facts, reference)])
+
+    def remove_registered_callable(review, _support, _upstream):
+        review["records"][0]["support"] = [
+            item
+            for item in review["records"][0]["support"]
+            if item["role"] != "registered_lua_callable"
+        ]
+
+    _rewrite_evidence_chain(tmp_path, reference, remove_registered_callable)
+    with pytest.raises(NativeFunctionAccountingError, match="native Lua roles differ"):
+        _build(tmp_path, program_facts, registry, executable, inventory)
+
+
+def test_native_lua_role_atoms_reject_duplicate_source_reference(tmp_path: Path):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    reference = _write_evidence(
+        tmp_path, program_facts["identity"], program_facts["functions"][0]
+    )
+    registry = _registry(program_facts, [_l2_claim(program_facts, reference)])
+
+    def duplicate_role(review, _support, _upstream):
+        role_support = next(
+            item
+            for item in review["records"][0]["support"]
+            if item["role"] == "lua_api_consumer"
+        )
+        review["records"][0]["support"].append(copy.deepcopy(role_support))
+
+    _rewrite_evidence_chain(tmp_path, reference, duplicate_role)
+    with pytest.raises(
+        NativeFunctionAccountingError,
+        match="duplicate support evidence reference",
+    ):
+        _build(tmp_path, program_facts, registry, executable, inventory)
+
+
+def test_native_lua_role_allows_distinct_corroborating_sources(tmp_path: Path):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    reference = _write_evidence(
+        tmp_path, program_facts["identity"], program_facts["functions"][0]
+    )
+    registry = _registry(program_facts, [_l2_claim(program_facts, reference)])
+
+    def add_corroboration(review, support, upstream):
+        role = "lua_api_consumer"
+        support_index = next(
+            index
+            for index, item in enumerate(support["records"])
+            if item["role"] == role
+        )
+        upstream_index = len(upstream["records"])
+        corroborating_upstream = copy.deepcopy(
+            upstream["records"][support_index]
+        )
+        corroborating_upstream["statement"] = (
+            "Independent synthetic Lua API consumer observation."
+        )
+        upstream["records"].append(corroborating_upstream)
+
+        new_support_index = len(support["records"])
+        corroborating_support = copy.deepcopy(support["records"][support_index])
+        corroborating_support["statement"] = (
+            "Independent reviewed Lua API consumer support."
+        )
+        corroborating_support["sources"][0]["json_pointer"] = (
+            f"/records/{upstream_index}"
+        )
+        support["records"].append(corroborating_support)
+
+        original_reference = next(
+            item
+            for item in review["records"][0]["support"]
+            if item["role"] == role
+        )
+        corroborating_reference = copy.deepcopy(original_reference)
+        corroborating_reference["json_pointer"] = f"/records/{new_support_index}"
+        review["records"][0]["support"].append(corroborating_reference)
+        review["records"][0]["support"].sort(
+            key=lambda item: (
+                item["support_class"],
+                "" if item["role"] is None else item["role"],
+                item["path"],
+                item["json_pointer"],
+            )
+        )
+
+    _rewrite_evidence_chain(tmp_path, reference, add_corroboration)
+    result = _build(tmp_path, program_facts, registry, executable, inventory)
+
+    assert result["functions"][0]["review"]["achieved_level"] == "L2"
+
+
+def test_accounting_schema_v2_rejects_legacy_registry(tmp_path: Path):
+    executable, inventory, program_facts = _write_inputs(tmp_path)
+    registry = _registry(program_facts)
+    registry["schema_version"] = 1
+
+    with pytest.raises(NativeFunctionAccountingError, match="unsupported review registry schema"):
+        _build(tmp_path, program_facts, registry, executable, inventory)
 
 
 def test_review_evidence_requires_dedicated_kind_and_matching_dimensions(
@@ -634,7 +930,10 @@ def test_l0_cannot_publish_resolved_higher_level_dimensions(tmp_path: Path):
         )
 
     claim = _l2_claim(program_facts, reference)
-    claim.update(claimed_level="L1", native_lua_boundary="unknown")
+    claim.update(
+        claimed_level="L1",
+        native_lua_boundary={"state": "unknown", "roles": []},
+    )
     with pytest.raises(NativeFunctionAccountingError, match="L1 cannot publish"):
         _build(
             tmp_path,
@@ -1030,7 +1329,7 @@ def test_cli_build_and_verify_round_trip(tmp_path: Path, capsys):
 
     assert itb_native_function_accounting.main(build_args) == 0
     evidence = tmp_path / "accounting.json"
-    evidence.write_text(capsys.readouterr().out, encoding="utf-8")
+    evidence.write_bytes(capsys.readouterr().out.encode("utf-8"))
     assert itb_native_function_accounting.main(
         [
             "verify",
@@ -1072,6 +1371,37 @@ def test_cli_rejects_duplicate_float_and_nonfinite_json(
     assert message in capsys.readouterr().err
 
 
+def test_cli_json_reader_rechecks_parent_identity(
+    tmp_path: Path,
+    monkeypatch,
+):
+    source = tmp_path / "input.json"
+    source.write_text('{"value":1}', encoding="utf-8")
+    parent = source.parent
+    observed = parent.lstat()
+
+    def stale_parent_chain(_path, _label):
+        return [
+            (
+                parent,
+                SimpleNamespace(
+                    st_mode=observed.st_mode,
+                    st_dev=observed.st_dev,
+                    st_ino=observed.st_ino + 1,
+                ),
+            )
+        ]
+
+    monkeypatch.setattr(
+        itb_native_function_accounting,
+        "_require_real_parent_chain",
+        stale_parent_chain,
+    )
+
+    with pytest.raises(NativeFunctionAccountingError, match="changed while"):
+        itb_native_function_accounting._read_json_object(source, "input")
+
+
 def test_cli_output_is_confined_and_only_replaces_native_accounting(
     tmp_path: Path,
     capsys,
@@ -1107,7 +1437,7 @@ def test_cli_output_is_confined_and_only_replaces_native_accounting(
 
     assert itb_native_function_accounting.main(build_args) == 0
     valid_rendered = capsys.readouterr().out
-    destination.write_text(valid_rendered, encoding="utf-8")
+    destination.write_bytes(valid_rendered.encode("utf-8"))
     assert (
         itb_native_function_accounting.main(
             build_args + ["--output", str(destination)]
@@ -1119,6 +1449,55 @@ def test_cli_output_is_confined_and_only_replaces_native_accounting(
         == ANALYSIS_KIND
     )
 
+    deterministic = destination.read_bytes()
+    destination.write_text(
+        json.dumps(json.loads(deterministic)),
+        encoding="utf-8",
+    )
+    reformatted = destination.read_bytes()
+    assert reformatted != deterministic
+    assert (
+        itb_native_function_accounting.main(
+            [
+                "verify",
+                "--executable",
+                str(executable),
+                "--inventory",
+                str(inventory),
+                "--program-facts",
+                str(facts),
+                "--registry",
+                str(registry),
+                "--evidence",
+                str(destination),
+            ]
+        )
+        == 2
+    )
+    assert "deterministically encoded" in capsys.readouterr().err
+    assert (
+        itb_native_function_accounting.main(
+            build_args + ["--output", str(destination)]
+        )
+        == 2
+    )
+    assert "deterministically encoded" in capsys.readouterr().err
+    assert destination.read_bytes() == reformatted
+    destination.write_bytes(deterministic)
+
+    differing_evidence = json.loads(valid_rendered)
+    differing_evidence["summary"]["schema_violations"] = 1
+    destination.write_text(json.dumps(differing_evidence), encoding="utf-8")
+    preserved = destination.read_bytes()
+    assert (
+        itb_native_function_accounting.main(
+            build_args + ["--output", str(destination)]
+        )
+        == 2
+    )
+    assert "overwrite differing" in capsys.readouterr().err
+    assert destination.read_bytes() == preserved
+
     different_identity = json.loads(valid_rendered)
     different_identity["build_identity"]["build_id"] = "different"
     destination.write_text(json.dumps(different_identity), encoding="utf-8")
@@ -1129,6 +1508,40 @@ def test_cli_output_is_confined_and_only_replaces_native_accounting(
         == 2
     )
     assert "different native-accounting identity" in capsys.readouterr().err
+
+
+def test_cli_writer_preserves_concurrently_created_destination(
+    tmp_path: Path,
+    capsys,
+    monkeypatch,
+):
+    executable, inventory, facts, registry = _write_cli_inputs(tmp_path)
+    repo_root = tmp_path / "repo"
+    output_root = repo_root / "data" / "observatory" / "programs"
+    output_root.mkdir(parents=True)
+    destination = output_root / "accounting.json"
+    monkeypatch.setattr(itb_native_function_accounting, "_REPO_ROOT", repo_root)
+    monkeypatch.setattr(
+        itb_native_function_accounting, "_OUTPUT_ROOT", output_root
+    )
+    original_link = itb_native_function_accounting.os.link
+    foreign = b"foreign concurrent output\n"
+
+    def race_link(source, target):
+        Path(target).write_bytes(foreign)
+        return original_link(source, target)
+
+    monkeypatch.setattr(itb_native_function_accounting.os, "link", race_link)
+
+    assert (
+        itb_native_function_accounting.main(
+            _cli_build_args(executable, inventory, facts, registry)
+            + ["--output", str(destination)]
+        )
+        == 2
+    )
+    assert "appeared concurrently" in capsys.readouterr().err
+    assert destination.read_bytes() == foreign
 
 
 def test_cli_atomic_writer_rejects_linked_output_root(
