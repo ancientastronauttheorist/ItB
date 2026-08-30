@@ -703,7 +703,10 @@ def validate_program_facts(
         },
         "evidence",
     )
-    if evidence["schema_version"] != SCHEMA_VERSION:
+    if (
+        type(evidence["schema_version"]) is not int
+        or evidence["schema_version"] != SCHEMA_VERSION
+    ):
         raise ProgramFactsError("unsupported program-facts schema version")
     if evidence["analysis_kind"] != ANALYSIS_KIND:
         raise ProgramFactsError("unexpected program-facts analysis kind")

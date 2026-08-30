@@ -20,6 +20,29 @@ inventoried PE before creating a deterministic artifact under `programs/`.
 `verify` independently rechecks a committed atlas against the executable. See
 `programs/README.md` for commands and limitations.
 
+## Native function review accounting
+
+`scripts/itb_native_function_accounting.py` derives a strict review overlay
+from the exact-verified program atlas and a separately hash-pinned analyst
+registry. The normalized artifact under `programs/` has exactly one record for
+each of the 25,312 atlas functions and recomputes complete partitions for
+level, boundary status, ownership, subsystem, native/Lua boundary, immediate
+reference status, evidence class, and exclusion.
+
+The initial ledger intentionally records all 25,312 functions at L0 and leaves
+all ownership/subsystem classifications unresolved; it has zero L1/L2
+promotions and zero reviewed exclusions. Ghidra's 685 thunk flags and 26
+repeated-body groups are retained only as non-promoting review candidates.
+Future claims must pass dedicated exact-dimensional review and typed-support
+records, then reach hash-pinned upstream evidence through a registered
+kind-specific adapter that derives the supported assertion. The initial
+production adapter allowlist is empty, so this tranche cannot promote a
+function beyond L0. No name, namespace, address, body-size, duplicate-body,
+thunk, or Ghidra-call heuristic can change a level or classification;
+unreachable, duplicate/thunk, and data-only exclusions also fail closed until
+their specialized proof contracts exist. See `programs/README.md` for the
+full registry/evidence contract, commands, and remaining atlas/callgraph gaps.
+
 ## Compiled Lua census
 
 `scripts/itb_lua_census.py` rebuilds the complete sealed installation

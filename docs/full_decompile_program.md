@@ -109,7 +109,10 @@ alone can claim.
 `scripts/ghidra/ExportItbProgramFacts.java` and
 `scripts/itb_program_facts.py` implement the first atlas pipeline. The output is
 strictly verified against the exact PE and lives under
-`data/observatory/programs/`.
+`data/observatory/programs/`. `scripts/itb_native_function_accounting.py`
+builds a separate exact one-to-one review overlay; the atlas remains immutable
+and every semantic promotion must come from a hash-pinned analyst registry and
+exact-build repository evidence.
 
 ### B. Shipped Lua, maps, shaders, and resource census
 
@@ -188,7 +191,19 @@ until core engine semantics are reconstructed.
 
 ### M1 — Complete surface census
 
-- [ ] Classify every atlas function at L0/L1.
+- [x] Establish an exact one-to-one L0 accounting overlay for all 25,312 atlas
+  functions. The initial empty review registry leaves every ownership and
+  subsystem value unknown, records zero L1/L2 promotions and zero exclusions,
+  and keeps 685 Ghidra-thunk flags plus 26 repeated-body groups as explicitly
+  non-promoting review candidates.
+- [ ] Review exact boundaries, ownership, and immediate references to promote
+  every first-party atlas function to at least L1 or record a fact-backed
+  exclusion. Reconcile the 281,434 executable-section bytes outside discovered
+  atlas bodies, focused boundary extents that do not exactly join an atlas
+  body, and 18,477 computed or unmapped call targets without silently changing
+  the denominator. The L0 ledger currently has no production upstream-analysis
+  adapters, so promotions fail closed until narrow kind-specific adapters can
+  derive each supported assertion from independently verified artifacts.
 - [x] Produce and independently verify the exact-owner-build compiled Lua
   function/environment census: 529 chunks, 915 functions, 1,444 total
   prototypes, 173,619 instructions, 2,686 environment identifiers, all 757
@@ -218,7 +233,9 @@ until core engine semantics are reconstructed.
   exports, 22 named executable imports, and all five bank basename literals.
   Event/string paths, payload bytes, codecs, samples, recursive topology, and
   runtime semantics remain explicitly excluded.
-- [ ] Establish subsystem ownership and exclusion counts.
+- [ ] Populate the exact subsystem-ownership and exclusion partitions with
+  reviewed evidence; the initial ledger's all-unknown/zero-exclusion baseline
+  is accounting infrastructure, not semantic classification.
 
 ### M2 — Core runtime model
 

@@ -199,6 +199,16 @@ def test_verifier_rejects_drift(tmp_path: Path, mutation, message: str):
         validate_program_facts(executable, evidence, inventory=inventory)
 
 
+def test_verifier_rejects_boolean_schema_version(tmp_path: Path):
+    executable, inventory_path, facts, _data = _write_inputs(tmp_path)
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    evidence = build_program_facts(executable, facts, inventory=inventory)
+    evidence["schema_version"] = True
+
+    with pytest.raises(ProgramFactsError, match="unsupported.*schema version"):
+        validate_program_facts(executable, evidence, inventory=inventory)
+
+
 def test_builder_rejects_unknown_rows_and_metadata_count_drift(tmp_path: Path):
     executable, inventory_path, facts, _data = _write_inputs(tmp_path)
     inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
