@@ -618,9 +618,38 @@ def _prepare_campaign(tmp_path: Path) -> tuple[Path, Path]:
             }
             trial_path = condition_dir / "trial.json"
             _write(trial_path, trial)
+            run_id = f"synthetic-{capture_id}"
             _write(
                 session_path,
-                {"run_id": f"synthetic-{capture_id}", "mission_index": 0},
+                {"run_id": run_id, "mission_index": 0},
+            )
+            recording_dir = campaign / "recordings" / run_id
+            recording_dir.mkdir(parents=True)
+            for recording_label in (
+                "board",
+                "solve_input",
+                "solve",
+                "threat_audit",
+            ):
+                _write(
+                    recording_dir / f"m00_turn_01_{recording_label}.json",
+                    {
+                        "run_id": run_id,
+                        "mission_index": 0,
+                        "turn": 1,
+                        "label": recording_label,
+                    },
+                )
+            (recording_dir / "resist_probe.jsonl").write_text(
+                json.dumps(
+                    {
+                        "run_id": run_id,
+                        "mission_id": "Mission_Power",
+                        "turn": 1,
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
             )
             _write(
                 condition_dir / "lifecycle.json",
@@ -662,12 +691,30 @@ def test_synthetic_capsule_campaign_seals_board_rng_and_neutrality(tmp_path):
     assert receipt["results"]["draw_counts"] == [2, 2, 2]
     assert receipt["results"]["all_armed_observations_match"] is True
     assert receipt["results"]["all_semantic_outcomes_match"] is True
+    assert receipt["results"]["all_fixed_scenario_outcomes_match"] is True
+    assert receipt["results"]["neutrality_status"] == "matched"
+    assert len(receipt["results"]["stable_board_carriers_sha256"]) == 64
+    assert len(receipt["results"]["stable_candidate_vector_sha256"]) == 64
     assert receipt["campaign"]["condition_orders"] == list(PAIR_SPECS.values())
     assert receipt["campaign"]["fresh_process_count"] == 9
     assert receipt["campaign"]["all_start_states_match"] is True
     assert receipt["campaign"]["all_lifecycles_complete"] is True
     assert receipt["campaign"]["all_processes_gracefully_closed"] is True
     assert receipt["campaign"]["all_runtime_modules_exact"] is True
+    assert receipt["campaign"]["recording_run_count"] == 9
+    assert receipt["campaign"]["recording_artifact_count"] == 45
+    assert receipt["campaign"]["all_recordings_bound_to_sessions"] is True
+    assert all(
+        len(
+            [
+                name
+                for name in pair["artifacts"]
+                if "_recording_" in name
+            ]
+        )
+        == 15
+        for pair in receipt["pairs"]
+    )
     assert receipt["restore"]["save_restoration_pending"] is False
     assert receipt["restore"]["cleanup_receipt_pending"] is True
     assert any(
@@ -676,12 +723,50 @@ def test_synthetic_capsule_campaign_seals_board_rng_and_neutrality(tmp_path):
     )
 
 
-def test_capsule_campaign_rejects_semantic_outcome_drift(tmp_path):
+def test_capsule_campaign_rejects_unbound_recording_directory(tmp_path):
     repo, campaign = _prepare_campaign(tmp_path)
-    condition_dir = campaign / "pair002" / "armed"
+    (campaign / "recordings" / "foreign-run").mkdir()
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="campaign children differ",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_rejects_recording_identity_drift(tmp_path):
+    repo, campaign = _prepare_campaign(tmp_path)
+    path = (
+        campaign
+        / "recordings"
+        / "synthetic-spawn-capsule-pair001-control"
+        / "m00_turn_01_board.json"
+    )
+    value = json.loads(path.read_text(encoding="utf-8"))
+    value["run_id"] = "foreign-run"
+    _write(path, value)
+
+    with pytest.raises(
+        SpawnCoordinateCapsuleCampaignError,
+        match="recording board identity differs",
+    ):
+        build_spawn_coordinate_capsule_campaign_receipt(
+            campaign,
+            repository_root=repo,
+        )
+
+
+def test_capsule_campaign_seals_unarmed_baseline_drift_without_claiming_neutrality(
+    tmp_path,
+):
+    repo, campaign = _prepare_campaign(tmp_path)
+    condition_dir = campaign / "pair001" / "control"
     outcome_path = condition_dir / "outcome.json"
     outcome = json.loads(outcome_path.read_text(encoding="utf-8"))
-    outcome["grid_power"] = 4
+    outcome["spawning_tiles"] = [[7, 7]]
     _write(outcome_path, outcome)
     trial_path = condition_dir / "trial.json"
     trial = json.loads(trial_path.read_text(encoding="utf-8"))
@@ -691,15 +776,33 @@ def test_capsule_campaign_rejects_semantic_outcome_drift(tmp_path):
     lifecycle = json.loads(lifecycle_path.read_text(encoding="utf-8"))
     lifecycle["trial"]["sha256"] = _file_sha256(trial_path)
     _write(lifecycle_path, lifecycle)
+    campaign_lifecycle_path = campaign / "campaign_lifecycle.json"
+    campaign_lifecycle = json.loads(
+        campaign_lifecycle_path.read_text(encoding="utf-8")
+    )
+    for condition in campaign_lifecycle["conditions"]:
+        if condition["pair"] == "pair001" and condition["condition"] == "control":
+            condition["lifecycle_sha256"] = _file_sha256(lifecycle_path)
+            break
+    _write(campaign_lifecycle_path, campaign_lifecycle)
 
-    with pytest.raises(
-        SpawnCoordinateCapsuleCampaignError,
-        match="whole-game outcomes differ",
-    ):
-        build_spawn_coordinate_capsule_campaign_receipt(
-            campaign,
-            repository_root=repo,
-        )
+    receipt = build_spawn_coordinate_capsule_campaign_receipt(
+        campaign,
+        repository_root=repo,
+    )
+
+    assert receipt["results"]["neutrality_status"] == (
+        "not_proven_unarmed_baseline_drift"
+    )
+    assert receipt["results"]["control_dormant_mismatch_count"] == 1
+    assert receipt["results"]["control_armed_mismatch_count"] == 1
+    assert receipt["results"]["all_semantic_outcomes_match"] is False
+    assert receipt["results"]["all_fixed_scenario_outcomes_match"] is False
+    assert receipt["results"]["semantic_sha256"] is None
+    assert any(
+        "whole-game capsule-observer neutrality" in claim.lower()
+        for claim in receipt["claims"]["not_proven"]
+    )
 
 
 def test_capsule_campaign_rejects_counterbalance_order_drift(tmp_path):

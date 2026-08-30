@@ -81,6 +81,13 @@ LIFECYCLE_ERROR_FIELDS = {
     "close",
     "continue_cleanup",
 }
+RECORDING_JSON_LABELS = (
+    "board",
+    "solve_input",
+    "solve",
+    "threat_audit",
+)
+RECORDING_JSONL_NAME = "resist_probe.jsonl"
 _WINDOWS_EPOCH_FILETIME = 116_444_736_000_000_000
 
 
@@ -190,7 +197,7 @@ def _exact_campaign_root(root: Path) -> None:
         if item.is_symlink() or (not item.is_dir() and not item.is_file())
     }
     if (
-        directories != set(PAIR_SPECS)
+        directories != set(PAIR_SPECS) | {"recordings"}
         or files != {"campaign_lifecycle.json"}
         or symlinks_or_other
     ):
@@ -208,6 +215,96 @@ def _artifact(path: Path, repository_root: Path) -> dict[str, Any]:
         ) from exc
     data = _stable_bytes(resolved, relative)
     return {"path": relative, "sha256": _sha256(data), "size": len(data)}
+
+
+def _recording_artifacts(
+    recordings_root: Path,
+    *,
+    session: Mapping[str, Any],
+    trial: Mapping[str, Any],
+    pair_name: str,
+    condition: str,
+    repository_root: Path,
+) -> tuple[str, dict[str, dict[str, Any]]]:
+    label = f"{pair_name} {condition} recording"
+    run_id = session.get("run_id")
+    mission_index = session.get("mission_index")
+    turn = trial.get("pre_end_turn_turn")
+    if (
+        type(run_id) is not str
+        or not run_id
+        or run_id in {".", ".."}
+        or "/" in run_id
+        or "\\" in run_id
+        or Path(run_id).name != run_id
+    ):
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} run ID is invalid")
+    if type(mission_index) is not int or mission_index < 0:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{label} mission index is invalid"
+        )
+    if type(turn) is not int or turn < 1:
+        raise SpawnCoordinateCapsuleCampaignError(f"{label} turn is invalid")
+
+    prefix = f"m{mission_index:02d}_turn_{turn:02d}_"
+    json_names = {
+        recording_label: f"{prefix}{recording_label}.json"
+        for recording_label in RECORDING_JSON_LABELS
+    }
+    expected_files = set(json_names.values()) | {RECORDING_JSONL_NAME}
+    recording_dir = recordings_root / run_id
+    _exact_children(recording_dir, expected_files, directories=False)
+
+    artifacts: dict[str, dict[str, Any]] = {}
+    for recording_label, filename in json_names.items():
+        path = recording_dir / filename
+        value = _load(path, f"{label} {recording_label}")
+        if (
+            value.get("run_id") != run_id
+            or value.get("mission_index") != mission_index
+            or value.get("turn") != turn
+            or value.get("label") != recording_label
+        ):
+            raise SpawnCoordinateCapsuleCampaignError(
+                f"{label} {recording_label} identity differs"
+            )
+        artifacts[f"{condition}_recording_{recording_label}"] = _artifact(
+            path,
+            repository_root,
+        )
+
+    resist_path = recording_dir / RECORDING_JSONL_NAME
+    resist_data = _stable_bytes(resist_path, f"{label} resist probe")
+    try:
+        resist_lines = resist_data.decode("utf-8", errors="strict").splitlines()
+    except UnicodeDecodeError as exc:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"invalid {label} resist probe: {exc}"
+        ) from exc
+    if not resist_lines:
+        raise SpawnCoordinateCapsuleCampaignError(
+            f"{label} resist probe is empty"
+        )
+    for line_number, line in enumerate(resist_lines, start=1):
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SpawnCoordinateCapsuleCampaignError(
+                f"invalid {label} resist probe line {line_number}: {exc}"
+            ) from exc
+        if not isinstance(value, Mapping) or (
+            value.get("run_id") != run_id
+            or value.get("mission_id") != "Mission_Power"
+            or value.get("turn") != turn
+        ):
+            raise SpawnCoordinateCapsuleCampaignError(
+                f"{label} resist probe identity differs"
+            )
+    artifacts[f"{condition}_recording_resist_probe"] = _artifact(
+        resist_path,
+        repository_root,
+    )
+    return run_id, artifacts
 
 
 def _timestamp(value: object, label: str) -> datetime:
@@ -1063,8 +1160,12 @@ def build_spawn_coordinate_capsule_campaign_receipt(
     build, _plan = _validate_build_identity(build_path, plan_path)
 
     pairs: list[dict[str, Any]] = []
-    semantic_sha256: str | None = None
-    observation_sha256: str | None = None
+    semantic_sha256s: set[str] = set()
+    armed_observation_sha256s: list[str] = []
+    board_carriers_sha256s: set[str] = set()
+    candidate_vector_sha256s: set[str] = set()
+    control_dormant_comparisons: list[Mapping[str, Any]] = []
+    control_armed_comparisons: list[Mapping[str, Any]] = []
     capsule_counts: list[int] = []
     draw_counts: list[int] = []
     session_files: set[str] = set()
@@ -1077,6 +1178,9 @@ def build_spawn_coordinate_capsule_campaign_receipt(
     source_session_sha256: str | None = None
     bridge_start_sha256: str | None = None
     condition_lifecycles: dict[str, Mapping[str, Any]] = {}
+    recording_run_ids: set[str] = set()
+    recording_artifact_count = 0
+    recordings_root = root / "recordings"
     for pair_name, expected_order in PAIR_SPECS.items():
         pair_dir = root / pair_name
         _exact_children(pair_dir, {"control", "dormant", "armed"}, directories=True)
@@ -1177,6 +1281,24 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             outcome = _load(
                 condition_dir / "outcome.json", f"{pair_name} {condition} outcome"
             )
+            session = _load(
+                condition_dir / "session.json", f"{pair_name} {condition} session"
+            )
+            recording_run_id, recording_artifacts = _recording_artifacts(
+                recordings_root,
+                session=session,
+                trial=trial,
+                pair_name=pair_name,
+                condition=condition,
+                repository_root=repo,
+            )
+            if recording_run_id in recording_run_ids:
+                raise SpawnCoordinateCapsuleCampaignError(
+                    f"{pair_name} {condition} recording run ID was reused"
+                )
+            recording_run_ids.add(recording_run_id)
+            recording_artifact_count += len(recording_artifacts)
+            artifacts.update(recording_artifacts)
             trials[condition] = trial
             outcomes[condition] = outcome
             artifacts[f"{condition}_trial"] = _artifact(
@@ -1251,12 +1373,10 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             )
 
         observation = _capsule_observation(validation)
-        if observation_sha256 is None:
-            observation_sha256 = observation["observation_sha256"]
-        elif observation["observation_sha256"] != observation_sha256:
-            raise SpawnCoordinateCapsuleCampaignError(
-                f"{pair_name} armed capsule observation differs"
-            )
+        armed_observation_sha256s.append(observation["observation_sha256"])
+        for capsule in observation["capsules"]:
+            board_carriers_sha256s.add(capsule["board_carriers_sha256"])
+            candidate_vector_sha256s.add(capsule["candidate_vector_sha256"])
         capsule_counts.append(observation["capsule_count"])
         draw_counts.append(len(snapshot["draw_records"]))
 
@@ -1272,17 +1392,19 @@ def build_spawn_coordinate_capsule_campaign_receipt(
                 capture_id=f"spawn-capsule-{pair_name}-armed",
             ),
         }
-        if any(item["status"] != "matched" for item in comparisons.values()):
+        if any(
+            item.get("status") not in {"matched", "mismatched"}
+            or item.get("differences_truncated") is not False
+            for item in comparisons.values()
+        ):
             raise SpawnCoordinateCapsuleCampaignError(
-                f"{pair_name} whole-game outcomes differ"
+                f"{pair_name} whole-game comparison is incomplete"
             )
-        pair_semantic = comparisons["control_armed"]["control_semantic_sha256"]
-        if semantic_sha256 is None:
-            semantic_sha256 = pair_semantic
-        elif pair_semantic != semantic_sha256:
-            raise SpawnCoordinateCapsuleCampaignError(
-                f"{pair_name} fixed scenario outcome differs"
-            )
+        control_dormant_comparisons.append(comparisons["control_dormant"])
+        control_armed_comparisons.append(comparisons["control_armed"])
+        for comparison in comparisons.values():
+            semantic_sha256s.add(str(comparison["control_semantic_sha256"]))
+            semantic_sha256s.add(str(comparison["exact_hook_semantic_sha256"]))
 
         artifacts["armed_snapshot"] = _artifact(
             armed_dir / "snapshot.json", repo
@@ -1309,16 +1431,20 @@ def build_spawn_coordinate_capsule_campaign_receipt(
                         "addresses_or_pointers_published",
                     )
                 },
-                "whole_game_outcome": {
-                    "control_dormant": "matched",
-                    "control_armed": "matched",
-                    "difference_count": 0,
-                    "semantic_sha256": pair_semantic,
-                },
+                "whole_game_outcome": comparisons,
                 "artifacts": artifacts,
             }
         )
 
+    _exact_children(recordings_root, recording_run_ids, directories=True)
+    if len(board_carriers_sha256s) != 1:
+        raise SpawnCoordinateCapsuleCampaignError(
+            "armed selector-entry Board carriers differ"
+        )
+    if len(candidate_vector_sha256s) != 1:
+        raise SpawnCoordinateCapsuleCampaignError(
+            "armed selector candidate vectors differ"
+        )
     if len(process_executable_paths) != 1:
         raise SpawnCoordinateCapsuleCampaignError(
             "campaign process executable paths differ"
@@ -1336,6 +1462,67 @@ def build_spawn_coordinate_capsule_campaign_receipt(
         start_state_tree_sha256=start_state_tree_sha256,
         start_state_manifest_sha256=start_state_manifest_sha256,
     )
+
+    control_dormant_mismatch_count = sum(
+        item["status"] == "mismatched" for item in control_dormant_comparisons
+    )
+    control_armed_mismatch_count = sum(
+        item["status"] == "mismatched" for item in control_armed_comparisons
+    )
+    all_pairwise_semantic_outcomes_match = (
+        control_dormant_mismatch_count == 0
+        and control_armed_mismatch_count == 0
+    )
+    all_fixed_scenario_outcomes_match = len(semantic_sha256s) == 1
+    all_armed_observations_match = len(set(armed_observation_sha256s)) == 1
+    stable_armed_observation_sha256 = (
+        armed_observation_sha256s[0] if all_armed_observations_match else None
+    )
+    semantic_sha256 = (
+        next(iter(semantic_sha256s))
+        if all_fixed_scenario_outcomes_match
+        else None
+    )
+    if all_pairwise_semantic_outcomes_match:
+        neutrality_status = "matched"
+    elif control_dormant_mismatch_count:
+        neutrality_status = "not_proven_unarmed_baseline_drift"
+    else:
+        neutrality_status = "not_proven_armed_outcomes_differ"
+
+    proven_claims = [
+        "Every armed trial paired each selector-entry Board carrier capsule with the exact shared native RNG transition, candidate vector, selected index, and selected coordinate.",
+        "Each native selected coordinate matched the ordered spawning markers exposed by the fresh bridge state on the following player turn.",
+        "All three armed trials captured byte-identical selector-entry Board carriers and ordered candidate vectors; selector-entry RNG transitions and selected indexes are reported separately rather than assumed stable.",
+        "Every one-shot observer cleared its debug registers, removed its vectored exception handler, released the pinned executable, preserved every seam, published no pointer, and modified no executable bytes.",
+        "All nine trials used distinct Windows process identities bound to the exact attested Breach.exe path, size, and SHA-256.",
+        "Before each fresh process started, the game was stopped and the live save file set and bytes exactly matched the same sealed start-state manifest.",
+        "Each trial used the exact installed capsule observer, Continue helper, and RNG-seed helper; consumed the one-shot native Continue request; began from the same fresh bridge state and isolated source session; and ended by gracefully closing that exact process without forced termination.",
+        "All nine solver recording directories were bound to their isolated session run IDs, mission indexes, and pre-End-Turn turns; every board, solve input, solve result, threat audit, and resist probe was sealed into the campaign receipt.",
+    ]
+    not_proven_claims = [
+        "Transient dead non-corpse occupancy at selector entry.",
+        "The selected pawn's complete native path profile at selector entry.",
+        "A complete future spawn forecast from ordinary solver input; these captures expose native selector-time state, not all prior scheduling inputs.",
+        "Pristine-depot behavior; this is the attested owner-local-modified Windows build.",
+    ]
+    if all_pairwise_semantic_outcomes_match:
+        proven_claims.append(
+            "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets."
+        )
+    else:
+        if control_dormant_mismatch_count:
+            proven_claims.append(
+                "Unarmed control-versus-dormant outcomes diverged in "
+                f"{control_dormant_mismatch_count} of {len(pairs)} triplets, "
+                "so a restored save plus the fixed seed did not produce a stable upstream RNG position."
+            )
+        not_proven_claims.extend(
+            [
+                "Whole-game capsule-observer neutrality; separate-process unarmed baselines already drifted, so armed outcome differences do not isolate an observer effect.",
+                "A stable selector-entry shared RNG state or selected coordinate from the restored save and fixed seed alone.",
+            ]
+        )
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -1376,6 +1563,9 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             "all_lifecycles_complete": True,
             "all_processes_gracefully_closed": True,
             "all_runtime_modules_exact": True,
+            "recording_run_count": len(recording_run_ids),
+            "recording_artifact_count": recording_artifact_count,
+            "all_recordings_bound_to_sessions": True,
         },
         "pairs": pairs,
         "results": {
@@ -1383,27 +1573,27 @@ def build_spawn_coordinate_capsule_campaign_receipt(
             "complete_restored_snapshots": len(pairs),
             "capsule_counts": capsule_counts,
             "draw_counts": draw_counts,
-            "stable_armed_observation_sha256": observation_sha256,
-            "all_armed_observations_match": True,
-            "all_semantic_outcomes_match": True,
+            "stable_board_carriers_sha256": next(
+                iter(board_carriers_sha256s)
+            ),
+            "stable_candidate_vector_sha256": next(
+                iter(candidate_vector_sha256s)
+            ),
+            "armed_observation_sha256s": armed_observation_sha256s,
+            "stable_armed_observation_sha256": stable_armed_observation_sha256,
+            "all_armed_observations_match": all_armed_observations_match,
+            "all_semantic_outcomes_match": all_pairwise_semantic_outcomes_match,
+            "all_fixed_scenario_outcomes_match": (
+                all_fixed_scenario_outcomes_match
+            ),
             "semantic_sha256": semantic_sha256,
+            "neutrality_status": neutrality_status,
+            "control_dormant_mismatch_count": control_dormant_mismatch_count,
+            "control_armed_mismatch_count": control_armed_mismatch_count,
         },
         "claims": {
-            "proven": [
-                "Every armed trial paired each selector-entry Board carrier capsule with the exact shared native RNG transition, candidate vector, selected index, and selected coordinate.",
-                "Each native selected coordinate matched the ordered spawning markers exposed by the fresh bridge state on the following player turn.",
-                "Control, dormant-loaded, and armed whole-game outcomes were semantically identical in all three counterbalanced triplets.",
-                "Every one-shot observer cleared its debug registers, removed its vectored exception handler, released the pinned executable, preserved every seam, published no pointer, and modified no executable bytes.",
-                "All nine trials used distinct Windows process identities bound to the exact attested Breach.exe path, size, and SHA-256.",
-                "Before each fresh process started, the game was stopped and the live save file set and bytes exactly matched the same sealed start-state manifest.",
-                "Each trial used the exact installed capsule observer, Continue helper, and RNG-seed helper; consumed the one-shot native Continue request; began from the same fresh bridge state and isolated source session; and ended by gracefully closing that exact process without forced termination.",
-            ],
-            "not_proven": [
-                "Transient dead non-corpse occupancy at selector entry.",
-                "The selected pawn's complete native path profile at selector entry.",
-                "A complete future spawn forecast from ordinary solver input; these captures expose native selector-time state, not all prior scheduling inputs.",
-                "Pristine-depot behavior; this is the attested owner-local-modified Windows build.",
-            ],
+            "proven": proven_claims,
+            "not_proven": not_proven_claims,
         },
         "solver_conformance": {
             "resolved_rule": (
