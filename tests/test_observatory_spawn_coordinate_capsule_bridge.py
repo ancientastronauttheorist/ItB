@@ -35,6 +35,62 @@ def test_capsule_load_check_requires_exact_dormant_unconsumed_ack(
     assert commands == ["OBS_SPAWN_CAPSULE_LOAD_CHECK"]
 
 
+def test_capsule_snapshot_consumer_removes_only_the_exact_copied_generation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    snapshot_path = tmp_path / "capsule.json"
+    snapshot_tmp = tmp_path / "capsule.tmp"
+    snapshot = {"kind": "capsule", "capture_id": "exact-copy"}
+    snapshot_path.write_text(json.dumps(snapshot), encoding="utf-8")
+    monkeypatch.setattr(
+        protocol,
+        "SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE",
+        snapshot_path,
+    )
+    monkeypatch.setattr(
+        protocol,
+        "SPAWN_COORDINATE_CAPSULE_SNAPSHOT_TMP",
+        snapshot_tmp,
+    )
+
+    protocol.consume_observatory_spawn_coordinate_capsule_snapshot(snapshot)
+
+    assert not snapshot_path.exists()
+
+
+def test_capsule_snapshot_consumer_rejects_copy_or_temporary_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    snapshot_path = tmp_path / "capsule.json"
+    snapshot_tmp = tmp_path / "capsule.tmp"
+    snapshot_path.write_text('{"capture_id":"observed"}', encoding="utf-8")
+    monkeypatch.setattr(
+        protocol,
+        "SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE",
+        snapshot_path,
+    )
+    monkeypatch.setattr(
+        protocol,
+        "SPAWN_COORDINATE_CAPSULE_SNAPSHOT_TMP",
+        snapshot_tmp,
+    )
+
+    with pytest.raises(protocol.BridgeError, match="copy differs"):
+        protocol.consume_observatory_spawn_coordinate_capsule_snapshot(
+            {"capture_id": "expected"}
+        )
+    assert snapshot_path.exists()
+
+    snapshot_tmp.write_text("partial", encoding="utf-8")
+    with pytest.raises(protocol.BridgeError, match="temporary output"):
+        protocol.consume_observatory_spawn_coordinate_capsule_snapshot(
+            {"capture_id": "observed"}
+        )
+    assert snapshot_path.exists()
+
+
 @pytest.mark.parametrize(
     ("condition", "counts"),
     [

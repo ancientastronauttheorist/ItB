@@ -641,6 +641,8 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "all 64 tile and pointer-free occupancy records" in evidence
     assert "state=dormant consumed=false armed=false" in evidence
     assert "dormant deployment only" in evidence
+    assert "fail-closed trial runner and offline campaign sealer" in evidence
+    assert "no live condition has run" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
         for item in record["implementations"]
@@ -679,7 +681,20 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     }
     assert implementations[
         "src/observatory/spawn_coordinate_capsule_hw.py"
-    ] == {"validate_spawn_coordinate_capsule_snapshot"}
+    ] == {
+        "validate_spawn_coordinate_capsule_build_identity",
+        "validate_spawn_coordinate_capsule_snapshot",
+        "correlate_spawn_coordinate_capsule_snapshot",
+    }
+    assert implementations[
+        "src/observatory/spawn_coordinate_capsule_turn.py"
+    ] == {"SpawnCoordinateCapsuleTurnBoundary"}
+    assert implementations[
+        "src/observatory/spawn_coordinate_capsule_campaign.py"
+    ] == {
+        "build_spawn_coordinate_capsule_campaign_receipt",
+        "publish_spawn_coordinate_capsule_campaign_receipt",
+    }
     assert implementations[
         "src/native/observatory_spawn_coordinate_capsule_hw_observer.c"
     ] == {
@@ -690,6 +705,12 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert implementations[
         "scripts/build_itb_observatory_spawn_coordinate_capsule_hw_observer.py"
     ] == {"build_observer"}
+    assert implementations[
+        "scripts/itb_observatory_spawn_coordinate_capsule_trial.py"
+    ] == {"run"}
+    assert implementations[
+        "scripts/itb_observatory_spawn_coordinate_capsule_campaign.py"
+    ] == {"main"}
     assert implementations["src/bridge/modloader.lua"] == {
         "native_enemy_spawn_inputs",
         "SPAWN_COORDINATE_CAPSULE",
@@ -703,6 +724,7 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "prepare_observatory_spawn_coordinate_capsule",
         "finish_observatory_spawn_coordinate_capsule",
         "abort_observatory_spawn_coordinate_capsule",
+        "consume_observatory_spawn_coordinate_capsule_snapshot",
     }
     assert implementations["rust_solver/src/native_rng.rs"] == {
         "build_native_enemy_spawn_candidate_pool",
@@ -819,6 +841,20 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     ] == {
         "test_capsule_load_check_requires_exact_dormant_unconsumed_ack",
         "test_capsule_boundary_requires_fresh_armed_output",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_trial.py"
+    ] == {
+        "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
+        "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
+        "test_build_identity_preflight_blocks_before_any_session_action",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_campaign.py"
+    ] == {
+        "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
+        "test_capsule_campaign_rejects_semantic_outcome_drift",
+        "test_capsule_campaign_rejects_counterbalance_order_drift",
     }
     assert tests[
         "tests/test_observatory_enemy_spawn_candidate_boundary.py"

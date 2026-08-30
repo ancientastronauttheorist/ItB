@@ -1768,6 +1768,39 @@ def finish_observatory_spawn_coordinate_capsule(
     )
 
 
+def consume_observatory_spawn_coordinate_capsule_snapshot(
+    expected_snapshot: dict,
+) -> None:
+    """Remove only an exactly copied capsule snapshot from the bridge directory."""
+    if not isinstance(expected_snapshot, dict):
+        raise BridgeError("expected spawn-coordinate capsule snapshot is invalid")
+    if SPAWN_COORDINATE_CAPSULE_SNAPSHOT_TMP.exists():
+        raise BridgeError("spawn-coordinate capsule temporary output still exists")
+    before = _file_generation(SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE)
+    if before is None:
+        raise BridgeError("spawn-coordinate capsule snapshot is missing")
+    try:
+        observed = json.loads(
+            SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE.read_text(encoding="utf-8")
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise BridgeError(
+            f"spawn-coordinate capsule snapshot cannot be consumed: {exc}"
+        ) from exc
+    if observed != expected_snapshot:
+        raise BridgeError("spawn-coordinate capsule snapshot copy differs")
+    if _file_generation(SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE) != before:
+        raise BridgeError("spawn-coordinate capsule snapshot changed while checked")
+    try:
+        SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE.unlink()
+    except OSError as exc:
+        raise BridgeError(
+            f"spawn-coordinate capsule snapshot removal failed: {exc}"
+        ) from exc
+    if SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE.exists():
+        raise BridgeError("spawn-coordinate capsule snapshot remained after removal")
+
+
 def abort_observatory_spawn_coordinate_capsule(
     capture_id: str,
     *,

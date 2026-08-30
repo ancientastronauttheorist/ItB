@@ -11,10 +11,12 @@ from src.observatory.msvc_rng_replay import (
 from src.observatory.spawn_coordinate_capsule_hw import (
     EXPECTED_BASE_PLAN_SHA256,
     EXPECTED_BASE_SOURCE_SHA256,
+    EXPECTED_BUILD_RECEIPT_SHA256,
     EXPECTED_BOUNDARY_MAP_SHA256,
     EXPECTED_EXECUTABLE_SHA256,
     EXPECTED_FALLBACK_PREBYTES_SHA256,
     EXPECTED_INVENTORY_SHA256,
+    EXPECTED_MODULE_SHA256,
     EXPECTED_PLAN_SHA256,
     EXPECTED_POSITION_BOUNDARY_SHA256,
     EXPECTED_RNG_OWNER_SHA256,
@@ -26,6 +28,8 @@ from src.observatory.spawn_coordinate_capsule_hw import (
     EXPECTED_SPAWN_BOUNDARY_SHA256,
     EXPECTED_STANDARD_PREBYTES_SHA256,
     SpawnCoordinateCapsuleHwError,
+    correlate_spawn_coordinate_capsule_snapshot,
+    validate_spawn_coordinate_capsule_build_identity,
     validate_spawn_coordinate_capsule_snapshot,
 )
 
@@ -311,3 +315,69 @@ def test_capsule_snapshot_rejects_build_or_restoration_safety_drift():
     snapshot["integrity"]["addresses_or_pointers_published"] = True
     with pytest.raises(SpawnCoordinateCapsuleHwError, match="not fully restored"):
         _validate(snapshot)
+
+
+def test_capsule_live_preflight_requires_exact_module_and_receipt_bytes():
+    receipt = _receipt()
+    receipt["module_sha256"] = EXPECTED_MODULE_SHA256
+    receipt["module_filename"] = (
+        "itb_observatory_spawn_coordinate_capsule_hw_observer_"
+        f"{EXPECTED_MODULE_SHA256}.dll"
+    )
+
+    identity = validate_spawn_coordinate_capsule_build_identity(
+        receipt,
+        observed_module_sha256=EXPECTED_MODULE_SHA256,
+        observed_build_receipt_sha256=EXPECTED_BUILD_RECEIPT_SHA256,
+    )
+
+    assert identity["module_sha256"] == EXPECTED_MODULE_SHA256
+    with pytest.raises(SpawnCoordinateCapsuleHwError, match="receipt bytes differ"):
+        validate_spawn_coordinate_capsule_build_identity(
+            receipt,
+            observed_module_sha256=EXPECTED_MODULE_SHA256,
+            observed_build_receipt_sha256="0" * 64,
+        )
+
+
+def test_capsule_correlation_requires_exact_next_turn_spawn_marker_order():
+    snapshot = _snapshot()
+    selected = snapshot["capsules"][0]
+    result = correlate_spawn_coordinate_capsule_snapshot(
+        snapshot,
+        {
+            "mission_id": "Mission_Power",
+            "phase": "combat_player",
+            "turn": 2,
+            "spawning_tiles": [[selected["selected_x"], selected["selected_y"]]],
+        },
+        build_receipt=_receipt(),
+        observed_module_sha256=MODULE_SHA256,
+    )
+
+    assert result["status"] == "correlated"
+    assert result["native"]["selected_spawn_coordinates"] == result["bridge"][
+        "spawning_tiles"
+    ]
+    assert result["native"]["capsule_board_turns"] == [1]
+
+
+def test_capsule_correlation_rejects_stale_turn_or_different_spawn_marker():
+    snapshot = _snapshot()
+    result = correlate_spawn_coordinate_capsule_snapshot(
+        snapshot,
+        {
+            "mission_id": "Mission_Power",
+            "phase": "combat_player",
+            "turn": 1,
+            "spawning_tiles": [[7, 7]],
+        },
+        build_receipt=_receipt(),
+        observed_module_sha256=MODULE_SHA256,
+    )
+
+    assert result["status"] == "rejected"
+    assert result["reasons"] == [
+        "bridge_turn_did_not_advance",
+        "selector_results_differ_from_spawn_markers",
+    ]

@@ -1110,11 +1110,14 @@ query/read-only Windows reader supplies the complete current Point-keyed
   player/environment changes and the shared CRT state immediately before a
   future selector call, so it still cannot know the selected coordinate. A
   content-addressed one-shot observer can now capture that exact selector-entry
-  Board/RNG capsule and has passed a live dormant/unconsumed load check, but no
-  armed capture has run. Keep the current Rust non-fabrication rule. The next
-  justified runtime step is a matched control/dormant/armed capsule campaign
-  under the same reversible protocol; candidate construction and current-state
-  carrier integration no longer need another broad native investigation.
+  Board/RNG capsule and has passed a live dormant/unconsumed load check. Its
+  exact-build trial runner, guarded local End Turn boundary, next-turn
+  correlation, exact snapshot consumer, and three-triplet counterbalanced
+  campaign sealer are now synthetically validated, but no armed capture has
+  run. Keep the current Rust non-fabrication rule. The next justified runtime
+  step is that matched control/dormant/armed capsule campaign under the same
+  reversible protocol; candidate construction and current-state carrier
+  integration no longer need another broad native investigation.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 

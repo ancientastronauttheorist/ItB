@@ -1051,6 +1051,60 @@ occupancy, the Pawn path profile at entry, future Board state, and broader spawn
 call ordering remain explicit unresolved inputs; the validator therefore keeps
 `complete_future_forecast=false`.
 
+The matched runtime path is now implemented and synthetically validated, but it
+has not been executed live. The one-condition runner
+`scripts/itb_observatory_spawn_coordinate_capsule_trial.py` rejects any module
+or receipt other than the exact content-addressed build before touching the
+session. It asks `auto_turn` to spend the player actors and reserve an opaque
+local End Turn, prepares the requested control/dormant/armed boundary only after
+that reservation exists, invokes the existing guarded local dispatcher, and
+keeps the boundary alive until a fresh `Mission_Power` player turn with a larger
+turn number is visible. It then finishes/restores the observer before taking and
+verifying a pause screenshot. An armed trial is accepted only when its native
+selected-coordinate order exactly matches the bridge's next-turn spawning
+markers; the copied snapshot is removed from the bridge only after that
+correlation and immutable artifact writes succeed.
+
+The offline sealer
+`scripts/itb_observatory_spawn_coordinate_capsule_campaign.py` accepts exactly
+three triplets with these counterbalanced orders:
+`control,dormant,armed`; `armed,control,dormant`; and
+`dormant,armed,control`. Each condition directory must contain only its trial
+and outcome, plus the armed snapshot and rebuilt correlation. The sealer rejects
+condition-order drift, extra files, digest drift, incomplete restoration,
+observer-output leakage from control/dormant conditions, any native/bridge
+coordinate disagreement, or any semantic whole-game difference. It preserves
+the unresolved forecast inputs and leaves installation/save restoration pending
+until a separate cleanup receipt closes them.
+
+For the eventual reversible campaign, use a different fresh session file and a
+fresh restored game process for every condition. Capture outside the repository
+first; after all nine trials validate, copy only the exact condition trees into
+the intended `data/observatory/captures/` campaign directory and seal them:
+
+```powershell
+$env:ITB_ARTIFACT_ROOT = "<absolute external capsule campaign root>"
+$env:ITB_SESSION_FILE = "<artifact root>\<fresh condition session>.json"
+python scripts/itb_observatory_spawn_coordinate_capsule_trial.py `
+  --pair-id spawn-capsule-pair001 `
+  --condition control `
+  --capture-id spawn-capsule-pair001-control `
+  --build-receipt data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json `
+  --module "<installed exact capsule DLL>" `
+  --trial-output "<artifact root>\pair001\control\trial.json" `
+  --outcome-output "<artifact root>\pair001\control\outcome.json"
+
+python scripts/itb_observatory_spawn_coordinate_capsule_campaign.py `
+  --campaign-root "data/observatory/captures/<capsule campaign>" `
+  --output "data/observatory/captures/<capsule campaign receipt>.json"
+```
+
+The armed invocation additionally requires `--snapshot-output` and
+`--analysis-output` paths in its armed condition directory. The campaign sealer
+proves distinct session files, plan IDs, and timestamps; the required process
+restart and save restore between conditions remain external operational gates
+until a process/save orchestration receipt records them.
+
 Capture and verify the current-only joined artifact with:
 
 ```powershell

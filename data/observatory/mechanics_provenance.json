@@ -1101,6 +1101,10 @@
         },
         {
           "classification": "fact",
+          "statement": "A fail-closed trial runner and offline campaign sealer now preflight the exact content-addressed module and receipt before any session action, reserve local End Turn only after all player actors are spent, keep the observer prepared through confirmed dispatch and the next player-turn bridge state, restore before a verified pause, consume only the exact copied snapshot, and require three counterbalanced control/dormant/armed triplets with matched whole-game outcomes. The orchestration is synthetically validated; no live condition has run."
+        },
+        {
+          "classification": "fact",
           "statement": "Three combined coordinate/RNG captures retained the same ordered five candidates and joined the standard selector to caller 60 at native RNG ordinals 1495, 1475, and 1450. The selected point was candidates[raw_rng % 5] in every capture; all varying upstream callers were classified, and classified count deltas [0, -20, -45] exactly matched the selector-ordinal deltas."
         },
         {
@@ -1185,7 +1189,22 @@
         {
           "path": "src/observatory/spawn_coordinate_capsule_hw.py",
           "symbols": [
-            "validate_spawn_coordinate_capsule_snapshot"
+            "validate_spawn_coordinate_capsule_build_identity",
+            "validate_spawn_coordinate_capsule_snapshot",
+            "correlate_spawn_coordinate_capsule_snapshot"
+          ]
+        },
+        {
+          "path": "src/observatory/spawn_coordinate_capsule_turn.py",
+          "symbols": [
+            "SpawnCoordinateCapsuleTurnBoundary"
+          ]
+        },
+        {
+          "path": "src/observatory/spawn_coordinate_capsule_campaign.py",
+          "symbols": [
+            "build_spawn_coordinate_capsule_campaign_receipt",
+            "publish_spawn_coordinate_capsule_campaign_receipt"
           ]
         },
         {
@@ -1200,6 +1219,18 @@
           "path": "scripts/build_itb_observatory_spawn_coordinate_capsule_hw_observer.py",
           "symbols": [
             "build_observer"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_spawn_coordinate_capsule_trial.py",
+          "symbols": [
+            "run"
+          ]
+        },
+        {
+          "path": "scripts/itb_observatory_spawn_coordinate_capsule_campaign.py",
+          "symbols": [
+            "main"
           ]
         },
         {
@@ -1219,7 +1250,8 @@
             "check_observatory_spawn_coordinate_capsule_load",
             "prepare_observatory_spawn_coordinate_capsule",
             "finish_observatory_spawn_coordinate_capsule",
-            "abort_observatory_spawn_coordinate_capsule"
+            "abort_observatory_spawn_coordinate_capsule",
+            "consume_observatory_spawn_coordinate_capsule_snapshot"
           ]
         },
         {
@@ -1244,7 +1276,7 @@
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
         "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, and selector-time CRT state remain unavailable to ordinary solver input. A content-addressed atomic Board/RNG capsule observer and validator now exist and pass an exact dormant/unconsumed live-load check, but no matched armed runtime capsule has been captured. Current ordered zone, both dangerous predicates, ground blocking, live Pawn Ranged/AvoidingMines flags, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, and selector-time CRT state remain unavailable to ordinary solver input. A content-addressed atomic Board/RNG capsule observer, exact-build live trial runner, and counterbalanced campaign sealer now exist and pass an exact dormant/unconsumed live-load check plus static and synthetic orchestration checks, but no matched armed runtime capsule has been captured. Current ordered zone, both dangerous predicates, ground blocking, live Pawn Ranged/AvoidingMines flags, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1438,6 +1470,22 @@
           "symbols": [
             "test_capsule_load_check_requires_exact_dormant_unconsumed_ack",
             "test_capsule_boundary_requires_fresh_armed_output"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_trial.py",
+          "symbols": [
+            "test_control_trial_prepares_only_after_reservation_and_finishes_before_pause",
+            "test_armed_trial_publishes_analysis_then_consumes_exact_bridge_snapshot",
+            "test_build_identity_preflight_blocks_before_any_session_action"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_campaign.py",
+          "symbols": [
+            "test_synthetic_capsule_campaign_seals_board_rng_and_neutrality",
+            "test_capsule_campaign_rejects_semantic_outcome_drift",
+            "test_capsule_campaign_rejects_counterbalance_order_drift"
           ]
         },
         {

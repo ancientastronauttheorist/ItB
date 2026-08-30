@@ -18,6 +18,7 @@ from src.observatory.msvc_rng_replay import (
 SCHEMA_VERSION = 1
 SNAPSHOT_KIND = "native_spawn_coordinate_capsule_hw_observer_snapshot"
 ANALYSIS_KIND = "spawn_coordinate_capsule_hw_validation"
+CORRELATION_KIND = "spawn_coordinate_capsule_hw_correlation"
 OBSERVER_VERSION = "observatory-spawn-coordinate-capsule-hw-observer/2"
 EXPECTED_PLAN_SHA256 = (
     "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1"
@@ -66,6 +67,12 @@ EXPECTED_BASE_SOURCE_SHA256 = (
 )
 EXPECTED_BASE_PLAN_SHA256 = (
     "6c22aa5cb62552afd7f08d9e942a82cbceb620aab3b1853f004c98534ea74e09"
+)
+EXPECTED_MODULE_SHA256 = (
+    "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9"
+)
+EXPECTED_BUILD_RECEIPT_SHA256 = (
+    "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62"
 )
 
 EVENT_KINDS = {
@@ -241,6 +248,34 @@ def _validate_receipt(
             "capsule build safety attestation failed"
         )
     return required
+
+
+def validate_spawn_coordinate_capsule_build_identity(
+    receipt: Mapping[str, Any],
+    *,
+    observed_module_sha256: str,
+    observed_build_receipt_sha256: str,
+) -> dict[str, Any]:
+    """Fail before a live trial unless the exact reproduced build is present."""
+    required = _validate_receipt(receipt, observed_module_sha256)
+    if observed_module_sha256 != EXPECTED_MODULE_SHA256:
+        raise SpawnCoordinateCapsuleHwError(
+            "capsule observer module differs from the attested build"
+        )
+    if observed_build_receipt_sha256 != EXPECTED_BUILD_RECEIPT_SHA256:
+        raise SpawnCoordinateCapsuleHwError(
+            "capsule build receipt bytes differ from the attested receipt"
+        )
+    return {
+        "build_id": required["build_id"],
+        "architecture": required["architecture"],
+        "executable_sha256": required["executable_sha256"],
+        "hardware_breakpoint_plan_sha256": required[
+            "hardware_breakpoint_plan_sha256"
+        ],
+        "module_sha256": observed_module_sha256,
+        "build_receipt_sha256": observed_build_receipt_sha256,
+    }
 
 
 def _validate_integrity(value: object) -> dict[str, Any]:
@@ -760,3 +795,87 @@ def validate_spawn_coordinate_capsule_snapshot(
     }
     result["evidence_sha256"] = _sha256(result)
     return result
+
+
+def correlate_spawn_coordinate_capsule_snapshot(
+    snapshot: Mapping[str, Any],
+    outcome: Mapping[str, Any],
+    *,
+    build_receipt: Mapping[str, Any],
+    observed_module_sha256: str,
+) -> dict[str, Any]:
+    """Join one validated selector-time capsule stream to its fresh bridge outcome."""
+    analysis = validate_spawn_coordinate_capsule_snapshot(
+        snapshot,
+        build_receipt=build_receipt,
+        observed_module_sha256=observed_module_sha256,
+    )
+    if not isinstance(outcome, Mapping):
+        raise SpawnCoordinateCapsuleHwError("capsule outcome must be an object")
+
+    raw_spawning = outcome.get("spawning_tiles")
+    if not isinstance(raw_spawning, list) or not raw_spawning:
+        raise SpawnCoordinateCapsuleHwError(
+            "capsule outcome must contain spawning tiles"
+        )
+    spawning: list[list[int]] = []
+    for index, point in enumerate(raw_spawning):
+        label = f"outcome.spawning_tiles[{index}]"
+        if not isinstance(point, list) or len(point) != 2:
+            raise SpawnCoordinateCapsuleHwError(
+                f"{label} must be a two-integer array"
+            )
+        spawning.append(
+            [
+                _integer(point[0], f"{label}[0]", minimum=0, maximum=7),
+                _integer(point[1], f"{label}[1]", minimum=0, maximum=7),
+            ]
+        )
+    if len({tuple(point) for point in spawning}) != len(spawning):
+        raise SpawnCoordinateCapsuleHwError(
+            "capsule outcome spawning tiles contain duplicates"
+        )
+    outcome_turn = _integer(outcome.get("turn"), "outcome.turn", minimum=0)
+    mission_id = outcome.get("mission_id")
+    phase = outcome.get("phase")
+    selected = [capsule["selected"] for capsule in analysis["capsules"]]
+    board_turns = [capsule["board"]["turn"] for capsule in analysis["capsules"]]
+
+    reasons: list[str] = []
+    if mission_id != "Mission_Power":
+        reasons.append("bridge_mission_mismatch")
+    if phase != "combat_player":
+        reasons.append("bridge_phase_mismatch")
+    if outcome_turn <= max(board_turns):
+        reasons.append("bridge_turn_did_not_advance")
+    if selected != spawning:
+        reasons.append("selector_results_differ_from_spawn_markers")
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "kind": CORRELATION_KIND,
+        "capture_id": analysis["capture_id"],
+        "status": "correlated" if not reasons else "rejected",
+        "reasons": reasons,
+        "snapshot_evidence_sha256": analysis["evidence_sha256"],
+        "identity": analysis["identity"],
+        "integrity": analysis["integrity"],
+        "bridge": {
+            "mission_id": mission_id,
+            "phase": phase,
+            "turn": outcome_turn,
+            "spawning_tiles": spawning,
+        },
+        "native": {
+            "capsule_count": len(analysis["capsules"]),
+            "capsule_board_turns": board_turns,
+            "selected_spawn_coordinates": selected,
+            "raw_rng_sequence": [
+                capsule["rng"]["raw_rng"] for capsule in analysis["capsules"]
+            ],
+            "selector_kinds": [
+                capsule["selector_kind"] for capsule in analysis["capsules"]
+            ],
+        },
+        "claims": analysis["claims"],
+    }

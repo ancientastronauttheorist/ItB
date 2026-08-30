@@ -161,6 +161,15 @@ The durable artifacts are:
 - `data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`
   for exact in-process module enumeration and the strict dormant, unconsumed,
   unarmed load ACK before any prepare/seed command or snapshot;
+- `scripts/itb_observatory_spawn_coordinate_capsule_trial.py` plus
+  `src/observatory/spawn_coordinate_capsule_turn.py` for exact-build preflight,
+  post-actor local End Turn reservation, prepare-through-next-turn lifetime,
+  fail-closed restoration, verified pause, and exact bridge snapshot
+  consumption;
+- `src/observatory/spawn_coordinate_capsule_campaign.py` plus its CLI for exact
+  three-triplet counterbalancing, rebuilt native/bridge correlation, semantic
+  neutrality comparison, observer-restoration checks, and immutable campaign
+  sealing; this path is synthetically validated but has not run live;
 - `data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json`
   for the exact path API bindings and constants, Board search vtable, 12
   reviewed region hashes, four direct call edges, and the Road Runner
