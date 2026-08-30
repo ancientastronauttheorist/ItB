@@ -58,6 +58,23 @@ per-map tag membership, or coordinate layouts. See `maps/README.md` for exact
 build/verification commands and the boundary between observed grammar facts
 and unresolved native consumer semantics.
 
+## OpenGL shader interface census
+
+`scripts/itb_shader_census.py` rebuilds and exact-matches the sealed
+installation inventory, seals the separately scoped flat `shadersOGL/`
+directory, and applies a strict non-executing lexical/interface parser to all
+12 files. The normalized artifact under `shaders/` records exact file
+identities, extension-based stage hints, duplicate groups, line-ending facts,
+bounded interface/preprocessor/call identifiers, and counts. It contains no
+raw source, expressions, literals, function bodies, compiler output, or
+absolute paths.
+
+The census accounts for 4,087 source bytes, eight entry points, ten uniform,
+three attribute, and two varying identifiers, nine `texture2D` calls, and four
+`discard` sites. See `shaders/README.md` for exact build and verification
+commands and the boundary between lexical source facts and unresolved loader,
+compiler, pipeline, and rendering behavior.
+
 ## Resource archive census
 
 `scripts/itb_resource_inventory.py` parses `resources/resource.dat` without

@@ -124,7 +124,8 @@ strictly verified against the exact PE and lives under
    bootstrap evidence.
 4. Validate `resource.dat` structurally and inventory record paths, types,
    extents, and payload hashes without committing payload bytes.
-5. Inventory the 12 OpenGL shader/header files and the FMOD bank interfaces.
+5. Maintain the exact non-executing lexical/interface census for all 12 OpenGL
+   shader/header files; inventory the FMOD bank interfaces next.
 6. Join Lua definitions and call sites to native registrations and the program
    atlas.
 7. Mark localization, presentation-only declarations, and dead aliases without
@@ -203,7 +204,11 @@ until core engine semantics are reconstructed.
 - [x] Produce and independently verify the metadata-only `resource.dat`
   census: 2,854 contiguous unique records, with per-payload hashes and no asset
   bytes committed.
-- [ ] Produce the plaintext shader and FMOD interface census.
+- [x] Produce and independently verify the metadata-only plaintext shader
+  census: all 12 files and 4,087 bytes sealed, eight entry points, 48 interface
+  declarations, seven preprocessor symbols, nine texture calls, and four
+  discard sites, with raw source and render semantics explicitly excluded.
+- [ ] Produce the FMOD bank and native-library interface census.
 - [ ] Establish subsystem ownership and exclusion counts.
 
 ### M2 — Core runtime model

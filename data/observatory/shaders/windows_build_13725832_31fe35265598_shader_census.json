@@ -1,0 +1,1410 @@
+{
+  "analysis_kind": "itb_opengl_shader_interface_census",
+  "baseline_inventory": {
+    "canonical_sha256": "26c6f8897938232177d46b675b570f3e866d1a3923b6bb36fd63a02b85fa00ff",
+    "label": "full decompile baseline 2026-08-30"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "call_identifiers": [
+    {
+      "name": "mix",
+      "occurrences": 2,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    },
+    {
+      "name": "texture2D",
+      "occurrences": 9,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    },
+    {
+      "name": "vec2",
+      "occurrences": 6,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    },
+    {
+      "name": "vec3",
+      "occurrences": 2,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    },
+    {
+      "name": "vec4",
+      "occurrences": 1,
+      "source_files": [
+        "shadersOGL/texture_alpha.ps"
+      ]
+    }
+  ],
+  "duplicate_content_groups": [
+    {
+      "paths": [
+        "shadersOGL/common_vs.h",
+        "shadersOGL/common_vs.vs"
+      ],
+      "sha256": "d701384e2f3865fce35314b09cae7be5e059523c21bb1513aa8f414f9f9d4330"
+    },
+    {
+      "paths": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ],
+      "sha256": "d8326a73f228ab5a2dcf513c132c0a177a973c7ae0bb054d358edbcbe5d6bbcf"
+    }
+  ],
+  "files": [
+    {
+      "builtin_identifiers": [],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [],
+      "extension": ".h",
+      "identifier_tokens": 0,
+      "interface_declarations": [],
+      "line_count": 5,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 5,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/common_ps.h",
+      "preprocessor": {
+        "defined_symbols": [
+          {
+            "name": "highp",
+            "occurrences": 1
+          },
+          {
+            "name": "lowp",
+            "occurrences": 1
+          },
+          {
+            "name": "mediump",
+            "occurrences": 1
+          }
+        ],
+        "directives": [
+          {
+            "directive": "define",
+            "occurrences": 3
+          },
+          {
+            "directive": "endif",
+            "occurrences": 1
+          },
+          {
+            "directive": "if",
+            "occurrences": 1
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "GLES2",
+            "occurrences": 1
+          },
+          {
+            "name": "GL_ES",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 0,
+      "sha256": "d8326a73f228ab5a2dcf513c132c0a177a973c7ae0bb054d358edbcbe5d6bbcf",
+      "size": 94,
+      "stage": "shared_header_hint"
+    },
+    {
+      "builtin_identifiers": [],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [],
+      "extension": ".ps",
+      "identifier_tokens": 0,
+      "interface_declarations": [],
+      "line_count": 5,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 5,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/common_ps.ps",
+      "preprocessor": {
+        "defined_symbols": [
+          {
+            "name": "highp",
+            "occurrences": 1
+          },
+          {
+            "name": "lowp",
+            "occurrences": 1
+          },
+          {
+            "name": "mediump",
+            "occurrences": 1
+          }
+        ],
+        "directives": [
+          {
+            "directive": "define",
+            "occurrences": 3
+          },
+          {
+            "directive": "endif",
+            "occurrences": 1
+          },
+          {
+            "directive": "if",
+            "occurrences": 1
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "GLES2",
+            "occurrences": 1
+          },
+          {
+            "name": "GL_ES",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 0,
+      "sha256": "d8326a73f228ab5a2dcf513c132c0a177a973c7ae0bb054d358edbcbe5d6bbcf",
+      "size": 94,
+      "stage": "fragment_stage_hint"
+    },
+    {
+      "builtin_identifiers": [],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 1
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [],
+      "extension": ".h",
+      "identifier_tokens": 0,
+      "interface_declarations": [],
+      "line_count": 1,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 1,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/common_vs.h",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 0,
+      "sha256": "d701384e2f3865fce35314b09cae7be5e059523c21bb1513aa8f414f9f9d4330",
+      "size": 10,
+      "stage": "shared_header_hint"
+    },
+    {
+      "builtin_identifiers": [],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 1
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [],
+      "extension": ".vs",
+      "identifier_tokens": 0,
+      "interface_declarations": [],
+      "line_count": 1,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 1,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/common_vs.vs",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 0,
+      "sha256": "d701384e2f3865fce35314b09cae7be5e059523c21bb1513aa8f414f9f9d4330",
+      "size": 10,
+      "stage": "vertex_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_Position",
+          "occurrences": 1,
+          "write_occurrences": 1
+        }
+      ],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".vs",
+      "identifier_tokens": 22,
+      "interface_declarations": [
+        {
+          "name": "viewProjMatrix",
+          "precision": null,
+          "storage": "uniform",
+          "type": "mat4"
+        },
+        {
+          "name": "materialColor",
+          "precision": null,
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "varyingColor",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "inPosition",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        }
+      ],
+      "line_count": 15,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 15,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/material_color.vs",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 7,
+      "sha256": "95d4024f8d34c97c41653fa6bc08fb1aa6164aeea47cc3584b2a4f27ea3a248a",
+      "size": 240,
+      "stage": "vertex_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_FragColor",
+          "occurrences": 2,
+          "write_occurrences": 2
+        }
+      ],
+      "call_identifiers": [
+        {
+          "name": "mix",
+          "occurrences": 1
+        },
+        {
+          "name": "texture2D",
+          "occurrences": 4
+        },
+        {
+          "name": "vec2",
+          "occurrences": 3
+        },
+        {
+          "name": "vec3",
+          "occurrences": 1
+        }
+      ],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 1,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".ps",
+      "identifier_tokens": 115,
+      "interface_declarations": [
+        {
+          "name": "varyingTex0",
+          "precision": "highp",
+          "storage": "varying",
+          "type": "vec2"
+        },
+        {
+          "name": "varyingColor",
+          "precision": "lowp",
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "alphaTestParams",
+          "precision": "lowp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteRParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteGParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteBParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "tex0",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex1",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex2",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex3",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        }
+      ],
+      "line_count": 40,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 6,
+        "lf": 34,
+        "style": "mixed"
+      },
+      "numeric_tokens": 3,
+      "path": "shadersOGL/texture.ps",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [
+          {
+            "directive": "else",
+            "occurrences": 1
+          },
+          {
+            "directive": "endif",
+            "occurrences": 2
+          },
+          {
+            "directive": "ifdef",
+            "occurrences": 2
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "_ALPHA_TEST",
+            "occurrences": 1
+          },
+          {
+            "name": "_PALETTE",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 20,
+      "sha256": "cb237d5df46a34d99b6c5d273d7926993b978eaa352dcbae3e5e8a1863ae4fd0",
+      "size": 1010,
+      "stage": "fragment_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_Position",
+          "occurrences": 1,
+          "write_occurrences": 1
+        }
+      ],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".vs",
+      "identifier_tokens": 30,
+      "interface_declarations": [
+        {
+          "name": "viewProjMatrix",
+          "precision": null,
+          "storage": "uniform",
+          "type": "mat4"
+        },
+        {
+          "name": "materialColor",
+          "precision": null,
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "varyingTex0",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec2"
+        },
+        {
+          "name": "varyingColor",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "inPosition",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        },
+        {
+          "name": "inTexCoord0",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec2"
+        }
+      ],
+      "line_count": 18,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 18,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/texture.vs",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 10,
+      "sha256": "c15670df9be6855a31c53dccdd06078210298376806af99767a584a4598e1910",
+      "size": 325,
+      "stage": "vertex_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_FragColor",
+          "occurrences": 2,
+          "write_occurrences": 2
+        }
+      ],
+      "call_identifiers": [
+        {
+          "name": "texture2D",
+          "occurrences": 1
+        },
+        {
+          "name": "vec4",
+          "occurrences": 1
+        }
+      ],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 1,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".ps",
+      "identifier_tokens": 38,
+      "interface_declarations": [
+        {
+          "name": "varyingTex0",
+          "precision": "highp",
+          "storage": "varying",
+          "type": "vec2"
+        },
+        {
+          "name": "varyingColor",
+          "precision": "lowp",
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "alphaTestParams",
+          "precision": "lowp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "tex0",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        }
+      ],
+      "line_count": 26,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 6,
+        "lf": 20,
+        "style": "mixed"
+      },
+      "numeric_tokens": 3,
+      "path": "shadersOGL/texture_alpha.ps",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [
+          {
+            "directive": "else",
+            "occurrences": 1
+          },
+          {
+            "directive": "endif",
+            "occurrences": 1
+          },
+          {
+            "directive": "ifdef",
+            "occurrences": 1
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "_ALPHA_TEST",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 9,
+      "sha256": "6c528dc3a45e644c608ddb1abfa8db8f52e078c26ad527c5e74f26deed72be68",
+      "size": 394,
+      "stage": "fragment_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_FragColor",
+          "occurrences": 2,
+          "write_occurrences": 2
+        }
+      ],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 1,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".ps",
+      "identifier_tokens": 21,
+      "interface_declarations": [
+        {
+          "name": "varyingColor",
+          "precision": "lowp",
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "alphaTestParams",
+          "precision": "lowp",
+          "storage": "uniform",
+          "type": "vec4"
+        }
+      ],
+      "line_count": 19,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 4,
+        "lf": 15,
+        "style": "mixed"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/vcolor.ps",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [
+          {
+            "directive": "else",
+            "occurrences": 1
+          },
+          {
+            "directive": "endif",
+            "occurrences": 1
+          },
+          {
+            "directive": "ifdef",
+            "occurrences": 1
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "_ALPHA_TEST",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 5,
+      "sha256": "60ee9dce7716b77f42141a1603c11191d039337ed51626ca896203e88c745d45",
+      "size": 255,
+      "stage": "fragment_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_Position",
+          "occurrences": 1,
+          "write_occurrences": 1
+        }
+      ],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".vs",
+      "identifier_tokens": 26,
+      "interface_declarations": [
+        {
+          "name": "viewProjMatrix",
+          "precision": null,
+          "storage": "uniform",
+          "type": "mat4"
+        },
+        {
+          "name": "materialColor",
+          "precision": null,
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "varyingColor",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "inPosition",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        },
+        {
+          "name": "inColor0",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        }
+      ],
+      "line_count": 16,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 16,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/vcolor.vs",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 8,
+      "sha256": "8d1f38fadd352713270d62cf2887b4ae3d41709205b0fa926553d6486239ab75",
+      "size": 277,
+      "stage": "vertex_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_FragColor",
+          "occurrences": 2,
+          "write_occurrences": 2
+        }
+      ],
+      "call_identifiers": [
+        {
+          "name": "mix",
+          "occurrences": 1
+        },
+        {
+          "name": "texture2D",
+          "occurrences": 4
+        },
+        {
+          "name": "vec2",
+          "occurrences": 3
+        },
+        {
+          "name": "vec3",
+          "occurrences": 1
+        }
+      ],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 1,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".ps",
+      "identifier_tokens": 115,
+      "interface_declarations": [
+        {
+          "name": "varyingTex0",
+          "precision": "highp",
+          "storage": "varying",
+          "type": "vec2"
+        },
+        {
+          "name": "varyingColor",
+          "precision": "lowp",
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "alphaTestParams",
+          "precision": "lowp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteRParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteGParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "paletteBParams",
+          "precision": "highp",
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "tex0",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex1",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex2",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        },
+        {
+          "name": "tex3",
+          "precision": null,
+          "storage": "uniform",
+          "type": "sampler2D"
+        }
+      ],
+      "line_count": 42,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 6,
+        "lf": 36,
+        "style": "mixed"
+      },
+      "numeric_tokens": 3,
+      "path": "shadersOGL/vcolor_texture.ps",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [
+          {
+            "directive": "else",
+            "occurrences": 1
+          },
+          {
+            "directive": "endif",
+            "occurrences": 2
+          },
+          {
+            "directive": "ifdef",
+            "occurrences": 2
+          }
+        ],
+        "maximum_conditional_depth": 1,
+        "read_symbols": [
+          {
+            "name": "_ALPHA_TEST",
+            "occurrences": 1
+          },
+          {
+            "name": "_PALETTE",
+            "occurrences": 1
+          }
+        ],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 20,
+      "sha256": "dd1abcdd21d05e87b669286721d1bd1523654fc26907ca65e240a458171cb01f",
+      "size": 1016,
+      "stage": "fragment_stage_hint"
+    },
+    {
+      "builtin_identifiers": [
+        {
+          "name": "gl_Position",
+          "occurrences": 1,
+          "write_occurrences": 1
+        }
+      ],
+      "call_identifiers": [],
+      "comments": {
+        "block_comments": 0,
+        "line_comments": 0
+      },
+      "discard_occurrences": 0,
+      "encoding": "utf-8-no-bom",
+      "entry_points": [
+        "main"
+      ],
+      "extension": ".vs",
+      "identifier_tokens": 34,
+      "interface_declarations": [
+        {
+          "name": "viewProjMatrix",
+          "precision": null,
+          "storage": "uniform",
+          "type": "mat4"
+        },
+        {
+          "name": "materialColor",
+          "precision": null,
+          "storage": "uniform",
+          "type": "vec4"
+        },
+        {
+          "name": "varyingTex0",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec2"
+        },
+        {
+          "name": "varyingColor",
+          "precision": null,
+          "storage": "varying",
+          "type": "vec4"
+        },
+        {
+          "name": "inPosition",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        },
+        {
+          "name": "inColor0",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec4"
+        },
+        {
+          "name": "inTexCoord0",
+          "precision": null,
+          "storage": "attribute",
+          "type": "vec2"
+        }
+      ],
+      "line_count": 19,
+      "line_endings": {
+        "cr": 0,
+        "crlf": 19,
+        "lf": 0,
+        "style": "crlf"
+      },
+      "numeric_tokens": 0,
+      "path": "shadersOGL/vcolor_texture.vs",
+      "preprocessor": {
+        "defined_symbols": [],
+        "directives": [],
+        "maximum_conditional_depth": 0,
+        "read_symbols": [],
+        "undefined_symbols": []
+      },
+      "semicolon_tokens": 11,
+      "sha256": "5de97a8758ffdac8b992e5220cc843a11fba8e93d852a6e3668a06fca93311e9",
+      "size": 362,
+      "stage": "vertex_stage_hint"
+    }
+  ],
+  "interfaces": [
+    {
+      "declarations": 2,
+      "name": "inTexCoord0",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "attribute",
+      "type": "vec2"
+    },
+    {
+      "declarations": 2,
+      "name": "inColor0",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/vcolor.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "attribute",
+      "type": "vec4"
+    },
+    {
+      "declarations": 4,
+      "name": "inPosition",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/material_color.vs",
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "attribute",
+      "type": "vec4"
+    },
+    {
+      "declarations": 4,
+      "name": "viewProjMatrix",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/material_color.vs",
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "uniform",
+      "type": "mat4"
+    },
+    {
+      "declarations": 3,
+      "name": "tex0",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "sampler2D"
+    },
+    {
+      "declarations": 2,
+      "name": "tex1",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "sampler2D"
+    },
+    {
+      "declarations": 2,
+      "name": "tex2",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "sampler2D"
+    },
+    {
+      "declarations": 2,
+      "name": "tex3",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "sampler2D"
+    },
+    {
+      "declarations": 4,
+      "name": "materialColor",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/material_color.vs",
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "uniform",
+      "type": "vec4"
+    },
+    {
+      "declarations": 2,
+      "name": "paletteBParams",
+      "precision": "highp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "vec4"
+    },
+    {
+      "declarations": 2,
+      "name": "paletteGParams",
+      "precision": "highp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "vec4"
+    },
+    {
+      "declarations": 2,
+      "name": "paletteRParams",
+      "precision": "highp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "vec4"
+    },
+    {
+      "declarations": 4,
+      "name": "alphaTestParams",
+      "precision": "lowp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "uniform",
+      "type": "vec4"
+    },
+    {
+      "declarations": 2,
+      "name": "varyingTex0",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "varying",
+      "type": "vec2"
+    },
+    {
+      "declarations": 3,
+      "name": "varyingTex0",
+      "precision": "highp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "varying",
+      "type": "vec2"
+    },
+    {
+      "declarations": 4,
+      "name": "varyingColor",
+      "precision": null,
+      "source_files": [
+        "shadersOGL/material_color.vs",
+        "shadersOGL/texture.vs",
+        "shadersOGL/vcolor.vs",
+        "shadersOGL/vcolor_texture.vs"
+      ],
+      "storage": "varying",
+      "type": "vec4"
+    },
+    {
+      "declarations": 4,
+      "name": "varyingColor",
+      "precision": "lowp",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ],
+      "storage": "varying",
+      "type": "vec4"
+    }
+  ],
+  "method": {
+    "compiler_invocation": false,
+    "limitations": [
+      "extension hints do not prove stage compilation or runtime loading",
+      "source alone does not prove header prepending or macro configurations",
+      "filename similarity does not prove pipeline pairing",
+      "no OpenGL version, driver acceptance, locations, values, reachability, or render semantics are inferred"
+    ],
+    "parser": "bounded UTF-8 lexical scan with comment masking, balanced preprocessor/braces, strict top-level interface declarations, and a void main() entry-point subset",
+    "publication_policy": "file identities, bounded interface/preprocessor/call identifiers, and counts only; no raw source, expressions, literals, or bodies",
+    "source_execution": false,
+    "stage_classification": "filename-extension hint only"
+  },
+  "preprocessor_symbols": [
+    {
+      "name": "highp",
+      "occurrences": 2,
+      "role": "defined_symbols",
+      "source_files": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ]
+    },
+    {
+      "name": "lowp",
+      "occurrences": 2,
+      "role": "defined_symbols",
+      "source_files": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ]
+    },
+    {
+      "name": "mediump",
+      "occurrences": 2,
+      "role": "defined_symbols",
+      "source_files": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ]
+    },
+    {
+      "name": "GLES2",
+      "occurrences": 2,
+      "role": "read_symbols",
+      "source_files": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ]
+    },
+    {
+      "name": "GL_ES",
+      "occurrences": 2,
+      "role": "read_symbols",
+      "source_files": [
+        "shadersOGL/common_ps.h",
+        "shadersOGL/common_ps.ps"
+      ]
+    },
+    {
+      "name": "_ALPHA_TEST",
+      "occurrences": 4,
+      "role": "read_symbols",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/texture_alpha.ps",
+        "shadersOGL/vcolor.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    },
+    {
+      "name": "_PALETTE",
+      "occurrences": 2,
+      "role": "read_symbols",
+      "source_files": [
+        "shadersOGL/texture.ps",
+        "shadersOGL/vcolor_texture.ps"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "shader_manifest": {
+    "byte_count": 4087,
+    "file_count": 12,
+    "revision_sha256": "08e26d15a68401577facb8d75c619bc2fc2d4827256ede7a35a389ed997de5e2",
+    "root": "shadersOGL"
+  },
+  "summary": {
+    "attribute_identifiers": 3,
+    "call_identifiers": 5,
+    "discard_occurrences": 4,
+    "duplicate_content_groups": 2,
+    "entry_points": 8,
+    "interface_declarations": 48,
+    "interface_identifiers": 15,
+    "mixed_line_ending_files": 4,
+    "preprocessor_symbols": 7,
+    "schema_violations": 0,
+    "shader_bytes": 4087,
+    "shader_files": 12,
+    "stage_hints": [
+      {
+        "files": 5,
+        "stage": "fragment_stage_hint"
+      },
+      {
+        "files": 2,
+        "stage": "shared_header_hint"
+      },
+      {
+        "files": 5,
+        "stage": "vertex_stage_hint"
+      }
+    ],
+    "texture2d_calls": 9,
+    "uniform_identifiers": 10,
+    "varying_identifiers": 2
+  }
+}
