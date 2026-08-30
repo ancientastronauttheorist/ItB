@@ -1,0 +1,78 @@
+{
+  "bridge_observation": {
+    "ack": "OK OBS_SPAWN_CAPSULE_LOAD_CHECK state=dormant consumed=false armed=false",
+    "command": "OBS_SPAWN_CAPSULE_LOAD_CHECK",
+    "command_recorded_at_local": "2026-08-29T18:57:48-05:00",
+    "observer_status_required_by_controller": {
+      "capsule_count": 0,
+      "capsule_entry_count": 0,
+      "capsule_error_count": 0,
+      "capture_started": false,
+      "consumed": false,
+      "debug_registers_armed": false,
+      "draw_record_count": 0,
+      "pairing_error_count": 0,
+      "pending_capsule_index": -1,
+      "rng_error_count": 0,
+      "state": "dormant",
+      "stopped_reason": null,
+      "veh_installed": false
+    },
+    "prepare_command_count_in_bridge_log": 0,
+    "snapshot_file_present": false,
+    "snapshot_tmp_file_present": false
+  },
+  "build_identity": {
+    "architecture": "x86",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "platform": "windows"
+  },
+  "capture_track": "owner_local_modified",
+  "claims": {
+    "capture_started": false,
+    "debug_registers_armed": false,
+    "module_loaded_in_game_process": true,
+    "native_selector_or_rng_runtime_evidence_captured": false,
+    "observer_consumed": false,
+    "observer_state_dormant": true,
+    "prepare_or_seed_command_executed": false,
+    "veh_installed": false
+  },
+  "installed_artifacts": {
+    "build_receipt": {
+      "path": "data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json",
+      "sha256": "ccf386503075c1ea2d7c028461a2d5f1825423be989a2486585f44fe65897a62",
+      "size": 5473
+    },
+    "hardware_breakpoint_plan": {
+      "path": "data/observatory/native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json",
+      "sha256": "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+      "size": 4635
+    },
+    "modloader": {
+      "installed_path": "B:/SteamLibrary/steamapps/common/Into the Breach/scripts/modloader.lua",
+      "sha256": "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c",
+      "size": 427934
+    },
+    "observer_module": {
+      "installed_path": "B:/SteamLibrary/steamapps/common/Into the Breach/scripts/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll",
+      "sha256": "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+      "size": 28672
+    }
+  },
+  "kind": "observatory_spawn_coordinate_capsule_dormant_load_receipt",
+  "limitations": [
+    "This is a dormant-load proof only. No selector entry, candidate vector, Board capsule, or native RNG transition was observed.",
+    "The exact observer remains one-shot per game process once a prepare command consumes it; this receipt proves only the unconsumed process state before any such command.",
+    "The owner-local-modified Windows installation does not establish pristine-depot or cross-platform equivalence."
+  ],
+  "process_observation": {
+    "executable_path": "B:/SteamLibrary/steamapps/common/Into the Breach/Breach.exe",
+    "module_enumeration_found_exact_observer": true,
+    "pid": 16864,
+    "process_start_local": "2026-08-29T18:47:21.2422292-05:00"
+  },
+  "schema_version": 1
+}

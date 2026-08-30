@@ -1,0 +1,134 @@
+{
+  "board_capsule": {
+    "board_identity": {
+      "primary_vtable_rva": "0x0042e2fc",
+      "secondary_vtable_rva": "0x0042e258"
+    },
+    "point_keyed_block_spawn_values": "complete 8x8 map-tree traversal",
+    "point_vectors": [
+      "existing spawn markers at +0x2d50/+0x2d54",
+      "danger vector A at +0x7460/+0x7464",
+      "danger vector B at +0x7470/+0x7474"
+    ],
+    "pointer_values_published": false,
+    "qualification": "Raw occupancy membership is captured, but transient dead/non-corpse classification and the Lua-derived Pawn path profile remain separate inputs; this capsule does not by itself claim a universal forecast.",
+    "scalar_fields": [
+      "width",
+      "height",
+      "turn"
+    ],
+    "tile_fields": [
+      "terrain +0x2ae0",
+      "pod state +0x2ae4",
+      "danger byte +0x2af0",
+      "acid byte +0x2af1",
+      "item presence +0x2b04",
+      "raw occupancy vector and pointer-free Pawn IDs +0xa0/+0xa4"
+    ],
+    "tile_order": "x-major then y-minor"
+  },
+  "breakpoints": [
+    {
+      "expected_prebytes_hex": "8b45088bca8b550c",
+      "rva": "0x001751ae",
+      "semantic_boundary": "scheduler_draw_resolved",
+      "slot": "DR0"
+    },
+    {
+      "expected_prebytes_hex": "8b75088b04d78906",
+      "rva": "0x00172e1e",
+      "semantic_boundary": "selector_fallback_draw_resolved",
+      "slot": "DR1"
+    },
+    {
+      "expected_prebytes_hex": "8b5cd1048b3cd18b",
+      "rva": "0x00172e7b",
+      "semantic_boundary": "selector_standard_draw_resolved",
+      "slot": "DR2"
+    },
+    {
+      "expected_prebytes_hex": "558bec6aff",
+      "register_contract": "ECX=active Board; [ESP+4]=hidden Point return; [ESP+8]=Pawn",
+      "rva": "0x00172a90",
+      "semantic_boundary": "selector_entry_board_rng_capsule",
+      "slot": "DR3"
+    }
+  ],
+  "debug_register_contract": {
+    "arm_rejects_any_nonzero_dr0_dr1_dr2_dr3_or_dr7": true,
+    "dr7_exact": "0x00000055",
+    "finish_clears_dr0_dr1_dr2_dr3_dr6_dr7": true,
+    "finish_requires_exact_owned_state_before_clear": true
+  },
+  "hot_contract": {
+    "addresses_or_pointers_published": false,
+    "allocation": false,
+    "clocks": false,
+    "file_io": false,
+    "locks": false,
+    "lua_or_game_calls": false,
+    "windows_api_calls": false,
+    "x87_mmx_sse_avx_state_changes": false
+  },
+  "identity": {
+    "architecture": "x86",
+    "boundary_map_sha256": "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "inventory_sha256": "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    "platform": "windows",
+    "position_observations_boundary_sha256": "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329",
+    "rng_return_map_sha256": "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    "source_sha256": "de4d7e79fe830611e640a05a2cfd7e81de322cf76a0308c1fb0612bb03b8fdf0",
+    "spawn_candidate_boundary_sha256": "9f6785d16f6c1102a7fd6e52d656b1438a12b1a3f216cbb99e5cadd269f53b3f",
+    "v1_plan_sha256": "6c22aa5cb62552afd7f08d9e942a82cbceb620aab3b1853f004c98534ea74e09",
+    "v1_source_sha256": "00e468dbafaf2da583b10b29593f672e9977c18e1cd81f31a267df83c21403a5"
+  },
+  "kind": "observatory_spawn_coordinate_capsule_hardware_breakpoint_plan",
+  "limits": {
+    "capsule_capacity": 64,
+    "draw_record_capacity": 256,
+    "occupants_per_tile_capacity": 8,
+    "point_vector_capacity": 64,
+    "thread_capacity": 1,
+    "tile_capacity": 64
+  },
+  "mutation_contract": {
+    "detour_installed": false,
+    "executable_bytes_modified": false,
+    "gateway_allocated": false,
+    "page_protection_changed": false
+  },
+  "observer_version": "observatory-spawn-coordinate-capsule-hw-observer/2",
+  "rng_pairing": {
+    "pairing": "each DR3 entry pairs with the next DR1 or DR2 draw",
+    "result": "raw_rng = (state_after >> 16) & 0x7fff",
+    "state_offset": "0x18",
+    "state_owner_rva": "0x0038ed32",
+    "transition": "state_after = state_before * 214013 + 2531011 mod 2^32"
+  },
+  "schema_version": 1,
+  "static_regions": [
+    {
+      "id": "spawn_coordinate_selector",
+      "rva": "0x00172a90",
+      "sha256": "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+      "size": 1126
+    },
+    {
+      "id": "shared_rng_state_owner",
+      "relocation_offsets": [
+        6,
+        13,
+        66,
+        83,
+        110,
+        122
+      ],
+      "rva": "0x0038ed32",
+      "sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+      "size": 131
+    }
+  ]
+}

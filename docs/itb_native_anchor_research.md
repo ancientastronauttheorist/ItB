@@ -36,15 +36,19 @@ record control word `0x027F` (nearest-even). All control/dormant/armed outcomes
 match, and every debug register, VEH, file handle, and image seam is restored.
 A later coordinate hardware observer resolves the standard selector's ordered
 candidates, direct shared-RNG caller, and modulo rule. Three same-process
-coordinate/RNG captures show that the selector ordinal is not stable under a
-restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
-environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
-observer neutrality, prospective selector-state delivery or complete upstream
-replay, runtime inputs for the special coordinate paths, and broader
-selected-action paths remain unresolved. One complete Firefly1 runtime
-candidate payload plus selector-entry state is now sealed, but ordinary
-prospective delivery and equivalent payloads for other shapes remain
-unresolved. Native score adjustment around that payload is no longer
+   coordinate/RNG captures show that the selector ordinal is not stable under a
+   restored save plus fixed seed because particle, pilot-portrait, `UnitAcid`,
+   environment-XP, and Lua draws share the upstream stream. Whole-game native-RNG
+   observer neutrality, complete upstream replay, runtime inputs for the special
+   coordinate paths, and broader selected-action paths remain unresolved. A new
+   content-addressed v2 observer now captures the complete selector-entry
+   Board/RNG carrier set without detours or pointer publication. Its reproducible
+   scalar hot path is attested and the exact module passed a live
+   dormant/unconsumed/unarmed load check, but no prepare or armed capsule capture
+   has run. One complete Firefly1 runtime candidate payload plus selector-entry
+   state is already sealed by the earlier campaign; ordinary prospective
+   delivery and equivalent payloads for other shapes remain unresolved. Native
+   score adjustment around that payload is no longer
 anonymous: a later exact-build continuation names the
 injured/health/weapon/history/priority fields and closes the positioning clamp
 and target-score modifier arithmetic. The post-callback record tournament is
@@ -134,7 +138,7 @@ The durable artifacts are:
   `ScoreDanger=-10` / `PositionScore=0` defaults;
 - `data/observatory/native/windows_build_13725832_31fe35265598_enemy_position_observations_boundary.json`
   for all 17 named Board/Pawn observations used by `ScorePositioning`, their
-  exact native meanings, pure predicate/distance replays, and the qualified
+  exact native meanings, pure predicate/distance replays, and the complete
   current-state carrier matrix;
 - `data/observatory/native/windows_build_13725832_31fe35265598_rng_return_ids.json`
   for deterministic small IDs covering all 118 raw `rel32` candidates to the
@@ -149,6 +153,14 @@ The durable artifacts are:
   for the exact scheduler/fallback/ordinary control-flow map. It binds callers
   59, 60, and 66, both function hashes, all seven direct callsites, three log
   or class strings, and six branch/vector/modulo windows.
+- `data/observatory/native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json`
+  plus the content-addressed v2 build receipt for the exact DR3 selector-entry
+  Board/RNG capsule, DR1/DR2 draw pairing, fixed pointer-free carrier limits,
+  private debug-register transition, and no-mutation hot-path contract; the
+  generated DLL remains deliberately omitted and reproducible from source;
+- `data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`
+  for exact in-process module enumeration and the strict dormant, unconsumed,
+  unarmed load ACK before any prepare/seed command or snapshot;
 - `data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json`
   for the exact path API bindings and constants, Board search vtable, 12
   reviewed region hashes, four direct call edges, and the Road Runner
@@ -991,6 +1003,14 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    terrain, ACID, and existing-marker gates are exact. Candidate-time
    `Board:IsDangerous`, BlockSpawn values, and the future pre-call CRT state
    remain unavailable inputs, not unknown native semantics.
+   **Selector-entry capsule implementation complete; runtime capture pending:**
+   the v2 observer copies Board width/height/turn, Pawn ID/team, all 64 tile and
+   pointer-free occupancy records, the full Point-keyed `BlockSpawn` map,
+   spawn/danger vectors, exact shared CRT state, and the paired selector draw.
+   Two `/Brepro` builds match byte-for-byte, and the 5,946-byte scalar hot
+   section has no calls, APIs, or x87/MMX/SSE/AVX instructions. The exact module
+   passed a live owner-process load check in state `dormant`, `consumed=false`,
+   `armed=false`; no matched control/dormant/armed capsule has yet been run.
 4. **Completed for natural invocation/restoration:** five callback pairs cover
    all exact defining slots for `ScorePositioning`, `GetTargetArea`,
    `GetTargetScore`, and `GetSkillEffect`. They record 622 attempts and 620
@@ -1022,10 +1042,10 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    Board/Pawn bindings and their native meanings are exact, including the two-
    vector dangerous predicate, eight-field dangerous-item test, spawn sources,
    team matching, and Manhattan Pawn/Building distances. The current carrier
-   matrix is explicit; current `Board:IsDangerous` is exported directly and a
-   read-only active-Board reader supplies current spawn `BlockSpawn`/marker
-   state. Dangerous-item state, live definition mutations, and the future
-   candidate-time Board snapshot remain unavailable inputs rather than unknown
+   matrix is complete: the bridge exports both dangerous predicates and live
+   Ranged/AvoidingMines values, while a read-only active-Board reader supplies
+   current spawn `BlockSpawn`/marker state. The future candidate-time Board
+   snapshot remains unavailable to ordinary bridge input rather than unknown
    native semantics.
    **Completed at runtime for native integer rounding:** three fresh armed
    processes record x87 control word `0x027F` immediately before the exact
@@ -1202,6 +1222,12 @@ It recovers observable selector pre-states `0x161229bc`, `0x495e317b`, and
 `0x2c54aa4a` from the three same-process native windows and drives the Rust
 input-based replay to exact coordinates `[5,4]`, `[5,4]`, and `[5,2]`. It does
 not make those states available prospectively to ordinary planning.
+The exact selector-entry capsule source, two-build receipt, breakpoint plan, and
+dormant live-load observation are sealed under `data/observatory/native/` and
+`data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`.
+The generated module is deliberately omitted but content-addressed by both
+receipts. They prove the capture boundary is reproducible and safe while
+dormant, not that an armed selector-time capsule has already been observed.
 The bounded Firefly tournament, target-area, target-score, raw SkillEffect, and
 selected native materialization evidence is sealed in the corresponding
 `windows_build_13725832_owner_local_modified_20260824_enemy_*_receipt.json`

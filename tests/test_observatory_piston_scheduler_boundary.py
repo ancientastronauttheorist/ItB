@@ -215,16 +215,23 @@ def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
             "232a2cd312c439652bf95b2dd2a9c56b4a65d17cc38c6e43666e983dbe9cf038"
         ),
     }
-    current = {
-        "id": "enemy_position_carriers_project_bridge",
-        "size": bridge.stat().st_size,
-        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
-    }
-    assert current == {
+    position_carriers = {
         "id": "enemy_position_carriers_project_bridge",
         "size": 396_449,
         "sha256": (
             "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec"
+        ),
+    }
+    current = {
+        "id": "spawn_coordinate_capsule_project_bridge",
+        "size": bridge.stat().st_size,
+        "sha256": hashlib.sha256(bridge.read_bytes()).hexdigest(),
+    }
+    assert current == {
+        "id": "spawn_coordinate_capsule_project_bridge",
+        "size": 427_934,
+        "sha256": (
+            "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c"
         ),
     }
     assert v408 in DEATH_EVENT_BRIDGE_OVERLAYS
@@ -233,6 +240,8 @@ def test_v408_bridge_is_hash_pinned_without_rewriting_predecessor_artifacts():
     assert tournament in FINAL_CAVE_BRIDGE_OVERLAYS
     assert materialized_effect in DEATH_EVENT_BRIDGE_OVERLAYS
     assert materialized_effect in FINAL_CAVE_BRIDGE_OVERLAYS
+    assert position_carriers in DEATH_EVENT_BRIDGE_OVERLAYS
+    assert position_carriers in FINAL_CAVE_BRIDGE_OVERLAYS
     assert current in DEATH_EVENT_BRIDGE_OVERLAYS
     assert current in FINAL_CAVE_BRIDGE_OVERLAYS
 

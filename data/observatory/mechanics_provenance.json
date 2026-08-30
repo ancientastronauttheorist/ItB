@@ -1093,6 +1093,14 @@
         },
         {
           "classification": "fact",
+          "statement": "A content-addressed v2 x86 hardware observer now captures selector-entry active Board/Pawn identity, all 64 tile and pointer-free occupancy records, the complete Point-keyed BlockSpawn map, spawn/danger Point vectors, exact shared CRT state, and the next fallback/standard selector draw. Two /Brepro builds are byte-identical; the exact 5,946-byte scalar hot section has 1,545 decoded instructions and zero calls, Windows API calls, or x87/MMX/SSE/AVX instructions."
+        },
+        {
+          "classification": "fact",
+          "statement": "The exact v2 module was enumerated inside one fresh owner-local-modified game process and the separate bridge controller returned state=dormant consumed=false armed=false. No prepare or seed command ran, no VEH or debug register was armed, and no capsule snapshot existed. This proves dormant deployment only; no selector-time runtime capsule has been captured."
+        },
+        {
+          "classification": "fact",
           "statement": "Three combined coordinate/RNG captures retained the same ordered five candidates and joined the standard selector to caller 60 at native RNG ordinals 1495, 1475, and 1450. The selected point was candidates[raw_rng % 5] in every capture; all varying upstream callers were classified, and classified count deltas [0, -20, -45] exactly matched the selector-ordinal deltas."
         },
         {
@@ -1175,9 +1183,43 @@
           ]
         },
         {
+          "path": "src/observatory/spawn_coordinate_capsule_hw.py",
+          "symbols": [
+            "validate_spawn_coordinate_capsule_snapshot"
+          ]
+        },
+        {
+          "path": "src/native/observatory_spawn_coordinate_capsule_hw_observer.c",
+          "symbols": [
+            "observer_spawn_coordinate_capsule_veh",
+            "capsule_status_observer",
+            "luaopen_itb_observatory_spawn_coordinate_capsule_hw_observer"
+          ]
+        },
+        {
+          "path": "scripts/build_itb_observatory_spawn_coordinate_capsule_hw_observer.py",
+          "symbols": [
+            "build_observer"
+          ]
+        },
+        {
           "path": "src/bridge/modloader.lua",
           "symbols": [
-            "native_enemy_spawn_inputs"
+            "native_enemy_spawn_inputs",
+            "SPAWN_COORDINATE_CAPSULE",
+            "OBS_SPAWN_CAPSULE_LOAD_CHECK",
+            "OBS_SPAWN_CAPSULE_PREPARE",
+            "OBS_SPAWN_CAPSULE_FINISH",
+            "OBS_SPAWN_CAPSULE_ABORT"
+          ]
+        },
+        {
+          "path": "src/bridge/protocol.py",
+          "symbols": [
+            "check_observatory_spawn_coordinate_capsule_load",
+            "prepare_observatory_spawn_coordinate_capsule",
+            "finish_observatory_spawn_coordinate_capsule",
+            "abort_observatory_spawn_coordinate_capsule"
           ]
         },
         {
@@ -1202,7 +1244,7 @@
       "known_gaps": [
         "Rust does not parse or apply SectorSpawners, reproduce Spawner:NextPawn, or materialize the unknown identity at an unblocked spawn marker; it projects marker persistence and blocking only.",
         "Ordinary bridge input exports neither the exact pre-NextPawn native state, effective ratios, and ordered candidate array nor a selector-time CRT state before execution. The standard selector state is now recovered exactly post hoc in three accepted captures, but the solver still cannot use either replay rule prospectively.",
-        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, selector-time CRT state, and an atomic future runtime replay capsule remain unresolved. Current ordered zone, Board:IsDangerous, ground blocking, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
+        "Native GetDifficulty, GetSector, GAME:GetSpawnList, spawn-count scheduling, the Board after future player/environment changes, and selector-time CRT state remain unavailable to ordinary solver input. A content-addressed atomic Board/RNG capsule observer and validator now exist and pass an exact dormant/unconsumed live-load check, but no matched armed runtime capsule has been captured. Current ordered zone, both dangerous predicates, ground blocking, live Pawn Ranged/AvoidingMines flags, all 64 Point-keyed BlockSpawn values, and the direct marker vector are exact for a stable snapshot. Standard candidate source order, absent-zone fallback, stable primary and turn-zero mode-9 filtering, emergency greatest-x-row construction, all ordinary enemy rejection semantics, modulo selection, direct caller 60, emergency caller 59, and caller-66 scheduler control flow are exact; future dynamic inputs and fallback runtime reachability remain uncaptured.",
         "The natural live captures did not reach the conditional boss draw; selection fallbacks and other difficulty/sector configurations still need mismatch-driven coverage."
       ],
       "sources": [
@@ -1317,6 +1359,33 @@
           ]
         },
         {
+          "path": "data/observatory/native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json",
+          "symbols": [
+            "selector_entry_board_rng_capsule",
+            "pointer_values_published",
+            "each DR3 entry pairs with the next DR1 or DR2 draw",
+            "transient dead/non-corpse classification"
+          ]
+        },
+        {
+          "path": "data/observatory/native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json",
+          "symbols": [
+            "observatory_spawn_coordinate_capsule_hw_observer_build",
+            "module_bytes_identical",
+            "direct_or_indirect_call_count",
+            "x87_mmx_sse_avx_instruction_count"
+          ]
+        },
+        {
+          "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json",
+          "symbols": [
+            "state=dormant consumed=false armed=false",
+            "module_loaded_in_game_process",
+            "prepare_or_seed_command_executed",
+            "native_selector_or_rng_runtime_evidence_captured"
+          ]
+        },
+        {
           "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_spawn_coordinate_rng_receipt.json",
           "symbols": [
             "\"classification\":\"spawn_coordinate_direct_rng_resolved_shared_presentation_stream_blocks_stable_prediction\"",
@@ -1348,6 +1417,27 @@
             "test_committed_selector_state_receipt_rebuilds_exactly",
             "test_selector_state_recovery_rejects_changed_following_result",
             "test_selector_state_recovery_rejects_candidate_order_drift"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_hw_observer.py",
+          "symbols": [
+            "test_capsule_hot_path_owns_four_breakpoints_and_is_api_free",
+            "test_committed_dormant_load_receipt_binds_exact_inert_artifacts"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_hw.py",
+          "symbols": [
+            "test_capsule_snapshot_validates_board_carriers_rng_and_candidate_pairing",
+            "test_capsule_snapshot_rejects_rng_transition_or_draw_replay_drift"
+          ]
+        },
+        {
+          "path": "tests/test_observatory_spawn_coordinate_capsule_bridge.py",
+          "symbols": [
+            "test_capsule_load_check_requires_exact_dormant_unconsumed_ack",
+            "test_capsule_boundary_requires_fresh_armed_output"
           ]
         },
         {

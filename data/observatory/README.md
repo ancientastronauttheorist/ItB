@@ -991,8 +991,10 @@ temporary/permanent `BlockSpawn`, exact `Board:IsDangerous`, ground blocking,
 terrain literals 5/6/Water, ACID, and existing spawn-marker membership. Smoke,
 Fire, Frozen, and Targeted are not separate rejection gates on this branch.
 Python and Rust replay the ordered pool from explicit candidate-time facts.
-The bridge now exports the exact current ordered enemy zone,
-`Board:IsDangerous`, and `Board:IsBlocked(point, PATH_GROUND)` observations.
+The bridge now exports the exact current ordered enemy zone, both
+`Board:IsDangerous` and `Board:IsDangerousItem`,
+`Board:IsBlocked(point, PATH_GROUND)`, and live ordered Pawn Ranged/
+AvoidingMines observations.
 The Windows-only read-only probe in
 `src/observatory/native_spawn_input_reader.py` resolves the active Board through
 the pinned host/Game/screen/BoardPlayer chain, then reads the complete 64-cell
@@ -1011,6 +1013,43 @@ This proves the complete carrier and replay path for that current snapshot. It
 does not supply the Board after future player/environment changes or the shared
 CRT state immediately before a future selector call, so it is not a production
 spawn forecast and simulator v408 remains unchanged.
+
+The selector-entry continuation is sealed by the content-addressed build receipt
+`native/itb_observatory_spawn_coordinate_capsule_hw_observer_bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9.dll.receipt.json`
+and plan
+`native/windows_build_13725832_spawn_coordinate_capsule_hw_plan_e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json`.
+Two independent `/Brepro` x86 builds produced the same 28,672 bytes. Machine
+attestation proves a zero-entrypoint image and a 5,946-byte scalar hot section
+with 1,545 decoded instructions, zero direct/indirect calls, zero Windows API
+calls, and zero x87/MMX/SSE/AVX instructions. The observer installs no detour,
+modifies no executable bytes, changes no page protection, and publishes no
+pointer or address. As with the older Observatory helpers, the generated DLL is
+deliberately omitted from the repository; the builder recreates the exact
+content-addressed module.
+
+DR3 observes the standard selector entry where `ECX` is the active Board and
+the stack supplies the hidden Point result plus Pawn. The fixed capsule copies
+Board width/height/turn, Pawn ID/team, all 64 tiles in x-major order, raw
+pointer-free occupancy IDs, the complete Point-keyed `BlockSpawn` map, direct
+spawn markers, and both native dangerous Point vectors. It records exact shared
+CRT state before/after and pairs that entry one-to-one with the next DR1
+fallback or DR2 standard selector draw. The strict validator rejects incomplete
+maps, reordered or duplicate points, torn/restoration state, pointer leakage,
+RNG-transition drift, or candidate/draw disagreement.
+
+The separate bridge controller was live-loaded into one fresh owner-track game
+process without preparing a condition. The immutable dormant-load receipt
+`captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_dormant_load_receipt.json`
+(SHA-256 `5d3b03a5f191ab2bbf26d5c416d2e83b9e468dc1385c470b6c888374a5ab3435`)
+binds the exact module, plan, build receipt, installed Mod Loader, process module
+enumeration, and ACK `state=dormant consumed=false armed=false`. No prepare or
+seed command ran, no breakpoint/VEH was armed, and no snapshot existed. This
+proves a safely deployable dormant boundary, not a selector-time runtime
+capture. A matched control/dormant/armed capture is still required before any
+Board/RNG capsule is promoted as game evidence. Transient dead/non-corpse
+occupancy, the Pawn path profile at entry, future Board state, and broader spawn
+call ordering remain explicit unresolved inputs; the validator therefore keeps
+`complete_future_forecast=false`.
 
 Capture and verify the current-only joined artifact with:
 

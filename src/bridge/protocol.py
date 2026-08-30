@@ -103,6 +103,12 @@ SPAWN_COORDINATE_SNAPSHOT_FILE = (
 SPAWN_COORDINATE_SNAPSHOT_TMP = (
     BRIDGE_DIR / "itb_observatory_spawn_coordinate_snapshot.json.tmp"
 )
+SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE = (
+    BRIDGE_DIR / "itb_observatory_spawn_coordinate_capsule_snapshot.json"
+)
+SPAWN_COORDINATE_CAPSULE_SNAPSHOT_TMP = (
+    BRIDGE_DIR / "itb_observatory_spawn_coordinate_capsule_snapshot.json.tmp"
+)
 _OBSERVATORY_CAPTURE_ID_RE = re.compile(
     r"[a-z][a-z0-9_.-]{0,95}\Z"
 )
@@ -1582,6 +1588,213 @@ def abort_observatory_spawn_coordinate(
     )
     if match is None or match.group(2) != capture_id:
         raise BridgeError(f"unexpected spawn-coordinate abort ACK: {ack}")
+    return ack
+
+
+def check_observatory_spawn_coordinate_capsule_load(
+    *, timeout: float = 10.0
+) -> str:
+    """Load the inert capsule DLL and prove it remains dormant and unconsumed."""
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "spawn-coordinate capsule load check requires an active heartbeat"
+        )
+    command = "OBS_SPAWN_CAPSULE_LOAD_CHECK"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    if ack != (
+        "OK OBS_SPAWN_CAPSULE_LOAD_CHECK "
+        "state=dormant consumed=false armed=false"
+    ):
+        raise BridgeError(f"unexpected spawn-coordinate capsule load ACK: {ack}")
+    return ack
+
+
+def prepare_observatory_spawn_coordinate_capsule(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Seed and optionally arm the selector-entry Board/RNG capsule observer."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("spawn-coordinate capsule condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capsule capture ID is invalid")
+    if not is_bridge_alive(max_stale_sec=5.0):
+        raise BridgeError(
+            "spawn-coordinate capsule prepare requires an active mission heartbeat"
+        )
+    if (
+        SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE.exists()
+        or SPAWN_COORDINATE_CAPSULE_SNAPSHOT_TMP.exists()
+    ):
+        raise BridgeError("spawn-coordinate capsule snapshot output already exists")
+    command = f"OBS_SPAWN_CAPSULE_PREPARE {condition} {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_CAPSULE_PREPARE "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) seed=324508639 "
+        r"armed=(true|false)",
+        ack,
+    )
+    expected_armed = "true" if condition == "armed" else "false"
+    if (
+        match is None
+        or match.group(1) != condition
+        or match.group(2) != capture_id
+        or match.group(3) != expected_armed
+    ):
+        raise BridgeError(f"unexpected spawn-coordinate capsule prepare ACK: {ack}")
+    return ack
+
+
+def finish_observatory_spawn_coordinate_capsule(
+    condition: str,
+    capture_id: str,
+    *,
+    timeout: float = 30.0,
+) -> tuple[str, dict | None]:
+    """Restore the capsule observer and retrieve fresh armed evidence."""
+    if condition not in {"control", "dormant", "armed"}:
+        raise BridgeError("spawn-coordinate capsule condition is invalid")
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capsule capture ID is invalid")
+    before = _file_generation(SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE)
+    command = f"OBS_SPAWN_CAPSULE_FINISH {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_CAPSULE_FINISH "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) draws=(\d+) "
+        r"scheduler=(\d+) fallback=(\d+) standard=(\d+) selectors=(\d+) "
+        r"capsules=(\d+) complete=true",
+        ack,
+    )
+    if match is None or match.group(1) != condition or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected spawn-coordinate capsule finish ACK: {ack}")
+    draw_count = int(match.group(3))
+    scheduler_count = int(match.group(4))
+    fallback_count = int(match.group(5))
+    standard_count = int(match.group(6))
+    selector_count = int(match.group(7))
+    capsule_count = int(match.group(8))
+    if condition != "armed":
+        if (
+            any(
+                value != 0
+                for value in (
+                    draw_count,
+                    scheduler_count,
+                    fallback_count,
+                    standard_count,
+                    selector_count,
+                    capsule_count,
+                )
+            )
+            or _file_generation(SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE) != before
+        ):
+            raise BridgeError(
+                "unarmed spawn-coordinate capsule boundary published output"
+            )
+        return ack, None
+    if (
+        not 1 <= draw_count <= 256
+        or draw_count != scheduler_count + fallback_count + standard_count
+        or selector_count != fallback_count + standard_count
+        or not 1 <= selector_count <= 64
+        or capsule_count != selector_count
+    ):
+        raise BridgeError("armed spawn-coordinate capsule boundary counts differ")
+    deadline = time.monotonic() + max(0.1, float(timeout))
+    while time.monotonic() < deadline:
+        generation = _file_generation(SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE)
+        if generation is None or generation == before:
+            time.sleep(0.02)
+            continue
+        try:
+            snapshot = json.loads(
+                SPAWN_COORDINATE_CAPSULE_SNAPSHOT_FILE.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise BridgeError(
+                f"spawn-coordinate capsule snapshot is not valid JSON: {exc}"
+            ) from exc
+        summary = snapshot.get("summary", {}) if isinstance(snapshot, dict) else {}
+        if (
+            not isinstance(snapshot, dict)
+            or snapshot.get("schema_version") != 1
+            or snapshot.get("kind")
+                != "native_spawn_coordinate_capsule_hw_observer_snapshot"
+            or snapshot.get("capture_id") != capture_id
+            or snapshot.get("integrity", {}).get("complete") is not True
+            or summary.get("draw_record_count") != draw_count
+            or summary.get("scheduler_count") != scheduler_count
+            or summary.get("selector_fallback_count") != fallback_count
+            or summary.get("selector_standard_count") != standard_count
+            or summary.get("selector_count") != selector_count
+            or summary.get("capsule_count") != capsule_count
+        ):
+            raise BridgeError(
+                "spawn-coordinate capsule snapshot does not match its ACK"
+            )
+        return ack, snapshot
+    raise TimeoutError(
+        f"Fresh spawn-coordinate capsule snapshot timeout after {timeout:.0f}s"
+    )
+
+
+def abort_observatory_spawn_coordinate_capsule(
+    capture_id: str,
+    *,
+    timeout: float = 10.0,
+) -> str:
+    """Restore an armed capsule observer without publishing evidence."""
+    if (
+        type(capture_id) is not str
+        or _OBSERVATORY_CAPTURE_ID_RE.fullmatch(capture_id) is None
+    ):
+        raise BridgeError("spawn-coordinate capsule capture ID is invalid")
+    command = f"OBS_SPAWN_CAPSULE_ABORT {capture_id}"
+    write_command(command)
+    pending_command = f"#{_seq_counter} {command}"
+    try:
+        ack = wait_for_ack(timeout=timeout)
+    except TimeoutError:
+        _cancel_pending_command(pending_command)
+        raise
+    match = re.fullmatch(
+        r"OK OBS_SPAWN_CAPSULE_ABORT "
+        r"condition=(control|dormant|armed) "
+        r"capture=([a-z][a-z0-9._-]{0,95}) restored=true",
+        ack,
+    )
+    if match is None or match.group(2) != capture_id:
+        raise BridgeError(f"unexpected spawn-coordinate capsule abort ACK: {ack}")
     return ack
 
 

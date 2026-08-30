@@ -144,20 +144,26 @@ pending restoration fields with 689/689 installation entries, a byte-exact
 33-file save tree, restored Mod Loader bytes, and no active Observatory files.
 
 Those records remain `partial` / `native_dependency` for narrower reasons.
-Rust does not reproduce the native future enemy tournament, the bridge does not
-provide one complete post-callback record payload or its selector-entry CRT
-state, and concrete Lua callback values/PointLists/SkillEffects, resolved base-
-score future candidate-time Board snapshots, runtime-mutated Pawn score-helper
-values, callback-time x87 control for
-fractional native results, plus transitive native-bound helper RNG before the
-now-proven native postprocessing boundaries remain unjoined. The native
-meanings and current-state carrier matrix themselves are no longer open.
-The prospective spawn replay
-capsule/selector-time CRT state remains absent, the queue correlation covers
-only one Firefly1 single-weapon shape, and the scheduler/emergency coordinate
-paths were not naturally exercised. Static control-flow evidence is kept
-distinct from runtime facts, and owner-local-modified Windows evidence is not
-promoted to a pristine-depot or cross-platform claim.
+Rust does not reproduce the native future enemy tournament, the ordinary bridge
+does not provide one complete post-callback record payload or its selector-entry
+CRT state, and concrete Lua callback values/PointLists/SkillEffects, resolved
+base-score future candidate-time Board snapshots, runtime-mutated Pawn score-
+helper values, callback-time x87 control for fractional native results, plus
+transitive native-bound helper RNG before the now-proven native postprocessing
+boundaries remain unjoined. The native meanings and current-state carrier matrix
+themselves are no longer open.
+
+A content-addressed v2 hardware capsule now implements the missing selector-time
+Board/RNG join and a strict pointer-free validator. Its two reproducible builds
+are machine-attested, and an owner-track process returned the exact dormant,
+unconsumed, unarmed ACK without a prepare/seed command, VEH, breakpoint, or
+snapshot. No armed matched capture has run, so the prospective runtime capsule
+remains unobserved evidence rather than an absent implementation. The queue
+correlation covers only one Firefly1 single-weapon shape, and the scheduler/
+emergency coordinate paths were not naturally exercised. Static control-flow,
+dormant-load, and armed runtime evidence are kept distinct, and owner-local-
+modified Windows evidence is not promoted to a pristine-depot or cross-platform
+claim.
 
 The base Battle/Survive/Volatile slice adds three exact shipped mission paths
 in three bounded `partial` records. `mission_battle.lua` is exactly two CRLF

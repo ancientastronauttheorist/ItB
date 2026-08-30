@@ -200,6 +200,47 @@ local SPAWN_COORDINATE_OBSERVER_EXPORT =
     "luaopen_itb_observatory_spawn_coordinate_hw_observer"
 local SPAWN_COORDINATE_HW_PLAN_SHA256 =
     "6c22aa5cb62552afd7f08d9e942a82cbceb620aab3b1853f004c98534ea74e09"
+-- Deliberately namespaced global: this legacy Lua 5.1 chunk already consumes
+-- all 200 top-level local slots, while the controller still needs one durable
+-- table shared by its loader, validators, lifecycle, and command dispatcher.
+SPAWN_COORDINATE_CAPSULE = {
+    snapshot_file =
+        BRIDGE_DIR .. "/itb_observatory_spawn_coordinate_capsule_snapshot.json",
+    snapshot_tmp =
+        BRIDGE_DIR .. "/itb_observatory_spawn_coordinate_capsule_snapshot.json.tmp",
+    observer_sha256 =
+        "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9",
+    observer_export =
+        "luaopen_itb_observatory_spawn_coordinate_capsule_hw_observer",
+    plan_sha256 =
+        "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1",
+    inventory_sha256 =
+        "81fc5d328603c087154c00c8249e9f2e208539b24b7989bd9d805403192aa2b4",
+    boundary_sha256 =
+        "ded91fdf8181b2ae310644ece211f77fecc4393c3cd1c43867cfd353af3d6dc2",
+    rng_return_sha256 =
+        "7da4ababb6aa91d7b834e68ea6d42a8a40b6ae379531f42cbbc96556cdcaae48",
+    spawn_boundary_sha256 =
+        "9f6785d16f6c1102a7fd6e52d656b1438a12b1a3f216cbb99e5cadd269f53b3f",
+    position_boundary_sha256 =
+        "f7871672fac450ff60196638bb35e28fb865f11844ce2cab76e9ba8bcafc8329",
+    selector_region_sha256 =
+        "9746df5a768534c54108600528bce8e0fd152d41e322bf0907dc92a434148904",
+    selector_entry_prebytes_sha256 =
+        "19bad2162e08fd3b256f0af4024c51343feb7827eb43fd73dcfea11a662668d8",
+    scheduler_prebytes_sha256 =
+        "419b08b2e5f923a50b9c561f72289c66c4582a38f35816d8727787cdae8f9ea7",
+    fallback_prebytes_sha256 =
+        "fd2f466614b6c81c7e73fcdb8b000dd72200a8143400bd9528bedc1d69ffd4e6",
+    standard_prebytes_sha256 =
+        "c582fb84bc51ea60cbda9c2b62bbd3a9ef4103d42654486a3569da5f8997f011",
+    rng_state_owner_sha256 =
+        "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+    observer = nil,
+    condition = nil,
+    capture_id = nil,
+    restored = false,
+}
 local NATIVE_RNG_OBSERVER_SHA256 =
     "8ef711798bd9d37fbff5e75eaac17c27189f9c25aa6f11122cb27068b5e2184c"
 local NATIVE_RNG_OBSERVER_EXPORT =
@@ -4240,6 +4281,57 @@ local function load_observatory_spawn_coordinate_module(directory)
     return observer
 end
 
+function SPAWN_COORDINATE_CAPSULE.load(directory)
+    if not is_windows() then
+        return nil, "spawn-coordinate capsule observer requires Windows"
+    end
+    if type(directory) ~= "string" then
+        return nil, "spawn-coordinate capsule observer directory is invalid"
+    end
+    local package_table = rawget(_G, "package")
+    local loadlib = type(package_table) == "table"
+        and rawget(package_table, "loadlib") or nil
+    if type(loadlib) ~= "function" then
+        return nil, "package.loadlib is unavailable"
+    end
+    local filename =
+        "itb_observatory_spawn_coordinate_capsule_hw_observer_"
+        .. SPAWN_COORDINATE_CAPSULE.observer_sha256 .. ".dll"
+    local ok, loader, load_error = pcall(
+        loadlib,
+        directory .. "/" .. filename,
+        SPAWN_COORDINATE_CAPSULE.observer_export
+    )
+    if not ok or type(loader) ~= "function" then
+        return nil, "cannot load spawn-coordinate capsule observer: "
+            .. tostring(load_error or loader)
+    end
+    local opened, observer = pcall(loader)
+    if not opened or type(observer) ~= "table" then
+        return nil, "spawn-coordinate capsule observer failed to open: "
+            .. tostring(observer)
+    end
+    if rawget(observer, "VERSION")
+            ~= "observatory-spawn-coordinate-capsule-hw-observer/2"
+        or rawget(observer, "BUILD_ID") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(observer, "EXECUTABLE_SHA256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(observer, "ARCHITECTURE") ~= "x86"
+        or rawget(observer, "SELECTOR_ENTRY_RVA") ~= "0x00172a90"
+        or rawget(observer, "SCHEDULER_RVA") ~= "0x001751ae"
+        or rawget(observer, "SELECTOR_FALLBACK_RVA") ~= "0x00172e1e"
+        or rawget(observer, "SELECTOR_STANDARD_RVA") ~= "0x00172e7b"
+        or rawget(observer, "RNG_STATE_OWNER_RVA") ~= "0x0038ed32"
+        or rawget(observer, "HARDWARE_BREAKPOINT_PLAN_SHA256")
+            ~= SPAWN_COORDINATE_CAPSULE.plan_sha256
+        or type(rawget(observer, "arm")) ~= "function"
+        or type(rawget(observer, "finish")) ~= "function"
+        or type(rawget(observer, "status")) ~= "function" then
+        return nil, "spawn-coordinate capsule observer contract mismatch"
+    end
+    return observer
+end
+
 local function observatory_path_exists(path)
     local file = io.open(path, "r")
     if not file then return false end
@@ -5601,6 +5693,300 @@ local function observatory_spawn_coordinate_snapshot_complete(snapshot)
     return true
 end
 
+function SPAWN_COORDINATE_CAPSULE.integer(value, minimum, maximum)
+    return type(value) == "number"
+        and value == math.floor(value)
+        and (minimum == nil or value >= minimum)
+        and (maximum == nil or value <= maximum)
+end
+
+function SPAWN_COORDINATE_CAPSULE.point(value)
+    return type(value) == "table"
+        and SPAWN_COORDINATE_CAPSULE.integer(rawget(value, "x"), 0, 7)
+        and SPAWN_COORDINATE_CAPSULE.integer(rawget(value, "y"), 0, 7)
+end
+
+function SPAWN_COORDINATE_CAPSULE.point_vector(value)
+    if type(value) ~= "table" or #value > 64 then return false end
+    local seen = {}
+    for _, point in ipairs(value) do
+        if not SPAWN_COORDINATE_CAPSULE.point(point) then return false end
+        local key = tostring(point.x) .. "," .. tostring(point.y)
+        if seen[key] then return false end
+        seen[key] = true
+    end
+    return true
+end
+
+function SPAWN_COORDINATE_CAPSULE.u32(value)
+    if type(value) ~= "string"
+        or not string.match(value, "^0x%x%x%x%x%x%x%x%x$") then
+        return nil
+    end
+    return tonumber(string.sub(value, 3), 16)
+end
+
+function SPAWN_COORDINATE_CAPSULE.validate_snapshot(snapshot, capture_id)
+    if type(snapshot) ~= "table"
+        or rawget(snapshot, "schema_version") ~= 1
+        or rawget(snapshot, "kind")
+            ~= "native_spawn_coordinate_capsule_hw_observer_snapshot"
+        or rawget(snapshot, "observer_version")
+            ~= "observatory-spawn-coordinate-capsule-hw-observer/2"
+        or rawget(snapshot, "capture_id") ~= capture_id
+        or type(rawget(snapshot, "identity")) ~= "table"
+        or type(rawget(snapshot, "integrity")) ~= "table"
+        or type(rawget(snapshot, "draw_records")) ~= "table"
+        or type(rawget(snapshot, "capsules")) ~= "table"
+        or type(rawget(snapshot, "summary")) ~= "table" then
+        return nil, "spawn-coordinate capsule snapshot contract mismatch"
+    end
+    local identity = snapshot.identity
+    local summary = snapshot.summary
+    if rawget(identity, "platform") ~= "windows"
+        or rawget(identity, "architecture") ~= "x86"
+        or rawget(identity, "build_id") ~= NATIVE_RNG_OBSERVER_BUILD_ID
+        or rawget(identity, "executable_sha256")
+            ~= NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256
+        or rawget(identity, "executable_size") ~= 5530112
+        or rawget(identity, "inventory_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.inventory_sha256
+        or rawget(identity, "boundary_map_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.boundary_sha256
+        or rawget(identity, "spawn_candidate_boundary_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.spawn_boundary_sha256
+        or rawget(identity, "position_observations_boundary_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.position_boundary_sha256
+        or rawget(identity, "hardware_breakpoint_plan_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.plan_sha256
+        or rawget(identity, "selector_region_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.selector_region_sha256
+        or rawget(identity, "selector_entry_prebytes_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.selector_entry_prebytes_sha256
+        or rawget(identity, "scheduler_prebytes_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.scheduler_prebytes_sha256
+        or rawget(identity, "selector_fallback_prebytes_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.fallback_prebytes_sha256
+        or rawget(identity, "selector_standard_prebytes_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.standard_prebytes_sha256
+        or rawget(identity, "rng_state_owner_sha256")
+            ~= SPAWN_COORDINATE_CAPSULE.rng_state_owner_sha256
+        or not SPAWN_COORDINATE_CAPSULE.integer(
+            rawget(summary, "draw_record_count"), 1, 256
+        )
+        or rawget(summary, "draw_record_count") ~= #snapshot.draw_records
+        or not SPAWN_COORDINATE_CAPSULE.integer(
+            rawget(summary, "capsule_count"), 1, 64
+        )
+        or rawget(summary, "capsule_count") ~= #snapshot.capsules then
+        return nil, "spawn-coordinate capsule identity or counts mismatch"
+    end
+
+    local kind_counts = {
+        scheduler_draw = 0,
+        selector_fallback_draw = 0,
+        selector_standard_draw = 0,
+    }
+    local selector_draws = {}
+    for index, record in ipairs(snapshot.draw_records) do
+        local kind = type(record) == "table" and rawget(record, "kind") or nil
+        local candidates = type(record) == "table"
+            and rawget(record, "candidates") or nil
+        local count = type(record) == "table"
+            and rawget(record, "candidate_count") or nil
+        local selected_index = type(record) == "table"
+            and rawget(record, "selected_index") or nil
+        local quotient = type(record) == "table"
+            and rawget(record, "rng_quotient") or nil
+        local raw_rng = type(record) == "table"
+            and rawget(record, "raw_rng") or nil
+        if kind_counts[kind] == nil
+            or rawget(record, "seq") ~= index - 1
+            or not SPAWN_COORDINATE_CAPSULE.integer(count, 1, 64)
+            or not SPAWN_COORDINATE_CAPSULE.integer(selected_index, 0, count - 1)
+            or not SPAWN_COORDINATE_CAPSULE.integer(quotient, 0, 32767)
+            or not SPAWN_COORDINATE_CAPSULE.integer(raw_rng, 0, 32767)
+            or raw_rng ~= quotient * count + selected_index
+            or type(candidates) ~= "table" or #candidates ~= count then
+            return nil, "spawn-coordinate capsule draw record is invalid"
+        end
+        for _, candidate in ipairs(candidates) do
+            if not SPAWN_COORDINATE_CAPSULE.point(candidate) then
+                return nil, "spawn-coordinate capsule candidate is invalid"
+            end
+        end
+        local selected = candidates[selected_index + 1]
+        if selected.x ~= rawget(record, "selected_x")
+            or selected.y ~= rawget(record, "selected_y") then
+            return nil, "spawn-coordinate capsule selected candidate mismatch"
+        end
+        kind_counts[kind] = kind_counts[kind] + 1
+        if kind ~= "scheduler_draw" then
+            selector_draws[index - 1] = true
+        end
+    end
+
+    local paired_draws = {}
+    for index, capsule in ipairs(snapshot.capsules) do
+        if type(capsule) ~= "table"
+            or rawget(capsule, "seq") ~= index - 1
+            or not SPAWN_COORDINATE_CAPSULE.integer(
+                rawget(capsule, "draw_seq"), 0, #snapshot.draw_records - 1
+            )
+            or (rawget(capsule, "selector_kind")
+                    ~= "selector_fallback_draw"
+                and rawget(capsule, "selector_kind")
+                    ~= "selector_standard_draw")
+            or rawget(capsule, "board_width") ~= 8
+            or rawget(capsule, "board_height") ~= 8
+            or not SPAWN_COORDINATE_CAPSULE.integer(
+                rawget(capsule, "board_turn"), 0, 20
+            )
+            or not SPAWN_COORDINATE_CAPSULE.integer(
+                rawget(capsule, "pawn_id"), -2147483648, 2147483647
+            )
+            or not SPAWN_COORDINATE_CAPSULE.integer(
+                rawget(capsule, "pawn_team"), 0, 8
+            ) then
+            return nil, "spawn-coordinate capsule header is invalid"
+        end
+        local draw_seq = capsule.draw_seq
+        local draw = snapshot.draw_records[draw_seq + 1]
+        local before = SPAWN_COORDINATE_CAPSULE.u32(capsule.rng_state_before)
+        local after = SPAWN_COORDINATE_CAPSULE.u32(capsule.rng_state_after)
+        if paired_draws[draw_seq] or not selector_draws[draw_seq]
+            or rawget(draw, "kind") ~= rawget(capsule, "selector_kind")
+            or before == nil or after == nil
+            or (before * 214013 + 2531011) % 4294967296 ~= after
+            or math.floor(after / 65536) % 32768 ~= capsule.raw_rng
+            or rawget(capsule, "raw_rng") ~= rawget(draw, "raw_rng")
+            or rawget(capsule, "selected_index")
+                ~= rawget(draw, "selected_index")
+            or rawget(capsule, "selected_x") ~= rawget(draw, "selected_x")
+            or rawget(capsule, "selected_y") ~= rawget(draw, "selected_y") then
+            return nil, "spawn-coordinate capsule RNG/draw pairing mismatch"
+        end
+        paired_draws[draw_seq] = true
+
+        local blocks = rawget(capsule, "block_spawn_values")
+        local tiles = rawget(capsule, "tiles")
+        if type(blocks) ~= "table" or #blocks ~= 64
+            or type(tiles) ~= "table" or #tiles ~= 64
+            or not SPAWN_COORDINATE_CAPSULE.point_vector(
+                rawget(capsule, "spawn_markers")
+            )
+            or not SPAWN_COORDINATE_CAPSULE.point_vector(
+                rawget(capsule, "dangerous_points_a")
+            )
+            or not SPAWN_COORDINATE_CAPSULE.point_vector(
+                rawget(capsule, "dangerous_points_b")
+            ) then
+            return nil, "spawn-coordinate capsule Board vectors are invalid"
+        end
+        for point_index = 1, 64 do
+            local expected_x = math.floor((point_index - 1) / 8)
+            local expected_y = (point_index - 1) % 8
+            local block = blocks[point_index]
+            local tile = tiles[point_index]
+            if type(block) ~= "table"
+                or rawget(block, "x") ~= expected_x
+                or rawget(block, "y") ~= expected_y
+                or not SPAWN_COORDINATE_CAPSULE.integer(
+                    rawget(block, "value"), -2147483648, 2147483647
+                )
+                or type(tile) ~= "table"
+                or rawget(tile, "x") ~= expected_x
+                or rawget(tile, "y") ~= expected_y
+                or not SPAWN_COORDINATE_CAPSULE.integer(
+                    rawget(tile, "terrain"), -2147483648, 2147483647
+                )
+                or not SPAWN_COORDINATE_CAPSULE.integer(
+                    rawget(tile, "pod_state"), -2147483648, 2147483647
+                )
+                or type(rawget(tile, "item_present")) ~= "boolean"
+                or type(rawget(tile, "acid")) ~= "boolean"
+                or type(rawget(tile, "dangerous_flag")) ~= "boolean"
+                or not SPAWN_COORDINATE_CAPSULE.integer(
+                    rawget(tile, "occupancy_count"), 0, 8
+                )
+                or type(rawget(tile, "occupant_ids")) ~= "table"
+                or #tile.occupant_ids ~= tile.occupancy_count then
+                return nil, "spawn-coordinate capsule tile map is invalid"
+            end
+            for _, pawn_id in ipairs(tile.occupant_ids) do
+                if not SPAWN_COORDINATE_CAPSULE.integer(
+                    pawn_id, -2147483648, 2147483647
+                ) then
+                    return nil, "spawn-coordinate capsule occupant ID is invalid"
+                end
+            end
+        end
+    end
+    for draw_seq in pairs(selector_draws) do
+        if not paired_draws[draw_seq] then
+            return nil, "spawn-coordinate capsule selector draw is unpaired"
+        end
+    end
+
+    local selector_count = kind_counts.selector_fallback_draw
+        + kind_counts.selector_standard_draw
+    if rawget(summary, "scheduler_count") ~= kind_counts.scheduler_draw
+        or rawget(summary, "selector_fallback_count")
+            ~= kind_counts.selector_fallback_draw
+        or rawget(summary, "selector_standard_count")
+            ~= kind_counts.selector_standard_draw
+        or rawget(summary, "selector_count") ~= selector_count
+        or rawget(summary, "capsule_entry_count") ~= #snapshot.capsules
+        or rawget(summary, "capsule_count") ~= selector_count
+        or rawget(summary, "thread_count") ~= 1
+        or rawget(summary, "last_draw_sequence")
+            ~= #snapshot.draw_records - 1
+        or rawget(summary, "last_capsule_sequence")
+            ~= #snapshot.capsules - 1 then
+        return nil, "spawn-coordinate capsule summary mismatch"
+    end
+    return true
+end
+
+function SPAWN_COORDINATE_CAPSULE.snapshot_complete(snapshot)
+    local integrity = rawget(snapshot, "integrity") or {}
+    local summary = rawget(snapshot, "summary") or {}
+    if rawget(integrity, "state") ~= "restored"
+        or rawget(integrity, "complete") ~= true
+        or rawget(integrity, "stopped_reason") ~= nil
+        or rawget(integrity, "overflow_count") ~= 0
+        or rawget(integrity, "candidate_error_count") ~= 0
+        or rawget(integrity, "capsule_error_count") ~= 0
+        or rawget(integrity, "rng_error_count") ~= 0
+        or rawget(integrity, "pairing_error_count") ~= 0
+        or rawget(integrity, "pointer_fault_count") ~= 0
+        or rawget(integrity, "transition_mismatch_count") ~= 0
+        or rawget(integrity, "wrong_thread_count") ~= 0
+        or rawget(integrity, "unexpected_breakpoint_count") ~= 0
+        or rawget(integrity, "torn_record_count") ~= 0
+        or rawget(integrity, "torn_capsule_count") ~= 0
+        or rawget(integrity, "debug_registers_armed") ~= false
+        or rawget(integrity, "debug_registers_cleared") ~= true
+        or rawget(integrity, "veh_installed") ~= false
+        or rawget(integrity, "veh_removed") ~= true
+        or rawget(integrity, "executable_file_released") ~= true
+        or rawget(integrity, "executable_bytes_modified") ~= false
+        or rawget(integrity, "seam_bytes_unchanged") ~= true
+        or rawget(integrity, "addresses_or_pointers_published") ~= false
+        or not SPAWN_COORDINATE_CAPSULE.integer(
+            rawget(summary, "draw_record_count"), 1, 256
+        )
+        or not SPAWN_COORDINATE_CAPSULE.integer(
+            rawget(summary, "selector_count"), 1, 64
+        )
+        or rawget(summary, "selector_count")
+            ~= rawget(summary, "capsule_count")
+        or rawget(summary, "thread_count") ~= 1 then
+        return nil, "spawn-coordinate capsule snapshot is incomplete"
+    end
+    return true
+end
+
 local function observatory_selected_queue_scenario()
     local mission = _ITB_CURRENT_MISSION
     if not mission and GetCurrentMission then
@@ -6638,6 +7024,254 @@ local function abort_observatory_spawn_coordinate_trial(capture_id)
         end
     end
     _observatory_spawn_coordinate_condition = "aborted"
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id .. " restored=" .. tostring(clean)
+end
+
+function SPAWN_COORDINATE_CAPSULE.clean_restore(integrity)
+    return type(integrity) == "table"
+        and rawget(integrity, "state") == "restored"
+        and rawget(integrity, "debug_registers_armed") == false
+        and rawget(integrity, "debug_registers_cleared") == true
+        and rawget(integrity, "veh_installed") == false
+        and rawget(integrity, "veh_removed") == true
+        and rawget(integrity, "executable_file_released") == true
+        and rawget(integrity, "executable_bytes_modified") == false
+        and rawget(integrity, "seam_bytes_unchanged") == true
+        and rawget(integrity, "addresses_or_pointers_published") == false
+end
+
+function SPAWN_COORDINATE_CAPSULE.load_check()
+    local command_name = "OBS_SPAWN_CAPSULE_LOAD_CHECK"
+    if SPAWN_COORDINATE_CAPSULE.condition ~= nil then
+        return nil, "spawn-coordinate capsule boundary is already consumed"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local observer = SPAWN_COORDINATE_CAPSULE.observer
+    if observer == nil then
+        local observer_error = nil
+        observer, observer_error = SPAWN_COORDINATE_CAPSULE.load(directory)
+        if not observer then return nil, tostring(observer_error) end
+        SPAWN_COORDINATE_CAPSULE.observer = observer
+    end
+    local status_ok, status = pcall(rawget(observer, "status"))
+    if not status_ok or type(status) ~= "table"
+        or rawget(status, "state") ~= "dormant"
+        or rawget(status, "consumed") ~= false
+        or rawget(status, "capture_started") ~= false
+        or rawget(status, "draw_record_count") ~= 0
+        or rawget(status, "capsule_entry_count") ~= 0
+        or rawget(status, "capsule_count") ~= 0
+        or rawget(status, "pending_capsule_index") ~= -1
+        or rawget(status, "debug_registers_armed") ~= false
+        or rawget(status, "veh_installed") ~= false
+        or rawget(status, "capsule_error_count") ~= 0
+        or rawget(status, "rng_error_count") ~= 0
+        or rawget(status, "pairing_error_count") ~= 0
+        or rawget(status, "stopped_reason") ~= nil then
+        return nil, "spawn-coordinate capsule dormant status mismatch"
+    end
+    return command_name .. " state=dormant consumed=false armed=false"
+end
+
+function SPAWN_COORDINATE_CAPSULE.prepare(condition, capture_id)
+    local command_name = "OBS_SPAWN_CAPSULE_PREPARE"
+    if condition ~= "control" and condition ~= "dormant"
+        and condition ~= "armed" then
+        return nil, command_name .. " condition is invalid"
+    end
+    if not valid_observatory_capture_id(capture_id)
+        or string.len(capture_id) > 96 then
+        return nil, command_name .. " capture ID is invalid"
+    end
+    if not Board or not Game then
+        return nil, command_name .. " requires an active mission"
+    end
+    local mission = _ITB_CURRENT_MISSION
+    if not mission and GetCurrentMission then
+        local mission_ok, current = pcall(GetCurrentMission)
+        if mission_ok then mission = current end
+    end
+    if mission_bridge_id(mission) ~= "Mission_Power" then
+        return nil, command_name .. " requires Mission_Power"
+    end
+    local team_ok, team_turn = pcall(function() return Game:GetTeamTurn() end)
+    if not team_ok or team_turn ~= TEAM_PLAYER then
+        return nil, command_name .. " requires combat_player"
+    end
+    local actor_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
+    for _, actor_id in ipairs(actor_ids) do
+        local actor = Board:GetPawn(actor_id)
+        local active_ok, active = pcall(function()
+            return actor and actor:IsActive()
+        end)
+        if active_ok and active then
+            return nil, command_name .. " requires spent player actors"
+        end
+    end
+    if SPAWN_COORDINATE_CAPSULE.condition ~= nil then
+        return nil, "spawn-coordinate capsule boundary is already consumed"
+    end
+    if observatory_path_exists(SPAWN_COORDINATE_CAPSULE.snapshot_file)
+        or observatory_path_exists(SPAWN_COORDINATE_CAPSULE.snapshot_tmp) then
+        return nil, "spawn-coordinate capsule snapshot output already exists"
+    end
+    local directory, directory_error = modloader_script_directory()
+    if not directory then return nil, directory_error end
+    local seed_helper, seed_helper_error = load_observatory_rng_seed_helper(
+        directory,
+        {
+            helper_version = "observatory-rng-seed-helper/1",
+            helper_sha256 = NATIVE_RNG_SEED_HELPER_SHA256,
+            executable_sha256 = NATIVE_RNG_OBSERVER_EXECUTABLE_SHA256,
+            architecture = "x86",
+            build_id = NATIVE_RNG_OBSERVER_BUILD_ID,
+            rng_seed_rva = "0x00387f37",
+            rng_seed_region_sha256 = NATIVE_RNG_SEED_REGION_SHA256,
+        }
+    )
+    if not seed_helper then return nil, tostring(seed_helper_error) end
+    local observer = nil
+    if condition ~= "control" then
+        observer = SPAWN_COORDINATE_CAPSULE.observer
+        if observer == nil then
+            local observer_error = nil
+            observer, observer_error = SPAWN_COORDINATE_CAPSULE.load(directory)
+            if not observer then return nil, tostring(observer_error) end
+            SPAWN_COORDINATE_CAPSULE.observer = observer
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "dormant"
+            or rawget(status, "consumed") ~= false
+            or rawget(status, "debug_registers_armed") ~= false
+            or rawget(status, "veh_installed") ~= false then
+            return nil, "spawn-coordinate capsule pre-arm status mismatch"
+        end
+    end
+    local seed_ok, seeded = pcall(
+        rawget(seed_helper, "seed"), NATIVE_RNG_FIXED_SEED
+    )
+    if not seed_ok or seeded ~= true then
+        return nil, "spawn-coordinate capsule seed failed: " .. tostring(seeded)
+    end
+    if condition == "armed" then
+        local arm_ok, armed = pcall(rawget(observer, "arm"), capture_id)
+        if not arm_ok or armed ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "spawn-coordinate capsule arm failed: " .. tostring(armed)
+        end
+        local status_ok, status = pcall(rawget(observer, "status"))
+        if not status_ok or type(status) ~= "table"
+            or rawget(status, "state") ~= "capturing"
+            or rawget(status, "debug_registers_armed") ~= true
+            or rawget(status, "veh_installed") ~= true then
+            pcall(rawget(observer, "finish"))
+            return nil, "spawn-coordinate capsule arm status mismatch"
+        end
+    elseif condition == "control" then
+        observer = false
+    end
+    SPAWN_COORDINATE_CAPSULE.observer = observer
+    SPAWN_COORDINATE_CAPSULE.condition = condition
+    SPAWN_COORDINATE_CAPSULE.capture_id = capture_id
+    SPAWN_COORDINATE_CAPSULE.restored = false
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " seed=" .. tostring(NATIVE_RNG_FIXED_SEED)
+        .. " armed=" .. tostring(condition == "armed")
+end
+
+function SPAWN_COORDINATE_CAPSULE.finish(capture_id)
+    local command_name = "OBS_SPAWN_CAPSULE_FINISH"
+    if capture_id ~= SPAWN_COORDINATE_CAPSULE.capture_id
+        or SPAWN_COORDINATE_CAPSULE.condition == nil then
+        return nil, command_name .. " capture does not match prepared boundary"
+    end
+    local condition = SPAWN_COORDINATE_CAPSULE.condition
+    local summary = {
+        draw_record_count = 0,
+        scheduler_count = 0,
+        selector_fallback_count = 0,
+        selector_standard_count = 0,
+        selector_count = 0,
+        capsule_count = 0,
+    }
+    if condition == "armed" then
+        local observer = SPAWN_COORDINATE_CAPSULE.observer
+        local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+        if not finish_ok or type(snapshot) ~= "table" then
+            return nil, "spawn-coordinate capsule finish failed: "
+                .. tostring(snapshot)
+        end
+        local integrity = rawget(snapshot, "integrity") or {}
+        SPAWN_COORDINATE_CAPSULE.restored =
+            SPAWN_COORDINATE_CAPSULE.clean_restore(integrity)
+        SPAWN_COORDINATE_CAPSULE.observer = false
+        if not SPAWN_COORDINATE_CAPSULE.restored then
+            return nil, "spawn-coordinate capsule finish could not prove clean restore"
+        end
+        local valid, validation_error =
+            SPAWN_COORDINATE_CAPSULE.validate_snapshot(snapshot, capture_id)
+        if not valid then return nil, tostring(validation_error) end
+        local complete, complete_error =
+            SPAWN_COORDINATE_CAPSULE.snapshot_complete(snapshot)
+        if not complete then return nil, tostring(complete_error) end
+        local wrote, write_error = write_observatory_create_only_json(
+            SPAWN_COORDINATE_CAPSULE.snapshot_file,
+            SPAWN_COORDINATE_CAPSULE.snapshot_tmp,
+            snapshot,
+            8 * 1024 * 1024
+        )
+        if not wrote then
+            return nil, "spawn-coordinate capsule snapshot output failed: "
+                .. tostring(write_error)
+        end
+        summary = rawget(snapshot, "summary") or summary
+    end
+    SPAWN_COORDINATE_CAPSULE.condition = "finished"
+    return command_name .. " condition=" .. condition
+        .. " capture=" .. capture_id
+        .. " draws=" .. tostring(summary.draw_record_count or 0)
+        .. " scheduler=" .. tostring(summary.scheduler_count or 0)
+        .. " fallback=" .. tostring(summary.selector_fallback_count or 0)
+        .. " standard=" .. tostring(summary.selector_standard_count or 0)
+        .. " selectors=" .. tostring(summary.selector_count or 0)
+        .. " capsules=" .. tostring(summary.capsule_count or 0)
+        .. " complete=true"
+end
+
+function SPAWN_COORDINATE_CAPSULE.abort(capture_id)
+    local command_name = "OBS_SPAWN_CAPSULE_ABORT"
+    if capture_id ~= SPAWN_COORDINATE_CAPSULE.capture_id
+        or SPAWN_COORDINATE_CAPSULE.condition == nil then
+        return nil, command_name .. " capture does not match prepared boundary"
+    end
+    local condition = SPAWN_COORDINATE_CAPSULE.condition
+    local clean = true
+    if condition == "armed" then
+        local observer = SPAWN_COORDINATE_CAPSULE.observer
+        if observer == false and SPAWN_COORDINATE_CAPSULE.restored then
+            clean = true
+        elseif type(observer) ~= "table" then
+            clean = false
+        else
+            local finish_ok, snapshot = pcall(rawget(observer, "finish"))
+            local integrity = finish_ok and type(snapshot) == "table"
+                and rawget(snapshot, "integrity") or {}
+            clean = finish_ok
+                and SPAWN_COORDINATE_CAPSULE.clean_restore(integrity)
+            if clean then
+                SPAWN_COORDINATE_CAPSULE.restored = true
+                SPAWN_COORDINATE_CAPSULE.observer = false
+            end
+        end
+        if not clean then
+            return nil, "spawn-coordinate capsule abort could not prove clean restore"
+        end
+    end
+    SPAWN_COORDINATE_CAPSULE.condition = "aborted"
     return command_name .. " condition=" .. condition
         .. " capture=" .. capture_id .. " restored=" .. tostring(clean)
 end
@@ -7832,6 +8466,73 @@ local function execute_command(cmd_str)
             abort_observatory_spawn_coordinate_trial(parts[2])
         if not completed then
             write_ack("ERROR: OBS_SPAWN_COORDINATE_ABORT "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_CAPSULE_LOAD_CHECK" then
+        if #parts ~= 1 then
+            write_ack(
+                "ERROR: OBS_SPAWN_CAPSULE_LOAD_CHECK accepts no arguments"
+            )
+            return
+        end
+        local completed, trial_error = SPAWN_COORDINATE_CAPSULE.load_check()
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_CAPSULE_LOAD_CHECK "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_CAPSULE_PREPARE" then
+        if #parts ~= 3 then
+            write_ack(
+                "ERROR: OBS_SPAWN_CAPSULE_PREPARE requires condition and capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            SPAWN_COORDINATE_CAPSULE.prepare(parts[2], parts[3])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_CAPSULE_PREPARE "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_CAPSULE_FINISH" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SPAWN_CAPSULE_FINISH requires capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            SPAWN_COORDINATE_CAPSULE.finish(parts[2])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_CAPSULE_FINISH "
+                .. tostring(trial_error))
+            return
+        end
+        write_ack("OK " .. completed)
+        return
+
+    elseif cmd == "OBS_SPAWN_CAPSULE_ABORT" then
+        if #parts ~= 2 then
+            write_ack(
+                "ERROR: OBS_SPAWN_CAPSULE_ABORT requires capture ID"
+            )
+            return
+        end
+        local completed, trial_error =
+            SPAWN_COORDINATE_CAPSULE.abort(parts[2])
+        if not completed then
+            write_ack("ERROR: OBS_SPAWN_CAPSULE_ABORT "
                 .. tostring(trial_error))
             return
         end

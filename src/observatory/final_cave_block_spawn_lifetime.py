@@ -111,6 +111,13 @@ POST_PUBLICATION_PROJECT_BRIDGE_OVERLAYS = (
             "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec"
         ),
     },
+    {
+        "id": "spawn_coordinate_capsule_project_bridge",
+        "size": 427_934,
+        "sha256": (
+            "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c"
+        ),
+    },
 )
 STARTUP_SPAWN_ORDER_ARTIFACT_SHA256 = (
     "b798a97c582be31ffba3d173e00b24eefae32a9725d03fe7a2260ca1403214f4"

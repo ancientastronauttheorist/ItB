@@ -637,6 +637,10 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "all 689 accepted installation entries" in evidence
     assert "pinned query/read-only Windows reader" in evidence
     assert "exact ordinary candidates [5,3], [5,4], [5,5], and [6,2]" in evidence
+    assert "content-addressed v2 x86 hardware observer" in evidence
+    assert "all 64 tile and pointer-free occupancy records" in evidence
+    assert "state=dormant consumed=false armed=false" in evidence
+    assert "dormant deployment only" in evidence
     implementations = {
         item["path"]: set(item["symbols"])
         for item in record["implementations"]
@@ -673,8 +677,32 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "combine_current_bridge_native_capture",
         "validate_current_bridge_native_capture_artifact",
     }
+    assert implementations[
+        "src/observatory/spawn_coordinate_capsule_hw.py"
+    ] == {"validate_spawn_coordinate_capsule_snapshot"}
+    assert implementations[
+        "src/native/observatory_spawn_coordinate_capsule_hw_observer.c"
+    ] == {
+        "observer_spawn_coordinate_capsule_veh",
+        "capsule_status_observer",
+        "luaopen_itb_observatory_spawn_coordinate_capsule_hw_observer",
+    }
+    assert implementations[
+        "scripts/build_itb_observatory_spawn_coordinate_capsule_hw_observer.py"
+    ] == {"build_observer"}
     assert implementations["src/bridge/modloader.lua"] == {
-        "native_enemy_spawn_inputs"
+        "native_enemy_spawn_inputs",
+        "SPAWN_COORDINATE_CAPSULE",
+        "OBS_SPAWN_CAPSULE_LOAD_CHECK",
+        "OBS_SPAWN_CAPSULE_PREPARE",
+        "OBS_SPAWN_CAPSULE_FINISH",
+        "OBS_SPAWN_CAPSULE_ABORT",
+    }
+    assert implementations["src/bridge/protocol.py"] == {
+        "check_observatory_spawn_coordinate_capsule_load",
+        "prepare_observatory_spawn_coordinate_capsule",
+        "finish_observatory_spawn_coordinate_capsule",
+        "abort_observatory_spawn_coordinate_capsule",
     }
     assert implementations["rust_solver/src/native_rng.rs"] == {
         "build_native_enemy_spawn_candidate_pool",
@@ -725,6 +753,37 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "42a0b9d49d1a95d9cea3dc716f0e68c60533e6b15b112ae993556c85b6ebfbec",
     }
     assert tests[
+        "data/observatory/native/"
+        "windows_build_13725832_spawn_coordinate_capsule_hw_plan_"
+        "e79fb1f734f06dee9862b15f29e0bbccfa82e34b3fe2506565ab56ad45d39ca1.json"
+    ] == {
+        "selector_entry_board_rng_capsule",
+        "pointer_values_published",
+        "each DR3 entry pairs with the next DR1 or DR2 draw",
+        "transient dead/non-corpse classification",
+    }
+    assert tests[
+        "data/observatory/native/"
+        "itb_observatory_spawn_coordinate_capsule_hw_observer_"
+        "bb099e829df74d4d7e1841a5ac70174bbdd2712ddfcdc0b2c9f633d32e0f17b9."
+        "dll.receipt.json"
+    ] == {
+        "observatory_spawn_coordinate_capsule_hw_observer_build",
+        "module_bytes_identical",
+        "direct_or_indirect_call_count",
+        "x87_mmx_sse_avx_instruction_count",
+    }
+    assert tests[
+        "data/observatory/captures/"
+        "windows_build_13725832_owner_local_modified_20260829_"
+        "spawn_coordinate_capsule_dormant_load_receipt.json"
+    ] == {
+        "state=dormant consumed=false armed=false",
+        "module_loaded_in_game_process",
+        "prepare_or_seed_command_executed",
+        "native_selector_or_rng_runtime_evidence_captured",
+    }
+    assert tests[
         "data/observatory/captures/"
         "windows_build_13725832_owner_local_modified_20260822_"
         "spawn_coordinate_rng_receipt.json"
@@ -744,6 +803,22 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
         "0x161229bc",
         "0x495e317b",
         "0x2c54aa4a",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_hw_observer.py"
+    ] == {
+        "test_capsule_hot_path_owns_four_breakpoints_and_is_api_free",
+        "test_committed_dormant_load_receipt_binds_exact_inert_artifacts",
+    }
+    assert tests["tests/test_observatory_spawn_coordinate_capsule_hw.py"] == {
+        "test_capsule_snapshot_validates_board_carriers_rng_and_candidate_pairing",
+        "test_capsule_snapshot_rejects_rng_transition_or_draw_replay_drift",
+    }
+    assert tests[
+        "tests/test_observatory_spawn_coordinate_capsule_bridge.py"
+    ] == {
+        "test_capsule_load_check_requires_exact_dormant_unconsumed_ack",
+        "test_capsule_boundary_requires_fresh_armed_output",
     }
     assert tests[
         "tests/test_observatory_enemy_spawn_candidate_boundary.py"
@@ -771,10 +846,12 @@ def test_real_spawn_selection_record_includes_sector_parameter_matrix():
     assert "GAME:GetSpawnList" in gaps
     assert "Board after future player/environment changes" in gaps
     assert "Point-keyed BlockSpawn values" in gaps
-    assert "Current ordered zone, Board:IsDangerous" in gaps
+    assert "Current ordered zone, both dangerous predicates" in gaps
     assert "Standard candidate source order" in gaps
     assert "emergency greatest-x-row construction" in gaps
     assert "recovered exactly post hoc" in gaps
+    assert "pass an exact dormant/unconsumed live-load check" in gaps
+    assert "no matched armed runtime capsule has been captured" in gaps
     assert "complete coordinate-candidate construction/filtering" not in gaps
     assert "spawn-coordinate selection, and the coordinate RNG call order" not in gaps
 

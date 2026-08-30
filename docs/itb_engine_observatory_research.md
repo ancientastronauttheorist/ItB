@@ -70,21 +70,31 @@ and ordered candidates needed to reproduce `Firefly2`, `Scarab2`, and
 `Firefly2` exactly. A later hardware observer now captures the coordinate
 scheduler/selector candidates and proves the standard selector's exact
 `raw_rng % candidate_count` rule. Three same-process coordinate-plus-RNG-core
-captures place that draw at caller 60 and ordinals 1495, 1475, and 1450.
-Their contiguous native windows now recover exact observable selector pre-
-states `0x161229bc`, `0x495e317b`, and `0x2c54aa4a`; an input-driven Rust replay
-reproduces all three raw draws and selected coordinates without changing the
-future-spawn non-fabrication rule.
+   captures place that draw at caller 60 and ordinals 1495, 1475, and 1450.
+   Their contiguous native windows now recover exact observable selector pre-
+   states `0x161229bc`, `0x495e317b`, and `0x2c54aa4a`; an input-driven Rust replay
+   reproduces all three raw draws and selected coordinates without changing the
+   future-spawn non-fabrication rule.
+   A content-addressed v2 selector-entry observer now joins the missing dynamic
+   carriers in one fixed pointer-free capsule: active Board/Pawn identity, all
+   64 tile/occupancy records, the complete `BlockSpawn` map, spawn/danger Point
+   vectors, exact shared CRT state, and the next fallback/standard selector
+   draw. Two reproducible x86 builds and scalar no-call hot-path attestation are
+   sealed. A live owner-track process also loaded the exact module and returned
+   `state=dormant consumed=false armed=false` with no prepare, seed, VEH, debug
+   register, or snapshot. This is deployability and dormant-safety evidence;
+   the first matched armed capture has deliberately not yet been taken.
 Focused static review classifies every caller whose upstream count varied: the
 dominant consumers are particle, pilot-portrait, and `UnitAcid` presentation
 code sharing the same native RNG stream. Focused offline control-flow review
 then resolves the two unobserved seams: caller 59 is the logged emergency
 fallback, while caller 66 randomizes a without-replacement predicate-check
 order before a separate call to the ordinary selector. The remaining unknowns
-are therefore narrower and more valuable: prospective selector-state delivery
-or upstream draw control, runtime inputs for those special paths only when a
-real mismatch needs them, matched runtime path vectors and `AddMove` execution,
-broader selected-action paths, effect execution, and hidden engine state. The
+   are therefore narrower and more valuable: matched selector-entry capsule
+   evidence and any later production-safe delivery, upstream draw control,
+   runtime inputs for those special paths only when a real mismatch needs them,
+   matched runtime path vectors and `AddMove` execution, broader selected-action
+   paths, effect execution, and hidden engine state. The
 ordinary reachability API, Henry Kwan transit/stop rule, path cost/order core,
 ordinary pawn-identity blocking, and Massive-Water behavior are now closed for
 this build. Simulator v401 implements Road Runner occupancy and v402 fixes
@@ -983,10 +993,10 @@ bridge-read boundary.
   named Board/Pawn bindings and their meanings are exact, including native
   danger versus environment danger, the eight-field dangerous-item predicate,
   spawning/targeted sources, team matching, and Manhattan Pawn/Building
-  distances. The current carrier matrix identifies direct, derived, static-
-  only, and absent values. Direct dangerous carriers, live definition
-  mutations, and the Board snapshot at each future candidate callback remain
-  inputs; they are no longer unknown native semantics.
+  distances. The bridge directly exports both dangerous predicates and live
+  Ranged/AvoidingMines values; a stable current-state receipt validates all 64
+  dangerous-item observations and ten ordered Pawn records. The Board snapshot
+  at each future candidate callback remains absent from ordinary bridge input.
 - Mine mechanic-specific callback records only where a Rust prediction provides
   a trustworthy comparison oracle.
 - Add native candidate/final-selection records only for mismatches that cannot
@@ -1006,6 +1016,12 @@ bridge-read boundary.
   the exact available array, and replay each selected pawn exactly. Advance
   prediction still needs those inputs before the call, and coordinates are
   scheduled outside this span.
+- **Selector-entry capsule ready, capture pending:** the separate v2 hardware
+  observer and strict validator bind the complete candidate-time Board/RNG
+  payload without code detours or pointer publication. Its exact module passed
+  a live dormant/unconsumed load check. No prepare or armed capture has run, so
+  this is not yet selector-time runtime evidence and does not relax the Rust
+  non-fabrication guard.
 
 ### Milestone 4: Hidden-state survey
 
@@ -1087,16 +1103,18 @@ coordinates. The current bridge now exports ordered enemy-zone, direct
 live ordered `Pawn:IsRanged` / `Pawn:IsAvoidingMines` values. A pinned
 query/read-only Windows reader supplies the complete current Point-keyed
 `BlockSpawn` map and direct spawn-marker vector. Two stable `Mission_Power`
-turn-one sandwiches replay the exact four-point current pool without writing
-game memory; the later one also validates all 64 item-danger booleans and ten
-on-board Pawn flag records as a complete current `ScorePositioning` carrier
-projection. Ordinary planning still lacks the Board after future
-player/environment changes and the shared CRT state immediately before a
-future selector call, so it still cannot know the selected coordinate. Keep
-the current Rust non-fabrication rule. If a future solver mismatch justifies
-more runtime work, capture a selector-time Board/RNG capsule under the same
-matched and reversible protocol; candidate construction and current-state
-carrier integration no longer need another broad native investigation.
+  turn-one sandwiches replay the exact four-point current pool without writing
+  game memory; the later one also validates all 64 item-danger booleans and ten
+  on-board Pawn flag records as a complete current `ScorePositioning` carrier
+  projection. Ordinary planning still lacks the Board after future
+  player/environment changes and the shared CRT state immediately before a
+  future selector call, so it still cannot know the selected coordinate. A
+  content-addressed one-shot observer can now capture that exact selector-entry
+  Board/RNG capsule and has passed a live dormant/unconsumed load check, but no
+  armed capture has run. Keep the current Rust non-fabrication rule. The next
+  justified runtime step is a matched control/dormant/armed capsule campaign
+  under the same reversible protocol; candidate construction and current-state
+  carrier integration no longer need another broad native investigation.
 Use a disposable installation only when the desired conclusion specifically
 requires pristine-depot neutrality.
 
