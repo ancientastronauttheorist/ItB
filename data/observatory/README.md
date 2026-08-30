@@ -75,6 +75,28 @@ three attribute, and two varying identifiers, nine `texture2D` calls, and four
 commands and the boundary between lexical source facts and unresolved loader,
 compiler, pipeline, and rendering behavior.
 
+## FMOD bank and native interface census
+
+`scripts/itb_fmod_census.py` exact-matches the sealed installation inventory,
+seals the separate flat five-bank surface under `resources/`, validates every
+bank as an exact-EOF RIFF/`FEV ` container, and joins bounded container facts
+to the two shipped FMOD DLL export/version surfaces and `Breach.exe` imports.
+The normalized artifact under `fmod/` contains whole-file identities,
+aggregate RIFF/FourCC counts, bounded raw `FMT `/`FSB5` header words, SHA-256
+identities for complete sorted named-export sets, ordinal-slot counts, exact
+executable imports, and bank-basename literal locations. It contains no bank
+payload bytes, decoded
+event/string paths, samples, codecs, recursive topology, or isolated payload
+fingerprints.
+
+The census accounts for five banks and 168,821,378 bytes, 25,979 RIFF nodes,
+689 recursive `WAV ` chunks, four `FSB5` signatures, two version-`1.10.2`
+libraries with 1,429 named and zero ordinal-only exports, 22 named executable
+imports, and one literal occurrence for each expected bank basename. See
+`fmod/README.md` for exact build and verification commands and the boundary
+between binary/container interface facts and unresolved audio/runtime
+semantics.
+
 ## Resource archive census
 
 `scripts/itb_resource_inventory.py` parses `resources/resource.dat` without

@@ -1,0 +1,1947 @@
+{
+  "analysis_kind": "itb_fmod_bank_interface_census",
+  "bank_manifest": {
+    "byte_count": 168821378,
+    "canonical_sha256": "d9d921aa3080be0e3b93951a70fbdc2c88fa79df9d03d45ea518c8e86daee949",
+    "expected_paths": [
+      "resources/ambience.bank",
+      "resources/Master Bank.bank",
+      "resources/Master Bank.strings.bank",
+      "resources/music.bank",
+      "resources/sfx.bank"
+    ],
+    "file_count": 5,
+    "root": "resources"
+  },
+  "banks": [
+    {
+      "fmt_payload_u32le": [
+        99,
+        99
+      ],
+      "fsb5": {
+        "candidate_span_end": 9669376,
+        "candidate_span_matches_eof": true,
+        "occurrences": 1,
+        "offsets": [
+          15584
+        ],
+        "raw_u32le_after_magic": [
+          1,
+          10,
+          3024,
+          180,
+          9650528
+        ],
+        "raw_word_2_matches_wav_count": true,
+        "recursive_wav_chunk_count": 10
+      },
+      "path": "resources/ambience.bank",
+      "riff": {
+        "chunk_id_counts": [
+          {
+            "id": "BNKI",
+            "occurrences": 1
+          },
+          {
+            "id": "BUS ",
+            "occurrences": 38
+          },
+          {
+            "id": "CTRO",
+            "occurrences": 11
+          },
+          {
+            "id": "DEL ",
+            "occurrences": 1
+          },
+          {
+            "id": "EVIB",
+            "occurrences": 7
+          },
+          {
+            "id": "EVTB",
+            "occurrences": 11
+          },
+          {
+            "id": "FMT ",
+            "occurrences": 1
+          },
+          {
+            "id": "GBSB",
+            "occurrences": 17
+          },
+          {
+            "id": "HASH",
+            "occurrences": 1
+          },
+          {
+            "id": "IBSB",
+            "occurrences": 10
+          },
+          {
+            "id": "INST",
+            "occurrences": 17
+          },
+          {
+            "id": "LCNT",
+            "occurrences": 30
+          },
+          {
+            "id": "LIST",
+            "occurrences": 211
+          },
+          {
+            "id": "MAP ",
+            "occurrences": 1
+          },
+          {
+            "id": "MBSB",
+            "occurrences": 11
+          },
+          {
+            "id": "MODB",
+            "occurrences": 9
+          },
+          {
+            "id": "MUTE",
+            "occurrences": 1
+          },
+          {
+            "id": "PROP",
+            "occurrences": 9
+          },
+          {
+            "id": "REFI",
+            "occurrences": 1
+          },
+          {
+            "id": "SNAB",
+            "occurrences": 1
+          },
+          {
+            "id": "SND ",
+            "occurrences": 1
+          },
+          {
+            "id": "SNDH",
+            "occurrences": 1
+          },
+          {
+            "id": "STBL",
+            "occurrences": 1
+          },
+          {
+            "id": "STDT",
+            "occurrences": 1
+          },
+          {
+            "id": "TLNB",
+            "occurrences": 11
+          },
+          {
+            "id": "TRNB",
+            "occurrences": 10
+          },
+          {
+            "id": "TRTL",
+            "occurrences": 10
+          },
+          {
+            "id": "WAIB",
+            "occurrences": 10
+          },
+          {
+            "id": "WAV ",
+            "occurrences": 10
+          }
+        ],
+        "declared_size": 9669368,
+        "exact_file_span": true,
+        "form_type": "FEV ",
+        "list_type_counts": [
+          {
+            "occurrences": 1,
+            "type": "BEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "CRVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "CTRS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EFIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVIS"
+          },
+          {
+            "occurrences": 7,
+            "type": "EVIT"
+          },
+          {
+            "occurrences": 11,
+            "type": "EVNT"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVTS"
+          },
+          {
+            "occurrences": 1,
+            "type": "GBSS"
+          },
+          {
+            "occurrences": 17,
+            "type": "GBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBSS"
+          },
+          {
+            "occurrences": 10,
+            "type": "IBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "LWVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MBSS"
+          },
+          {
+            "occurrences": 11,
+            "type": "MBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MODS"
+          },
+          {
+            "occurrences": 9,
+            "type": "MODU"
+          },
+          {
+            "occurrences": 1,
+            "type": "MPGS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "PMLS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRMS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PROJ"
+          },
+          {
+            "occurrences": 76,
+            "type": "PRPS"
+          },
+          {
+            "occurrences": 1,
+            "type": "RBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SCFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAP"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SPIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "TLNS"
+          },
+          {
+            "occurrences": 11,
+            "type": "TMLN"
+          },
+          {
+            "occurrences": 10,
+            "type": "TRAN"
+          },
+          {
+            "occurrences": 11,
+            "type": "TRNS"
+          },
+          {
+            "occurrences": 1,
+            "type": "VCAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAIS"
+          },
+          {
+            "occurrences": 10,
+            "type": "WAIT"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAVS"
+          }
+        ],
+        "magic": "RIFF",
+        "maximum_depth": 5,
+        "node_count": 444,
+        "padding_bytes": 77,
+        "parsed_to_eof": true,
+        "top_level_chunks": [
+          {
+            "id": "FMT ",
+            "offset": 12,
+            "ordinal": 0,
+            "payload_size": 8
+          },
+          {
+            "id": "LIST",
+            "offset": 28,
+            "ordinal": 1,
+            "payload_size": 15534
+          },
+          {
+            "id": "SND ",
+            "offset": 15570,
+            "ordinal": 2,
+            "payload_size": 9653798
+          }
+        ]
+      },
+      "sha256": "a7b8243d45b7e901cc6bbc88a35c5abeea2d07d9403af9b973f655265373bc1e",
+      "size": 9669376
+    },
+    {
+      "fmt_payload_u32le": [
+        99,
+        99
+      ],
+      "fsb5": {
+        "candidate_span_end": 100800,
+        "candidate_span_matches_eof": true,
+        "occurrences": 1,
+        "offsets": [
+          20160
+        ],
+        "raw_u32le_after_magic": [
+          1,
+          3,
+          116,
+          80,
+          80384
+        ],
+        "raw_word_2_matches_wav_count": true,
+        "recursive_wav_chunk_count": 3
+      },
+      "path": "resources/Master Bank.bank",
+      "riff": {
+        "chunk_id_counts": [
+          {
+            "id": "BEFB",
+            "occurrences": 5
+          },
+          {
+            "id": "BNKI",
+            "occurrences": 1
+          },
+          {
+            "id": "BUS ",
+            "occurrences": 25
+          },
+          {
+            "id": "CTRO",
+            "occurrences": 5
+          },
+          {
+            "id": "DEL ",
+            "occurrences": 1
+          },
+          {
+            "id": "EVTB",
+            "occurrences": 5
+          },
+          {
+            "id": "FMT ",
+            "occurrences": 1
+          },
+          {
+            "id": "GBSB",
+            "occurrences": 16
+          },
+          {
+            "id": "HASH",
+            "occurrences": 1
+          },
+          {
+            "id": "IBSB",
+            "occurrences": 1
+          },
+          {
+            "id": "INST",
+            "occurrences": 4
+          },
+          {
+            "id": "LCNT",
+            "occurrences": 20
+          },
+          {
+            "id": "LIST",
+            "occurrences": 125
+          },
+          {
+            "id": "MAP ",
+            "occurrences": 156
+          },
+          {
+            "id": "MBSB",
+            "occurrences": 6
+          },
+          {
+            "id": "MUIB",
+            "occurrences": 1
+          },
+          {
+            "id": "MUTE",
+            "occurrences": 1
+          },
+          {
+            "id": "PLST",
+            "occurrences": 1
+          },
+          {
+            "id": "PMEF",
+            "occurrences": 5
+          },
+          {
+            "id": "PROP",
+            "occurrences": 21
+          },
+          {
+            "id": "RBSB",
+            "occurrences": 2
+          },
+          {
+            "id": "REFI",
+            "occurrences": 1
+          },
+          {
+            "id": "SEFB",
+            "occurrences": 1
+          },
+          {
+            "id": "SNAB",
+            "occurrences": 4
+          },
+          {
+            "id": "SND ",
+            "occurrences": 1
+          },
+          {
+            "id": "SNDH",
+            "occurrences": 1
+          },
+          {
+            "id": "STBL",
+            "occurrences": 1
+          },
+          {
+            "id": "STDT",
+            "occurrences": 1
+          },
+          {
+            "id": "TLNB",
+            "occurrences": 5
+          },
+          {
+            "id": "WAIB",
+            "occurrences": 3
+          },
+          {
+            "id": "WAV ",
+            "occurrences": 3
+          }
+        ],
+        "declared_size": 100792,
+        "exact_file_span": true,
+        "form_type": "FEV ",
+        "list_type_counts": [
+          {
+            "occurrences": 5,
+            "type": "BEFF"
+          },
+          {
+            "occurrences": 1,
+            "type": "BEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "CRVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "CTRS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EFIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVIS"
+          },
+          {
+            "occurrences": 5,
+            "type": "EVNT"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVTS"
+          },
+          {
+            "occurrences": 1,
+            "type": "GBSS"
+          },
+          {
+            "occurrences": 16,
+            "type": "GBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "LWVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MBSS"
+          },
+          {
+            "occurrences": 6,
+            "type": "MBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MODS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MPGS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIT"
+          },
+          {
+            "occurrences": 1,
+            "type": "PEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "PMLS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRMS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PROJ"
+          },
+          {
+            "occurrences": 44,
+            "type": "PRPS"
+          },
+          {
+            "occurrences": 1,
+            "type": "RBSS"
+          },
+          {
+            "occurrences": 2,
+            "type": "RBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SCFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFF"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFX"
+          },
+          {
+            "occurrences": 4,
+            "type": "SNAP"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SPIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "TLNS"
+          },
+          {
+            "occurrences": 5,
+            "type": "TMLN"
+          },
+          {
+            "occurrences": 5,
+            "type": "TRNS"
+          },
+          {
+            "occurrences": 1,
+            "type": "VCAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAIS"
+          },
+          {
+            "occurrences": 3,
+            "type": "WAIT"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAVS"
+          }
+        ],
+        "magic": "RIFF",
+        "maximum_depth": 4,
+        "node_count": 424,
+        "padding_bytes": 45,
+        "parsed_to_eof": true,
+        "top_level_chunks": [
+          {
+            "id": "FMT ",
+            "offset": 12,
+            "ordinal": 0,
+            "payload_size": 8
+          },
+          {
+            "id": "LIST",
+            "offset": 28,
+            "ordinal": 1,
+            "payload_size": 20096
+          },
+          {
+            "id": "SND ",
+            "offset": 20132,
+            "ordinal": 2,
+            "payload_size": 80660
+          }
+        ]
+      },
+      "sha256": "1eee14e04db38d5d02c9a49d1bbbd224cfa8324d4b689ef6827a57d7b9697338",
+      "size": 100800
+    },
+    {
+      "fmt_payload_u32le": [
+        99,
+        99
+      ],
+      "fsb5": null,
+      "path": "resources/Master Bank.strings.bank",
+      "riff": {
+        "chunk_id_counts": [
+          {
+            "id": "BNKI",
+            "occurrences": 1
+          },
+          {
+            "id": "DEL ",
+            "occurrences": 1
+          },
+          {
+            "id": "FMT ",
+            "occurrences": 1
+          },
+          {
+            "id": "HASH",
+            "occurrences": 1
+          },
+          {
+            "id": "LIST",
+            "occurrences": 27
+          },
+          {
+            "id": "MUTE",
+            "occurrences": 1
+          },
+          {
+            "id": "REFI",
+            "occurrences": 1
+          },
+          {
+            "id": "SNDH",
+            "occurrences": 1
+          },
+          {
+            "id": "STBL",
+            "occurrences": 1
+          },
+          {
+            "id": "STDT",
+            "occurrences": 1
+          }
+        ],
+        "declared_size": 33690,
+        "exact_file_span": true,
+        "form_type": "FEV ",
+        "list_type_counts": [
+          {
+            "occurrences": 1,
+            "type": "BEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "CRVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "CTRS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EFIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVTS"
+          },
+          {
+            "occurrences": 1,
+            "type": "GBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "LWVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MODS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MPGS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "PMLS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRMS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PROJ"
+          },
+          {
+            "occurrences": 1,
+            "type": "RBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SCFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SPIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "TLNS"
+          },
+          {
+            "occurrences": 1,
+            "type": "VCAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAVS"
+          }
+        ],
+        "magic": "RIFF",
+        "maximum_depth": 1,
+        "node_count": 36,
+        "padding_bytes": 1,
+        "parsed_to_eof": true,
+        "top_level_chunks": [
+          {
+            "id": "FMT ",
+            "offset": 12,
+            "ordinal": 0,
+            "payload_size": 8
+          },
+          {
+            "id": "LIST",
+            "offset": 28,
+            "ordinal": 1,
+            "payload_size": 33662
+          }
+        ]
+      },
+      "sha256": "a2c570856134d4e5d2cd02e6aa129e9ecc4bf556db160b98521b1823b1de3f4e",
+      "size": 33698
+    },
+    {
+      "fmt_payload_u32le": [
+        99,
+        99
+      ],
+      "fsb5": {
+        "candidate_span_end": 136557504,
+        "candidate_span_matches_eof": true,
+        "occurrences": 1,
+        "offsets": [
+          38240
+        ],
+        "raw_u32le_after_magic": [
+          1,
+          34,
+          35120,
+          788,
+          136483296
+        ],
+        "raw_word_2_matches_wav_count": true,
+        "recursive_wav_chunk_count": 34
+      },
+      "path": "resources/music.bank",
+      "riff": {
+        "chunk_id_counts": [
+          {
+            "id": "BNKI",
+            "occurrences": 1
+          },
+          {
+            "id": "BUS ",
+            "occurrences": 94
+          },
+          {
+            "id": "CTRL",
+            "occurrences": 5
+          },
+          {
+            "id": "CTRO",
+            "occurrences": 32
+          },
+          {
+            "id": "CURV",
+            "occurrences": 5
+          },
+          {
+            "id": "DEL ",
+            "occurrences": 1
+          },
+          {
+            "id": "EVTB",
+            "occurrences": 30
+          },
+          {
+            "id": "FMT ",
+            "occurrences": 1
+          },
+          {
+            "id": "GBSB",
+            "occurrences": 34
+          },
+          {
+            "id": "HASH",
+            "occurrences": 1
+          },
+          {
+            "id": "IBSB",
+            "occurrences": 30
+          },
+          {
+            "id": "INST",
+            "occurrences": 37
+          },
+          {
+            "id": "LCNT",
+            "occurrences": 62
+          },
+          {
+            "id": "LIST",
+            "occurrences": 492
+          },
+          {
+            "id": "MAP ",
+            "occurrences": 3
+          },
+          {
+            "id": "MBSB",
+            "occurrences": 30
+          },
+          {
+            "id": "MODB",
+            "occurrences": 32
+          },
+          {
+            "id": "MUIB",
+            "occurrences": 2
+          },
+          {
+            "id": "MUTE",
+            "occurrences": 1
+          },
+          {
+            "id": "PLST",
+            "occurrences": 2
+          },
+          {
+            "id": "PMLB",
+            "occurrences": 2
+          },
+          {
+            "id": "PRMB",
+            "occurrences": 2
+          },
+          {
+            "id": "PROP",
+            "occurrences": 37
+          },
+          {
+            "id": "REFI",
+            "occurrences": 1
+          },
+          {
+            "id": "SEFB",
+            "occurrences": 1
+          },
+          {
+            "id": "SND ",
+            "occurrences": 1
+          },
+          {
+            "id": "SNDH",
+            "occurrences": 1
+          },
+          {
+            "id": "STBL",
+            "occurrences": 1
+          },
+          {
+            "id": "STDT",
+            "occurrences": 1
+          },
+          {
+            "id": "TLNB",
+            "occurrences": 30
+          },
+          {
+            "id": "TRNB",
+            "occurrences": 11
+          },
+          {
+            "id": "TRTL",
+            "occurrences": 11
+          },
+          {
+            "id": "WAIB",
+            "occurrences": 35
+          },
+          {
+            "id": "WAV ",
+            "occurrences": 34
+          }
+        ],
+        "declared_size": 136557496,
+        "exact_file_span": true,
+        "form_type": "FEV ",
+        "list_type_counts": [
+          {
+            "occurrences": 1,
+            "type": "BEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "CRVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "CTRS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EFIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVIS"
+          },
+          {
+            "occurrences": 30,
+            "type": "EVNT"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVTS"
+          },
+          {
+            "occurrences": 1,
+            "type": "GBSS"
+          },
+          {
+            "occurrences": 34,
+            "type": "GBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBSS"
+          },
+          {
+            "occurrences": 30,
+            "type": "IBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "LWVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MBSS"
+          },
+          {
+            "occurrences": 30,
+            "type": "MBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MODS"
+          },
+          {
+            "occurrences": 32,
+            "type": "MODU"
+          },
+          {
+            "occurrences": 1,
+            "type": "MPGS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIS"
+          },
+          {
+            "occurrences": 2,
+            "type": "MUIT"
+          },
+          {
+            "occurrences": 2,
+            "type": "PARM"
+          },
+          {
+            "occurrences": 1,
+            "type": "PEFX"
+          },
+          {
+            "occurrences": 2,
+            "type": "PMLO"
+          },
+          {
+            "occurrences": 1,
+            "type": "PMLS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRMS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PROJ"
+          },
+          {
+            "occurrences": 196,
+            "type": "PRPS"
+          },
+          {
+            "occurrences": 1,
+            "type": "RBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SCFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFF"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SPIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "TLNS"
+          },
+          {
+            "occurrences": 30,
+            "type": "TMLN"
+          },
+          {
+            "occurrences": 11,
+            "type": "TRAN"
+          },
+          {
+            "occurrences": 30,
+            "type": "TRNS"
+          },
+          {
+            "occurrences": 1,
+            "type": "VCAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAIS"
+          },
+          {
+            "occurrences": 35,
+            "type": "WAIT"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAVS"
+          }
+        ],
+        "magic": "RIFF",
+        "maximum_depth": 5,
+        "node_count": 1063,
+        "padding_bytes": 175,
+        "parsed_to_eof": true,
+        "top_level_chunks": [
+          {
+            "id": "FMT ",
+            "offset": 12,
+            "ordinal": 0,
+            "payload_size": 8
+          },
+          {
+            "id": "LIST",
+            "offset": 28,
+            "ordinal": 1,
+            "payload_size": 38174
+          },
+          {
+            "id": "SND ",
+            "offset": 38210,
+            "ordinal": 2,
+            "payload_size": 136519286
+          }
+        ]
+      },
+      "sha256": "3a89fbf15132ab769ee5ad0362948edff1681da306ce4485d94de858cb147e72",
+      "size": 136557504
+    },
+    {
+      "fmt_payload_u32le": [
+        99,
+        99
+      ],
+      "fsb5": {
+        "candidate_span_end": 22460000,
+        "candidate_span_matches_eof": true,
+        "occurrences": 1,
+        "offsets": [
+          933824
+        ],
+        "raw_u32le_after_magic": [
+          1,
+          642,
+          24304,
+          18996,
+          21482816
+        ],
+        "raw_word_2_matches_wav_count": true,
+        "recursive_wav_chunk_count": 642
+      },
+      "path": "resources/sfx.bank",
+      "riff": {
+        "chunk_id_counts": [
+          {
+            "id": "BEFB",
+            "occurrences": 4
+          },
+          {
+            "id": "BNKI",
+            "occurrences": 1
+          },
+          {
+            "id": "BUS ",
+            "occurrences": 2049
+          },
+          {
+            "id": "CTRL",
+            "occurrences": 26
+          },
+          {
+            "id": "CTRO",
+            "occurrences": 842
+          },
+          {
+            "id": "CURV",
+            "occurrences": 28
+          },
+          {
+            "id": "DEL ",
+            "occurrences": 1
+          },
+          {
+            "id": "EVIB",
+            "occurrences": 171
+          },
+          {
+            "id": "EVTB",
+            "occurrences": 666
+          },
+          {
+            "id": "FMT ",
+            "occurrences": 1
+          },
+          {
+            "id": "GBSB",
+            "occurrences": 719
+          },
+          {
+            "id": "HASH",
+            "occurrences": 1
+          },
+          {
+            "id": "IBSB",
+            "occurrences": 664
+          },
+          {
+            "id": "INST",
+            "occurrences": 1762
+          },
+          {
+            "id": "LCNT",
+            "occurrences": 279
+          },
+          {
+            "id": "LIST",
+            "occurrences": 11346
+          },
+          {
+            "id": "MAP ",
+            "occurrences": 6
+          },
+          {
+            "id": "MBSB",
+            "occurrences": 666
+          },
+          {
+            "id": "MODB",
+            "occurrences": 219
+          },
+          {
+            "id": "MUIB",
+            "occurrences": 427
+          },
+          {
+            "id": "MUTE",
+            "occurrences": 1
+          },
+          {
+            "id": "PLST",
+            "occurrences": 427
+          },
+          {
+            "id": "PMEF",
+            "occurrences": 4
+          },
+          {
+            "id": "PMLB",
+            "occurrences": 176
+          },
+          {
+            "id": "PRMB",
+            "occurrences": 3
+          },
+          {
+            "id": "PROP",
+            "occurrences": 242
+          },
+          {
+            "id": "REFI",
+            "occurrences": 1
+          },
+          {
+            "id": "SNAB",
+            "occurrences": 2
+          },
+          {
+            "id": "SND ",
+            "occurrences": 1
+          },
+          {
+            "id": "SNDH",
+            "occurrences": 1
+          },
+          {
+            "id": "STBL",
+            "occurrences": 1
+          },
+          {
+            "id": "STDT",
+            "occurrences": 1
+          },
+          {
+            "id": "TLNB",
+            "occurrences": 666
+          },
+          {
+            "id": "TRNB",
+            "occurrences": 401
+          },
+          {
+            "id": "TRTL",
+            "occurrences": 401
+          },
+          {
+            "id": "WAIB",
+            "occurrences": 1164
+          },
+          {
+            "id": "WAV ",
+            "occurrences": 642
+          }
+        ],
+        "declared_size": 22459992,
+        "exact_file_span": true,
+        "form_type": "FEV ",
+        "list_type_counts": [
+          {
+            "occurrences": 4,
+            "type": "BEFF"
+          },
+          {
+            "occurrences": 1,
+            "type": "BEFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "CRVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "CTRS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EFIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVIS"
+          },
+          {
+            "occurrences": 171,
+            "type": "EVIT"
+          },
+          {
+            "occurrences": 666,
+            "type": "EVNT"
+          },
+          {
+            "occurrences": 1,
+            "type": "EVTS"
+          },
+          {
+            "occurrences": 1,
+            "type": "GBSS"
+          },
+          {
+            "occurrences": 719,
+            "type": "GBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "IBSS"
+          },
+          {
+            "occurrences": 664,
+            "type": "IBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "LWVS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MBSS"
+          },
+          {
+            "occurrences": 666,
+            "type": "MBUS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MODS"
+          },
+          {
+            "occurrences": 219,
+            "type": "MODU"
+          },
+          {
+            "occurrences": 1,
+            "type": "MPGS"
+          },
+          {
+            "occurrences": 1,
+            "type": "MUIS"
+          },
+          {
+            "occurrences": 427,
+            "type": "MUIT"
+          },
+          {
+            "occurrences": 3,
+            "type": "PARM"
+          },
+          {
+            "occurrences": 1,
+            "type": "PEFX"
+          },
+          {
+            "occurrences": 176,
+            "type": "PMLO"
+          },
+          {
+            "occurrences": 1,
+            "type": "PMLS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PRMS"
+          },
+          {
+            "occurrences": 1,
+            "type": "PROJ"
+          },
+          {
+            "occurrences": 4705,
+            "type": "PRPS"
+          },
+          {
+            "occurrences": 1,
+            "type": "RBSS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SCFX"
+          },
+          {
+            "occurrences": 1,
+            "type": "SEFX"
+          },
+          {
+            "occurrences": 2,
+            "type": "SNAP"
+          },
+          {
+            "occurrences": 1,
+            "type": "SNAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "SPIS"
+          },
+          {
+            "occurrences": 1,
+            "type": "TLNS"
+          },
+          {
+            "occurrences": 666,
+            "type": "TMLN"
+          },
+          {
+            "occurrences": 401,
+            "type": "TRAN"
+          },
+          {
+            "occurrences": 666,
+            "type": "TRNS"
+          },
+          {
+            "occurrences": 1,
+            "type": "VCAS"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAIS"
+          },
+          {
+            "occurrences": 1164,
+            "type": "WAIT"
+          },
+          {
+            "occurrences": 1,
+            "type": "WAVS"
+          }
+        ],
+        "magic": "RIFF",
+        "maximum_depth": 5,
+        "node_count": 24012,
+        "padding_bytes": 4886,
+        "parsed_to_eof": true,
+        "top_level_chunks": [
+          {
+            "id": "FMT ",
+            "offset": 12,
+            "ordinal": 0,
+            "payload_size": 8
+          },
+          {
+            "id": "LIST",
+            "offset": 28,
+            "ordinal": 1,
+            "payload_size": 933766
+          },
+          {
+            "id": "SND ",
+            "offset": 933802,
+            "ordinal": 2,
+            "payload_size": 21526190
+          }
+        ]
+      },
+      "sha256": "b8aba5adf765e6c44fa69f165f452182593a286e62fa6931c18e4857e38e2d62",
+      "size": 22460000
+    }
+  ],
+  "baseline_inventory": {
+    "canonical_sha256": "26c6f8897938232177d46b675b570f3e866d1a3923b6bb36fd63a02b85fa00ff",
+    "label": "full decompile baseline 2026-08-30"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "executable_interface": {
+    "bank_basename_literals": [
+      {
+        "basename": "ambience.bank",
+        "file_offsets": [
+          4350944
+        ],
+        "occurrence_count": 1
+      },
+      {
+        "basename": "Master Bank.bank",
+        "file_offsets": [
+          4350896
+        ],
+        "occurrence_count": 1
+      },
+      {
+        "basename": "Master Bank.strings.bank",
+        "file_offsets": [
+          4350916
+        ],
+        "occurrence_count": 1
+      },
+      {
+        "basename": "music.bank",
+        "file_offsets": [
+          4350960
+        ],
+        "occurrence_count": 1
+      },
+      {
+        "basename": "sfx.bank",
+        "file_offsets": [
+          4350972
+        ],
+        "occurrence_count": 1
+      }
+    ],
+    "named_imports": [
+      {
+        "library": "fmod.dll",
+        "name": "?getVersion@System@FMOD@@QAG?AW4FMOD_RESULT@@PAI@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?create@System@Studio@FMOD@@SG?AW4FMOD_RESULT@@PAPAV123@I@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?createInstance@EventDescription@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PAPAVEventInstance@23@@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?getBus@System@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PBDPAPAVBus@23@@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?getEventCount@Bank@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PAH@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?getEventList@Bank@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PAPAVEventDescription@23@HPAH@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?getLowLevelSystem@System@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PAPAV13@@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?getPath@EventDescription@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PADHPAH@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?initialize@System@Studio@FMOD@@QAG?AW4FMOD_RESULT@@HIIPAX@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?isOneshot@EventDescription@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PA_N@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?isStream@EventDescription@Studio@FMOD@@QBG?AW4FMOD_RESULT@@PA_N@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?loadBankFile@System@Studio@FMOD@@QAG?AW4FMOD_RESULT@@PBDIPAPAVBank@23@@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?loadSampleData@Bank@Studio@FMOD@@QAG?AW4FMOD_RESULT@@XZ",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?release@EventInstance@Studio@FMOD@@QAG?AW4FMOD_RESULT@@XZ",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?release@System@Studio@FMOD@@QAG?AW4FMOD_RESULT@@XZ",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?setCallback@EventInstance@Studio@FMOD@@QAG?AW4FMOD_RESULT@@P6G?AW44@IPAUFMOD_STUDIO_EVENTINSTANCE@@PAX@ZI@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?setMute@Bus@Studio@FMOD@@QAG?AW4FMOD_RESULT@@_N@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?setParameterValue@EventInstance@Studio@FMOD@@QAG?AW4FMOD_RESULT@@PBDM@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?setVolume@Bus@Studio@FMOD@@QAG?AW4FMOD_RESULT@@M@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?start@EventInstance@Studio@FMOD@@QAG?AW4FMOD_RESULT@@XZ",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?stop@EventInstance@Studio@FMOD@@QAG?AW4FMOD_RESULT@@W4FMOD_STUDIO_STOP_MODE@@@Z",
+        "occurrences": 1
+      },
+      {
+        "library": "fmodstudio.dll",
+        "name": "?update@System@Studio@FMOD@@QAG?AW4FMOD_RESULT@@XZ",
+        "occurrences": 1
+      }
+    ],
+    "ordinal_import_counts": [
+      {
+        "library": "fmod.dll",
+        "occurrences": 0
+      },
+      {
+        "library": "fmodstudio.dll",
+        "occurrences": 0
+      }
+    ],
+    "path": "Breach.exe",
+    "sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "size": 5530112
+  },
+  "method": {
+    "audio_extraction": false,
+    "bank_parser": "bounded RIFF/FEV header and recursive LIST-container validation; only top-level chunk facts, aggregate FourCC counts, and bounded raw FMT/FSB5 header words are retained",
+    "export_identity": "SHA-256 of canonical JSON for the sorted complete named-export set; unnamed exports remain aggregate ordinal-slot counts",
+    "limitations": [
+      "RIFF FourCCs and FSB5 raw words are byte facts, not semantic field interpretations",
+      "absence of SND or FSB5 does not prove that a bank is audio-free",
+      "DLL version resources are publisher metadata, not ABI or runtime-load proof",
+      "imports describe available executable calls, not reachability or successful calls",
+      "bank basename bytes do not prove load order, reachability, or successful loading",
+      "no event paths, bus/VCA paths, string-table values, codec facts, sample records, recursive node topology, or audio payload bytes/isolated fingerprints are published"
+    ],
+    "native_parser": "dependency-free bounded PE export-slot/version parsing plus exact named imports from the existing PE image parser",
+    "payload_bytes_published": false,
+    "semantic_inference": false,
+    "source_execution": false,
+    "string_table_decoding": false
+  },
+  "native_libraries": [
+    {
+      "architecture": "x86",
+      "bits": 32,
+      "exports": {
+        "forwarder_count": 0,
+        "function_slots": 1088,
+        "named_alias_count": 0,
+        "named_count": 1088,
+        "named_ordinal_slots": 1088,
+        "nonzero_function_slots": 1088,
+        "ordinal_only_count": 0,
+        "sorted_named_identity_sha256": "64abe861843c939402d68165a7d371c19dea70f052ce72b7f686c5f28c1dd21c"
+      },
+      "format": "pe",
+      "path": "fmod.dll",
+      "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+      "size": 1518080,
+      "version_resource": {
+        "build": 92217,
+        "fixed_file_version_u32le": [
+          1,
+          655362
+        ],
+        "fixed_product_version_u32le": [
+          1,
+          655362
+        ],
+        "original_filename_matches_path": true,
+        "version": "1.10.2"
+      }
+    },
+    {
+      "architecture": "x86",
+      "bits": 32,
+      "exports": {
+        "forwarder_count": 0,
+        "function_slots": 341,
+        "named_alias_count": 0,
+        "named_count": 341,
+        "named_ordinal_slots": 341,
+        "nonzero_function_slots": 341,
+        "ordinal_only_count": 0,
+        "sorted_named_identity_sha256": "d457ee013641b25ebeca9e91c18e0a87823257a68223a00f79abb85b42e3b2ab"
+      },
+      "format": "pe",
+      "path": "fmodstudio.dll",
+      "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+      "size": 1085440,
+      "version_resource": {
+        "build": 92217,
+        "fixed_file_version_u32le": [
+          1,
+          655362
+        ],
+        "fixed_product_version_u32le": [
+          1,
+          655362
+        ],
+        "original_filename_matches_path": true,
+        "version": "1.10.2"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "bank_basename_literal_occurrences": 5,
+    "bank_bytes": 168821378,
+    "bank_files": 5,
+    "executable_named_imports": 22,
+    "executable_ordinal_imports": 0,
+    "fsb5_signatures": 4,
+    "named_exports": 1429,
+    "native_libraries": 2,
+    "ordinal_only_exports": 0,
+    "recursive_wav_chunks": 689,
+    "riff_nodes": 25979,
+    "schema_violations": 0,
+    "top_level_chunks": 14
+  }
+}

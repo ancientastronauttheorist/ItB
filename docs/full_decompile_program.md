@@ -44,7 +44,8 @@ The resource archive has a deterministic metadata grammar and 2,854 validated
 entries (2,703 PNG, 138 custom font records, and 13 TTF files). Its payloads
 remain external; paths, types, extents, and hashes can be inventoried without
 publishing assets. Twelve plaintext OpenGL shader/header files and the FMOD
-bank container interfaces are also in scope for census and interface mapping.
+bank/native interfaces now have separate exact-build metadata censuses; audio
+payload decoding and runtime behavior remain outside those census claims.
 
 Third-party libraries (`SDL2`, Lua 5.1, FMOD, Steam API, and the VC runtime) are
 identified and interface-mapped but excluded from first-party semantic
@@ -125,7 +126,9 @@ strictly verified against the exact PE and lives under
 4. Validate `resource.dat` structurally and inventory record paths, types,
    extents, and payload hashes without committing payload bytes.
 5. Maintain the exact non-executing lexical/interface census for all 12 OpenGL
-   shader/header files; inventory the FMOD bank interfaces next.
+   shader/header files and the metadata-only census for all five FMOD banks,
+   both FMOD DLL export/version surfaces, and the executable import/literal
+   interface.
 6. Join Lua definitions and call sites to native registrations and the program
    atlas.
 7. Mark localization, presentation-only declarations, and dead aliases without
@@ -208,7 +211,13 @@ until core engine semantics are reconstructed.
   census: all 12 files and 4,087 bytes sealed, eight entry points, 48 interface
   declarations, seven preprocessor symbols, nine texture calls, and four
   discard sites, with raw source and render semantics explicitly excluded.
-- [ ] Produce the FMOD bank and native-library interface census.
+- [x] Produce and independently verify the metadata-only FMOD bank and
+  native-library interface census: five exact banks totaling 168,821,378
+  bytes, 25,979 bounded RIFF nodes, 689 recursive `WAV ` chunks, four `FSB5`
+  signatures, two version-`1.10.2` DLLs with 1,429 named and zero ordinal-only
+  exports, 22 named executable imports, and all five bank basename literals.
+  Event/string paths, payload bytes, codecs, samples, recursive topology, and
+  runtime semantics remain explicitly excluded.
 - [ ] Establish subsystem ownership and exclusion counts.
 
 ### M2 — Core runtime model
