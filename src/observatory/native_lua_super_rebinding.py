@@ -76,9 +76,21 @@ LUA_LIBRARY = "lua5.1.dll"
 LUA_GLOBALSINDEX = -10002
 PE_SECTION_WRITABLE = 0x80000000
 MAX_LITERAL_BYTES = 512
-_REGISTER_STAGE_PREFIX = {"ebx": b"\x8b\x1d", "esi": b"\x8b\x35"}
-_REGISTER_CALL_BYTES = {"ebx": b"\xff\xd3", "esi": b"\xff\xd6"}
-_REGISTER_WRITE_FIELD = {"ebx": "writes_ebx", "esi": "writes_esi"}
+_REGISTER_STAGE_PREFIX = {
+    "ebx": b"\x8b\x1d",
+    "esi": b"\x8b\x35",
+    "edi": b"\x8b\x3d",
+}
+_REGISTER_CALL_BYTES = {
+    "ebx": b"\xff\xd3",
+    "esi": b"\xff\xd6",
+    "edi": b"\xff\xd7",
+}
+_REGISTER_WRITE_FIELD = {
+    "ebx": "writes_ebx",
+    "esi": "writes_esi",
+    "edi": "writes_edi",
+}
 
 
 _METHOD = {
@@ -637,7 +649,7 @@ def _staged_dispatch_records(
     )
     if observed_partition != sorted(expected_partition):
         raise NativeLuaSuperRebindingError(
-            "staged EBX/ESI Lua-call partition is incomplete"
+            "staged EBX/ESI/EDI Lua-call partition is incomplete"
         )
     return records
 

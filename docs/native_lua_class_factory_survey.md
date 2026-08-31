@@ -1,8 +1,11 @@
 # Native Lua `class` factory survey
 
-Status: read-only static research checkpoint. This document follows one
-build-bound native closure chain published under the exact Lua global key
-`class`; it does not reconstruct source or prove runtime behavior.
+Status: normalized executable-rebuilt evidence plus wider read-only static
+research. The narrow committed artifact follows one build-bound native closure
+chain published under the exact Lua global key `class`; it does not reconstruct
+source or prove runtime behavior. Helper-internal observations later in this
+document remain survey context unless explicitly listed in the normalized
+artifact boundary below.
 
 ## Bound evidence
 
@@ -16,6 +19,14 @@ The chain composes these exact artifacts:
   `631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803`.
 - Direct Lua import-call census, canonical SHA-256
   `07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608`.
+- Immediate C-closure callback census, canonical SHA-256
+  `cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003`.
+- Setfield-publication census, canonical SHA-256
+  `b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6`.
+- Direct table-setter publication census, canonical SHA-256
+  `a6333ffefd9c9d0ed42bea28b9f5a6e82afff58fc7adb26293c34b5589cb5fa9`.
+- Indirect-settable publication census, canonical SHA-256
+  `50790f8372d90ab11e44a483a39bd575e5af10ceb037c1aa557e4ebf801ac682`.
 - Table-key provenance census, canonical SHA-256
   `8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6`.
 - Terminal-disposition census, canonical SHA-256
@@ -145,36 +156,39 @@ registry keys including `__luabind_classes`, `__luabind_cast_graph`, and
 by the returned callback, but this survey deliberately does not assign those
 fields semantic names or prove their later validity.
 
-## Candidate fail-closed artifact
+## Normalized executable-rebuilt artifact
 
-An exact, narrow artifact could be named
-`pe_native_lua_class_factory_callback_census`. It should join the four bound
-artifacts and retain only this five-node chain: constructor, global publication,
-factory callback, returned-closure construction, and returned callback. Its
-records should publish normalized RVAs, atlas identities, instruction
-size/SHA-256 facts, literal metadata/hashes, direct import identities, finite
-CFG/entry audits, and declarative Lua-stack fragments.
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_factory_chain.json`
+has analysis kind `pe_native_lua_class_factory_chain`. Its pretty-printed file
+SHA-256 is
+`2fe1f0032564594d3b9be01e976e1c24c4ccfa60036e14432e44fc1503c6b6ae`;
+its canonical JSON SHA-256 is
+`824883dddbf0573c26c556d19501027c01b3031d1723ac8a493374bbf63204fc`.
 
-Minimum exact checks:
+The artifact rebuilds the unique `class` global-environment publication and
+the returned single-result closure, then seals only callbacks `0x002ec220` and
+`0x002ec110`: 565 body bytes, 199 CFG nodes, and 206 CFG edges. It proves the
+complete register-call partition in those bodies: EDI-loaded
+`lua_touserdata` at two calls, ESI-loaded `lua_rawgeti` at four calls, and
+EBX-loaded `lua_pushstring` at three calls, each under one exact dominating IAT
+stage with no intervening same-register writer or alternate modeled entry.
 
-1. Rebuild the `class` key/global-environment publication and target
-   `0x002ec220` from the bound executable.
-2. Require the factory's argument-count/type/nonnumeric/embedded-NUL branches,
-   72-byte userdata allocation, initializer call, global-setter stack grammar,
-   one-upvalue closure construction, and one-result terminal disposition.
-3. Require the returned callback's `-10003` upvalue access, both
-   `__luabind_classrep` helper checks, two rawgeti-pair sources, mutation site,
-   and zero-result normal epilogue.
-4. Require direct-call and IAT identities, register/stack argument adjacency,
-   no alternate atlas entry into asserted dominated regions, and all
-   prerequisite canonical digests.
+Six selected direct native edges are retained as exact call facts to four
+unique targets. Four safe literals are re-read from the executable: `class`,
+the two factory validation messages, and the returned callback error message.
+The helper-internal `__luabind_classrep` literal and the initializer/helper body
+interpretations from the wider survey are intentionally not normalized in this
+version; the edge records assign them no behavior.
 
-Adversarial tests should separately change the key literal, destination index,
-closure target/upvalue count, argument count/type checks, numeric-string
-branch, NUL-length comparison, userdata size, initializer edge, settable index,
-returned result count, upvalue pseudo-index, metatable-key literal, either
-registry reference offset, rawgeti IAT, helper edge, mutation offset, or any
-guard/CFG/prerequisite identity.
+Finally, an exhaustive operand scan of all 25,490 atlas ranges, 3,735,718
+bytes, and 1,153,814 decoded instructions finds exactly two references to the
+two callback VAs: immediate closure producers at `0x002e6b9b` and
+`0x002ec322`. Direct calls, comparisons, absolute-memory references, and other
+immediate uses are empty. Structural and exact tests tamper prerequisite joins,
+publication/return witnesses, literals, reviewed instruction points, sealed
+CFG paths and register writers, staged IAT/stage/call/path facts, ungrouped
+register calls, native edges, target records/scope/aggregates, method and
+summary fields, schema fields, and immutable-output protections.
 
 ## Explicit nonclaims
 

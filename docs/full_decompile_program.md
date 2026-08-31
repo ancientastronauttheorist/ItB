@@ -342,9 +342,18 @@ until core engine semantics are reconstructed.
   callback. That callback checks both values for `__luabind_classrep`, mutates
   the captured object through a native helper, feeds two registry-reference
   pairs to a second helper, and copies one fixed word before returning zero.
-  Both notes are exact-build, independently reviewed research checkpoints with
-  fail-closed artifact specifications; neither is yet a normalized
-  executable-rebuilt census or runtime/reachability proof.
+  The normalized executable-rebuilt class artifact now pins the unique
+  publication and returned-closure join, four literals, both reviewed callback
+  bodies and sealed CFGs, all nine register-dispatched Lua calls under three
+  exact IAT stages, six selected direct native edges, and the complete
+  two-target 25,490-range / 1,153,814-instruction operand partition. Its
+  canonical JSON SHA-256 is
+  `824883dddbf0573c26c556d19501027c01b3031d1723ac8a493374bbf63204fc`.
+  Helper-internal behavior from the wider survey remains outside this narrow
+  artifact, as do runtime reachability, indirect/Lua-side consumers, registry
+  validity, source class/derivation semantics, and source equivalence. The
+  property note remains an exact-build research checkpoint awaiting its own
+  normalized executable-rebuilt artifact.
   `docs/native_lua_super_rebinding_survey.md` now closes the three proved
   `super` publication rows into one conditional rebinding chain: a zero-upvalue
   deprecation/error callback, a guarded two-upvalue replacement around an
