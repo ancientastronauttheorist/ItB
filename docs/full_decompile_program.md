@@ -309,6 +309,15 @@ until core engine semantics are reconstructed.
   recover destination-table/key identities, Lua-visible names, consumers of
   the returned closures and holder, descriptor/bootstrap ownership, and actual
   runtime reachability without merging conditional paths or ABI assumptions.
+  The follow-up static survey in
+  `docs/native_lua_registration_bootstrap_survey.md` now isolates the next
+  exact five-site grammar: four conditional userdata/metatable construction
+  chains ending in metamethod-capable registry-index assignments, plus the
+  raw-cached `luabind.function` metatable helper and its sole decoded direct
+  consumer. It also records the exact five-of-ten `__gc` publication partition
+  and the stack-preserving initializer/helper seams. This is a reviewed
+  research checkpoint and artifact specification, not yet a normalized
+  executable-rebuilt census or runtime/lifetime proof.
   Preliminary luabind-shaped pointer/name/builder candidates remain local
   research until every builder form and alternate compiler sequence has an
   exact, complete grammar.
