@@ -1,8 +1,10 @@
 # Native Lua `property` factory survey
 
-Status: read-only static research checkpoint. This note follows one finite
-native callback chain in the Windows executable. It does not reconstruct a C++
-or Lua source implementation and does not establish runtime reachability.
+Status: normalized executable-rebuilt core evidence plus wider read-only static
+research. The committed artifact seals publication, producer provenance, the
+factory and returned callback, and their complete direct target-reference
+partition. Consumer and placement sections remain survey context rather than
+normalized source or runtime semantics.
 
 ## Bound inputs
 
@@ -15,6 +17,14 @@ They join these exact artifacts:
   `631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803`.
 - Direct Lua import-call census, canonical SHA-256
   `07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608`.
+- Immediate C-closure callback census, canonical SHA-256
+  `cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003`.
+- Setfield-publication census, canonical SHA-256
+  `b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6`.
+- Direct table-setter publication census, canonical SHA-256
+  `a6333ffefd9c9d0ed42bea28b9f5a6e82afff58fc7adb26293c34b5589cb5fa9`.
+- Indirect-settable publication census, canonical SHA-256
+  `50790f8372d90ab11e44a483a39bd575e5af10ceb037c1aa557e4ebf801ac682`.
 - Closure table-key provenance census, canonical SHA-256
   `8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6`.
 - Closure terminal-disposition census, canonical SHA-256
@@ -94,9 +104,10 @@ The literal is 46 bytes excluding NUL, has NUL-inclusive SHA-256
 and is non-writable `.rdata`. If `lua_error` contrary to its ABI contract
 returned, the binary fallback at `0x002eaa6d`-`0x002eaa70` would return zero.
 
-The strongest local claim is therefore that this callback is a non-callable
-tag under normal Lua 5.1 semantics. Its captured values acquire getter/setter
-roles from separate consumers, not from any operation in the tag callback.
+The strongest local claim is therefore that this callback reaches
+`lua_error` unconditionally under the reviewed body and does not return under
+the Lua 5.1 ABI premise. “Tag” is only a descriptive label; the closure itself
+is callable by Lua, and its captured values acquire consumer roles elsewhere.
 
 ## Exact tag consumers
 
@@ -187,35 +198,43 @@ getter/setter data-flow claims above are unconditional about how the two
 consumer branches use successfully retrieved upvalues, and conditional on a
 factory-produced closure when identifying those values as `A1` and `A2`.
 
-## Candidate fail-closed artifact
+## Normalized executable-rebuilt core artifact
 
-A narrow next artifact could be named
-`pe_native_lua_property_factory_semantics`. It should compose the four bound
-prerequisites and retain:
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_factory_chain.json`
+has analysis kind `pe_native_lua_property_factory_chain`. Its pretty-printed
+file SHA-256 is
+`5859871e2a61522a7f80a3b92f12ed705ad906b770c1fa2247877f16a066fa4b`;
+its canonical JSON SHA-256 is
+`aef6475375ce31da7d089eb819bf4b3a42228332892aa2bb8645668fe2db3b5e`.
 
-- the exact global-key publication and zero-upvalue factory callback;
-- the factory argument-count CFG, nil-padding arm, two-upvalue stack trace,
-  one-result epilogue, and wrong-count literal;
-- the returned tag callback and its non-callable error path;
-- the complete direct-immediate `0x006eaa50` operand partition;
-- the two identity comparisons, exact upvalue indices, consumer argument
-  copies, `lua_call` arities/result counts, and read-only error arm;
-- the `__index`/`__newindex` closure placement facts; and
-- the alternate registry-holder producer as a separately labeled provenance
-  class rather than evidence of factory origin.
+The artifact rebuilds the unique global publication, the factory's proven
+single-result two-upvalue closure, and the terminal census's separate
+registry-holder producer of the same returned callback. That alternate row is
+explicitly marked `factory_origin_claimed: false`, so callback identity cannot
+silently acquire factory provenance.
 
-Minimum adversarial tests should independently mutate the global key or table
-index, argument-count branches, nil padding, tag callback, upvalue count/order,
-result count, any literal byte/hash/section characteristic, `lua_error` call,
-consumer identity comparison, `lua_getupvalue` index, copied stack argument,
-`lua_call` arity/result count, read-only nil test, metamethod key, alternate
-producer classification, one direct-immediate reference, CFG predecessor or
-entry audit, and every prerequisite canonical digest.
+Only callbacks `0x002e67b0` and `0x002eaa50` are normalized as bodies: 125
+bytes, 45 CFG nodes, and 46 CFG edges. Their complete seven direct Lua-import
+calls are joined to the census, and their complete eight-encoding x86
+`call r32` partition is empty. The `property` and wrong-count literals are
+published; the colon-bearing returned-callback message is retained only by
+RVA, section, length, and NUL-inclusive hash.
 
-A PE-free structural validator may replay stored hashes, partitions, paths,
-dominance, and declarative VM traces. Instruction decoding, branch semantics,
-register-write classification, literal bytes, import identities, and the four
-direct-immediate operands remain exact-executable rebuild obligations.
+The exhaustive scan of all 25,490 atlas ranges, 3,735,718 bytes, and 1,153,814
+instructions finds exactly five operands equal to either callback VA: three
+closure producers at `0x0005799c`, `0x002e67f4`, and `0x002e6bbc`, plus two
+callback-identity comparisons at `0x002ea047` and `0x002ea172`. There are no
+direct calls, absolute-memory references, or other immediate uses. The
+consumer bodies, their match/mismatch branch semantics, the read-only arm, and
+metamethod placement are deliberately left outside this core artifact for a
+separate normalized consumer tranche.
+
+The adversarial suite changes prerequisite and producer identities, factory
+origin classification, literals, reviewed points, direct and dynamic-call
+partitions, all eight x86 register-call encodings, sealed CFG identity, target
+roles/scope, aggregates, method/summary/schema fields, and immutable-output
+protections. PE-free validation replays the finite joins and partitions;
+instruction/literal bytes and exhaustive decoding remain exact rebuild duties.
 
 ## Explicit nonclaims
 

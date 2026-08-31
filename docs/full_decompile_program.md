@@ -335,7 +335,16 @@ until core engine semantics are reconstructed.
   references: the factory, an alternate registry-backed producer, and the
   `__index`/`__newindex` consumers that use upvalues one and two with distinct
   call arities. Callback identity alone deliberately does not establish which
-  producer supplied a dynamic closure.
+  producer supplied a dynamic closure. The normalized executable-rebuilt core
+  artifact now pins the unique publication, factory-returned closure, separate
+  registry-holder producer, three bounded literals, the two callback bodies
+  (125 bytes aggregate) and sealed CFGs, all seven direct Lua calls, an empty dynamic
+  register-call partition, and the complete five-reference two-target atlas
+  scan. Its canonical JSON SHA-256 is
+  `aef6475375ce31da7d089eb819bf4b3a42228332892aa2bb8645668fe2db3b5e`.
+  The two consumer branch grammars and metamethod placement remain wider survey
+  context awaiting their own normalized evidence; runtime provenance and
+  source-level property semantics remain open.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue
@@ -351,9 +360,7 @@ until core engine semantics are reconstructed.
   `824883dddbf0573c26c556d19501027c01b3031d1723ac8a493374bbf63204fc`.
   Helper-internal behavior from the wider survey remains outside this narrow
   artifact, as do runtime reachability, indirect/Lua-side consumers, registry
-  validity, source class/derivation semantics, and source equivalence. The
-  property note remains an exact-build research checkpoint awaiting its own
-  normalized executable-rebuilt artifact.
+  validity, source class/derivation semantics, and source equivalence.
   `docs/native_lua_super_rebinding_survey.md` now closes the three proved
   `super` publication rows into one conditional rebinding chain: a zero-upvalue
   deprecation/error callback, a guarded two-upvalue replacement around an

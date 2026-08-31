@@ -1,0 +1,1507 @@
+{
+  "analysis_kind": "pe_native_lua_property_factory_chain",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "body_range_count": 25490,
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_body_bytes": 3735718,
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "callback_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_callback_census",
+    "canonical_sha256": "cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003"
+  },
+  "callback_targets": [
+    {
+      "atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "body_sha256": "c93226f0c1ca1e6afb2be4498dddb966b3bc052a7fc71bdad123772adee83303",
+      "body_size": 92,
+      "entry_rva": "0x002e67b0",
+      "entry_va": "0x006e67b0"
+    },
+    {
+      "atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "body_sha256": "0b8d87b0ad0d6a1535a67f930c0b4fe9960a099bd5ad08b13c3d30cbf41b223f",
+      "body_size": 33,
+      "entry_rva": "0x002eaa50",
+      "entry_va": "0x006eaa50"
+    }
+  ],
+  "control_flow_graphs": [
+    {
+      "caller_entry_rva": "0x002e67b0",
+      "edge_count": 36,
+      "node_count": 34,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b0",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67b1"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b1",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67b3"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b3",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67b4"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b4",
+          "sha256": "b0f751a22f9b1c30c903d25f5a91638e0aa8911a27e7138a5091739563f0f778",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67b7"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67b8"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67b8",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67b9"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002e67b9",
+          "sha256": "7d9204369e9842e17adadf9f57810fb54d30327d098f5f4f4ca2215ce776db76",
+          "size": 6,
+          "successor_rvas": [
+            "0x002e67bf"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67bf",
+          "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67c1"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67c1",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67c4"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67c4",
+          "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67c6"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x002e67c6",
+          "sha256": "58b821595e7051b1409a38f7c48f7b1153019dce5f9e8b78241111e6dd4a67cb",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67c8",
+            "0x002e67cd"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67c8",
+          "sha256": "09b12db2174c23af1bc6a7bcac2c7a76693a4bb749e2cc850c1d402538e8817f",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67cb"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x002e67cb",
+          "sha256": "f4fdc95541ee7bfcc52668b62ca070e41323683b074687607b12c548816ee30b",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67cd",
+            "0x002e67e3"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67cd",
+          "sha256": "e2b57b7bf31d979e66ae3f7f6c3027ddba09b7dbb83669e6e4f7b48d0e49f4f4",
+          "size": 5,
+          "successor_rvas": [
+            "0x002e67d2"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67d2",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67d3"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002e67d3",
+          "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "size": 6,
+          "successor_rvas": [
+            "0x002e67d9"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67d9",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67da"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002e67da",
+          "sha256": "523f3fede92bd2779f45c12bd3af088935afc72cbe237d444cedb064baaa8773",
+          "size": 6,
+          "successor_rvas": [
+            "0x002e67e0"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67e0",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67e3"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67e3",
+          "sha256": "2641b6054cfd8b36bca1d8deaaa118a13b9a1b74b5c0663922c9e416df2b035c",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67e6"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x002e67e6",
+          "sha256": "ea46748e171abd2dd4dba5b86bb6589334d86bba2df8d50cbb16b36c83b0856a",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67e8",
+            "0x002e67f2"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67e8",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67e9"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002e67e9",
+          "sha256": "a1b0226d706d4a72ca354508fcaa2b721f8e4e80a24d8a28302ca881cae8a23f",
+          "size": 6,
+          "successor_rvas": [
+            "0x002e67ef"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67ef",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e67f2"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67f2",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2,
+          "successor_rvas": [
+            "0x002e67f4"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67f4",
+          "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+          "size": 5,
+          "successor_rvas": [
+            "0x002e67f9"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e67f9",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e67fa"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002e67fa",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6,
+          "successor_rvas": [
+            "0x002e6800"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e6800",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3,
+          "successor_rvas": [
+            "0x002e6803"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e6803",
+          "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+          "size": 5,
+          "successor_rvas": [
+            "0x002e6808"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e6808",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e6809"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e6809",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e680a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002e680a",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x002e680b"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x002e680b",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 92,
+      "range_start_rva": "0x002e67b0"
+    },
+    {
+      "caller_entry_rva": "0x002eaa50",
+      "edge_count": 10,
+      "node_count": 11,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa50",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x002eaa51"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa51",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2,
+          "successor_rvas": [
+            "0x002eaa53"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa53",
+          "sha256": "6945aee07fb3175dcc95713a9494dce36848dbf3344dc08f3df903d062c8724f",
+          "size": 5,
+          "successor_rvas": [
+            "0x002eaa58"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa58",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3,
+          "successor_rvas": [
+            "0x002eaa5b"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002eaa5b",
+          "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "size": 6,
+          "successor_rvas": [
+            "0x002eaa61"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa61",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3,
+          "successor_rvas": [
+            "0x002eaa64"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x002eaa64",
+          "sha256": "523f3fede92bd2779f45c12bd3af088935afc72cbe237d444cedb064baaa8773",
+          "size": 6,
+          "successor_rvas": [
+            "0x002eaa6a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa6a",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3,
+          "successor_rvas": [
+            "0x002eaa6d"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa6d",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x002eaa6f"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x002eaa6f",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x002eaa70"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x002eaa70",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 33,
+      "range_start_rva": "0x002eaa50"
+    }
+  ],
+  "decoder": {
+    "architecture": "x86",
+    "cfg_register_write_fields": [
+      "writes_ebx",
+      "writes_esi",
+      "writes_edi",
+      "writes_esp"
+    ],
+    "dynamic_register_call_encodings": [
+      "ffd0",
+      "ffd1",
+      "ffd2",
+      "ffd3",
+      "ffd4",
+      "ffd5",
+      "ffd6",
+      "ffd7"
+    ],
+    "mode_bits": 32,
+    "name": "capstone",
+    "operand_classes": [
+      "absolute_memory",
+      "immediate"
+    ],
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "direct_table_setter_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+    "canonical_sha256": "a6333ffefd9c9d0ed42bea28b9f5a6e82afff58fc7adb26293c34b5589cb5fa9"
+  },
+  "function_bodies": [
+    {
+      "atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "body_sha256": "c93226f0c1ca1e6afb2be4498dddb966b3bc052a7fc71bdad123772adee83303",
+      "body_size": 92,
+      "control_flow_graph_canonical_sha256": "76d55921e73a9b3bf5d98fba3a0a57d020c91e6855e0fd3f417198f2ed3a690d",
+      "direct_lua_call_partition_complete": true,
+      "dynamic_register_call_partition_complete": true,
+      "dynamic_register_call_rvas": [],
+      "entry_rva": "0x002e67b0",
+      "range_size": 92,
+      "range_start_rva": "0x002e67b0",
+      "reviewed_points": [
+        {
+          "direct_lua_import": "lua_gettop",
+          "role": "lua_gettop",
+          "rva": "0x002e67b9",
+          "sha256": "7d9204369e9842e17adadf9f57810fb54d30327d098f5f4f4ca2215ce776db76",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "argument_count_zero_test",
+          "rva": "0x002e67c4",
+          "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "zero_argument_error_branch",
+          "rva": "0x002e67c6",
+          "sha256": "58b821595e7051b1409a38f7c48f7b1153019dce5f9e8b78241111e6dd4a67cb",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "argument_count_compare_two",
+          "rva": "0x002e67c8",
+          "sha256": "09b12db2174c23af1bc6a7bcac2c7a76693a4bb749e2cc850c1d402538e8817f",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "role": "at_most_two_success_branch",
+          "rva": "0x002e67cb",
+          "sha256": "f4fdc95541ee7bfcc52668b62ca070e41323683b074687607b12c548816ee30b",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "wrong_count_literal_push",
+          "rva": "0x002e67cd",
+          "sha256": "e2b57b7bf31d979e66ae3f7f6c3027ddba09b7dbb83669e6e4f7b48d0e49f4f4",
+          "size": 5
+        },
+        {
+          "direct_lua_import": "lua_pushstring",
+          "role": "wrong_count_pushstring",
+          "rva": "0x002e67d3",
+          "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "size": 6
+        },
+        {
+          "direct_lua_import": "lua_error",
+          "role": "wrong_count_lua_error",
+          "rva": "0x002e67da",
+          "sha256": "523f3fede92bd2779f45c12bd3af088935afc72cbe237d444cedb064baaa8773",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "argument_count_compare_one",
+          "rva": "0x002e67e3",
+          "sha256": "2641b6054cfd8b36bca1d8deaaa118a13b9a1b74b5c0663922c9e416df2b035c",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "role": "two_argument_closure_branch",
+          "rva": "0x002e67e6",
+          "sha256": "ea46748e171abd2dd4dba5b86bb6589334d86bba2df8d50cbb16b36c83b0856a",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "one_argument_state_push",
+          "rva": "0x002e67e8",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "direct_lua_import": "lua_pushnil",
+          "role": "one_argument_nil_padding",
+          "rva": "0x002e67e9",
+          "sha256": "a1b0226d706d4a72ca354508fcaa2b721f8e4e80a24d8a28302ca881cae8a23f",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "returned_upvalue_count_two",
+          "rva": "0x002e67f2",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "returned_callback_target_push",
+          "rva": "0x002e67f4",
+          "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "role": "returned_closure_state_push",
+          "rva": "0x002e67f9",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "direct_lua_import": "lua_pushcclosure",
+          "role": "returned_lua_pushcclosure",
+          "rva": "0x002e67fa",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "closure_argument_cleanup",
+          "rva": "0x002e6800",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "role": "normal_result_count_one",
+          "rva": "0x002e6803",
+          "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "role": "return",
+          "rva": "0x002e680b",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "published_factory_callback",
+      "semantic_facts": {
+        "accepted_argument_counts": [
+          1,
+          2
+        ],
+        "error_argument_count_partition": [
+          "zero",
+          "greater_than_two"
+        ],
+        "lua51_vm_stack_traces": [
+          {
+            "before_closure": [
+              "A1",
+              "nil"
+            ],
+            "before_padding": [
+              "A1"
+            ],
+            "input_argument_count": 1,
+            "selected_result": [
+              "C"
+            ]
+          },
+          {
+            "before_closure": [
+              "A1",
+              "A2"
+            ],
+            "input_argument_count": 2,
+            "selected_result": [
+              "C"
+            ]
+          }
+        ],
+        "normal_result_count": 1,
+        "one_argument_nil_padding": true,
+        "returned_closure_upvalue_count": 2
+      }
+    },
+    {
+      "atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "body_sha256": "0b8d87b0ad0d6a1535a67f930c0b4fe9960a099bd5ad08b13c3d30cbf41b223f",
+      "body_size": 33,
+      "control_flow_graph_canonical_sha256": "2f02c6895ea6ce37037c9d477bcf06da7058ab27feb4ef820985f91e91770b1b",
+      "direct_lua_call_partition_complete": true,
+      "dynamic_register_call_partition_complete": true,
+      "dynamic_register_call_rvas": [],
+      "entry_rva": "0x002eaa50",
+      "range_size": 33,
+      "range_start_rva": "0x002eaa50",
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "role": "error_literal_push",
+          "rva": "0x002eaa53",
+          "sha256": "6945aee07fb3175dcc95713a9494dce36848dbf3344dc08f3df903d062c8724f",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "role": "pushstring_state_push",
+          "rva": "0x002eaa58",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3
+        },
+        {
+          "direct_lua_import": "lua_pushstring",
+          "role": "lua_pushstring",
+          "rva": "0x002eaa5b",
+          "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "error_state_push",
+          "rva": "0x002eaa61",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3
+        },
+        {
+          "direct_lua_import": "lua_error",
+          "role": "lua_error",
+          "rva": "0x002eaa64",
+          "sha256": "523f3fede92bd2779f45c12bd3af088935afc72cbe237d444cedb064baaa8773",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "role": "fallback_cleanup",
+          "rva": "0x002eaa6a",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "role": "fallback_result_count_zero",
+          "rva": "0x002eaa6d",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "role": "return",
+          "rva": "0x002eaa70",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "returned_callback",
+      "semantic_facts": {
+        "binary_fallback_result_count": 0,
+        "fallback_reachability_claimed": false,
+        "normal_abi_outcome": "lua_error_does_not_return"
+      }
+    }
+  ],
+  "indirect_settable_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_indirect_settable_publication_census",
+    "canonical_sha256": "50790f8372d90ab11e44a483a39bd575e5af10ceb037c1aa557e4ebf801ac682"
+  },
+  "literals": [
+    {
+      "byte_length_excluding_nul": 8,
+      "nul_terminated_bytes_sha256": "e0d753a813d3d803fae7d2aa3f4f35384d2e18d4671c88af256ea5834b595010",
+      "role": "global_key_property",
+      "rva": "0x0043bf8c",
+      "section_characteristics": "0x40000040",
+      "section_name": ".rdata",
+      "section_rva": "0x003d6000",
+      "section_writable": false,
+      "text": "property"
+    },
+    {
+      "byte_length_excluding_nul": 54,
+      "nul_terminated_bytes_sha256": "a5cfaa776573b35f0c3701aaad43a4331e8603e83b07cb38aa0e6e3a0a8b9956",
+      "role": "wrong_argument_count_message",
+      "rva": "0x0043be24",
+      "section_characteristics": "0x40000040",
+      "section_name": ".rdata",
+      "section_rva": "0x003d6000",
+      "section_writable": false,
+      "text": "make_property() called with wrong number of arguments."
+    },
+    {
+      "byte_length_excluding_nul": 46,
+      "nul_terminated_bytes_sha256": "571afe6269d164266ab1c841d2e07b422b7224f100e9c5a3953b4cdad5e68bc5",
+      "role": "returned_callback_error_message",
+      "rva": "0x0043c5d4",
+      "section_characteristics": "0x40000040",
+      "section_name": ".rdata",
+      "section_rva": "0x003d6000",
+      "section_writable": false,
+      "text": null,
+      "text_published": false
+    }
+  ],
+  "method": {
+    "accepted_chain": "Exactly one table-key row for property is joined to one returned single-result closure row, the returned callback's separate registry-holder producer, two sealed callback bodies, finite instruction and stack facts, and a complete direct target-operand partition.",
+    "lua51_abi_premises": [
+      "LUA_GLOBALSINDEX is -10002",
+      "LUA_REGISTRYINDEX is -10000",
+      "lua_error does not return normally"
+    ],
+    "not_claimed": [
+      "runtime reachability, execution order, frequency, state continuity, or persistence",
+      "a raw or durable global export or absence of settable metamethod effects",
+      "successful allocation, calls, closure creation, or error propagation",
+      "that callback identity proves factory origin or a particular upvalue schema",
+      "argument or upvalue types, callability, registry validity, lifetime, or ownership",
+      "getter, setter, descriptor, metatable, class, or source-level property semantics",
+      "behavior or placement of the two direct callback-identity consumers",
+      "computed, indirect, data, un-atlased, or Lua-side references",
+      "source equivalence or a complete runtime call graph"
+    ],
+    "structural_boundary": "PE-free validation proves prerequisite joins, sealed profile and full-CFG identities, complete direct-import and dynamic-register-call partitions, finite producer classes, target references, and aggregates. Instruction and literal bytes plus exhaustive atlas decoding require exact rebuild validation.",
+    "target_scan_boundary": "Every instruction in every file-backed program-facts atlas range is decoded with operand detail. Only immediate and absolute-memory operands equal to either exact callback VA are retained."
+  },
+  "publication_chain": {
+    "alternate_registry_holder_producer": {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x000579a2",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+      "caller_entry_rva": "0x00057970",
+      "disposition_kind": "registry_reference_holder",
+      "factory_origin_claimed": false,
+      "holder_register": "ebx",
+      "initial_reference_sentinel": -2,
+      "literal_upvalue_count": 2,
+      "registry_index": -10000,
+      "returned_register": "ebx",
+      "reviewed_sequence": [
+        {
+          "role": "first_reference_push",
+          "rva": "0x00057975",
+          "sha256": "32462fcfcf991828d8566add9c2df292182af62b1b77d272a57a535c852e3c08",
+          "size": 3
+        },
+        {
+          "role": "load_state_edi",
+          "rva": "0x00057978",
+          "sha256": "5e76f40e2b05c5d612a534535d37158a791a0c71f5be52573a807083a6b5b0c7",
+          "size": 2
+        },
+        {
+          "role": "load_holder_ebx",
+          "rva": "0x0005797a",
+          "sha256": "57ff03e26abab83cf46384bfae912a4b8a5efe37fac2dd2623e4199584f948d0",
+          "size": 2
+        },
+        {
+          "role": "first_registry_index",
+          "rva": "0x0005797c",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "first_state_push",
+          "rva": "0x00057981",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "first_rawgeti",
+          "rva": "0x00057982",
+          "sha256": "160f577683307532d8abc4be0c257f09706cf1dcfd49970c79367b41f574b457",
+          "size": 6
+        },
+        {
+          "role": "load_second_reference_owner",
+          "rva": "0x00057988",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3
+        },
+        {
+          "role": "second_reference_push",
+          "rva": "0x0005798b",
+          "sha256": "46c95d44729980e7b6073dc8c2f8ea58d535b687282f83dcbcfb7a70364ba6a3",
+          "size": 3
+        },
+        {
+          "role": "second_registry_index",
+          "rva": "0x0005798e",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "second_state_push",
+          "rva": "0x00057993",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "second_rawgeti",
+          "rva": "0x00057994",
+          "sha256": "160f577683307532d8abc4be0c257f09706cf1dcfd49970c79367b41f574b457",
+          "size": 6
+        },
+        {
+          "role": "upvalue_count_two",
+          "rva": "0x0005799a",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2
+        },
+        {
+          "role": "callback_push",
+          "rva": "0x0005799c",
+          "sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+          "size": 5
+        },
+        {
+          "role": "closure_state_push",
+          "rva": "0x000579a1",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "pushcclosure",
+          "rva": "0x000579a2",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        },
+        {
+          "role": "top_index_minus_one",
+          "rva": "0x000579a8",
+          "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+          "size": 2
+        },
+        {
+          "role": "pushvalue_state",
+          "rva": "0x000579aa",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "store_holder_state",
+          "rva": "0x000579ab",
+          "sha256": "125dcfb80ec95889b2d37e5e84ccb9cee03f02178079d203f48671b12b8ce3c5",
+          "size": 2
+        },
+        {
+          "role": "store_holder_noref",
+          "rva": "0x000579ad",
+          "sha256": "db2e020be4d84dbe76e16a9b16de8bef7e0bfe8f7c81f2fc421e4bbdbfc2ffb1",
+          "size": 7
+        },
+        {
+          "role": "pushvalue",
+          "rva": "0x000579b4",
+          "sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "size": 6
+        },
+        {
+          "role": "ref_registry_index",
+          "rva": "0x000579ba",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "role": "ref_state_push",
+          "rva": "0x000579bf",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "luaL_ref",
+          "rva": "0x000579c0",
+          "sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "size": 6
+        },
+        {
+          "role": "settop_index_minus_two",
+          "rva": "0x000579c6",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "role": "settop_state_push",
+          "rva": "0x000579c8",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "role": "store_holder_reference",
+          "rva": "0x000579c9",
+          "sha256": "c8d3d87e50d91c155193aa2357358891b1bb3df95ac11133622c9d1f80d0415b",
+          "size": 3
+        },
+        {
+          "role": "lua_settop",
+          "rva": "0x000579cc",
+          "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "size": 6
+        },
+        {
+          "role": "argument_cleanup",
+          "rva": "0x000579d2",
+          "sha256": "62b2c8f7d2bf2b6e5d6ad732a425cae17914f5252bb142d710a7bea0fc9be02f",
+          "size": 3
+        },
+        {
+          "role": "return_holder",
+          "rva": "0x000579d5",
+          "sha256": "a51914475e973a2f049d7292f473d0d53f50a376607ef6c5b90e56c9fc5f0263",
+          "size": 2
+        },
+        {
+          "role": "restore_edi",
+          "rva": "0x000579d7",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "role": "restore_ebx",
+          "rva": "0x000579d8",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "role": "restore_ebp",
+          "rva": "0x000579d9",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "role": "return",
+          "rva": "0x000579da",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "source_record_sha256": "e0313e4c489f13b873e4147262eaa9f3bb8e73d9b6396939147241d7702af875",
+      "state_register": "edi",
+      "upvalue_argument_kind": "immediate"
+    },
+    "factory_returned_closure": {
+      "callback_atlas_record_sha256": "6e08833e3a1a0078685480ca5053ead58d032fc1670434be0b6b23cabf4bba2a",
+      "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+      "callback_call_rva": "0x002e67fa",
+      "callback_entry_rva": "0x002eaa50",
+      "caller_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "caller_callback_target_witness": {
+        "callback_target_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+        "callback_target_entry_rva": "0x002e67b0",
+        "construction_call_rva": "0x002e6bc2",
+        "constructor_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "constructor_entry_rva": "0x002e6900"
+      },
+      "caller_entry_rva": "0x002e67b0",
+      "disposition_kind": "lua_callback_single_result",
+      "epilogue_kind": "simple_saved_edi_esi_ebp",
+      "literal_upvalue_count": 2,
+      "result_count": 1,
+      "reviewed_sequence": [
+        {
+          "role": "closure_argument_cleanup",
+          "rva": "0x002e6800",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "role": "lua_result_count_one",
+          "rva": "0x002e6803",
+          "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+          "size": 5
+        },
+        {
+          "role": "restore_edi",
+          "rva": "0x002e6808",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "role": "restore_esi",
+          "rva": "0x002e6809",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "role": "restore_ebp",
+          "rva": "0x002e680a",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "role": "return",
+          "rva": "0x002e680b",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "source_record_sha256": "f543af62626bd8a54a54a7bf6b503cd03cdb175b1a1e719777e1ab51f1a96556"
+    },
+    "property_publication": {
+      "callback_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+      "callback_call_rva": "0x002e6bc2",
+      "callback_entry_rva": "0x002e67b0",
+      "closure_effective_upvalue_count": 0,
+      "constructor_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "constructor_entry_rva": "0x002e6900",
+      "destination": {
+        "abi_constant": "LUA_GLOBALSINDEX",
+        "class": "lua51_global_environment_pseudo_index",
+        "lua_table_index": -10002,
+        "stable_export_claimed": false
+      },
+      "grammar_family": "literal_key_staged_pushstring_immediate_zero",
+      "key": {
+        "byte_length_excluding_nul": 8,
+        "nul_terminated_bytes_sha256": "e0d753a813d3d803fae7d2aa3f4f35384d2e18d4671c88af256ea5834b595010",
+        "rva": "0x0043bf8c",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "property"
+      },
+      "setter_call_rva": "0x002e6bd1",
+      "setter_import_name": "lua_settable",
+      "source_publication_kind": "staged_indirect",
+      "source_record_sha256": "dcc17fcfe0c6a99a0ce6019d814d4289722f4fbbc0b813fdb1a8c923596ac409",
+      "vm_stack_trace": {
+        "after_closure": [
+          "K",
+          "C"
+        ],
+        "after_key": [
+          "K"
+        ],
+        "before_closure": [
+          "K"
+        ],
+        "setter_consumes": [
+          "K",
+          "C"
+        ]
+      }
+    }
+  },
+  "schema_version": 1,
+  "setfield_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_setfield_publication_census",
+    "canonical_sha256": "b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6"
+  },
+  "summary": {
+    "alternate_producer_count": 1,
+    "direct_lua_call_count": 7,
+    "dynamic_register_call_count": 0,
+    "factory_normal_result_count": 1,
+    "literal_count": 3,
+    "publication_count": 1,
+    "returned_callback_binary_fallback_result_count": 0,
+    "returned_closure_count": 1,
+    "reviewed_function_bytes": 125,
+    "reviewed_function_count": 2,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 2,
+    "sealed_control_flow_graph_edge_count": 46,
+    "sealed_control_flow_graph_node_count": 45,
+    "target_reference_comparison_count": 2,
+    "target_reference_count": 5,
+    "target_reference_direct_call_count": 0,
+    "target_reference_memory_operand_count": 0,
+    "target_reference_other_address_count": 0,
+    "target_reference_producer_count": 3,
+    "unique_callback_target_count": 2
+  },
+  "table_key_provenance_census": {
+    "analysis_kind": "pe_native_lua_cclosure_table_key_provenance_census",
+    "canonical_sha256": "8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6"
+  },
+  "target_reference_scan": {
+    "aggregates": {
+      "alternate_producer_count": 1,
+      "comparison_count": 2,
+      "direct_call_count": 0,
+      "factory_producer_count": 1,
+      "factory_returned_producer_count": 1,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "producer_count": 3,
+      "reference_count": 5
+    },
+    "references": [
+      {
+        "instruction_rva": "0x0005799c",
+        "instruction_sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e28de54aab78fb49a49a9ed069a539f0b3eb9328c0749ae815ef2533a7f62f9b",
+        "owner_entry_rva": "0x00057970",
+        "target_rva": "0x002eaa50",
+        "target_va": "0x006eaa50",
+        "use_class": "alternate_registry_holder_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002e67f4",
+        "instruction_sha256": "9b48a9c2e8aba168cc3a5e7d0ca71f897db750f8362a234468d4920feef4524a",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "265fc6ee4f1eada382864c8aff40ac04735694cf096b3cc6cf06bfc55eda232e",
+        "owner_entry_rva": "0x002e67b0",
+        "target_rva": "0x002eaa50",
+        "target_va": "0x006eaa50",
+        "use_class": "factory_returned_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002e6bbc",
+        "instruction_sha256": "40c68e0a8ebe689089feb45239a1251c32678af8b5f42223f7df396a4d266c92",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_rva": "0x002e67b0",
+        "target_va": "0x006e67b0",
+        "use_class": "global_factory_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002ea047",
+        "instruction_sha256": "35034915cc7de933d00f46d1ad16f2161e235c8aa7029be214a4658d779496db",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 1,
+        "owner_atlas_record_sha256": "26ca28e33ec6841b32ad2338597479eaa50cd32177171a25f11ab0467c68925f",
+        "owner_entry_rva": "0x002e9fd0",
+        "target_rva": "0x002eaa50",
+        "target_va": "0x006eaa50",
+        "use_class": "callback_identity_comparison"
+      },
+      {
+        "instruction_rva": "0x002ea172",
+        "instruction_sha256": "35034915cc7de933d00f46d1ad16f2161e235c8aa7029be214a4658d779496db",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 1,
+        "owner_atlas_record_sha256": "84bc3a094175a3337ad9c85900387e6873d9c850016b0390f8d14374b292454b",
+        "owner_entry_rva": "0x002ea110",
+        "target_rva": "0x002eaa50",
+        "target_va": "0x006eaa50",
+        "use_class": "callback_identity_comparison"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_rvas": [
+      "0x002e67b0",
+      "0x002eaa50"
+    ],
+    "target_vas": [
+      "0x006e67b0",
+      "0x006eaa50"
+    ]
+  },
+  "terminal_disposition_census": {
+    "analysis_kind": "pe_native_lua_cclosure_terminal_disposition_census",
+    "canonical_sha256": "74b762e486611a6dc71325276d9e8e92b7894de30f99bacf9e301e894c85bb85"
+  }
+}
