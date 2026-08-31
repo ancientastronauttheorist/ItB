@@ -350,9 +350,15 @@ until core engine semantics are reconstructed.
   deprecation/error callback, a guarded two-upvalue replacement around an
   `__init` call, and that callback's pointer-driven self-replacement plus nil
   cleanup arms. A complete atlas operand scan finds exactly three direct target
-  references, all closure producers and no direct native consumers. The chain
-  remains static research awaiting a normalized executable-rebuilt artifact
-  and runtime evidence.
+  references, all closure producers and no direct native consumers. The
+  normalized executable-rebuilt artifact now pins the three publication rows,
+  three literals, four reviewed bodies and sealed CFGs, every direct Lua-call
+  join, all 13 register-dispatched Lua calls under five exact IAT stages, and
+  the complete 25,490-range / 1,153,814-instruction target-reference partition.
+  Its canonical JSON SHA-256 is
+  `da064ec63caddb0f3c7735caefa8397795455be76a9ead2ffc8ed678a9612ba4`.
+  Runtime reachability, indirect/computed consumers, Lua-side invocation, and
+  source equivalence remain open.
   Preliminary luabind-shaped pointer/name/builder candidates remain local
   research until every builder form and alternate compiler sequence has an
   exact, complete grammar.

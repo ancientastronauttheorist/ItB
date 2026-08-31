@@ -403,6 +403,63 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 
+## Native Lua `super` rebinding chain
+
+`scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete
+publication prerequisite chain and selects the three global `super`
+publications at callback calls `0x002e6c01`, `0x002eb086`, and `0x002eb2a5`.
+It re-reads three bounded literals, verifies four exact atlas bodies, rebuilds
+and seals their instruction-level CFGs, joins every profiled direct Lua import
+call, proves a complete five-stage / 13-call EBX-and-ESI Lua dispatch partition,
+and scans all exact atlas ranges for operands equal to callback VAs
+`0x006e6810` or `0x006eb230`. The exact partition contains only closure producers at
+`0x002e6bfb`, `0x002eb080`, and `0x002eb29f`; direct calls, comparisons,
+memory-operand references, and other direct uses are all empty.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_super_rebinding.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_super_rebinding.json
+
+python -X utf8 scripts/itb_native_lua_super_rebinding.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_super_rebinding.json
+```
+
+The normalized chain records one zero-upvalue deprecation/error callback and
+two two-upvalue dynamic/self-replacement publications, their alternate and
+post-call `nil` cleanup requests, the exact `__init` calls, and normal return
+counts. The artifact covers 25,490 ranges, 3,735,718 bytes, and 1,153,814
+decoded instructions. It does not prove runtime reachability, guard meanings,
+native type or ownership identities, registry validity, successful calls,
+metamethod-free persistence, indirect/computed or Lua-side consumers, or
+source equivalence.
+
+The artifact's pretty-printed file SHA-256 is
+`3b79c82dde6b1bdb7e0b36f9612dc4e5d598b7505ab76411ad6035dccafe34a2`;
+its canonical JSON SHA-256 is
+`da064ec63caddb0f3c7735caefa8397795455be76a9ead2ffc8ed678a9612ba4`.
+Existing byte-identical output is reused; differing, unrelated, or concurrently
+changed output is preserved and rejected.
+
 ## Native Lua C-closure terminal-disposition census
 
 `scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently

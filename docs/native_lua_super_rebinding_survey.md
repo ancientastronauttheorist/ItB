@@ -1,8 +1,10 @@
 # Native Lua `super` rebinding survey
 
-Status: read-only static research checkpoint. This note follows the three
-proved native publications under exact global key `super`. It does not
-reconstruct source or prove runtime reachability.
+Status: normalized executable-rebuilt static evidence. This note follows the
+three proved native publications under exact global key `super`; the committed
+artifact and verifier now bind the chain to the exact executable and complete
+atlas target-reference partition. They do not reconstruct source or prove
+runtime reachability.
 
 ## Bound evidence
 
@@ -130,19 +132,32 @@ There are zero direct calls, comparisons, or other address uses in this finite
 operand-equality partition. This does not exclude computed or indirect
 function pointers, data references, un-atlased code, or Lua-side invocation.
 
-## Candidate fail-closed artifact
+## Normalized fail-closed artifact
 
-A normalized `pe_native_lua_super_rebinding_chain` artifact should retain the
-three prerequisite-bound publication rows, literal and callback body
-identities, guard CFG, helper stack delta, exact upvalue derivations,
-publication/alternate-clear/post-call-clear paths, `lua_call` arities and
-normal return counts, and the three-item target-reference partition.
+`scripts/itb_native_lua_super_rebinding.py` builds and verifies the committed
+`pe_native_lua_super_rebinding_chain` artifact at
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_super_rebinding.json`.
+It exact-verifies the complete prerequisite chain, re-reads literals and
+function bodies, re-decodes all four reviewed CFGs, joins every retained Lua
+import call, proves all 13 register-dispatched Lua calls under five exact IAT
+stages, seals the four complete CFGs, and scans all 25,490 atlas body ranges
+(3,735,718 bytes and 1,153,814 decoded instructions) for either callback
+address. The resulting partition has exactly three references, all closure
+producers, and zero direct calls, comparisons, memory-operand references, or
+other direct uses.
 
-Adversarial tests should independently mutate each key, callback, setter,
-upvalue source/index, guard edge, helper-created userdata stack position,
-`__init` identity, call arity, cleanup edge, body hash, operand partition, and
-prerequisite digest. A PE-free validator may replay normalized facts, but the
-artifact builder must re-decode and re-read the exact executable.
+The PE-free validator recomputes the normalized graph, profile, join,
+partition, and aggregate invariants without claiming to rediscover instruction
+semantics. The exact validator rebuilds from `Breach.exe` and
+canonical-compares the entire document. Focused adversarial tests cover schema
+closure, prerequisite and profile tampering, CFG divergence, target-reference
+partition divergence, deterministic rebuilding, exact verification, and
+immutable output handling.
+
+The artifact's pretty-printed file SHA-256 is
+`3b79c82dde6b1bdb7e0b36f9612dc4e5d598b7505ab76411ad6035dccafe34a2`;
+its canonical JSON SHA-256 is
+`da064ec63caddb0f3c7735caefa8397795455be76a9ead2ffc8ed678a9612ba4`.
 
 ## Explicit nonclaims
 
