@@ -318,6 +318,15 @@ until core engine semantics are reconstructed.
   and the stack-preserving initializer/helper seams. This is a reviewed
   research checkpoint and artifact specification, not yet a normalized
   executable-rebuilt census or runtime/lifetime proof.
+  The adjacent registry-holder survey in
+  `docs/native_lua_registry_holder_survey.md` also closes a finite declared
+  direct-caller frontier for the returned holder: all 46 callers use one
+  247-byte relative-offset grammar, read the returned `+4` registry reference,
+  and conditionally attempt `luaL_unref` on the original local state/reference
+  pair. The raw-lookup state comes from a separate temporary and is deliberately
+  not equated with the holder state; ownership, execution, validity, indirect
+  callers, and complete lifetime remain unproved. This too is an exact-build
+  research checkpoint awaiting a normalized executable-rebuilt census.
   Preliminary luabind-shaped pointer/name/builder candidates remain local
   research until every builder form and alternate compiler sequence has an
   exact, complete grammar.
