@@ -286,6 +286,16 @@ immutable-output behavior. PE-free validation replays the finite joins,
 dominance proofs, CFG seals, and partitions; byte reads and exhaustive decoding
 remain exact rebuild duties.
 
+The adjacent
+`docs/native_lua_property_residual_survey.md` closes the two currently opaque
+mismatch traces as exact-build research and maps the initializer's remaining
+marker, `__gc`, and 13 two-upvalue wrapper closures. It also identifies the
+wrapper callback, its numeric-slot-one getter test, a reusable 76-caller native
+recognizer using the same test, and the `__gc` callback's sole direct cleanup
+helper. That checkpoint deliberately remains outside the normalized artifact
+until its expanded branch, literal-array, helper, and caller-frontier proofs are
+encoded and tested.
+
 ## Explicit nonclaims
 
 This survey and its artifacts do not prove runtime execution, call success,

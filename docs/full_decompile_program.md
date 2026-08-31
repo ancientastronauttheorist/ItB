@@ -356,6 +356,16 @@ until core engine semantics are reconstructed.
   `2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
   Runtime provenance, dynamic attachment and invocation, mismatch semantics,
   and source-level property equivalence remain open.
+  `docs/native_lua_property_residual_survey.md` now closes those two mismatch
+  traces at the exact-build research layer. It preserves the setter's critical
+  absolute-slot-four distinction instead of assuming three arguments, maps the
+  initializer's `__luabind_class` marker and `__gc` closure, proves the ordered
+  13-key / two-upvalue wrapper loop (with true flags only for `__unm` and
+  `__len`), reconstructs the two-input wrapper callback, and closes a
+  76-direct-caller frontier for the reusable numeric-slot-one recognizer. The
+  residual helper target partition has 79 exact operands when the `__gc`
+  cleanup helper is included. This remains a reviewed survey awaiting its own
+  normalized executable-rebuilt artifact.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue
