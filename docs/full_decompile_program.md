@@ -305,10 +305,11 @@ until core engine semantics are reconstructed.
   code generation, and runtime reachability. The immediate closure frontier is
   now completely dispositioned: ten of 13 sites are static table publications,
   two return the closure as one conditional Lua result, and one stores a
-  registry reference in a returned holder. Continue from these exact edges to
-  recover destination-table/key identities, Lua-visible names, consumers of
-  the returned closures and holder, descriptor/bootstrap ownership, and actual
-  runtime reachability without merging conditional paths or ABI assumptions.
+  registry reference in a returned holder. Continue by normalizing the surveyed
+  key/destination and consumer facts into executable-rebuilt artifacts, closing
+  the class-return direct-consumer frontier, and recovering remaining dynamic
+  or indirect consumers, descriptor/bootstrap ownership, and actual runtime
+  reachability without merging conditional paths or ABI assumptions.
   The follow-up static survey in
   `docs/native_lua_registration_bootstrap_survey.md` now isolates the next
   exact five-site grammar: four conditional userdata/metatable construction
