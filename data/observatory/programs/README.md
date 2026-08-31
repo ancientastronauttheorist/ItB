@@ -339,6 +339,70 @@ not a key, destination-table identity, Lua-visible name, runtime execution, or
 lifetime. Existing byte-identical output is reused; differing or concurrent
 output is preserved and rejected.
 
+## Native Lua C-closure table-key provenance census
+
+`scripts/itb_native_lua_cclosure_table_key_provenance.py` exact-verifies the
+full direct and staged-indirect publication chain, then composes all seven
+table-setter sites under four finite x86/Lua-stack grammars. Each grammar
+requires a bounded non-writable NUL-terminated ASCII literal, exact
+`lua_pushstring` provenance, the complete zero- or two-upvalue producer chain,
+and preservation of the key below the closure until the retained setter
+consumes the key/value pair. Register-indirect calls require caller-entry CFG
+dominance of an exact `mov ebx,[IAT]` stage and no EBX writer on any
+stage-to-call path under the stated 32-bit Windows cdecl premise.
+
+The guarded register-count form proves that `ESI == 0` only on the path to its
+closure call. The deferred two-upvalue `super` form separately proves that its
+pre-branch key arguments dominate the publication-arm `call ebx`; its exact
+four-instruction register-only interior is pinned so neither an ESP change nor
+a native stack-memory store can overwrite those arguments. The alternate arm
+writes `nil` under the same global key. The PE-free validator recomputes graph
+continuity, fallthrough edges,
+dominance, path sets, register-write exclusions, entry audits, producer
+adjacency, literal metadata, destinations, and aggregates. Decoded branch and
+register-write semantics plus actual literal bytes still require exact rebuild.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_table_key_provenance.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_table_key_provenance.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json
+```
+
+The exact keys are `super` at callback calls `0x002e6c01`, `0x002eb086`, and
+`0x002eb2a5`; `__gc` at `0x002e69f1` and `0x002ea533`; `class` at
+`0x002e6ba1`; and `property` at `0x002e6bc2`. Five sites use Lua 5.1's
+`LUA_GLOBALSINDEX` value `-10002`. The two `-3` sites are independently tied to
+fresh unnamed tables created immediately before their key/closure pairs. This
+does not name those tables, prove a durable global export, bypass
+`__newindex`, establish runtime reachability or persistence, or recover source.
+
+The artifact's pretty-printed file SHA-256 is
+`4b37f2206e05b2b881ae6b550df494f908f40eb0beb76b132d3a75364935734e`;
+its canonical JSON SHA-256 is
+`8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6`.
+Existing byte-identical output is reused; differing, unrelated, or concurrently
+changed output is preserved and rejected.
+
 ## Native Lua C-closure terminal-disposition census
 
 `scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently

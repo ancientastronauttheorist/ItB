@@ -183,6 +183,26 @@ destination table, Lua-visible name, global/module export, runtime execution,
 or lifetime. The three terminal-disposition sites remain unmatched in this
 artifact. See `programs/README.md` for exact commands and hashes.
 
+## Native Lua C-closure table-key provenance
+
+`scripts/itb_native_lua_cclosure_table_key_provenance.py` composes all four
+direct and three staged-indirect table publications and exact-proves the Lua VM
+stack key that survives below each newly constructed closure. Four bounded
+grammars cover straight zero-upvalue, guarded register-zero, direct
+two-pushvalue, and branch-deferred mixed-upvalue forms. Their CFG proofs bind
+register-indirect `lua_pushstring` and `lua_pushvalue` calls to dominating EBX
+IAT stages, exclude path clobbers, pin the deferred argument-live interior,
+and retain the alternate `super = nil` arm.
+
+The exact keys are `super` at three sites, `__gc` at two, and `class` and
+`property` at one each. Five destinations use Lua 5.1 `LUA_GLOBALSINDEX`; the
+two relative `-3` destinations are proved to be fresh unnamed tables. This
+does not establish durable exports, semantic table identities, runtime
+reachability, persistence, or source equivalence. The PE-free validator
+recomputes graph and stack-proof structure, while exact rebuild remains
+required for decoded semantics and literal bytes. See `programs/README.md` for
+commands and hashes.
+
 ## Native Lua C-closure terminal dispositions
 
 `scripts/itb_native_lua_cclosure_terminal_dispositions.py` independently

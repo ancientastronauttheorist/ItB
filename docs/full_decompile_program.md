@@ -256,6 +256,14 @@ until core engine semantics are reconstructed.
   relies explicitly on the 32-bit Windows cdecl ESI-preservation and atlas-entry
   premises and still does not identify the stack key, table, Lua-visible name,
   runtime execution, or lifetime.
+- [x] Recover exact key and destination provenance for all seven direct and
+  staged-indirect table publications. Four finite Lua-stack grammars prove
+  exact keys `super` (three sites), `__gc` (two), `class`, and `property`; five
+  setters address Lua 5.1 `LUA_GLOBALSINDEX`, while both relative `-3` setters
+  target freshly created unnamed tables. The deferred `super` proof also
+  retains its alternate global `nil` write. These static facts do not prove a
+  durable export, semantic identity for either fresh table, runtime execution,
+  persistence, or source equivalence.
 - [x] Close the immediate-closure disposition partition for all 13 resolved
   callback sites. In parallel with the indirect-setter proof, an exact terminal
   grammar classifies two closures as the sole conditional Lua callback result
@@ -278,8 +286,8 @@ until core engine semantics are reconstructed.
   counter. The L0 ledger has five production upstream-analysis adapters,
   narrowly limited to binary-reverified positive `lua_api_consumer`,
   `cclosure_callback_target`, `registered_lua_callable`, and
-  `registration_builder` support. All three table-publication adapters accept only a
-  direct callback aggregate for the registered-callable role or a direct
+  `registration_builder` support. All three table-publication adapters accept
+  only a direct callback aggregate for the registered-callable role or a direct
   caller aggregate for the builder role. The empty registry still promotes nothing,
   and every other assertion fails closed until a kind-specific adapter can
   derive it from independently verified evidence. Closure construction alone
