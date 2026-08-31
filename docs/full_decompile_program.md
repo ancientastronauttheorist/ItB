@@ -327,6 +327,23 @@ until core engine semantics are reconstructed.
   not equated with the holder state; ownership, execution, validity, indirect
   callers, and complete lifetime remain unproved. This too is an exact-build
   research checkpoint awaiting a normalized executable-rebuilt census.
+  Two adjacent returned-closure surveys now trace the remaining static factory
+  edges. `docs/native_lua_property_factory_survey.md` follows the global
+  `property` callback through its exact one-or-two-argument grammar into a
+  two-upvalue error-tag closure, then partitions all four direct-immediate tag
+  references: the factory, an alternate registry-backed producer, and the
+  `__index`/`__newindex` consumers that use upvalues one and two with distinct
+  call arities. Callback identity alone deliberately does not establish which
+  producer supplied a dynamic closure.
+  `docs/native_lua_class_factory_survey.md` follows the global `class` callback
+  through its exact string, numeric-string, and embedded-NUL guards, 72-byte
+  userdata initialization and global assignment, into a returned one-upvalue
+  callback. That callback checks both values for `__luabind_classrep`, mutates
+  the captured object through a native helper, feeds two registry-reference
+  pairs to a second helper, and copies one fixed word before returning zero.
+  Both notes are exact-build, independently reviewed research checkpoints with
+  fail-closed artifact specifications; neither is yet a normalized
+  executable-rebuilt census or runtime/reachability proof.
   Preliminary luabind-shaped pointer/name/builder candidates remain local
   research until every builder form and alternate compiler sequence has an
   exact, complete grammar.
