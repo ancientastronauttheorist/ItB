@@ -462,6 +462,66 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 
+## Native Lua `property` consumer chain
+
+`scripts/itb_native_lua_property_consumer_chain.py` recursively exact-verifies
+the normalized property-factory artifact, then seals the getter-like consumer
+at `0x002ea110`, setter-like consumer at `0x002e9fd0`, and initializer at
+`0x002ea2d0`. Build and verify it with the same prerequisite paths shown above,
+plus the factory artifact:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_property_consumer_chain.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --property-factory-chain data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_factory_chain.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_consumer_chain.json
+
+python -X utf8 scripts/itb_native_lua_property_consumer_chain.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --property-factory-chain data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_factory_chain.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_consumer_chain.json
+```
+
+The artifact seals 706 bytes in three complete CFGs with 279 nodes and 286
+edges, joins all 34 direct Lua-import calls, and proves five staged imports cover
+all 23 EBX, ESI, and EDI calls while separately checking every x86 `call r32`
+encoding. It records the two tag-match call arms, setter read-only arm, and
+three distinct zero-upvalue placements: a getter under numeric raw key `1.0`, a
+separate getter under `__index`, and the setter under `__newindex`.
+
+Its three-target whole-atlas scan covers 25,490 ranges, 3,735,718 bytes, and
+1,153,814 instructions. The exact six-reference partition contains three
+closure producers, two getter-identity comparisons, and one direct initializer
+call; absolute-memory and other direct uses are empty. Mismatch-branch
+semantics, dynamic attachment or invocation, callback-origin inference,
+callability, runtime reachability, and source-level property equivalence remain
+unclaimed.
+
+The artifact's pretty-printed file SHA-256 is
+`1cc4b84cebb5b5fab17b059f8050bca477c6d27742efb267b7a29851d87d88a5`;
+its canonical JSON SHA-256 is
+`2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
+Existing byte-identical output is reused; differing, unrelated, or concurrently
+changed output is preserved and rejected.
+
 ## Native Lua `class` factory chain
 
 `scripts/itb_native_lua_class_factory_chain.py` exact-verifies the complete

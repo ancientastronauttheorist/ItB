@@ -1,10 +1,11 @@
 # Native Lua `property` factory survey
 
-Status: normalized executable-rebuilt core evidence plus wider read-only static
-research. The committed artifact seals publication, producer provenance, the
-factory and returned callback, and their complete direct target-reference
-partition. Consumer and placement sections remain survey context rather than
-normalized source or runtime semantics.
+Status: normalized executable-rebuilt factory and consumer evidence plus wider
+read-only static research. The two committed artifacts seal publication,
+producer provenance, the factory and returned callback, both identity
+consumers, the read-only arm, exact closure placements, and their declared
+whole-atlas target-reference partitions. They remain binary evidence rather
+than recovered source or runtime semantics.
 
 ## Bound inputs
 
@@ -169,7 +170,14 @@ callability.
 
 The 245-byte initializer at `0x002ea2d0` (body SHA-256
 `87e765ce2290b8320efb30cb7e110e8ae67783793b968aecd01827f6bd00d9c1`)
-constructs zero-upvalue closures for `0x002ea110` at `0x002ea345` and
+first pushes the exact binary64 constant `1.0` from `0x0043cbe0`, constructs a
+zero-upvalue getter closure at `0x002ea31e`, and places it with
+`lua_rawset(L,-3)` at `0x002ea323`. This is a numeric-key placement, not the
+`__index` placement. The constant bytes are `000000000000f03f`, with SHA-256
+`6c3c396ed6b5c36dcae172271f462051b1266b851e92df3deea8ac65478fd712`.
+
+The initializer then constructs zero-upvalue closures for `0x002ea110` at
+`0x002ea345` and
 `0x002e9fd0` at `0x002ea35c`. It places them with `lua_setfield` at
 `0x002ea352` and `0x002ea366` under exact non-writable literals `__index` and
 `__newindex`, respectively. Their NUL-inclusive literal hashes are
@@ -236,12 +244,54 @@ roles/scope, aggregates, method/summary/schema fields, and immutable-output
 protections. PE-free validation replays the finite joins and partitions;
 instruction/literal bytes and exhaustive decoding remain exact rebuild duties.
 
+## Normalized executable-rebuilt consumer artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_consumer_chain.json`
+has analysis kind `pe_native_lua_property_consumer_chain`. Its pretty-printed
+file SHA-256 is
+`1cc4b84cebb5b5fab17b059f8050bca477c6d27742efb267b7a29851d87d88a5`;
+its canonical JSON SHA-256 is
+`2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
+
+The artifact recursively exact-verifies the factory artifact, then seals the
+setter-like consumer, getter-like consumer, and initializer: 706 bytes, 279
+CFG nodes, and 286 CFG edges. It joins all 34 direct Lua-import calls and five
+dominating EBX, ESI, or EDI import stages covering all 23 register calls. A
+separate complete check of all eight x86 `call r32` encodings prevents another
+register form from escaping that partition.
+
+The normalized identity-match arms retrieve upvalues two and one respectively.
+The setter's nil arm is the exact read-only `lua_error` path; its non-nil arm
+copies original arguments one and three into `lua_call(L,2,0)`. The getter
+copies original argument one into `lua_call(L,1,1)`. Successful upvalue
+retrieval and callability are not inferred, and interpreting those upvalues as
+factory arguments `A1` and `A2` remains conditional on factory provenance.
+Both identity-mismatch arms remain explicitly opaque inside otherwise sealed
+bodies.
+
+The initializer records three distinct zero-upvalue placements: a getter under
+numeric raw key `1.0`, a separately created getter under `__index`, and the
+setter under `__newindex`. Only the latter two are labeled metamethod
+placements. The three-target exhaustive atlas scan covers the same 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions and finds exactly six
+references: three closure producers, two external getter-identity comparisons,
+and the sole direct call to the initializer. Absolute-memory and other direct
+uses are empty.
+
+The consumer adversarial suite changes prerequisite and comparison identities,
+literals, the numeric constant, reviewed points, direct and staged-call
+partitions, all eight register-call encodings, semantic fields, placement
+classification, exhaustive-scan rows and scope, summaries, schema fields, and
+immutable-output behavior. PE-free validation replays the finite joins,
+dominance proofs, CFG seals, and partitions; byte reads and exhaustive decoding
+remain exact rebuild duties.
+
 ## Explicit nonclaims
 
-This survey does not prove runtime execution, call success, argument or
-upvalue types, callability, stable global export, tag provenance from callback
-identity alone, descriptor storage, dynamic metatable attachment, later
-lookup, state continuity across separate invocations, reference validity,
-lifetime, ownership, source-level class/property semantics, absence of later
-mutation, absence of computed or indirect consumers, or completeness beyond
-the declared atlas and finite grammars above.
+This survey and its artifacts do not prove runtime execution, call success,
+argument or upvalue types, callability, stable global export, tag provenance
+from callback identity alone, descriptor storage, dynamic metatable attachment,
+later lookup or invocation, state continuity across separate invocations,
+reference validity, lifetime, ownership, source-level class/property
+semantics, absence of later mutation, absence of computed or indirect
+consumers, or completeness beyond the declared atlas and finite grammars above.

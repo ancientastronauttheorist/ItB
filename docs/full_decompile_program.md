@@ -342,9 +342,20 @@ until core engine semantics are reconstructed.
   register-call partition, and the complete five-reference two-target atlas
   scan. Its canonical JSON SHA-256 is
   `aef6475375ce31da7d089eb819bf4b3a42228332892aa2bb8645668fe2db3b5e`.
-  The two consumer branch grammars and metamethod placement remain wider survey
-  context awaiting their own normalized evidence; runtime provenance and
-  source-level property semantics remain open.
+  The adjacent consumer artifact now recursively binds that factory evidence
+  and seals the getter-like consumer, setter-like consumer, and initializer:
+  706 bytes, 279 CFG nodes, 286 CFG edges, all 34 direct Lua calls, and all 23
+  EBX/ESI/EDI staged calls under a complete eight-encoding `call r32` audit.
+  It normalizes both tag-match arms and the setter's read-only arm, while
+  keeping both mismatch branches explicitly opaque. It also distinguishes the
+  first getter closure stored under numeric raw key `1.0` from the separately
+  created `__index` getter and `__newindex` setter. Its exhaustive three-target
+  atlas partition has six references: three closure producers, two getter
+  identity comparisons, and the sole direct initializer call. The canonical
+  JSON SHA-256 is
+  `2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
+  Runtime provenance, dynamic attachment and invocation, mismatch semantics,
+  and source-level property equivalence remain open.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue
