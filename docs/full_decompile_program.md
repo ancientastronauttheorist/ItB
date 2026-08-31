@@ -344,6 +344,14 @@ until core engine semantics are reconstructed.
   Both notes are exact-build, independently reviewed research checkpoints with
   fail-closed artifact specifications; neither is yet a normalized
   executable-rebuilt census or runtime/reachability proof.
+  `docs/native_lua_super_rebinding_survey.md` now closes the three proved
+  `super` publication rows into one conditional rebinding chain: a zero-upvalue
+  deprecation/error callback, a guarded two-upvalue replacement around an
+  `__init` call, and that callback's pointer-driven self-replacement plus nil
+  cleanup arms. A complete atlas operand scan finds exactly three direct target
+  references, all closure producers and no direct native consumers. The chain
+  remains static research awaiting a normalized executable-rebuilt artifact
+  and runtime evidence.
   Preliminary luabind-shaped pointer/name/builder candidates remain local
   research until every builder form and alternate compiler sequence has an
   exact, complete grammar.
