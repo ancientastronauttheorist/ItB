@@ -738,12 +738,68 @@ near calls: five from returned callback `0x002ec110` and the alternate
 `0x002e7970 -> 0x002eb140` call at `0x002e7ce0`. Comparisons,
 absolute-memory operands, and other direct-address uses are empty. Runtime
 invocation, valid input values, successful calls, dynamic or Lua-side
-consumers, and the separate 612-byte initializer remain unproved.
+consumers, and initializer behavior are outside this helper artifact. The
+adjacent initializer artifact below closes that distinct static body.
 
 The artifact's pretty-printed file SHA-256 is
 `aab9847af280484af26885f6390f586726fd173466b76d5f0b2cda104f836bec`;
 its canonical JSON SHA-256 is
 `33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
+Existing byte-identical output is reused; differing, unrelated, or concurrently
+changed output is preserved and rejected.
+
+## Native Lua `class` initializer chain
+
+`scripts/itb_native_lua_class_initializer_chain.py` canonical-pins the exact
+`class` factory artifact, rejoins its conditional initializer call, seals the
+single factory-side initializer body, and scans every atlas operand for its
+complete entry-reference frontier. The normalized evidence remains
+offset-only: it assigns no source class, vtable, ownership, or lifetime names.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_class_initializer_chain.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-factory data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_factory_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json
+
+python -X utf8 scripts/itb_native_lua_class_initializer_chain.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-factory data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_factory_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json
+```
+
+The artifact has analysis kind `pe_native_lua_class_initializer_chain`. It
+seals initializer `0x002eacf0`: 612 bytes, one 185-node / 191-edge CFG, all 20
+direct Lua calls, and all six EBX-staged calls under a complete eight-encoding
+`call r32` audit. It exact-reads `__luabind_classes`,
+`__luabind_cast_graph`, and `__luabind_class_id_map` from non-writable
+`.rdata`, and retains the calls to `0x0007c600` and the assertion helper as two
+opaque native-edge facts.
+
+The offset grammar includes the fixed initial writes, three state/reference
+pairs and their conditional prior unrefs, the registry-key lookups, the
+`__luabind_classes` `+0x0c` guard and `+0x10` raw-reference read, and the later
+stores through `+0x44`. `lua_gettable` is not treated as raw, and registry
+values, reference validity, assertion termination, runtime success, ownership,
+lifetime, and source equivalence remain unproved.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one initializer reference survives: the
+factory's immediate `0x002ec302 -> 0x002eacf0` call. Comparisons,
+absolute-memory operands, and other direct-address uses are empty.
+
+The artifact's pretty-printed file SHA-256 is
+`8bd9b4ad928675f0cb2e708ec6695daf1618dfbd3eff1324f8bfa7147bc9a4b2`;
+its canonical JSON SHA-256 is
+`799ab272966a317f27c0fbaf25df7d47821650a6f5e0b1a914c98eb40dcfece9`.
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 

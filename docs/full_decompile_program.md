@@ -321,7 +321,9 @@ until core engine semantics are reconstructed.
   frontier is now closed: the factory artifact finds only the returned
   callback's producer and no direct native consumer, while the dependent helper
   artifact seals all three callback-side callees and every atlas-decoded direct
-  reference to them. Continue with the distinct class initializer and the
+  reference to them. The dependent initializer artifact now also seals the
+  distinct `0x002eacf0` construction body and proves that its only atlas-decoded
+  direct reference is the factory call at `0x002ec302`. Continue with the
   remaining dynamic or indirect consumers, descriptor/bootstrap ownership,
   lifetime seams, and actual runtime reachability without merging conditional
   paths or ABI assumptions.
@@ -356,10 +358,17 @@ until core engine semantics are reconstructed.
   edges to five exact targets. Its all-operand atlas partition contains exactly
   six immediate direct calls: five from returned callback `0x002ec110` and one
   explicit alternate `0x002e7970 -> 0x002eb140` edge. The alternate caller is
-  reference-only, and the 612-byte initializer `0x002eacf0` remains a separate
-  construction and registry-lifetime tranche. The artifact's canonical JSON
-  SHA-256 is
+  reference-only. The artifact's canonical JSON SHA-256 is
   `33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
+  The adjacent class-initializer artifact closes the formerly separate
+  `0x002eacf0` tranche without assigning source class or lifetime semantics. It
+  seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
+  staged Lua calls under the complete eight-encoding register-call audit,
+  exact-reads the three registry keys, and retains two outgoing native calls as
+  opaque edge facts. Its all-operand atlas scan finds exactly one reference,
+  the factory's conditional `0x002ec302 -> 0x002eacf0` call. The canonical JSON
+  SHA-256 is
+  `799ab272966a317f27c0fbaf25df7d47821650a6f5e0b1a914c98eb40dcfece9`.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

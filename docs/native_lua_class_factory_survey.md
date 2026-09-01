@@ -154,7 +154,9 @@ through `luaL_ref`; it also conditionally unrefs prior values and reads exact
 registry keys including `__luabind_classes`, `__luabind_cast_graph`, and
 `__luabind_class_id_map`. This is useful provenance for the fixed offsets used
 by the returned callback, but this survey deliberately does not assign those
-fields semantic names or prove their later validity.
+fields semantic names or prove their later validity. The dependent exact
+artifact below now normalizes this bounded body and its complete decoded
+reference frontier.
 
 ## Normalized executable-rebuilt artifact
 
@@ -180,7 +182,8 @@ The helper-internal `__luabind_classrep` literal and the initializer/helper body
 interpretations from the wider survey are intentionally not normalized in this
 base artifact; the edge records assign them no behavior. The dependent artifact
 below closes the three callback-side helper bodies without expanding the base
-factory claim or absorbing the distinct initializer.
+factory claim. A second dependent artifact closes the distinct initializer as
+its own offset-only tranche.
 
 Finally, an exhaustive operand scan of all 25,490 atlas ranges, 3,735,718
 bytes, and 1,153,814 decoded instructions finds exactly two references to the
@@ -234,10 +237,37 @@ callback `0x002ec110` and the explicit alternate
 operands, and other direct-address uses are empty. The alternate caller remains
 reference-only; its 1,348-byte body is not folded into this helper artifact.
 
-The factory-side initializer `0x002eacf0` remains a separate 612-byte
-construction and registry-reference/lifetime tranche. Runtime invocation,
-input validity, successful calls, dynamic or Lua-side consumers, ownership,
-lifetime, and source equivalence remain unproved.
+The factory-side initializer `0x002eacf0` remains separate from this helper
+artifact and is normalized by the adjacent artifact below.
+
+## Dependent class-initializer artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json`
+has analysis kind `pe_native_lua_class_initializer_chain`. It canonical-pins
+the exact factory artifact and retains its conditional initializer edge, then
+seals the single `0x002eacf0` body: 612 bytes and one 185-node / 191-edge CFG.
+Its pretty-printed file SHA-256 is
+`8bd9b4ad928675f0cb2e708ec6695daf1618dfbd3eff1324f8bfa7147bc9a4b2`;
+its canonical JSON SHA-256 is
+`799ab272966a317f27c0fbaf25df7d47821650a6f5e0b1a914c98eb40dcfece9`.
+
+The artifact preserves only fixed-offset grammar. It records the initial
+writes through `+0x44`, three state/reference pairs, each prior-reference guard,
+the `__luabind_classes` lookup and `+0x0c` assertion arm, the `+0x10`
+`lua_rawgeti` input, and the later `+0x30`, `+0x40`, and `+0x44` stores. It
+joins all 20 direct Lua calls and six EBX-staged calls under a complete
+eight-encoding `call r32` audit. Exact literals `__luabind_classes`,
+`__luabind_cast_graph`, and `__luabind_class_id_map` are re-read from
+non-writable `.rdata`; the calls to `0x0007c600` and the assertion helper remain
+opaque outgoing edge facts.
+
+The all-operand atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718
+bytes, and 1,153,814 instructions. Its sole initializer-entry reference is the
+factory's immediate `E8` call at `0x002ec302`; comparisons, absolute-memory
+operands, and other direct-address uses are empty. Runtime invocation, valid
+Lua states or registry values, raw `lua_gettable` behavior, successful calls,
+assertion termination, ownership, lifetime, indirect consumers, and source
+class or vtable equivalence remain unproved.
 
 ## Explicit nonclaims
 
