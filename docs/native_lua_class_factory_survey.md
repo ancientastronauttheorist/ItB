@@ -792,11 +792,49 @@ The artifact's pretty-printed file SHA-256 is
 `366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6`;
 its canonical JSON SHA-256 is
 `0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
-The next static frontier remains the two opaque direct targets `0x0039cb92`
-and `0x00357b42`. Relationship membership, decoded syntax, the terminal
-interrupt record, and PE addresses do not prove semantic identity, purpose,
-ABI, runtime reachability, execution order, termination, state mutation,
-normal return, data meaning, un-atlased references, or Lua-side behavior.
+## Residual-target-set callee external-target import-thunk static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_import_thunk_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_import_thunk_static_boundary`.
+It canonically pins relationship-only target `0x0039cb92`, rejoins its parent
+`E8` at `0x00357b75`, and seals the complete one-instruction body:
+`FF 25 10 60 7D 00`, six bytes, with body SHA-256
+`247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7` and
+atlas-record SHA-256
+`495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e`.
+
+Its 1-node / 0-edge `indirect_jump` CFG has canonical SHA-256
+`29e8bc268788c4dad137925a79b4350355d7f7db2dd2666bbc21399dd5bce60c`.
+The instruction is not a return; runtime target, execution, and OS semantics
+remain opaque. Its sole local PE operand is a file-backed, nonwritable
+`.rdata` absolute-memory read of VA `0x007d6010` / RVA `0x003d6010`. Raw PE32
+import metadata uniquely identifies `KERNEL32.dll!IsProcessorFeaturePresent`,
+hint 772, no ordinal, as an import-table binding only. The receipt seals the
+220-byte import directory (10 descriptors, 342 named imports, zero ordinal
+imports, and 139 KERNEL32 rows); its exact descriptor, ILT, IAT, and hint/name
+digests remain pinned in the artifact.
+
+Outgoing direct calls, direct/staged Lua, `call r32`, BND-prefixed controls,
+segment-qualified memory, and interrupt syntax are empty. The all-atlas target
+frontier has exactly six `E8` calls from six owners; the independent IAT-slot
+scan finds one absolute-memory indirect jump, this `FF 25` use. Both scans
+cover 25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814
+instructions. Target scan partition SHA-256 values (owner, target-owner,
+target-reference) are
+`1bbecba81a7d7aa4aeca7f1f710d6f01f560569ffa80408e47615ced30e2abcd`,
+`3a8c2764b1ef2d34109ba3afefbceac6055183a06bf28065f29b231f54dd0f8c`, and
+`4ac37284ab3f41c7661c27432c2e89564f73e16913fa0f183b564f6d2330604e`.
+
+The artifact's pretty-printed file SHA-256 is
+`91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f`; its
+canonical JSON SHA-256 is
+`af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
+The next static frontier is sibling `0x00357b42` only. Relationship membership,
+import metadata, decoded syntax, and PE addresses do not prove semantic
+identity, purpose, ABI, runtime reachability, target resolution, execution
+order, state mutation, normal return, data meaning, un-atlased references, or
+Lua-side behavior.
 
 ## Dependent query local-helper static-boundary artifact
 

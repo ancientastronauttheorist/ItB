@@ -594,10 +594,30 @@ until core engine semantics are reconstructed.
   `366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6`;
   its canonical JSON SHA-256 is
   `0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
-  The next static frontier is its two retained opaque direct targets
-  `0x0039cb92` and `0x00357b42`; these static facts do not prove purpose,
-  ABI, runtime reachability, execution order, termination, state mutation,
-  normal return, data contents, or Lua-side behavior.
+  The first of those targets, relationship-only import thunk `0x0039cb92`, is
+  now sealed separately: its complete body is the one 6-byte `FF 25 10 60 7D
+  00` instruction, with a 1-node / 0-edge `indirect_jump` CFG (canonical
+  SHA-256 `29e8bc268788c4dad137925a79b4350355d7f7db2dd2666bbc21399dd5bce60c`).
+  It is not a return; its runtime target, execution, and OS semantics remain
+  opaque. The sole local PE operand is a file-backed, nonwritable `.rdata`
+  absolute-memory read at VA `0x007d6010` / RVA `0x003d6010`. Raw PE32 import
+  metadata uniquely binds it to `KERNEL32.dll!IsProcessorFeaturePresent`, hint
+  772, no ordinal; the binding is metadata only. The receipt seals the
+  220-byte import directory (10 descriptors / 342 named / zero ordinal;
+  KERNEL32 has 139 rows), retains parent `E8` at `0x00357b75`, and finds six
+  all-atlas `E8` calls from six owners. A separate all-atlas IAT-slot scan
+  finds exactly this one `FF 25` use. There are no outgoing direct calls,
+  direct/staged Lua, `call r32`, BND, segment, or interrupt records. The scan
+  covers 25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814
+  instructions. Its pretty-printed file SHA-256 is
+  `91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f`; its
+  canonical JSON SHA-256 is
+  `af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
+  The next static frontier is sibling `0x00357b42` only. Relationship
+  membership, import metadata, decoded syntax, and PE addresses do not prove
+  purpose, source identity, ABI, runtime reachability, target resolution,
+  execution order, state mutation, normal return, data meaning, or Lua-side
+  behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

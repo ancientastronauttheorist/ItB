@@ -203,10 +203,27 @@ scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814
 instructions. Its pretty-printed and canonical SHA-256 values are
 `366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6` and
 `0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
-The next static frontier is the two retained opaque direct targets
-`0x0039cb92` and `0x00357b42`; their relationship and decoded syntax do not
-prove purpose, ABI, runtime reachability, state mutation, normal return, or
-Lua-side behavior.
+The first of those retained direct targets, the relationship-only import thunk
+at `0x0039cb92`, is now sealed separately: its whole body is the one
+6-byte `FF 25 10 60 7D 00` instruction, with a 1-node / 0-edge
+`indirect_jump` CFG. It is not a return; its runtime target, execution, and OS
+semantics remain opaque. Its sole local PE operand is the file-backed,
+nonwritable `.rdata` absolute-memory read at VA `0x007d6010` (RVA
+`0x003d6010`). Raw PE32 import metadata uniquely binds that slot to
+`KERNEL32.dll!IsProcessorFeaturePresent`, hint 772, no ordinal; that binding
+is metadata only. The receipt seals the 220-byte import directory (10
+descriptors, 342 named imports, zero ordinal imports, 139 KERNEL32 rows), has
+no outgoing direct calls, Lua evidence, `call r32`, BND, segment, or interrupt
+syntax, and rejoins parent `E8` at `0x00357b75`. Its all-atlas target frontier
+is exactly six `E8` calls from six owners, while the independent IAT-slot scan
+finds exactly this one `FF 25` use. The scan covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Its pretty-printed and
+canonical SHA-256 values are
+`91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f` and
+`af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
+The next static frontier is sibling `0x00357b42` only; these static facts do
+not prove purpose, ABI, runtime reachability, execution order, state mutation,
+normal return, data contents, or Lua-side behavior.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at
