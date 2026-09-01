@@ -1,0 +1,527 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_second_callee_static_boundary",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "control_flow_graph": {
+    "caller_entry_rva": "0x0038c89f",
+    "edge_count": 1,
+    "node_count": 2,
+    "nodes": [
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x0038c89f",
+        "sha256": "c6d8b4c2dc3118001d418f6f8a033d3bfa81a223ed9c2769d1c9788433a0cc21",
+        "size": 5,
+        "successor_rvas": [
+          "0x0038c8a4"
+        ],
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": false
+      },
+      {
+        "flow_kind": "terminal",
+        "rva": "0x0038c8a4",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1,
+        "successor_rvas": [],
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": true
+      }
+    ],
+    "range_size": 6,
+    "range_start_rva": "0x0038c89f"
+  },
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "register_call_encoding_audit": [
+      {
+        "encoding": "ffd0",
+        "register": "EAX"
+      },
+      {
+        "encoding": "ffd1",
+        "register": "ECX"
+      },
+      {
+        "encoding": "ffd2",
+        "register": "EDX"
+      },
+      {
+        "encoding": "ffd3",
+        "register": "EBX"
+      },
+      {
+        "encoding": "ffd4",
+        "register": "ESP"
+      },
+      {
+        "encoding": "ffd5",
+        "register": "EBP"
+      },
+      {
+        "encoding": "ffd6",
+        "register": "ESI"
+      },
+      {
+        "encoding": "ffd7",
+        "register": "EDI"
+      }
+    ],
+    "sealed_instruction_count": 2,
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "function_body": {
+    "atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+    "body_sha256": "f664d3656a8c5a2735ac645e41a9bf134e95d47511b55d5466a3384f9d529fec",
+    "body_size": 6,
+    "call_r32_audit": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ],
+    "control_flow_graph_canonical_sha256": "56183b6f25df792273808ded5bb52ca03b46561f13c794f0ef9abf7d687cb375",
+    "direct_lua_calls": [],
+    "entry_rva": "0x0038c89f",
+    "ghidra_analysis_metadata": {
+      "metadata_only": true,
+      "name": "FUN_0078c89f",
+      "name_source": "DEFAULT",
+      "namespace": "Global",
+      "thunk": false
+    },
+    "range_size": 6,
+    "range_start_rva": "0x0038c89f",
+    "register_call_partition_complete": true,
+    "reviewed_points": [
+      {
+        "rva": "0x0038c89f",
+        "sha256": "c6d8b4c2dc3118001d418f6f8a033d3bfa81a223ed9c2769d1c9788433a0cc21",
+        "size": 5,
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": false
+      },
+      {
+        "rva": "0x0038c8a4",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1,
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": true
+      }
+    ],
+    "role": "relationship_defined_assertion_helper_second_callee_static_boundary",
+    "semantic_facts": {
+      "analysis_labels_opaque": true,
+      "relationship_defined_only": true,
+      "runtime_or_success_claimed": false,
+      "source_semantic_names_assigned": false
+    },
+    "staged_lua_dispatches": []
+  },
+  "method": {
+    "not_claimed": [
+      "analysis-label meaning, source identity, ABI, inputs, outputs, behavior, success, failure, or normal return",
+      "runtime reachability, invocation, ordering, frequency, or effects",
+      "contents or runtime meaning of the virtual-only PE-address operand",
+      "computed, indirect, data, un-atlased, dynamic, or Lua-side references"
+    ],
+    "structural_boundary": "The receipt seals six decoded PE bytes, a virtual-only .data address operand, one predecessor edge, and the all-atlas finite reference partition."
+  },
+  "native_calls": {
+    "bnd_prefixed_control_partition_complete": true,
+    "bnd_prefixed_control_syntax": [],
+    "call_r32_audit": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ],
+    "direct_lua_calls": [],
+    "direct_lua_partition_complete": true,
+    "indirect_control_partition_complete": true,
+    "non_pe_immediate_literal_partition_complete": true,
+    "non_pe_immediate_literals": [],
+    "opaque_indirect_controls": [],
+    "opaque_interrupt_partition_complete": true,
+    "opaque_interrupt_syntax": [],
+    "outgoing_direct": [],
+    "outgoing_direct_partition_complete": true,
+    "pe_address_operand_partition_complete": true,
+    "pe_address_operands": [
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "file_backed": false,
+        "file_offset": null,
+        "instruction": {
+          "rva": "0x0038c89f",
+          "sha256": "c6d8b4c2dc3118001d418f6f8a033d3bfa81a223ed9c2769d1c9788433a0cc21",
+          "size": 5
+        },
+        "operand_access": "read",
+        "operand_class": "absolute_memory",
+        "operand_index": 1,
+        "operand_rva": "0x004b7318",
+        "operand_va": "0x008b7318",
+        "role": "opaque_absolute_memory_read_syntax",
+        "section_characteristics": "0xc0000040",
+        "section_name": ".data",
+        "section_raw_offset": "0x00490200",
+        "section_raw_size": "0x00024800",
+        "section_rva": "0x00492000",
+        "section_virtual_size": "0x000471cc",
+        "section_writable": true
+      }
+    ],
+    "register_call_partition_complete": true,
+    "segment_qualified_memory_partition_complete": true,
+    "segment_qualified_memory_syntax": [],
+    "staged_lua_dispatches": [],
+    "staged_lua_partition_complete": true
+  },
+  "predecessor_parent_edges": [
+    {
+      "callee_behavior_opaque": true,
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00379cdc",
+        "source_entry_rva": "0x00379cc2",
+        "target_entry_rva": "0x0038c89f",
+        "target_name_sha256": "ad5603569c38795fd3392ccc8a84846c29f36a3dd97355ac30eb0d8b9b5fb0b0",
+        "target_rva": "0x0038c89f"
+      },
+      "instruction": {
+        "rva": "0x00379cdc",
+        "sha256": "adb9e2c0779eee8c161bcbfbeebb3ba833bfdae639ef3d985a7b4d285de86401",
+        "size": 5
+      },
+      "label_source": "analysis_or_default",
+      "role": "opaque_native_direct_edge",
+      "source_atlas_record_sha256": "0103f8a5b002b70e110ee0031538326b0eeb59da2cc798607a62a5603e04ac29",
+      "source_body_sha256": "1f55c49efcf686fecf491fc4ac23411e373af8d7c38c0f076b070a417e7ddf13",
+      "source_body_size": 72,
+      "source_entry_rva": "0x00379cc2",
+      "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+      "target_body_sha256": "f664d3656a8c5a2735ac645e41a9bf134e95d47511b55d5466a3384f9d529fec",
+      "target_body_size": 6,
+      "target_entry_rva": "0x0038c89f",
+      "target_rva": "0x0038c89f"
+    }
+  ],
+  "predecessor_static_boundary": {
+    "analysis_kind": "pe_native_assertion_helper_static_boundary",
+    "canonical_sha256": "beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4"
+  },
+  "program_facts": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "body_range_count": 25490,
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_body_bytes": 3735718,
+    "function_count": 25312
+  },
+  "schema_version": 1,
+  "summary": {
+    "bnd_prefixed_control_syntax_count": 0,
+    "call_r32_count": 0,
+    "direct_lua_call_count": 0,
+    "native_direct_edge_count": 0,
+    "non_pe_immediate_literal_count": 0,
+    "opaque_indirect_control_count": 0,
+    "opaque_interrupt_syntax_count": 0,
+    "pe_address_operand_count": 1,
+    "reviewed_target_bytes": 6,
+    "reviewed_target_count": 1,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 1,
+    "sealed_control_flow_graph_edge_count": 1,
+    "sealed_control_flow_graph_node_count": 2,
+    "sealed_instruction_count": 2,
+    "segment_qualified_memory_syntax_count": 0,
+    "staged_lua_dispatch_count": 0,
+    "target_reference_count": 3,
+    "target_reference_direct_call_count": 3,
+    "target_reference_memory_operand_count": 0,
+    "target_reference_other_address_count": 0,
+    "target_reference_owner_count": 3
+  },
+  "whole_atlas_reference_scan": {
+    "aggregates": {
+      "comparison_count": 0,
+      "direct_call_count": 3,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "owner_count": 3,
+      "reference_count": 3,
+      "target_count": 1,
+      "target_owner_count": 3
+    },
+    "owner_partition": [
+      {
+        "owner_atlas_record_sha256": "0103f8a5b002b70e110ee0031538326b0eeb59da2cc798607a62a5603e04ac29",
+        "owner_entry_rva": "0x00379cc2",
+        "reference_count": 1
+      },
+      {
+        "owner_atlas_record_sha256": "d0d713a914e2065e32fc25b4f289f91909576e382a6c9aef5c6186c16403e39b",
+        "owner_entry_rva": "0x00392d32",
+        "reference_count": 1
+      },
+      {
+        "owner_atlas_record_sha256": "654a6c370fe85fa9e87bb83abc6b53d350386dce0352169728bf1fd02027c318",
+        "owner_entry_rva": "0x00392efb",
+        "reference_count": 1
+      }
+    ],
+    "partition_sha256": {
+      "owner_partition": "ad95edf73405c9fe2ee0689db262557eea2d1d508a2d952aa690a0575a1fdc90",
+      "target_owner_partition": "f3d8416816c947b93549fdefe8cbf1ec80f8e758223d5c1099d6db9dfc063d02",
+      "target_partition": "6ec1b7904a151173d82aae3a94e9ea9d0a975241e4f61f7ba3a95b92dc55780e",
+      "target_reference_partition": "19246dfd530950dd8eae7bac502f01ee5e084591cdf72752f23b5f30f935ca77"
+    },
+    "references": [
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379cdc",
+          "source_entry_rva": "0x00379cc2",
+          "target_entry_rva": "0x0038c89f",
+          "target_name_sha256": "ad5603569c38795fd3392ccc8a84846c29f36a3dd97355ac30eb0d8b9b5fb0b0",
+          "target_rva": "0x0038c89f"
+        },
+        "instruction_rva": "0x00379cdc",
+        "instruction_sha256": "adb9e2c0779eee8c161bcbfbeebb3ba833bfdae639ef3d985a7b4d285de86401",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "0103f8a5b002b70e110ee0031538326b0eeb59da2cc798607a62a5603e04ac29",
+        "owner_entry_rva": "0x00379cc2",
+        "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+        "target_rva": "0x0038c89f",
+        "target_va": "0x0078c89f",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00392d68",
+          "source_entry_rva": "0x00392d32",
+          "target_entry_rva": "0x0038c89f",
+          "target_name_sha256": "ad5603569c38795fd3392ccc8a84846c29f36a3dd97355ac30eb0d8b9b5fb0b0",
+          "target_rva": "0x0038c89f"
+        },
+        "instruction_rva": "0x00392d68",
+        "instruction_sha256": "8601f5f6b650ec66bc8bf077f89505efd31c543b161a29563a8d9c14b43b4b53",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "d0d713a914e2065e32fc25b4f289f91909576e382a6c9aef5c6186c16403e39b",
+        "owner_entry_rva": "0x00392d32",
+        "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+        "target_rva": "0x0038c89f",
+        "target_va": "0x0078c89f",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00392f34",
+          "source_entry_rva": "0x00392efb",
+          "target_entry_rva": "0x0038c89f",
+          "target_name_sha256": "ad5603569c38795fd3392ccc8a84846c29f36a3dd97355ac30eb0d8b9b5fb0b0",
+          "target_rva": "0x0038c89f"
+        },
+        "instruction_rva": "0x00392f34",
+        "instruction_sha256": "2076da48c2b5d0cff546db09c81e8fd21ff2fbe4faa932881943750c4209a1db",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "654a6c370fe85fa9e87bb83abc6b53d350386dce0352169728bf1fd02027c318",
+        "owner_entry_rva": "0x00392efb",
+        "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+        "target_rva": "0x0038c89f",
+        "target_va": "0x0078c89f",
+        "use_class": "direct_call"
+      }
+    ],
+    "references_canonical_sha256": "8b9a4c17749dba7b9a76a1ccc2ff85dcb064708b16ccc40a2266aa6b4a488a10",
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_owner_partition": [
+      {
+        "owner_atlas_record_sha256": "0103f8a5b002b70e110ee0031538326b0eeb59da2cc798607a62a5603e04ac29",
+        "owner_entry_rva": "0x00379cc2",
+        "reference_count": 1,
+        "target_rva": "0x0038c89f"
+      },
+      {
+        "owner_atlas_record_sha256": "d0d713a914e2065e32fc25b4f289f91909576e382a6c9aef5c6186c16403e39b",
+        "owner_entry_rva": "0x00392d32",
+        "reference_count": 1,
+        "target_rva": "0x0038c89f"
+      },
+      {
+        "owner_atlas_record_sha256": "654a6c370fe85fa9e87bb83abc6b53d350386dce0352169728bf1fd02027c318",
+        "owner_entry_rva": "0x00392efb",
+        "reference_count": 1,
+        "target_rva": "0x0038c89f"
+      }
+    ],
+    "target_partition": [
+      {
+        "owner_count": 3,
+        "reference_count": 3,
+        "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+        "target_rva": "0x0038c89f"
+      }
+    ],
+    "target_reference_partition": [
+      {
+        "reference_count": 3,
+        "target_atlas_record_sha256": "bedac224c196ecaac1be86641c5dff897aa6f82a898bb95760259b310f50d207",
+        "target_rva": "0x0038c89f"
+      }
+    ],
+    "target_rvas": [
+      "0x0038c89f"
+    ],
+    "target_vas": [
+      "0x0078c89f"
+    ]
+  }
+}
