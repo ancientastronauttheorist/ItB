@@ -114,7 +114,7 @@ def _profile(facts: Mapping[str,Any])->dict[str,Any]:
     refs.sort(key=lambda item:item["instruction_rva"])
     if len(refs)!=4 or len({item["owner_entry_rva"] for item in refs})!=4: raise NativeCallnewhStaticBoundaryError("callnewh declared reference profile differs")
     return {"executable_sha256":_EXE_SHA256,"functions":[_FUNCTION],"literals":[],"native_edges":[],"target_references":refs}
-def _reference_scan(scan: Mapping[str,Any])->dict[str,Any]:
+def _reference_scan(scan: Mapping[str,Any],require_owner_partition: bool=False)->dict[str,Any]:
     result=dict(_mapping(scan,"scan")); refs=_array(result.get("references"),"references"); aggregate=dict(_mapping(result.get("aggregates"),"aggregates")); aggregate.pop("returned_callback_reference_count",None); aggregate.pop("alternate_owner_reference_count",None); result["aggregates"]=aggregate
     if len(refs)!=4 or aggregate!={"reference_count":4,"direct_call_count":4,"comparison_count":0,"other_address_count":0,"memory_operand_count":0,"owner_count":4}: raise NativeCallnewhStaticBoundaryError("reference partition differs")
     for raw in refs:
@@ -124,9 +124,10 @@ def _reference_scan(scan: Mapping[str,Any])->dict[str,Any]:
     owners={item["owner_entry_rva"]:item["owner_atlas_record_sha256"] for item in refs}
     if len(owners)!=4: raise NativeCallnewhStaticBoundaryError("owner partition differs")
     supplied=_array(result.get("owner_partition",[]),"owner partition")
-    if supplied:
-        for item in supplied:_exact_keys(_mapping(item,"owner partition item"),{"owner_entry_rva","owner_atlas_record_sha256","reference_count"},"owner partition item")
-    result["owner_partition"]=[{"owner_entry_rva":owner,"owner_atlas_record_sha256":digest,"reference_count":1} for owner,digest in sorted(owners.items())]
+    for item in supplied:_exact_keys(_mapping(item,"owner partition item"),{"owner_entry_rva","owner_atlas_record_sha256","reference_count"},"owner partition item")
+    derived=[{"owner_entry_rva":owner,"owner_atlas_record_sha256":digest,"reference_count":1} for owner,digest in sorted(owners.items())]
+    if require_owner_partition and ("owner_partition" not in result or not _same(supplied,derived)): raise NativeCallnewhStaticBoundaryError("owner partition differs")
+    result["owner_partition"]=derived
     return result
 def _expected_scan(facts: Mapping[str,Any],direct: Mapping[str,Any])->dict[str,Any]: return _reference_scan(_expected_reference_scan(facts,direct,_profile(facts)))
 def _native_edges(facts: Mapping[str,Any], image: Any | None = None)->dict[str,list[dict[str,Any]]]:
@@ -193,7 +194,7 @@ def validate_native_callnewh_static_boundary_structure(evidence:Mapping[str,Any]
         for point in _array(_mapping(bodies[0],"body").get("reviewed_points"),"points"):
             node=graph_map[_ENTRY][1].get(_rva(_mapping(point,"point").get("rva"),"rva"))
             if node is None or (node.get("size"),node.get("sha256")) != (_mapping(point,"point").get("size"),_mapping(point,"point").get("sha256")):raise NativeCallnewhStaticBoundaryError("point does not join CFG")
-        scan=_reference_scan(_mapping(evidence.get("whole_atlas_reference_scan"),"scan"))
+        scan=_reference_scan(_mapping(evidence.get("whole_atlas_reference_scan"),"scan"),require_owner_partition=True)
         if not _same(scan,_expected_scan(facts,direct)) or not _same(evidence.get("operator_new_callnewh_edge"),_operator_predecessor(operator,scan)) or not _same(evidence.get("native_calls"),_native_edges(facts)) or not _same(evidence.get("summary"),_summary(evidence)):raise NativeCallnewhStaticBoundaryError("edge, reference, or summary differs")
         _assert_publication_safe(evidence); return {"schema_version":SCHEMA_VERSION,"analysis_kind":STRUCTURE_VERIFICATION_KIND,"status":"structurally_verified","build_identity":dict(evidence["build_identity"]),"evidence_sha256":_canonical_sha256(evidence),"summary":dict(evidence["summary"])}
     except NativeCallnewhStaticBoundaryError:raise

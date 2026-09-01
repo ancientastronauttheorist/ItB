@@ -71,6 +71,13 @@ def test_committed_exact_rebuild(values):
 def test_structure_rejects_every_top_level_category(values,monkeypatch,key):_rejects(values,monkeypatch,_replace(values["evidence"],(key,),_changed(values["evidence"][key])))
 @pytest.mark.parametrize("path",[("unexpected",),("function_bodies",0,"unexpected"),("native_calls","indirect",0,"unexpected"),("whole_atlas_reference_scan","references",0,"unexpected"),("whole_atlas_reference_scan","owner_partition",0,"unexpected"),("operator_new_callnewh_edge","instruction","unexpected")])
 def test_structure_rejects_unknown_retained_keys(values,monkeypatch,path):_rejects(values,monkeypatch,_add(values["evidence"],path,True))
+def test_structure_rejects_missing_owner_partition(values,monkeypatch):
+ evidence=copy.deepcopy(values["evidence"]);del evidence["whole_atlas_reference_scan"]["owner_partition"];_rejects(values,monkeypatch,evidence)
+@pytest.mark.parametrize("path",[("whole_atlas_reference_scan","owner_partition",0,"owner_entry_rva"),("whole_atlas_reference_scan","owner_partition",0,"owner_atlas_record_sha256"),("whole_atlas_reference_scan","owner_partition",0,"reference_count")])
+def test_structure_rejects_tampered_owner_partition(values,monkeypatch,path):
+ cursor=values["evidence"]
+ for key in path:cursor=cursor[key]
+ _rejects(values,monkeypatch,_replace(values["evidence"],path,_changed(cursor)))
 @pytest.mark.parametrize("value",[None,False,[],{}])
 def test_structure_rejects_malformed_reference_owner(values,monkeypatch,value):_rejects(values,monkeypatch,_replace(values["evidence"],("whole_atlas_reference_scan","references",0,"owner_entry_rva"),value))
 @pytest.mark.parametrize("path",[("native_calls","indirect",0,"instruction","rva"),("native_calls","indirect",0,"call_form"),("native_calls","indirect",0,"operand_va"),("native_calls","indirect",0,"section_characteristics"),("native_calls","absolute_memory_reads",0,"operand_rva"),("native_calls","absolute_memory_reads",0,"section_writable")])
