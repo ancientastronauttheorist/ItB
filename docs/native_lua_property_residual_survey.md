@@ -4,9 +4,10 @@ Status: partially promoted exact-build static research checkpoint. The two
 identity-mismatch traces are normalized by the dependent mismatch-path
 artifact. The initializer's marker, `__gc` closure placement, and 13-entry
 operator-wrapper construction loop are normalized by a second dependent
-artifact. Cleanup-callback behavior, the wrapper callback, cleanup helper, and
-native-recognizer frontier remain survey-only facts; their reviewed artifact
-split and exact acceptance packet are frozen in
+artifact. Cleanup-callback/helper behavior and its two-reference frontier are
+now normalized by a third dependent artifact. The wrapper callback and native-
+recognizer frontier remain survey-only facts; their reviewed artifact boundary
+and exact acceptance packet are frozen in
 `docs/native_lua_property_callback_artifact_spec.md`.
 
 ## Bound inputs and notation
@@ -337,10 +338,9 @@ same derivation without reopening the PE; its exact validator rebuilds through
 the complete prerequisite chain and byte-compares canonical evidence.
 
 This promotes only the getter and setter mismatch traces. Follow-on artifacts
-can seal the wrapper callback, cleanup helper, recognizer, and the 76-call
-recognizer frontier. They must preserve the wrapper's exact two-input loop just
-as the mismatch artifact preserves the setter's conditional absolute-slot-four
-relation.
+can seal the wrapper callback, recognizer, and the 76-call recognizer frontier.
+They must preserve the wrapper's exact two-input loop just as the mismatch
+artifact preserves the setter's conditional absolute-slot-four relation.
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_initializer_chain.json`
 has analysis kind `pe_native_lua_property_initializer_chain`. Its
@@ -355,6 +355,22 @@ operator array. The resulting grammar records
 `T["__luabind_class"] = true`, the zero-upvalue `__gc` closure placement,
 and each two-upvalue wrapper closure with upvalue order `[K,B]`. It does not
 normalize behavior inside either callback.
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_cleanup_chain.json`
+has analysis kind `pe_native_lua_property_cleanup_chain`. Its pretty-printed
+SHA-256 is
+`71e22903dc54d2e1088221e61140b12374def39883813c6474c0335f09d4ca88`;
+its canonical JSON SHA-256 is
+`e2aaf57a9560f806814977ee30a48ce4d3afae35d00e78e3bcb39ebb9bfb7483`.
+It recursively exact-verifies the initializer chain, seals the 201-byte
+cleanup callback/helper pair and their 83-node / 86-edge CFG identity, joins
+all ten direct Lua calls, exact-rereads the 11-byte NUL-inclusive `__finalize`
+literal, and exhaustively reproduces the helper call plus initializer closure
+producer as the only two direct target references. Its structural validator
+replays the normalized evidence without reopening the PE; its exact validator
+redecodes both bodies and all 25,490 atlas ranges. This promotes only the
+cleanup pair. The wrapper callback, recognizer, and 76-caller frontier remain
+outside normalized evidence.
 
 This survey does not prove runtime execution, successful API calls or
 allocations, callback callability, factory provenance from callback identity,

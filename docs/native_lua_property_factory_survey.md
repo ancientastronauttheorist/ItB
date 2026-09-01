@@ -329,17 +329,20 @@ the `__luabind_class` true marker, zero-upvalue `__gc` closure placement, and
 all 13 two-upvalue wrapper placements. Upvalue one is the exact key and upvalue
 two is a Boolean true only for `__unm` and `__len`.
 
-This is construction and placement evidence only. It does not normalize
-behavior inside the cleanup or wrapper callbacks, prove runtime dispatch, or
-assign source-level class, property, operator, or metamethod semantics.
+This is construction and placement evidence only. The dependent cleanup-chain
+artifact now normalizes behavior inside the cleanup callback and its sole
+direct helper; wrapper behavior remains outside this initializer artifact. None
+of these facts prove runtime dispatch or assign source-level class, property,
+operator, or metamethod semantics.
 
 The adjacent
 `docs/native_lua_property_residual_survey.md` supplies the promoted mismatch
 and initializer derivations. It also identifies the wrapper callback, its
 numeric-slot-one getter test, a reusable 76-caller native recognizer using the
-same test, and the `__gc` callback's sole direct cleanup helper. Those callback,
-helper, and caller-frontier proofs remain outside the normalized artifacts
-until they are encoded and tested.
+same test, and the `__gc` callback's sole direct cleanup helper. The cleanup
+callback/helper pair and its two-reference frontier are now encoded and tested;
+the wrapper, recognizer, and 76-caller frontier remain outside the normalized
+artifacts.
 
 ## Explicit nonclaims
 

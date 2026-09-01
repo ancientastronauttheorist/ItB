@@ -382,16 +382,18 @@ until core engine semantics are reconstructed.
   pointer array is exact-reread, with true Boolean flags only at `__unm` and
   `__len`; its canonical JSON SHA-256 is
   `b76b3d46d30da4801a3bc4f67be78d3818f847557a0b275f6048120873b44bc4`.
-  Cleanup-callback behavior, the wrapper callback, the cleanup helper, and the
-  76-caller recognizer frontier remain reviewed survey facts awaiting further
-  normalized artifacts. Their next implementation boundary is now frozen in
-  `docs/native_lua_property_callback_artifact_spec.md`: a 201-byte cleanup
-  callback/helper artifact with a complete two-reference target partition,
-  followed by a 395-byte wrapper/recognizer artifact with 20 direct and four
-  staged Lua calls plus the exact 76-owner recognizer frontier. The packet pins
-  all four EDI-enriched CFG identities and preserves the wrapper's no-arity-
-  guard and absolute-slot-three caveats; it is a reviewed specification, not
-  yet normalized callback evidence.
+  Cleanup-callback/helper behavior is now promoted by a dependent artifact. It
+  recursively verifies the initializer, seals 201 bytes and 83-node / 86-edge
+  CFG identity, joins all ten direct Lua calls and the `__finalize` literal,
+  and reproduces the exact two-reference target partition. Its canonical JSON
+  SHA-256 is
+  `e2aaf57a9560f806814977ee30a48ce4d3afae35d00e78e3bcb39ebb9bfb7483`.
+  The wrapper callback and 76-caller recognizer frontier remain reviewed survey
+  facts awaiting the second artifact frozen in
+  `docs/native_lua_property_callback_artifact_spec.md`: a 395-byte pair with
+  20 direct and four staged Lua calls plus the exact 76-owner frontier. The
+  packet preserves the wrapper's no-arity-guard and absolute-slot-three
+  caveats.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue
