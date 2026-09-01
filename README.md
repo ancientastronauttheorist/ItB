@@ -184,8 +184,9 @@ and Lua-side meaning remain unproved.
 Four of that target's direct callees now form a layout-only adjacent-cluster
 boundary across `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, all
 51 instructions, and four CFGs totaling 51 nodes / 47 edges. The cluster has
-two still-opaque outgoing native edges; its `0x00378b7d -> 0x0039cb98` edge is
-closed by the dependent receipt below. One unresolved `call ECX` and one final
+one still-opaque outgoing native edge. Its `0x00378b5d -> 0x00378a15` and
+`0x00378b7d -> 0x0039cb98` edges are closed by the dependent receipts below.
+One unresolved `call ECX` and one final
 `jmp ESI` remain; an intervening call prevents a register-provenance claim for
 the jump. Its complete PE-address operand universe is four file-backed `.text`
 immediates and zero absolute-memory operands. The whole-atlas frontier is
@@ -197,6 +198,20 @@ pretty-printed and canonical SHA-256 values are
 `1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
 Adjacency and analysis labels prove no semantic kinship, execution order,
 exception behavior, ABI, target identity, or runtime effect.
+The dependent second-callee boundary rejoins exact edge
+`0x00378b5d -> 0x00378a15` and seals the complete 31-byte body, all 16
+instructions, and its 16-node / 15-edge CFG. It explicitly binds the target's
+`.text` backing and both neighboring atlas boundaries. The sole PE-address
+operand is an immediate naming writable `.data` RVA `0x00494010`; its four
+file bytes are hash-pinned but their contents and runtime meaning remain
+opaque. The full atlas contains exactly four immediate `E8` entry references
+from four owners, including the parent rejoin. The artifact's pretty-printed
+and canonical SHA-256 values are
+`f5f42474bb049805e9844ac5cb6bffe25f4a20b8caea22ef0120620fdaabd6b8` and
+`ec66ae66eb932cb59f52ca3ad9095c31bb887723ed7647aef4eeeb0aaa64389d`.
+The `__NLG_Notify` spelling is analysis metadata only; purpose, ABI, inputs,
+outputs, behavior, execution, effects, success, failure, and normal return
+remain explicitly unclaimed.
 The dependent third-callee import-thunk boundary rejoins exact edge
 `0x00378b7d -> 0x0039cb98` and seals the complete six-byte `FF 25` body, its
 single instruction, and 1-node / 0-edge indirect-jump CFG. Raw PE metadata

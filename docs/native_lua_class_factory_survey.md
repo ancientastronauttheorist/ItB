@@ -695,9 +695,9 @@ kinship.
 
 The complete outgoing direct-edge partition contains
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The middle edge is now closed by the dependent
-receipt below; the other two remain opaque. The complete `FF D0` through
-`FF D7` audit finds only `call ECX` at `0x00378b4e`. Final `jmp ESI` at
+`0x00378b92 -> 0x00378a40`. The first and middle edges are now closed by the
+dependent receipts below; only the last remains opaque. The complete `FF D0`
+through `FF D7` audit finds only `call ECX` at `0x00378b4e`. Final `jmp ESI` at
 `0x00378b6c` is retained as a separate opaque indirect-control record. The
 exact `MOV ESI,ECX` bytes at `0x00378b57` precede an intervening direct call at
 `0x00378b5d`, so this artifact does not claim that a register value survives
@@ -729,6 +729,44 @@ labels, adjacency, decoded registers, and address syntax do not prove purpose,
 exception behavior, ABI, arguments, target identity, state mutation, success,
 normal return, runtime reachability, dynamic or computed references, data
 consumers, un-atlased code, or Lua-side behavior.
+
+## Dependent adjacent-cluster second-callee static boundary
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary`.
+It canonical-pins the adjacent-cluster receipt and rejoins exact edge
+`0x00378b5d -> 0x00378a15`, including the 25-byte source body, source and
+target atlas identities, exact `E8` instruction, and normalized declared-edge
+metadata.
+
+The target is exactly 31 bytes at `0x00378a15`, all 16 decoded instructions,
+and a 16-node / 15-edge CFG. Its `.text` backing is pinned at file offset
+`0x00377e15`. The exact left atlas neighbor at `0x00378a0c` ends at the target,
+and the exact right neighbor at `0x00378a34` starts at the target end; this is
+layout evidence only. The body has no outgoing direct edge, direct or staged
+Lua call, register call, or indirect control. The `RET 4` operand is retained
+only as non-PE immediate syntax.
+
+The sole PE-address operand is the `MOV EBX,0x00894010` immediate at
+`0x00378a17`. It resolves to file-backed writable `.data` RVA `0x00494010`,
+file offset `0x00492210`. The exact four bytes `20 05 93 19` and their SHA-256
+are sealed, while their contents, consumers, and runtime meaning remain
+opaque.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly four target-entry
+references survive, all immediate `E8` calls at `0x003788ca`, `0x003789c7`,
+`0x00378aae`, and `0x00378b5d` from four owners. The final row exactly rejoins
+the cluster parent edge. The artifact's pretty-printed file SHA-256 is
+`f5f42474bb049805e9844ac5cb6bffe25f4a20b8caea22ef0120620fdaabd6b8`;
+its canonical JSON SHA-256 is
+`ec66ae66eb932cb59f52ca3ad9095c31bb887723ed7647aef4eeeb0aaa64389d`.
+
+The `__NLG_Notify` Ghidra name is analysis metadata only. The receipt does not
+prove source identity, purpose, ABI, inputs, outputs, behavior, invocation,
+effects, success, failure, termination, normal return, computed references,
+un-atlased code, or Lua-side references.
 
 ## Dependent adjacent-cluster third-callee import-thunk static boundary
 

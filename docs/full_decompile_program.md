@@ -565,8 +565,9 @@ until core engine semantics are reconstructed.
   and four CFGs totaling 51 nodes / 47 edges. All five parent `E8` records are
   cross-joined to the independently rebuilt whole-atlas frontier, which has
   sole owner `0x003729b0` and target partition `1/1/1/2`. The
-  `0x00378b7d -> 0x0039cb98` edge is closed by the dependent receipt below;
-  two outgoing direct edges remain opaque. The complete register-call audit
+  `0x00378b5d -> 0x00378a15` and `0x00378b7d -> 0x0039cb98` edges are closed
+  by the dependent receipts below; one outgoing direct edge remains opaque.
+  The complete register-call audit
   contains only `call ECX` at `0x00378b4e`; final `jmp ESI` at `0x00378b6c`
   is separately retained without a target-provenance claim across the
   intervening call. The
@@ -580,6 +581,22 @@ until core engine semantics are reconstructed.
   Adjacency and analysis labels prove no semantic kinship, execution order,
   exception behavior, ABI, target identity, state mutation, runtime effect,
   or Lua-side meaning.
+  The dependent adjacent-cluster second-callee boundary canonical-pins that
+  receipt and rejoins exact edge `0x00378b5d -> 0x00378a15`. It seals all 31
+  target bytes, all 16 instructions, and a 16-node / 15-edge CFG. Exact PE
+  checks bind the target to `.text` file offset `0x00377e15`, pin the atlas
+  neighbors ending at `0x00378a15` and beginning at `0x00378a34`, and retain
+  one opaque immediate naming writable `.data` RVA `0x00494010`. The four
+  file bytes at that operand are `20 05 93 19` and are hash-pinned without a
+  contents or runtime-behavior claim. An exhaustive all-operand atlas scan
+  finds exactly four immediate `E8` entry references from four owners. Its
+  pretty-printed file SHA-256 is
+  `f5f42474bb049805e9844ac5cb6bffe25f4a20b8caea22ef0120620fdaabd6b8`;
+  its canonical JSON SHA-256 is
+  `ec66ae66eb932cb59f52ca3ad9095c31bb887723ed7647aef4eeeb0aaa64389d`.
+  The `__NLG_Notify` Ghidra label is metadata only. Purpose, source identity,
+  ABI, arguments, outputs, behavior, invocation, effects, success, failure,
+  termination, and normal return remain unproved.
   The dependent adjacent-cluster third-callee import-thunk boundary
   canonical-pins that receipt and rejoins exact edge
   `0x00378b7d -> 0x0039cb98`. It seals all six target bytes, the sole `FF 25`

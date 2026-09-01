@@ -1509,8 +1509,9 @@ normalized Ghidra edge.
 
 The cluster's complete declared outgoing-edge partition is
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The middle edge is closed by the dependent receipt
-below; the other two remain opaque. The complete eight-register call audit
+`0x00378b92 -> 0x00378a40`. The first and middle edges are closed by the
+dependent receipts below; only the last remains opaque. The complete
+eight-register call audit
 contains only `call ECX` at `0x00378b4e`. The final `jmp ESI` at
 `0x00378b6c` is retained as opaque indirect-control syntax. Although
 `0x00378b57` has exact `MOV ESI,ECX` bytes, the intervening direct call at
@@ -1542,6 +1543,68 @@ analysis labels, decoded registers, and addresses do not prove shared purpose,
 execution order, exception behavior, ABI, argument meaning, target identity,
 state mutation, success, normal return, runtime reachability, dynamic or
 computed references, data consumers, un-atlased code, or Lua-side behavior.
+
+## Native query adjacent-cluster second-callee static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.py`
+canonical-pins the adjacent-cluster artifact, rejoins its exact
+`0x00378b5d -> 0x00378a15` edge, seals the relationship-defined 31-byte target
+and CFG, binds its exact PE backing and neighboring atlas boundaries, and
+performs a whole-atlas scan for every static reference to the target entry.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --adjacent-callee-cluster-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --adjacent-callee-cluster-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary`.
+It seals `0x00378a15`: 31 exact bytes, all 16 instructions, and a 16-node /
+15-edge CFG. The target is bound to file-backed non-writable `.text` at file
+offset `0x00377e15`. The exact left atlas neighbor at `0x00378a0c` ends at the
+target, and the right neighbor at `0x00378a34` begins at the target end. These
+adjacency facts prove layout only.
+
+The body has no outgoing native direct edge, direct or staged Lua call,
+register call, or indirect control. Its one PE-address operand is the
+immediate at `0x00378a17`, naming writable file-backed `.data` VA
+`0x00894010` / RVA `0x00494010` / file offset `0x00492210`. The exact four
+file bytes are `20 05 93 19`, with SHA-256
+`f0a19effaf081c6247b43afd3bc9f70ea771353137f4cce3ac38833893543af1`.
+Their contents and runtime meaning remain opaque. The final `RET 4` operand is
+retained separately as non-PE immediate syntax.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly four target-entry references survive, all
+immediate `E8` calls at `0x003788ca`, `0x003789c7`, `0x00378aae`, and
+`0x00378b5d` from four owners. The final row exactly rejoins the parent edge.
+The artifact's pretty-printed file SHA-256 is
+`f5f42474bb049805e9844ac5cb6bffe25f4a20b8caea22ef0120620fdaabd6b8`;
+its canonical JSON SHA-256 is
+`ec66ae66eb932cb59f52ca3ad9095c31bb887723ed7647aef4eeeb0aaa64389d`.
+
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing evidence after
+failed final validation, and removes a failed private publication. The
+`__NLG_Notify` Ghidra name is analysis metadata only. Source identity, purpose,
+ABI, arguments, outputs, behavior, invocation, effects, success, failure,
+termination, normal return, computed references, un-atlased code, and Lua-side
+references remain unproved.
 
 ## Native query adjacent-cluster third-callee import-thunk static boundary
 
