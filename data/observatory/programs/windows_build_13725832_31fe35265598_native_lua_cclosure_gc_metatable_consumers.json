@@ -1,0 +1,5229 @@
+{
+  "analysis_kind": "pe_native_lua_cclosure_gc_metatable_consumers",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+  },
+  "bootstrap_caller": {
+    "callee_entry_rva": "0x002e6900",
+    "cdecl_cleanup_before_call": {
+      "rva": "0x0004cadb",
+      "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+      "size": 3
+    },
+    "direct_call_rva": "0x0004cade",
+    "entry_rva": "0x0004caa0",
+    "luaL_newstate_call_rva": "0x0004cab0",
+    "luaL_openlibs_call_rva": "0x0004cad2",
+    "state_transfer": {
+      "register": "ecx",
+      "rva": "0x0004cad8",
+      "sha256": "dffe399673ee631e67b2044c87b339a6ecc9e93e21e2e3a569c6791989f64e69",
+      "size": 3,
+      "source": "[esi+0x10]"
+    }
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "callback_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_callback_census",
+    "canonical_sha256": "cb594d7662778b98549bde5f460f1c9d8d0b30f3625d44953c392b8caa50b003"
+  },
+  "callback_identities": [
+    {
+      "atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+      "body_sha256": "50a7849dc71af7790dcdf28d1cb53735f9b19de05bf74c2dc06a536bcb5ca53c",
+      "body_size": 58,
+      "entry_rva": "0x002e6c30"
+    },
+    {
+      "atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+      "body_sha256": "e304e0e0e68f5266e6ad400d950b0ce39ca57ca6d517dc0c8e0873847683a087",
+      "body_size": 58,
+      "entry_rva": "0x002e6840"
+    },
+    {
+      "atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+      "body_sha256": "fe3f015008893bb5486bb04ce326e64cc99533006cca817b51b34cd1bc0c9e29",
+      "body_size": 47,
+      "entry_rva": "0x002e6880"
+    },
+    {
+      "atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+      "body_sha256": "407e02b34fb9b785dfd04168bd31ba78b71b733ae96db40aee4fc9bc3b02fe82",
+      "body_size": 71,
+      "entry_rva": "0x002e68b0"
+    },
+    {
+      "atlas_record_sha256": "ced5cc883286ebf3bdd45adbbd9c096f1a2a9ad97aa8bc98edf3f43f0bdc6423",
+      "body_sha256": "8a33265accb6ace9d75f2b125d1d25f9b46b3d52a8835ef199ae607a906c5b35",
+      "body_size": 33,
+      "entry_rva": "0x002ea4b0"
+    }
+  ],
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "direct_table_setter_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_direct_table_setter_publication_census",
+    "canonical_sha256": "a6333ffefd9c9d0ed42bea28b9f5a6e82afff58fc7adb26293c34b5589cb5fa9"
+  },
+  "helper_consumer_call_boundary": {
+    "callee_entry_rva": "0x002ea4e0",
+    "caller_entry_rva": "0x002ea820",
+    "direct_call_rva": "0x002ea839",
+    "state_transfer": {
+      "register": "ecx",
+      "rva": "0x002ea835",
+      "sha256": "4b114be14a1901cce6f7a0f927756e414400942123cd365bfe5043a4b118045f",
+      "size": 2,
+      "source": "ebx"
+    },
+    "userdata_pointer_save": {
+      "register": "esi",
+      "rva": "0x002ea837",
+      "sha256": "234f8f2031d456cbb66a9a4907f797ba3e97e213bae11b112af85390c778cb8c",
+      "size": 2,
+      "source": "eax"
+    }
+  },
+  "indirect_settable_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_indirect_settable_publication_census",
+    "canonical_sha256": "50790f8372d90ab11e44a483a39bd575e5af10ceb037c1aa557e4ebf801ac682"
+  },
+  "initializer_subtree": {
+    "direct_edges": [
+      {
+        "instruction_rva": "0x002e6a25",
+        "instruction_sha256": "db05259bae8acf96acf037c5c93ab6c666dbce1ea3437178480098c0e35c963e",
+        "instruction_size": 5,
+        "source_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "source_entry_rva": "0x002e6900",
+        "target_entry_rva": "0x002ebb30"
+      },
+      {
+        "instruction_rva": "0x002ebb54",
+        "instruction_sha256": "cb8c54bf5e58aa1dbf5ac8b381a66ac6a828dccd1803d353ca0cabddc4757214",
+        "instruction_size": 5,
+        "source_atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+        "source_entry_rva": "0x002ebb30",
+        "target_entry_rva": "0x002eb990"
+      },
+      {
+        "instruction_rva": "0x002ebb5e",
+        "instruction_sha256": "7add4fa4fcac6eb0461992f73e07abbfda662741bc68e78e5cd59771b807b723",
+        "instruction_size": 5,
+        "source_atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+        "source_entry_rva": "0x002ebb30",
+        "target_entry_rva": "0x002eba60"
+      },
+      {
+        "instruction_rva": "0x002ebb68",
+        "instruction_sha256": "d6ea1f27958b2f3e3fdec9c9f9778c8ac80df1caba16b66b91e866fd134b7d90",
+        "instruction_size": 5,
+        "source_atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+        "source_entry_rva": "0x002ebb30",
+        "target_entry_rva": "0x002ea2d0"
+      }
+    ],
+    "stack_proof": {
+      "entry_shape": "B,K,U",
+      "join_shape": "B,K,U",
+      "net_effect": 0,
+      "premise": "normal returns only; no runtime execution or retained-reference validity is claimed",
+      "steps": [
+        {
+          "after": "B,K,U",
+          "before": "B,K,U",
+          "call_rva": "0x002ebb54",
+          "callee_entry_rva": "0x002eb990",
+          "reason": "created table is consumed by luaL_ref"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U",
+          "call_rva": "0x002ebb5e",
+          "callee_entry_rva": "0x002eba60",
+          "reason": "created table is consumed by luaL_ref"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U",
+          "call_rva": "0x002ebb68",
+          "callee_entry_rva": "0x002ea2d0",
+          "reason": "property initializer leaves one table"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U,T",
+          "call_rva": "0x002ebb73",
+          "callee_entry_rva": "luaL_ref",
+          "reason": "parent consumes the property table"
+        }
+      ]
+    }
+  },
+  "method": {
+    "cache_boundary": "the four asserted bootstrap chains use the common lua_gettable lookup and their four lua_settable registry stores; only the fifth asserted cache uses lua_rawget/lua_rawset",
+    "not_claimed": [
+      "runtime execution, reachability, persistence, or lifetime",
+      "registry-entry absence, dynamic type beyond the explicit type-5 hit test, or later mutation",
+      "runtime __gc dispatch, finalization, destructor/free semantics, ownership, allocation origin, or source-level identity",
+      "all native __gc construction, dynamically keyed code, Lua code, or completeness beyond the finite normalized immediate-C-closure setter and table-key provenance universes",
+      "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts"
+    ],
+    "partition_scope": "this excludes other native construction grammars, including staged rawset writes in initializer helpers 0x002eb990 and 0x002eba60",
+    "publication_partition": "exactly five of the ten normalized immediate-C-closure setter publications are keyed by __gc",
+    "staged_call_premise": "x86 cdecl preserves EBX, ESI, and EDI across calls; exact CFG dominance and reaching-definition replay prove every staged call's last stage; atlas entries and Ghidra-declared direct targets prove the function entry is the sole modeled external entry"
+  },
+  "records": [
+    {
+      "callback_call_rva": "0x002e69f1",
+      "callback_entry_rva": "0x002e6c30",
+      "conditional_null_gate": {
+        "branch_rva": "0x002e69bc",
+        "fallthrough_rva": "0x002e69c2",
+        "nonzero_target_rva": "0x002e6c19",
+        "test_rva": "0x002e69ba"
+      },
+      "metatable_consumer": {
+        "call_form": "x86_absolute_iat_indirect_call_ff15",
+        "call_rva": "0x002e6a08",
+        "iat_rva": "0x003d6530",
+        "import_name": "lua_setmetatable",
+        "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+        "instruction_size": 6
+      },
+      "publication": {
+        "alternate_global_clear": null,
+        "callback_atlas_record_sha256": "f238fd47a54e68d8bcf2b78ef18ce27c0917f5afe55139cc5afb0f1273405ecc",
+        "callback_call_rva": "0x002e69f1",
+        "callback_entry_rva": "0x002e6c30",
+        "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "caller_entry_rva": "0x002e6900",
+        "closure_effective_upvalue_count": 0,
+        "deferred_argument_proof": null,
+        "destination": {
+          "array_size_push": {
+            "rva": "0x002e69d3",
+            "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+            "size": 1
+          },
+          "class": "fresh_unnamed_table_at_relative_index_minus_3",
+          "creator_api": "lua_createtable",
+          "creator_call": {
+            "rva": "0x002e69d9",
+            "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+            "size": 6
+          },
+          "hash_size_push": {
+            "rva": "0x002e69d4",
+            "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+            "size": 1
+          },
+          "lua_table_index": -3,
+          "native_argument_cleanup": {
+            "rva": "0x002e69df",
+            "sha256": "3e5d8666de6e41e2d3fe8a422da67fff00bdcc78f6e436101c6d6bf0a6f84c44",
+            "size": 3
+          },
+          "native_argument_interior": {
+            "rva": "0x002e69d6",
+            "sha256": "6f4593845df7d880045a6bebdb6b606748de9945cd26d4a3e429e3670b66f4d2",
+            "size": 3
+          },
+          "semantic_table_identity": null,
+          "size_argument_proof": "guarded_esi_zero",
+          "state_push": {
+            "rva": "0x002e69d5",
+            "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+            "size": 1
+          }
+        },
+        "grammar_family": "literal_key_guarded_register_zero",
+        "key": {
+          "byte_length_excluding_nul": 4,
+          "nul_terminated_bytes_sha256": "6b3cc554d45a56ed43995cc307f4481a80680a993cd06b4ecfef70986c17997e",
+          "rva": "0x0043bf84",
+          "section_characteristics": "0x40000040",
+          "section_name": ".rdata",
+          "section_rva": "0x003d6000",
+          "section_writable": false,
+          "text": "__gc"
+        },
+        "key_call": {
+          "rva": "0x002e69e8",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        "key_call_form": "staged_ebx",
+        "key_pointer_push": {
+          "rva": "0x002e69e2",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        "key_register_api_proof": {
+          "abi_premise": "x86_windows_cdecl_nonvolatile_ebx",
+          "alternate_atlas_entry_rvas": [],
+          "api_name": "lua_pushstring",
+          "call": {
+            "rva": "0x002e69e8",
+            "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+            "size": 2
+          },
+          "declared_direct_call_entries": [],
+          "iat_rva": "0x003d6494",
+          "library": "lua5.1.dll",
+          "post_stage_ebx_writers": [],
+          "register": "ebx",
+          "stage": {
+            "rva": "0x002e6989",
+            "sha256": "bc47ecfb87cc938338a34d357fc0db35e52cc3f90d302ae0f4e3e96fca03979c",
+            "size": 6
+          },
+          "stage_dominates_call": true,
+          "stage_to_call_path_node_count": 32,
+          "stage_to_call_path_rvas": [
+            "0x002e6989",
+            "0x002e698f",
+            "0x002e6994",
+            "0x002e6995",
+            "0x002e6997",
+            "0x002e699c",
+            "0x002e699d",
+            "0x002e69a3",
+            "0x002e69a5",
+            "0x002e69a6",
+            "0x002e69ac",
+            "0x002e69ae",
+            "0x002e69af",
+            "0x002e69b1",
+            "0x002e69b7",
+            "0x002e69ba",
+            "0x002e69bc",
+            "0x002e69c2",
+            "0x002e69c7",
+            "0x002e69c8",
+            "0x002e69ca",
+            "0x002e69cc",
+            "0x002e69cd",
+            "0x002e69d3",
+            "0x002e69d4",
+            "0x002e69d5",
+            "0x002e69d6",
+            "0x002e69d9",
+            "0x002e69df",
+            "0x002e69e2",
+            "0x002e69e7",
+            "0x002e69e8"
+          ]
+        },
+        "key_state_push": {
+          "rva": "0x002e69e7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        "setter_call_rva": "0x002e6a03",
+        "setter_import_name": "lua_settable",
+        "source_publication_kind": "staged_indirect",
+        "table_index": -3,
+        "upvalue_producers": [],
+        "vm_stack_trace": {
+          "after_closure": [
+            "K",
+            "C"
+          ],
+          "after_key": [
+            "K"
+          ],
+          "before_closure": [
+            "K"
+          ],
+          "setter_consumes": [
+            "K",
+            "C"
+          ]
+        },
+        "zero_guard_proof": {
+          "branch_dominates_callback": true,
+          "nonzero_branch": {
+            "rva": "0x002e69bc",
+            "sha256": "e7926e85664f513a9dbe73be3d81bab40ab9a8b01c334847d62e54422cc6cd09",
+            "size": 6
+          },
+          "nonzero_successor_rva": "0x002e6c19",
+          "register": "esi",
+          "test": {
+            "rva": "0x002e69ba",
+            "sha256": "8ab1132e0f39300a69111599262ce5db7c26e24b7eb3cc9ae866e97c67ff49bd",
+            "size": 2
+          },
+          "zero_fallthrough_rva": "0x002e69c2",
+          "zero_path_esi_writers": [],
+          "zero_path_node_count": 19,
+          "zero_path_rvas": [
+            "0x002e69c2",
+            "0x002e69c7",
+            "0x002e69c8",
+            "0x002e69ca",
+            "0x002e69cc",
+            "0x002e69cd",
+            "0x002e69d3",
+            "0x002e69d4",
+            "0x002e69d5",
+            "0x002e69d6",
+            "0x002e69d9",
+            "0x002e69df",
+            "0x002e69e2",
+            "0x002e69e7",
+            "0x002e69e8",
+            "0x002e69ea",
+            "0x002e69eb",
+            "0x002e69f0",
+            "0x002e69f1"
+          ]
+        }
+      },
+      "publication_source": "staged_indirect",
+      "record_kind": "conditional_bootstrap_registry_metatable",
+      "registry_key": {
+        "byte_length_excluding_nul": 17,
+        "nul_terminated_bytes_sha256": "d9b53c957a9924e6583d6b1931dfc280dfff360c1a81042f6264b3d285d355fa",
+        "rva": "0x0043bf18",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "__luabind_classes"
+      },
+      "registry_store": {
+        "call_form": "staged_esi",
+        "call_rva": "0x002e6a30",
+        "import_name": "lua_settable",
+        "stage_rva": "0x002e69f7"
+      },
+      "stack_trace": [
+        {
+          "after": "B,K",
+          "before": "B",
+          "operation": "push registry key"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K",
+          "operation": "lua_newuserdata(size)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U",
+          "operation": "lua_createtable(0,0)"
+        },
+        {
+          "after": "B,K,U,T,G",
+          "before": "B,K,U,T",
+          "operation": "push __gc key"
+        },
+        {
+          "after": "B,K,U,T,G,C",
+          "before": "B,K,U,T,G",
+          "operation": "lua_pushcclosure(callback,0)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U,T,G,C",
+          "operation": "lua_settable(-3)"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U,T",
+          "operation": "lua_setmetatable(-2)"
+        },
+        {
+          "after": "B",
+          "before": "B,K,U",
+          "operation": "lua_settable(LUA_REGISTRYINDEX)"
+        }
+      ],
+      "userdata_size": 24
+    },
+    {
+      "callback_call_rva": "0x002e6a8c",
+      "callback_entry_rva": "0x002e6840",
+      "conditional_null_gate": {
+        "branch_rva": "0x002e69bc",
+        "fallthrough_rva": "0x002e69c2",
+        "nonzero_target_rva": "0x002e6c19",
+        "test_rva": "0x002e69ba"
+      },
+      "metatable_consumer": {
+        "call_form": "x86_absolute_iat_indirect_call_ff15",
+        "call_rva": "0x002e6aa9",
+        "iat_rva": "0x003d6530",
+        "import_name": "lua_setmetatable",
+        "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+        "instruction_size": 6
+      },
+      "publication": {
+        "callback_atlas_record_sha256": "e759873ebdebdd205a0cbdc758701883c7302c9cbbc767888bad174d14d5e669",
+        "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+        "callback_call_rva": "0x002e6a8c",
+        "callback_entry_rva": "0x002e6840",
+        "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "caller_entry_rva": "0x002e6900",
+        "cleanup_instruction": {
+          "rva": "0x002e6a92",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        "key_byte_length": 4,
+        "key_push": {
+          "rva": "0x002e6a95",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        "key_rva": "0x0043bf84",
+        "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+        "key_text": "__gc",
+        "library": "lua5.1.dll",
+        "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+        "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+        "setter_call_rva": "0x002e6a9d",
+        "setter_iat_rva": "0x003d6520",
+        "setter_import_name": "lua_setfield",
+        "state_push": {
+          "rva": "0x002e6a9c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        "table_index": -2,
+        "table_index_push": {
+          "rva": "0x002e6a9a",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        }
+      },
+      "publication_source": "setfield",
+      "record_kind": "conditional_bootstrap_registry_metatable",
+      "registry_key": {
+        "byte_length_excluding_nul": 22,
+        "nul_terminated_bytes_sha256": "9ff3832e39fd8abb51ed203f64ef8a5b9c518d8f72156c942d3b99e7a056cd61",
+        "rva": "0x0042a86c",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "__luabind_class_id_map"
+      },
+      "registry_store": {
+        "call_form": "staged_esi",
+        "call_rva": "0x002e6ab5",
+        "import_name": "lua_settable",
+        "stage_rva": "0x002e69f7"
+      },
+      "stack_trace": [
+        {
+          "after": "B,K",
+          "before": "B",
+          "operation": "push registry key"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K",
+          "operation": "lua_newuserdata(size)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U",
+          "operation": "lua_createtable(0,0)"
+        },
+        {
+          "after": "B,K,U,T,C",
+          "before": "B,K,U,T",
+          "operation": "lua_pushcclosure(callback,0)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U,T,C",
+          "operation": "lua_setfield(-2,__gc)"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U,T",
+          "operation": "lua_setmetatable(-2)"
+        },
+        {
+          "after": "B",
+          "before": "B,K,U",
+          "operation": "lua_settable(LUA_REGISTRYINDEX)"
+        }
+      ],
+      "userdata_size": 12
+    },
+    {
+      "callback_call_rva": "0x002e6af9",
+      "callback_entry_rva": "0x002e6880",
+      "conditional_null_gate": {
+        "branch_rva": "0x002e69bc",
+        "fallthrough_rva": "0x002e69c2",
+        "nonzero_target_rva": "0x002e6c19",
+        "test_rva": "0x002e69ba"
+      },
+      "metatable_consumer": {
+        "call_form": "x86_absolute_iat_indirect_call_ff15",
+        "call_rva": "0x002e6b16",
+        "iat_rva": "0x003d6530",
+        "import_name": "lua_setmetatable",
+        "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+        "instruction_size": 6
+      },
+      "publication": {
+        "callback_atlas_record_sha256": "adadbd50871d7733e9c5a18ac886c24b0fcc056db93e7639fcf5b0dd276d557b",
+        "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+        "callback_call_rva": "0x002e6af9",
+        "callback_entry_rva": "0x002e6880",
+        "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "caller_entry_rva": "0x002e6900",
+        "cleanup_instruction": {
+          "rva": "0x002e6aff",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        "key_byte_length": 4,
+        "key_push": {
+          "rva": "0x002e6b02",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        "key_rva": "0x0043bf84",
+        "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+        "key_text": "__gc",
+        "library": "lua5.1.dll",
+        "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+        "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+        "setter_call_rva": "0x002e6b0a",
+        "setter_iat_rva": "0x003d6520",
+        "setter_import_name": "lua_setfield",
+        "state_push": {
+          "rva": "0x002e6b09",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        "table_index": -2,
+        "table_index_push": {
+          "rva": "0x002e6b07",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        }
+      },
+      "publication_source": "setfield",
+      "record_kind": "conditional_bootstrap_registry_metatable",
+      "registry_key": {
+        "byte_length_excluding_nul": 20,
+        "nul_terminated_bytes_sha256": "2c6601dedc983c9694b1c556740cbe937c23189effa02a9d6129090e336f8800",
+        "rva": "0x0043bf6c",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "__luabind_cast_graph"
+      },
+      "registry_store": {
+        "call_form": "staged_esi",
+        "call_rva": "0x002e6b22",
+        "import_name": "lua_settable",
+        "stage_rva": "0x002e69f7"
+      },
+      "stack_trace": [
+        {
+          "after": "B,K",
+          "before": "B",
+          "operation": "push registry key"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K",
+          "operation": "lua_newuserdata(size)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U",
+          "operation": "lua_createtable(0,0)"
+        },
+        {
+          "after": "B,K,U,T,C",
+          "before": "B,K,U,T",
+          "operation": "lua_pushcclosure(callback,0)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U,T,C",
+          "operation": "lua_setfield(-2,__gc)"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U,T",
+          "operation": "lua_setmetatable(-2)"
+        },
+        {
+          "after": "B",
+          "before": "B,K,U",
+          "operation": "lua_settable(LUA_REGISTRYINDEX)"
+        }
+      ],
+      "userdata_size": 4
+    },
+    {
+      "callback_call_rva": "0x002e6b66",
+      "callback_entry_rva": "0x002e68b0",
+      "conditional_null_gate": {
+        "branch_rva": "0x002e69bc",
+        "fallthrough_rva": "0x002e69c2",
+        "nonzero_target_rva": "0x002e6c19",
+        "test_rva": "0x002e69ba"
+      },
+      "metatable_consumer": {
+        "call_form": "x86_absolute_iat_indirect_call_ff15",
+        "call_rva": "0x002e6b83",
+        "iat_rva": "0x003d6530",
+        "import_name": "lua_setmetatable",
+        "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+        "instruction_size": 6
+      },
+      "publication": {
+        "callback_atlas_record_sha256": "78905d68fa790e8ed61f226c7a340071cb1cfd6cb3b772f03ba02fe2eef43821",
+        "callback_call_instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+        "callback_call_rva": "0x002e6b66",
+        "callback_entry_rva": "0x002e68b0",
+        "caller_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "caller_entry_rva": "0x002e6900",
+        "cleanup_instruction": {
+          "rva": "0x002e6b6c",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        "key_byte_length": 4,
+        "key_push": {
+          "rva": "0x002e6b6f",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        "key_rva": "0x0043bf84",
+        "key_sha256": "fead6e576f743083c5afb6839b93cb04c19db8e9f33856dd2bafd8fe88770a94",
+        "key_text": "__gc",
+        "library": "lua5.1.dll",
+        "publication_form": "x86_cdecl_cleanup12_key_imm32_table_minus2_same_state_lua_setfield_ff15",
+        "setter_call_instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+        "setter_call_rva": "0x002e6b77",
+        "setter_iat_rva": "0x003d6520",
+        "setter_import_name": "lua_setfield",
+        "state_push": {
+          "rva": "0x002e6b76",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        "table_index": -2,
+        "table_index_push": {
+          "rva": "0x002e6b74",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        }
+      },
+      "publication_source": "setfield",
+      "record_kind": "conditional_bootstrap_registry_metatable",
+      "registry_key": {
+        "byte_length_excluding_nul": 19,
+        "nul_terminated_bytes_sha256": "79d79631d86216b5e947d500c8c800cb872d14004794f546f7099c0c4c451183",
+        "rva": "0x00420fa8",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "__luabind_class_map"
+      },
+      "registry_store": {
+        "call_form": "staged_esi",
+        "call_rva": "0x002e6b8f",
+        "import_name": "lua_settable",
+        "stage_rva": "0x002e69f7"
+      },
+      "stack_trace": [
+        {
+          "after": "B,K",
+          "before": "B",
+          "operation": "push registry key"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K",
+          "operation": "lua_newuserdata(size)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U",
+          "operation": "lua_createtable(0,0)"
+        },
+        {
+          "after": "B,K,U,T,C",
+          "before": "B,K,U,T",
+          "operation": "lua_pushcclosure(callback,0)"
+        },
+        {
+          "after": "B,K,U,T",
+          "before": "B,K,U,T,C",
+          "operation": "lua_setfield(-2,__gc)"
+        },
+        {
+          "after": "B,K,U",
+          "before": "B,K,U,T",
+          "operation": "lua_setmetatable(-2)"
+        },
+        {
+          "after": "B",
+          "before": "B,K,U",
+          "operation": "lua_settable(LUA_REGISTRYINDEX)"
+        }
+      ],
+      "userdata_size": 12
+    },
+    {
+      "cache": {
+        "lookup": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea4f8",
+          "iat_rva": "0x003d6484",
+          "import_name": "lua_rawget",
+          "instruction_sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+          "instruction_size": 6
+        },
+        "miss_settop": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea512",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        },
+        "raw_access": true,
+        "store": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea55c",
+          "iat_rva": "0x003d652c",
+          "import_name": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6
+        },
+        "table_type_constant": 5,
+        "type": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea501",
+          "iat_rva": "0x003d64fc",
+          "import_name": "lua_type",
+          "instruction_sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+          "instruction_size": 6
+        }
+      },
+      "cache_key": {
+        "byte_length_excluding_nul": 16,
+        "nul_terminated_bytes_sha256": "151c5227a1df5d9eb41c7bb391a21b8ba42be9fa4d6a6a96f95bd9e19a25d796",
+        "rva": "0x0043c570",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false,
+        "text": "luabind.function"
+      },
+      "callback_call_rva": "0x002ea533",
+      "callback_entry_rva": "0x002ea4b0",
+      "consumer": {
+        "between_helper_and_next_lua_call": [
+          {
+            "rva": "0x002ea83e",
+            "sha256": "849f48aadaada9f124f163691d4edb662630d9ee338916176879c197c9b4d1e1",
+            "size": 3
+          },
+          {
+            "rva": "0x002ea841",
+            "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+            "size": 2
+          },
+          {
+            "rva": "0x002ea843",
+            "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+            "size": 1
+          },
+          {
+            "rva": "0x002ea844",
+            "sha256": "6eaef7f6b7489043a110404072ca5eb0c2cbdd27c1bf1a303b372af0f6328374",
+            "size": 2
+          }
+        ],
+        "callee_entry_rva": "0x002ea4e0",
+        "cleanup": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea88b",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        },
+        "closure": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea85e",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        "direct_call_rva": "0x002ea839",
+        "duplicate": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea873",
+          "iat_rva": "0x003d64e4",
+          "import_name": "lua_pushvalue",
+          "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "instruction_size": 6
+        },
+        "next_lua_api_call": true,
+        "registry_ref": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea87f",
+          "iat_rva": "0x003d64e8",
+          "import_name": "luaL_ref",
+          "instruction_sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "instruction_size": 6
+        },
+        "setmetatable": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea846",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        "upvalue_count": 2,
+        "userdata": {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea82f",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        "userdata_size": 4
+      },
+      "publication": {
+        "alternate_global_clear": null,
+        "callback_atlas_record_sha256": "ced5cc883286ebf3bdd45adbbd9c096f1a2a9ad97aa8bc98edf3f43f0bdc6423",
+        "callback_call_rva": "0x002ea533",
+        "callback_entry_rva": "0x002ea4b0",
+        "caller_atlas_record_sha256": "4ef06177a94fc20e9f22528fcd6202ba6853ba62cd93cdc695b0e45cd6a7e490",
+        "caller_entry_rva": "0x002ea4e0",
+        "closure_effective_upvalue_count": 0,
+        "deferred_argument_proof": null,
+        "destination": {
+          "array_size_push": {
+            "rva": "0x002ea518",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2
+          },
+          "class": "fresh_unnamed_table_at_relative_index_minus_3",
+          "creator_api": "lua_createtable",
+          "creator_call": {
+            "rva": "0x002ea51d",
+            "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+            "size": 6
+          },
+          "hash_size_push": {
+            "rva": "0x002ea51a",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2
+          },
+          "lua_table_index": -3,
+          "native_argument_cleanup": null,
+          "native_argument_interior": null,
+          "semantic_table_identity": null,
+          "size_argument_proof": "immediate_zero",
+          "state_push": {
+            "rva": "0x002ea51c",
+            "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+            "size": 1
+          }
+        },
+        "grammar_family": "literal_key_staged_pushstring_immediate_zero",
+        "key": {
+          "byte_length_excluding_nul": 4,
+          "nul_terminated_bytes_sha256": "6b3cc554d45a56ed43995cc307f4481a80680a993cd06b4ecfef70986c17997e",
+          "rva": "0x0043bf84",
+          "section_characteristics": "0x40000040",
+          "section_name": ".rdata",
+          "section_rva": "0x003d6000",
+          "section_writable": false,
+          "text": "__gc"
+        },
+        "key_call": {
+          "rva": "0x002ea529",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        "key_call_form": "staged_ebx",
+        "key_pointer_push": {
+          "rva": "0x002ea523",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        "key_register_api_proof": {
+          "abi_premise": "x86_windows_cdecl_nonvolatile_ebx",
+          "alternate_atlas_entry_rvas": [],
+          "api_name": "lua_pushstring",
+          "call": {
+            "rva": "0x002ea529",
+            "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+            "size": 2
+          },
+          "declared_direct_call_entries": [],
+          "iat_rva": "0x003d6494",
+          "library": "lua5.1.dll",
+          "post_stage_ebx_writers": [],
+          "register": "ebx",
+          "stage": {
+            "rva": "0x002ea4e1",
+            "sha256": "bc47ecfb87cc938338a34d357fc0db35e52cc3f90d302ae0f4e3e96fca03979c",
+            "size": 6
+          },
+          "stage_dominates_call": true,
+          "stage_to_call_path_node_count": 25,
+          "stage_to_call_path_rvas": [
+            "0x002ea4e1",
+            "0x002ea4e7",
+            "0x002ea4e8",
+            "0x002ea4ea",
+            "0x002ea4ef",
+            "0x002ea4f0",
+            "0x002ea4f2",
+            "0x002ea4f7",
+            "0x002ea4f8",
+            "0x002ea4fe",
+            "0x002ea500",
+            "0x002ea501",
+            "0x002ea507",
+            "0x002ea50a",
+            "0x002ea50d",
+            "0x002ea50f",
+            "0x002ea511",
+            "0x002ea512",
+            "0x002ea518",
+            "0x002ea51a",
+            "0x002ea51c",
+            "0x002ea51d",
+            "0x002ea523",
+            "0x002ea528",
+            "0x002ea529"
+          ]
+        },
+        "key_state_push": {
+          "rva": "0x002ea528",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        "setter_call_rva": "0x002ea53c",
+        "setter_import_name": "lua_rawset",
+        "source_publication_kind": "direct",
+        "table_index": -3,
+        "upvalue_producers": [],
+        "vm_stack_trace": {
+          "after_closure": [
+            "K",
+            "C"
+          ],
+          "after_key": [
+            "K"
+          ],
+          "before_closure": [
+            "K"
+          ],
+          "setter_consumes": [
+            "K",
+            "C"
+          ]
+        },
+        "zero_guard_proof": null
+      },
+      "publication_source": "direct",
+      "record_kind": "raw_cached_function_metatable_consumer",
+      "stack_trace": {
+        "consumer": [
+          {
+            "after": "B,U",
+            "before": "B,U,T",
+            "operation": "lua_setmetatable(-2)"
+          },
+          {
+            "after": "B,U,P",
+            "before": "B,U",
+            "operation": "lua_pushlightuserdata(pointer)"
+          },
+          {
+            "after": "B,C",
+            "before": "B,U,P",
+            "operation": "lua_pushcclosure(dynamic,2)"
+          },
+          {
+            "after": "B,C,C",
+            "before": "B,C",
+            "operation": "lua_pushvalue(-1)"
+          },
+          {
+            "after": "B,C",
+            "before": "B,C,C",
+            "operation": "luaL_ref(LUA_REGISTRYINDEX)"
+          },
+          {
+            "after": "B",
+            "before": "B,C",
+            "operation": "lua_settop(-2)"
+          }
+        ],
+        "entry_shape": "B,U",
+        "hit": [
+          {
+            "after": "B,U,T",
+            "before": "B,U,T",
+            "operation": "type-5 branch"
+          }
+        ],
+        "join_shape": "B,U,T",
+        "lookup": [
+          {
+            "after": "B,U,K",
+            "before": "B,U",
+            "operation": "push cache key"
+          },
+          {
+            "after": "B,U,V",
+            "before": "B,U,K",
+            "operation": "lua_rawget(LUA_REGISTRYINDEX)"
+          },
+          {
+            "after": "B,U,V",
+            "before": "B,U,V",
+            "operation": "lua_type(-1) and compare with 5"
+          }
+        ],
+        "miss": [
+          {
+            "after": "B,U",
+            "before": "B,U,V",
+            "operation": "lua_settop(-2)"
+          },
+          {
+            "after": "B,U,T",
+            "before": "B,U",
+            "operation": "lua_createtable(0,0)"
+          },
+          {
+            "after": "B,U,T,G",
+            "before": "B,U,T",
+            "operation": "push __gc key"
+          },
+          {
+            "after": "B,U,T,G,C",
+            "before": "B,U,T,G",
+            "operation": "lua_pushcclosure(callback,0)"
+          },
+          {
+            "after": "B,U,T",
+            "before": "B,U,T,G,C",
+            "operation": "lua_rawset(-3)"
+          },
+          {
+            "after": "B,U,T,K",
+            "before": "B,U,T",
+            "operation": "push cache key"
+          },
+          {
+            "after": "B,U,T,K,T",
+            "before": "B,U,T,K",
+            "operation": "lua_pushvalue(-2)"
+          },
+          {
+            "after": "B,U,T",
+            "before": "B,U,T,K,T",
+            "operation": "lua_rawset(LUA_REGISTRYINDEX)"
+          }
+        ]
+      }
+    }
+  ],
+  "schema_version": 1,
+  "semantic_adjacencies": [
+    {
+      "end_rva": "0x0004cab0",
+      "instructions": [
+        {
+          "mnemonic": "cmp",
+          "operand_text": "dword ptr [esi + 0x10], 0",
+          "rva": "0x0004caaa",
+          "sha256": "2dbeeb3ec9aa1afe858befb37a0623bc84b157f406d8e4695f0caf2aa7e7899b",
+          "size": 4
+        },
+        {
+          "mnemonic": "jne",
+          "operand_text": "0x44cab9",
+          "rva": "0x0004caae",
+          "sha256": "e782e5bf1da0ed772627c84052b2d0392c1eef3dfba7aea25856ab3d85f05eaa",
+          "size": 2
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64dc]",
+          "rva": "0x0004cab0",
+          "sha256": "c009b5e2cf1480b47e38f718c5b6162e6197965f434fbdc61511620c58ad6b35",
+          "size": 6
+        }
+      ],
+      "role": "bootstrap_state_gate",
+      "start_rva": "0x0004caaa"
+    },
+    {
+      "end_rva": "0x0004cad2",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "dword ptr [esi + 0x10]",
+          "rva": "0x0004cacf",
+          "sha256": "07809e1402594edefa063590edb8fd38a9f1d4181177b5a737f2ba4979bb3756",
+          "size": 3
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64d8]",
+          "rva": "0x0004cad2",
+          "sha256": "599e2befe71b9e0ad15ed96e75be5a6fbdff07c29dd9744a8bb702757aaf5b9f",
+          "size": 6
+        }
+      ],
+      "role": "bootstrap_openlibs_argument",
+      "start_rva": "0x0004cacf"
+    },
+    {
+      "end_rva": "0x0004cade",
+      "instructions": [
+        {
+          "mnemonic": "mov",
+          "operand_text": "ecx, dword ptr [esi + 0x10]",
+          "rva": "0x0004cad8",
+          "sha256": "dffe399673ee631e67b2044c87b339a6ecc9e93e21e2e3a569c6791989f64e69",
+          "size": 3
+        },
+        {
+          "mnemonic": "add",
+          "operand_text": "esp, 0xc",
+          "rva": "0x0004cadb",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "0x6e6900",
+          "rva": "0x0004cade",
+          "sha256": "1dda8f3c89f4ba237a6946aae07dd2b8fba7e96c391d30f7b4a590577aab1a86",
+          "size": 5
+        }
+      ],
+      "role": "bootstrap_state_to_initializer",
+      "start_rva": "0x0004cad8"
+    },
+    {
+      "end_rva": "0x002e6995",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf18",
+          "rva": "0x002e698f",
+          "sha256": "c6f001a95244d810f4c2be5d1f8e49a11c8757fb8a2661e9ba089d8c3227ec4e",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6994",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e6995",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        }
+      ],
+      "role": "bootstrap_lookup_key_call",
+      "start_rva": "0x002e698f"
+    },
+    {
+      "end_rva": "0x002e699d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002e6997",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e699c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64bc]",
+          "rva": "0x002e699d",
+          "sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+          "size": 6
+        }
+      ],
+      "role": "bootstrap_lookup_selector_call",
+      "start_rva": "0x002e6997"
+    },
+    {
+      "end_rva": "0x002e69a6",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-1",
+          "rva": "0x002e69a3",
+          "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69a5",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d649c]",
+          "rva": "0x002e69a6",
+          "sha256": "94907586f792c7fd04898c7e82af767680468dd223037e8db917dbc8706571ff",
+          "size": 6
+        }
+      ],
+      "role": "bootstrap_lookup_result_call",
+      "start_rva": "0x002e69a3"
+    },
+    {
+      "end_rva": "0x002e69bc",
+      "instructions": [
+        {
+          "mnemonic": "test",
+          "operand_text": "esi, esi",
+          "rva": "0x002e69ba",
+          "sha256": "8ab1132e0f39300a69111599262ce5db7c26e24b7eb3cc9ae866e97c67ff49bd",
+          "size": 2
+        },
+        {
+          "mnemonic": "jne",
+          "operand_text": "0x6e6c19",
+          "rva": "0x002e69bc",
+          "sha256": "e7926e85664f513a9dbe73be3d81bab40ab9a8b01c334847d62e54422cc6cd09",
+          "size": 6
+        }
+      ],
+      "role": "bootstrap_gate",
+      "start_rva": "0x002e69ba"
+    },
+    {
+      "end_rva": "0x002e69c8",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf18",
+          "rva": "0x002e69c2",
+          "sha256": "c6f001a95244d810f4c2be5d1f8e49a11c8757fb8a2661e9ba089d8c3227ec4e",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69c7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e69c8",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        }
+      ],
+      "role": "classes_key_call",
+      "start_rva": "0x002e69c2"
+    },
+    {
+      "end_rva": "0x002e69cd",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x18",
+          "rva": "0x002e69ca",
+          "sha256": "27a1584e3edfc2eb704cee80ff0a8a4c10363e45a1bc43daacd2ac15bd84baaf",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69cc",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6528]",
+          "rva": "0x002e69cd",
+          "sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "size": 6
+        }
+      ],
+      "role": "classes_userdata_call",
+      "start_rva": "0x002e69ca"
+    },
+    {
+      "end_rva": "0x002e69d9",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "esi",
+          "rva": "0x002e69d3",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "esi",
+          "rva": "0x002e69d4",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69d5",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "dword ptr [ebp - 0x10], eax",
+          "rva": "0x002e69d6",
+          "sha256": "6f4593845df7d880045a6bebdb6b606748de9945cd26d4a3e429e3670b66f4d2",
+          "size": 3
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6518]",
+          "rva": "0x002e69d9",
+          "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "size": 6
+        }
+      ],
+      "role": "classes_createtable_call",
+      "start_rva": "0x002e69d3"
+    },
+    {
+      "end_rva": "0x002e69f1",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf84",
+          "rva": "0x002e69e2",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69e7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e69e8",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "esi",
+          "rva": "0x002e69ea",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0x6e6c30",
+          "rva": "0x002e69eb",
+          "sha256": "af5f277a5f2cdca7db5519be56370a7262b408308652c505efb52c3a6da9abfe",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e69f0",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002e69f1",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "classes_closure_call",
+      "start_rva": "0x002e69e2"
+    },
+    {
+      "end_rva": "0x002e6a03",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-3",
+          "rva": "0x002e6a00",
+          "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a02",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "esi",
+          "rva": "0x002e6a03",
+          "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+          "size": 2
+        }
+      ],
+      "role": "classes_gc_setter",
+      "start_rva": "0x002e6a00"
+    },
+    {
+      "end_rva": "0x002e6a08",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6a05",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a07",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6530]",
+          "rva": "0x002e6a08",
+          "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "size": 6
+        }
+      ],
+      "role": "classes_metatable_setter",
+      "start_rva": "0x002e6a05"
+    },
+    {
+      "end_rva": "0x002e6a30",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002e6a2a",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a2f",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "esi",
+          "rva": "0x002e6a30",
+          "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+          "size": 2
+        }
+      ],
+      "role": "classes_registry_store",
+      "start_rva": "0x002e6a2a"
+    },
+    {
+      "end_rva": "0x002e6a38",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x82a86c",
+          "rva": "0x002e6a32",
+          "sha256": "14a7ff6b0ab1d37c8cb6e3d998237b20b965df07501c17995303442422adb13f",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a37",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e6a38",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        }
+      ],
+      "role": "class_id_key_call",
+      "start_rva": "0x002e6a32"
+    },
+    {
+      "end_rva": "0x002e6a3d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xc",
+          "rva": "0x002e6a3a",
+          "sha256": "ac7110edcd8aa5e33d8203ef02f5e65591a308f24050afc2cb9aab99b660c772",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a3c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6528]",
+          "rva": "0x002e6a3d",
+          "sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "size": 6
+        }
+      ],
+      "role": "class_id_userdata_call",
+      "start_rva": "0x002e6a3a"
+    },
+    {
+      "end_rva": "0x002e6a7b",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6a76",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6a78",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a7a",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6518]",
+          "rva": "0x002e6a7b",
+          "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "size": 6
+        }
+      ],
+      "role": "class_id_createtable_call",
+      "start_rva": "0x002e6a76"
+    },
+    {
+      "end_rva": "0x002e6a8c",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6a84",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0x6e6840",
+          "rva": "0x002e6a86",
+          "sha256": "fa6de6e57e8c52334b61840202b802998e69195d00c9193db49c6fcbf267de3d",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a8b",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002e6a8c",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "class_id_closure_call",
+      "start_rva": "0x002e6a84"
+    },
+    {
+      "end_rva": "0x002e6a9d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf84",
+          "rva": "0x002e6a95",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6a9a",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6a9c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6520]",
+          "rva": "0x002e6a9d",
+          "sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "size": 6
+        }
+      ],
+      "role": "class_id_gc_setter",
+      "start_rva": "0x002e6a95"
+    },
+    {
+      "end_rva": "0x002e6aa9",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6aa6",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6aa8",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6530]",
+          "rva": "0x002e6aa9",
+          "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "size": 6
+        }
+      ],
+      "role": "class_id_metatable_setter",
+      "start_rva": "0x002e6aa6"
+    },
+    {
+      "end_rva": "0x002e6ab5",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002e6aaf",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6ab4",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "esi",
+          "rva": "0x002e6ab5",
+          "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+          "size": 2
+        }
+      ],
+      "role": "class_id_registry_store",
+      "start_rva": "0x002e6aaf"
+    },
+    {
+      "end_rva": "0x002e6abd",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf6c",
+          "rva": "0x002e6ab7",
+          "sha256": "1e1df572a6c16cb34226d57e284389ae9c94f429df099cb4299fd3b3f7f18978",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6abc",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e6abd",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        }
+      ],
+      "role": "cast_graph_key_call",
+      "start_rva": "0x002e6ab7"
+    },
+    {
+      "end_rva": "0x002e6ac2",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "4",
+          "rva": "0x002e6abf",
+          "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6ac1",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6528]",
+          "rva": "0x002e6ac2",
+          "sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "size": 6
+        }
+      ],
+      "role": "cast_graph_userdata_call",
+      "start_rva": "0x002e6abf"
+    },
+    {
+      "end_rva": "0x002e6ae8",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6ae3",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6ae5",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6ae7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6518]",
+          "rva": "0x002e6ae8",
+          "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "size": 6
+        }
+      ],
+      "role": "cast_graph_createtable_call",
+      "start_rva": "0x002e6ae3"
+    },
+    {
+      "end_rva": "0x002e6af9",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6af1",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0x6e6880",
+          "rva": "0x002e6af3",
+          "sha256": "5c672359fc90ca1e50ea49640b1b3c8af40443a3cd5b926e2a41658202c4faa8",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6af8",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002e6af9",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "cast_graph_closure_call",
+      "start_rva": "0x002e6af1"
+    },
+    {
+      "end_rva": "0x002e6b0a",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf84",
+          "rva": "0x002e6b02",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6b07",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b09",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6520]",
+          "rva": "0x002e6b0a",
+          "sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "size": 6
+        }
+      ],
+      "role": "cast_graph_gc_setter",
+      "start_rva": "0x002e6b02"
+    },
+    {
+      "end_rva": "0x002e6b16",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6b13",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b15",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6530]",
+          "rva": "0x002e6b16",
+          "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "size": 6
+        }
+      ],
+      "role": "cast_graph_metatable_setter",
+      "start_rva": "0x002e6b13"
+    },
+    {
+      "end_rva": "0x002e6b22",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002e6b1c",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b21",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "esi",
+          "rva": "0x002e6b22",
+          "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+          "size": 2
+        }
+      ],
+      "role": "cast_graph_registry_store",
+      "start_rva": "0x002e6b1c"
+    },
+    {
+      "end_rva": "0x002e6b2a",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x820fa8",
+          "rva": "0x002e6b24",
+          "sha256": "5aaad6c878e92c046de744d0767d2f6e689adffc36c826a5dbbc65cffec1c66b",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b29",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002e6b2a",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        }
+      ],
+      "role": "class_map_key_call",
+      "start_rva": "0x002e6b24"
+    },
+    {
+      "end_rva": "0x002e6b2f",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xc",
+          "rva": "0x002e6b2c",
+          "sha256": "ac7110edcd8aa5e33d8203ef02f5e65591a308f24050afc2cb9aab99b660c772",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b2e",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6528]",
+          "rva": "0x002e6b2f",
+          "sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "size": 6
+        }
+      ],
+      "role": "class_map_userdata_call",
+      "start_rva": "0x002e6b2c"
+    },
+    {
+      "end_rva": "0x002e6b55",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6b50",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6b52",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b54",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6518]",
+          "rva": "0x002e6b55",
+          "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "size": 6
+        }
+      ],
+      "role": "class_map_createtable_call",
+      "start_rva": "0x002e6b50"
+    },
+    {
+      "end_rva": "0x002e6b66",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002e6b5e",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0x6e68b0",
+          "rva": "0x002e6b60",
+          "sha256": "88e2af70e98bddb923d768bd066028d99d2dd844d597bb3fcb2416a563ce36ae",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b65",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002e6b66",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "class_map_closure_call",
+      "start_rva": "0x002e6b5e"
+    },
+    {
+      "end_rva": "0x002e6b77",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf84",
+          "rva": "0x002e6b6f",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6b74",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b76",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6520]",
+          "rva": "0x002e6b77",
+          "sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "size": 6
+        }
+      ],
+      "role": "class_map_gc_setter",
+      "start_rva": "0x002e6b6f"
+    },
+    {
+      "end_rva": "0x002e6b83",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002e6b80",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b82",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6530]",
+          "rva": "0x002e6b83",
+          "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "size": 6
+        }
+      ],
+      "role": "class_map_metatable_setter",
+      "start_rva": "0x002e6b80"
+    },
+    {
+      "end_rva": "0x002e6b8f",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002e6b89",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002e6b8e",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "esi",
+          "rva": "0x002e6b8f",
+          "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+          "size": 2
+        }
+      ],
+      "role": "class_map_registry_store",
+      "start_rva": "0x002e6b89"
+    },
+    {
+      "end_rva": "0x002ea4f8",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83c570",
+          "rva": "0x002ea4ea",
+          "sha256": "5fc3bc32a30bca46b9dc9e76116470822b3d83deca8b9dc91d19ad18bd95f76d",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea4ef",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002ea4f0",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002ea4f2",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea4f7",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6484]",
+          "rva": "0x002ea4f8",
+          "sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+          "size": 6
+        }
+      ],
+      "role": "raw_lookup",
+      "start_rva": "0x002ea4ea"
+    },
+    {
+      "end_rva": "0x002ea50d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-1",
+          "rva": "0x002ea4fe",
+          "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea500",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64fc]",
+          "rva": "0x002ea501",
+          "sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+          "size": 6
+        },
+        {
+          "mnemonic": "add",
+          "operand_text": "esp, 0x18",
+          "rva": "0x002ea507",
+          "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+          "size": 3
+        },
+        {
+          "mnemonic": "cmp",
+          "operand_text": "eax, 5",
+          "rva": "0x002ea50a",
+          "sha256": "02c3e9502d128e3f80559af408b3a0a2a8f9d91e2f6e54f352543a48ad898505",
+          "size": 3
+        },
+        {
+          "mnemonic": "je",
+          "operand_text": "0x6ea565",
+          "rva": "0x002ea50d",
+          "sha256": "05a6f1ec7459b3145e3590e1765322963720e766725da43f6039db0c5c99279e",
+          "size": 2
+        }
+      ],
+      "role": "raw_type_gate",
+      "start_rva": "0x002ea4fe"
+    },
+    {
+      "end_rva": "0x002ea512",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002ea50f",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea511",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6510]",
+          "rva": "0x002ea512",
+          "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "size": 6
+        }
+      ],
+      "role": "raw_miss_pop",
+      "start_rva": "0x002ea50f"
+    },
+    {
+      "end_rva": "0x002ea51d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002ea518",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002ea51a",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea51c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6518]",
+          "rva": "0x002ea51d",
+          "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "size": 6
+        }
+      ],
+      "role": "raw_create",
+      "start_rva": "0x002ea518"
+    },
+    {
+      "end_rva": "0x002ea533",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83bf84",
+          "rva": "0x002ea523",
+          "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea528",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002ea529",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0",
+          "rva": "0x002ea52b",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "0x6ea4b0",
+          "rva": "0x002ea52d",
+          "sha256": "0c5bb0b932a478617cb71e8c1731d6bce10a0b8c099b440273202573476aa1c3",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea532",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002ea533",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "raw_gc_closure",
+      "start_rva": "0x002ea523"
+    },
+    {
+      "end_rva": "0x002ea53c",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-3",
+          "rva": "0x002ea539",
+          "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea53b",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d652c]",
+          "rva": "0x002ea53c",
+          "sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "size": 6
+        }
+      ],
+      "role": "raw_gc_store",
+      "start_rva": "0x002ea539"
+    },
+    {
+      "end_rva": "0x002ea54d",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x83c570",
+          "rva": "0x002ea542",
+          "sha256": "5fc3bc32a30bca46b9dc9e76116470822b3d83deca8b9dc91d19ad18bd95f76d",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea547",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "ebx",
+          "rva": "0x002ea548",
+          "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002ea54a",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea54c",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64e4]",
+          "rva": "0x002ea54d",
+          "sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "size": 6
+        }
+      ],
+      "role": "raw_cache_duplicate",
+      "start_rva": "0x002ea542"
+    },
+    {
+      "end_rva": "0x002ea55c",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002ea556",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "edi",
+          "rva": "0x002ea55b",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d652c]",
+          "rva": "0x002ea55c",
+          "sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "size": 6
+        }
+      ],
+      "role": "raw_cache_store",
+      "start_rva": "0x002ea556"
+    },
+    {
+      "end_rva": "0x002ea82f",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "4",
+          "rva": "0x002ea82c",
+          "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea82e",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6528]",
+          "rva": "0x002ea82f",
+          "sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "size": 6
+        }
+      ],
+      "role": "consumer_userdata",
+      "start_rva": "0x002ea82c"
+    },
+    {
+      "end_rva": "0x002ea846",
+      "instructions": [
+        {
+          "mnemonic": "mov",
+          "operand_text": "ecx, ebx",
+          "rva": "0x002ea835",
+          "sha256": "4b114be14a1901cce6f7a0f927756e414400942123cd365bfe5043a4b118045f",
+          "size": 2
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "esi, eax",
+          "rva": "0x002ea837",
+          "sha256": "234f8f2031d456cbb66a9a4907f797ba3e97e213bae11b112af85390c778cb8c",
+          "size": 2
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "0x6ea4e0",
+          "rva": "0x002ea839",
+          "sha256": "4d69f8c93aa015125f5a77cac8cd71130a8d48233d3e2d7c896fdf83e382448c",
+          "size": 5
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "edi, dword ptr [ebp + 8]",
+          "rva": "0x002ea83e",
+          "sha256": "849f48aadaada9f124f163691d4edb662630d9ee338916176879c197c9b4d1e1",
+          "size": 3
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002ea841",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea843",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "dword ptr [esi], edi",
+          "rva": "0x002ea844",
+          "sha256": "6eaef7f6b7489043a110404072ca5eb0c2cbdd27c1bf1a303b372af0f6328374",
+          "size": 2
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6530]",
+          "rva": "0x002ea846",
+          "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "size": 6
+        }
+      ],
+      "role": "consumer_helper_to_metatable",
+      "start_rva": "0x002ea835"
+    },
+    {
+      "end_rva": "0x002ea85e",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0x8b9ea8",
+          "rva": "0x002ea84c",
+          "sha256": "f3bb27536807544c53c4e580015c7ec77c4796fd64b7dd2594d115240f7c2f94",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea851",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d651c]",
+          "rva": "0x002ea852",
+          "sha256": "8281a6fa509daffdb373db326eba02918813ff2abf5a5f8934c83f0e6a2a5b20",
+          "size": 6
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "2",
+          "rva": "0x002ea858",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "dword ptr [edi + 4]",
+          "rva": "0x002ea85a",
+          "sha256": "6a1b670c386387c414e992c915a246cf3698e9d8f80487245b4ed98672f7cfeb",
+          "size": 3
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea85d",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64a0]",
+          "rva": "0x002ea85e",
+          "sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "size": 6
+        }
+      ],
+      "role": "consumer_closure",
+      "start_rva": "0x002ea84c"
+    },
+    {
+      "end_rva": "0x002ea873",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-1",
+          "rva": "0x002ea867",
+          "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea869",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "dword ptr [esi], ebx",
+          "rva": "0x002ea86a",
+          "sha256": "db5afe7704d79e72e70c7e093b8f4d810c98c9c12efbf595a7e30af4fa4d1a2b",
+          "size": 2
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "dword ptr [esi + 4], 0xfffffffe",
+          "rva": "0x002ea86c",
+          "sha256": "9fe37e1c14b865fae017539addab2e28de846442be6a3cbbd30d478e82b36010",
+          "size": 7
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64e4]",
+          "rva": "0x002ea873",
+          "sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "size": 6
+        }
+      ],
+      "role": "consumer_duplicate",
+      "start_rva": "0x002ea867"
+    },
+    {
+      "end_rva": "0x002ea87f",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "0xffffd8f0",
+          "rva": "0x002ea879",
+          "sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+          "size": 5
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea87e",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d64e8]",
+          "rva": "0x002ea87f",
+          "sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "size": 6
+        }
+      ],
+      "role": "consumer_registry_ref",
+      "start_rva": "0x002ea879"
+    },
+    {
+      "end_rva": "0x002ea88b",
+      "instructions": [
+        {
+          "mnemonic": "push",
+          "operand_text": "-2",
+          "rva": "0x002ea885",
+          "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+          "size": 2
+        },
+        {
+          "mnemonic": "push",
+          "operand_text": "ebx",
+          "rva": "0x002ea887",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "mnemonic": "mov",
+          "operand_text": "dword ptr [esi + 4], eax",
+          "rva": "0x002ea888",
+          "sha256": "f49d9e55cb77604907965d963c4fd7b25f39e7ad6aee1b0542ba1da026799d21",
+          "size": 3
+        },
+        {
+          "mnemonic": "call",
+          "operand_text": "dword ptr [0x7d6510]",
+          "rva": "0x002ea88b",
+          "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "size": 6
+        }
+      ],
+      "role": "consumer_cleanup",
+      "start_rva": "0x002ea885"
+    }
+  ],
+  "semantic_points": [
+    {
+      "instruction_rva": "0x0004caaa",
+      "instruction_sha256": "2dbeeb3ec9aa1afe858befb37a0623bc84b157f406d8e4695f0caf2aa7e7899b",
+      "instruction_size": 4,
+      "meaning": {
+        "constant": 0
+      },
+      "mnemonic": "cmp",
+      "next_rva": "0x0004caae",
+      "operand_text": "dword ptr [esi + 0x10], 0",
+      "role": "bootstrap_state_zero_test"
+    },
+    {
+      "instruction_rva": "0x0004caae",
+      "instruction_sha256": "e782e5bf1da0ed772627c84052b2d0392c1eef3dfba7aea25856ab3d85f05eaa",
+      "instruction_size": 2,
+      "meaning": {
+        "target_rva": "0x0004cab9"
+      },
+      "mnemonic": "jne",
+      "next_rva": "0x0004cab0",
+      "operand_text": "0x44cab9",
+      "role": "bootstrap_state_nonzero_branch"
+    },
+    {
+      "instruction_rva": "0x0004cacf",
+      "instruction_sha256": "07809e1402594edefa063590edb8fd38a9f1d4181177b5a737f2ba4979bb3756",
+      "instruction_size": 3,
+      "meaning": {
+        "source": "[esi+0x10]"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x0004cad2",
+      "operand_text": "dword ptr [esi + 0x10]",
+      "role": "bootstrap_state_argument"
+    },
+    {
+      "instruction_rva": "0x0004cad8",
+      "instruction_sha256": "dffe399673ee631e67b2044c87b339a6ecc9e93e21e2e3a569c6791989f64e69",
+      "instruction_size": 3,
+      "meaning": {
+        "destination": "ecx",
+        "source": "[esi+0x10]"
+      },
+      "mnemonic": "mov",
+      "next_rva": "0x0004cadb",
+      "operand_text": "ecx, dword ptr [esi + 0x10]",
+      "role": "bootstrap_state_transfer"
+    },
+    {
+      "instruction_rva": "0x0004cade",
+      "instruction_sha256": "1dda8f3c89f4ba237a6946aae07dd2b8fba7e96c391d30f7b4a590577aab1a86",
+      "instruction_size": 5,
+      "meaning": {
+        "target_rva": "0x002e6900"
+      },
+      "mnemonic": "call",
+      "next_rva": "0x0004cae3",
+      "operand_text": "0x6e6900",
+      "role": "bootstrap_initializer_call"
+    },
+    {
+      "instruction_rva": "0x002e698f",
+      "instruction_sha256": "c6f001a95244d810f4c2be5d1f8e49a11c8757fb8a2661e9ba089d8c3227ec4e",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf18"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6994",
+      "operand_text": "0x83bf18",
+      "role": "bootstrap_lookup_key"
+    },
+    {
+      "instruction_rva": "0x002e6997",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e699c",
+      "operand_text": "0xffffd8f0",
+      "role": "bootstrap_lookup_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002e69a3",
+      "instruction_sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -1
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69a5",
+      "operand_text": "-1",
+      "role": "bootstrap_lookup_value_index"
+    },
+    {
+      "instruction_rva": "0x002e69ba",
+      "instruction_sha256": "8ab1132e0f39300a69111599262ce5db7c26e24b7eb3cc9ae866e97c67ff49bd",
+      "instruction_size": 2,
+      "meaning": {
+        "register": "esi"
+      },
+      "mnemonic": "test",
+      "next_rva": "0x002e69bc",
+      "operand_text": "esi, esi",
+      "role": "bootstrap_null_test"
+    },
+    {
+      "instruction_rva": "0x002e69bc",
+      "instruction_sha256": "e7926e85664f513a9dbe73be3d81bab40ab9a8b01c334847d62e54422cc6cd09",
+      "instruction_size": 6,
+      "meaning": {
+        "fallthrough_rva": "0x002e69c2",
+        "target_rva": "0x002e6c19"
+      },
+      "mnemonic": "jne",
+      "next_rva": "0x002e69c2",
+      "operand_text": "0x6e6c19",
+      "role": "bootstrap_nonzero_gate"
+    },
+    {
+      "instruction_rva": "0x002e69c2",
+      "instruction_sha256": "c6f001a95244d810f4c2be5d1f8e49a11c8757fb8a2661e9ba089d8c3227ec4e",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf18"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69c7",
+      "operand_text": "0x83bf18",
+      "role": "classes_key"
+    },
+    {
+      "instruction_rva": "0x002e69ca",
+      "instruction_sha256": "27a1584e3edfc2eb704cee80ff0a8a4c10363e45a1bc43daacd2ac15bd84baaf",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 24
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69cc",
+      "operand_text": "0x18",
+      "role": "classes_userdata_size"
+    },
+    {
+      "instruction_rva": "0x002e69d3",
+      "instruction_sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+      "instruction_size": 1,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69d4",
+      "operand_text": "esi",
+      "role": "classes_createtable_nrec"
+    },
+    {
+      "instruction_rva": "0x002e69d4",
+      "instruction_sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+      "instruction_size": 1,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69d5",
+      "operand_text": "esi",
+      "role": "classes_createtable_narr"
+    },
+    {
+      "instruction_rva": "0x002e69e2",
+      "instruction_sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf84"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69e7",
+      "operand_text": "0x83bf84",
+      "role": "classes_gc_key"
+    },
+    {
+      "instruction_rva": "0x002e69ea",
+      "instruction_sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+      "instruction_size": 1,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e69eb",
+      "operand_text": "esi",
+      "role": "classes_gc_upvalues"
+    },
+    {
+      "instruction_rva": "0x002e6a00",
+      "instruction_sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -3
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a02",
+      "operand_text": "-3",
+      "role": "classes_gc_settable_index"
+    },
+    {
+      "instruction_rva": "0x002e6a05",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a07",
+      "operand_text": "-2",
+      "role": "classes_metatable_index"
+    },
+    {
+      "instruction_rva": "0x002e6a2a",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a2f",
+      "operand_text": "0xffffd8f0",
+      "role": "classes_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002e6a32",
+      "instruction_sha256": "14a7ff6b0ab1d37c8cb6e3d998237b20b965df07501c17995303442422adb13f",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0042a86c"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a37",
+      "operand_text": "0x82a86c",
+      "role": "class_id_key"
+    },
+    {
+      "instruction_rva": "0x002e6a3a",
+      "instruction_sha256": "ac7110edcd8aa5e33d8203ef02f5e65591a308f24050afc2cb9aab99b660c772",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 12
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a3c",
+      "operand_text": "0xc",
+      "role": "class_id_userdata_size"
+    },
+    {
+      "instruction_rva": "0x002e6a76",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a78",
+      "operand_text": "0",
+      "role": "class_id_createtable_nrec"
+    },
+    {
+      "instruction_rva": "0x002e6a78",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a7a",
+      "operand_text": "0",
+      "role": "class_id_createtable_narr"
+    },
+    {
+      "instruction_rva": "0x002e6a84",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a86",
+      "operand_text": "0",
+      "role": "class_id_gc_upvalues"
+    },
+    {
+      "instruction_rva": "0x002e6a95",
+      "instruction_sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf84"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a9a",
+      "operand_text": "0x83bf84",
+      "role": "class_id_gc_key"
+    },
+    {
+      "instruction_rva": "0x002e6a9a",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6a9c",
+      "operand_text": "-2",
+      "role": "class_id_gc_setfield_index"
+    },
+    {
+      "instruction_rva": "0x002e6aa6",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6aa8",
+      "operand_text": "-2",
+      "role": "class_id_metatable_index"
+    },
+    {
+      "instruction_rva": "0x002e6aaf",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6ab4",
+      "operand_text": "0xffffd8f0",
+      "role": "class_id_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002e6ab7",
+      "instruction_sha256": "1e1df572a6c16cb34226d57e284389ae9c94f429df099cb4299fd3b3f7f18978",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf6c"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6abc",
+      "operand_text": "0x83bf6c",
+      "role": "cast_graph_key"
+    },
+    {
+      "instruction_rva": "0x002e6abf",
+      "instruction_sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 4
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6ac1",
+      "operand_text": "4",
+      "role": "cast_graph_userdata_size"
+    },
+    {
+      "instruction_rva": "0x002e6ae3",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6ae5",
+      "operand_text": "0",
+      "role": "cast_graph_createtable_nrec"
+    },
+    {
+      "instruction_rva": "0x002e6ae5",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6ae7",
+      "operand_text": "0",
+      "role": "cast_graph_createtable_narr"
+    },
+    {
+      "instruction_rva": "0x002e6af1",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6af3",
+      "operand_text": "0",
+      "role": "cast_graph_gc_upvalues"
+    },
+    {
+      "instruction_rva": "0x002e6b02",
+      "instruction_sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf84"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b07",
+      "operand_text": "0x83bf84",
+      "role": "cast_graph_gc_key"
+    },
+    {
+      "instruction_rva": "0x002e6b07",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b09",
+      "operand_text": "-2",
+      "role": "cast_graph_gc_setfield_index"
+    },
+    {
+      "instruction_rva": "0x002e6b13",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b15",
+      "operand_text": "-2",
+      "role": "cast_graph_metatable_index"
+    },
+    {
+      "instruction_rva": "0x002e6b1c",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b21",
+      "operand_text": "0xffffd8f0",
+      "role": "cast_graph_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002e6b24",
+      "instruction_sha256": "5aaad6c878e92c046de744d0767d2f6e689adffc36c826a5dbbc65cffec1c66b",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x00420fa8"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b29",
+      "operand_text": "0x820fa8",
+      "role": "class_map_key"
+    },
+    {
+      "instruction_rva": "0x002e6b2c",
+      "instruction_sha256": "ac7110edcd8aa5e33d8203ef02f5e65591a308f24050afc2cb9aab99b660c772",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 12
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b2e",
+      "operand_text": "0xc",
+      "role": "class_map_userdata_size"
+    },
+    {
+      "instruction_rva": "0x002e6b50",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b52",
+      "operand_text": "0",
+      "role": "class_map_createtable_nrec"
+    },
+    {
+      "instruction_rva": "0x002e6b52",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b54",
+      "operand_text": "0",
+      "role": "class_map_createtable_narr"
+    },
+    {
+      "instruction_rva": "0x002e6b5e",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b60",
+      "operand_text": "0",
+      "role": "class_map_gc_upvalues"
+    },
+    {
+      "instruction_rva": "0x002e6b6f",
+      "instruction_sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf84"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b74",
+      "operand_text": "0x83bf84",
+      "role": "class_map_gc_key"
+    },
+    {
+      "instruction_rva": "0x002e6b74",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b76",
+      "operand_text": "-2",
+      "role": "class_map_gc_setfield_index"
+    },
+    {
+      "instruction_rva": "0x002e6b80",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b82",
+      "operand_text": "-2",
+      "role": "class_map_metatable_index"
+    },
+    {
+      "instruction_rva": "0x002e6b89",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002e6b8e",
+      "operand_text": "0xffffd8f0",
+      "role": "class_map_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002ea4ea",
+      "instruction_sha256": "5fc3bc32a30bca46b9dc9e76116470822b3d83deca8b9dc91d19ad18bd95f76d",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043c570"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea4ef",
+      "operand_text": "0x83c570",
+      "role": "raw_cache_key_lookup"
+    },
+    {
+      "instruction_rva": "0x002ea4f2",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea4f7",
+      "operand_text": "0xffffd8f0",
+      "role": "raw_lookup_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002ea4fe",
+      "instruction_sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -1
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea500",
+      "operand_text": "-1",
+      "role": "raw_type_index"
+    },
+    {
+      "instruction_rva": "0x002ea50a",
+      "instruction_sha256": "02c3e9502d128e3f80559af408b3a0a2a8f9d91e2f6e54f352543a48ad898505",
+      "instruction_size": 3,
+      "meaning": {
+        "value": 5
+      },
+      "mnemonic": "cmp",
+      "next_rva": "0x002ea50d",
+      "operand_text": "eax, 5",
+      "role": "raw_table_type"
+    },
+    {
+      "instruction_rva": "0x002ea50d",
+      "instruction_sha256": "05a6f1ec7459b3145e3590e1765322963720e766725da43f6039db0c5c99279e",
+      "instruction_size": 2,
+      "meaning": {
+        "miss_rva": "0x002ea50f",
+        "target_rva": "0x002ea565"
+      },
+      "mnemonic": "je",
+      "next_rva": "0x002ea50f",
+      "operand_text": "0x6ea565",
+      "role": "raw_hit_branch"
+    },
+    {
+      "instruction_rva": "0x002ea50f",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea511",
+      "operand_text": "-2",
+      "role": "raw_miss_settop_index"
+    },
+    {
+      "instruction_rva": "0x002ea518",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea51a",
+      "operand_text": "0",
+      "role": "raw_createtable_nrec"
+    },
+    {
+      "instruction_rva": "0x002ea51a",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea51c",
+      "operand_text": "0",
+      "role": "raw_createtable_narr"
+    },
+    {
+      "instruction_rva": "0x002ea523",
+      "instruction_sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043bf84"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea528",
+      "operand_text": "0x83bf84",
+      "role": "raw_gc_key"
+    },
+    {
+      "instruction_rva": "0x002ea52b",
+      "instruction_sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 0
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea52d",
+      "operand_text": "0",
+      "role": "raw_gc_upvalues"
+    },
+    {
+      "instruction_rva": "0x002ea539",
+      "instruction_sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -3
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea53b",
+      "operand_text": "-3",
+      "role": "raw_gc_set_index"
+    },
+    {
+      "instruction_rva": "0x002ea542",
+      "instruction_sha256": "5fc3bc32a30bca46b9dc9e76116470822b3d83deca8b9dc91d19ad18bd95f76d",
+      "instruction_size": 5,
+      "meaning": {
+        "literal_rva": "0x0043c570"
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea547",
+      "operand_text": "0x83c570",
+      "role": "raw_cache_key_store"
+    },
+    {
+      "instruction_rva": "0x002ea54a",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea54c",
+      "operand_text": "-2",
+      "role": "raw_duplicate_index"
+    },
+    {
+      "instruction_rva": "0x002ea556",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea55b",
+      "operand_text": "0xffffd8f0",
+      "role": "raw_store_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002ea82c",
+      "instruction_sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 4
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea82e",
+      "operand_text": "4",
+      "role": "consumer_userdata_size"
+    },
+    {
+      "instruction_rva": "0x002ea841",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea843",
+      "operand_text": "-2",
+      "role": "consumer_metatable_index"
+    },
+    {
+      "instruction_rva": "0x002ea858",
+      "instruction_sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+      "instruction_size": 2,
+      "meaning": {
+        "value": 2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea85a",
+      "operand_text": "2",
+      "role": "consumer_upvalue_count"
+    },
+    {
+      "instruction_rva": "0x002ea867",
+      "instruction_sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -1
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea869",
+      "operand_text": "-1",
+      "role": "consumer_duplicate_index"
+    },
+    {
+      "instruction_rva": "0x002ea879",
+      "instruction_sha256": "c0fe9f0a9e52c85c675480417ab3518070164f0fa6a82c53ec9a95cceec4df0a",
+      "instruction_size": 5,
+      "meaning": {
+        "index": -10000
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea87e",
+      "operand_text": "0xffffd8f0",
+      "role": "consumer_ref_registry_selector"
+    },
+    {
+      "instruction_rva": "0x002ea885",
+      "instruction_sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+      "instruction_size": 2,
+      "meaning": {
+        "index": -2
+      },
+      "mnemonic": "push",
+      "next_rva": "0x002ea887",
+      "operand_text": "-2",
+      "role": "consumer_cleanup_index"
+    }
+  ],
+  "setfield_publication_census": {
+    "analysis_kind": "pe_native_lua_immediate_cclosure_setfield_publication_census",
+    "canonical_sha256": "b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6"
+  },
+  "shared_gc_literal": {
+    "byte_length_excluding_nul": 4,
+    "nul_terminated_bytes_sha256": "6b3cc554d45a56ed43995cc307f4481a80680a993cd06b4ecfef70986c17997e",
+    "rva": "0x0043bf84",
+    "section_characteristics": "0x40000040",
+    "section_name": ".rdata",
+    "section_rva": "0x003d6000",
+    "section_writable": false,
+    "text": "__gc"
+  },
+  "source_bodies": [
+    {
+      "atlas_record_sha256": "5e3a44ee9526a8f3ed7fb3e1a911277d83c050f2b53acda420a7f1db00cd6fd2",
+      "body_sha256": "f10f71d05330bede8c22353dfcdc846698199e1c73b75a838a4db4236bbfe84b",
+      "body_size": 114,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "61e11efac08e0c223b3ec60ea86224f6d78ce4f417dcbff9bfd9ba3e4eb7fcb2",
+      "control_flow_graph_edge_count": 39,
+      "control_flow_graph_node_count": 39,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x0004cab0",
+          "iat_rva": "0x003d64dc",
+          "import_name": "luaL_newstate",
+          "instruction_sha256": "c009b5e2cf1480b47e38f718c5b6162e6197965f434fbdc61511620c58ad6b35",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x0004cad2",
+          "iat_rva": "0x003d64d8",
+          "import_name": "luaL_openlibs",
+          "instruction_sha256": "599e2befe71b9e0ad15ed96e75be5a6fbdff07c29dd9744a8bb702757aaf5b9f",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x0004caa0",
+      "role": "bootstrap_caller",
+      "staged_lua_calls": [],
+      "staged_proof_entry_audit": null
+    },
+    {
+      "atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "body_sha256": "0723567170e15f7f36f25c97f15257ce9aabaaff57ace1bdf7778810a9158886",
+      "body_size": 811,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [
+            "0x002e6995",
+            "0x002e69c8",
+            "0x002e69e8",
+            "0x002e6a38",
+            "0x002e6abd",
+            "0x002e6b2a",
+            "0x002e6b97",
+            "0x002e6bb8",
+            "0x002e6bf7"
+          ],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [
+            "0x002e6a03",
+            "0x002e6a30",
+            "0x002e6ab5",
+            "0x002e6b22",
+            "0x002e6b8f",
+            "0x002e6bb0",
+            "0x002e6bd1",
+            "0x002e6bdf",
+            "0x002e6be3"
+          ],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "3366932fbf51a111e3cbdb190c3dd0153b1ac504fef5ca97379cfdba00be2f6a",
+      "control_flow_graph_edge_count": 265,
+      "control_flow_graph_node_count": 260,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e692b",
+          "iat_rva": "0x003d6524",
+          "import_name": "lua_pushthread",
+          "instruction_sha256": "c09b0dbcf8824e63d24af9798febbdf8adcb9241b53f81bdec48a92b33c568aa",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e693d",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e699d",
+          "iat_rva": "0x003d64bc",
+          "import_name": "lua_gettable",
+          "instruction_sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e69a6",
+          "iat_rva": "0x003d649c",
+          "import_name": "lua_touserdata",
+          "instruction_sha256": "94907586f792c7fd04898c7e82af767680468dd223037e8db917dbc8706571ff",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e69b1",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e69cd",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e69d9",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e69f1",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6a08",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6a3d",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6a7b",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6a8c",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6a9d",
+          "iat_rva": "0x003d6520",
+          "import_name": "lua_setfield",
+          "instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6aa9",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6ac2",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6ae8",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6af9",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b0a",
+          "iat_rva": "0x003d6520",
+          "import_name": "lua_setfield",
+          "instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b16",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b2f",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b55",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b66",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b77",
+          "iat_rva": "0x003d6520",
+          "import_name": "lua_setfield",
+          "instruction_sha256": "1021e337c16e197434eb5dc90bc012010a1564dff4b5aaaad47f099ba508c8bf",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6b83",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6ba1",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6bc2",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6beb",
+          "iat_rva": "0x003d652c",
+          "import_name": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6c01",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002e6c10",
+          "iat_rva": "0x003d6550",
+          "import_name": "lua_settable",
+          "instruction_sha256": "c7236c61ae860cc144b4d0a27207ba2dd0b409550c7c4abfcd90e86e0b9d83d5",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002e6900",
+      "role": "bootstrap_initializer",
+      "staged_lua_calls": [
+        {
+          "api": "lua_settable",
+          "calls": [
+            {
+              "call_rva": "0x002e6a03",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6a30",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6ab5",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6b22",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6b8f",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6bb0",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            },
+            {
+              "call_rva": "0x002e6bd1",
+              "last_reaching_stage_rvas": [
+                "0x002e69f7"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "ESI",
+          "stage_rva": "0x002e69f7"
+        },
+        {
+          "api": "lua_pushstring",
+          "calls": [
+            {
+              "call_rva": "0x002e6995",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e69c8",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e69e8",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6a38",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6abd",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6b2a",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6b97",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6bb8",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            },
+            {
+              "call_rva": "0x002e6bf7",
+              "last_reaching_stage_rvas": [
+                "0x002e6989"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EBX",
+          "stage_rva": "0x002e6989"
+        },
+        {
+          "api": "lua_pushlightuserdata",
+          "calls": [
+            {
+              "call_rva": "0x002e6bdf",
+              "last_reaching_stage_rvas": [
+                "0x002e6bd3"
+              ]
+            },
+            {
+              "call_rva": "0x002e6be3",
+              "last_reaching_stage_rvas": [
+                "0x002e6bd3"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "ESI",
+          "stage_rva": "0x002e6bd3"
+        }
+      ],
+      "staged_proof_entry_audit": {
+        "alternate_atlas_entry_rvas": [],
+        "declared_direct_call_entries": [],
+        "scope": "entire_contiguous_function_body_after_declared_entry",
+        "sole_modeled_external_entry": true,
+        "unmodeled_entry_premise": "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts are not claimed"
+      }
+    },
+    {
+      "atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+      "body_sha256": "711a6653796f690359556b58fb1158b76d6a213a2a43c476299daf4c375a4c70",
+      "body_size": 89,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "10643e77d2331e634c8e6a875534731a7200aeb014ebdd430bbe589bcb788a23",
+      "control_flow_graph_edge_count": 30,
+      "control_flow_graph_node_count": 31,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ebb73",
+          "iat_rva": "0x003d64e8",
+          "import_name": "luaL_ref",
+          "instruction_sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002ebb30",
+      "role": "initializer_join",
+      "staged_lua_calls": [],
+      "staged_proof_entry_audit": null
+    },
+    {
+      "atlas_record_sha256": "008cb2fe2fb3bacfe58aa0fb2e2d5f031ca9e3c12303b1391c3338dba43990a3",
+      "body_sha256": "b9c8fea4e75e340f47cdda145ecc1cd44d06656fea9f783096e300aea63fb7eb",
+      "body_size": 202,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [
+            "0x002eb9c7",
+            "0x002eb9e6",
+            "0x002eba06",
+            "0x002eba23",
+            "0x002eba42"
+          ],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [
+            "0x002eb9df",
+            "0x002eb9ff",
+            "0x002eba1c",
+            "0x002eba3d"
+          ],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [
+            "0x002eb9b3",
+            "0x002eb9cf",
+            "0x002eb9f3",
+            "0x002eba10",
+            "0x002eba2d"
+          ],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "68673d956494b254ff399cfb221719ae0361f95dd9ad99aaa66c4aa22b07e3a0",
+      "control_flow_graph_edge_count": 76,
+      "control_flow_graph_node_count": 77,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002eb9a1",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002eb9b8",
+          "iat_rva": "0x003d64a4",
+          "import_name": "lua_pushboolean",
+          "instruction_sha256": "84402c7ac341017f47d51d681e08356ad33561ddc8ccd8f96378f6e48f3b8fb4",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002eba4a",
+          "iat_rva": "0x003d64e8",
+          "import_name": "luaL_ref",
+          "instruction_sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002eb990",
+      "role": "initializer_subtree_one",
+      "staged_lua_calls": [
+        {
+          "api": "lua_pushstring",
+          "calls": [
+            {
+              "call_rva": "0x002eb9b3",
+              "last_reaching_stage_rvas": [
+                "0x002eb9a7"
+              ]
+            },
+            {
+              "call_rva": "0x002eb9cf",
+              "last_reaching_stage_rvas": [
+                "0x002eb9a7"
+              ]
+            },
+            {
+              "call_rva": "0x002eb9f3",
+              "last_reaching_stage_rvas": [
+                "0x002eb9a7"
+              ]
+            },
+            {
+              "call_rva": "0x002eba10",
+              "last_reaching_stage_rvas": [
+                "0x002eb9a7"
+              ]
+            },
+            {
+              "call_rva": "0x002eba2d",
+              "last_reaching_stage_rvas": [
+                "0x002eb9a7"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EDI",
+          "stage_rva": "0x002eb9a7"
+        },
+        {
+          "api": "lua_rawset",
+          "calls": [
+            {
+              "call_rva": "0x002eb9c7",
+              "last_reaching_stage_rvas": [
+                "0x002eb9be"
+              ]
+            },
+            {
+              "call_rva": "0x002eb9e6",
+              "last_reaching_stage_rvas": [
+                "0x002eb9be"
+              ]
+            },
+            {
+              "call_rva": "0x002eba06",
+              "last_reaching_stage_rvas": [
+                "0x002eb9be"
+              ]
+            },
+            {
+              "call_rva": "0x002eba23",
+              "last_reaching_stage_rvas": [
+                "0x002eb9be"
+              ]
+            },
+            {
+              "call_rva": "0x002eba42",
+              "last_reaching_stage_rvas": [
+                "0x002eb9be"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EBX",
+          "stage_rva": "0x002eb9be"
+        },
+        {
+          "api": "lua_pushcclosure",
+          "calls": [
+            {
+              "call_rva": "0x002eb9df",
+              "last_reaching_stage_rvas": [
+                "0x002eb9d9"
+              ]
+            },
+            {
+              "call_rva": "0x002eb9ff",
+              "last_reaching_stage_rvas": [
+                "0x002eb9d9"
+              ]
+            },
+            {
+              "call_rva": "0x002eba1c",
+              "last_reaching_stage_rvas": [
+                "0x002eb9d9"
+              ]
+            },
+            {
+              "call_rva": "0x002eba3d",
+              "last_reaching_stage_rvas": [
+                "0x002eb9d9"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "ESI",
+          "stage_rva": "0x002eb9d9"
+        }
+      ],
+      "staged_proof_entry_audit": {
+        "alternate_atlas_entry_rvas": [],
+        "declared_direct_call_entries": [],
+        "scope": "entire_contiguous_function_body_after_declared_entry",
+        "sole_modeled_external_entry": true,
+        "unmodeled_entry_premise": "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts are not claimed"
+      }
+    },
+    {
+      "atlas_record_sha256": "3a83a46e93535ea47e8bef370f9bf1884ecb9d0dc4be9e47e6127e1539ac18d9",
+      "body_sha256": "26ea09e0235e5ec6910a3de43d628f22f239dec5f46842e05a41fb2e862f670d",
+      "body_size": 202,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [
+            "0x002eba97",
+            "0x002ebab6",
+            "0x002ebad6",
+            "0x002ebaf3",
+            "0x002ebb12"
+          ],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [
+            "0x002ebaaf",
+            "0x002ebacf",
+            "0x002ebaec",
+            "0x002ebb0d"
+          ],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [
+            "0x002eba83",
+            "0x002eba9f",
+            "0x002ebac3",
+            "0x002ebae0",
+            "0x002ebafd"
+          ],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "f63bcaf4b59e8a39b688839f30c683aa43625cfaf3ce493c57e6978fbc7c8e6c",
+      "control_flow_graph_edge_count": 76,
+      "control_flow_graph_node_count": 77,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002eba71",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002eba88",
+          "iat_rva": "0x003d64a4",
+          "import_name": "lua_pushboolean",
+          "instruction_sha256": "84402c7ac341017f47d51d681e08356ad33561ddc8ccd8f96378f6e48f3b8fb4",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ebb1a",
+          "iat_rva": "0x003d64e8",
+          "import_name": "luaL_ref",
+          "instruction_sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002eba60",
+      "role": "initializer_subtree_two",
+      "staged_lua_calls": [
+        {
+          "api": "lua_pushstring",
+          "calls": [
+            {
+              "call_rva": "0x002eba83",
+              "last_reaching_stage_rvas": [
+                "0x002eba77"
+              ]
+            },
+            {
+              "call_rva": "0x002eba9f",
+              "last_reaching_stage_rvas": [
+                "0x002eba77"
+              ]
+            },
+            {
+              "call_rva": "0x002ebac3",
+              "last_reaching_stage_rvas": [
+                "0x002eba77"
+              ]
+            },
+            {
+              "call_rva": "0x002ebae0",
+              "last_reaching_stage_rvas": [
+                "0x002eba77"
+              ]
+            },
+            {
+              "call_rva": "0x002ebafd",
+              "last_reaching_stage_rvas": [
+                "0x002eba77"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EDI",
+          "stage_rva": "0x002eba77"
+        },
+        {
+          "api": "lua_rawset",
+          "calls": [
+            {
+              "call_rva": "0x002eba97",
+              "last_reaching_stage_rvas": [
+                "0x002eba8e"
+              ]
+            },
+            {
+              "call_rva": "0x002ebab6",
+              "last_reaching_stage_rvas": [
+                "0x002eba8e"
+              ]
+            },
+            {
+              "call_rva": "0x002ebad6",
+              "last_reaching_stage_rvas": [
+                "0x002eba8e"
+              ]
+            },
+            {
+              "call_rva": "0x002ebaf3",
+              "last_reaching_stage_rvas": [
+                "0x002eba8e"
+              ]
+            },
+            {
+              "call_rva": "0x002ebb12",
+              "last_reaching_stage_rvas": [
+                "0x002eba8e"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EBX",
+          "stage_rva": "0x002eba8e"
+        },
+        {
+          "api": "lua_pushcclosure",
+          "calls": [
+            {
+              "call_rva": "0x002ebaaf",
+              "last_reaching_stage_rvas": [
+                "0x002ebaa9"
+              ]
+            },
+            {
+              "call_rva": "0x002ebacf",
+              "last_reaching_stage_rvas": [
+                "0x002ebaa9"
+              ]
+            },
+            {
+              "call_rva": "0x002ebaec",
+              "last_reaching_stage_rvas": [
+                "0x002ebaa9"
+              ]
+            },
+            {
+              "call_rva": "0x002ebb0d",
+              "last_reaching_stage_rvas": [
+                "0x002ebaa9"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "ESI",
+          "stage_rva": "0x002ebaa9"
+        }
+      ],
+      "staged_proof_entry_audit": {
+        "alternate_atlas_entry_rvas": [],
+        "declared_direct_call_entries": [],
+        "scope": "entire_contiguous_function_body_after_declared_entry",
+        "sole_modeled_external_entry": true,
+        "unmodeled_entry_premise": "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts are not claimed"
+      }
+    },
+    {
+      "atlas_record_sha256": "9bebfe870176e21574adce7ab56dc323785c19e0cdb73d03afc267a3edf84c1f",
+      "body_sha256": "87e765ce2290b8320efb30cb7e110e8ae67783793b968aecd01827f6bd00d9c1",
+      "body_size": 245,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [
+            "0x002ea31e",
+            "0x002ea331",
+            "0x002ea345",
+            "0x002ea35c",
+            "0x002ea3ad"
+          ],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [
+            "0x002ea2f7",
+            "0x002ea33b",
+            "0x002ea352",
+            "0x002ea366"
+          ],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "eb72d84b7ad57f610bc595f6b68d52b5e4f221f64a6e1d44456bce3b3cad93d9",
+      "control_flow_graph_edge_count": 91,
+      "control_flow_graph_node_count": 89,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea2da",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea2e3",
+          "iat_rva": "0x003d64a4",
+          "import_name": "lua_pushboolean",
+          "instruction_sha256": "84402c7ac341017f47d51d681e08356ad33561ddc8ccd8f96378f6e48f3b8fb4",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea30a",
+          "iat_rva": "0x003d6488",
+          "import_name": "lua_pushnumber",
+          "instruction_sha256": "9fb0f965b7be3084757e7d2d2b3e69981c778dc7d98fc3e1de89f35a1c7e4a07",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea323",
+          "iat_rva": "0x003d652c",
+          "import_name": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea378",
+          "iat_rva": "0x003d6494",
+          "import_name": "lua_pushstring",
+          "instruction_sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea381",
+          "iat_rva": "0x003d64e4",
+          "import_name": "lua_pushvalue",
+          "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea39f",
+          "iat_rva": "0x003d64a4",
+          "import_name": "lua_pushboolean",
+          "instruction_sha256": "84402c7ac341017f47d51d681e08356ad33561ddc8ccd8f96378f6e48f3b8fb4",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea3b2",
+          "iat_rva": "0x003d6550",
+          "import_name": "lua_settable",
+          "instruction_sha256": "c7236c61ae860cc144b4d0a27207ba2dd0b409550c7c4abfcd90e86e0b9d83d5",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002ea2d0",
+      "role": "property_initializer",
+      "staged_lua_calls": [
+        {
+          "api": "lua_setfield",
+          "calls": [
+            {
+              "call_rva": "0x002ea2f7",
+              "last_reaching_stage_rvas": [
+                "0x002ea2e9"
+              ]
+            },
+            {
+              "call_rva": "0x002ea33b",
+              "last_reaching_stage_rvas": [
+                "0x002ea2e9"
+              ]
+            },
+            {
+              "call_rva": "0x002ea352",
+              "last_reaching_stage_rvas": [
+                "0x002ea2e9"
+              ]
+            },
+            {
+              "call_rva": "0x002ea366",
+              "last_reaching_stage_rvas": [
+                "0x002ea2e9"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "ESI",
+          "stage_rva": "0x002ea2e9"
+        },
+        {
+          "api": "lua_pushcclosure",
+          "calls": [
+            {
+              "call_rva": "0x002ea31e",
+              "last_reaching_stage_rvas": [
+                "0x002ea310"
+              ]
+            },
+            {
+              "call_rva": "0x002ea331",
+              "last_reaching_stage_rvas": [
+                "0x002ea310"
+              ]
+            },
+            {
+              "call_rva": "0x002ea345",
+              "last_reaching_stage_rvas": [
+                "0x002ea310"
+              ]
+            },
+            {
+              "call_rva": "0x002ea35c",
+              "last_reaching_stage_rvas": [
+                "0x002ea310"
+              ]
+            },
+            {
+              "call_rva": "0x002ea3ad",
+              "last_reaching_stage_rvas": [
+                "0x002ea310"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EBX",
+          "stage_rva": "0x002ea310"
+        }
+      ],
+      "staged_proof_entry_audit": {
+        "alternate_atlas_entry_rvas": [],
+        "declared_direct_call_entries": [],
+        "scope": "entire_contiguous_function_body_after_declared_entry",
+        "sole_modeled_external_entry": true,
+        "unmodeled_entry_premise": "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts are not claimed"
+      }
+    },
+    {
+      "atlas_record_sha256": "4ef06177a94fc20e9f22528fcd6202ba6853ba62cd93cdc695b0e45cd6a7e490",
+      "body_sha256": "5f9a4aaec50ec8236da729ec16b25f59a5e606053a13468fda28d644052598f5",
+      "body_size": 136,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [
+            "0x002ea4f0",
+            "0x002ea529",
+            "0x002ea548"
+          ],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "05056dbad1b7f5e8c3d4d9645f961634f6da587917f9d6c8368d451b2f25bb40",
+      "control_flow_graph_edge_count": 47,
+      "control_flow_graph_node_count": 47,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea4f8",
+          "iat_rva": "0x003d6484",
+          "import_name": "lua_rawget",
+          "instruction_sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea501",
+          "iat_rva": "0x003d64fc",
+          "import_name": "lua_type",
+          "instruction_sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea512",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea51d",
+          "iat_rva": "0x003d6518",
+          "import_name": "lua_createtable",
+          "instruction_sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea533",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea53c",
+          "iat_rva": "0x003d652c",
+          "import_name": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea54d",
+          "iat_rva": "0x003d64e4",
+          "import_name": "lua_pushvalue",
+          "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea55c",
+          "iat_rva": "0x003d652c",
+          "import_name": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002ea4e0",
+      "role": "raw_cache_helper",
+      "staged_lua_calls": [
+        {
+          "api": "lua_pushstring",
+          "calls": [
+            {
+              "call_rva": "0x002ea4f0",
+              "last_reaching_stage_rvas": [
+                "0x002ea4e1"
+              ]
+            },
+            {
+              "call_rva": "0x002ea529",
+              "last_reaching_stage_rvas": [
+                "0x002ea4e1"
+              ]
+            },
+            {
+              "call_rva": "0x002ea548",
+              "last_reaching_stage_rvas": [
+                "0x002ea4e1"
+              ]
+            }
+          ],
+          "premise": "x86 cdecl preserves EBX, ESI, and EDI across calls",
+          "register": "EBX",
+          "stage_rva": "0x002ea4e1"
+        }
+      ],
+      "staged_proof_entry_audit": {
+        "alternate_atlas_entry_rvas": [],
+        "declared_direct_call_entries": [],
+        "scope": "entire_contiguous_function_body_after_declared_entry",
+        "sole_modeled_external_entry": true,
+        "unmodeled_entry_premise": "indirect, exception, callback, or externally fabricated entries absent from atlas functions and Ghidra-declared direct-call facts are not claimed"
+      }
+    },
+    {
+      "atlas_record_sha256": "f325fd434c226798d70dcb82ce08868f9ea8589f52ee4c5ce63459d80124689b",
+      "body_sha256": "7ccb69986751a399d34584c44c0c52c68da088fe85a5e8a62743964cbcc4db0c",
+      "body_size": 125,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd0"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd1"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd2"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd3"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd4"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd5"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd6"
+        },
+        {
+          "call_rvas": [],
+          "opcode_hex": "ffd7"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "52b70b0a2dc41fb580b86bcf6cb26b8b4b4b2e52a3b4120ac01bcd4c43dadb48",
+      "control_flow_graph_edge_count": 46,
+      "control_flow_graph_node_count": 47,
+      "direct_lua_calls": [
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea82f",
+          "iat_rva": "0x003d6528",
+          "import_name": "lua_newuserdata",
+          "instruction_sha256": "6542893a32dd1ee38e4cc49823f51ddd7eb4c8d500562548c2d2dc12b5295e8d",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea846",
+          "iat_rva": "0x003d6530",
+          "import_name": "lua_setmetatable",
+          "instruction_sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea852",
+          "iat_rva": "0x003d651c",
+          "import_name": "lua_pushlightuserdata",
+          "instruction_sha256": "8281a6fa509daffdb373db326eba02918813ff2abf5a5f8934c83f0e6a2a5b20",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea85e",
+          "iat_rva": "0x003d64a0",
+          "import_name": "lua_pushcclosure",
+          "instruction_sha256": "17e9778622a2da7e0fc064ccd398307140ffebd7f68e379021caee5faaea8787",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea873",
+          "iat_rva": "0x003d64e4",
+          "import_name": "lua_pushvalue",
+          "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea87f",
+          "iat_rva": "0x003d64e8",
+          "import_name": "luaL_ref",
+          "instruction_sha256": "2a15caf11926f825b5e0373a78fdfdd2b13a0c931b8699bc336f8ab33e461adf",
+          "instruction_size": 6
+        },
+        {
+          "call_form": "x86_absolute_iat_indirect_call_ff15",
+          "call_rva": "0x002ea88b",
+          "iat_rva": "0x003d6510",
+          "import_name": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6
+        }
+      ],
+      "entry_rva": "0x002ea820",
+      "role": "raw_cache_consumer",
+      "staged_lua_calls": [],
+      "staged_proof_entry_audit": null
+    }
+  ],
+  "summary": {
+    "bootstrap_registry_stores": 4,
+    "callback_identity_count": 5,
+    "conditional_bootstrap_records": 4,
+    "direct_helper_consumers": 1,
+    "direct_lua_call_count": 61,
+    "gc_publication_consumer_records": 5,
+    "initializer_subtree_edge_count": 4,
+    "raw_cache_records": 1,
+    "schema_violations": 0,
+    "semantic_adjacency_count": 49,
+    "semantic_point_count": 66,
+    "setfield_publications": 3,
+    "source_body_bytes": 1924,
+    "source_body_count": 8,
+    "source_cfg_edge_count": 670,
+    "source_cfg_node_count": 667,
+    "staged_lua_call_count": 58,
+    "table_setter_publications": 2,
+    "target_reference_count": 7
+  },
+  "table_key_provenance_census": {
+    "analysis_kind": "pe_native_lua_cclosure_table_key_provenance_census",
+    "canonical_sha256": "8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6"
+  },
+  "table_key_provenance_receipt": {
+    "analysis_kind": "pe_native_lua_cclosure_table_key_provenance_census_verification",
+    "evidence_sha256": "8b8cab571c3c8945dae440933107022b35eed28b4c806a35188202bd52073db6",
+    "status": "verified"
+  },
+  "target_reference_scan": {
+    "references": [
+      {
+        "instruction_rva": "0x0004cade",
+        "instruction_sha256": "1dda8f3c89f4ba237a6946aae07dd2b8fba7e96c391d30f7b4a590577aab1a86",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "5e3a44ee9526a8f3ed7fb3e1a911277d83c050f2b53acda420a7f1db00cd6fd2",
+        "owner_entry_rva": "0x0004caa0",
+        "target_rva": "0x002e6900",
+        "use_class": "bootstrap_direct_call"
+      },
+      {
+        "instruction_rva": "0x002e69eb",
+        "instruction_sha256": "af5f277a5f2cdca7db5519be56370a7262b408308652c505efb52c3a6da9abfe",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_rva": "0x002e6c30",
+        "use_class": "bootstrap_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002e6a86",
+        "instruction_sha256": "fa6de6e57e8c52334b61840202b802998e69195d00c9193db49c6fcbf267de3d",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_rva": "0x002e6840",
+        "use_class": "bootstrap_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002e6af3",
+        "instruction_sha256": "5c672359fc90ca1e50ea49640b1b3c8af40443a3cd5b926e2a41658202c4faa8",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_rva": "0x002e6880",
+        "use_class": "bootstrap_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002e6b60",
+        "instruction_sha256": "88e2af70e98bddb923d768bd066028d99d2dd844d597bb3fcb2416a563ce36ae",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_rva": "0x002e68b0",
+        "use_class": "bootstrap_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002ea52d",
+        "instruction_sha256": "0c5bb0b932a478617cb71e8c1731d6bce10a0b8c099b440273202573476aa1c3",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "4ef06177a94fc20e9f22528fcd6202ba6853ba62cd93cdc695b0e45cd6a7e490",
+        "owner_entry_rva": "0x002ea4e0",
+        "target_rva": "0x002ea4b0",
+        "use_class": "raw_cache_closure_producer"
+      },
+      {
+        "instruction_rva": "0x002ea839",
+        "instruction_sha256": "4d69f8c93aa015125f5a77cac8cd71130a8d48233d3e2d7c896fdf83e382448c",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f325fd434c226798d70dcb82ce08868f9ea8589f52ee4c5ce63459d80124689b",
+        "owner_entry_rva": "0x002ea820",
+        "target_rva": "0x002ea4e0",
+        "use_class": "raw_helper_direct_consumer"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_function_count": 25312,
+      "atlas_range_count": 25490,
+      "decoded_byte_count": 3735718,
+      "decoded_instruction_count": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_rvas": [
+      "0x002e6900",
+      "0x002e6c30",
+      "0x002e6840",
+      "0x002e6880",
+      "0x002e68b0",
+      "0x002ea4b0",
+      "0x002ea4e0"
+    ]
+  }
+}
