@@ -174,6 +174,20 @@ exactly those two `E8` references from sole owner `0x0039d580`. The artifact's
 pretty-printed and canonical SHA-256 values are
 `bffdbec3554c1969563d4ac235a2e7d150aff311b5b277a31a9f413a3b5094e2` and
 `c479ae8d802d848877f8fd57475d8909e0fe2129d25182996d16f599b6cbaf8c`.
+The residual set's externally transferred-to callee at `0x003574ca` is now
+sealed as its own relationship-only boundary: 17 bytes, all four instructions,
+and a 4-node / 3-edge body-local CFG. Exact `F2`-prefixed syntax retains one
+conditional branch, one terminal return, and one opaque external jump to
+`0x00357b6a`; prefix runtime semantics remain unclaimed. The complete local
+PE-address universe is one writable `.data` absolute-memory read plus two
+file-backed `.text` immediates. Direct/staged Lua evidence, indirect controls,
+`call r32`, and segment-qualified memory are empty. Both residual parents,
+`0x0037298a` (`E8`) and `0x0037299d` (`E9`), rejoin the prerequisite receipt.
+The exhaustive atlas frontier contains 1,794 references from 1,620 owners:
+1,790 standard `E8` calls, three `F2 E8` calls, and the one parent `E9` address
+use. The artifact's pretty-printed and canonical SHA-256 values are
+`548580d0fee7d612fe16bfe10b567ffd2c8d9a6add9cfd965a75c48c22123c2b` and
+`8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1`.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

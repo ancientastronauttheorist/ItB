@@ -718,6 +718,47 @@ layout, control flow, and PE syntax do not prove semantic kinship, purpose,
 ABI, runtime reachability, execution order, success, normal return, state or
 data meaning, un-atlased references, or Lua-side behavior.
 
+## Dependent residual-target-set callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary`.
+It canonical-pins the residual set and exactly rejoins its two transfers to
+`0x003574ca`: `E8` at `0x0037298a` and `E9` at `0x0037299d`, both from owner
+`0x00372970`.
+
+The target is a complete 17-byte / four-instruction body with body SHA-256
+`5eafe60e37cdb82b85f6df218e4b490940c6fb2545895c2cef644fb38ab97375`
+and atlas-record SHA-256
+`931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0`.
+Its 4-node / 3-edge CFG has canonical SHA-256
+`96b4b9365583495d1aa25d002d4833a064caf3792125584a8a6916bda9eb1a9d`.
+The graph retains an `F2`-prefixed conditional, terminal return, and external
+jump `0x003574d5 -> 0x00357b6a`. Prefix semantics and target behavior remain
+opaque.
+
+The complete PE-address partition contains one absolute-memory read in
+file-backed writable `.data` plus two immediates in file-backed nonwritable
+`.text`. Indirect controls, `call r32`, segment-qualified memory, direct Lua,
+and staged Lua partitions are empty. The whole-atlas scan covers 25,312
+functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions. It finds
+exactly 1,794 references from 1,620 owners: 1,790 standard `E8` calls, three
+`F2 E8` calls, and one `E9` address use. Owner, target-owner, and
+target-reference partition hashes are
+`2496424b11c54f2dc558861a9469e4364f470a1b373cb93ed0b00eb4944790de`,
+`e581d35f505204c2623a22d21e63fa5852d323a9e59ac2248ad6b681a178bfbb`,
+and `64e5b02dda9ed08d40341ce46043a78eb705724bdf057ad885d59ef36feb993e`.
+
+The artifact's pretty-printed file SHA-256 is
+`548580d0fee7d612fe16bfe10b567ffd2c8d9a6add9cfd965a75c48c22123c2b`;
+its canonical JSON SHA-256 is
+`8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1`.
+Publication uses the immutable locked writer. Relationship membership,
+analysis labels, BND-prefixed syntax, decoded controls, and PE addresses do
+not prove security purpose, source identity, ABI, runtime reachability,
+execution order, termination, state mutation, success, data contents,
+un-atlased references, or Lua-side behavior.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`

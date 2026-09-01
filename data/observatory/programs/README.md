@@ -1559,6 +1559,77 @@ and analysis labels do not prove semantic kinship, purpose, ABI, inputs or
 outputs, runtime reachability, execution order, state mutation, success,
 normal return, data contents, un-atlased references, or Lua-side behavior.
 
+## Native query pointer-target residual-set callee static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.py`
+canonical-pins the residual direct-target-set receipt, rejoins its two exact
+transfers to `0x003574ca`, and seals the complete target body without assigning
+a source name, security purpose, or runtime behavior.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary`.
+It seals the complete 17-byte body at `0x003574ca`, all four instructions, body
+SHA-256
+`5eafe60e37cdb82b85f6df218e4b490940c6fb2545895c2cef644fb38ab97375`,
+atlas-record SHA-256
+`931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0`,
+and a 4-node / 3-edge body-local CFG with canonical SHA-256
+`96b4b9365583495d1aa25d002d4833a064caf3792125584a8a6916bda9eb1a9d`.
+The graph retains an `F2`-prefixed conditional at `0x003574d0`, terminal return
+at `0x003574d3`, and external unconditional transfer
+`0x003574d5 -> 0x00357b6a`; all three remain opaque BND-prefixed syntax rather
+than claims about prefix semantics or target behavior.
+
+The complete PE-address partition contains one absolute-memory read of
+VA `0x00893f28` / RVA `0x00493f28` in file-backed writable `.data`, plus two
+file-backed nonwritable `.text` immediates. Indirect control, all eight
+`FF D0..D7` register-call buckets, segment-qualified memory, direct Lua calls,
+and locally evidenced staged Lua dispatches are empty. The opaque outgoing
+target at `0x00357b6a` rejoins its 251-byte atlas record without sealing that
+target's behavior.
+
+The exact residual parents are `0x0037298a -> 0x003574ca` via `E8` and
+`0x0037299d -> 0x003574ca` via `E9`, both from owner `0x00372970`. Every
+instruction and source/target atlas identity cross-joins the prerequisite
+receipt. The exhaustive scan decodes all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly 1,794 references survive
+from 1,620 owners: 1,790 standard `E8` calls, three `F2 E8` calls, and the one
+parent `E9` address use. Owner, target-owner, and target-reference partition
+SHA-256 values are
+`2496424b11c54f2dc558861a9469e4364f470a1b373cb93ed0b00eb4944790de`,
+`e581d35f505204c2623a22d21e63fa5852d323a9e59ac2248ad6b681a178bfbb`,
+and `64e5b02dda9ed08d40341ce46043a78eb705724bdf057ad885d59ef36feb993e`.
+
+The artifact's pretty-printed file SHA-256 is
+`548580d0fee7d612fe16bfe10b567ffd2c8d9a6add9cfd965a75c48c22123c2b`;
+its canonical JSON SHA-256 is
+`8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1`.
+Publication uses the immutable locked writer. Relationship membership,
+analysis labels, decoded controls, BND-prefixed syntax, and PE addresses do
+not prove security or cookie purpose, source identity, ABI, runtime
+reachability, execution order, termination, state mutation, success, normal
+return, data contents, un-atlased references, or Lua-side behavior.
+
 ## Native query-new-handler local-helper static boundary
 
 `scripts/itb_native_query_new_handler_local_helper_static_boundary.py`

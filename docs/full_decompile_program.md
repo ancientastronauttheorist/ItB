@@ -559,6 +559,23 @@ until core engine semantics are reconstructed.
   Relationship membership and decoded syntax do not prove semantic identity,
   purpose, ABI, runtime reachability, normal return, state mutation, data
   meaning, un-atlased references, or Lua-side behavior.
+  The residual target set's callee at `0x003574ca` is now sealed as a separate
+  relationship-only boundary: 17 bytes, all four instructions, and a 4-node /
+  3-edge CFG. The exact body retains opaque `F2`-prefixed conditional, return,
+  and external-jump syntax; the outgoing transfer targets `0x00357b6a`.
+  Its complete PE-address partition is one writable `.data` absolute-memory
+  read plus two `.text` immediates. Indirect controls, `call r32`,
+  segment-qualified memory, direct Lua, and staged Lua partitions are empty.
+  Both residual parents (`E8` at `0x0037298a`, `E9` at `0x0037299d`) rejoin
+  the predecessor receipt. The exhaustive atlas frontier has 1,794 references
+  from 1,620 owners: 1,790 standard `E8` calls, three `F2 E8` calls, and one
+  `E9` address use. Its pretty-printed file SHA-256 is
+  `548580d0fee7d612fe16bfe10b567ffd2c8d9a6add9cfd965a75c48c22123c2b`;
+  its canonical JSON SHA-256 is
+  `8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1`.
+  Relationship membership, BND-prefixed syntax, decoded controls, and PE
+  addresses do not prove security purpose, source identity, ABI, runtime
+  reachability, termination, state mutation, data meaning, or Lua behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /
