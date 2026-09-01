@@ -427,6 +427,35 @@ ownership, lifetime, source identity, direct-callee behavior, normal return,
 runtime reachability, computed or indirect references, data consumers,
 un-atlased code, and Lua-side references remain unproved.
 
+## Dependent query local-helper static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`
+has analysis kind
+`pe_native_query_new_handler_local_helper_static_boundary`. It canonical-pins
+the exact query-new-handler artifact and rejoins its
+`0x0038bc41 -> 0x0038bc51` edge. The join is independently checked against the
+whole-atlas reference record, including exact instruction, source/target
+atlas, immediate-`E8`, and normalized Ghidra-edge identity.
+
+The artifact seals the complete 9-byte target body, all four exact instruction
+points, and its 4-node / 3-edge CFG. Its sole outgoing direct native edge,
+`0x0038bc53 -> 0x00388c0d`, remains opaque. The whole-atlas scan covers all
+25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions;
+exactly one target-entry reference survives from one owner, a five-byte
+immediate `E8` call. Comparison, absolute-memory, other-address, direct/staged
+Lua, complete `call r32`, retained-literal, and absolute-address partitions
+are empty.
+
+The artifact's pretty-printed file SHA-256 is
+`3cc19d7a2fb7aac636aba2395692598dad8de7e51c5be9a12c75c30b33eb306c`;
+its canonical JSON SHA-256 is
+`01a03401fdbef4e6d1d575ab74e498b5271387a1ffde440c0dee44b28ad5439c`.
+The default `FUN_0078bc51` label and the callee's analysis label remain
+metadata only. Helper purpose, unlock or lock semantics, ABI, argument
+meaning, success, state mutation, normal return, runtime reachability, source
+identity, callee behavior, dynamic or computed references, data consumers,
+un-atlased code, and Lua-side references remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

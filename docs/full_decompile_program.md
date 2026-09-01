@@ -447,6 +447,21 @@ until core engine semantics are reconstructed.
   metadata only; handler/allocation behavior, pointer contents, ABI, success,
   ownership, lifetime, normal return, runtime reachability, source identity,
   and callee semantics remain unproved.
+  The query handler's 9-byte local target is now closed by a separate,
+  recursively pinned boundary. It rejoins and independently revalidates
+  `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /
+  3-edge CFG, and retains the sole outgoing
+  `0x0038bc53 -> 0x00388c0d` direct call as opaque. Its all-atlas entry
+  frontier is exactly one immediate `E8` call from one owner; Lua calls,
+  register calls, literals, and absolute-address records are empty. Its
+  pretty-printed file SHA-256 is
+  `3cc19d7a2fb7aac636aba2395692598dad8de7e51c5be9a12c75c30b33eb306c`;
+  its canonical JSON SHA-256 is
+  `01a03401fdbef4e6d1d575ab74e498b5271387a1ffde440c0dee44b28ad5439c`.
+  Default and analysis-generated labels remain metadata only; helper purpose,
+  unlock/lock behavior, ABI, argument meaning, success, state mutation,
+  normal return, runtime reachability, source identity, and callee behavior
+  remain unproved.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

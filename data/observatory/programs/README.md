@@ -1083,6 +1083,61 @@ identity, callee behavior, normal return, runtime reachability, computed or
 indirect references, data consumers, un-atlased code, and Lua-side references
 remain unproved.
 
+## Native query-new-handler local-helper static boundary
+
+`scripts/itb_native_query_new_handler_local_helper_static_boundary.py`
+canonical-pins the exact query-new-handler boundary, rejoins its
+`0x0038bc41 -> 0x0038bc51` edge, seals the complete target body and CFG, and
+scans every atlas operand for the complete target-entry reference frontier.
+The predecessor is validated both from the pinned query evidence and from the
+independently rebuilt PE reference record. The target's default
+`FUN_0078bc51` spelling is retained only as analysis metadata.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_new_handler_local_helper_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-new-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_new_handler_local_helper_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-new-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_new_handler_local_helper_static_boundary`. It seals target
+`0x0038bc51`: 9 bytes, all four exact instruction points, and one 4-node /
+3-edge CFG. Its sole outgoing direct call at
+`0x0038bc53 -> 0x00388c0d` remains opaque.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one target reference survives from one
+owner, a five-byte immediate `E8` call; comparison, absolute-memory, and
+other-address partitions are empty. Direct and staged Lua calls, the complete
+eight-register call audit, retained literals, and absolute-address records are
+also empty.
+
+The artifact's pretty-printed file SHA-256 is
+`3cc19d7a2fb7aac636aba2395692598dad8de7e51c5be9a12c75c30b33eb306c`;
+its canonical JSON SHA-256 is
+`01a03401fdbef4e6d1d575ab74e498b5271387a1ffde440c0dee44b28ad5439c`.
+Publication validates one locked point-in-time snapshot, requires the explicit
+owner partition during structural verification, normalizes inherited errors,
+and preserves a published destination after failed final validation. Helper
+purpose, unlock or lock semantics, ABI, argument meaning, success, state
+mutation, normal return, runtime reachability, source identity, callee
+behavior, dynamic or computed references, data consumers, un-atlased code,
+and Lua-side references remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete

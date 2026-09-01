@@ -84,6 +84,18 @@ The `__query_new_handler` spelling and all outgoing names remain analysis
 metadata only; handler, allocation, SEH, lock, security, pointer contents,
 ABI, success, ownership, lifetime, runtime behavior, and callee semantics are
 unclaimed.
+The query local-helper boundary closes exact edge
+`0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
+instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at
+`0x0038bc53 -> 0x00388c0d` remains opaque, and the full incoming frontier is
+one immediate `E8` call from one owner. Direct/staged Lua calls, `call r32`,
+retained literals, and absolute-address records are empty. The artifact's
+pretty-printed and canonical SHA-256 values are
+`3cc19d7a2fb7aac636aba2395692598dad8de7e51c5be9a12c75c30b33eb306c` and
+`01a03401fdbef4e6d1d575ab74e498b5271387a1ffde440c0dee44b28ad5439c`.
+The default `FUN_0078bc51` and analysis-labeled callee names do not prove
+helper purpose, unlock/lock behavior, ABI, argument meaning, state mutation,
+normal return, runtime reachability, source identity, or callee behavior.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
