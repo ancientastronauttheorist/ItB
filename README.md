@@ -19,8 +19,9 @@ includes executable-rebuilt `property` factory, consumer, mismatch-path,
 initializer, cleanup-chain, operator-dispatch, and native `__gc` metatable
 consumer artifacts, the `class` factory, returned-callback helper chain, and
 factory-side class initializer, its formerly opaque `0x0007c600` native
-helper, and the initializer's remaining analysis-labeled assertion-helper edge,
-plus the 46-caller registry-holder local-use/release census. That census seals
+helper, the helper's analysis-labeled `operator_new` target, and the
+initializer's remaining analysis-labeled assertion-helper edge, plus the
+46-caller registry-holder local-use/release census. That census seals
 47 bodies and the complete all-operand producer reference partition while
 leaving ownership and lifetime unclaimed. The class-return helper chain seals
 three callback-side helpers / 501 bytes, all 20 direct or staged Lua calls,
@@ -42,6 +43,19 @@ and partitions all 881 atlas references as immediate `E8` calls from 660
 owners. It records only exact instruction and non-writable `.rdata` pointer
 syntax: CRT identity, dialog/display behavior, termination, source
 equivalence, and runtime reachability remain explicitly unclaimed.
+The adjacent operator-new boundary closes the helper's exact
+`0x0007c602 -> 0x003574db` edge and seals the 51-byte target body, all 20
+instructions, and its 20-node / 22-edge CFG. Four outgoing direct calls remain
+opaque. Its whole-atlas frontier contains 1,233 references from 1,050 owners:
+1,232 immediate `E8` calls and one declared `E9` reference at `0x00357874`,
+with no direct or staged Lua calls, `call r32`, or retained literals. The
+artifact's pretty-printed and canonical SHA-256 values are
+`08cfc38143f47c4b4f737e4638f82495b5bfd22341626a1ee3d7ea66df2005e9` and
+`d0cecf29ab94b05dbe8f75c2c6edd823b83c53ed06f853d4db478a76e046479f`.
+The `operator_new` name remains an analysis label only: allocation semantics,
+ABI, success, ownership, lifetime, size meaning, normal return, runtime
+reachability, source identity, opaque-callee behavior, and computed, indirect,
+data, un-atlased, or Lua references remain explicitly unclaimed.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry

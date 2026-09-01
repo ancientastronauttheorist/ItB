@@ -392,6 +392,24 @@ until core engine semantics are reconstructed.
   `beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`;
   analysis labels do not establish CRT identity, dialog/display behavior,
   termination, source equivalence, or runtime reachability.
+  The self-linked helper's analysis-labeled target is now closed by a separate
+  operator-new static boundary. It simultaneously revalidates the canonical-
+  pinned predecessor evidence and the independently rebuilt whole-atlas
+  reference record for exact edge `0x0007c602 -> 0x003574db`, then seals the
+  51-byte target body, all 20 instructions, and a 20-node / 22-edge CFG. Four
+  outgoing direct calls remain opaque. The complete entry frontier partitions
+  1,233 references from 1,050 owners into 1,232 immediate `E8` calls and one
+  declared `E9` reference at `0x00357874`; direct and staged Lua calls,
+  `call r32`, and retained literals are empty. Its pretty-printed file SHA-256
+  is `08cfc38143f47c4b4f737e4638f82495b5bfd22341626a1ee3d7ea66df2005e9`;
+  its canonical JSON SHA-256 is
+  `d0cecf29ab94b05dbe8f75c2c6edd823b83c53ed06f853d4db478a76e046479f`.
+  The name remains an analysis label only; allocation semantics, ABI, success,
+  ownership, lifetime, size meaning, normal return, runtime reachability,
+  source identity, opaque-callee behavior, and computed, indirect, data,
+  un-atlased, or Lua references remain unproved. Publication verifies one
+  locked point-in-time snapshot, and failed published destinations are
+  preserved for inspection rather than deleted.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

@@ -329,6 +329,36 @@ CRT identity or ownership, dialog/display behavior, normal return, abort,
 termination, source equivalence, computed or indirect references, un-atlased
 code, and Lua-side references remain unproved.
 
+## Dependent operator-new static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_static_boundary.json`
+has analysis kind `pe_native_operator_new_static_boundary`. It
+canonical-pins the exact self-linked-record helper artifact and rejoins its
+`0x0007c602 -> 0x003574db` edge. The join is also checked against the current
+independently rebuilt whole-atlas reference record, including instruction,
+source-atlas, target-atlas, immediate-`E8`, and normalized Ghidra-edge identity.
+
+The artifact seals the 51-byte target body, all 20 exact instruction points,
+and its 20-node / 22-edge CFG. Four outgoing direct calls remain opaque native
+edges. The body contains no direct Lua call, staged Lua dispatch, `call r32`,
+or retained literal. Its pretty-printed file SHA-256 is
+`08cfc38143f47c4b4f737e4638f82495b5bfd22341626a1ee3d7ea66df2005e9`;
+its canonical JSON SHA-256 is
+`d0cecf29ab94b05dbe8f75c2c6edd823b83c53ed06f853d4db478a76e046479f`.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly 1,233 target-entry
+references survive from 1,050 owners. Of these, 1,232 are five-byte immediate
+`E8` calls; the sole other-address reference is a declared `E9` instruction at
+`0x00357874`. Comparison and absolute-memory partitions are empty. The
+`operator_new` name is an analysis label only. Allocation semantics, ABI,
+success, ownership, lifetime, size meaning, runtime reachability, normal
+return, source identity, opaque-callee behavior, computed or indirect
+references, data references, un-atlased code, and Lua-side references remain
+unproved. Publication proves one locked point-in-time snapshot; a published
+destination that fails validation is preserved for inspection rather than
+deleted.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that
