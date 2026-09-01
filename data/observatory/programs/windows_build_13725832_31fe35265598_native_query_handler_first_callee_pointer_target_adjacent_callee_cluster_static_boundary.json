@@ -1,0 +1,2067 @@
+{
+  "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "body_range_count": 25490,
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_body_bytes": 3735718,
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "contiguous_layout": {
+    "adjacent_pairs": [
+      {
+        "left_end_rva_exclusive": "0x00378b55",
+        "left_entry_rva": "0x00378b3e",
+        "right_entry_rva": "0x00378b55"
+      },
+      {
+        "left_end_rva_exclusive": "0x00378b6e",
+        "left_entry_rva": "0x00378b55",
+        "right_entry_rva": "0x00378b6e"
+      },
+      {
+        "left_end_rva_exclusive": "0x00378b87",
+        "left_entry_rva": "0x00378b6e",
+        "right_entry_rva": "0x00378b87"
+      }
+    ],
+    "end_rva_exclusive": "0x00378b9e",
+    "member_entries": [
+      "0x00378b3e",
+      "0x00378b55",
+      "0x00378b6e",
+      "0x00378b87"
+    ],
+    "role": "contiguous_atlas_layout_only",
+    "semantic_kinship_claimed": false,
+    "sha256": "90bbfc64c1432f6b635812d241f996137a7e02d88381c66e66955102f1f9d48d",
+    "size": 96,
+    "start_rva": "0x00378b3e"
+  },
+  "control_flow_graphs": [
+    {
+      "caller_entry_rva": "0x00378b3e",
+      "edge_count": 15,
+      "node_count": 16,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b3e",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b3f"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b3f",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b40"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b40",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b41"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b41",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b42"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b42",
+          "sha256": "967454afd6de086e4d8a945d0691f2180d4241943ad2bb507a345dc446e57a11",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b44"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b44",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b46"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b46",
+          "sha256": "45f1dcfd70b34f4cf0bb2c8541d74e6ec286851628ace2c254fae48a382a590d",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b48"
+          ],
+          "writes_ebx": true,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b48",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b4a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b4a",
+          "sha256": "52ee7bc49cb2b8661e54f8103f068838ea4bf5089db7626cad08a85a8a6dce66",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b4c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b4c",
+          "sha256": "1770ae2694dfffb5381d1db167ea14ea806e849f7c886fc876528fc8e197f9ce",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b4e"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x00378b4e",
+          "sha256": "a718ee5ed04f90e9b8295213930a9d1dd81229a39ba2b0dea961eef92d879f4b",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b50"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b50",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b51"
+          ],
+          "writes_ebx": true,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b51",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b52"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b52",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b53"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b53",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b54"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x00378b54",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 23,
+      "range_start_rva": "0x00378b3e"
+    },
+    {
+      "caller_entry_rva": "0x00378b55",
+      "edge_count": 10,
+      "node_count": 11,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b55",
+          "sha256": "967454afd6de086e4d8a945d0691f2180d4241943ad2bb507a345dc446e57a11",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b57"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b57",
+          "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b59"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b59",
+          "sha256": "fda557d71a110b6fb6a609d5f68c02973a9e541d6e52b891fd648c847f23c752",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b5b"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b5b",
+          "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b5d"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x00378b5d",
+          "sha256": "4e38c6d710566ad37df0cab3823d7455bef4ebfbfe4dfc9feb62668eeadc80fc",
+          "size": 5,
+          "successor_rvas": [
+            "0x00378b62"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b62",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b64"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b64",
+          "sha256": "45f1dcfd70b34f4cf0bb2c8541d74e6ec286851628ace2c254fae48a382a590d",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b66"
+          ],
+          "writes_ebx": true,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b66",
+          "sha256": "6b3abe7b30d64eef0441e29f68b0eabf17526b476fa2495d67f1a901e3e73ec5",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b68"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b68",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b6a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b6a",
+          "sha256": "1770ae2694dfffb5381d1db167ea14ea806e849f7c886fc876528fc8e197f9ce",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b6c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "indirect_jump",
+          "rva": "0x00378b6c",
+          "sha256": "00ddff629a38849a38d4b0d384a73c29efd55344ca2124a8601eb360dc6b638c",
+          "size": 2,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        }
+      ],
+      "range_size": 25,
+      "range_start_rva": "0x00378b55"
+    },
+    {
+      "caller_entry_rva": "0x00378b6e",
+      "edge_count": 14,
+      "node_count": 15,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b6e",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b6f"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b6f",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b71"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b71",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b72"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b72",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b73"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b73",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b74"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b74",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2,
+          "successor_rvas": [
+            "0x00378b76"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b76",
+          "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b77"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b77",
+          "sha256": "57814715fc5c1b4f2ebc6bb2dff044bb914a778b66957a1a77a834ebea969116",
+          "size": 5,
+          "successor_rvas": [
+            "0x00378b7c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b7c",
+          "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b7d"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x00378b7d",
+          "sha256": "1bf6aac09857661da870fb8aa4d8b6b3d8f9c750fafdbf2550f03e7da710cc76",
+          "size": 5,
+          "successor_rvas": [
+            "0x00378b82"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b82",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b83"
+          ],
+          "writes_ebx": false,
+          "writes_edi": true,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b83",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b84"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": true,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b84",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b85"
+          ],
+          "writes_ebx": true,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b85",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b86"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x00378b86",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 25,
+      "range_start_rva": "0x00378b6e"
+    },
+    {
+      "caller_entry_rva": "0x00378b87",
+      "edge_count": 8,
+      "node_count": 9,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b87",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b88"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b88",
+          "sha256": "9a6826736715f26986804b2b22089779ebd53f69153201829dd01eb96406094c",
+          "size": 4,
+          "successor_rvas": [
+            "0x00378b8c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b8c",
+          "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b8d"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b8d",
+          "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b8e"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b8e",
+          "sha256": "7a0304b31440583a6deb64290f1eb9798abc8a1ab0ccc20bd76b9c0e519ee9f4",
+          "size": 4,
+          "successor_rvas": [
+            "0x00378b92"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x00378b92",
+          "sha256": "feaa451c48aba43f521c66f0e9f02b98fa05870d18f12c156a0f5ea40822e886",
+          "size": 5,
+          "successor_rvas": [
+            "0x00378b97"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b97",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3,
+          "successor_rvas": [
+            "0x00378b9a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x00378b9a",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x00378b9b"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x00378b9b",
+          "sha256": "1d10894625976bca9d8906f3ecf1e766b94e9219ec3bf1c30e02feea5e18e45a",
+          "size": 3,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 23,
+      "range_start_rva": "0x00378b87"
+    }
+  ],
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "register_call_encoding_audit": [
+      {
+        "encoding": "ffd0",
+        "register": "EAX"
+      },
+      {
+        "encoding": "ffd1",
+        "register": "ECX"
+      },
+      {
+        "encoding": "ffd2",
+        "register": "EDX"
+      },
+      {
+        "encoding": "ffd3",
+        "register": "EBX"
+      },
+      {
+        "encoding": "ffd4",
+        "register": "ESP"
+      },
+      {
+        "encoding": "ffd5",
+        "register": "EBP"
+      },
+      {
+        "encoding": "ffd6",
+        "register": "ESI"
+      },
+      {
+        "encoding": "ffd7",
+        "register": "EDI"
+      }
+    ],
+    "sealed_instruction_count": 51,
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "function_bodies": [
+    {
+      "atlas_record_sha256": "21bfa842aaa26c0306ff5b8da85ba63bc13daaa71cd930aaa24b91da1e34ed6c",
+      "body_sha256": "6e2b3bd553f0ffdd43df815cf3341fce2e76a73e8f9b243867c06b12310701fb",
+      "body_size": 23,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [
+            "0x00378b4e"
+          ],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "a88b1abbcaa972963f916fd4574f173aafcc6a899d26c28848d86d2f4a9c6b0c",
+      "direct_lua_calls": [],
+      "entry_rva": "0x00378b3e",
+      "range_size": 23,
+      "range_start_rva": "0x00378b3e",
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_000",
+          "rva": "0x00378b3e",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_001",
+          "rva": "0x00378b3f",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_002",
+          "rva": "0x00378b40",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_003",
+          "rva": "0x00378b41",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_004",
+          "rva": "0x00378b42",
+          "sha256": "967454afd6de086e4d8a945d0691f2180d4241943ad2bb507a345dc446e57a11",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_005",
+          "rva": "0x00378b44",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_006",
+          "rva": "0x00378b46",
+          "sha256": "45f1dcfd70b34f4cf0bb2c8541d74e6ec286851628ace2c254fae48a382a590d",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_007",
+          "rva": "0x00378b48",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_008",
+          "rva": "0x00378b4a",
+          "sha256": "52ee7bc49cb2b8661e54f8103f068838ea4bf5089db7626cad08a85a8a6dce66",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_009",
+          "rva": "0x00378b4c",
+          "sha256": "1770ae2694dfffb5381d1db167ea14ea806e849f7c886fc876528fc8e197f9ce",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_010",
+          "rva": "0x00378b4e",
+          "sha256": "a718ee5ed04f90e9b8295213930a9d1dd81229a39ba2b0dea961eef92d879f4b",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_011",
+          "rva": "0x00378b50",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_012",
+          "rva": "0x00378b51",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_013",
+          "rva": "0x00378b52",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_014",
+          "rva": "0x00378b53",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_015",
+          "rva": "0x00378b54",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "contiguous_atlas_member_opaque_static_boundary",
+      "semantic_facts": {
+        "adjacency_only": true,
+        "analysis_labels_opaque": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    },
+    {
+      "atlas_record_sha256": "0bf347712ab1049e562b947e0a83c7669425e76e910aab6096bb42c8a45f2c46",
+      "body_sha256": "c60b762b740ca702e7dd2f96ac96f31c9122758f9c0bf0b518a54cda2986dfe7",
+      "body_size": 25,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "db652309bf25985f8a5909d782947fbb6b2ebed9d29d251ed091c973b6e0f8eb",
+      "direct_lua_calls": [],
+      "entry_rva": "0x00378b55",
+      "range_size": 25,
+      "range_start_rva": "0x00378b55",
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_000",
+          "rva": "0x00378b55",
+          "sha256": "967454afd6de086e4d8a945d0691f2180d4241943ad2bb507a345dc446e57a11",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_001",
+          "rva": "0x00378b57",
+          "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_002",
+          "rva": "0x00378b59",
+          "sha256": "fda557d71a110b6fb6a609d5f68c02973a9e541d6e52b891fd648c847f23c752",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_003",
+          "rva": "0x00378b5b",
+          "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_004",
+          "rva": "0x00378b5d",
+          "sha256": "4e38c6d710566ad37df0cab3823d7455bef4ebfbfe4dfc9feb62668eeadc80fc",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_005",
+          "rva": "0x00378b62",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_006",
+          "rva": "0x00378b64",
+          "sha256": "45f1dcfd70b34f4cf0bb2c8541d74e6ec286851628ace2c254fae48a382a590d",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_007",
+          "rva": "0x00378b66",
+          "sha256": "6b3abe7b30d64eef0441e29f68b0eabf17526b476fa2495d67f1a901e3e73ec5",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_008",
+          "rva": "0x00378b68",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_009",
+          "rva": "0x00378b6a",
+          "sha256": "1770ae2694dfffb5381d1db167ea14ea806e849f7c886fc876528fc8e197f9ce",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_010",
+          "rva": "0x00378b6c",
+          "sha256": "00ddff629a38849a38d4b0d384a73c29efd55344ca2124a8601eb360dc6b638c",
+          "size": 2
+        }
+      ],
+      "role": "contiguous_atlas_member_opaque_static_boundary",
+      "semantic_facts": {
+        "adjacency_only": true,
+        "analysis_labels_opaque": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    },
+    {
+      "atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+      "body_sha256": "e4c5374582d34dcaf8ef3cd401b6bcc2e38a1cc1ab6950af7eaf0ce7129c3286",
+      "body_size": 25,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "34669d29c9c8fd8a47c973be00fdbd8b4df94e34e48574542470bd70bdcf2bf4",
+      "direct_lua_calls": [],
+      "entry_rva": "0x00378b6e",
+      "range_size": 25,
+      "range_start_rva": "0x00378b6e",
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_000",
+          "rva": "0x00378b6e",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_001",
+          "rva": "0x00378b6f",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_002",
+          "rva": "0x00378b71",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_003",
+          "rva": "0x00378b72",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_004",
+          "rva": "0x00378b73",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_005",
+          "rva": "0x00378b74",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_006",
+          "rva": "0x00378b76",
+          "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_007",
+          "rva": "0x00378b77",
+          "sha256": "57814715fc5c1b4f2ebc6bb2dff044bb914a778b66957a1a77a834ebea969116",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_008",
+          "rva": "0x00378b7c",
+          "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_009",
+          "rva": "0x00378b7d",
+          "sha256": "1bf6aac09857661da870fb8aa4d8b6b3d8f9c750fafdbf2550f03e7da710cc76",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_010",
+          "rva": "0x00378b82",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_011",
+          "rva": "0x00378b83",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_012",
+          "rva": "0x00378b84",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_013",
+          "rva": "0x00378b85",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_014",
+          "rva": "0x00378b86",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "contiguous_atlas_member_opaque_static_boundary",
+      "semantic_facts": {
+        "adjacency_only": true,
+        "analysis_labels_opaque": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    },
+    {
+      "atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+      "body_sha256": "00a48f1b6eb852efff2b66f536e59bcdffe8c722348a1127d976604a5c3cc994",
+      "body_size": 23,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "e4f26af633adad0cf0c255d9f96cc8ce2202d91fd5a8a3c65b7f530303f2505c",
+      "direct_lua_calls": [],
+      "entry_rva": "0x00378b87",
+      "range_size": 23,
+      "range_start_rva": "0x00378b87",
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_000",
+          "rva": "0x00378b87",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_001",
+          "rva": "0x00378b88",
+          "sha256": "9a6826736715f26986804b2b22089779ebd53f69153201829dd01eb96406094c",
+          "size": 4
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_002",
+          "rva": "0x00378b8c",
+          "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_003",
+          "rva": "0x00378b8d",
+          "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_004",
+          "rva": "0x00378b8e",
+          "sha256": "7a0304b31440583a6deb64290f1eb9798abc8a1ab0ccc20bd76b9c0e519ee9f4",
+          "size": 4
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_005",
+          "rva": "0x00378b92",
+          "sha256": "feaa451c48aba43f521c66f0e9f02b98fa05870d18f12c156a0f5ea40822e886",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_006",
+          "rva": "0x00378b97",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_007",
+          "rva": "0x00378b9a",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "decoded_instruction",
+            "source_semantic_names_assigned": false
+          },
+          "role": "instruction_008",
+          "rva": "0x00378b9b",
+          "sha256": "1d10894625976bca9d8906f3ecf1e766b94e9219ec3bf1c30e02feea5e18e45a",
+          "size": 3
+        }
+      ],
+      "role": "contiguous_atlas_member_opaque_static_boundary",
+      "semantic_facts": {
+        "adjacency_only": true,
+        "analysis_labels_opaque": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    }
+  ],
+  "method": {
+    "not_claimed": [
+      "semantic kinship based on adjacency, analysis labels, ABI, registers, compiler, exception, arguments, control transfer, behavior, success, or normal return",
+      "runtime reachability, invocation, order, frequency, target identity, state mutation, or runtime effect",
+      "contents or semantics of operands, indirect controls, registers, or pointed-to data",
+      "dynamic, computed, indirect, data, un-atlased, or Lua-side references"
+    ],
+    "structural_boundary": "PE-free validation reconstructs the fixed prerequisite, layout-only span, four atlas body, CFG, declared-edge, opaque-control, opaque-operand, and whole-atlas reference receipts. Exact bytes and the atlas traversal require the sealed executable."
+  },
+  "native_calls": {
+    "direct": [
+      {
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378b5d",
+          "source_entry_rva": "0x00378b55",
+          "target_entry_rva": "0x00378a15",
+          "target_name_sha256": "33d0a0b292db5172dcfbbedd49defac7eae926baee9e8797494a74a90f3aee97",
+          "target_rva": "0x00378a15"
+        },
+        "instruction": {
+          "rva": "0x00378b5d",
+          "sha256": "4e38c6d710566ad37df0cab3823d7455bef4ebfbfe4dfc9feb62668eeadc80fc",
+          "size": 5
+        },
+        "role": "opaque_declared_direct_edge",
+        "source_atlas_record_sha256": "0bf347712ab1049e562b947e0a83c7669425e76e910aab6096bb42c8a45f2c46",
+        "source_body_sha256": "c60b762b740ca702e7dd2f96ac96f31c9122758f9c0bf0b518a54cda2986dfe7",
+        "source_body_size": 25,
+        "source_entry_rva": "0x00378b55",
+        "target_atlas_record_sha256": "6bf2ee0e68ff7a0c12250248e928bae616b939421135f8b679081c4903dedb81",
+        "target_body_sha256": "bfc32dca1a2879c053683385362acc34071b244f56f0724b2ec96d15f6660f29",
+        "target_body_size": 31,
+        "target_entry_rva": "0x00378a15"
+      },
+      {
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378b7d",
+          "source_entry_rva": "0x00378b6e",
+          "target_entry_rva": "0x0039cb98",
+          "target_name_sha256": "3d859f62aadd9aa78b7bd2d1ca6fa56e5bee6a744dee0f410a74fa1785a97035",
+          "target_rva": "0x0039cb98"
+        },
+        "instruction": {
+          "rva": "0x00378b7d",
+          "sha256": "1bf6aac09857661da870fb8aa4d8b6b3d8f9c750fafdbf2550f03e7da710cc76",
+          "size": 5
+        },
+        "role": "opaque_declared_direct_edge",
+        "source_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "source_body_sha256": "e4c5374582d34dcaf8ef3cd401b6bcc2e38a1cc1ab6950af7eaf0ce7129c3286",
+        "source_body_size": 25,
+        "source_entry_rva": "0x00378b6e",
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_body_sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+        "target_body_size": 6,
+        "target_entry_rva": "0x0039cb98"
+      },
+      {
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378b92",
+          "source_entry_rva": "0x00378b87",
+          "target_entry_rva": "0x00378a40",
+          "target_name_sha256": "1a687bc71257cdaf1d441abfa82445df6d72210f99f6859310e0aa5bfbde2c7d",
+          "target_rva": "0x00378a40"
+        },
+        "instruction": {
+          "rva": "0x00378b92",
+          "sha256": "feaa451c48aba43f521c66f0e9f02b98fa05870d18f12c156a0f5ea40822e886",
+          "size": 5
+        },
+        "role": "opaque_declared_direct_edge",
+        "source_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+        "source_body_sha256": "00a48f1b6eb852efff2b66f536e59bcdffe8c722348a1127d976604a5c3cc994",
+        "source_body_size": 23,
+        "source_entry_rva": "0x00378b87",
+        "target_atlas_record_sha256": "e4355b9ed70a7a29fd028431b4a0ed4d63dbe0727cfd1e13832aab61407b9cd6",
+        "target_body_sha256": "c75af58d5bf56eae591044575adab9c6c3a2861576a9524fa38e4854960c99da",
+        "target_body_size": 144,
+        "target_entry_rva": "0x00378a40"
+      }
+    ],
+    "opaque_instruction_syntax": [
+      {
+        "instruction": {
+          "rva": "0x00378b4e",
+          "sha256": "a718ee5ed04f90e9b8295213930a9d1dd81229a39ba2b0dea961eef92d879f4b",
+          "size": 2
+        },
+        "register": "ECX",
+        "role": "opaque_register_call_syntax",
+        "target_identity_or_runtime_behavior_opaque": true
+      },
+      {
+        "instruction": {
+          "rva": "0x00378b6c",
+          "sha256": "00ddff629a38849a38d4b0d384a73c29efd55344ca2124a8601eb360dc6b638c",
+          "size": 2
+        },
+        "register": "ESI",
+        "role": "opaque_register_jmp_syntax",
+        "target_identity_or_runtime_behavior_opaque": true
+      },
+      {
+        "contents_or_semantics_opaque": true,
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x00378b77",
+          "sha256": "57814715fc5c1b4f2ebc6bb2dff044bb914a778b66957a1a77a834ebea969116",
+          "size": 5
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x00378b82",
+        "operand_va": "0x00778b82",
+        "role": "opaque_absolute_immediate_syntax",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_writable": false,
+        "target_identity_or_runtime_behavior_opaque": true
+      }
+    ]
+  },
+  "pointer_target_parent_edges": [
+    {
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00372a2a",
+        "source_entry_rva": "0x003729b0",
+        "target_entry_rva": "0x00378b3e",
+        "target_name_sha256": "ec9787931a88d9e88e7e48a5880ed159790ca4dad4d85401b184263084cd8409",
+        "target_rva": "0x00378b3e"
+      },
+      "instruction": {
+        "rva": "0x00372a2a",
+        "sha256": "faa46c393ba970492eff9be750d7f81b5487e5e77b0a1cb1298ed415dd0e8872",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+      "source_body_sha256": "041351f97ec254c16a90406f1db804efed9b575e1f7e253f3cc459add09f316e",
+      "source_body_size": 358,
+      "source_entry_rva": "0x003729b0",
+      "target_atlas_record_sha256": "21bfa842aaa26c0306ff5b8da85ba63bc13daaa71cd930aaa24b91da1e34ed6c",
+      "target_body_sha256": "6e2b3bd553f0ffdd43df815cf3341fce2e76a73e8f9b243867c06b12310701fb",
+      "target_body_size": 23,
+      "target_entry_rva": "0x00378b3e"
+    },
+    {
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00372a80",
+        "source_entry_rva": "0x003729b0",
+        "target_entry_rva": "0x00378b6e",
+        "target_name_sha256": "36c6e1bcecfe71661e16ae5e2268316b5af104237d73252c010e8ecc10ca7f8e",
+        "target_rva": "0x00378b6e"
+      },
+      "instruction": {
+        "rva": "0x00372a80",
+        "sha256": "991c345ea97ba4ecf9a4525d2b4a17a9729c3c1ed934f5f9789aa0ff7b74276c",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+      "source_body_sha256": "041351f97ec254c16a90406f1db804efed9b575e1f7e253f3cc459add09f316e",
+      "source_body_size": 358,
+      "source_entry_rva": "0x003729b0",
+      "target_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+      "target_body_sha256": "e4c5374582d34dcaf8ef3cd401b6bcc2e38a1cc1ab6950af7eaf0ce7129c3286",
+      "target_body_size": 25,
+      "target_entry_rva": "0x00378b6e"
+    },
+    {
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00372ac9",
+        "source_entry_rva": "0x003729b0",
+        "target_entry_rva": "0x00378b87",
+        "target_name_sha256": "88c2b74eff5c26aaa542ad7cf47055b42550eb0118b368cb275a6721f4f49086",
+        "target_rva": "0x00378b87"
+      },
+      "instruction": {
+        "rva": "0x00372ac9",
+        "sha256": "d62ec39116bf3c2c061dde7234d4e62fdb8d73aee0e98eeb5d385e5c61c3dcfc",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+      "source_body_sha256": "041351f97ec254c16a90406f1db804efed9b575e1f7e253f3cc459add09f316e",
+      "source_body_size": 358,
+      "source_entry_rva": "0x003729b0",
+      "target_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+      "target_body_sha256": "00a48f1b6eb852efff2b66f536e59bcdffe8c722348a1127d976604a5c3cc994",
+      "target_body_size": 23,
+      "target_entry_rva": "0x00378b87"
+    },
+    {
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00372af1",
+        "source_entry_rva": "0x003729b0",
+        "target_entry_rva": "0x00378b87",
+        "target_name_sha256": "88c2b74eff5c26aaa542ad7cf47055b42550eb0118b368cb275a6721f4f49086",
+        "target_rva": "0x00378b87"
+      },
+      "instruction": {
+        "rva": "0x00372af1",
+        "sha256": "91c03384db9e35815a2708f37974c1920d2bdbcf5aa9b41cdb2df56648de1214",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+      "source_body_sha256": "041351f97ec254c16a90406f1db804efed9b575e1f7e253f3cc459add09f316e",
+      "source_body_size": 358,
+      "source_entry_rva": "0x003729b0",
+      "target_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+      "target_body_sha256": "00a48f1b6eb852efff2b66f536e59bcdffe8c722348a1127d976604a5c3cc994",
+      "target_body_size": 23,
+      "target_entry_rva": "0x00378b87"
+    },
+    {
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x00372b10",
+        "source_entry_rva": "0x003729b0",
+        "target_entry_rva": "0x00378b55",
+        "target_name_sha256": "cac8d1943b6fe619a2a64d1f07a09a92597ec3db575d431e06939f2659d2f688",
+        "target_rva": "0x00378b55"
+      },
+      "instruction": {
+        "rva": "0x00372b10",
+        "sha256": "34d99d891de354973075a64281aa71ce284a15f20e8fe5d55bb3052a08b0a921",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+      "source_body_sha256": "041351f97ec254c16a90406f1db804efed9b575e1f7e253f3cc459add09f316e",
+      "source_body_size": 358,
+      "source_entry_rva": "0x003729b0",
+      "target_atlas_record_sha256": "0bf347712ab1049e562b947e0a83c7669425e76e910aab6096bb42c8a45f2c46",
+      "target_body_sha256": "c60b762b740ca702e7dd2f96ac96f31c9122758f9c0bf0b518a54cda2986dfe7",
+      "target_body_size": 25,
+      "target_entry_rva": "0x00378b55"
+    }
+  ],
+  "pointer_target_static_boundary": {
+    "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_static_boundary",
+    "canonical_sha256": "41ee47debe789243dfe9fd9566958846cd79cb82549acb99eafc9e2b5cfd9349"
+  },
+  "schema_version": 1,
+  "summary": {
+    "call_r32_count": 1,
+    "direct_lua_call_count": 0,
+    "indirect_jmp_count": 1,
+    "native_direct_edge_count": 3,
+    "noncontrol_pe_address_operand_count": 1,
+    "opaque_instruction_syntax_count": 3,
+    "pe_address_operand_count": 4,
+    "pointer_target_parent_edge_count": 5,
+    "reviewed_adjacent_callee_cluster_bytes": 96,
+    "reviewed_adjacent_callee_cluster_count": 4,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 4,
+    "sealed_control_flow_graph_edge_count": 47,
+    "sealed_control_flow_graph_node_count": 51,
+    "sealed_instruction_count": 51,
+    "staged_lua_dispatch_count": 0,
+    "target_reference_comparison_count": 0,
+    "target_reference_count": 5,
+    "target_reference_direct_call_count": 5,
+    "target_reference_memory_operand_count": 0,
+    "target_reference_other_address_count": 0,
+    "target_reference_owner_count": 1,
+    "target_reference_target_count": 4
+  },
+  "whole_atlas_reference_scan": {
+    "aggregates": {
+      "absolute_memory_operand_count": 0,
+      "comparison_count": 0,
+      "direct_call_count": 5,
+      "immediate_operand_count": 5,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "owner_count": 1,
+      "reference_count": 5,
+      "target_count": 4
+    },
+    "owner_partition": [
+      {
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "reference_count": 5
+      }
+    ],
+    "references": [
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00372a2a",
+          "source_entry_rva": "0x003729b0",
+          "target_entry_rva": "0x00378b3e",
+          "target_name_sha256": "ec9787931a88d9e88e7e48a5880ed159790ca4dad4d85401b184263084cd8409",
+          "target_rva": "0x00378b3e"
+        },
+        "instruction_rva": "0x00372a2a",
+        "instruction_sha256": "faa46c393ba970492eff9be750d7f81b5487e5e77b0a1cb1298ed415dd0e8872",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "target_atlas_record_sha256": "21bfa842aaa26c0306ff5b8da85ba63bc13daaa71cd930aaa24b91da1e34ed6c",
+        "target_rva": "0x00378b3e",
+        "target_va": "0x00778b3e",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00372a80",
+          "source_entry_rva": "0x003729b0",
+          "target_entry_rva": "0x00378b6e",
+          "target_name_sha256": "36c6e1bcecfe71661e16ae5e2268316b5af104237d73252c010e8ecc10ca7f8e",
+          "target_rva": "0x00378b6e"
+        },
+        "instruction_rva": "0x00372a80",
+        "instruction_sha256": "991c345ea97ba4ecf9a4525d2b4a17a9729c3c1ed934f5f9789aa0ff7b74276c",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "target_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "target_rva": "0x00378b6e",
+        "target_va": "0x00778b6e",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00372ac9",
+          "source_entry_rva": "0x003729b0",
+          "target_entry_rva": "0x00378b87",
+          "target_name_sha256": "88c2b74eff5c26aaa542ad7cf47055b42550eb0118b368cb275a6721f4f49086",
+          "target_rva": "0x00378b87"
+        },
+        "instruction_rva": "0x00372ac9",
+        "instruction_sha256": "d62ec39116bf3c2c061dde7234d4e62fdb8d73aee0e98eeb5d385e5c61c3dcfc",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "target_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+        "target_rva": "0x00378b87",
+        "target_va": "0x00778b87",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00372af1",
+          "source_entry_rva": "0x003729b0",
+          "target_entry_rva": "0x00378b87",
+          "target_name_sha256": "88c2b74eff5c26aaa542ad7cf47055b42550eb0118b368cb275a6721f4f49086",
+          "target_rva": "0x00378b87"
+        },
+        "instruction_rva": "0x00372af1",
+        "instruction_sha256": "91c03384db9e35815a2708f37974c1920d2bdbcf5aa9b41cdb2df56648de1214",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "target_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+        "target_rva": "0x00378b87",
+        "target_va": "0x00778b87",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00372b10",
+          "source_entry_rva": "0x003729b0",
+          "target_entry_rva": "0x00378b55",
+          "target_name_sha256": "cac8d1943b6fe619a2a64d1f07a09a92597ec3db575d431e06939f2659d2f688",
+          "target_rva": "0x00378b55"
+        },
+        "instruction_rva": "0x00372b10",
+        "instruction_sha256": "34d99d891de354973075a64281aa71ce284a15f20e8fe5d55bb3052a08b0a921",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e777279976e53e36c9adba5d9286452cf9ac91e85061c1414cbf892941d6b845",
+        "owner_entry_rva": "0x003729b0",
+        "target_atlas_record_sha256": "0bf347712ab1049e562b947e0a83c7669425e76e910aab6096bb42c8a45f2c46",
+        "target_rva": "0x00378b55",
+        "target_va": "0x00778b55",
+        "use_class": "direct_call"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_partition": [
+      {
+        "reference_count": 1,
+        "target_atlas_record_sha256": "21bfa842aaa26c0306ff5b8da85ba63bc13daaa71cd930aaa24b91da1e34ed6c",
+        "target_rva": "0x00378b3e"
+      },
+      {
+        "reference_count": 1,
+        "target_atlas_record_sha256": "0bf347712ab1049e562b947e0a83c7669425e76e910aab6096bb42c8a45f2c46",
+        "target_rva": "0x00378b55"
+      },
+      {
+        "reference_count": 1,
+        "target_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "target_rva": "0x00378b6e"
+      },
+      {
+        "reference_count": 2,
+        "target_atlas_record_sha256": "6cb344ca1b46add4cfae6c7a40acda49140fff99365b33a5d0f572e8047fc5b3",
+        "target_rva": "0x00378b87"
+      }
+    ],
+    "target_rvas": [
+      "0x00378b3e",
+      "0x00378b55",
+      "0x00378b6e",
+      "0x00378b87"
+    ],
+    "target_vas": [
+      "0x00778b3e",
+      "0x00778b55",
+      "0x00778b6e",
+      "0x00778b87"
+    ]
+  }
+}
