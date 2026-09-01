@@ -1,0 +1,401 @@
+{
+  "analysis_kind": "pe_native_lua_property_cleanup_chain",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "initializer_chain": {
+    "analysis_kind": "pe_native_lua_property_initializer_chain",
+    "canonical_sha256": "b76b3d46d30da4801a3bc4f67be78d3818f847557a0b275f6048120873b44bc4"
+  },
+  "initializer_cleanup_placement": {
+    "initializer_atlas_record_sha256": "9bebfe870176e21574adce7ab56dc323785c19e0cdb73d03afc267a3edf84c1f",
+    "initializer_entry_rva": "0x002ea2d0",
+    "placement": {
+      "callback_behavior_normalized": false,
+      "callback_entry_rva": "0x002e9f40",
+      "closure_upvalue_count": 0,
+      "key": "__gc",
+      "setter": "lua_setfield",
+      "table_index": -2
+    },
+    "producer_points": [
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "cleanup_upvalue_count_zero",
+        "rva": "0x002ea329",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea32b"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "cleanup_callback_target",
+        "rva": "0x002ea32b",
+        "sha256": "5a8636738d6c58ab5c150bb57671f43af26c38d52799570d38d1584202bcc57b",
+        "size": 5,
+        "successor_rvas": [
+          "0x002ea330"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushcclosure",
+        "lua_dispatch_kind": "staged_register",
+        "role": "create_cleanup_closure",
+        "rva": "0x002ea331",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea333"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "cleanup_key_pointer",
+        "rva": "0x002ea333",
+        "sha256": "0699df4437197eefdc38a8be97f440bb9c8379dc395ac9442357551b454d26ea",
+        "size": 5,
+        "successor_rvas": [
+          "0x002ea338"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "cleanup_table_index_minus_two",
+        "rva": "0x002ea338",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea33a"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_setfield",
+        "lua_dispatch_kind": "staged_register",
+        "role": "set_cleanup_field",
+        "rva": "0x002ea33b",
+        "sha256": "dbbb9d94ac78020db261961edf777d7c842eb70ae1a35a6301b9bf261c1d6e76",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea33d"
+        ]
+      }
+    ]
+  },
+  "literal": {
+    "byte_length_excluding_nul": 10,
+    "bytes_including_nul": 11,
+    "nul_terminated_bytes_sha256": "2da9eac9965b6b70aa210a588888733805c3214ecd627e37afd1aa1909b100b7",
+    "role": "finalize_lookup_key",
+    "rva": "0x0043c50c",
+    "section_characteristics": "0x40000040",
+    "section_name": ".rdata",
+    "section_rva": "0x003d6000",
+    "section_writable": false,
+    "text": "__finalize"
+  },
+  "method": {
+    "accepted_chain": "One exact property initializer cleanup-closure producer is joined to a cleanup callback, its registry-nil helper, complete direct Lua-call partitions, and an exhaustive two-target operand scan.",
+    "lua51_abi_premises": [
+      "Lua registry index -10000 has Lua 5.1 meaning",
+      "lua_type zero denotes nil",
+      "lua_gettable is metamethod-aware",
+      "lua_rawset bypasses table metamethod dispatch"
+    ],
+    "not_claimed": [
+      "runtime reachability, execution, ordering, frequency, or persistence",
+      "successful lookup or invocation, callback callability, runtime __gc dispatch, finalization, destruction, or freeing",
+      "allocation origin, registry-key meaning, native pointer type, ownership, or lifetime",
+      "computed, indirect, data, un-atlased, or Lua-side references",
+      "source-level property, class, ownership, or cleanup equivalence"
+    ],
+    "structural_boundary": "PE-free validation recursively structure-verifies the initializer and replays static body, direct-census, literal, helper-edge, placement, and target-reference joins. Exact validation additionally redecodes both PE bodies and every atlas range."
+  },
+  "schema_version": 1,
+  "semantics": {
+    "callback_lookup_and_tail": {
+      "conditional_native_tail": {
+        "branch_rva": "0x002e9fb8",
+        "comparison_rva": "0x002e9fb6",
+        "target_label_semantic_evidence": false,
+        "target_rva": "0x0036fb17"
+      },
+      "direct_helper_edge_rva": "0x002e9fa0",
+      "indirect_native_call": {
+        "form": "call_memory_eax",
+        "guard_branch_rva": "0x002e9fa9",
+        "instruction_rva": "0x002e9faf"
+      },
+      "lookup_api": "lua_gettable",
+      "lookup_key": "__finalize",
+      "lookup_table_index": 1,
+      "native_free_or_destructor_claimed": false,
+      "nil_branch": {
+        "action": "lua_settop(L,-2)",
+        "instruction_rva": "0x002e9f76",
+        "successor_rvas": [
+          "0x002e9f78",
+          "0x002e9f86"
+        ]
+      },
+      "nil_type_value": 0,
+      "non_nil_branch": {
+        "callability_proven": false,
+        "copies_original_input_index": 1,
+        "lua_call_argument_count": 1,
+        "lua_call_result_count": 0
+      },
+      "normal_arms_converge_rva": "0x002e9f9d",
+      "normal_result_count": 0,
+      "return_instruction_rva": "0x002e9fc8",
+      "runtime_finalization_claimed": false,
+      "userdata_null_checked_before_native_tail": false,
+      "userdata_source": "raw lua_touserdata(L,1) result"
+    },
+    "helper_registry_nil_loop": {
+      "byte_offset_increment_rva": "0x002e9f30",
+      "initial_byte_offset": 0,
+      "loop_branch": {
+        "condition": "byte_offset_unsigned_below_count",
+        "instruction_rva": "0x002e9f37",
+        "successor_rvas": [
+          "0x002e9f12",
+          "0x002e9f39"
+        ]
+      },
+      "lua_state_native_stack_argument_count": 1,
+      "native_pointer_register": "ECX",
+      "ownership_or_lifetime_claimed": false,
+      "per_iteration": [
+        "lua_pushlightuserdata(L,native_pointer_plus_byte_offset)",
+        "lua_pushnil(L)",
+        "lua_rawset(L,-10000)"
+      ],
+      "pointer_meaning_claimed": false,
+      "registry_index": -10000,
+      "return_instruction_rva": "0x002e9f3d",
+      "return_stack_bytes": 4,
+      "unsigned_count_offset": "+0x2c",
+      "zero_count_branch": {
+        "condition": "count_unsigned_less_or_equal_zero",
+        "instruction_rva": "0x002e9f0c",
+        "successor_rvas": [
+          "0x002e9f0e",
+          "0x002e9f3a"
+        ]
+      }
+    }
+  },
+  "source_bodies": [
+    {
+      "atlas_record_sha256": "86390c564903f8df5223d60089c9b91976b494b244f5c6f10d1fe3a08eb15361",
+      "body_sha256": "65d5712025be3aeb9d3bec9845edf4aec64fb7aaaf04ea706b5482d8d43305eb",
+      "body_size": 64,
+      "control_flow_graph_canonical_sha256": "5078c6cb6ca9031f04531df4b21f8d9e35406601dd301f90da5e0a582d14f888",
+      "control_flow_graph_edge_count": 29,
+      "control_flow_graph_node_count": 28,
+      "direct_lua_calls": [
+        {
+          "api": "lua_pushlightuserdata",
+          "instruction_sha256": "8281a6fa509daffdb373db326eba02918813ff2abf5a5f8934c83f0e6a2a5b20",
+          "instruction_size": 6,
+          "rva": "0x002e9f17"
+        },
+        {
+          "api": "lua_pushnil",
+          "instruction_sha256": "a1b0226d706d4a72ca354508fcaa2b721f8e4e80a24d8a28302ca881cae8a23f",
+          "instruction_size": 6,
+          "rva": "0x002e9f1e"
+        },
+        {
+          "api": "lua_rawset",
+          "instruction_sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+          "instruction_size": 6,
+          "rva": "0x002e9f2a"
+        }
+      ],
+      "entry_rva": "0x002e9f00",
+      "role": "cleanup_registry_helper",
+      "staged_lua_call_count": 0
+    },
+    {
+      "atlas_record_sha256": "9bfdab42775774edd1e0cb41c123ec97ac3014322e061d6576ca6a4491efc45f",
+      "body_sha256": "42a2e05350e953d42a76c65c17f665e384fd53bc3ef4e1d578681a10c48008ba",
+      "body_size": 137,
+      "control_flow_graph_canonical_sha256": "9296c21c4acc66e0cc63554a3fdb5dd27cf78d3b61bbf975b36a5af094a0640f",
+      "control_flow_graph_edge_count": 57,
+      "control_flow_graph_node_count": 55,
+      "direct_lua_calls": [
+        {
+          "api": "lua_touserdata",
+          "instruction_sha256": "94907586f792c7fd04898c7e82af767680468dd223037e8db917dbc8706571ff",
+          "instruction_size": 6,
+          "rva": "0x002e9f4b"
+        },
+        {
+          "api": "lua_pushstring",
+          "instruction_sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+          "instruction_size": 6,
+          "rva": "0x002e9f59"
+        },
+        {
+          "api": "lua_gettable",
+          "instruction_sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+          "instruction_size": 6,
+          "rva": "0x002e9f62"
+        },
+        {
+          "api": "lua_type",
+          "instruction_sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+          "instruction_size": 6,
+          "rva": "0x002e9f6b"
+        },
+        {
+          "api": "lua_settop",
+          "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+          "instruction_size": 6,
+          "rva": "0x002e9f7b"
+        },
+        {
+          "api": "lua_pushvalue",
+          "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+          "instruction_size": 6,
+          "rva": "0x002e9f89"
+        },
+        {
+          "api": "lua_call",
+          "instruction_sha256": "2e1b2323deff1307c11adb23d064b97893b444ed217a9c795c43d7eb6d963ed5",
+          "instruction_size": 6,
+          "rva": "0x002e9f94"
+        }
+      ],
+      "entry_rva": "0x002e9f40",
+      "role": "cleanup_callback",
+      "staged_lua_call_count": 0
+    }
+  ],
+  "summary": {
+    "cleanup_closure_producer_count": 1,
+    "direct_lua_call_count": 10,
+    "helper_direct_call_count": 1,
+    "initializer_prerequisite_count": 1,
+    "literal_count": 1,
+    "schema_violations": 0,
+    "source_body_bytes": 201,
+    "source_body_count": 2,
+    "source_cfg_edge_count": 86,
+    "source_cfg_node_count": 83,
+    "staged_lua_call_count": 0,
+    "target_reference_count": 2
+  },
+  "target_reference_scan": {
+    "references": [
+      {
+        "instruction_rva": "0x002e9fa0",
+        "instruction_sha256": "05a2387faabb45c2821bc075bd423d975ba4c162bcc17c415bc1ede909d237df",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9bfdab42775774edd1e0cb41c123ec97ac3014322e061d6576ca6a4491efc45f",
+        "owner_entry_rva": "0x002e9f40",
+        "target_rva": "0x002e9f00",
+        "use_class": "callback_direct_helper_call"
+      },
+      {
+        "instruction_rva": "0x002ea32b",
+        "instruction_sha256": "5a8636738d6c58ab5c150bb57671f43af26c38d52799570d38d1584202bcc57b",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9bebfe870176e21574adce7ab56dc323785c19e0cdb73d03afc267a3edf84c1f",
+        "owner_entry_rva": "0x002ea2d0",
+        "target_rva": "0x002e9f40",
+        "use_class": "initializer_cleanup_closure_producer"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_rvas": [
+      "0x002e9f00",
+      "0x002e9f40"
+    ]
+  }
+}
