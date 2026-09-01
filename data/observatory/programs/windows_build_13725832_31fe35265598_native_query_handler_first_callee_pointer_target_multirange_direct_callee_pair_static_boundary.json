@@ -1,0 +1,1369 @@
+{
+  "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_multirange_direct_callee_pair_static_boundary",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "control_flow_graphs": [
+    {
+      "body_local_successor_policy": "only successors within each declared single-range body appear in successor_rvas; terminal RET instructions have no successor",
+      "edge_count": 36,
+      "entry_rva": "0x0039d530",
+      "node_count": 33,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d530",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d531"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d531",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d533"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d533",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d536"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d536",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d538"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d538",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d539"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d539",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d53a"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d53a",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d53b"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d53b",
+          "sha256": "975110006fc466d2458920a2c1f23d2b1a30557288226577976f9781817e7801",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d53e"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d53e",
+          "sha256": "6e222f1c275c8906045b65ff3c1636c68c733b4fc164dce540a04ac74f510aec",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d540"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d540",
+          "sha256": "96b56afae681a00d94daab0bdb939ed8ee90f926133606b7cc40484aed827fb3",
+          "size": 4,
+          "successor_rvas": [
+            "0x0039d544"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d544",
+          "sha256": "a971db1c44171dc1d7413603ab8e74a78804468df5545824140ed3b1cea1aa04",
+          "size": 4,
+          "successor_rvas": [
+            "0x0039d548"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d548",
+          "sha256": "b63624035ea745d594db23fe763bec3afad6cdbfae518dca86a5e20d1f124eaf",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d54b"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d54b",
+          "sha256": "5d001c124660d09359dd0e64b112966a2a10b6b44fdf418ccabfba89790ef684",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d54d"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d54d",
+          "sha256": "d86cc2c9a5f786ea67d140d62c02cb1f9f227c637412c5c7fe0791c7c13a0ddf",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d54f"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d54f",
+          "sha256": "841437fd6b8a9aea74f9ee2b7b903afa11b5702e99d301c7fa4bd2ba3665ed2e",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d551",
+            "0x0039d56c"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d551",
+          "sha256": "09cd16192c8686a9b73b07eda3f9bc75d610dde2738d8ea8bf608f1b3b1a39d5",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d554"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d554",
+          "sha256": "690f105aa3f5d47971b05397ecfb90dcf5b170841d39fe0e84049cddfb651797",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d557"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d557",
+          "sha256": "a3a9257018e908dce3370e064670b39597902158f2e625b4b89849939576d331",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d559"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d559",
+          "sha256": "ec77d12c402ca990aeac44791e9054ef2fe80769aced2879013023212bf02c78",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d55b",
+            "0x0039d564"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d55b",
+          "sha256": "8df8fccc616867547d618b0f52b4aaeadd0699dbcecf705db094a6b6934faa42",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d55e"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d55e",
+          "sha256": "aab5d06d317053625ecc6f091e9cf870da1b8e28d727762d731190f1d225f36a",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d560"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d560",
+          "sha256": "6f032093152ba18bbab43186b9363c8697d907f349c15cebbd8e3764251f57f7",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d562"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d562",
+          "sha256": "8e54b0ca18020275e4aef1ca0eb5e197e066c065c1864817652a8a39c55402cd",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d564",
+            "0x0039d56e"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d564",
+          "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d565"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d565",
+          "sha256": "bfff5c2eb3e2230b3f672688108030b381d90160bb96faee10685182b14a4338",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d568"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d568",
+          "sha256": "de4bf1d683cc3ae9d1cc8635deb512bd744d88671cd40afc9dacbc2e28a8d09c",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d56a"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d56a",
+          "sha256": "a42722229a81bbd9f047a1424960c15a3203b40140a2760d856c535b56f5dcac",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d56c",
+            "0x0039d554"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d56c",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d56e"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d56e",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d56f"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d56f",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d570"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d570",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d571"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d571",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d572"
+          ]
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x0039d572",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": []
+        }
+      ],
+      "projection_kind": "single_range_body_local_instruction_cfg_v1",
+      "ranges": [
+        {
+          "size": 67,
+          "start_rva": "0x0039d530"
+        }
+      ]
+    },
+    {
+      "body_local_successor_policy": "only successors within each declared single-range body appear in successor_rvas; terminal RET instructions have no successor",
+      "edge_count": 19,
+      "entry_rva": "0x0039d640",
+      "node_count": 19,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d640",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d641"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d641",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d643"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d643",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d646"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d646",
+          "sha256": "1429374ca5152e49bb9b3fd76ab048bb7c831bc66c9390e4b55db50577417f61",
+          "size": 5,
+          "successor_rvas": [
+            "0x0039d64b"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d64b",
+          "sha256": "78e9129f24bcd35d00802f5bcb7df78c6ec9016cdfe759a34480e13eff91230d",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d64e"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d64e",
+          "sha256": "17939dd714ea208681c914081d0e69e725c85480a30e9bd19b3b46ed6f426d51",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d650",
+            "0x0039d654"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d650",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d652"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d652",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d653"
+          ]
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x0039d653",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": []
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d654",
+          "sha256": "975110006fc466d2458920a2c1f23d2b1a30557288226577976f9781817e7801",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d657"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d657",
+          "sha256": "6e222f1c275c8906045b65ff3c1636c68c733b4fc164dce540a04ac74f510aec",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d659"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d659",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d65b"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d65b",
+          "sha256": "958e1dbcdc53b74569de66fa3f1153dcb159ac2a1decc271ae3804459a296b1b",
+          "size": 6,
+          "successor_rvas": [
+            "0x0039d661"
+          ]
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0039d661",
+          "sha256": "1f39a9b3a90c11a3d6a6ce33f095308491a43cea49a94bc692e4ab11de704f79",
+          "size": 2,
+          "successor_rvas": [
+            "0x0039d663",
+            "0x0039d66f"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d663",
+          "sha256": "2e5e891cbf53c2b985b4f415457a8be6a3333e459f7a36925e7555bddf0f6200",
+          "size": 5,
+          "successor_rvas": [
+            "0x0039d668"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d668",
+          "sha256": "677a1b9025d38a7f4dd4fb5b98962954b938bc7b193b007e4602453a014ae210",
+          "size": 4,
+          "successor_rvas": [
+            "0x0039d66c"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d66c",
+          "sha256": "4a0869c37f459db069cf817ea0f3921f1c12ac2bd31ccaf59ca9cdb35e3e250a",
+          "size": 3,
+          "successor_rvas": [
+            "0x0039d66f"
+          ]
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0039d66f",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1,
+          "successor_rvas": [
+            "0x0039d670"
+          ]
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x0039d670",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": []
+        }
+      ],
+      "projection_kind": "single_range_body_local_instruction_cfg_v1",
+      "ranges": [
+        {
+          "size": 49,
+          "start_rva": "0x0039d640"
+        }
+      ]
+    }
+  ],
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "range_union_cfg_projection": "single_range_body_local_instruction_cfg_v1",
+    "register_call_encoding_audit": [
+      {
+        "encoding": "ffd0",
+        "register": "EAX"
+      },
+      {
+        "encoding": "ffd1",
+        "register": "ECX"
+      },
+      {
+        "encoding": "ffd2",
+        "register": "EDX"
+      },
+      {
+        "encoding": "ffd3",
+        "register": "EBX"
+      },
+      {
+        "encoding": "ffd4",
+        "register": "ESP"
+      },
+      {
+        "encoding": "ffd5",
+        "register": "EBP"
+      },
+      {
+        "encoding": "ffd6",
+        "register": "ESI"
+      },
+      {
+        "encoding": "ffd7",
+        "register": "EDI"
+      }
+    ],
+    "sealed_instruction_count": 52,
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "function_bodies": [
+    {
+      "atlas_record_sha256": "8bf9de6d5005bace77c5efac9dc74cf7c7189a6892d9c823af9a02a697eed765",
+      "body_sha256": "e2091fa15d6c96ccd134af2a889036e32422bcca28ff80076dc78453ad534f3b",
+      "body_size": 67,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "f189c9abc78a31c21e1b5e479382105374ab05508d05b181cedd61083d3999cb",
+      "direct_lua_calls": [],
+      "entry_rva": "0x0039d530",
+      "ranges": [
+        {
+          "sha256": "e2091fa15d6c96ccd134af2a889036e32422bcca28ff80076dc78453ad534f3b",
+          "size": 67,
+          "start_rva": "0x0039d530"
+        }
+      ],
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "rva": "0x0039d530",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d531",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d533",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d536",
+          "sha256": "a843932057795ea71b924ac1dbe4196f846aa6e914088874b991473831eeb65b",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d538",
+          "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d539",
+          "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d53a",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d53b",
+          "sha256": "975110006fc466d2458920a2c1f23d2b1a30557288226577976f9781817e7801",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d53e",
+          "sha256": "6e222f1c275c8906045b65ff3c1636c68c733b4fc164dce540a04ac74f510aec",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d540",
+          "sha256": "96b56afae681a00d94daab0bdb939ed8ee90f926133606b7cc40484aed827fb3",
+          "size": 4
+        },
+        {
+          "rva": "0x0039d544",
+          "sha256": "a971db1c44171dc1d7413603ab8e74a78804468df5545824140ed3b1cea1aa04",
+          "size": 4
+        },
+        {
+          "rva": "0x0039d548",
+          "sha256": "b63624035ea745d594db23fe763bec3afad6cdbfae518dca86a5e20d1f124eaf",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d54b",
+          "sha256": "5d001c124660d09359dd0e64b112966a2a10b6b44fdf418ccabfba89790ef684",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d54d",
+          "sha256": "d86cc2c9a5f786ea67d140d62c02cb1f9f227c637412c5c7fe0791c7c13a0ddf",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d54f",
+          "sha256": "841437fd6b8a9aea74f9ee2b7b903afa11b5702e99d301c7fa4bd2ba3665ed2e",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d551",
+          "sha256": "09cd16192c8686a9b73b07eda3f9bc75d610dde2738d8ea8bf608f1b3b1a39d5",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d554",
+          "sha256": "690f105aa3f5d47971b05397ecfb90dcf5b170841d39fe0e84049cddfb651797",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d557",
+          "sha256": "a3a9257018e908dce3370e064670b39597902158f2e625b4b89849939576d331",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d559",
+          "sha256": "ec77d12c402ca990aeac44791e9054ef2fe80769aced2879013023212bf02c78",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d55b",
+          "sha256": "8df8fccc616867547d618b0f52b4aaeadd0699dbcecf705db094a6b6934faa42",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d55e",
+          "sha256": "aab5d06d317053625ecc6f091e9cf870da1b8e28d727762d731190f1d225f36a",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d560",
+          "sha256": "6f032093152ba18bbab43186b9363c8697d907f349c15cebbd8e3764251f57f7",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d562",
+          "sha256": "8e54b0ca18020275e4aef1ca0eb5e197e066c065c1864817652a8a39c55402cd",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d564",
+          "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d565",
+          "sha256": "bfff5c2eb3e2230b3f672688108030b381d90160bb96faee10685182b14a4338",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d568",
+          "sha256": "de4bf1d683cc3ae9d1cc8635deb512bd744d88671cd40afc9dacbc2e28a8d09c",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d56a",
+          "sha256": "a42722229a81bbd9f047a1424960c15a3203b40140a2760d856c535b56f5dcac",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d56c",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d56e",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d56f",
+          "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d570",
+          "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d571",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d572",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "multirange_direct_callee_opaque_static_boundary",
+      "semantic_facts": {
+        "analysis_labels_opaque": true,
+        "relationship_defined_only": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    },
+    {
+      "atlas_record_sha256": "e07de0003b517cac5faf02a21e32552db3980edb296719910d04db79d6e59597",
+      "body_sha256": "722744bdeb5185942d2f7905fe9b7988f786d2e7c22cf081747858f79cafea03",
+      "body_size": 49,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "94c13ceee9fdf0c3d9feeb6664abca7380f97df101a86dcc5265e12461bee80e",
+      "direct_lua_calls": [],
+      "entry_rva": "0x0039d640",
+      "ranges": [
+        {
+          "sha256": "722744bdeb5185942d2f7905fe9b7988f786d2e7c22cf081747858f79cafea03",
+          "size": 49,
+          "start_rva": "0x0039d640"
+        }
+      ],
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "rva": "0x0039d640",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d641",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d643",
+          "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d646",
+          "sha256": "1429374ca5152e49bb9b3fd76ab048bb7c831bc66c9390e4b55db50577417f61",
+          "size": 5
+        },
+        {
+          "rva": "0x0039d64b",
+          "sha256": "78e9129f24bcd35d00802f5bcb7df78c6ec9016cdfe759a34480e13eff91230d",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d64e",
+          "sha256": "17939dd714ea208681c914081d0e69e725c85480a30e9bd19b3b46ed6f426d51",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d650",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d652",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d653",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d654",
+          "sha256": "975110006fc466d2458920a2c1f23d2b1a30557288226577976f9781817e7801",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d657",
+          "sha256": "6e222f1c275c8906045b65ff3c1636c68c733b4fc164dce540a04ac74f510aec",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d659",
+          "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d65b",
+          "sha256": "958e1dbcdc53b74569de66fa3f1153dcb159ac2a1decc271ae3804459a296b1b",
+          "size": 6
+        },
+        {
+          "rva": "0x0039d661",
+          "sha256": "1f39a9b3a90c11a3d6a6ce33f095308491a43cea49a94bc692e4ab11de704f79",
+          "size": 2
+        },
+        {
+          "rva": "0x0039d663",
+          "sha256": "2e5e891cbf53c2b985b4f415457a8be6a3333e459f7a36925e7555bddf0f6200",
+          "size": 5
+        },
+        {
+          "rva": "0x0039d668",
+          "sha256": "677a1b9025d38a7f4dd4fb5b98962954b938bc7b193b007e4602453a014ae210",
+          "size": 4
+        },
+        {
+          "rva": "0x0039d66c",
+          "sha256": "4a0869c37f459db069cf817ea0f3921f1c12ac2bd31ccaf59ca9cdb35e3e250a",
+          "size": 3
+        },
+        {
+          "rva": "0x0039d66f",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x0039d670",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "multirange_direct_callee_opaque_static_boundary",
+      "semantic_facts": {
+        "analysis_labels_opaque": true,
+        "relationship_defined_only": true,
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false
+      },
+      "staged_lua_dispatches": []
+    }
+  ],
+  "method": {
+    "body_local_successor_policy": "only successors within each declared single-range body appear in successor_rvas; terminal RET instructions have no successor",
+    "not_claimed": [
+      "semantic identity, analysis-label meaning, ABI, purpose, inputs, outputs, behavior, success, or normal return",
+      "runtime reachability, invocation, ordering, frequency, state mutation, termination, or effect",
+      "contents or runtime meaning of PE-address operands",
+      "computed, indirect, data, un-atlased, dynamic, or Lua-side references"
+    ],
+    "structural_boundary": "PE-free validation reconstructs both declared direct callees, every decoded point, both body-local CFGs, typed PE operands, empty local control partitions, the two parent edges, and both whole-atlas entry references. Exact reconstruction decodes the sealed executable and exhaustively traverses every declared atlas range."
+  },
+  "multirange_parent_edges": [
+    {
+      "control_encoding": "e8",
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x0039d5bf",
+        "source_entry_rva": "0x0039d580",
+        "target_entry_rva": "0x0039d640",
+        "target_name_sha256": "a1de0d3656d5aa22d164f952da2b07175759d37b90bdda1e01fb138a57acea3f",
+        "target_rva": "0x0039d640"
+      },
+      "instruction": {
+        "rva": "0x0039d5bf",
+        "sha256": "a7d3a8100f4cbbd5f737de210e3d4b2a1fcff454945301c0f756c0fa05afab2b",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+      "source_body_sha256": "1f4270f944215528deb2ae971345d562d784bd50acc000041cce365911b5ea67",
+      "source_body_size": 164,
+      "source_entry_rva": "0x0039d580",
+      "target_atlas_record_sha256": "e07de0003b517cac5faf02a21e32552db3980edb296719910d04db79d6e59597",
+      "target_body_sha256": "722744bdeb5185942d2f7905fe9b7988f786d2e7c22cf081747858f79cafea03",
+      "target_body_size": 49,
+      "target_entry_rva": "0x0039d640"
+    },
+    {
+      "control_encoding": "e8",
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x0039d5d9",
+        "source_entry_rva": "0x0039d580",
+        "target_entry_rva": "0x0039d530",
+        "target_name_sha256": "b6616669c860312334eefc640fd7d1e2b091684ad081315ace2d431e11a13861",
+        "target_rva": "0x0039d530"
+      },
+      "instruction": {
+        "rva": "0x0039d5d9",
+        "sha256": "13c3cd925eec75fc2b57eb03c7bbaa4038ad83f97ed410fc83646c0656356bac",
+        "size": 5
+      },
+      "role": "opaque_declared_direct_edge",
+      "source_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+      "source_body_sha256": "1f4270f944215528deb2ae971345d562d784bd50acc000041cce365911b5ea67",
+      "source_body_size": 164,
+      "source_entry_rva": "0x0039d580",
+      "target_atlas_record_sha256": "8bf9de6d5005bace77c5efac9dc74cf7c7189a6892d9c823af9a02a697eed765",
+      "target_body_sha256": "e2091fa15d6c96ccd134af2a889036e32422bcca28ff80076dc78453ad534f3b",
+      "target_body_size": 67,
+      "target_entry_rva": "0x0039d530"
+    }
+  ],
+  "multirange_static_boundary": {
+    "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_multirange_static_boundary",
+    "canonical_sha256": "a19a16ff5b999872acba98381163dc7d67113864ff508454d63162aa719e1c4e"
+  },
+  "native_calls": {
+    "call_r32_audit": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ],
+    "indirect_control_partition_complete": true,
+    "opaque_indirect_controls": [],
+    "outgoing_direct": [],
+    "pe_address_operand_partition_complete": true,
+    "pe_address_operands": [
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d54f",
+          "sha256": "841437fd6b8a9aea74f9ee2b7b903afa11b5702e99d301c7fa4bd2ba3665ed2e",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d56c",
+        "operand_va": "0x0079d56c",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      },
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d559",
+          "sha256": "ec77d12c402ca990aeac44791e9054ef2fe80769aced2879013023212bf02c78",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d564",
+        "operand_va": "0x0079d564",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      },
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d562",
+          "sha256": "8e54b0ca18020275e4aef1ca0eb5e197e066c065c1864817652a8a39c55402cd",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d56e",
+        "operand_va": "0x0079d56e",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      },
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d56a",
+          "sha256": "a42722229a81bbd9f047a1424960c15a3203b40140a2760d856c535b56f5dcac",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d554",
+        "operand_va": "0x0079d554",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      },
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d64e",
+          "sha256": "17939dd714ea208681c914081d0e69e725c85480a30e9bd19b3b46ed6f426d51",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d654",
+        "operand_va": "0x0079d654",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      },
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "declared_conditional_branch_target",
+        "file_backed": true,
+        "instruction": {
+          "rva": "0x0039d661",
+          "sha256": "1f39a9b3a90c11a3d6a6ce33f095308491a43cea49a94bc692e4ab11de704f79",
+          "size": 2
+        },
+        "operand_access": "none",
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "operand_rva": "0x0039d66f",
+        "operand_va": "0x0079d66f",
+        "role": "typed_pe_address_operand",
+        "section_characteristics": "0x60000020",
+        "section_name": ".text",
+        "section_rva": "0x00001000",
+        "section_writable": false
+      }
+    ],
+    "register_call_partition_complete": true,
+    "segment_qualified_memory_partition_complete": true,
+    "segment_qualified_memory_syntax": []
+  },
+  "program_facts": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+  },
+  "schema_version": 1,
+  "summary": {
+    "call_r32_count": 0,
+    "direct_lua_call_count": 0,
+    "multirange_parent_edge_count": 2,
+    "native_direct_edge_count": 0,
+    "opaque_indirect_control_count": 0,
+    "pe_absolute_memory_operand_count": 0,
+    "pe_address_operand_count": 6,
+    "pe_immediate_operand_count": 6,
+    "reviewed_target_bytes": 116,
+    "reviewed_target_count": 2,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 2,
+    "sealed_control_flow_graph_edge_count": 55,
+    "sealed_control_flow_graph_node_count": 52,
+    "sealed_instruction_count": 52,
+    "segment_qualified_memory_syntax_count": 0,
+    "staged_lua_dispatch_count": 0,
+    "target_reference_count": 2,
+    "target_reference_direct_call_count": 2,
+    "target_reference_memory_operand_count": 0,
+    "target_reference_other_address_count": 0,
+    "target_reference_owner_count": 1,
+    "target_reference_target_count": 2
+  },
+  "whole_atlas_reference_scan": {
+    "aggregates": {
+      "direct_call_count": 2,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "owner_count": 1,
+      "reference_count": 2,
+      "target_count": 2,
+      "target_owner_count": 2
+    },
+    "owner_partition": [
+      {
+        "owner_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+        "owner_entry_rva": "0x0039d580",
+        "reference_count": 2
+      }
+    ],
+    "partition_sha256": {
+      "owner_partition": "751468fb4a47b8885547c9880c5a755f2b225f6c2f8253acc56f8231830bb5d6",
+      "target_owner_partition": "73f08fc635b2768f2e4fad7baf1861126489488faf00af74b8ef36d9c86a3ce0",
+      "target_reference_partition": "4bc97f58b81bf1a9d3f70d3054f3df61718b7bed2d090b3cd63ac71f97716339"
+    },
+    "references": [
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x0039d5bf",
+          "source_entry_rva": "0x0039d580",
+          "target_entry_rva": "0x0039d640",
+          "target_name_sha256": "a1de0d3656d5aa22d164f952da2b07175759d37b90bdda1e01fb138a57acea3f",
+          "target_rva": "0x0039d640"
+        },
+        "instruction_rva": "0x0039d5bf",
+        "instruction_sha256": "a7d3a8100f4cbbd5f737de210e3d4b2a1fcff454945301c0f756c0fa05afab2b",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+        "owner_entry_rva": "0x0039d580",
+        "target_atlas_record_sha256": "e07de0003b517cac5faf02a21e32552db3980edb296719910d04db79d6e59597",
+        "target_rva": "0x0039d640",
+        "target_va": "0x0079d640",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x0039d5d9",
+          "source_entry_rva": "0x0039d580",
+          "target_entry_rva": "0x0039d530",
+          "target_name_sha256": "b6616669c860312334eefc640fd7d1e2b091684ad081315ace2d431e11a13861",
+          "target_rva": "0x0039d530"
+        },
+        "instruction_rva": "0x0039d5d9",
+        "instruction_sha256": "13c3cd925eec75fc2b57eb03c7bbaa4038ad83f97ed410fc83646c0656356bac",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+        "owner_entry_rva": "0x0039d580",
+        "target_atlas_record_sha256": "8bf9de6d5005bace77c5efac9dc74cf7c7189a6892d9c823af9a02a697eed765",
+        "target_rva": "0x0039d530",
+        "target_va": "0x0079d530",
+        "use_class": "direct_call"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_owner_partition": [
+      {
+        "owner_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+        "owner_entry_rva": "0x0039d580",
+        "reference_count": 1,
+        "target_rva": "0x0039d530"
+      },
+      {
+        "owner_atlas_record_sha256": "9342b71e2bf2b3ade0b42a2c6450ef8d8af9fc51448e504566955bffe36e5131",
+        "owner_entry_rva": "0x0039d580",
+        "reference_count": 1,
+        "target_rva": "0x0039d640"
+      }
+    ],
+    "target_partition": [
+      {
+        "owner_count": 1,
+        "reference_count": 1,
+        "target_atlas_record_sha256": "8bf9de6d5005bace77c5efac9dc74cf7c7189a6892d9c823af9a02a697eed765",
+        "target_rva": "0x0039d530"
+      },
+      {
+        "owner_count": 1,
+        "reference_count": 1,
+        "target_atlas_record_sha256": "e07de0003b517cac5faf02a21e32552db3980edb296719910d04db79d6e59597",
+        "target_rva": "0x0039d640"
+      }
+    ],
+    "target_reference_partition": [
+      {
+        "reference_count": 1,
+        "target_atlas_record_sha256": "8bf9de6d5005bace77c5efac9dc74cf7c7189a6892d9c823af9a02a697eed765",
+        "target_rva": "0x0039d530"
+      },
+      {
+        "reference_count": 1,
+        "target_atlas_record_sha256": "e07de0003b517cac5faf02a21e32552db3980edb296719910d04db79d6e59597",
+        "target_rva": "0x0039d640"
+      }
+    ]
+  }
+}
