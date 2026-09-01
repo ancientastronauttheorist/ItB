@@ -564,10 +564,12 @@ until core engine semantics are reconstructed.
   `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, 51 instructions,
   and four CFGs totaling 51 nodes / 47 edges. All five parent `E8` records are
   cross-joined to the independently rebuilt whole-atlas frontier, which has
-  sole owner `0x003729b0` and target partition `1/1/1/2`. Three outgoing
-  direct edges remain opaque. The complete register-call audit contains only
-  `call ECX` at `0x00378b4e`; final `jmp ESI` at `0x00378b6c` is separately
-  retained without a target-provenance claim across the intervening call. The
+  sole owner `0x003729b0` and target partition `1/1/1/2`. The
+  `0x00378b7d -> 0x0039cb98` edge is closed by the dependent receipt below;
+  two outgoing direct edges remain opaque. The complete register-call audit
+  contains only `call ECX` at `0x00378b4e`; final `jmp ESI` at `0x00378b6c`
+  is separately retained without a target-provenance claim across the
+  intervening call. The
   complete PE-address operand universe is four file-backed non-writable
   `.text` immediates, including one opaque interior-body push, and zero
   absolute-memory operands. Direct/staged Lua evidence is empty without
@@ -578,6 +580,24 @@ until core engine semantics are reconstructed.
   Adjacency and analysis labels prove no semantic kinship, execution order,
   exception behavior, ABI, target identity, state mutation, runtime effect,
   or Lua-side meaning.
+  The dependent adjacent-cluster third-callee import-thunk boundary
+  canonical-pins that receipt and rejoins exact edge
+  `0x00378b7d -> 0x0039cb98`. It seals all six target bytes, the sole `FF 25`
+  instruction, and a 1-node / 0-edge CFG whose indirect jump has no statically
+  resolved successor. The exact PE32 import proof binds `.rdata` VA
+  `0x007d6170` / RVA `0x003d6170` to the unique `KERNEL32.dll` / `RtlUnwind`
+  named row with hint 1048, descriptor index 7, thunk index 92, a null import
+  descriptor, and both KERNEL32 thunk-array terminators. An exhaustive
+  all-operand atlas scan finds exactly three immediate `E8` entry references
+  from three owners. A separate scan of the IAT-slot VA finds exactly two
+  absolute-memory uses from two owners: `FF 15` at `0x00371024` and the target
+  `FF 25` thunk. Its pretty-printed file SHA-256 is
+  `2f56d4bc7413036890013f70de5e202835f3254491048f17612a76c80a072f9b`;
+  its canonical JSON SHA-256 is
+  `1222126b3527186a823ffb252a97ddc2beb7a0c4dc49b45e15e462fb244b2a5b`.
+  Import/Ghidra names are metadata only. Loader resolution, unwind or
+  exception behavior, ABI, execution, reachability, effects, and normal return
+  remain unproved.
   The three non-cluster, non-deferred direct targets are now sealed as a
   relationship-only residual set at `0x00372970`, `0x00007e70`, and
   `0x003581b3`: 57 bytes, all 23 instructions, and three body-local CFGs

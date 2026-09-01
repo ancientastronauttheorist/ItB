@@ -184,9 +184,10 @@ and Lua-side meaning remain unproved.
 Four of that target's direct callees now form a layout-only adjacent-cluster
 boundary across `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, all
 51 instructions, and four CFGs totaling 51 nodes / 47 edges. The cluster has
-three opaque outgoing native edges, one unresolved `call ECX`, and one final
-`jmp ESI`; an intervening call prevents a register-provenance claim for the
-jump. Its complete PE-address operand universe is four file-backed `.text`
+two still-opaque outgoing native edges; its `0x00378b7d -> 0x0039cb98` edge is
+closed by the dependent receipt below. One unresolved `call ECX` and one final
+`jmp ESI` remain; an intervening call prevents a register-provenance claim for
+the jump. Its complete PE-address operand universe is four file-backed `.text`
 immediates and zero absolute-memory operands. The whole-atlas frontier is
 exactly the five parent `E8` calls from sole owner `0x003729b0`, partitioned
 `1/1/1/2` across the four targets. Direct and staged Lua evidence is empty,
@@ -196,6 +197,21 @@ pretty-printed and canonical SHA-256 values are
 `1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
 Adjacency and analysis labels prove no semantic kinship, execution order,
 exception behavior, ABI, target identity, or runtime effect.
+The dependent third-callee import-thunk boundary rejoins exact edge
+`0x00378b7d -> 0x0039cb98` and seals the complete six-byte `FF 25` body, its
+single instruction, and 1-node / 0-edge indirect-jump CFG. Raw PE metadata
+binds the `.rdata` slot at VA `0x007d6170` / RVA `0x003d6170` to the unique
+`KERNEL32.dll` / `RtlUnwind` named-import row, including descriptor index 7,
+thunk index 92, the null descriptor, and both KERNEL32 thunk-array terminators.
+The full atlas contains exactly three immediate `E8` entry references from
+three owners and exactly two absolute-memory uses of the IAT slot: the thunk's
+`FF 25` jump and an `FF 15` call at `0x00371024`. The artifact's pretty-printed
+and canonical SHA-256 values are
+`2f56d4bc7413036890013f70de5e202835f3254491048f17612a76c80a072f9b` and
+`1222126b3527186a823ffb252a97ddc2beb7a0c4dc49b45e15e462fb244b2a5b`.
+Import and analysis names remain metadata only; target resolution, unwind or
+exception behavior, ABI, execution, effects, reachability, and normal return
+remain explicitly unclaimed.
 The pointer target's three non-cluster, non-deferred direct targets are now
 sealed as a second relationship-only boundary: `0x00372970`, `0x00007e70`,
 and `0x003581b3`, totaling 57 bytes and all 23 instructions. Their body-local

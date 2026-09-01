@@ -1509,11 +1509,13 @@ normalized Ghidra edge.
 
 The cluster's complete declared outgoing-edge partition is
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The complete eight-register call audit contains
-only `call ECX` at `0x00378b4e`. The final `jmp ESI` at `0x00378b6c` is
-retained as opaque indirect-control syntax. Although `0x00378b57` has exact
-`MOV ESI,ECX` bytes, the intervening direct call at `0x00378b5d` prevents this
-static receipt from assigning provenance or target identity to the jump.
+`0x00378b92 -> 0x00378a40`. The middle edge is closed by the dependent receipt
+below; the other two remain opaque. The complete eight-register call audit
+contains only `call ECX` at `0x00378b4e`. The final `jmp ESI` at
+`0x00378b6c` is retained as opaque indirect-control syntax. Although
+`0x00378b57` has exact `MOV ESI,ECX` bytes, the intervening direct call at
+`0x00378b5d` prevents this static receipt from assigning provenance or target
+identity to the jump.
 
 The exact PE-address operand universe is four operand-zero immediates, all in
 file-backed non-writable `.text`, with no absolute-memory operand. Three are
@@ -1540,6 +1542,63 @@ analysis labels, decoded registers, and addresses do not prove shared purpose,
 execution order, exception behavior, ABI, argument meaning, target identity,
 state mutation, success, normal return, runtime reachability, dynamic or
 computed references, data consumers, un-atlased code, or Lua-side behavior.
+
+## Native query adjacent-cluster third-callee import-thunk static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.py`
+canonical-pins the adjacent-cluster artifact, rejoins its exact
+`0x00378b7d -> 0x0039cb98` edge, seals the relationship-defined six-byte
+target and CFG, validates the complete raw PE import binding, and performs
+separate whole-atlas scans for the target entry and IAT-slot VA.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --parent-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --parent-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary`.
+It seals `0x0039cb98`: six bytes, one exact `FF 25` instruction, and a
+1-node / 0-edge CFG with `indirect_jump` flow and no successor. The sole PE
+operand is the absolute-memory read of non-writable, file-backed `.rdata` VA
+`0x007d6170` / RVA `0x003d6170`.
+
+The raw PE32 proof binds that slot to the unique `KERNEL32.dll` /
+`RtlUnwind` named-import row with hint 1048. It cross-checks import descriptor
+index 7, thunk index 92, both ILT/IAT words, the NUL-terminated library and
+hint/name bytes, null descriptor index 10, both KERNEL32 table terminators at
+index 139, and the parsed 342-row import census. Every one of the 52 published
+binding fields is reconstructed from the PE and compared before publication.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly three target-entry references survive,
+all immediate `E8` calls at `0x00378889`, `0x00378913`, and `0x00378b7d`
+from three owners. The separate IAT-slot scan finds exactly two
+absolute-memory reads from two owners: an `FF 15` call at `0x00371024` and the
+target `FF 25` jump. The artifact's pretty-printed file SHA-256 is
+`2f56d4bc7413036890013f70de5e202835f3254491048f17612a76c80a072f9b`;
+its canonical JSON SHA-256 is
+`1222126b3527186a823ffb252a97ddc2beb7a0c4dc49b45e15e462fb244b2a5b`.
+
+Import and Ghidra names are metadata only. Loader resolution, unwind or
+exception behavior, ABI, invocation, execution, effects, reachability,
+termination, normal return, computed references, un-atlased code, and Lua-side
+references remain unproved.
 
 ## Native query pointer-target residual direct-target-set static boundary
 

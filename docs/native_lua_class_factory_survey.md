@@ -693,14 +693,15 @@ instruction points and four CFGs totaling 51 nodes / 47 edges. The adjacency
 receipt proves layout only, not shared purpose, execution order, or semantic
 kinship.
 
-Three exact outgoing direct edges remain opaque:
+The complete outgoing direct-edge partition contains
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The complete `FF D0` through `FF D7` audit finds
-only `call ECX` at `0x00378b4e`. Final `jmp ESI` at `0x00378b6c` is retained
-as a separate opaque indirect-control record. The exact `MOV ESI,ECX` bytes at
-`0x00378b57` precede an intervening direct call at `0x00378b5d`, so this
-artifact does not claim that a register value survives to or identifies the
-jump target.
+`0x00378b92 -> 0x00378a40`. The middle edge is now closed by the dependent
+receipt below; the other two remain opaque. The complete `FF D0` through
+`FF D7` audit finds only `call ECX` at `0x00378b4e`. Final `jmp ESI` at
+`0x00378b6c` is retained as a separate opaque indirect-control record. The
+exact `MOV ESI,ECX` bytes at `0x00378b57` precede an intervening direct call at
+`0x00378b5d`, so this artifact does not claim that a register value survives
+to or identifies the jump target.
 
 The complete PE-address operand audit scans both immediate and absolute-memory
 classes. Exactly four operand-zero immediates survive, all naming file-backed
@@ -728,6 +729,39 @@ labels, adjacency, decoded registers, and address syntax do not prove purpose,
 exception behavior, ABI, arguments, target identity, state mutation, success,
 normal return, runtime reachability, dynamic or computed references, data
 consumers, un-atlased code, or Lua-side behavior.
+
+## Dependent adjacent-cluster third-callee import-thunk static boundary
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary`.
+It canonical-pins the adjacent-cluster receipt and rejoins exact edge
+`0x00378b7d -> 0x0039cb98`, including the 25-byte source body, source and
+target atlas identities, exact `E8` instruction, and normalized declared-edge
+metadata.
+
+The target is exactly six bytes, one `FF 25 70 61 7d 00` instruction, and a
+1-node / 0-edge CFG with `indirect_jump` flow and no successor. Its sole PE
+operand is an absolute-memory read of `.rdata` VA `0x007d6170` / RVA
+`0x003d6170`. The raw PE32 proof binds that slot to the unique
+`KERNEL32.dll` / `RtlUnwind` named-import row with hint 1048, descriptor index
+7, thunk index 92, the null descriptor at index 10, and both KERNEL32 thunk
+terminators at index 139.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly three target-entry
+references survive, all immediate `E8` calls at `0x00378889`, `0x00378913`,
+and `0x00378b7d` from three owners. A separate traversal for the IAT-slot VA
+finds exactly two absolute-memory reads from two owners: `FF 15` at
+`0x00371024` and the target `FF 25` instruction. The artifact's pretty-printed
+file SHA-256 is
+`2f56d4bc7413036890013f70de5e202835f3254491048f17612a76c80a072f9b`;
+its canonical JSON SHA-256 is
+`1222126b3527186a823ffb252a97ddc2beb7a0c4dc49b45e15e462fb244b2a5b`.
+
+The import and Ghidra names are metadata only. The receipt does not prove
+loader resolution, unwind or exception behavior, ABI, arguments, invocation,
+target execution, effects, reachability, termination, or normal return.
 
 ## Dependent residual direct-target-set static-boundary artifact
 
