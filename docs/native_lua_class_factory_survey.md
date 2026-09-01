@@ -889,8 +889,65 @@ its canonical JSON SHA-256 is
 `71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
 The Ghidra labels, source identity, EAX value, indirect destination, ABI,
 arguments, outputs, behavior, invocation, effects, success, failure,
-termination, and normal return remain unproved. The next local frontier is
-the un-atlased span beginning at `0x00378ad0`.
+termination, and normal return remain unproved.
+
+## Dependent fourth-callee right un-atlased-span static boundary
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary`.
+It canonical-pins the fourth-callee, fourth-callee-child, residual-target-set,
+residual-callee, direct-call, and program-facts receipts. The fourth receipt's
+exact right-gap record identifies the target range as
+`[0x00378ad0,0x00378b3e)`, and its endpoint scan's sole reference is rejoined
+to the new receipt's independent whole-atlas traversal.
+
+The target is 110 exact file-backed `.text` bytes at file offset
+`0x00377ed0`. A complete linear decode consumes all bytes as 34 instructions.
+The receipt conservatively retains two code-candidate components rather than
+declaring atlas functions: component A spans `[0x00378ad0,0x00378b16)`, 70
+bytes and 21 instructions, with a 21-node / 21-edge CFG; component B spans
+`[0x00378b16,0x00378b3e)`, 40 bytes and 13 instructions, with a 13-node /
+12-edge CFG. Both components are locally reachable from their candidate start,
+end in exact return syntax, and together form a disconnected 34-node /
+33-edge union. Zero undecoded bytes are proved; whether any decoded bytes are
+padding is deliberately not classified.
+
+Four direct `E8` instructions survive: `0x00378aeb -> 0x003574ca`,
+`0x00378afd -> 0x00378a40`, `0x00378b1b -> 0x00007e70`, and
+`0x00378b32 -> 0x00378a40`. Atlas body identity is checked for every target.
+The residual-callee receipt rejoins `0x003574ca`, the fourth-callee receipt
+rejoins both calls to `0x00378a40`, and the residual-target-set receipt rejoins
+`0x00007e70`. No Ghidra declared direct edge has its source, instruction, or
+target inside the un-atlased range.
+
+The complete immediate frontier contains five PE-address controls: the four
+calls plus internal `JE 0x00378b15` at `0x00378ae0`. Six ordinary immediates
+and explicit `RET 4` at `0x00378b3b` are partitioned separately. No absolute
+memory or IAT operand, register call, other indirect control, segment-qualified
+memory, BND control, interrupt, direct Lua call, or staged Lua dispatch
+survives.
+
+The exhaustive atlas operand traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly one reference
+lands anywhere in the 110-byte span: the fourth callee's
+`PUSH 0x00778ad0` at `0x00378a54`. A bytewise whole-file dword scan also finds
+that address once, at file offset `0x00377e55`. The pinned base-relocation
+directory proves one HIGHLOW relocation at RVA `0x00378a55`, whose entry is
+`55 3a` at file offset `0x00532e08`; there is no relocation site inside the
+span. The pinned import directory parses 342 named records and no ordinal
+records, with no IAT slot inside the span.
+
+The artifact's pretty-printed file SHA-256 is
+`43db988b412d01cfbe06adfb258e2dfb2a3dbba98bfcf8a65e4092165a86eec1`;
+its canonical JSON SHA-256 is
+`02a4e933250820874a6b8876e8092636747f780bde25f28103b4585651dc0359`.
+This relationship-only evidence does not assign function names, source
+identity, compiler or exception semantics, ABI, arguments, register meaning,
+purpose, runtime reachability, invocation, ordering, frequency, behavior,
+effects, success, failure, termination, normal return, or Lua-side meaning.
+This closes the exact layout join from the fourth callee to the already sealed
+adjacent cluster beginning at `0x00378b3e`.
 
 ## Dependent residual direct-target-set static-boundary artifact
 

@@ -656,7 +656,33 @@ until core engine semantics are reconstructed.
   `71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
   The target EAX value, runtime destination, analysis-label meaning, ABI,
   behavior, execution, effects, success, failure, and normal return remain
-  unproved. The next local frontier is the un-atlased span at `0x00378ad0`.
+  unproved.
+  The fourth callee's right un-atlased span now has a relationship-only
+  receipt over exact range `[0x00378ad0,0x00378b3e)`. It retains two
+  code-candidate components, not function claims: a 70-byte / 21-instruction
+  component with a 21-node / 21-edge CFG and a 40-byte / 13-instruction
+  component with a 13-node / 12-edge CFG. Their disconnected union has 34
+  nodes / 33 edges. Four `E8` controls exactly target the pinned bodies at
+  `0x003574ca`, `0x00378a40` twice, and `0x00007e70`; the prerequisite
+  residual, residual-callee, and fourth-callee receipts independently rejoin
+  all three target identities and all four call sites. The complete operand
+  partition has five PE-address control immediates, six non-PE immediates, and
+  one explicit `RET 4`, with empty absolute-memory, register-call,
+  segment-qualified, BND, interrupt, direct-Lua, and staged-Lua partitions.
+  Exact `.text` backing starts at file offset `0x00377ed0`. The full atlas has
+  zero overlapping ranges and exactly one reference into the span: the fourth
+  callee's `PUSH 0x00778ad0` at `0x00378a54`. A whole-file dword scan finds the
+  same address once at file offset `0x00377e55`; one HIGHLOW relocation at RVA
+  `0x00378a55` backs it, while no relocation site or parsed import/IAT slot is
+  inside the span. Its pretty-printed file SHA-256 is
+  `43db988b412d01cfbe06adfb258e2dfb2a3dbba98bfcf8a65e4092165a86eec1`;
+  its canonical JSON SHA-256 is
+  `02a4e933250820874a6b8876e8092636747f780bde25f28103b4585651dc0359`.
+  All bytes decode, but padding classification is explicitly withheld.
+  Function identity, semantic kinship, ABI, purpose, runtime reachability,
+  invocation, behavior, effects, success, failure, and normal return remain
+  unproved. This closes the exact layout join from the fourth callee to the
+  already sealed adjacent cluster beginning at `0x00378b3e`.
   The three non-cluster, non-deferred direct targets are now sealed as a
   relationship-only residual set at `0x00372970`, `0x00007e70`, and
   `0x003581b3`: 57 bytes, all 23 instructions, and three body-local CFGs

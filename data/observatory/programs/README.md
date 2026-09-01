@@ -1809,8 +1809,82 @@ contention, normalizes inherited errors, preserves differing existing output,
 and removes a failed private publication. Analysis labels, EAX contents,
 indirect destination, source identity, ABI, arguments, outputs, invocation,
 behavior, effects, success, failure, termination, and normal return remain
-unproved. The next local frontier is the un-atlased span beginning at
-`0x00378ad0`.
+unproved.
+
+## Native query fourth-callee right un-atlased-span static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.py`
+canonical-pins the fourth-callee, fourth-callee-child, residual-target-set,
+residual-callee, direct-call, and program-facts artifacts. It seals the complete
+110-byte un-atlased range, two conservative code-candidate CFG components,
+their finite control and operand frontiers, exact PE backing, and exhaustive
+atlas, whole-file, relocation, and import scans.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --fourth-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json `
+  --fourth-callee-child-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --residual-direct-target-set-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --fourth-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json `
+  --fourth-callee-child-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --residual-direct-target-set-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_right_unatlased_span_static_boundary`.
+It seals exact range `[0x00378ad0,0x00378b3e)` at `.text` file offset
+`0x00377ed0`. All 110 bytes decode into 34 instructions. Component A is 70
+bytes / 21 instructions with a 21-node / 21-edge CFG; component B is 40 bytes
+/ 13 instructions with a 13-node / 12-edge CFG. Their disconnected union has
+34 nodes / 33 edges. The records are code candidates only: zero undecoded bytes
+are proved, while padding classification and semantic function boundaries are
+explicitly withheld.
+
+Four direct `E8` controls survive: `0x00378aeb -> 0x003574ca`,
+`0x00378afd -> 0x00378a40`, `0x00378b1b -> 0x00007e70`, and
+`0x00378b32 -> 0x00378a40`. All target bodies rejoin canonical-pinned
+prerequisite receipts. The complete operand partition contains the four calls
+and one internal `JE` as five PE-address immediates, six ordinary immediates,
+and explicit `RET 4`. Absolute-memory/IAT operands, register calls, other
+indirect controls, segment-qualified memory, BND controls, interrupts, direct
+Lua calls, and staged Lua dispatches are empty.
+
+The exhaustive atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718
+bytes, and 1,153,814 instructions. It finds one reference anywhere in the
+span: `PUSH 0x00778ad0` at `0x00378a54`, owned by the fourth callee. The
+whole-file dword scan finds the same address once at file offset `0x00377e55`.
+One HIGHLOW relocation at RVA `0x00378a55`, represented by bytes `55 3a` at
+relocation-entry file offset `0x00532e08`, backs that value. No relocation site
+and none of the 342 parsed named-import IAT slots lies inside the span.
+
+The artifact's pretty-printed file SHA-256 is
+`43db988b412d01cfbe06adfb258e2dfb2a3dbba98bfcf8a65e4092165a86eec1`;
+its canonical JSON SHA-256 is
+`02a4e933250820874a6b8876e8092636747f780bde25f28103b4585651dc0359`.
+Publication validates one locked point-in-time snapshot, preserves differing
+existing output, and removes failed private publication. Decoded syntax,
+adjacency, and static references do not prove function identity, compiler or
+exception semantics, ABI, arguments, register meaning, purpose, runtime
+reachability, invocation, ordering, frequency, behavior, effects, success,
+failure, termination, normal return, or Lua-side meaning. This closes the exact
+layout join from the fourth callee to the already sealed adjacent cluster
+beginning at `0x00378b3e`.
 
 ## Native query pointer-target residual direct-target-set static boundary
 

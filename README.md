@@ -257,8 +257,28 @@ The artifact's pretty-printed and canonical SHA-256 values are
 `61e0571607dd92e2861f06297a410c9766135c718b0420afbf3d7351d160b570` and
 `71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
 The analysis labels, EAX value, indirect destination, ABI, behavior,
-execution, effects, and normal return remain explicitly unclaimed. The next
-local frontier is the un-atlased span beginning at `0x00378ad0`.
+execution, effects, and normal return remain explicitly unclaimed.
+The fourth callee's 110-byte un-atlased right span is now sealed as two
+relationship-only code-candidate components: 70 bytes / 21 instructions at
+`0x00378ad0` and 40 bytes / 13 instructions at `0x00378b16`. Their local CFGs
+are 21 nodes / 21 edges and 13 nodes / 12 edges; the disconnected union is
+34 nodes / 33 edges. Four exact `E8` controls target already sealed atlas
+bodies at `0x003574ca`, `0x00378a40` twice, and `0x00007e70`. The complete
+operand frontier contains those four calls plus one internal `JE` as five
+PE-address immediates, six ordinary immediates, and one explicit `RET 4`, with
+no absolute-memory, register-call, segment, BND, interrupt, direct-Lua, or
+staged-Lua syntax. The exhaustive atlas scan finds only the fourth callee's
+`PUSH 0x00778ad0` at `0x00378a54`; the whole-file scan finds the same value
+once, backed by one HIGHLOW relocation and no relocation site or import/IAT
+slot inside the span. The artifact's pretty-printed and canonical SHA-256
+values are
+`43db988b412d01cfbe06adfb258e2dfb2a3dbba98bfcf8a65e4092165a86eec1` and
+`02a4e933250820874a6b8876e8092636747f780bde25f28103b4585651dc0359`.
+Complete decoding proves zero undecoded bytes but deliberately does not
+classify padding or promote either component to an atlas function. Function
+identity, ABI, purpose, runtime reachability, behavior, effects, and normal
+return remain unclaimed. This closes the exact layout join from the fourth
+callee to the already sealed adjacent cluster beginning at `0x00378b3e`.
 The pointer target's three non-cluster, non-deferred direct targets are now
 sealed as a second relationship-only boundary: `0x00372970`, `0x00007e70`,
 and `0x003581b3`, totaling 57 bytes and all 23 instructions. Their body-local
