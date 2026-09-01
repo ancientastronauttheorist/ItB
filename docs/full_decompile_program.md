@@ -347,15 +347,25 @@ until core engine semantics are reconstructed.
   706 bytes, 279 CFG nodes, 286 CFG edges, all 34 direct Lua calls, and all 23
   EBX/ESI/EDI staged calls under a complete eight-encoding `call r32` audit.
   It normalizes both tag-match arms and the setter's read-only arm, while
-  keeping both mismatch branches explicitly opaque. It also distinguishes the
-  first getter closure stored under numeric raw key `1.0` from the separately
-  created `__index` getter and `__newindex` setter. Its exhaustive three-target
+  keeping both mismatch branches explicitly opaque at that artifact layer. It
+  also distinguishes the first getter closure stored under numeric raw key
+  `1.0` from the separately created `__index` getter and `__newindex` setter.
+  Its exhaustive three-target
   atlas partition has six references: three closure producers, two getter
   identity comparisons, and the sole direct initializer call. The canonical
   JSON SHA-256 is
   `2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
-  Runtime provenance, dynamic attachment and invocation, mismatch semantics,
-  and source-level property equivalence remain open.
+  The dependent mismatch-path artifact now removes that local opacity without
+  weakening the consumer boundary. It recursively exact-verifies the complete
+  consumer chain, seals the two source bodies and their 190-node / 195-edge
+  CFGs, rejoins 78 path points to direct or staged Lua API identities, and
+  publishes replayable normal-return stack traces for all three getter
+  candidate sources and both setter storage arms. It retains the getter's
+  distinct buried-stack shapes and proves `slot 4 = F` only under `N == 3`;
+  for `N >= 4`, slot four is `I4`. Its canonical JSON SHA-256 is
+  `49276d63020a536bdd456d3f36667428afff2b3d8b15e479eb5444c241b23263`.
+  Runtime provenance, dynamic attachment and invocation, entry arity, durable
+  mutation, and source-level property equivalence remain open.
   `docs/native_lua_property_residual_survey.md` now closes those two mismatch
   traces at the exact-build research layer. It preserves the setter's critical
   absolute-slot-four distinction instead of assuming three arguments, maps the
@@ -364,8 +374,10 @@ until core engine semantics are reconstructed.
   `__len`), reconstructs the two-input wrapper callback, and closes a
   76-direct-caller frontier for the reusable numeric-slot-one recognizer. The
   residual helper target partition has 79 exact operands when the `__gc`
-  cleanup helper is included. This remains a reviewed survey awaiting its own
-  normalized executable-rebuilt artifact.
+  cleanup helper is included. The two mismatch traces have now been promoted
+  into the dependent executable-rebuilt artifact above. The initializer marker,
+  `__gc`, operator-wrapper, cleanup-helper, and recognizer portions remain a
+  reviewed survey awaiting further normalized artifacts.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue

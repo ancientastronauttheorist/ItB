@@ -286,15 +286,40 @@ immutable-output behavior. PE-free validation replays the finite joins,
 dominance proofs, CFG seals, and partitions; byte reads and exhaustive decoding
 remain exact rebuild duties.
 
+## Normalized executable-rebuilt mismatch-path artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_mismatch_chain.json`
+has analysis kind `pe_native_lua_property_mismatch_chain`, pretty-printed file
+SHA-256
+`dcae907285c435a8ac178a65bb4c1edb341f0b6cfdd35597b5d2cd57306bdb63`,
+and canonical JSON SHA-256
+`49276d63020a536bdd456d3f36667428afff2b3d8b15e479eb5444c241b23263`.
+
+The artifact recursively verifies the full consumer chain and promotes only
+its two opaque identity-mismatch arms. It binds both source bodies and their
+190-node / 195-edge CFG identity, then rejoins 78 declared path points to
+sealed instructions and direct or staged Lua API identities. The getter keeps
+all three distinct terminal internal stacks and selects only the top value as
+its one result. The setter normalizes its candidate stack, then preserves the
+critical split where absolute slot four is the appended environment only when
+`N == 3`; for `N >= 4`, it is original input `I4`. All claims are limited to
+normal-return stack effects and result counts.
+
+The focused suite mutates prerequisite receipts, body and CFG joins, path
+points and successors, Lua dispatch classifications, getter buried stacks,
+setter normalization and slot-four relations, storage destinations, result
+counts, nonclaims, summaries, schemas, and immutable-output behavior. Exact
+verification rebuilds through the complete prerequisite chain; PE-free
+verification repeats the derivation from the structurally verified consumer.
+
 The adjacent
-`docs/native_lua_property_residual_survey.md` closes the two currently opaque
-mismatch traces as exact-build research and maps the initializer's remaining
-marker, `__gc`, and 13 two-upvalue wrapper closures. It also identifies the
-wrapper callback, its numeric-slot-one getter test, a reusable 76-caller native
-recognizer using the same test, and the `__gc` callback's sole direct cleanup
-helper. That checkpoint deliberately remains outside the normalized artifact
-until its expanded branch, literal-array, helper, and caller-frontier proofs are
-encoded and tested.
+`docs/native_lua_property_residual_survey.md` supplies the promoted mismatch
+derivation and also maps the initializer's remaining marker, `__gc`, and 13
+two-upvalue wrapper closures. It identifies the wrapper callback, its
+numeric-slot-one getter test, a reusable 76-caller native recognizer using the
+same test, and the `__gc` callback's sole direct cleanup helper. Those latter
+initializer, wrapper, helper, and caller-frontier proofs remain outside the
+normalized artifacts until they are encoded and tested.
 
 ## Explicit nonclaims
 

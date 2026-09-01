@@ -1,10 +1,11 @@
 # Native Lua `property` residual-path survey
 
-Status: exact-build static research checkpoint. This survey closes the two
-identity-mismatch control-flow traces left opaque by the normalized property
-consumer artifact and maps the initializer's remaining marker, `__gc`,
-operator-wrapper, and native-recognizer seams. These facts are not yet a new
-normalized executable-rebuilt artifact.
+Status: partially promoted exact-build static research checkpoint. The two
+identity-mismatch control-flow traces left opaque by the property-consumer
+artifact are now normalized by the dependent executable-rebuilt mismatch-path
+artifact. This survey also maps the initializer's remaining marker, `__gc`,
+operator-wrapper, and native-recognizer seams; those latter facts are not yet
+normalized artifacts.
 
 ## Bound inputs and notation
 
@@ -21,6 +22,8 @@ They reuse:
   `aef6475375ce31da7d089eb819bf4b3a42228332892aa2bb8645668fe2db3b5e`.
 - Property-consumer artifact canonical SHA-256
   `2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9`.
+- Property-mismatch artifact canonical SHA-256
+  `49276d63020a536bdd456d3f36667428afff2b3d8b15e479eb5444c241b23263`.
 
 Let the entry Lua VM stack be `S = [I1, ..., IN]`. The getter trace requires
 `N >= 2`; the setter trace requires `N >= 3`. `F` is the one value pushed by
@@ -313,11 +316,25 @@ decoded operands, un-atlased code, indirect calls, or Lua-side behavior.
 
 ## Normalization boundary and nonclaims
 
-A follow-on executable-rebuilt artifact can now seal the getter and setter
-mismatch traces, the initializer's marker and `__gc` rows, the 13-entry pointer
-table and two-upvalue loop, the wrapper callback, cleanup helper, recognizer,
-and the 76-call recognizer frontier. It must preserve the setter's absolute
-slot-four distinction and the wrapper's exact two-input loop.
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_mismatch_chain.json`
+has analysis kind `pe_native_lua_property_mismatch_chain`. Its pretty-printed
+SHA-256 is
+`dcae907285c435a8ac178a65bb4c1edb341f0b6cfdd35597b5d2cd57306bdb63`;
+its canonical JSON SHA-256 is
+`49276d63020a536bdd456d3f36667428afff2b3d8b15e479eb5444c241b23263`.
+The artifact recursively verifies the exact property-consumer chain, binds the
+two 461-byte source bodies and their full 190-node / 195-edge CFG identity,
+and rejoins 78 declared path points to their sealed CFG nodes and proven direct
+or register-staged Lua API identities. Its structural validator performs the
+same derivation without reopening the PE; its exact validator rebuilds through
+the complete prerequisite chain and byte-compares canonical evidence.
+
+This promotes only the getter and setter mismatch traces. Follow-on artifacts
+can seal the initializer's marker and `__gc` rows, the 13-entry pointer table
+and two-upvalue loop, the wrapper callback, cleanup helper, recognizer, and the
+76-call recognizer frontier. They must preserve the wrapper's exact two-input
+loop just as the mismatch artifact preserves the setter's conditional
+absolute-slot-four relation.
 
 This survey does not prove runtime execution, successful API calls or
 allocations, callback callability, factory provenance from callback identity,

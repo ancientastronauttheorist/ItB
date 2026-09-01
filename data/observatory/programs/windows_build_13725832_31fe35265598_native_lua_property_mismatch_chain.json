@@ -1,0 +1,1356 @@
+{
+  "analysis_kind": "pe_native_lua_property_mismatch_chain",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "consumer_chain": {
+    "analysis_kind": "pe_native_lua_property_consumer_chain",
+    "canonical_sha256": "2c6569177595cbdc8abdbe4ba1bdc3d09f4bb0d15dac5d280c16ba3dfcc2d3b9"
+  },
+  "getter_mismatch_path": {
+    "entry_rva": "0x002ea110",
+    "path_points": [
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "getfenv_index_one",
+        "rva": "0x002ea118",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea11a"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_getfenv",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_getfenv",
+        "rva": "0x002ea11b",
+        "sha256": "be39b2c36b623ffcbf9a0b6c427218b4bd43374afcf6e845547c73493355464e",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea121"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "copy_key_index_two",
+        "rva": "0x002ea127",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea129"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_key",
+        "rva": "0x002ea12a",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea12c"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "rawget_environment_index",
+        "rva": "0x002ea12c",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea12e"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_rawget",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_rawget_environment",
+        "rva": "0x002ea12f",
+        "sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea135"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "type_candidate_index",
+        "rva": "0x002ea135",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea137"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_type",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_type_candidate",
+        "rva": "0x002ea138",
+        "sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea13e"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "candidate_nil_test",
+        "rva": "0x002ea141",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea143"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "candidate_nonnil_branch",
+        "rva": "0x002ea143",
+        "sha256": "5a5a00140d021edd79b0e4f5789a8e876e7e34a697ae6c89794314dbb1878bad",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea145",
+          "0x002ea166"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "getmetatable_environment_index",
+        "rva": "0x002ea145",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea147"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_getmetatable",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_getmetatable_environment",
+        "rva": "0x002ea148",
+        "sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea14e"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "metatable_present_test",
+        "rva": "0x002ea151",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea153"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "metatable_absent_branch",
+        "rva": "0x002ea153",
+        "sha256": "96130f87157d43e27bc054e16bf1575134eda74a9718cd0783013beaa07bced4",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea155",
+          "0x002ea166"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "fallback_copy_key_index_two",
+        "rva": "0x002ea155",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea157"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "fallback_lua_pushvalue_key",
+        "rva": "0x002ea158",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea15a"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "fallback_rawget_metatable_index",
+        "rva": "0x002ea15a",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea15c"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_rawget",
+        "lua_dispatch_kind": "direct_import",
+        "role": "fallback_lua_rawget",
+        "rva": "0x002ea15d",
+        "sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea163"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "tocfunction_candidate_index",
+        "rva": "0x002ea166",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea168"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_tocfunction",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_tocfunction",
+        "rva": "0x002ea169",
+        "sha256": "e47d6c90f46382e2d680ffc28fb0404661b9809bb89cf0372129c13ecc1b006c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea16f"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "property_tag_identity_compare",
+        "rva": "0x002ea172",
+        "sha256": "35034915cc7de933d00f46d1ad16f2161e235c8aa7029be214a4658d779496db",
+        "size": 5,
+        "successor_rvas": [
+          "0x002ea177"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "identity_mismatch_branch",
+        "rva": "0x002ea177",
+        "sha256": "d6dd9017f80eebb63539f08a1015605cc047cfd6411e6c40f3f6eae37aee0f91",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea179",
+          "0x002ea197"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "result_count_one",
+        "rva": "0x002ea198",
+        "sha256": "173c093d57da014e0a94224d45afe0c3acd2d81942e5370fca1559cbeeece74c",
+        "size": 5,
+        "successor_rvas": [
+          "0x002ea19d"
+        ]
+      },
+      {
+        "flow_kind": "terminal",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "return",
+        "rva": "0x002ea19f",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1,
+        "successor_rvas": []
+      }
+    ],
+    "semantics": {
+      "candidate_sources": [
+        {
+          "candidate_symbol": "D",
+          "conditions": [
+            "D_type_is_nonzero"
+          ],
+          "internal_stack": [
+            "S",
+            "F",
+            "D"
+          ],
+          "source_class": "environment_rawget_nonnil"
+        },
+        {
+          "candidate_symbol": "nil",
+          "conditions": [
+            "D_type_is_zero",
+            "F_has_no_metatable"
+          ],
+          "internal_stack": [
+            "S",
+            "F",
+            "nil"
+          ],
+          "source_class": "environment_rawget_nil_without_environment_metatable"
+        },
+        {
+          "candidate_symbol": "W",
+          "conditions": [
+            "D_type_is_zero",
+            "F_has_metatable"
+          ],
+          "internal_stack": [
+            "S",
+            "F",
+            "nil",
+            "M",
+            "W"
+          ],
+          "source_class": "environment_metatable_rawget"
+        }
+      ],
+      "common_terminal_internal_stack_claimed": false,
+      "entry_contract": {
+        "exact_input_count_proven": false,
+        "input_count_checked_by_binary": false,
+        "input_stack_symbol": "S=[I1..IN]",
+        "minimum_input_count": 2,
+        "minimum_is_analysis_premise": true
+      },
+      "lua_api_calls_after_mismatch_branch": 0,
+      "mismatch_condition": {
+        "branch_instruction_rva": "0x002ea177",
+        "comparison_instruction_rva": "0x002ea172",
+        "comparison_target_rva": "0x002eaa50",
+        "conversion": "lua_tocfunction_of_top_candidate",
+        "mismatch_successor_rva": "0x002ea197",
+        "relation": "not_equal",
+        "type_or_provenance_classification_claimed": false
+      },
+      "normal_result_count": 1,
+      "normal_return_only": true,
+      "returns_top_candidate": true,
+      "terminal_paths": [
+        {
+          "internal_stack": [
+            "S",
+            "F",
+            "D"
+          ],
+          "selected_result": "D",
+          "source_class": "environment_rawget_nonnil"
+        },
+        {
+          "internal_stack": [
+            "S",
+            "F",
+            "nil"
+          ],
+          "selected_result": "nil",
+          "source_class": "environment_rawget_nil_without_environment_metatable"
+        },
+        {
+          "internal_stack": [
+            "S",
+            "F",
+            "nil",
+            "M",
+            "W"
+          ],
+          "selected_result": "W",
+          "source_class": "environment_metatable_rawget"
+        }
+      ]
+    }
+  },
+  "lua51_abi": {
+    "normal_return_only": true,
+    "normal_return_stack_effects": {
+      "lua_createtable": "pushes_fresh_table_T",
+      "lua_getfenv": "pushes_environment_F",
+      "lua_getmetatable_false": "pushes_nothing",
+      "lua_getmetatable_true": "pushes_metatable",
+      "lua_pushvalue": "pushes_copy_of_indexed_value",
+      "lua_rawget": "pops_key_and_pushes_raw_value",
+      "lua_rawset": "pops_key_and_value",
+      "lua_replace": "moves_top_to_index_then_pops_top",
+      "lua_setfenv": "pops_environment",
+      "lua_setmetatable": "pops_metatable",
+      "lua_settop_minus_two": "pops_one_value",
+      "lua_tocfunction": "stack_neutral",
+      "lua_type": "stack_neutral"
+    },
+    "result_rule": "the_declared_C_result_count_selects_topmost_Lua_stack_values",
+    "stack_index_model": {
+      "native_machine_stack_is_distinct": true,
+      "negative_indices_are_top_relative": true,
+      "positive_indices_are_absolute": true
+    },
+    "symbols": {
+      "C": "topmost_selected_candidate",
+      "D": "raw_F_at_I2",
+      "F": "value_pushed_by_lua_getfenv_of_I1",
+      "M": "metatable_of_F",
+      "S": "entry_stack_[I1..IN]",
+      "T": "fresh_table_created_on_the_no_metatable_storage_arm",
+      "W": "raw_M_at_I2",
+      "X": "absolute_Lua_stack_slot_four_after_candidate_removal"
+    }
+  },
+  "method": {
+    "accepted_chain": "One exact property-consumer artifact is reduced to two sealed source body identities, declared CFG-node witnesses, and deterministic Lua 5.1 stack traces for both callback-identity mismatch arms.",
+    "derivation_boundary": "Exact rebuild first exact-verifies the complete property-consumer chain. PE-free validation recursively structure-verifies it and rejoins every declared path point to one sealed CFG node and its proven direct or staged Lua API identity.",
+    "lua51_abi_premises": [
+      "positive Lua stack indices are absolute",
+      "negative Lua stack indices are relative to the current top",
+      "lua_type value zero denotes nil",
+      "lua_rawget and lua_rawset bypass table metamethod dispatch",
+      "a false lua_getmetatable result pushes no Lua value",
+      "lua_replace moves the top value to its index and pops the top",
+      "lua_settop with index minus two pops one Lua value"
+    ],
+    "normal_return_boundary": "The traces model only normal Lua C API returns and the native function's declared C result count; error and nonreturning paths remain outside scope.",
+    "not_claimed": [
+      "runtime reachability, invocation arity, execution order across calls, or persistence",
+      "successful allocation, API calls, environment mutation, or metatable mutation",
+      "factory provenance from callback identity alone",
+      "candidate, input, environment, metatable, key, or value source types",
+      "callability, descriptor ownership, reference validity, or lifetime",
+      "dynamic metamethod attachment, later lookup, invocation, or durable read-only enforcement",
+      "computed, indirect, data, un-atlased, or Lua-side references",
+      "source-level property equivalence or complete program semantics"
+    ]
+  },
+  "schema_version": 1,
+  "setter_mismatch_path": {
+    "entry_rva": "0x002e9fd0",
+    "path_points": [
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "getfenv_index_one",
+        "rva": "0x002e9fd9",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2,
+        "successor_rvas": [
+          "0x002e9fdb"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_getfenv",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_getfenv",
+        "rva": "0x002e9fdc",
+        "sha256": "be39b2c36b623ffcbf9a0b6c427218b4bd43374afcf6e845547c73493355464e",
+        "size": 6,
+        "successor_rvas": [
+          "0x002e9fe2"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "copy_key_index_two",
+        "rva": "0x002e9fe8",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x002e9fea"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_key",
+        "rva": "0x002e9feb",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002e9fed"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "rawget_environment_index",
+        "rva": "0x002e9fed",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002e9fef"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_rawget",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_rawget_environment",
+        "rva": "0x002e9ff0",
+        "sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002e9ff6"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "type_candidate_index",
+        "rva": "0x002e9ff6",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2,
+        "successor_rvas": [
+          "0x002e9ff8"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_type",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_type_candidate",
+        "rva": "0x002e9ff9",
+        "sha256": "8ff6df17a153e6e4e3a21355452999b781fa8f90f69f7980e297194d855d9e99",
+        "size": 6,
+        "successor_rvas": [
+          "0x002e9fff"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "candidate_nil_test",
+        "rva": "0x002ea008",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea00a"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "candidate_nonnil_branch",
+        "rva": "0x002ea00a",
+        "sha256": "41807dbf58caeb9a434e89474e3845fcd70760662450b8e14d4488c0cf5728b1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea00c",
+          "0x002ea03b"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "getmetatable_environment_index",
+        "rva": "0x002ea00c",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea00e"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_getmetatable",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_getmetatable_environment",
+        "rva": "0x002ea00f",
+        "sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea015"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "metatable_present_test",
+        "rva": "0x002ea018",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea01a"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "metatable_absent_branch",
+        "rva": "0x002ea01a",
+        "sha256": "a819eea7993b5220e9d69e8393a16b0e8d5e1e4691768768829f909bec2ac406",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea01c",
+          "0x002ea03b"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "fallback_copy_key_index_two",
+        "rva": "0x002ea01c",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea01e"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "fallback_lua_pushvalue_key",
+        "rva": "0x002ea01f",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea021"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "fallback_rawget_metatable_index",
+        "rva": "0x002ea021",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea023"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_rawget",
+        "lua_dispatch_kind": "direct_import",
+        "role": "fallback_lua_rawget",
+        "rva": "0x002ea024",
+        "sha256": "8e1a4dfe1aa9107e3dc7d4910326d6d4443eaa287e035f940deac55d2473937c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea02a"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "replace_candidate_index",
+        "rva": "0x002ea02a",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea02c"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_replace",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_replace_candidate",
+        "rva": "0x002ea02d",
+        "sha256": "e6eb048c6b8bf94ecd377cbf033d6204d860742a106bcd174858ee81ca201633",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea033"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "settop_pop_metatable_index",
+        "rva": "0x002ea033",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea035"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_settop",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_settop_pop_metatable",
+        "rva": "0x002ea036",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea038"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "tocfunction_candidate_index",
+        "rva": "0x002ea03b",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea03d"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_tocfunction",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_tocfunction",
+        "rva": "0x002ea03e",
+        "sha256": "e47d6c90f46382e2d680ffc28fb0404661b9809bb89cf0372129c13ecc1b006c",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea044"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "property_tag_identity_compare",
+        "rva": "0x002ea047",
+        "sha256": "35034915cc7de933d00f46d1ad16f2161e235c8aa7029be214a4658d779496db",
+        "size": 5,
+        "successor_rvas": [
+          "0x002ea04c"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "identity_mismatch_branch",
+        "rva": "0x002ea04c",
+        "sha256": "c3de4da576e12c71210ef2f1147dfc37aeaf6d190e891b53327254b5fd58e08b",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea04e",
+          "0x002ea0a9"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "pop_candidate_index",
+        "rva": "0x002ea0a9",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0ab"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_settop",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_settop_pop_candidate",
+        "rva": "0x002ea0ac",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0ae"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "absolute_slot_four",
+        "rva": "0x002ea0ae",
+        "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0b0"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_getmetatable",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_getmetatable_slot_four",
+        "rva": "0x002ea0b1",
+        "sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea0b7"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "slot_four_metatable_test",
+        "rva": "0x002ea0ba",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0bc"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "slot_four_has_metatable_branch",
+        "rva": "0x002ea0bc",
+        "sha256": "36bc10ab8b96c8c5ef412c67e4c6a58caed87bd834b62343d9c87b90c4027d6d",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0be",
+          "0x002ea0e8"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "zero_array_size",
+        "rva": "0x002ea0be",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1,
+        "successor_rvas": [
+          "0x002ea0bf"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "zero_record_size",
+        "rva": "0x002ea0bf",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1,
+        "successor_rvas": [
+          "0x002ea0c0"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_createtable",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_createtable",
+        "rva": "0x002ea0c1",
+        "sha256": "e361ddccf813f02415a97688dc1c6ff9c18e318510384a1578433caeb4989221",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea0c7"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "duplicate_fresh_table_index",
+        "rva": "0x002ea0c7",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0c9"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_fresh_table",
+        "rva": "0x002ea0ca",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0cc"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "setfenv_input_index_one",
+        "rva": "0x002ea0cc",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0ce"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_setfenv",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_setfenv",
+        "rva": "0x002ea0cf",
+        "sha256": "9b018c4819593286dcb0824e9b6a908eec94238de60fa82c07f8373f0bd08b06",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea0d5"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "copy_absolute_slot_four",
+        "rva": "0x002ea0d5",
+        "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0d7"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_slot_four",
+        "rva": "0x002ea0d8",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0da"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "setmetatable_fresh_table_index",
+        "rva": "0x002ea0da",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0dc"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_setmetatable",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_setmetatable",
+        "rva": "0x002ea0dd",
+        "sha256": "d29aaf385352cda336f32cdd1cd275f9bfa5795cc608d2e04c7d45dcff9966fc",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea0e3"
+        ]
+      },
+      {
+        "flow_kind": "direct_unconditional_branch",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "fresh_table_to_common_tail",
+        "rva": "0x002ea0e6",
+        "sha256": "68b50534f0ab3d4a740d9915093dd8228a69f6c01867faaea436093efd3da225",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0f0"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "pop_slot_four_metatable_index",
+        "rva": "0x002ea0e8",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0ea"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_settop",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_settop_pop_slot_four_metatable",
+        "rva": "0x002ea0eb",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0ed"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "copy_store_key_index_two",
+        "rva": "0x002ea0f0",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0f2"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_store_key",
+        "rva": "0x002ea0f3",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0f5"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "copy_store_value_index_three",
+        "rva": "0x002ea0f5",
+        "sha256": "413d574c3b171871faa327f83f0ca55e6ffbbf2bf281b4146219a7e59bc14173",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0f7"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_pushvalue",
+        "lua_dispatch_kind": "staged_register",
+        "role": "lua_pushvalue_store_value",
+        "rva": "0x002ea0f8",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0fa"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "rawset_destination_index",
+        "rva": "0x002ea0fa",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea0fc"
+        ]
+      },
+      {
+        "flow_kind": "call_fallthrough",
+        "lua_api": "lua_rawset",
+        "lua_dispatch_kind": "direct_import",
+        "role": "lua_rawset",
+        "rva": "0x002ea0fd",
+        "sha256": "204d9fd034b58b17a9849854e522f72e2184c705f078097e25376575d86c9f79",
+        "size": 6,
+        "successor_rvas": [
+          "0x002ea103"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "result_count_zero",
+        "rva": "0x002ea106",
+        "sha256": "72fb562c9d90dfcc008e5b0a391395fd2a244bb6bc231e2621a8ec6860d21fa3",
+        "size": 2,
+        "successor_rvas": [
+          "0x002ea108"
+        ]
+      },
+      {
+        "flow_kind": "terminal",
+        "lua_api": null,
+        "lua_dispatch_kind": null,
+        "role": "return",
+        "rva": "0x002ea10c",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1,
+        "successor_rvas": []
+      }
+    ],
+    "semantics": {
+      "absolute_slot_four_partition": [
+        {
+          "entry_input_count": 3,
+          "slot_four_is_appended_environment_slot": true,
+          "slot_four_symbol": "F"
+        },
+        {
+          "minimum_entry_input_count": 4,
+          "slot_four_is_appended_environment_slot": false,
+          "slot_four_symbol": "I4"
+        }
+      ],
+      "candidate_sources": [
+        {
+          "candidate_symbol": "D",
+          "conditions": [
+            "D_type_is_nonzero"
+          ],
+          "normalized_stack": [
+            "S",
+            "F",
+            "D"
+          ],
+          "source_class": "environment_rawget_nonnil"
+        },
+        {
+          "candidate_symbol": "nil",
+          "conditions": [
+            "D_type_is_zero",
+            "F_has_no_metatable"
+          ],
+          "normalized_stack": [
+            "S",
+            "F",
+            "nil"
+          ],
+          "source_class": "environment_rawget_nil_without_environment_metatable"
+        },
+        {
+          "after_lua_replace_minus_three": [
+            "S",
+            "F",
+            "W",
+            "M"
+          ],
+          "candidate_symbol": "W",
+          "conditions": [
+            "D_type_is_zero",
+            "F_has_metatable"
+          ],
+          "normalized_stack": [
+            "S",
+            "F",
+            "W"
+          ],
+          "pre_normalization_stack": [
+            "S",
+            "F",
+            "nil",
+            "M",
+            "W"
+          ],
+          "source_class": "environment_metatable_rawget"
+        }
+      ],
+      "entry_contract": {
+        "exact_input_count_proven": false,
+        "input_count_checked_by_binary": false,
+        "input_stack_symbol": "S=[I1..IN]",
+        "minimum_input_count": 3,
+        "minimum_is_analysis_premise": true
+      },
+      "exactly_three_input_summary": {
+        "has_metatable_destination": "F",
+        "no_metatable_fresh_table_metatable_symbol": "F",
+        "premise": "entry_input_count_equals_three",
+        "premise_locally_proven": false,
+        "slot_four_symbol": "F"
+      },
+      "mismatch_condition": {
+        "branch_instruction_rva": "0x002ea04c",
+        "comparison_instruction_rva": "0x002ea047",
+        "comparison_target_rva": "0x002eaa50",
+        "conversion": "lua_tocfunction_of_top_candidate",
+        "mismatch_successor_rva": "0x002ea0a9",
+        "relation": "not_equal",
+        "type_or_provenance_classification_claimed": false
+      },
+      "normal_result_count": 0,
+      "normal_return_only": true,
+      "post_mismatch_candidate_removal": {
+        "after": [
+          "S",
+          "F"
+        ],
+        "before": [
+          "S",
+          "F",
+          "C"
+        ],
+        "lua_settop_index": -2
+      },
+      "setfenv_return_checked": false,
+      "setmetatable_return_checked": false,
+      "storage_paths": [
+        {
+          "guard": "lua_getmetatable_of_X_returns_true",
+          "path_class": "slot_four_has_metatable",
+          "raw_store_destination": "F",
+          "raw_store_key": "I2",
+          "raw_store_value": "I3",
+          "terminal_internal_stack": [
+            "S",
+            "F"
+          ],
+          "tested_symbol": "X"
+        },
+        {
+          "fresh_table_symbol": "T",
+          "guard": "lua_getmetatable_of_X_returns_false",
+          "path_class": "slot_four_has_no_metatable",
+          "raw_store_destination": "T",
+          "raw_store_key": "I2",
+          "raw_store_value": "I3",
+          "setfenv_attempt": {
+            "environment_symbol": "T",
+            "return_checked": false,
+            "target_input_index": 1
+          },
+          "setmetatable_attempt": {
+            "metatable_symbol": "X",
+            "return_checked": false,
+            "table_symbol": "T"
+          },
+          "terminal_internal_stack": [
+            "S",
+            "F",
+            "T"
+          ],
+          "tested_symbol": "X"
+        }
+      ]
+    }
+  },
+  "source_bodies": [
+    {
+      "atlas_record_sha256": "26ca28e33ec6841b32ad2338597479eaa50cd32177171a25f11ab0467c68925f",
+      "body_sha256": "89dcd9a4a320eb36f3c9d96c3bd24dc0c27c48b7c15dfb78fbd6ad6a59191c68",
+      "body_size": 317,
+      "control_flow_graph_canonical_sha256": "e8e40b27127b5089c437dc21970c5a239b6e67e76aa779dbd9a680047887dda4",
+      "control_flow_graph_edge_count": 136,
+      "control_flow_graph_node_count": 133,
+      "entry_rva": "0x002e9fd0",
+      "role": "setter_like_consumer"
+    },
+    {
+      "atlas_record_sha256": "84bc3a094175a3337ad9c85900387e6873d9c850016b0390f8d14374b292454b",
+      "body_sha256": "af02593b529264569e721d6dd2e401afd5d5b2b5d8aea67ee623226bfe3584a2",
+      "body_size": 144,
+      "control_flow_graph_canonical_sha256": "bf0b0d9be19d193c9fa79b582566a9d696d73eb98d466459e0e548a5bddf1c55",
+      "control_flow_graph_edge_count": 59,
+      "control_flow_graph_node_count": 57,
+      "entry_rva": "0x002ea110",
+      "role": "getter_like_consumer"
+    }
+  ],
+  "summary": {
+    "candidate_source_count": 6,
+    "conditional_entry_arity_partition_count": 2,
+    "consumer_prerequisite_count": 1,
+    "declared_path_point_count": 78,
+    "getter_path_point_count": 24,
+    "getter_terminal_path_count": 3,
+    "mismatch_trace_count": 2,
+    "non_normalized_getter_candidate_stack_count": 1,
+    "normalized_setter_candidate_stack_count": 1,
+    "schema_violations": 0,
+    "setter_path_point_count": 54,
+    "setter_storage_path_count": 2,
+    "source_body_count": 2,
+    "source_cfg_count": 2,
+    "source_cfg_edge_count": 195,
+    "source_cfg_node_count": 190
+  }
+}

@@ -14,7 +14,12 @@ New long-term track: the [full-decompile program](docs/full_decompile_program.md
 extends the existing build-keyed Engine Observatory into a measurable
 whole-program reconstruction. Its first pipeline exports and independently
 verifies a normalized Ghidra function atlas without committing game binaries,
-disassembly, or bulk decompiler output.
+disassembly, or bulk decompiler output. The current native-Lua frontier now
+includes executable-rebuilt `property` factory, consumer, and mismatch-path
+artifacts; the latest one replays the getter and setter mismatch arms across
+78 exact instruction points while preserving the getter's buried stack values
+and the setter's conditional absolute-slot-four interpretation. See the
+[residual-path survey](docs/native_lua_property_residual_survey.md).
 
 ### Lightning War retrospective
 
