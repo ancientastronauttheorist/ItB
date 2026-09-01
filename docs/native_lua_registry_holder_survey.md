@@ -1,8 +1,9 @@
 # Native Lua registry-holder survey
 
-Status: read-only static research checkpoint. This note records one exact
-constructor-to-local-release fragment for the Windows executable; it does not
-recover a C++ type or establish a complete resource lifetime.
+Status: promoted executable-rebuilt census. This note records the exact
+constructor-to-local-release fragment normalized by
+`pe_native_lua_registry_holder_local_use_release_census`; it does not recover a
+C++ type or establish a complete resource lifetime.
 
 ## Bound inputs
 
@@ -25,6 +26,13 @@ The required, build-bound artifacts are:
   analysis kind `pe_native_lua_cclosure_terminal_disposition_census`, canonical
   SHA-256 `74b762e486611a6dc71325276d9e8e92b7894de30f99bacf9e301e894c85bb85`.
   Its `registry_reference_holder` record pins the constructor sequence below.
+- Registry-holder local-use/release census:
+  `data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_registry_holder_local_use_release_census.json`,
+  analysis kind `pe_native_lua_registry_holder_local_use_release_census`,
+  pretty-file SHA-256
+  `139ed2444ee9b8824a4913638214db8c68a7899340a5e53b955c4a367c576755`,
+  canonical JSON SHA-256
+  `395603c2a163925fc202a5a35791200859313872c242fe5901e4de8c05ab892f`.
 
 Addresses are image-relative RVAs. Lua API semantics use the Lua 5.1 ABI,
 including `LUA_REGISTRYINDEX == -10000` and the no-reference sentinel `-2`.
@@ -60,10 +68,12 @@ reference, or a destructible type outside the reviewed sequence.
 
 ## Complete declared direct-caller partition
 
-A complete exact-PE decode of every function range declared by the
-program-facts atlas finds exactly 46 direct calls targeting `0x00057970`.
-Every source has a 247-byte atlas body. The call partition has two address
-clusters:
+A complete exact-PE decode of every immediate and absolute-memory operand in
+every function range declared by the program-facts atlas finds exactly 46
+references to `0x00057970`. Every reference is an immediate five-byte `E8`
+call, joins the matching Ghidra-declared direct edge, and comes from one of the
+46 reviewed callers. Every source has a 247-byte atlas body. The call partition
+has two address clusters:
 
 | cluster | source entries | count | stride |
 | --- | --- | --- | --- |
@@ -105,8 +115,9 @@ For the first source entry, those are respectively `0x00054765`,
 
 The `lua_rawgeti` stage is the named Lua 5.1 import at IAT RVA `0x003d64c0`;
 the `luaL_unref` stage is the named Lua 5.1 import at IAT RVA `0x003d64ec`.
-A future exact artifact must prove each ESI stage dominates its indirect call,
-reject every post-stage ESI writer on the accepted path, and make its
+The promoted artifact proves each `lua_rawgeti`, `lua_settop`, and `luaL_unref`
+ESI stage dominates its accepted indirect calls, retains the complete CFG path
+set, rejects every post-stage ESI writer on those paths, and makes its
 32-bit-Windows-cdecl nonvolatile-register premise explicit.
 
 The decoded bodies contain no explicit post-return write through EBX to
@@ -122,10 +133,12 @@ unmodeled/indirect paths.
 The `E + 0x73` read proves that the constructor output's `+4` reference field
 is supplied to the later registry `lua_rawgeti`. It does **not** prove that the
 state argument to that raw lookup comes from the output holder's `+0` field.
-The raw-lookup state is loaded through a separate temporary whose pointer was
-saved at `[esp+0x10]`; exact equality between that state and the holder's state
-is not established. The earlier `lua_rawgeti` at `E + 0x5e` is likewise not a
-proved use of the constructor output.
+The raw-lookup state is loaded through a separate temporary whose pointer is
+first saved at `[esp+0x10]`; after intervening pushes, `E + 0x76` reloads that
+temporary with `mov ebx,[esp+0x1c]`, then `E + 0x7f` pushes its `+0` field.
+Exact equality between that state and the holder's state is not established.
+The earlier `lua_rawgeti` at `E + 0x5e` is likewise not a proved use of the
+constructor output.
 
 By contrast, the release fragment reads the local state/ref pair at
 `[esp+0x14]` and `[esp+0x18]`, checks the two guards, and only then calls
@@ -136,44 +149,45 @@ release path. Each caller has a second later `luaL_unref` for a distinct stack
 pair; it must not be attributed to the constructor output without an
 independent provenance proof.
 
-## Candidate fail-closed artifact
+## Promoted fail-closed artifact
 
-A narrow next artifact could be named
-`pe_native_lua_registry_holder_local_use_release_census`. It should compose the
-three bound prerequisites and retain one record per declared direct caller,
-plus one exact producer record. It should publish only:
+Build and verify the normalized artifact with:
 
-- atlas body identities, normalized RVAs, instruction sizes, and SHA-256
-  instruction facts;
-- the producer's exact two-field layout and return-register witness;
-- the declared direct edge and caller-local destination grammar;
-- the separately labeled ref-to-`lua_rawgeti` and state/ref-to-`luaL_unref`
-  data-flow witnesses;
-- complete CFG/entry audits, stage-to-call path sets, and guard edges; and
-- deterministic cluster/count aggregates.
+```powershell
+python -X utf8 scripts/itb_native_lua_registry_holder_local_use_release.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_registry_holder_local_use_release_census.json
 
-It must fail closed if the executable, atlas identity, terminal-disposition
-identity, direct-import identity, caller partition, field offsets, local stack
-offsets, import IAT stages, guard constants, or stored CFG facts differ.
+python -X utf8 scripts/itb_native_lua_registry_holder_local_use_release.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_registry_holder_local_use_release_census.json
+```
 
-Minimum adversarial tests should independently alter:
+The artifact seals 47 source bodies / 11,469 bytes and their 4,177 CFG nodes /
+4,360 edges. The 46 callers contribute 11,362 bytes, 4,140 CFG nodes, 4,324
+CFG edges, 92 direct Lua calls, 276 register-indirect calls, 1,702 semantic
+instruction points, and 46 bounded EBX holder-use windows. The producer adds
+its complete 33-instruction terminal sequence and all six direct Lua calls.
+The whole-atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions; its only references to the producer are the 46
+declared immediate `E8` calls.
 
-1. the producer body identity, field store, sentinel, or returned-register
-   transfer;
-2. a declared caller edge, call offset, local destination, or EBX transfer;
-3. the ref-field read, rawgeti IAT stage, registry selector, or a post-stage
-   ESI clobber;
-4. the state/ref cleanup offsets, either guard, sentinel comparison, unref IAT
-   stage, or cleanup branch edge;
-5. a fabricated state-equality assertion, persistent-holder copy, or reset;
-6. an alternate atlas entry into an accepted region, a missing caller, a
-   duplicate caller, or a changed cluster aggregate; and
-7. any prerequisite canonical digest or exact-PE instruction rebuild.
-
-A PE-free structural validator may replay retained hashes, paths, dominance,
-and aggregates. It cannot establish decoded instruction semantics, literal
-bytes, register-write classification, or Lua import identity without the exact
-bound executable rebuild.
+Structural validation reconstructs every nested artifact field from the three
+canonical-pinned prerequisites plus the sealed body, CFG, path, and instruction
+profile. Exact validation independently decodes the PE, checks all operand
+references, rebuilds every CFG, replays the terminal sequence, classifies every
+`call r32` encoding, and recomputes each stage path and bounded EBX register-use
+partition. Unknown fields and altered nested facts fail closed. Existing
+byte-identical output is reused; symlink, reparse-point, non-regular, differing,
+unrelated, or concurrently changed output is preserved and rejected.
 
 ## Explicit nonclaims
 

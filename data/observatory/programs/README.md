@@ -456,6 +456,61 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; symlink, reparse-point, non-regular,
 differing, unrelated, or concurrently changed output is preserved and rejected.
 
+## Native Lua registry-holder local-use/release census
+
+`scripts/itb_native_lua_registry_holder_local_use_release.py` composes the
+canonical program-facts, direct-Lua-call, and terminal-disposition artifacts
+with the exact Windows executable. It replays the 107-byte producer at
+`0x00057970`, then seals every immediate or absolute-memory atlas reference to
+that producer and the bounded local holder-use/release grammar in each source.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_registry_holder_local_use_release.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_registry_holder_local_use_release_census.json
+
+python -X utf8 scripts/itb_native_lua_registry_holder_local_use_release.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --terminal-dispositions data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_terminal_dispositions.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_registry_holder_local_use_release_census.json
+```
+
+The artifact contains one producer and exactly 46 callers in two address
+clusters. Together they seal 47 bodies / 11,469 bytes, 4,177 CFG nodes / 4,360
+edges, 98 direct Lua calls, and 276 register-indirect calls. Each 247-byte
+caller retains 37 semantic points, all three staged-ESI API paths, an all-eight
+`call r32` audit, its sole modeled entry, and the EBX window from constructor
+return capture through the instruction before EBX is reused for a separate
+temporary. That bounded window contains only the capture and the `[ebx+4]`
+reference read; no holder-state equality is inferred for the later raw lookup.
+The original local state/reference pair is conditionally passed to
+`luaL_unref`, while the later second stack pair remains explicitly
+unattributed.
+
+The exhaustive scan decodes 25,312 atlas functions, 25,490 ranges, 3,735,718
+bytes, and 1,153,814 instructions. Its complete 46-reference producer
+partition consists only of the matching immediate five-byte `E8` calls, each
+joined to its Ghidra-declared edge. Runtime execution, reference validity,
+ownership, field clearing, destruction, indirect or un-atlased callers, and a
+complete lifetime remain unclaimed.
+
+The artifact's pretty-printed file SHA-256 is
+`139ed2444ee9b8824a4913638214db8c68a7899340a5e53b955c4a367c576755`;
+its canonical JSON SHA-256 is
+`395603c2a163925fc202a5a35791200859313872c242fe5901e4de8c05ab892f`.
+Existing byte-identical output is reused; symlink, reparse-point, non-regular,
+differing, unrelated, or concurrently changed output is preserved and
+rejected.
+
 ## Native Lua `property` factory chain
 
 `scripts/itb_native_lua_property_factory_chain.py` exact-verifies the complete

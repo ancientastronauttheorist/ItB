@@ -338,8 +338,13 @@ until core engine semantics are reconstructed.
   and conditionally attempt `luaL_unref` on the original local state/reference
   pair. The raw-lookup state comes from a separate temporary and is deliberately
   not equated with the holder state; ownership, execution, validity, indirect
-  callers, and complete lifetime remain unproved. This too is an exact-build
-  research checkpoint awaiting a normalized executable-rebuilt census.
+  callers, and complete lifetime remain unproved. The normalized
+  executable-rebuilt census now seals all 47 bodies / 11,469 bytes, 4,177 CFG
+  nodes / 4,360 edges, 98 direct Lua calls, 276 register-indirect calls, 1,702
+  caller semantic points, and all 46 bounded EBX-use windows. Its all-operand
+  atlas scan covers 25,312 functions and proves the only 46 references to the
+  producer are the declared immediate `E8` calls. Its canonical JSON SHA-256 is
+  `395603c2a163925fc202a5a35791200859313872c242fe5901e4de8c05ab892f`.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a
