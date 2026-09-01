@@ -56,6 +56,24 @@ The `operator_new` name remains an analysis label only: allocation semantics,
 ABI, success, ownership, lifetime, size meaning, normal return, runtime
 reachability, source identity, opaque-callee behavior, and computed, indirect,
 data, un-atlased, or Lua references remain explicitly unclaimed.
+The sibling operator-new second-callee boundary closes exact edge
+`0x003574f3 -> 0x0035848f` and seals the 28-byte target body, all nine
+instructions, and its 9-node / 8-edge CFG. Its final instruction is a direct
+call at the declared range end, so the CFG records `direct_call_range_end`
+without claiming a return or callee behavior. Two outgoing direct calls remain
+opaque at `0x00358498 -> 0x00358477` and
+`0x003584a6 -> 0x00370dab`; the complete PE-address operand partition also
+retains the exact non-writable `.rdata` immediate pushed at `0x0035849d`.
+The whole-atlas entry frontier is exactly the parent `E8` call from one owner,
+with no direct or staged Lua call, register call, indirect control, BND,
+segment-qualified, or interrupt syntax. Its pretty-printed and canonical
+SHA-256 values are
+`c427f25ed77f605911ddea747fcda26b44814ca0060f0c4fce3bbffcfe717f25` and
+`ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
+The default `FUN_0075848f` name remains analysis metadata only; source purpose,
+ABI, exception behavior, runtime reachability, normal return, and both callee
+semantics remain unclaimed. The next static frontier is the first outgoing
+target at `0x00358477`; sibling target `0x00370dab` also remains open.
 The next callnewh boundary closes operator-new's exact
 `0x003574e3 -> 0x0038bbc4` edge and seals the 68-byte target body, all 30
 instructions, and its 30-node / 31-edge CFG. It retains two opaque direct

@@ -410,6 +410,26 @@ until core engine semantics are reconstructed.
   un-atlased, or Lua references remain unproved. Publication verifies one
   locked point-in-time snapshot, and failed published destinations are
   preserved for inspection rather than deleted.
+  The operator-new target's second direct callee is now closed by a separate
+  relationship-defined static boundary. It canonical-pins the operator-new
+  receipt, independently rejoins exact edge
+  `0x003574f3 -> 0x0035848f`, and seals the 28-byte body, all nine
+  instructions, and a 9-node / 8-edge CFG. The last instruction is a direct
+  call at the declared range end; `direct_call_range_end` records only that
+  boundary and does not promote return or callee semantics. The artifact
+  retains opaque outgoing edges `0x00358498 -> 0x00358477` and
+  `0x003584a6 -> 0x00370dab`, plus the exact non-writable `.rdata` immediate
+  pushed at `0x0035849d`. Its complete entry frontier is the one parent
+  immediate `E8` call from one owner. Direct and staged Lua calls, the complete
+  eight-register call audit, indirect controls, BND, segment-qualified, and
+  interrupt partitions are empty. Its pretty-printed file SHA-256 is
+  `c427f25ed77f605911ddea747fcda26b44814ca0060f0c4fce3bbffcfe717f25`;
+  its canonical JSON SHA-256 is
+  `ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
+  The default Ghidra name is metadata only; source purpose, ABI, exception
+  behavior, runtime reachability, normal return, and callee behavior remain
+  unproved. The next relationship-defined frontier is `0x00358477`, while
+  sibling target `0x00370dab` remains open.
   The operator-new target's smallest supported outgoing callee is now closed
   by a callnewh static boundary. It revalidates both the canonical-pinned
   operator-new evidence and the independently rebuilt exact

@@ -359,6 +359,44 @@ unproved. Publication proves one locked point-in-time snapshot; a published
 destination that fails validation is preserved for inspection rather than
 deleted.
 
+## Dependent operator-new second-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json`
+has analysis kind
+`pe_native_operator_new_second_callee_static_boundary`. It canonical-pins the
+exact operator-new receipt and rejoins its
+`0x003574f3 -> 0x0035848f` edge. The join is independently rebuilt from the
+whole atlas and pins instruction bytes and SHA-256, source and target atlas
+identities, immediate-`E8` form, and normalized Ghidra-edge identity.
+
+The artifact seals the complete 28-byte target body, all nine instruction
+points, and its 9-node / 8-edge CFG. It retains two opaque outgoing direct
+edges: `0x00358498 -> 0x00358477` and
+`0x003584a6 -> 0x00370dab`. Because the second direct call ends the declared
+range, its final node is `direct_call_range_end`; this is a boundary fact, not
+a return or callee-behavior claim. The complete PE-address operand partition
+contains those two `.text` targets and the non-writable file-backed `.rdata`
+immediate VA `0x0088c9d4` / RVA `0x0048c9d4` pushed at `0x0035849d`.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly one target-entry
+reference survives from one owner: the five-byte immediate `E8` parent call at
+`0x003574f3`. Comparison, absolute-memory, and other-address reference
+partitions are empty. Direct and staged Lua calls, all eight register-call
+partitions, indirect controls, BND-prefixed controls, segment-qualified memory
+syntax, and interrupt syntax are also empty. The artifact's pretty-printed
+file SHA-256 is
+`c427f25ed77f605911ddea747fcda26b44814ca0060f0c4fce3bbffcfe717f25`;
+its canonical JSON SHA-256 is
+`ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
+
+The default `FUN_0075848f` name is analysis metadata only. Source purpose,
+ABI, exception behavior, argument or pointer meaning, normal return, runtime
+reachability, source equivalence, callee behavior, computed or indirect
+references, data consumers, un-atlased code, and Lua-side references remain
+unproved. The next relationship-defined target is the first outgoing callee at
+`0x00358477`; the second at `0x00370dab` remains a separate open boundary.
+
 ## Dependent callnewh static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_callnewh_static_boundary.json`

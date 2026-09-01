@@ -970,6 +970,63 @@ ownership, lifetime, size meaning, runtime reachability, normal return, source
 identity, opaque-callee behavior, computed or indirect references, data
 references, un-atlased code, and Lua-side references remain unproved.
 
+## Native operator-new second-callee static boundary
+
+`scripts/itb_native_operator_new_second_callee_static_boundary.py`
+canonical-pins the exact operator-new receipt, rejoins its
+`0x003574f3 -> 0x0035848f` edge, seals the relationship-defined target body
+and CFG, and scans every operand in every atlas range for the complete incoming
+reference frontier. The predecessor join is checked both against the pinned
+artifact and against the independently rebuilt PE reference row.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_operator_new_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_operator_new_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_operator_new_second_callee_static_boundary`. It seals target
+`0x0035848f`: 28 bytes, all nine exact instruction points, and one 9-node /
+8-edge CFG. It retains opaque direct edges
+`0x00358498 -> 0x00358477` and `0x003584a6 -> 0x00370dab`. The latter ends
+the declared range, so its final CFG node is `direct_call_range_end`; this does
+not claim that the target returns or assign either callee behavior. The exact
+PE-address operand partition contains both `.text` call targets and the
+non-writable file-backed `.rdata` immediate pushed at `0x0035849d`.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one target reference survives from one
+owner: the parent five-byte immediate `E8` call at `0x003574f3`. Comparison,
+absolute-memory, and other-address partitions are empty. Direct and staged Lua
+calls, the complete eight-register call audit, indirect controls, BND,
+segment-qualified, and interrupt syntax are empty.
+
+The artifact's pretty-printed file SHA-256 is
+`c427f25ed77f605911ddea747fcda26b44814ca0060f0c4fce3bbffcfe717f25`;
+its canonical JSON SHA-256 is
+`ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
+Publication validates one locked point-in-time snapshot. The default
+`FUN_0075848f` name remains analysis metadata only; source purpose, ABI,
+exception behavior, argument meaning, normal return, runtime reachability,
+source equivalence, callee behavior, computed or indirect references, data
+consumers, un-atlased code, and Lua-side references remain unproved. The next
+relationship-defined frontier is `0x00358477`; `0x00370dab` also remains open.
+
 ## Native callnewh static boundary
 
 `scripts/itb_native_callnewh_static_boundary.py` canonical-pins the exact
