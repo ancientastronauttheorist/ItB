@@ -391,7 +391,26 @@ until core engine semantics are reconstructed.
   SHA-256 is
   `beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`;
   analysis labels do not establish CRT identity, dialog/display behavior,
-  termination, source equivalence, or runtime reachability.
+  termination, source equivalence, or runtime reachability. Its second direct
+  target is now closed below; three direct targets remain opaque.
+  The dependent assertion-helper second-callee boundary canonical-pins that
+  receipt and independently rejoins exact edge
+  `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction
+  points, and a 2-node / 1-edge CFG whose final `ret` remains terminal syntax,
+  not a normal-return claim. The declared outgoing-native, indirect-control,
+  direct/staged Lua, complete eight-register call, BND-prefixed,
+  segment-qualified, interrupt, and non-PE-immediate partitions are empty.
+  Its sole PE-address operand is the five-byte `A1` absolute-memory read at
+  `0x0038c89f`. VA `0x008b7318` / RVA `0x004b7318` is proven to lie in the
+  writable virtual-only tail of `.data`; it has no file offset and its contents
+  remain opaque. The exhaustive all-operand atlas scan finds exactly three
+  immediate `E8` entry references from three owners. Its pretty-printed file
+  SHA-256 is
+  `d9ae877fc1f9acb604a566470d0b8c2c1bb471701ef19de0e7c0a170e1287a07`;
+  its canonical JSON SHA-256 is
+  `ad26b7dddb2996fd69b53937de0ae8bdb6d694982df62c280c4a03430895e0d7`.
+  Default-label meaning, source identity, ABI, input/output meaning, `.data`
+  contents, runtime reachability, effects, and normal return remain unproved.
   The self-linked helper's analysis-labeled target is now closed by a separate
   operator-new static boundary. It simultaneously revalidates the canonical-
   pinned predecessor evidence and the independently rebuilt whole-atlas

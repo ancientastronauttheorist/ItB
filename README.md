@@ -37,12 +37,26 @@ and the complete nine-reference direct-call frontier. Allocation success,
 source type, container, ownership, lifetime, and runtime behavior remain
 explicitly unclaimed.
 The adjacent assertion-helper boundary seals the exact 72-byte `0x00379cc2`
-body and 29-node / 30-edge CFG, retains all four outgoing native calls as
-opaque edges, rejoins the initializer's six-instruction predecessor window,
+body and 29-node / 30-edge CFG, retains four outgoing native calls as opaque
+edges, rejoins the initializer's six-instruction predecessor window,
 and partitions all 881 atlas references as immediate `E8` calls from 660
 owners. It records only exact instruction and non-writable `.rdata` pointer
 syntax: CRT identity, dialog/display behavior, termination, source
-equivalence, and runtime reachability remain explicitly unclaimed.
+equivalence, and runtime reachability remain explicitly unclaimed. Its second
+direct target is now closed below; three assertion-helper targets remain open.
+The dependent assertion-helper second-callee boundary rejoins exact edge
+`0x00379cdc -> 0x0038c89f` and seals the complete six-byte body, both
+instructions, and its 2-node / 1-edge CFG. The final `ret` is terminal syntax
+only. Every outgoing direct, indirect, register-call, direct/staged Lua, BND,
+segment-qualified, interrupt, and non-PE-immediate partition is empty. The
+sole PE operand is the exact `A1` absolute-memory read at `0x0038c89f`; its VA
+`0x008b7318` / RVA `0x004b7318` lies in writable virtual-only `.data` and has
+no file offset. The full atlas contains exactly three immediate `E8` entry
+references from three owners. Its pretty-printed and canonical SHA-256 values
+are `d9ae877fc1f9acb604a566470d0b8c2c1bb471701ef19de0e7c0a170e1287a07`
+and `ad26b7dddb2996fd69b53937de0ae8bdb6d694982df62c280c4a03430895e0d7`.
+The default `FUN_0078c89f` label, `.data` contents, runtime reachability,
+effects, ABI, and normal return remain explicitly unclaimed.
 The adjacent operator-new boundary closes the helper's exact
 `0x0007c602 -> 0x003574db` edge and seals the 51-byte target body, all 20
 instructions, and its 20-node / 22-edge CFG. Four outgoing direct calls remain

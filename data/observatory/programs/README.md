@@ -889,7 +889,7 @@ python -X utf8 scripts/itb_native_assertion_helper_static_boundary.py verify `
 The artifact has analysis kind
 `pe_native_assertion_helper_static_boundary`. It seals helper `0x00379cc2`:
 72 bytes, all 29 exact instruction points, and one 29-node / 30-edge CFG. Its
-four outgoing direct calls remain opaque native edges. The body contains no
+four outgoing direct calls are retained as opaque native edges. The body contains no
 direct Lua call, staged Lua dispatch, `call r32`, or retained literal, and its
 trailing `int3` does not prove termination.
 
@@ -912,7 +912,63 @@ not claim perpetual immutability after release. Runtime reachability,
 invocation order or frequency, argument validity, CRT identity or ownership,
 dialog/display behavior, normal return, abort, termination, source
 equivalence, computed or indirect references, un-atlased code, and Lua-side
-references remain unproved.
+references remain unproved. Its second direct target is now closed below; the
+other three remain opaque.
+
+## Native assertion-helper second-callee static boundary
+
+`scripts/itb_native_assertion_helper_second_callee_static_boundary.py`
+canonical-pins the exact assertion-helper receipt, rejoins its
+`0x00379cdc -> 0x0038c89f` edge, seals the relationship-defined target body
+and CFG, proves its complete empty outgoing/control partitions, and scans every
+operand in every atlas range for the full incoming reference frontier.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --assertion-helper-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_assertion_helper_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --assertion-helper-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_assertion_helper_second_callee_static_boundary`. It seals target
+`0x0038c89f`: six bytes, both exact instruction points, and one 2-node / 1-edge
+CFG. Its last `ret` is terminal syntax only. Declared outgoing native calls,
+indirect controls, direct/staged Lua calls, the complete eight-register call
+audit, non-PE immediates, BND-prefixed controls, segment-qualified memory, and
+interrupt syntax are all complete empty partitions.
+
+The one PE-address operand is operand 1 of the exact five-byte `A1` read at
+`0x0038c89f`, naming VA `0x008b7318` / RVA `0x004b7318`. The address is within
+writable `.data` but beyond its raw-backed end, so the receipt records it as
+virtual-only with no file offset and leaves its contents opaque.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly three target references survive from three
+owners, all immediate `E8` calls at `0x00379cdc`, `0x00392d68`, and
+`0x00392f34`; comparison, other-address, and absolute-memory entry references
+are empty. The artifact's pretty-printed file SHA-256 is
+`d9ae877fc1f9acb604a566470d0b8c2c1bb471701ef19de0e7c0a170e1287a07`;
+its canonical JSON SHA-256 is
+`ad26b7dddb2996fd69b53937de0ae8bdb6d694982df62c280c4a03430895e0d7`.
+Publication validates one locked point-in-time snapshot. The default
+`FUN_0078c89f` label, source purpose, ABI, inputs, outputs, `.data` contents,
+runtime reachability, effects, success, failure, normal return, dynamic or
+computed references, un-atlased code, and Lua-side references remain unproved.
+With no outgoing native edge, this relationship-defined branch ends here.
 
 ## Native operator-new static boundary
 

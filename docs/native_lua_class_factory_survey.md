@@ -317,8 +317,9 @@ The predecessor window records only exact syntax: the initializer's sentinel
 comparison and branch, immediate `96`, two pointers into non-writable
 `.rdata`, and the direct helper call. The helper body has no direct Lua call,
 staged Lua dispatch, `call r32`, or retained literal. Its four outgoing direct
-calls remain opaque native edges, and the trailing `int3` does not prove
-termination.
+calls are retained as opaque native edges, and the trailing `int3` does not
+prove termination. The second direct target is now closed below; the other
+three remain separate opaque boundaries.
 
 The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
 3,735,718 bytes, and 1,153,814 instructions. Exactly 881 helper-entry
@@ -328,6 +329,45 @@ empty. Runtime reachability, invocation order or frequency, argument validity,
 CRT identity or ownership, dialog/display behavior, normal return, abort,
 termination, source equivalence, computed or indirect references, un-atlased
 code, and Lua-side references remain unproved.
+
+## Dependent assertion-helper second-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`
+has analysis kind
+`pe_native_assertion_helper_second_callee_static_boundary`. It canonical-pins
+the exact assertion-helper receipt and rejoins its
+`0x00379cdc -> 0x0038c89f` edge. The independently rebuilt entry-reference row
+pins instruction bytes and SHA-256, owner and target atlas identities,
+immediate-`E8` form, and normalized Ghidra-edge identity.
+
+The artifact seals the complete six-byte target body, both exact instruction
+points, and its 2-node / 1-edge CFG. The last one-byte `ret` is represented as
+`terminal` with no successor; this proves syntax only, not normal return. The
+declared outgoing-native, indirect-control, direct/staged Lua, complete
+eight-register call, non-PE-immediate, BND-prefixed, segment-qualified, and
+interrupt partitions are all empty.
+
+The sole PE-address operand is operand 1 of the five-byte `A1` read at
+`0x0038c89f`: VA `0x008b7318` / RVA `0x004b7318`. It lies within writable
+`.data` (section RVA `0x00492000`, virtual size `0x000471cc`, raw size
+`0x00024800`) but beyond the section's raw-backed end, so it is explicitly
+virtual-only with no file offset. The receipt does not read or assign meaning
+to its runtime contents.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly three target-entry
+references survive from three owners, all five-byte immediate `E8` calls at
+`0x00379cdc`, `0x00392d68`, and `0x00392f34`. Comparison, other-address, and
+absolute-memory entry-reference partitions are empty. The artifact's
+pretty-printed file SHA-256 is
+`d9ae877fc1f9acb604a566470d0b8c2c1bb471701ef19de0e7c0a170e1287a07`;
+its canonical JSON SHA-256 is
+`ad26b7dddb2996fd69b53937de0ae8bdb6d694982df62c280c4a03430895e0d7`.
+
+The default `FUN_0078c89f` name is analysis metadata only. Source purpose,
+ABI, inputs, outputs, state mutation, `.data` contents, runtime reachability,
+effects, success, failure, and normal return remain unproved. With no outgoing
+native edge, this relationship-defined branch ends here.
 
 ## Dependent operator-new static-boundary artifact
 
