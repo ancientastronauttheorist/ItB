@@ -1,14 +1,15 @@
 # Native Lua `property` residual-path survey
 
-Status: partially promoted exact-build static research checkpoint. The two
+Status: promoted exact-build static research checkpoint. The two
 identity-mismatch traces are normalized by the dependent mismatch-path
 artifact. The initializer's marker, `__gc` closure placement, and 13-entry
 operator-wrapper construction loop are normalized by a second dependent
 artifact. Cleanup-callback/helper behavior and its two-reference frontier are
-now normalized by a third dependent artifact. The wrapper callback and native-
-recognizer frontier remain survey-only facts; their reviewed artifact boundary
-and exact acceptance packet are frozen in
-`docs/native_lua_property_callback_artifact_spec.md`.
+normalized by a third dependent artifact. The wrapper callback, reusable
+native recognizer, and complete 77-reference / 76-owner frontier are normalized
+by a fourth. Their implemented exact acceptance boundary remains recorded in
+`docs/native_lua_property_callback_artifact_spec.md`. These are finite binary
+proofs, not recovered source or runtime execution evidence.
 
 ## Bound inputs and notation
 
@@ -337,10 +338,11 @@ or register-staged Lua API identities. Its structural validator performs the
 same derivation without reopening the PE; its exact validator rebuilds through
 the complete prerequisite chain and byte-compares canonical evidence.
 
-This promotes only the getter and setter mismatch traces. Follow-on artifacts
-can seal the wrapper callback, recognizer, and the 76-call recognizer frontier.
-They must preserve the wrapper's exact two-input loop just as the mismatch
-artifact preserves the setter's conditional absolute-slot-four relation.
+This artifact promotes only the getter and setter mismatch traces. The
+dependent artifacts below separately seal initializer placement, cleanup, the
+wrapper callback, the recognizer, and its 76-call frontier. The split preserves
+the wrapper's exact two-input loop just as the mismatch artifact preserves the
+setter's conditional absolute-slot-four relation.
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_initializer_chain.json`
 has analysis kind `pe_native_lua_property_initializer_chain`. Its
@@ -354,7 +356,8 @@ and exact-rereads 15 NUL-terminated literals plus the 52-byte, 13-pointer
 operator array. The resulting grammar records
 `T["__luabind_class"] = true`, the zero-upvalue `__gc` closure placement,
 and each two-upvalue wrapper closure with upvalue order `[K,B]`. It does not
-normalize behavior inside either callback.
+normalize behavior inside either callback; the two dependent callback artifacts
+below do so under their own narrower grammars.
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_cleanup_chain.json`
 has analysis kind `pe_native_lua_property_cleanup_chain`. Its pretty-printed
@@ -369,8 +372,26 @@ literal, and exhaustively reproduces the helper call plus initializer closure
 producer as the only two direct target references. Its structural validator
 replays the normalized evidence without reopening the PE; its exact validator
 redecodes both bodies and all 25,490 atlas ranges. This promotes only the
-cleanup pair. The wrapper callback, recognizer, and 76-caller frontier remain
-outside normalized evidence.
+cleanup pair; the companion artifact below covers the wrapper and recognizer.
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_operator_dispatch_chain.json`
+has analysis kind `pe_native_lua_property_operator_dispatch_chain`. Its
+pretty-printed SHA-256 is
+`6b3a33905b8a36463e32fbda680ad86fe21d4ae04dea6cab59bf7b2c4ff0f239`;
+its canonical JSON SHA-256 is
+`7db59f62fc9d70e3b2338bc0349afae91ee8c7b34099cd3b034c6c240b035fdc`.
+It recursively exact-verifies the initializer chain, seals the 395-byte
+wrapper/recognizer pair and their 155-node / 159-edge CFG identity, joins all
+20 direct Lua calls and four register-staged calls, exact-rereads the 25-byte
+NUL-inclusive `No such operator defined` literal, and exhaustively reproduces
+the initializer wrapper producer plus 76 direct recognizer calls from 76
+distinct owners as the complete 77-reference partition. The staged-call proof
+uses exact last reaching definitions, including both `0x002ea22b` and
+`0x002ea23b` at error-path call `0x002ea25c`. Its structural validator replays
+the normalized evidence without reopening the PE; its exact validator redecodes
+both bodies and every atlas range. Together the two callback artifacts seal
+596 body bytes, 238 nodes / 245 edges, 30 direct Lua calls, four staged calls,
+and the complete 79-reference four-target partition described above.
 
 This survey does not prove runtime execution, successful API calls or
 allocations, callback callability, factory provenance from callback identity,

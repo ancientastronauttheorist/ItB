@@ -16,11 +16,13 @@ whole-program reconstruction. Its first pipeline exports and independently
 verifies a normalized Ghidra function atlas without committing game binaries,
 disassembly, or bulk decompiler output. The current native-Lua frontier now
 includes executable-rebuilt `property` factory, consumer, mismatch-path,
-initializer, and cleanup-chain artifacts. The mismatch chain replays both
-callback arms across 78 exact instruction points; the initializer chain seals
-the marker, zero-upvalue `__gc` placement, and ordered 13-entry two-upvalue
-wrapper loop; the cleanup chain seals the 201-byte callback/helper pair and its
-complete two-reference frontier. See the
+initializer, cleanup-chain, and operator-dispatch artifacts. The mismatch chain
+replays both callback arms across 78 exact instruction points; the initializer
+chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
+two-upvalue wrapper loop; the cleanup chain seals its 201-byte callback/helper
+pair; and the operator-dispatch chain seals the 395-byte wrapper/recognizer pair
+with 20 direct calls, four staged calls, and the complete 77-reference /
+76-recognizer-owner frontier. See the
 [residual-path survey](docs/native_lua_property_residual_survey.md).
 
 ### Lightning War retrospective

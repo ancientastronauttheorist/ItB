@@ -330,19 +330,21 @@ all 13 two-upvalue wrapper placements. Upvalue one is the exact key and upvalue
 two is a Boolean true only for `__unm` and `__len`.
 
 This is construction and placement evidence only. The dependent cleanup-chain
-artifact now normalizes behavior inside the cleanup callback and its sole
-direct helper; wrapper behavior remains outside this initializer artifact. None
-of these facts prove runtime dispatch or assign source-level class, property,
-operator, or metamethod semantics.
+and operator-dispatch artifacts now normalize behavior inside both constructed
+callbacks, the cleanup callback's sole direct helper, and the wrapper's shared
+numeric-slot recognizer. That does not make the behavior part of this
+initializer artifact. None of these facts prove runtime dispatch or assign
+source-level class, property, operator, or metamethod semantics.
 
 The adjacent
 `docs/native_lua_property_residual_survey.md` supplies the promoted mismatch
 and initializer derivations. It also identifies the wrapper callback, its
 numeric-slot-one getter test, a reusable 76-caller native recognizer using the
 same test, and the `__gc` callback's sole direct cleanup helper. The cleanup
-callback/helper pair and its two-reference frontier are now encoded and tested;
-the wrapper, recognizer, and 76-caller frontier remain outside the normalized
-artifacts.
+callback/helper pair, wrapper/recognizer pair, and their combined 79-reference
+frontier are now encoded and tested. The 76 recognizer callers remain exact
+operand-reachability evidence only; their heterogeneous semantics are not
+classified.
 
 ## Explicit nonclaims
 

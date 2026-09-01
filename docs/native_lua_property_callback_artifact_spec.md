@@ -1,8 +1,12 @@
 # Native Lua `property` callback artifact specification
 
-Status: reviewed exact-build implementation packet. This document freezes the
-next normalized-artifact boundary and its acceptance criteria; it is not itself
-an executable-rebuilt artifact and does not promote the surveyed behavior.
+Status: implemented and exact-verified for the pinned build. The cleanup-chain
+artifact has canonical SHA-256
+`e2aaf57a9560f806814977ee30a48ce4d3afae35d00e78e3bcb39ebb9bfb7483`;
+the operator-dispatch artifact has canonical SHA-256
+`7db59f62fc9d70e3b2338bc0349afae91ee8c7b34099cd3b034c6c240b035fdc`.
+This document remains the reviewed boundary and acceptance record; the emitted
+artifacts are finite executable evidence, not recovered source or runtime proof.
 
 ## Bound inputs
 
@@ -161,16 +165,23 @@ It has exactly four additional register-dispatched Lua calls:
 
 ```text
 0x002ea22b  stage EBX = [lua_settop IAT]  -> call EBX 0x002ea234
-0x002ea23b  stage EBX = [lua_settop IAT]  -> call EBX 0x002ea25c
+0x002ea22b or 0x002ea23b
+            stage EBX = [lua_settop IAT]  -> call EBX 0x002ea25c
 0x002ea284  stage EDI = [lua_toboolean IAT]
                                             -> call EDI 0x002ea290
                                             -> call EDI 0x002ea2a2
 ```
 
-The stage-to-call proofs must reject intervening register writers, alternate
-atlas entries, or declared direct-call entries. They rely on the explicit x86
-Windows cdecl nonvolatile-register premise across intervening calls. Audit all
-eight one-byte `call r32` encodings over the complete body, not just EBX/EDI.
+The staged-call proof must compute exact last reaching definitions, not require
+one naive no-writer path across the loop. Call `0x002ea234` has only stage
+`0x002ea22b`; call `0x002ea25c` has exactly stages `0x002ea22b` and
+`0x002ea23b`. The first reaches the error clear when the second input produces
+a nil candidate, while the second covers the early recognizer-failure exits.
+Calls `0x002ea290` and `0x002ea2a2` each have only stage `0x002ea284`. Reject
+any other reaching definition, import identity, alternate atlas entry, or
+declared direct-call entry. The proofs rely on the explicit x86 Windows cdecl
+nonvolatile-register premise across intervening calls. Audit all eight two-byte
+`FF D0`--`FF D7` `call r32` encodings over the complete body, not just EBX/EDI.
 
 The recognizer has exactly five direct calls and no register-dispatched Lua
 call:

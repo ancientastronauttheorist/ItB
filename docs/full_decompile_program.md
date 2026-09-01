@@ -388,12 +388,18 @@ until core engine semantics are reconstructed.
   and reproduces the exact two-reference target partition. Its canonical JSON
   SHA-256 is
   `e2aaf57a9560f806814977ee30a48ce4d3afae35d00e78e3bcb39ebb9bfb7483`.
-  The wrapper callback and 76-caller recognizer frontier remain reviewed survey
-  facts awaiting the second artifact frozen in
-  `docs/native_lua_property_callback_artifact_spec.md`: a 395-byte pair with
-  20 direct and four staged Lua calls plus the exact 76-owner frontier. The
-  packet preserves the wrapper's no-arity-guard and absolute-slot-three
-  caveats.
+  Wrapper/recognizer behavior is now promoted by the second callback artifact.
+  It recursively verifies the initializer, seals 395 bytes and 155-node /
+  159-edge CFG identity, joins 20 direct and four register-staged Lua calls,
+  exact-rereads `No such operator defined`, and reproduces one wrapper producer
+  plus 76 recognizer calls from 76 owners as the complete 77-reference target
+  partition. Its canonical JSON SHA-256 is
+  `7db59f62fc9d70e3b2338bc0349afae91ee8c7b34099cd3b034c6c240b035fdc`.
+  The fixed-point register proof preserves both valid last definitions for the
+  error-path `call EBX` at `0x002ea25c`. Together the cleanup and operator
+  artifacts close the reviewed 596-byte callback packet while retaining the
+  wrapper's no-arity-guard and absolute-slot-three caveats and making no
+  semantic-homogeneity claim about the 76 recognizer callers.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue
