@@ -576,6 +576,28 @@ until core engine semantics are reconstructed.
   Relationship membership, BND-prefixed syntax, decoded controls, and PE
   addresses do not prove security purpose, source identity, ABI, runtime
   reachability, termination, state mutation, data meaning, or Lua behavior.
+  The residual callee's relationship-only external target `0x00357b6a` is now
+  sealed in its own receipt: 251 bytes, all 56 instructions, and a 56-node /
+  55-edge enriched CFG. Its exact terminal `CD 29` is opaque interrupt syntax
+  only, without claiming runtime interruption or termination behavior. Two
+  opaque `E8` edges leave the body: `E8 18 50 04 00` at
+  `0x00357b75 -> 0x0039cb92` and `E8 E1 FE FF FF` at
+  `0x00357c5c -> 0x00357b42`. Its 28 PE address operands split into four
+  immediates and 24 writable `.data` absolute-memory operands (21 writes /
+  three reads), with exactly six file-backed and 22 virtual-only records.
+  Indirect controls, `call r32`, BND-prefixed controls, segment-qualified
+  memory, direct Lua, and staged Lua partitions are empty. The full atlas
+  scan has one target reference from one owner: the exact `F2 E9` at
+  `0x003574d5` from `0x003574ca`, across 25,312 functions, 25,490 ranges,
+  3,735,718 bytes, and 1,153,814 instructions. Its pretty-printed file
+  SHA-256 is
+  `366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6`;
+  its canonical JSON SHA-256 is
+  `0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
+  The next static frontier is its two retained opaque direct targets
+  `0x0039cb92` and `0x00357b42`; these static facts do not prove purpose,
+  ABI, runtime reachability, execution order, termination, state mutation,
+  normal return, data contents, or Lua-side behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

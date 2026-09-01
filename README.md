@@ -188,6 +188,25 @@ The exhaustive atlas frontier contains 1,794 references from 1,620 owners:
 use. The artifact's pretty-printed and canonical SHA-256 values are
 `548580d0fee7d612fe16bfe10b567ffd2c8d9a6add9cfd965a75c48c22123c2b` and
 `8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1`.
+The resulting relationship-only external target at `0x00357b6a` is now sealed:
+251 bytes, all 56 instructions, and a 56-node / 55-edge enriched CFG. Its
+single `CD 29` point is recorded only as terminal opaque interrupt syntax; it
+makes no runtime termination or interrupt-semantics claim. Two opaque `E8`
+edges leave the body: `E8 18 50 04 00` at `0x00357b75 -> 0x0039cb92` and
+`E8 E1 FE FF FF` at `0x00357c5c -> 0x00357b42`. Its complete PE-address
+partition has four immediates and 24 writable `.data` absolute-memory operands
+(21 writes / three reads), exactly six file-backed and 22 explicit
+virtual-only. Direct/staged Lua, indirect controls, `call r32`, BND-prefixed
+control syntax, and segment-qualified memory are empty. The all-atlas entry
+frontier is solely the `F2 E9` at `0x003574d5` from owner `0x003574ca`; the
+scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814
+instructions. Its pretty-printed and canonical SHA-256 values are
+`366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6` and
+`0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
+The next static frontier is the two retained opaque direct targets
+`0x0039cb92` and `0x00357b42`; their relationship and decoded syntax do not
+prove purpose, ABI, runtime reachability, state mutation, normal return, or
+Lua-side behavior.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

@@ -759,6 +759,45 @@ not prove security purpose, source identity, ABI, runtime reachability,
 execution order, termination, state mutation, success, data contents,
 un-atlased references, or Lua-side behavior.
 
+## Residual-target-set callee external-target static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary`.
+It canonically pins the relationship-only external target `0x00357b6a`,
+rejoins the exact `F2 E9` parent at `0x003574d5` from `0x003574ca`, and seals a
+complete 251-byte / 56-instruction body with body SHA-256
+`0a7f470e5151d95873547c1201fe9ad8d4c502d6afc9b530de59d9390eb9c0ed` and
+atlas-record SHA-256
+`324c7636ddd286b956053bb39fa045719f388d5254e441ce98b33d77d11fb074`.
+
+Its enriched CFG has 56 nodes / 55 edges and canonical SHA-256
+`020e22523160d01f527e80e62320f1052dc8654755d8aee3b8a88ae4dcc14048`.
+`CD 29` at `0x00357b81` is retained solely as static terminal opaque interrupt
+syntax, not a claim of runtime interrupt or termination behavior. Two opaque
+direct calls remain: `E8 18 50 04 00` at `0x00357b75 -> 0x0039cb92` (SHA-256
+`53a83b7d8c828fb30d1db99cb34f3ef39a9efff5068be6a8a626d05b2323b8df`) and
+`E8 E1 FE FF FF` at `0x00357c5c -> 0x00357b42` (SHA-256
+`d26d2f0423b8246000842d5f509221ff9bd0a727fd2fdbe6dfd975e060afd344`).
+
+The complete PE-address partition contains four immediates and 24 writable
+`.data` pure absolute-memory operands: 21 writes and three reads. Exactly six
+are file-backed and 22 are explicitly virtual-only. `call r32`, indirect
+controls, BND-prefixed controls, segment-qualified memory, direct Lua, and
+staged Lua partitions are empty. The all-atlas scan covers 25,312 functions,
+25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions, finding exactly
+one `other_address` reference from its sole owner `0x003574ca`.
+
+The artifact's pretty-printed file SHA-256 is
+`366bbfcf22cf6ed4dd667308336036191651c4d6dba3d48e6ae51271b66998c6`;
+its canonical JSON SHA-256 is
+`0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9`.
+The next static frontier remains the two opaque direct targets `0x0039cb92`
+and `0x00357b42`. Relationship membership, decoded syntax, the terminal
+interrupt record, and PE addresses do not prove semantic identity, purpose,
+ABI, runtime reachability, execution order, termination, state mutation,
+normal return, data meaning, un-atlased references, or Lua-side behavior.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`
