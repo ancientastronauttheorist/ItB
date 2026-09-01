@@ -523,6 +523,26 @@ until core engine semantics are reconstructed.
   Relationship membership and decoded syntax do not prove semantic kinship,
   ABI, purpose, runtime reachability, termination, target identity, effect,
   data meaning, or Lua-side behavior.
+  The previously deferred `0x0039d580` target is now sealed across both atlas
+  ranges: 164 bytes, all 57 instructions, and one 57-node / 57-edge union CFG.
+  Only `JE` sites `0x0039d5c9` and `0x0039d5e3` cross the range gap to
+  `0x0039d61f`; both range-local `RET` instructions terminate without an
+  invented gap fallthrough. The exact parent `0x00372a53 -> 0x0039d580`
+  cross-joins the residual receipt and the exhaustive one-reference atlas
+  frontier, completing the formerly deferred member of the pointer target's
+  11-edge partition. Two opaque outgoing calls target `0x0039d640` and
+  `0x0039d530`. Seven PE operands comprise six immediates plus one writable
+  `.data` absolute-memory read at operand index 1; four exact `FS:[0]` sites
+  remain a separate segment-qualified class. Indirect control, `call r32`,
+  direct Lua, and staged Lua partitions are empty. Its pretty-printed file
+  SHA-256 is
+  `ecf806bea49d116e0dd785d5d22aab4a769b51634efd1545acefa303d5c17778`;
+  its canonical JSON SHA-256 is
+  `a19a16ff5b999872acba98381163dc7d67113864ff508454d63162aa719e1c4e`.
+  Analysis labels, relationship membership, decoded controls, PE addresses,
+  and segment-qualified syntax do not prove purpose, ABI, exception behavior,
+  runtime reachability, successful return, state mutation, data contents, or
+  Lua-side behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

@@ -626,6 +626,60 @@ kinship, ABI, purpose, input/output meaning, runtime reachability, execution
 order, termination, dynamic target identity, state mutation, success, effect,
 data consumers, un-atlased code, or Lua-side behavior.
 
+## Dependent deferred multi-range static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_multirange_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_multirange_static_boundary`.
+It canonical-pins both the pointer-target and residual-target-set artifacts,
+then exactly rejoins the residual artifact's sole deferred parent
+`0x00372a53 -> 0x0039d580`. The target grouping is relationship-defined; the
+analysis label attached to its atlas record remains metadata only.
+
+The target contains two declared ranges. Range `0x0039d580` is 137 bytes with
+46 instructions; range `0x0039d61f` is 27 bytes with 11 instructions. Their
+joined 164-byte body has SHA-256
+`1f4270f944215528deb2ae971345d562d784bd50acc000041cce365911b5ea67`.
+The union CFG has 57 nodes / 57 edges and canonical SHA-256
+`9f88252951d61c605a8deea0eb6e3e9cf1e85453e1515aded9c62b5539214d94`.
+Only conditionals at `0x0039d5c9` and `0x0039d5e3` cross from the first range
+to `0x0039d61f`; their first-range fallthroughs are also preserved. The
+`RET` nodes at `0x0039d608` and `0x0039d639` are terminal, and no artificial
+fallthrough crosses the undeclared gap.
+
+The body has exactly two declared outgoing direct calls:
+`0x0039d5bf -> 0x0039d640` and `0x0039d5d9 -> 0x0039d530`. Both remain opaque.
+There is no indirect control or `call r32` syntax. The pinned direct-call census
+contains no direct Lua call for the body, and locally evidenced staged Lua
+dispatch is empty without classifying dynamic behavior.
+
+The complete PE-address operand partition contains six immediates and one
+absolute-memory read. The latter is operand index 1 at `0x0039d59c`, naming VA
+`0x00893f28` / RVA `0x00493f28` in file-backed writable `.data`. The four
+segment-qualified sites `0x0039d58f`, `0x0039d5aa`, `0x0039d5fa`, and
+`0x0039d62b` are retained separately as exact `FS:[0]` syntax; the first is a
+read at operand index 1 and the other three are writes at operand index 0. None
+is misclassified as a PE absolute-memory operand.
+
+The whole-atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one entry reference survives: the parent
+`E8` from sole owner `0x003729b0`. Other-address and absolute-memory reference
+classes are empty. Owner, target-owner, and target-reference partition hashes
+are `48a52d8519a9fcf7342f56530716af793f15fc620eddf0b856c0f303f37b93b6`,
+`99510bf1ab711cd75f2eae4ec0f11de440eeb945b4d792956e64debdff48a1b2`,
+and `82cbfb9dd0e25c2b8393c971ab66eb3c4de7b419718b89c1036ae18a164698c9`.
+
+The artifact's pretty-printed file SHA-256 is
+`ecf806bea49d116e0dd785d5d22aab4a769b51634efd1545acefa303d5c17778`;
+its canonical JSON SHA-256 is
+`a19a16ff5b999872acba98381163dc7d67113864ff508454d63162aa719e1c4e`.
+Publication uses the immutable locked writer with destination restriction,
+existing-content preservation, contention defense, and failed-private-output
+cleanup. Relationship membership, analysis labels, decoded controls, PE
+addresses, and `FS:[0]` syntax do not prove purpose, ABI, exception behavior,
+runtime reachability, execution order, state mutation, success, normal return,
+data contents, un-atlased references, or Lua-side behavior.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`

@@ -147,6 +147,21 @@ explicitly partitioned `5/5/1`. The artifact's pretty-printed and canonical
 SHA-256 values are
 `13784d112c47e9de5b0a92f7cfaac17245a98afb48214699ed516360b6d4d702` and
 `0783fffcd973eca3937ce01faa4d4f93b974540cfdaf004a301ce7ef0198fd5d`.
+The final deferred pointer target at `0x0039d580` is now sealed across both of
+its declared atlas ranges: 164 bytes, all 57 instructions, and one union CFG
+with 57 nodes / 57 edges. The only cross-range edges are conditional branches
+from `0x0039d5c9` and `0x0039d5e3` to `0x0039d61f`; both `RET` sites terminate,
+and no fallthrough is invented across the range gap. Its two opaque outgoing
+`E8` edges target `0x0039d640` and `0x0039d530`. The complete PE-address
+universe is six immediates plus one `.data` absolute-memory read, while four
+exact `FS:[0]` sites remain segment-qualified syntax rather than PE addresses.
+There are no indirect controls, `call r32` sites, or direct/staged Lua records.
+The exhaustive atlas frontier is the sole parent
+`0x00372a53 -> 0x0039d580` from owner `0x003729b0`, completing the previously
+deferred member of the exact 11-edge pointer-target partition. The artifact's
+pretty-printed and canonical SHA-256 values are
+`ecf806bea49d116e0dd785d5d22aab4a769b51634efd1545acefa303d5c17778` and
+`a19a16ff5b999872acba98381163dc7d67113864ff508454d63162aa719e1c4e`.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at
