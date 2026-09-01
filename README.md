@@ -125,6 +125,20 @@ and canonical SHA-256 values are
 The `___acrt_lock` spelling and named import remain metadata only; purpose,
 lock or synchronization behavior, ABI, argument meaning, state mutation,
 success, normal return, and runtime execution remain unproved.
+The query handler's relationship-defined fourth callee boundary closes exact
+edge `0x0038bc48 -> 0x003584f6` and seals the complete 21-byte,
+11-instruction, 11-node / 10-edge body. Its full entry frontier contains 67
+references from 67 owners: 66 five-byte immediate `E8` calls plus one
+six-byte BND-prefixed immediate jump at `0x0039d7c4`, classified as an opaque
+other-address use. The body has no outgoing direct native edge, Lua call,
+register call, or retained literal. Its sole segment-relative destination
+write is pinned as exact `FS:[0]` syntax, not converted into a PE absolute
+address. The artifact's pretty-printed and canonical SHA-256 values are
+`2af1d59469ee8213ea8ae29bd0df46969af1b7c4acc9453f9d24ae06b655f9a7` and
+`d89c9a6eb25d63cd08830a0ee7beab1df5413aa6eb2b05ac791b8c1b7fedc05e`.
+The `__SEH_epilog4` spelling remains an analysis label only; purpose, SEH,
+exception, epilog, stack, register, ABI, state mutation, success, normal
+return, and runtime execution remain unproved.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry

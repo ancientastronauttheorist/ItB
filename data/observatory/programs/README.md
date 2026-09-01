@@ -1259,6 +1259,68 @@ semantics, ABI, argument meaning, state mutation, success, normal return,
 runtime reachability, source identity, or pointed-to data. Dynamic, computed,
 indirect, data, un-atlased, and Lua-side references remain unproved.
 
+## Native query-handler fourth-callee static boundary
+
+`scripts/itb_native_query_handler_fourth_callee_static_boundary.py`
+canonical-pins the query-handler evidence, rejoins exact predecessor
+`0x0038bc48 -> 0x003584f6`, seals the complete relationship-defined target
+body and CFG, and scans every atlas operand for the target-entry frontier. The
+target's `__SEH_epilog4` spelling is retained only as analysis metadata.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_fourth_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_fourth_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_fourth_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_fourth_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_fourth_callee_static_boundary`. It seals target
+`0x003584f6`: 21 bytes, all 11 exact instruction points, and one 11-node /
+10-edge CFG. The body has no direct native edge, direct or staged Lua call,
+`call r32`, or retained literal.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 67 target-entry references survive from
+67 owners. Sixty-six are five-byte immediate `E8` calls. The remaining row is
+the six-byte BND-prefixed immediate jump at `0x0039d7c4`, owned by
+`0x0039d7b9`; it is classified as `other_address`, has no call form, and is
+rejoined to its normalized Ghidra edge. Comparison and absolute-memory
+entry-reference partitions are empty, and structural verification requires
+the explicit 67-owner partition.
+
+The instruction at `0x003584f9` has an exact segment-relative destination
+write using `FS:[0]`. The record pins the seven instruction bytes, SHA-256,
+operand index, segment, displacement, absent base/index, and write access. It
+is deliberately not represented as a PE absolute address and does not assign
+meaning to the segment-relative location or pointed-to data.
+
+The artifact's pretty-printed file SHA-256 is
+`2af1d59469ee8213ea8ae29bd0df46969af1b7c4acc9453f9d24ae06b655f9a7`;
+its canonical JSON SHA-256 is
+`d89c9a6eb25d63cd08830a0ee7beab1df5413aa6eb2b05ac791b8c1b7fedc05e`.
+Publication validates one locked point-in-time snapshot, requires the exact
+owner partition during structural verification, normalizes inherited errors,
+blocks writer contention, preserves existing published evidence after failed
+final validation, and removes a failed private publication. The analysis
+label does not prove purpose, SEH, exception, epilog, stack, register, ABI,
+argument meaning, state mutation, success, normal return, runtime
+reachability, source identity, or segment-relative contents. Dynamic,
+computed, indirect, data, un-atlased, and Lua-side references remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete

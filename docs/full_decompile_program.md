@@ -500,6 +500,23 @@ until core engine semantics are reconstructed.
   lock or synchronization semantics, ABI, argument meaning, state mutation,
   success, normal return, runtime execution, source identity, or pointed-to
   data.
+  The query handler's fourth direct target is now closed by a separate
+  relationship-defined boundary. It canonical-pins the query-handler artifact,
+  independently rejoins exact edge `0x0038bc48 -> 0x003584f6`, and seals the
+  target's complete 21-byte body, 11 instructions, and 11-node / 10-edge CFG.
+  Its all-atlas entry frontier is 67 references from 67 owners: 66 five-byte
+  immediate `E8` calls plus one six-byte BND-prefixed immediate jump at
+  `0x0039d7c4`, classified as `other_address`. Comparison and absolute-memory
+  entry references are empty. The body has no direct native edge, Lua call,
+  register call, or retained literal. Its exact `FS:[0]` destination write is
+  retained as opaque segment-relative syntax rather than mapped to a PE
+  absolute address. Its pretty-printed file SHA-256 is
+  `2af1d59469ee8213ea8ae29bd0df46969af1b7c4acc9453f9d24ae06b655f9a7`;
+  its canonical JSON SHA-256 is
+  `d89c9a6eb25d63cd08830a0ee7beab1df5413aa6eb2b05ac791b8c1b7fedc05e`.
+  The `__SEH_epilog4` analysis label does not prove purpose, SEH, exception,
+  epilog, stack, register, ABI, state mutation, success, normal return,
+  runtime execution, source identity, or segment-relative contents.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

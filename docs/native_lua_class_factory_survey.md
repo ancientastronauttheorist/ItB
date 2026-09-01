@@ -533,6 +533,44 @@ mutation, success, normal return, runtime reachability, source identity,
 pointed-to data, dynamic or computed references, data consumers, un-atlased
 code, or Lua-side references.
 
+## Dependent query-handler fourth-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_fourth_callee_static_boundary.json`
+has analysis kind `pe_native_query_handler_fourth_callee_static_boundary`. It
+canonical-pins the query-handler artifact and rejoins direct edge
+`0x0038bc48 -> 0x003584f6` against the independently rebuilt entry-reference
+row. The join pins exact instruction bytes, size, and SHA-256; source and
+target atlas identities; immediate-`E8` form; and the normalized Ghidra edge.
+
+The artifact seals the complete 21-byte target body, all 11 instruction
+points, and its 11-node / 10-edge CFG. It has no direct native edge, direct or
+staged Lua call, `call r32`, or retained literal. The whole-atlas scan covers
+25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions.
+Exactly 67 target-entry references from 67 owners survive. Sixty-six are
+five-byte immediate `E8` calls; the sole exception is the six-byte
+BND-prefixed immediate jump at `0x0039d7c4`, owned by `0x0039d7b9` and
+classified as an `other_address` use with no call form. Comparison and
+absolute-memory entry-reference partitions are empty.
+
+The instruction at `0x003584f9` has one exact `FS:[0]` destination-write
+record. Its instruction bytes and SHA-256, operand index, segment,
+displacement, absent base/index, and write access are pinned. The
+segment-relative syntax is not represented as a PE absolute address and
+carries no claim about the location's contents or behavior.
+
+The artifact's pretty-printed file SHA-256 is
+`2af1d59469ee8213ea8ae29bd0df46969af1b7c4acc9453f9d24ae06b655f9a7`;
+its canonical JSON SHA-256 is
+`d89c9a6eb25d63cd08830a0ee7beab1df5413aa6eb2b05ac791b8c1b7fedc05e`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing published
+evidence after failed final validation, and removes a failed private
+publication. The `__SEH_epilog4` analysis label does not prove purpose, SEH,
+exception, epilog, stack, register, ABI, argument meaning, state mutation,
+success, normal return, runtime reachability, source identity,
+segment-relative contents, dynamic or computed references, data consumers,
+un-atlased code, or Lua-side references.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that
