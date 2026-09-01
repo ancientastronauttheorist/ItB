@@ -162,6 +162,18 @@ deferred member of the exact 11-edge pointer-target partition. The artifact's
 pretty-printed and canonical SHA-256 values are
 `ecf806bea49d116e0dd785d5d22aab4a769b51634efd1545acefa303d5c17778` and
 `a19a16ff5b999872acba98381163dc7d67113864ff508454d63162aa719e1c4e`.
+The two opaque callees are now sealed together as a relationship-only pair.
+Target `0x0039d530` contributes 67 bytes / 33 instructions and a 33-node /
+36-edge CFG; `0x0039d640` contributes 49 bytes / 19 instructions and a
+19-node / 19-edge CFG. Their complete local PE-address universe is six
+file-backed `.text` conditional-target immediates. Outgoing direct edges,
+indirect controls, `call r32`, segment-qualified memory, and direct/staged Lua
+partitions are empty. The exact parent calls at `0x0039d5bf` and `0x0039d5d9`
+rejoin the multi-range artifact, and the exhaustive atlas frontier contains
+exactly those two `E8` references from sole owner `0x0039d580`. The artifact's
+pretty-printed and canonical SHA-256 values are
+`bffdbec3554c1969563d4ac235a2e7d150aff311b5b277a31a9f413a3b5094e2` and
+`c479ae8d802d848877f8fd57475d8909e0fe2129d25182996d16f599b6cbaf8c`.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

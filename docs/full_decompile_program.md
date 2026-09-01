@@ -543,6 +543,22 @@ until core engine semantics are reconstructed.
   and segment-qualified syntax do not prove purpose, ABI, exception behavior,
   runtime reachability, successful return, state mutation, data contents, or
   Lua-side behavior.
+  The two formerly opaque multi-range callees are now sealed as a paired
+  relationship-only boundary. `0x0039d530` contributes 67 bytes / 33
+  instructions and a 33-node / 36-edge CFG; `0x0039d640` contributes 49 bytes
+  / 19 instructions and a 19-node / 19-edge CFG. Their exact parents
+  `0x0039d5bf -> 0x0039d640` and `0x0039d5d9 -> 0x0039d530` rejoin the
+  multi-range receipt and an exhaustive two-reference atlas frontier from
+  sole owner `0x0039d580`. Six `.text` conditional-target immediates form the
+  complete PE-address partition; outgoing direct edges, indirect control,
+  `call r32`, segment-qualified memory, direct Lua, and locally evidenced
+  staged Lua partitions are empty. Its pretty-printed file SHA-256 is
+  `bffdbec3554c1969563d4ac235a2e7d150aff311b5b277a31a9f413a3b5094e2`;
+  its canonical JSON SHA-256 is
+  `c479ae8d802d848877f8fd57475d8909e0fe2129d25182996d16f599b6cbaf8c`.
+  Relationship membership and decoded syntax do not prove semantic identity,
+  purpose, ABI, runtime reachability, normal return, state mutation, data
+  meaning, un-atlased references, or Lua-side behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /
