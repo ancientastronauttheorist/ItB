@@ -1,0 +1,1375 @@
+{
+  "analysis_kind": "pe_native_self_linked_record_helper_chain",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "body_range_count": 25490,
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_body_bytes": 3735718,
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "caller_grammar_witnesses": [
+    {
+      "call_to_return_store_intervening_instruction_count": 0,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x0007a57d",
+        "sha256": "dab64b0efc736bdce7360bcd623910c9e3b8c85a87051990f03c606e1a13fa2c",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "683614d413757fdd171aece594cf071c7bc70b6c82a981fe74638155dade67a1",
+      "owner_entry_rva": "0x0007a460",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x0007a582",
+        "sha256": "3fd6eb805b042fd36c0dcebc06cd228472df1dd6e1bcb6d72f1c7bb275b26f8b",
+        "size": 5
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x0007a569",
+        "sha256": "8327f82df24afaf2fbb0d2dfdb68cb9818197d00ae95caac8bcbc4f2b3b3e245",
+        "size": 10
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x0007a573",
+        "sha256": "6bfa2ad98e243c3510ea4e55c10af57fa5791931c16478e515a6fe1addeb30ad",
+        "size": 10
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 0,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x0009c521",
+        "sha256": "7d70ae3400dbaff90fec5866a071b251e98f7bf06fed6e56971c9c1e2001615a",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "cdb47b514850e61da516f6d196a6b4659204a9e344524fefbdb176a3ae7e8bd4",
+      "owner_entry_rva": "0x0009c420",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x0009c526",
+        "sha256": "525c3d7e8579cfba7bb505a61c9d78c9a9e1954e9d0b3ffb7a073c0903a9829b",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x0009c514",
+        "sha256": "c57277dc5d95d035c93e3d3697ec58bb9aa8e1c0aef5957b00e88056fb6d6b72",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x0009c51a",
+        "sha256": "9fcb1d591b008d164198be4cc8e67e950737eb269c88ecaa3871d6787521cee4",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 0,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x0009d70d",
+        "sha256": "7d86026ecd30bd89fc789e1be04a4405b88970e12d5d0683cdcd4c60da280208",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "900f1a8d5f5b4424fdd636ea2a948f89ddb9b2f30ba4c71ab50275d57c6c975b",
+      "owner_entry_rva": "0x0009d6d0",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x0009d712",
+        "sha256": "525c3d7e8579cfba7bb505a61c9d78c9a9e1954e9d0b3ffb7a073c0903a9829b",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x0009d700",
+        "sha256": "c57277dc5d95d035c93e3d3697ec58bb9aa8e1c0aef5957b00e88056fb6d6b72",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x0009d706",
+        "sha256": "9fcb1d591b008d164198be4cc8e67e950737eb269c88ecaa3871d6787521cee4",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 1,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002e6a64",
+        "sha256": "82f73eb33db283c9aca45ce0b027773a5895f673e06c3cbb4773728ddd40080a",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+      "owner_entry_rva": "0x002e6900",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002e6a6c",
+        "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002e6a57",
+        "sha256": "ac6eced6df1a6dc7e75729c6935cef0eeb6bdf7598711c487d024473f0320a30",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002e6a5d",
+        "sha256": "b115750dc86afc9c7ff2629b4953c0fc66532299a812278e6549c3911debf234",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 0,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002e77e3",
+        "sha256": "66bd99ba393bec05b29334de74d2ec602e274aa9a7842e70d3ea4de01cc3ad0d",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "4584a9d1fb8a5dd4320d05a1a724fd4da2f8144a29a5bd78ef4b52377e002fb3",
+      "owner_entry_rva": "0x002e7790",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002e77e8",
+        "sha256": "525c3d7e8579cfba7bb505a61c9d78c9a9e1954e9d0b3ffb7a073c0903a9829b",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002e77d6",
+        "sha256": "c57277dc5d95d035c93e3d3697ec58bb9aa8e1c0aef5957b00e88056fb6d6b72",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002e77dc",
+        "sha256": "9fcb1d591b008d164198be4cc8e67e950737eb269c88ecaa3871d6787521cee4",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 1,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002e8d99",
+        "sha256": "eca26f87b50f311e6f806d1ec8525db375a7d3a979cd2386349cce286484d35b",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "8b712e83ccab122e890b2ed20874cde398f2de4306976e9f7759b72f6eca9b13",
+      "owner_entry_rva": "0x002e8d20",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002e8da3",
+        "sha256": "4d468257caef48b0bc85266b253a8190aec7b5e65a75b4b835f14e2ccc521b88",
+        "size": 5
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002e8d85",
+        "sha256": "73834e1f2a6f6f388455e29126f997f44a4557af06b7cceb95510ff4b6090c59",
+        "size": 10
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002e8d8f",
+        "sha256": "d929c2ea654732ff834cc26b7382f5ea26d3cd78236500e6ced273837ae565a2",
+        "size": 10
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 1,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002eab1c",
+        "sha256": "d7b077a4065a761ecd99727058b68f4b2538567fb6c98c78073e2645e1e539b3",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "8a0702ff7d871ebf59ad4a9b02456df6fa89d2acb57ebd16123c74927fbb739b",
+      "owner_entry_rva": "0x002eaa80",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002eab23",
+        "sha256": "525c3d7e8579cfba7bb505a61c9d78c9a9e1954e9d0b3ffb7a073c0903a9829b",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002eab0f",
+        "sha256": "c57277dc5d95d035c93e3d3697ec58bb9aa8e1c0aef5957b00e88056fb6d6b72",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002eab15",
+        "sha256": "9fcb1d591b008d164198be4cc8e67e950737eb269c88ecaa3871d6787521cee4",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 1,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002ead8b",
+        "sha256": "be2bf31c70f7062cb674dedf8786a5319f998ac233f7fa8de4af3f7d6391636e",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "b27b7c7d7c5e3fe24fab074eaf6402b26a7be3006c3a11a72ba1b5d1f136f892",
+      "owner_entry_rva": "0x002eacf0",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002ead92",
+        "sha256": "525c3d7e8579cfba7bb505a61c9d78c9a9e1954e9d0b3ffb7a073c0903a9829b",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002ead7e",
+        "sha256": "c57277dc5d95d035c93e3d3697ec58bb9aa8e1c0aef5957b00e88056fb6d6b72",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002ead84",
+        "sha256": "9fcb1d591b008d164198be4cc8e67e950737eb269c88ecaa3871d6787521cee4",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    },
+    {
+      "call_to_return_store_intervening_instruction_count": 2,
+      "caller_body_or_cfg_sealed": false,
+      "helper_call": {
+        "meaning": {
+          "operation": "direct_call",
+          "target_rva": "0x0007c600"
+        },
+        "role": "helper_call",
+        "rva": "0x002ebb48",
+        "sha256": "219db97cec812b2af041a0a81d59ea2b2dfe2686482e6158701175be4506d365",
+        "size": 5
+      },
+      "owner_atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+      "owner_entry_rva": "0x002ebb30",
+      "return_to_offset_0": {
+        "meaning": {
+          "operation": "store_memory",
+          "relative_offset": 0,
+          "source": "EAX"
+        },
+        "role": "return_to_offset_0",
+        "rva": "0x002ebb52",
+        "sha256": "6cb2225c36f21f14c55347f008ff7a0b6e03dd96a83345d8b116d91805aa20ce",
+        "size": 2
+      },
+      "zero_offset_0": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 0,
+          "value": 0
+        },
+        "role": "zero_offset_0",
+        "rva": "0x002ebb3b",
+        "sha256": "7e0963b0b8cd853e01f67ade2dfb3ec7ea1c895b2c395e3e8876e8d3d2c1f2bf",
+        "size": 6
+      },
+      "zero_offset_4": {
+        "meaning": {
+          "operation": "store_memory_immediate",
+          "relative_offset": 4,
+          "value": 0
+        },
+        "role": "zero_offset_4",
+        "rva": "0x002ebb41",
+        "sha256": "8f4e1d8e7b1d4e5eb1d49870dfcf446f51787d20e7c8640e41f7594965418c49",
+        "size": 7
+      },
+      "zero_pair_and_call_are_contiguous_decoded_instructions": true
+    }
+  ],
+  "class_initializer_chain": {
+    "analysis_kind": "pe_native_lua_class_initializer_chain",
+    "canonical_sha256": "799ab272966a317f27c0fbaf25df7d47821650a6f5e0b1a914c98eb40dcfece9"
+  },
+  "control_flow_graphs": [
+    {
+      "caller_entry_rva": "0x0007c600",
+      "edge_count": 18,
+      "node_count": 16,
+      "nodes": [
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c600",
+          "sha256": "27a1584e3edfc2eb704cee80ff0a8a4c10363e45a1bc43daacd2ac15bd84baaf",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c602"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "call_fallthrough",
+          "rva": "0x0007c602",
+          "sha256": "8bd038f34543662d4fb139b3c93856c179a76e31a0cafa4a1e8a7c2dbea5e63e",
+          "size": 5,
+          "successor_rvas": [
+            "0x0007c607"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c607",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3,
+          "successor_rvas": [
+            "0x0007c60a"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c60a",
+          "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c60c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0007c60c",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c60e",
+            "0x0007c610"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c60e",
+          "sha256": "abc8a336b459eb08ac926b0c1cf19f0741bf543c64aaa7fccbba331c8ba0fc23",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c610"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c610",
+          "sha256": "0141ec913f701eb29274212b0efb8f55b56bceec2694a516d5411995b49788f9",
+          "size": 3,
+          "successor_rvas": [
+            "0x0007c613"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c613",
+          "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c615"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0007c615",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c617",
+            "0x0007c619"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c617",
+          "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c619"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c619",
+          "sha256": "b578f415724a5e969170e90b88a354692ef069ad015d6e88c4d10259b928503b",
+          "size": 3,
+          "successor_rvas": [
+            "0x0007c61c"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c61c",
+          "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c61e"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "direct_conditional_branch",
+          "rva": "0x0007c61e",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c620",
+            "0x0007c622"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c620",
+          "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+          "size": 2,
+          "successor_rvas": [
+            "0x0007c622"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "fallthrough",
+          "rva": "0x0007c622",
+          "sha256": "5b1859f900585c5a2fe1099bb87064987313b6ff8ced1c2236ae7370dfcc6968",
+          "size": 6,
+          "successor_rvas": [
+            "0x0007c628"
+          ],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": false
+        },
+        {
+          "flow_kind": "terminal",
+          "rva": "0x0007c628",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1,
+          "successor_rvas": [],
+          "writes_ebx": false,
+          "writes_edi": false,
+          "writes_esi": false,
+          "writes_esp": true
+        }
+      ],
+      "range_size": 41,
+      "range_start_rva": "0x0007c600"
+    }
+  ],
+  "decoder": {
+    "architecture": "x86",
+    "cfg_register_write_fields": [
+      "writes_ebx",
+      "writes_esi",
+      "writes_edi",
+      "writes_esp"
+    ],
+    "mode_bits": 32,
+    "name": "capstone",
+    "operand_classes": [
+      "absolute_memory",
+      "immediate"
+    ],
+    "register_call_encoding_audit": [
+      {
+        "encoding": "ffd0",
+        "register": "EAX"
+      },
+      {
+        "encoding": "ffd1",
+        "register": "ECX"
+      },
+      {
+        "encoding": "ffd2",
+        "register": "EDX"
+      },
+      {
+        "encoding": "ffd3",
+        "register": "EBX"
+      },
+      {
+        "encoding": "ffd4",
+        "register": "ESP"
+      },
+      {
+        "encoding": "ffd5",
+        "register": "EBP"
+      },
+      {
+        "encoding": "ffd6",
+        "register": "ESI"
+      },
+      {
+        "encoding": "ffd7",
+        "register": "EDI"
+      }
+    ],
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "function_bodies": [
+    {
+      "atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+      "body_sha256": "bf6d8eea868843a089fcc2b74af1426c5f71328fc018f028310cc48259f0dda1",
+      "body_size": 41,
+      "call_r32_audit": [
+        {
+          "call_rvas": [],
+          "register": "EAX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ECX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDX"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBX"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESP"
+        },
+        {
+          "call_rvas": [],
+          "register": "EBP"
+        },
+        {
+          "call_rvas": [],
+          "register": "ESI"
+        },
+        {
+          "call_rvas": [],
+          "register": "EDI"
+        }
+      ],
+      "control_flow_graph_canonical_sha256": "ad0e30bf52543a6222f473c4a7f7740e9333fa05ad054256599f67d5bb35303b",
+      "direct_lua_calls": [],
+      "entry_rva": "0x0007c600",
+      "range_size": 41,
+      "range_start_rva": "0x0007c600",
+      "register_call_partition_complete": true,
+      "reviewed_points": [
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "push_immediate",
+            "value": 24
+          },
+          "role": "size_request_push",
+          "rva": "0x0007c600",
+          "sha256": "27a1584e3edfc2eb704cee80ff0a8a4c10363e45a1bc43daacd2ac15bd84baaf",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "direct_call",
+            "target_rva": "0x003574db"
+          },
+          "role": "native_size_request_edge",
+          "rva": "0x0007c602",
+          "sha256": "8bd038f34543662d4fb139b3c93856c179a76e31a0cafa4a1e8a7c2dbea5e63e",
+          "size": 5
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "add_stack_pointer",
+            "value": 4
+          },
+          "role": "stack_cleanup",
+          "rva": "0x0007c607",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "test",
+            "register": "EAX"
+          },
+          "role": "return_register_guard",
+          "rva": "0x0007c60a",
+          "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "branch_if_zero",
+            "target_rva": "0x0007c610"
+          },
+          "role": "return_register_zero_branch",
+          "rva": "0x0007c60c",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "EAX",
+            "field_offset": 0,
+            "operation": "store_memory",
+            "source": "EAX"
+          },
+          "role": "return_register_self_store",
+          "rva": "0x0007c60e",
+          "sha256": "abc8a336b459eb08ac926b0c1cf19f0741bf543c64aaa7fccbba331c8ba0fc23",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "EAX",
+            "destination": "ECX",
+            "field_offset": 4,
+            "operation": "address"
+          },
+          "role": "plus_4_address",
+          "rva": "0x0007c610",
+          "sha256": "0141ec913f701eb29274212b0efb8f55b56bceec2694a516d5411995b49788f9",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "test",
+            "register": "ECX"
+          },
+          "role": "plus_4_guard",
+          "rva": "0x0007c613",
+          "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "branch_if_zero",
+            "target_rva": "0x0007c619"
+          },
+          "role": "plus_4_zero_branch",
+          "rva": "0x0007c615",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "ECX",
+            "field_offset": 0,
+            "operation": "store_memory",
+            "source": "EAX"
+          },
+          "role": "plus_4_return_store",
+          "rva": "0x0007c617",
+          "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "EAX",
+            "destination": "ECX",
+            "field_offset": 8,
+            "operation": "address"
+          },
+          "role": "plus_8_address",
+          "rva": "0x0007c619",
+          "sha256": "b578f415724a5e969170e90b88a354692ef069ad015d6e88c4d10259b928503b",
+          "size": 3
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "test",
+            "register": "ECX"
+          },
+          "role": "plus_8_guard",
+          "rva": "0x0007c61c",
+          "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "branch_if_zero",
+            "target_rva": "0x0007c622"
+          },
+          "role": "plus_8_zero_branch",
+          "rva": "0x0007c61e",
+          "sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "ECX",
+            "field_offset": 0,
+            "operation": "store_memory",
+            "source": "EAX"
+          },
+          "role": "plus_8_return_store",
+          "rva": "0x0007c620",
+          "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+          "size": 2
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "base": "EAX",
+            "field_offset": 12,
+            "operation": "store_memory_immediate",
+            "value": "0x0101",
+            "width_bytes": 2
+          },
+          "role": "plus_0c_word_write",
+          "rva": "0x0007c622",
+          "sha256": "5b1859f900585c5a2fe1099bb87064987313b6ff8ced1c2236ae7370dfcc6968",
+          "size": 6
+        },
+        {
+          "direct_lua_import": null,
+          "meaning": {
+            "operation": "return",
+            "register": "EAX"
+          },
+          "role": "return",
+          "rva": "0x0007c628",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ],
+      "role": "self_linked_record_helper",
+      "semantic_facts": {
+        "conditional_store_guards": [
+          "EAX",
+          "EAX_plus_4",
+          "EAX_plus_8"
+        ],
+        "requested_size_bytes": 24,
+        "return_register": "EAX",
+        "runtime_or_success_claimed": false,
+        "source_semantic_names_assigned": false,
+        "stores": {
+          "0x0": "EAX",
+          "0x4": "EAX",
+          "0x8": "EAX",
+          "0xc": "0x0101_word"
+        }
+      },
+      "staged_lua_dispatches": []
+    }
+  ],
+  "helper_targets": [
+    {
+      "atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+      "body_sha256": "bf6d8eea868843a089fcc2b74af1426c5f71328fc018f028310cc48259f0dda1",
+      "body_size": 41,
+      "entry_rva": "0x0007c600",
+      "entry_va": "0x0047c600",
+      "role": "self_linked_record_helper"
+    }
+  ],
+  "initializer_opaque_edge": [
+    {
+      "condition": null,
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x002ead8b",
+        "source_entry_rva": "0x002eacf0",
+        "target_entry_rva": "0x0007c600",
+        "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+        "target_rva": "0x0007c600"
+      },
+      "instruction": {
+        "rva": "0x002ead8b",
+        "sha256": "be2bf31c70f7062cb674dedf8786a5319f998ac233f7fa8de4af3f7d6391636e",
+        "size": 5
+      },
+      "role": "opaque_native_helper_edge",
+      "source_atlas_record_sha256": "b27b7c7d7c5e3fe24fab074eaf6402b26a7be3006c3a11a72ba1b5d1f136f892",
+      "source_entry_rva": "0x002eacf0",
+      "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+      "target_body_sha256": "bf6d8eea868843a089fcc2b74af1426c5f71328fc018f028310cc48259f0dda1",
+      "target_body_size": 41,
+      "target_entry_rva": "0x0007c600"
+    }
+  ],
+  "literals": [],
+  "method": {
+    "accepted_chain": "One canonical-pinned class-initializer opaque edge is joined to one exact native helper body, selected offset-only stores, one symbol-labeled native edge, and a complete all-operand atlas reference partition.",
+    "native_abi_premise": "The reported return-register and conditional-store facts are syntactic x86 evidence; no runtime outcome is inferred.",
+    "not_claimed": [
+      "runtime reachability, invocation, order, frequency, state continuity, allocation success, throw behavior, or successful calls",
+      "tree, container, sentinel, ownership, lifetime, allocation, or source-level type semantics",
+      "semantic behavior of the symbol-labeled native callee",
+      "behavior of the eight reference-only callers or arbitrary callee memory",
+      "computed, indirect, data, un-atlased, or Lua-side consumers or references"
+    ],
+    "structural_boundary": "PE-free validation reconstructs every finite prerequisite, body, CFG, point, edge, and reference record. Exact bytes and all-atlas operand traversal require an exact PE rebuild."
+  },
+  "native_edges": [
+    {
+      "condition": null,
+      "ghidra_declared_direct_edge": {
+        "instruction_rva": "0x0007c602",
+        "source_entry_rva": "0x0007c600",
+        "target_entry_rva": "0x003574db",
+        "target_name_sha256": "e64f0996c43094112fb542c2709fa175b41aa7101504391746dafad2d550663a",
+        "target_rva": "0x003574db"
+      },
+      "instruction": {
+        "rva": "0x0007c602",
+        "sha256": "8bd038f34543662d4fb139b3c93856c179a76e31a0cafa4a1e8a7c2dbea5e63e",
+        "size": 5
+      },
+      "role": "symbol_labeled_native_size_request_edge",
+      "source_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+      "source_entry_rva": "0x0007c600",
+      "target_atlas_record_sha256": "605ec81a3c1419f23863f79237b52573167b4dd5d86c86c3bcb958bc46a75eba",
+      "target_body_sha256": "452b4c981b0a2567c6f4fc35b20076deca45a6b3509707358212028d21db5bfa",
+      "target_body_size": 51,
+      "target_entry_rva": "0x003574db"
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "call_r32_count": 0,
+    "caller_grammar_return_store_count": 9,
+    "caller_grammar_witness_count": 9,
+    "caller_grammar_zero_pair_count": 9,
+    "class_initializer_opaque_edge_count": 1,
+    "direct_lua_call_count": 0,
+    "helper_target_count": 1,
+    "literal_count": 0,
+    "reviewed_helper_bytes": 41,
+    "reviewed_helper_count": 1,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 1,
+    "sealed_control_flow_graph_edge_count": 18,
+    "sealed_control_flow_graph_node_count": 16,
+    "selected_native_edge_count": 1,
+    "staged_lua_call_count": 0,
+    "staged_lua_dispatch_count": 0,
+    "target_reference_comparison_count": 0,
+    "target_reference_count": 9,
+    "target_reference_direct_call_count": 9,
+    "target_reference_memory_operand_count": 0,
+    "target_reference_other_address_count": 0,
+    "target_reference_owner_count": 9,
+    "total_lua_call_count": 0,
+    "unique_native_edge_target_count": 1
+  },
+  "whole_atlas_reference_scan": {
+    "aggregates": {
+      "comparison_count": 0,
+      "direct_call_count": 9,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "owner_count": 9,
+      "reference_count": 9
+    },
+    "references": [
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x0007a57d",
+          "source_entry_rva": "0x0007a460",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x0007a57d",
+        "instruction_sha256": "dab64b0efc736bdce7360bcd623910c9e3b8c85a87051990f03c606e1a13fa2c",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "683614d413757fdd171aece594cf071c7bc70b6c82a981fe74638155dade67a1",
+        "owner_entry_rva": "0x0007a460",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x0009c521",
+          "source_entry_rva": "0x0009c420",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x0009c521",
+        "instruction_sha256": "7d70ae3400dbaff90fec5866a071b251e98f7bf06fed6e56971c9c1e2001615a",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "cdb47b514850e61da516f6d196a6b4659204a9e344524fefbdb176a3ae7e8bd4",
+        "owner_entry_rva": "0x0009c420",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x0009d70d",
+          "source_entry_rva": "0x0009d6d0",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x0009d70d",
+        "instruction_sha256": "7d86026ecd30bd89fc789e1be04a4405b88970e12d5d0683cdcd4c60da280208",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "900f1a8d5f5b4424fdd636ea2a948f89ddb9b2f30ba4c71ab50275d57c6c975b",
+        "owner_entry_rva": "0x0009d6d0",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002e6a64",
+          "source_entry_rva": "0x002e6900",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002e6a64",
+        "instruction_sha256": "82f73eb33db283c9aca45ce0b027773a5895f673e06c3cbb4773728ddd40080a",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "81d4b667a6b0d8f7d3fd30ae48dd64e5fb9da6d92317f8e4e86abf81539d3fbe",
+        "owner_entry_rva": "0x002e6900",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002e77e3",
+          "source_entry_rva": "0x002e7790",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002e77e3",
+        "instruction_sha256": "66bd99ba393bec05b29334de74d2ec602e274aa9a7842e70d3ea4de01cc3ad0d",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "4584a9d1fb8a5dd4320d05a1a724fd4da2f8144a29a5bd78ef4b52377e002fb3",
+        "owner_entry_rva": "0x002e7790",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002e8d99",
+          "source_entry_rva": "0x002e8d20",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002e8d99",
+        "instruction_sha256": "eca26f87b50f311e6f806d1ec8525db375a7d3a979cd2386349cce286484d35b",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "8b712e83ccab122e890b2ed20874cde398f2de4306976e9f7759b72f6eca9b13",
+        "owner_entry_rva": "0x002e8d20",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002eab1c",
+          "source_entry_rva": "0x002eaa80",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002eab1c",
+        "instruction_sha256": "d7b077a4065a761ecd99727058b68f4b2538567fb6c98c78073e2645e1e539b3",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "8a0702ff7d871ebf59ad4a9b02456df6fa89d2acb57ebd16123c74927fbb739b",
+        "owner_entry_rva": "0x002eaa80",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002ead8b",
+          "source_entry_rva": "0x002eacf0",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002ead8b",
+        "instruction_sha256": "be2bf31c70f7062cb674dedf8786a5319f998ac233f7fa8de4af3f7d6391636e",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "b27b7c7d7c5e3fe24fab074eaf6402b26a7be3006c3a11a72ba1b5d1f136f892",
+        "owner_entry_rva": "0x002eacf0",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x002ebb48",
+          "source_entry_rva": "0x002ebb30",
+          "target_entry_rva": "0x0007c600",
+          "target_name_sha256": "ede6723485f13ef2d373e023ff341ed73ba013dcc84bb93d3bc66b5be3dad6d3",
+          "target_rva": "0x0007c600"
+        },
+        "instruction_rva": "0x002ebb48",
+        "instruction_sha256": "219db97cec812b2af041a0a81d59ea2b2dfe2686482e6158701175be4506d365",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "2770bd67ecee65db91bd3a69441b5e42d94b316ed20b974ef5094c770e9aa9b7",
+        "owner_entry_rva": "0x002ebb30",
+        "target_atlas_record_sha256": "b23c39e3e1dfab4b00fd244c712661c955b29fbadb402c897764a58e5b64bafd",
+        "target_rva": "0x0007c600",
+        "target_va": "0x0047c600",
+        "use_class": "direct_call"
+      }
+    ],
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_rvas": [
+      "0x0007c600"
+    ],
+    "target_vas": [
+      "0x0047c600"
+    ]
+  }
+}
