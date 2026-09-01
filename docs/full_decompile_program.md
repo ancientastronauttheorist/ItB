@@ -481,6 +481,25 @@ until core engine semantics are reconstructed.
   synchronization or lock/unlock behavior, ABI, argument meaning, state
   mutation, successful or normal return, runtime execution, source identity,
   or pointed-to data.
+  The query handler's second direct target is now closed by another
+  relationship-defined boundary. It canonical-pins the query-handler artifact,
+  independently rejoins exact edge `0x0038bc1a -> 0x00388bc5`, and seals the
+  target's complete 23-byte body, nine instructions, and 9-node / 8-edge CFG.
+  Its all-atlas entry frontier is 26 immediate `E8` calls from 26 owners, with
+  comparison, other-address, and absolute-memory entry references empty. The
+  body has no direct native edge, Lua call, register call, or retained literal.
+  Its absolute add operand names the same virtual-only writable `.data` RVA;
+  its absolute-memory call uses the adjacent file-backed non-writable `.rdata`
+  IAT slot. The sealed PE import table uniquely binds that slot to
+  `KERNEL32.dll!EnterCriticalSection`, hint 238, as metadata only. Its
+  pretty-printed file SHA-256 is
+  `39daf451a37440201d5cadedf946da30d3fa90e1a23677bf39f913f4a8fa6d33`;
+  its canonical JSON SHA-256 is
+  `fd8836f3ccaa14ec45931d611f96122b7b64f2ca54331d6aa2730197c1f45b20`.
+  The `___acrt_lock` analysis label and named import do not prove purpose,
+  lock or synchronization semantics, ABI, argument meaning, state mutation,
+  success, normal return, runtime execution, source identity, or pointed-to
+  data.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

@@ -111,6 +111,20 @@ artifact's pretty-printed and canonical SHA-256 values are
 The `___acrt_unlock` spelling remains an analysis label only; purpose,
 lock/unlock semantics, ABI, argument meaning, state mutation, success, normal
 return, runtime reachability, and pointed-to data remain unproved.
+The query handler's relationship-defined second callee boundary closes exact
+edge `0x0038bc1a -> 0x00388bc5` and seals another complete 23-byte,
+nine-instruction, 9-node / 8-edge body. Its entry frontier contains 26
+immediate `E8` calls from 26 owners and no comparison, other-address, or
+absolute-memory entry references. The same virtual-only writable `.data`
+address appears in its add operand, and its adjacent non-writable `.rdata` IAT
+slot has the unique sealed-PE import row
+`KERNEL32.dll!EnterCriticalSection`, hint 238. The artifact's pretty-printed
+and canonical SHA-256 values are
+`39daf451a37440201d5cadedf946da30d3fa90e1a23677bf39f913f4a8fa6d33` and
+`fd8836f3ccaa14ec45931d611f96122b7b64f2ca54331d6aa2730197c1f45b20`.
+The `___acrt_lock` spelling and named import remain metadata only; purpose,
+lock or synchronization behavior, ABI, argument meaning, state mutation,
+success, normal return, and runtime execution remain unproved.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry

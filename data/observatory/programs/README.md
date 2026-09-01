@@ -1198,6 +1198,67 @@ argument meaning, state mutation, success, normal return, runtime
 reachability, source identity, or pointed-to data. Dynamic, computed,
 indirect, data, un-atlased, and Lua-side references remain unproved.
 
+## Native query-handler second-callee static boundary
+
+`scripts/itb_native_query_handler_second_callee_static_boundary.py`
+canonical-pins the query-handler evidence, rejoins exact predecessor
+`0x0038bc1a -> 0x00388bc5`, seals the complete relationship-defined target
+body and CFG, and scans every atlas operand for the target-entry frontier. The
+target's `___acrt_lock` spelling is retained only as analysis metadata.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_second_callee_static_boundary`. It seals target
+`0x00388bc5`: 23 bytes, all nine exact instruction points, and one 9-node /
+8-edge CFG. The body has no direct native edge, direct or staged Lua call,
+`call r32`, or retained literal.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 26 target-entry references survive from
+26 owners, all five-byte immediate `E8` calls. Comparison, other-address, and
+absolute-memory entry-reference partitions are empty, and structural
+verification requires the explicit 26-owner partition.
+
+The add at `0x00388bce` points into the virtual-only writable `.data` tail at
+VA `0x008b70a8` / RVA `0x004b70a8`. The absolute-memory call at
+`0x00388bd4` uses the file-backed non-writable `.rdata` slot at VA
+`0x007d6084` / RVA `0x003d6084`. The sealed PE import table has exactly one
+row for that slot: `KERNEL32.dll!EnterCriticalSection`, hint 238, no ordinal.
+This is import-table metadata only, not proof of runtime execution or
+synchronization behavior.
+
+The artifact's pretty-printed file SHA-256 is
+`39daf451a37440201d5cadedf946da30d3fa90e1a23677bf39f913f4a8fa6d33`;
+its canonical JSON SHA-256 is
+`fd8836f3ccaa14ec45931d611f96122b7b64f2ca54331d6aa2730197c1f45b20`.
+Publication validates one locked point-in-time snapshot, requires the exact
+owner partition during structural verification, normalizes inherited errors,
+blocks writer contention, preserves existing published evidence after failed
+final validation, and removes a failed private publication. The analysis
+label and named import do not prove purpose, lock or synchronization
+semantics, ABI, argument meaning, state mutation, success, normal return,
+runtime reachability, source identity, or pointed-to data. Dynamic, computed,
+indirect, data, un-atlased, and Lua-side references remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete
