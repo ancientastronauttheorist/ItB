@@ -269,6 +269,38 @@ Lua states or registry values, raw `lua_gettable` behavior, successful calls,
 assertion termination, ownership, lifetime, indirect consumers, and source
 class or vtable equivalence remain unproved.
 
+## Dependent self-linked-record helper artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_self_linked_record_helper_chain.json`
+has analysis kind `pe_native_self_linked_record_helper_chain`. It
+canonical-pins the exact class-initializer artifact and rejoins its
+`0x002ead8b -> 0x0007c600` edge, then seals the 41-byte helper body and its
+16-node / 18-edge CFG. Its pretty-printed file SHA-256 is
+`50786d8c2b84702c3d0c246c90ee715afa7c7ef544ddf3fc8afb66e487a01d3c`;
+its canonical JSON SHA-256 is
+`994b4af188a8017d0dce172a53a9598b9cdf7a48d2faef1fbcbfa5ffcbbf2ddb`.
+
+The exact body pushes immediate `24` before the sole direct native call, whose
+program-facts target carries the analysis label `operator_new` at
+`0x003574db`. The returned EAX is retained syntactically; the body conditionally
+stores it at offsets `+0`, `+4`, and `+8` under the exact EAX, EAX-plus-four,
+and EAX-plus-eight tests, then writes word `0x0101` at `+0x0c`. In particular,
+the latter two tests are not normalized into ordinary returned-EAX null
+guards. The symbol label and size immediate do not establish successful
+allocation, a valid or writable result, or a source-level record type.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly nine helper-entry
+references survive, all immediate `E8` calls from nine distinct owners;
+comparison, absolute-memory, and other direct-address partitions are empty.
+For each owner the artifact seals one bounded window containing adjacent
+`+0` / `+4` zero stores, the helper call, and a returned-EAX store after zero
+to two intervening decoded instructions. The caller bodies and CFGs remain
+reference-only. Runtime reachability, normal return, allocation or caller
+success, pointer validity, aliasing, tree/container/sentinel identity,
+ownership, lifetime, computed references, indirect calls, and Lua-side
+consumers remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

@@ -803,6 +803,60 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 
+## Native self-linked-record helper chain
+
+`scripts/itb_native_self_linked_record_helper_chain.py` canonical-pins the
+exact class-initializer artifact, rejoins its formerly opaque
+`0x002ead8b -> 0x0007c600` edge, seals that helper's exact body and CFG, and
+scans every atlas operand for its complete entry-reference frontier. The
+normalized evidence records byte- and offset-level behavior only.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_self_linked_record_helper_chain.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-initializer data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_self_linked_record_helper_chain.json
+
+python -X utf8 scripts/itb_native_self_linked_record_helper_chain.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-initializer data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_self_linked_record_helper_chain.json
+```
+
+The artifact has analysis kind `pe_native_self_linked_record_helper_chain`.
+It seals helper `0x0007c600`: 41 bytes and one 16-node / 18-edge CFG. The body
+passes immediate `24` to its sole direct native-call target, whose program-facts
+name is analysis-labeled `operator_new` at `0x003574db`; retains the returned
+EAX through exact stores at `+0`, `+4`, and `+8` under the distinct EAX,
+EAX-plus-four, and EAX-plus-eight tests; writes word `0x0101` at `+0x0c`; and
+returns EAX. The latter two tests are not ordinary returned-EAX null guards.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly nine helper references survive, all
+immediate direct calls from nine distinct owners. The artifact also seals nine
+bounded caller grammar windows: adjacent `+0` / `+4` zero stores, the helper
+call, and a returned-EAX store after zero to two intervening instructions.
+Those owner bodies and CFGs remain reference-only.
+
+The artifact's pretty-printed file SHA-256 is
+`50786d8c2b84702c3d0c246c90ee715afa7c7ef544ddf3fc8afb66e487a01d3c`;
+its canonical JSON SHA-256 is
+`994b4af188a8017d0dce172a53a9598b9cdf7a48d2faef1fbcbfa5ffcbbf2ddb`.
+Existing byte-identical output is reused; differing, unrelated, concurrently
+changed, or same-inode-mutated existing output is preserved and rejected. A
+new destination that fails final content validation is removed. Runtime
+reachability, normal return, allocation success, pointer validity, source
+type, tree/container/sentinel identity, ownership, lifetime, computed
+references, indirect calls, and Lua-side consumers remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete

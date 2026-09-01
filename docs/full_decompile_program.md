@@ -369,6 +369,17 @@ until core engine semantics are reconstructed.
   the factory's conditional `0x002ec302 -> 0x002eacf0` call. The canonical JSON
   SHA-256 is
   `799ab272966a317f27c0fbaf25df7d47821650a6f5e0b1a914c98eb40dcfece9`.
+  The initializer's formerly opaque `0x0007c600` edge is now closed by a
+  separate, recursively pinned helper artifact. It seals the exact 41-byte
+  body and 16-node / 18-edge CFG, records the 24-byte immediate supplied to the
+  analysis-labeled `operator_new` target, and partitions all nine atlas
+  references as immediate direct calls from nine distinct owners. Nine bounded
+  caller windows retain the adjacent `+0` / `+4` zero stores, helper call, and
+  returned-EAX store without sealing the full 3,364 bytes of caller bodies.
+  The canonical JSON SHA-256 is
+  `994b4af188a8017d0dce172a53a9598b9cdf7a48d2faef1fbcbfa5ffcbbf2ddb`;
+  allocation success, source type, container, ownership, lifetime, caller
+  execution, and runtime reachability remain unproved.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a
