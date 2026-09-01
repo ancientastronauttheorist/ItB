@@ -410,6 +410,26 @@ until core engine semantics are reconstructed.
   un-atlased, or Lua references remain unproved. Publication verifies one
   locked point-in-time snapshot, and failed published destinations are
   preserved for inspection rather than deleted.
+  The operator-new target's smallest supported outgoing callee is now closed
+  by a callnewh static boundary. It revalidates both the canonical-pinned
+  operator-new evidence and the independently rebuilt exact
+  `0x003574e3 -> 0x0038bbc4` reference, then seals 68 bytes, all 30
+  instructions, and a 30-node / 31-edge CFG. Two direct native edges remain
+  opaque at `0x0038bbd5 -> 0x0038bc08` and
+  `0x0038bbff -> 0x003574ca`. The artifact also retains an unresolved
+  absolute-memory call through non-writable `.rdata` at `0x0038bbe5`, an
+  unresolved `call ESI` at `0x0038bbeb`, and an absolute read from writable
+  `.data` at `0x0038bbca`. Its complete target frontier is four immediate
+  `E8` calls from four owners; direct and staged Lua calls and literals are
+  empty, while the complete eight-register audit contains the one ESI call.
+  Its pretty-printed file SHA-256 is
+  `5b1651f4b17b3d6531b71a19c828ab4700cebb19f444c5db6d694e5534793449`;
+  its canonical JSON SHA-256 is
+  `27f7495174094b3d6dca6acd6e9975a4dfa7d349f3bf974d40c3f5acd0b4eb45`.
+  The `__callnewh` name is analysis metadata only: allocation, handler, ABI,
+  success, ownership, lifetime, callee identity or behavior, normal return,
+  runtime reachability, dynamic-target resolution, and source equivalence
+  remain unproved.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

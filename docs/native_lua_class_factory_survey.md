@@ -359,6 +359,40 @@ unproved. Publication proves one locked point-in-time snapshot; a published
 destination that fails validation is preserved for inspection rather than
 deleted.
 
+## Dependent callnewh static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_callnewh_static_boundary.json`
+has analysis kind `pe_native_callnewh_static_boundary`. It canonical-pins the
+exact operator-new artifact and rejoins its
+`0x003574e3 -> 0x0038bbc4` edge. The join is independently checked against the
+current whole-atlas reference record, including instruction, source/target
+atlas, immediate-`E8`, and normalized Ghidra-edge identity.
+
+The artifact seals the 68-byte target body, all 30 exact instruction points,
+and its 30-node / 31-edge CFG. It retains opaque direct edges
+`0x0038bbd5 -> 0x0038bc08` and `0x0038bbff -> 0x003574ca`. It also records an
+unresolved absolute-memory call at `0x0038bbe5` through VA `0x007d6580` / RVA
+`0x003d6580`, verified in non-writable `.rdata`; an unresolved `call ESI` at
+`0x0038bbeb`; and an absolute read at `0x0038bbca` from VA `0x00893f28` / RVA
+`0x00493f28`, verified in writable `.data`. Direct and staged Lua calls and
+retained literals are empty. The complete eight-register call audit contains
+only the ESI site.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly four target-entry
+references survive from four owners, all five-byte immediate `E8` calls;
+comparison, absolute-memory, and other-address reference partitions are empty.
+The artifact's pretty-printed file SHA-256 is
+`5b1651f4b17b3d6531b71a19c828ab4700cebb19f444c5db6d694e5534793449`;
+its canonical JSON SHA-256 is
+`27f7495174094b3d6dca6acd6e9975a4dfa7d349f3bf974d40c3f5acd0b4eb45`.
+
+The `__callnewh` spelling remains an analysis label only. Allocation,
+new-handler, ABI, success, ownership, lifetime, size meaning, direct- or
+indirect-callee identity or behavior, normal return, runtime reachability,
+dynamic-target resolution, source equivalence, data consumers, un-atlased
+code, and Lua-side references remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

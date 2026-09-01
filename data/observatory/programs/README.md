@@ -970,6 +970,63 @@ ownership, lifetime, size meaning, runtime reachability, normal return, source
 identity, opaque-callee behavior, computed or indirect references, data
 references, un-atlased code, and Lua-side references remain unproved.
 
+## Native callnewh static boundary
+
+`scripts/itb_native_callnewh_static_boundary.py` canonical-pins the exact
+operator-new boundary, rejoins its `0x003574e3 -> 0x0038bbc4` edge, seals the
+analysis-labeled target body and CFG, and scans every atlas operand for the
+complete target-entry reference frontier. The predecessor edge is validated
+both from the pinned artifact and from the independently rebuilt PE reference
+record. The `__callnewh` spelling remains analysis metadata only.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_callnewh_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_callnewh_static_boundary.json
+
+python -X utf8 scripts/itb_native_callnewh_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_callnewh_static_boundary.json
+```
+
+The artifact has analysis kind `pe_native_callnewh_static_boundary`. It seals
+target `0x0038bbc4`: 68 bytes, all 30 exact instruction points, and one
+30-node / 31-edge CFG. It retains two opaque direct native edges at
+`0x0038bbd5 -> 0x0038bc08` and `0x0038bbff -> 0x003574ca`; an unresolved
+absolute-memory call through non-writable `.rdata` at `0x0038bbe5`; an
+unresolved `call ESI` at `0x0038bbeb`; and an absolute read from writable
+`.data` at `0x0038bbca`. The complete eight-register call audit contains the
+one ESI site. Direct and staged Lua calls and retained literals are empty.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly four target references survive from four
+owners, all five-byte immediate `E8` calls; comparison, absolute-memory, and
+other-address reference partitions are empty. The artifact's pretty-printed
+file SHA-256 is
+`5b1651f4b17b3d6531b71a19c828ab4700cebb19f444c5db6d694e5534793449`;
+its canonical JSON SHA-256 is
+`27f7495174094b3d6dca6acd6e9975a4dfa7d349f3bf974d40c3f5acd0b4eb45`.
+
+Publication validates one locked point-in-time snapshot. Windows denies
+write/delete sharing and takes a mandatory full-range lock; POSIX uses an
+advisory exclusive lock for cooperating writers. Inherited output-root and
+locking failures are normalized into the artifact's own error domain, and a
+published destination that fails final validation is preserved for inspection.
+Allocation, new-handler, ABI, success, ownership, lifetime, size meaning,
+callee identity or behavior, normal return, runtime reachability,
+dynamic-target resolution, source equivalence, data consumers, un-atlased
+code, and Lua-side references remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete

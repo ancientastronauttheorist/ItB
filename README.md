@@ -56,6 +56,20 @@ The `operator_new` name remains an analysis label only: allocation semantics,
 ABI, success, ownership, lifetime, size meaning, normal return, runtime
 reachability, source identity, opaque-callee behavior, and computed, indirect,
 data, un-atlased, or Lua references remain explicitly unclaimed.
+The next callnewh boundary closes operator-new's exact
+`0x003574e3 -> 0x0038bbc4` edge and seals the 68-byte target body, all 30
+instructions, and its 30-node / 31-edge CFG. It retains two opaque direct
+native calls, one absolute-memory indirect call through a non-writable
+`.rdata` slot, one opaque `call ESI`, and one absolute read from writable
+`.data`. The whole-atlas entry frontier is exactly four immediate `E8` calls
+from four owners; direct/staged Lua calls and retained literals are empty, and
+the sole `call r32` is the opaque ESI site. Its pretty-printed and canonical
+SHA-256 values are
+`5b1651f4b17b3d6531b71a19c828ab4700cebb19f444c5db6d694e5534793449` and
+`27f7495174094b3d6dca6acd6e9975a4dfa7d349f3bf974d40c3f5acd0b4eb45`.
+The `__callnewh` spelling remains analysis metadata only; allocation,
+new-handler, ABI, success, ownership, lifetime, callee identity or behavior,
+runtime reachability, and dynamic-target resolution remain unclaimed.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
