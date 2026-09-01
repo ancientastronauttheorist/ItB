@@ -1024,8 +1024,8 @@ Publication validates one locked point-in-time snapshot. The default
 `FUN_0075848f` name remains analysis metadata only; source purpose, ABI,
 exception behavior, argument meaning, normal return, runtime reachability,
 source equivalence, callee behavior, computed or indirect references, data
-consumers, un-atlased code, and Lua-side references remain unproved. Its first
-outgoing target is now closed below; `0x00370dab` remains open.
+consumers, un-atlased code, and Lua-side references remain unproved. Both
+outgoing targets are now closed below.
 
 ## Native operator-new second-callee first-callee static boundary
 
@@ -1078,8 +1078,75 @@ Publication validates one locked point-in-time snapshot. The default
 `FUN_00758477` name and both `.rdata` contents remain metadata only. Source
 purpose, ABI, inputs, outputs, state mutation, runtime reachability, normal
 return, source equivalence, data consumers, un-atlased code, and Lua-side
-references remain unproved. With no outgoing native edge, this branch ends;
-sibling `0x00370dab` is the next open operator-new child.
+references remain unproved. With no outgoing native edge, this branch ends.
+
+## Native operator-new second-callee second-callee static boundary
+
+`scripts/itb_native_operator_new_second_callee_second_callee_static_boundary.py`
+canonical-pins the exact second-callee receipt, rejoins its
+`0x003584a6 -> 0x00370dab` edge, seals the relationship-defined target body
+and CFG, and scans every operand in every atlas range for the complete incoming
+reference frontier. It also canonical-joins the target's one outgoing direct
+edge to the body and CFG already sealed by the residual-direct-target-set
+receipt, exact-proves one PE import-table row, and independently scans every
+atlas operand for all uses of that row's IAT slot.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_operator_new_second_callee_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_operator_new_second_callee_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json `
+  --residual-direct-target-set-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_operator_new_second_callee_second_callee_static_boundary`. It seals
+target `0x00370dab`: 110 bytes, all 45 exact instruction points, and one
+45-node / 48-edge CFG. Its one declared direct native call at
+`0x00370de0 -> 0x003581b3` rejoins the already sealed residual target. Two
+indirect controls remain opaque: `call ESI` at `0x00370de5` and absolute-memory
+`FF 15` at `0x00370e0a`. The latter reads VA `0x007d616c` / RVA `0x003d616c`
+from non-writable file-backed `.rdata`.
+
+The raw PE proof binds that slot to descriptor index 7 and thunk index 91,
+matching ILT/IAT words, both thunk-array terminators, hint 945, and the unique
+parsed `KERNEL32.dll` / `RaiseException` row. This is import metadata only.
+The complete PE-address partition contains six immediate operands plus the one
+absolute-memory slot operand. Seven non-PE immediates form a separate complete
+partition. One `F3 A5` at `0x00370dc2` is retained as exact `ES:[EDI]`
+segment-qualified write syntax. Direct and staged Lua, BND-prefixed, and
+interrupt partitions are empty; the complete eight-register audit contains
+only the ESI call.
+
+The entry scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes, and
+1,153,814 instructions. Exactly 481 target-entry references from 414 owners
+survive, all five-byte immediate `E8` calls. The independent IAT-slot scan over
+the same scope finds exactly three absolute-memory `FF 15` uses from three
+owners. The artifact's pretty-printed file SHA-256 is
+`e2b04a14adfa5440a1b01f978b8785a48b3f7cf6ed26d59577963a48d4eef365`;
+its canonical JSON SHA-256 is
+`87f650968e7858d1676b51a99b98822846db39577da2ef737d9e8d74f4c251a8`.
+Publication validates one locked point-in-time snapshot. The
+`__CxxThrowException@8`, library, and import spellings remain metadata only.
+Source purpose, ABI, exception or throw behavior, runtime reachability,
+imported-call execution, effects, normal return, source equivalence, dynamic or
+computed references, data consumers, un-atlased code, and Lua-side references
+remain unproved. Its sole direct child is already sealed, so this branch ends
+and both direct children of the operator-new second callee are closed.
 
 ## Native callnewh static boundary
 

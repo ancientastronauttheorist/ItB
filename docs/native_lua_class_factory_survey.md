@@ -394,8 +394,8 @@ The default `FUN_0075848f` name is analysis metadata only. Source purpose,
 ABI, exception behavior, argument or pointer meaning, normal return, runtime
 reachability, source equivalence, callee behavior, computed or indirect
 references, data consumers, un-atlased code, and Lua-side references remain
-unproved. The first outgoing callee is now closed below; the second at
-`0x00370dab` remains a separate open boundary.
+unproved. Both outgoing callees are now closed by the dependent artifacts
+below.
 
 ## Dependent operator-new second-callee first-callee static-boundary artifact
 
@@ -431,8 +431,52 @@ The default `FUN_00758477` name is analysis metadata only. Source purpose,
 ABI, inputs, outputs, state mutation, `.rdata` contents, runtime reachability,
 normal return, source equivalence, data consumers, un-atlased code, and
 Lua-side references remain unproved. Because the body has no outgoing native
-edge, this relationship-defined branch ends here. Sibling `0x00370dab` is the
-next open operator-new child.
+edge, this relationship-defined branch ends here.
+
+## Dependent operator-new second-callee second-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_second_callee_static_boundary.json`
+has analysis kind
+`pe_native_operator_new_second_callee_second_callee_static_boundary`. It
+canonical-pins the exact second-callee receipt and rejoins its
+`0x003584a6 -> 0x00370dab` edge. The independently rebuilt whole-atlas row pins
+the instruction bytes and SHA-256, owner and target atlas identities,
+immediate-`E8` form, and normalized Ghidra-edge identity.
+
+The artifact seals the complete 110-byte target body, all 45 instruction
+points, and its 45-node / 48-edge CFG. Its sole declared outgoing direct call,
+`0x00370de0 -> 0x003581b3`, is canonical-joined to the already sealed body and
+CFG in the residual-direct-target-set receipt. Two indirect controls remain
+opaque: register call `ESI` at `0x00370de5` and absolute-memory `FF 15` at
+`0x00370e0a`. The latter reads VA `0x007d616c` / RVA `0x003d616c` from
+non-writable file-backed `.rdata`.
+
+The raw PE import proof binds that slot to descriptor index 7 and thunk index
+91, exact matching ILT/IAT words, both array terminators, hint 945, and the
+unique parsed `KERNEL32.dll` / `RaiseException` row. This is metadata only and
+does not prove the imported call executes or assign it behavior. The complete
+address partition contains six immediate `.text`/`.rdata` operands and that
+one absolute-memory IAT operand. Seven other immediates form a separate non-PE
+partition. The exact `F3 A5` instruction at `0x00370dc2` is retained as one
+`ES:[EDI]` segment-qualified write syntax. Direct/staged Lua, BND-prefixed, and
+interrupt partitions are empty; the eight-register audit contains only the
+one ESI call.
+
+The all-operand entry scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly 481 target-entry
+references from 414 owners survive, all immediate `E8` calls. An independent
+traversal over the same scope finds exactly three absolute-memory `FF 15` uses
+of the IAT slot from three owners. The artifact's pretty-printed file SHA-256
+is `e2b04a14adfa5440a1b01f978b8785a48b3f7cf6ed26d59577963a48d4eef365`;
+its canonical JSON SHA-256 is
+`87f650968e7858d1676b51a99b98822846db39577da2ef737d9e8d74f4c251a8`.
+
+The `__CxxThrowException@8`, library, and import names are analysis/import
+metadata only. Source identity, ABI, input/output meaning, exception or throw
+behavior, runtime reachability, ordering, state mutation, imported-function
+execution, effects, and normal return remain unproved. The one direct child is
+already sealed, so this relationship-defined branch ends here and both direct
+children of the operator-new second callee are closed.
 
 ## Dependent callnewh static-boundary artifact
 

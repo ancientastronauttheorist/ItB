@@ -428,8 +428,7 @@ until core engine semantics are reconstructed.
   `ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
   The default Ghidra name is metadata only; source purpose, ABI, exception
   behavior, runtime reachability, normal return, and callee behavior remain
-  unproved. Its first outgoing target is now closed below, while sibling target
-  `0x00370dab` remains open.
+  unproved. Both outgoing targets are now closed below.
   The dependent first-child boundary canonical-pins that receipt and rejoins
   exact edge `0x00358498 -> 0x00358477`. It seals the complete 24-byte body,
   all six instructions, and a 6-node / 5-edge CFG whose final `ret` remains
@@ -446,7 +445,28 @@ until core engine semantics are reconstructed.
   Analysis-label meaning, source identity, ABI, input/output behavior,
   `.rdata` contents, runtime reachability, effects, and normal return remain
   unproved. With no outgoing native edge, this relationship-defined branch is
-  closed; sibling target `0x00370dab` is the next open operator-new child.
+  closed.
+  The dependent second-child boundary canonical-pins the same predecessor and
+  rejoins exact edge `0x003584a6 -> 0x00370dab`. It seals all 110 body bytes,
+  45 instructions, and a 45-node / 48-edge CFG. Its sole declared direct edge,
+  `0x00370de0 -> 0x003581b3`, canonical-rejoins the previously sealed residual
+  target receipt. Opaque indirect controls remain at `0x00370de5` (`call ESI`)
+  and `0x00370e0a` (absolute-memory `FF 15`). The latter uses a non-writable
+  `.rdata` IAT slot whose raw PE proof binds descriptor 7, thunk 91, matching
+  ILT/IAT words and terminators, and the unique parsed `KERNEL32.dll` /
+  `RaiseException` row; all names and behavior remain metadata only. Seven
+  PE-address operands, seven non-PE immediate literals, and one exact
+  `ES:[EDI]` segment-qualified syntax form complete separate partitions.
+  Direct/staged Lua, BND-prefixed, and interrupt partitions are empty. One
+  exhaustive traversal finds 481 immediate `E8` entry references from 414
+  owners; an independent traversal finds three `FF 15` uses of the IAT slot
+  from three owners. Its pretty-printed file SHA-256 is
+  `e2b04a14adfa5440a1b01f978b8785a48b3f7cf6ed26d59577963a48d4eef365`;
+  its canonical JSON SHA-256 is
+  `87f650968e7858d1676b51a99b98822846db39577da2ef737d9e8d74f4c251a8`.
+  Analysis/import-label meaning, ABI, exception or throw behavior, runtime
+  execution, effects, and normal return remain unproved. This closes both
+  relationship-defined direct children of the operator-new second callee.
   The operator-new target's smallest supported outgoing callee is now closed
   by a callnewh static boundary. It revalidates both the canonical-pinned
   operator-new evidence and the independently rebuilt exact
