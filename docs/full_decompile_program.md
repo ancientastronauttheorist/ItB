@@ -566,7 +566,9 @@ until core engine semantics are reconstructed.
   cross-joined to the independently rebuilt whole-atlas frontier, which has
   sole owner `0x003729b0` and target partition `1/1/1/2`. The
   `0x00378b5d -> 0x00378a15` and `0x00378b7d -> 0x0039cb98` edges are closed
-  by the dependent receipts below; one outgoing direct edge remains opaque.
+  by the dependent receipts below. The fourth-callee receipt also closes
+  `0x00378b92 -> 0x00378a40`, so no declared cluster direct edge remains
+  opaque.
   The complete register-call audit
   contains only `call ECX` at `0x00378b4e`; final `jmp ESI` at `0x00378b6c`
   is separately retained without a target-provenance claim across the
@@ -615,6 +617,27 @@ until core engine semantics are reconstructed.
   Import/Ghidra names are metadata only. Loader resolution, unwind or
   exception behavior, ABI, execution, reachability, effects, and normal return
   remain unproved.
+  The dependent adjacent-cluster fourth-callee boundary canonical-pins both
+  the cluster and second-callee receipts, then rejoins exact edge
+  `0x00378b92 -> 0x00378a40`. It seals all 144 target bytes, all 48
+  instructions, and a 48-node / 51-edge CFG. Exact backing checks bind the
+  target to `.text` file offset `0x00377e40`, a three-byte left atlas neighbor,
+  a nine-byte left gap, a 110-byte un-atlased right span, and a 23-byte right
+  atlas neighbor. The two gaps total 119 sealed un-atlased bytes. Its complete
+  outgoing partition has two edges: `0x00378aae -> 0x00378a15` exactly rejoins
+  the pinned second-callee evidence, while `0x00378abb -> 0x00378a34` retains
+  one opaque three-byte child. Nine PE-address operands, six non-PE literals,
+  and three FS-qualified memory forms are exhaustively retained. Separate
+  all-atlas scans find exactly three immediate `E8` target-entry references
+  from three owners and one `other_address` reference to endpoint
+  `0x00378ad0`. Its pretty-printed file SHA-256 is
+  `105170018df7456821dc09c7e762b933f490eb9544131cb94a4b8c49810669ed`;
+  its canonical JSON SHA-256 is
+  `1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
+  The `__local_unwind4` label is metadata only. Purpose, unwind behavior, ABI,
+  execution, effects, success, failure, and normal return remain unproved.
+  The cluster now has zero opaque declared direct edges; the next local
+  frontiers are child `0x00378a34` and the un-atlased span at `0x00378ad0`.
   The three non-cluster, non-deferred direct targets are now sealed as a
   relationship-only residual set at `0x00372970`, `0x00007e70`, and
   `0x003581b3`: 57 bytes, all 23 instructions, and three body-local CFGs

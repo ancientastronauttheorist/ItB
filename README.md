@@ -183,9 +183,10 @@ handler, stack, register, security, ABI, target identity, runtime behavior,
 and Lua-side meaning remain unproved.
 Four of that target's direct callees now form a layout-only adjacent-cluster
 boundary across `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, all
-51 instructions, and four CFGs totaling 51 nodes / 47 edges. The cluster has
-one still-opaque outgoing native edge. Its `0x00378b5d -> 0x00378a15` and
-`0x00378b7d -> 0x0039cb98` edges are closed by the dependent receipts below.
+51 instructions, and four CFGs totaling 51 nodes / 47 edges. All three native
+edges in the cluster's declared outgoing partition are now closed by the
+dependent receipts below: `0x00378b5d -> 0x00378a15`,
+`0x00378b7d -> 0x0039cb98`, and `0x00378b92 -> 0x00378a40`.
 One unresolved `call ECX` and one final
 `jmp ESI` remain; an intervening call prevents a register-provenance claim for
 the jump. Its complete PE-address operand universe is four file-backed `.text`
@@ -227,6 +228,26 @@ and canonical SHA-256 values are
 Import and analysis names remain metadata only; target resolution, unwind or
 exception behavior, ABI, execution, effects, reachability, and normal return
 remain explicitly unclaimed.
+The dependent fourth-callee boundary rejoins exact edge
+`0x00378b92 -> 0x00378a40` and seals the complete 144-byte body, all 48
+instructions, and its 48-node / 51-edge CFG. It canonical-pins both the
+cluster receipt and the second-callee receipt, then exactly rejoins the body's
+`0x00378aae -> 0x00378a15` edge to that dependent evidence. The other outgoing
+edge, `0x00378abb -> 0x00378a34`, remains behaviorally opaque. Exact layout
+evidence seals the three-byte left neighbor, nine-byte left gap, target
+`.text` backing, 110-byte un-atlased right span, and 23-byte right neighbor.
+Nine file-backed PE operands, six non-PE literals, and three FS-qualified
+memory forms are exhaustively partitioned. Separate whole-atlas scans find
+exactly three immediate `E8` references to the target entry and one
+`other_address` reference to endpoint `0x00378ad0`. The artifact's
+pretty-printed and canonical SHA-256 values are
+`105170018df7456821dc09c7e762b933f490eb9544131cb94a4b8c49810669ed` and
+`1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
+The `__local_unwind4` spelling is analysis metadata only; unwind behavior,
+ABI, inputs, outputs, execution, effects, and normal return remain unproved.
+The adjacent cluster now has zero opaque declared direct edges; its next local
+frontiers are the fourth callee's three-byte child at `0x00378a34` and the
+un-atlased span beginning at `0x00378ad0`.
 The pointer target's three non-cluster, non-deferred direct targets are now
 sealed as a second relationship-only boundary: `0x00372970`, `0x00007e70`,
 and `0x003581b3`, totaling 57 bytes and all 23 instructions. Their body-local

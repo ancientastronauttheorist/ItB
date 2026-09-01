@@ -695,8 +695,9 @@ kinship.
 
 The complete outgoing direct-edge partition contains
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The first and middle edges are now closed by the
-dependent receipts below; only the last remains opaque. The complete `FF D0`
+`0x00378b92 -> 0x00378a40`. All three edges are now closed by the dependent
+receipts below, leaving no opaque declared direct edge in this cluster. The
+complete `FF D0`
 through `FF D7` audit finds only `call ECX` at `0x00378b4e`. Final `jmp ESI` at
 `0x00378b6c` is retained as a separate opaque indirect-control record. The
 exact `MOV ESI,ECX` bytes at `0x00378b57` precede an intervening direct call at
@@ -800,6 +801,55 @@ its canonical JSON SHA-256 is
 The import and Ghidra names are metadata only. The receipt does not prove
 loader resolution, unwind or exception behavior, ABI, arguments, invocation,
 target execution, effects, reachability, termination, or normal return.
+
+## Dependent adjacent-cluster fourth-callee static boundary
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary`.
+It canonical-pins both the adjacent-cluster and second-callee receipts and
+rejoins exact parent edge `0x00378b92 -> 0x00378a40`, including the 23-byte
+source body, exact five-byte `E8`, source and target atlas identities, and
+normalized declared-edge metadata.
+
+The target is exactly 144 bytes at `0x00378a40`, all 48 decoded instructions,
+and a 48-node / 51-edge CFG. Its `.text` backing is pinned at file offset
+`0x00377e40`. The nearest left atlas body is the three-byte function at
+`0x00378a34`; a nine-byte `CC` gap separates its end from the target. The
+target ends at `0x00378ad0`, followed by a 110-byte un-atlased span and then
+the 23-byte right atlas body at `0x00378b3e`. Both gaps are explicitly
+unowned by the atlas and total 119 sealed bytes; this is layout evidence only.
+
+The complete outgoing native partition has two edges. The exact
+`0x00378aae -> 0x00378a15` row rejoins the pinned second-callee reference,
+while `0x00378abb -> 0x00378a34` retains an opaque `FF D0 C3` child. Direct and
+staged Lua calls, register calls, and other indirect controls are empty. The
+receipt separately retains six non-PE immediate literals and three
+FS-qualified absolute-memory forms without assigning behavior.
+
+Nine PE-address operands survive: eight immediates and one absolute-memory
+read. The latter names writable `.data` VA `0x00893f28` / RVA `0x00493f28` /
+file offset `0x00492128`; its exact four bytes `4e e6 40 bb` have SHA-256
+`ce27c3a226b06f760dc303582e2dd3ab690a1634fdced2e53b238a4e947cd75f`.
+Every operand is file-backed and hash-pinned without a contents or runtime-use
+claim.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly three target-entry
+references survive, all immediate `E8` calls at `0x00378b92`, `0x00386e8f`,
+and `0x00386fb7` from three owners. The separate endpoint scan finds one
+`other_address` use: `PUSH 0x00778ad0` at `0x00378a54`, owned by the target
+itself. The artifact's pretty-printed file SHA-256 is
+`105170018df7456821dc09c7e762b933f490eb9544131cb94a4b8c49810669ed`;
+its canonical JSON SHA-256 is
+`1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
+
+The `__local_unwind4` Ghidra name is metadata only. The receipt does not prove
+source identity, purpose, unwind or exception behavior, ABI, inputs, outputs,
+invocation, effects, success, failure, termination, normal return, dynamic
+references, un-atlased execution, or Lua-side behavior. This closes the final
+opaque declared direct edge of the adjacent cluster. The next local frontiers
+are child `0x00378a34` and the un-atlased span beginning at `0x00378ad0`.
 
 ## Dependent residual direct-target-set static-boundary artifact
 

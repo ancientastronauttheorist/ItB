@@ -1509,9 +1509,9 @@ normalized Ghidra edge.
 
 The cluster's complete declared outgoing-edge partition is
 `0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
-`0x00378b92 -> 0x00378a40`. The first and middle edges are closed by the
-dependent receipts below; only the last remains opaque. The complete
-eight-register call audit
+`0x00378b92 -> 0x00378a40`. All three edges are closed by the dependent
+receipts below, so the cluster has no opaque declared direct edge remaining.
+The complete eight-register call audit
 contains only `call ECX` at `0x00378b4e`. The final `jmp ESI` at
 `0x00378b6c` is retained as opaque indirect-control syntax. Although
 `0x00378b57` has exact `MOV ESI,ECX` bytes, the intervening direct call at
@@ -1662,6 +1662,86 @@ Import and Ghidra names are metadata only. Loader resolution, unwind or
 exception behavior, ABI, invocation, execution, effects, reachability,
 termination, normal return, computed references, un-atlased code, and Lua-side
 references remain unproved.
+
+## Native query adjacent-cluster fourth-callee static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.py`
+canonical-pins both the adjacent-cluster and second-callee artifacts, rejoins
+exact parent edge `0x00378b92 -> 0x00378a40`, seals the complete target body and
+CFG, validates its PE and neighboring gap backing, and performs separate
+whole-atlas scans for the target entry and the pushed target-end address.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --adjacent-callee-cluster-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --adjacent-callee-cluster-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json `
+  --second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary`.
+It seals `0x00378a40`: 144 exact bytes, all 48 instructions, and a 48-node /
+51-edge CFG. The exact parent record binds the 23-byte source at `0x00378b87`,
+the five-byte `E8` at `0x00378b92`, and both atlas identities. The target's
+Ghidra `__local_unwind4` name is analysis metadata only.
+
+The target is bound to file-backed non-writable `.text` at file offset
+`0x00377e40`. Its nearest left atlas body is the three-byte target at
+`0x00378a34`, followed by nine exact `CC` bytes before the target entry. The
+target ends at `0x00378ad0`; an exact 110-byte un-atlased span then reaches the
+23-byte right atlas neighbor at `0x00378b3e`. Both gaps are marked unowned by
+the atlas and total 119 sealed bytes. These facts prove layout and backing only.
+
+The complete outgoing direct-edge partition is
+`0x00378aae -> 0x00378a15` and `0x00378abb -> 0x00378a34`. The first edge
+exactly rejoins the canonical-pinned second-callee receipt; the latter retains
+an opaque three-byte `FF D0 C3` child. No direct or staged Lua call, register
+call, or other indirect-control instruction survives. Six non-PE immediate
+literals and three FS-qualified absolute-memory syntax records are retained
+without assigning semantics.
+
+Exactly nine PE-address operands survive: eight immediates and one
+absolute-memory read. The latter names writable `.data` VA `0x00893f28` / RVA
+`0x00493f28` / file offset `0x00492128`; exact bytes `4e e6 40 bb` have
+SHA-256
+`ce27c3a226b06f760dc303582e2dd3ab690a1634fdced2e53b238a4e947cd75f`.
+All operand backing is hash-pinned without a contents or runtime-behavior
+claim.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly three target-entry
+references survive, all immediate `E8` calls at `0x00378b92`, `0x00386e8f`,
+and `0x00386fb7` from three owners. A separate endpoint traversal finds exactly
+one `other_address` reference: the target's `PUSH 0x00778ad0` at `0x00378a54`.
+The artifact's pretty-printed file SHA-256 is
+`105170018df7456821dc09c7e762b933f490eb9544131cb94a4b8c49810669ed`;
+its canonical JSON SHA-256 is
+`1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
+
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves differing existing output,
+and removes a failed private publication. Analysis labels, adjacency, FS
+syntax, addresses, and decoded control flow do not prove source identity,
+purpose, unwind or exception behavior, ABI, arguments, outputs, invocation,
+effects, success, failure, termination, normal return, dynamic references,
+un-atlased execution, or Lua-side behavior. This closes the adjacent cluster's
+last opaque declared direct edge. The next local frontiers are the opaque child
+at `0x00378a34` and the un-atlased span beginning at `0x00378ad0`.
 
 ## Native query pointer-target residual direct-target-set static boundary
 
