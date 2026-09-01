@@ -221,9 +221,26 @@ ranges, 3,735,718 bytes, and 1,153,814 instructions. Its pretty-printed and
 canonical SHA-256 values are
 `91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f` and
 `af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
-The next static frontier is sibling `0x00357b42` only; these static facts do
-not prove purpose, ABI, runtime reachability, execution order, state mutation,
-normal return, data contents, or Lua-side behavior.
+The sibling relationship-only target at `0x00357b42` is now sealed too: its
+complete body is 40 bytes / 12 instructions, with a 12-node / 11-edge CFG.
+Four `FF 15` call-fallthrough syntaxes read file-backed, nonwritable `.rdata`
+IAT slots. Raw PE32 import metadata uniquely binds them to
+`KERNEL32.dll!SetUnhandledExceptionFilter`, `UnhandledExceptionFilter`,
+`GetCurrentProcess`, and `TerminateProcess` (hints 1189, 1235, 448, and 1216;
+no ordinals); these are metadata-only identities, not behavior claims. The
+receipt rejoins parent `0x00357c5c`, seals the complete two-`E8` entry frontier
+from two owners, and independently closes all-atlas uses of the four slots at
+3, 3, 5, and 13 references when ordered by slot RVAs `0x003d6014`,
+`0x003d6018`, `0x003d60e4`, and `0x003d60f0`. The 13-reference set includes
+one non-control `8B 3D` absolute-memory read; every closure scan considers
+both immediate and pure absolute-memory operands. Its pretty-printed and
+canonical SHA-256 values are
+`5ccb1830fe36c58579b35089c68b84f0eb34bd5303eab72c09d4ed6b8b3096d2` and
+`f82310c91d26d3580458decdd70450c130f965ea53134cf0a383b7f9e5ea56d4`.
+This branch's direct-target frontier is now closed. Relationship membership,
+analysis labels, import metadata, decoded syntax, and PE addresses do not
+prove purpose, ABI, runtime reachability, imported-function execution,
+termination, state mutation, normal return, data contents, or Lua behavior.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

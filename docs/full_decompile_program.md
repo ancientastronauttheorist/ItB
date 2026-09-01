@@ -613,11 +613,33 @@ until core engine semantics are reconstructed.
   `91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f`; its
   canonical JSON SHA-256 is
   `af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
-  The next static frontier is sibling `0x00357b42` only. Relationship
-  membership, import metadata, decoded syntax, and PE addresses do not prove
-  purpose, source identity, ABI, runtime reachability, target resolution,
-  execution order, state mutation, normal return, data meaning, or Lua-side
-  behavior.
+  The sibling relationship-only target `0x00357b42` is now sealed separately:
+  its complete 40-byte body has 12 instructions and a 12-node / 11-edge CFG
+  (canonical SHA-256
+  `b3d334286def4ca119c59b70f91b17aa46c35b9737edf5088bf755b3f43e0b39`).
+  Four `FF 15` call-fallthrough syntaxes read file-backed, nonwritable
+  `.rdata` IAT slots. Raw PE32 metadata uniquely binds the slots to
+  `KERNEL32.dll!SetUnhandledExceptionFilter`, `UnhandledExceptionFilter`,
+  `GetCurrentProcess`, and `TerminateProcess`, with hints 1189, 1235, 448,
+  and 1216 and no ordinals; these identities remain metadata only. The receipt
+  rejoins parent `E8` at `0x00357c5c`, while the exhaustive target scan finds
+  exactly two `E8` references from owners `0x00357b6a` and `0x00357c71`.
+  Four separate IAT-slot closures find 3, 3, 5, and 13 all-atlas uses for slot
+  RVAs `0x003d6014`, `0x003d6018`, `0x003d60e4`, and `0x003d60f0`,
+  respectively; the 13-use set includes one `8B 3D` absolute-memory read and
+  12 `FF 15` calls. Every closure scan checks immediate and pure
+  absolute-memory operands across all 25,312 functions, 25,490 ranges,
+  3,735,718 bytes, and 1,153,814 instructions. Outgoing direct calls,
+  direct/staged Lua, `call r32`, BND, segment, and interrupt partitions are
+  empty. Its pretty-printed file SHA-256 is
+  `5ccb1830fe36c58579b35089c68b84f0eb34bd5303eab72c09d4ed6b8b3096d2`;
+  its canonical JSON SHA-256 is
+  `f82310c91d26d3580458decdd70450c130f965ea53134cf0a383b7f9e5ea56d4`.
+  This branch's direct-target frontier is now closed. Relationship membership,
+  analysis labels, import metadata, decoded syntax, and PE addresses do not
+  prove purpose, source identity, ABI, runtime reachability, imported-function
+  execution, termination, state mutation, normal return, data meaning, or
+  Lua-side behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

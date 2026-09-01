@@ -1770,12 +1770,88 @@ The artifact's pretty-printed file SHA-256 is
 `91397015cb9d8cd74fe2f18d648060c1e8cb28baa6b79f15f39e55ff77e3b71f`; its
 canonical JSON SHA-256 is
 `af117e253c45140863acc378051d6b5b1eba37458337aad43be6ef22d2589654`.
-Publication uses the immutable locked writer. The next static frontier is
-sibling `0x00357b42` only. Relationship membership, analysis labels, import
-metadata, decoded syntax, and PE addresses do not prove purpose, source
-identity, ABI, runtime reachability, target resolution, execution order, state
-mutation, success, normal return, data contents, un-atlased references, or
-Lua-side behavior.
+Publication uses the immutable locked writer. Its formerly retained sibling
+`0x00357b42` is sealed by the boundary below. Relationship membership,
+analysis labels, import metadata, decoded syntax, and PE addresses do not
+prove purpose, source identity, ABI, runtime reachability, target resolution,
+execution order, state mutation, success, normal return, data contents,
+un-atlased references, or Lua-side behavior.
+
+## Native query pointer-target residual-set callee external-target second-callee static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary.py`
+canonical-pins the predecessor's second opaque direct target as a
+relationship-only native boundary, independently rejoins the exact parent,
+seals its complete body and CFG, validates four raw PE32 import bindings, and
+closes the complete entry and IAT-slot operand frontiers without assigning
+behavior, ABI, source identity, or runtime semantics.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --predecessor-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --predecessor-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary`.
+It seals complete relationship-only target `0x00357b42`: 40 bytes, all 12
+instructions, body SHA-256
+`5a4568c1047a793bff70d7632cc28b29500160dea29a7a4b913c8416835bee26`,
+atlas-record SHA-256
+`c3417b9783a2a113a7f51883f10fd57557b7457ca184638a679cf15ac7ed863e`,
+and a 12-node / 11-edge CFG with canonical SHA-256
+`b3d334286def4ca119c59b70f91b17aa46c35b9737edf5088bf755b3f43e0b39`.
+
+Four `FF 15` call-fallthrough syntaxes read file-backed, nonwritable `.rdata`
+IAT slots. Raw PE32 metadata uniquely binds them to
+`KERNEL32.dll!SetUnhandledExceptionFilter` (RVA `0x003d60e4`, hint 1189),
+`UnhandledExceptionFilter` (`0x003d6018`, 1235), `GetCurrentProcess`
+(`0x003d60f0`, 448), and `TerminateProcess` (`0x003d6014`, 1216), all named
+and non-ordinal. These are metadata-only bindings. The exact 220-byte import
+directory has ten descriptors, 342 named imports, zero ordinal imports, and
+139 KERNEL32 rows. Exact mode rereads and hashes the descriptor, ILT, IAT,
+hint/name, and library spans for every binding.
+
+The predecessor parent is `E8 E1 FE FF FF` at `0x00357c5c`. The complete
+target frontier contains exactly that call plus `E8 05 FE FF FF` at
+`0x00357d38`, from two distinct owners. Owner, target-owner, and
+target-reference partition SHA-256 values are
+`952f4d8d2d4027d45635f916a9f0160b633762f836754533bbb06ba29ae6ec3c`,
+`ac04221eb3f1206725537a9fa5a263ad86b263e4d28dd8139f387fd294dc4614`,
+and `0a36c89948e227a42750480cf04dbb59625da7d8d1437454a2e68ca4beade141`.
+Four independent IAT-slot scans close respectively 3, 3, 5, and 13 uses for
+RVAs `0x003d6014`, `0x003d6018`, `0x003d60e4`, and `0x003d60f0`. The final
+set contains 12 `FF 15` calls and one `8B 3D` absolute-memory read. Each scan
+checks both immediate and pure absolute-memory operands across 25,312
+functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions.
+
+Outgoing direct calls, direct/staged Lua, `call r32`, BND-prefixed controls,
+segment-qualified memory, and interrupt syntax are empty. The artifact's
+pretty-printed file SHA-256 is
+`5ccb1830fe36c58579b35089c68b84f0eb34bd5303eab72c09d4ed6b8b3096d2`;
+its canonical JSON SHA-256 is
+`f82310c91d26d3580458decdd70450c130f965ea53134cf0a383b7f9e5ea56d4`.
+Publication uses the immutable locked writer. This branch's direct-target
+frontier is closed. The retained `___raise_securityfailure` analysis label,
+relationship membership, import metadata, decoded syntax, and PE addresses do
+not prove semantic identity, security, exception or termination behavior,
+purpose, source identity, ABI, runtime reachability, imported-function
+execution, state mutation, success, normal return, data contents, un-atlased
+references, or Lua-side behavior.
 
 ## Native query-new-handler local-helper static boundary
 
