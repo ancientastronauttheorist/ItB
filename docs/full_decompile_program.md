@@ -264,6 +264,18 @@ until core engine semantics are reconstructed.
   retains its alternate global `nil` write. These static facts do not prove a
   durable export, semantic identity for either fresh table, runtime execution,
   persistence, or source equivalence.
+- [x] Promote the five reviewed `__gc` publication/consumer grammars into an
+  executable-rebuilt census. Four conditional bootstrap chains create userdata
+  and metatables before metamethod-capable registry stores; the fifth joins the
+  raw-cached `luabind.function` helper to its sole decoded direct consumer. The
+  artifact seals eight bodies / 1,924 bytes, 667 CFG nodes / 670 edges, 61
+  direct and 58 staged Lua calls, 66 semantic points, 49 adjacency proofs, five
+  callback identities, and the complete seven-reference central-target scan.
+  Staged loads must dominate their calls, and whole-function interiors reject
+  alternate atlas or declared-direct entries. The exact five-of-ten claim is
+  limited to the normalized immediate-C-closure setter universe and does not
+  assert runtime dispatch, finalization, ownership, lifetime, or all native
+  `__gc` construction.
 - [x] Close the immediate-closure disposition partition for all 13 resolved
   callback sites. In parallel with the indirect-setter proof, an exact terminal
   grammar classifies two closures as the sole conditional Lua callback result
@@ -305,20 +317,20 @@ until core engine semantics are reconstructed.
   code generation, and runtime reachability. The immediate closure frontier is
   now completely dispositioned: ten of 13 sites are static table publications,
   two return the closure as one conditional Lua result, and one stores a
-  registry reference in a returned holder. Continue by normalizing the surveyed
-  key/destination and consumer facts into executable-rebuilt artifacts, closing
-  the class-return direct-consumer frontier, and recovering remaining dynamic
+  registry reference in a returned holder. Continue by promoting the remaining
+  surveyed consumer/lifetime seams, closing the class-return direct-consumer
+  frontier, and recovering dynamic
   or indirect consumers, descriptor/bootstrap ownership, and actual runtime
   reachability without merging conditional paths or ABI assumptions.
-  The follow-up static survey in
-  `docs/native_lua_registration_bootstrap_survey.md` now isolates the next
-  exact five-site grammar: four conditional userdata/metatable construction
-  chains ending in metamethod-capable registry-index assignments, plus the
+  The follow-up survey in
+  `docs/native_lua_registration_bootstrap_survey.md` now accompanies the
+  promoted exact five-site artifact: four conditional userdata/metatable
+  construction chains ending in metamethod-capable registry-index assignments, plus the
   raw-cached `luabind.function` metatable helper and its sole decoded direct
   consumer. It also records the exact five-of-ten `__gc` publication partition
-  and the stack-preserving initializer/helper seams. This is a reviewed
-  research checkpoint and artifact specification, not yet a normalized
-  executable-rebuilt census or runtime/lifetime proof.
+  and the stack-preserving initializer/helper seams. The census is now
+  normalized and executable-rebuilt; runtime dispatch, ownership, and lifetime
+  remain unproved.
   The adjacent registry-holder survey in
   `docs/native_lua_registry_holder_survey.md` also closes a finite declared
   direct-caller frontier for the returned holder: all 46 callers use one

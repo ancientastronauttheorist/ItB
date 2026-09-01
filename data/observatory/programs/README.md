@@ -403,6 +403,59 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 
+## Native Lua `__gc` metatable consumers
+
+`scripts/itb_native_lua_cclosure_gc_metatable_consumers.py` composes the exact
+closure-publication prerequisites into five `__gc` publication/consumer
+records. Four records cover the null-gated bootstrap userdata/metatable chains
+and their `lua_settable(LUA_REGISTRYINDEX)` stores. The fifth covers the raw
+`luabind.function` registry cache and its sole decoded direct consumer.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_cclosure_gc_metatable_consumers.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_gc_metatable_consumers.json
+
+python -X utf8 scripts/itb_native_lua_cclosure_gc_metatable_consumers.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --callbacks data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_callbacks.json `
+  --setfield-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json `
+  --direct-table-setter-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_setter_publications.json `
+  --indirect-settable-publications data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_indirect_settable_publications.json `
+  --table-key-provenance data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_table_key_provenance.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_cclosure_gc_metatable_consumers.json
+```
+
+The artifact seals eight core bodies / 1,924 bytes, 667 CFG nodes / 670 edges,
+61 direct and 58 staged Lua calls, 66 semantic instruction points, 49
+contiguous adjacency proofs, five callback identities, four initializer-
+subtree edges, and the complete seven-reference scan for its central targets.
+Its exact five-of-ten `__gc` partition is limited to normalized immediate-
+C-closure setter publications; other native grammars, including staged rawset
+writes in helpers `0x002eb990` and `0x002eba60`, remain outside that count.
+Runtime dispatch, destructor behavior, ownership, allocation origin, lifetime,
+and unmodeled indirect entries are not claimed.
+
+The artifact's pretty-printed file SHA-256 is
+`9d4435d6d67b5ab46b6391585fecb1e09dc3be926dac66aa04fa1b4c39e34fc7`;
+its canonical JSON SHA-256 is
+`4c2e4be756ef611f234d7d78418daf3fe16be2928ef440bb67b5a586df3bef8a`.
+Existing byte-identical output is reused; symlink, reparse-point, non-regular,
+differing, unrelated, or concurrently changed output is preserved and rejected.
+
 ## Native Lua `property` factory chain
 
 `scripts/itb_native_lua_property_factory_chain.py` exact-verifies the complete

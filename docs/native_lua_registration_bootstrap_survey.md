@@ -1,8 +1,9 @@
 # Native Lua registration bootstrap survey
 
-Status: read-only research checkpoint. This is a finite static survey of one
-native Lua bootstrap path in the Windows build; it is not a source
-reconstruction.
+Status: promoted to an exact executable-rebuilt artifact. This document retains
+the research interpretation and boundaries for one native Lua bootstrap path;
+`windows_build_13725832_31fe35265598_native_lua_cclosure_gc_metatable_consumers.json`
+is the normalized evidence. Neither is a source reconstruction.
 
 ## Bound executable and prerequisites
 
@@ -25,6 +26,13 @@ The observations below apply only to:
   `windows_build_13725832_31fe35265598_native_lua_cclosure_setfield_publications.json`,
   canonical SHA-256
   `b9a77c1e5e37f251f44b4c1fac304ddbea5251c1cad164e0538c4970417608a6`.
+- Direct table-setter and staged-indirect publication censuses, which the
+  table-key verifier recursively exact-rebuilds before this artifact is
+  accepted.
+- Promoted GC metatable-consumer artifact, pretty-printed file SHA-256
+  `9d4435d6d67b5ab46b6391585fecb1e09dc3be926dac66aa04fa1b4c39e34fc7`
+  and canonical JSON SHA-256
+  `4c2e4be756ef611f234d7d78418daf3fe16be2928ef440bb67b5a586df3bef8a`.
 
 All addresses in this note are image-relative RVAs. Lua API interpretations
 use the Lua 5.1 ABI: `LUA_REGISTRYINDEX == -10000`, table setters consume their
@@ -48,8 +56,9 @@ fallthrough sequence is:
 1. `luaL_newstate` at `0x0004cab0` is conditionally reached when the stored
    state field is zero.
 2. `luaL_openlibs` is called at `0x0004cad2` with the stored state.
-3. `mov ecx,[esi+0x10]` at `0x0004cad8` is immediately followed by the direct
-   call to `0x002e6900` at `0x0004cade`.
+3. `mov ecx,[esi+0x10]` at `0x0004cad8` is followed by the cdecl cleanup
+   `add esp,0xc` at `0x0004cadb`, then by the direct call to `0x002e6900` at
+   `0x0004cade`. The cleanup does not overwrite `ecx`.
 
 That proves a static native call edge and local instruction order only. It does
 not prove the state allocation succeeded, that either Lua call returned
@@ -106,9 +115,9 @@ consumes with `luaL_ref` at `0x002ebb73`. Thus the initializer's normal-return
 join still has `B,K,U`. This is a local stack-effect proof, not a claim that
 the helper calls return or that their references remain valid.
 
-This supports a future artifact phrased as **conditional native construction
-and registry-index assignment**. The four final registry writes use
-`lua_settable`, not `lua_rawset`, so this note does not prove raw or durable
+The promoted artifact phrases these records as **conditional native
+construction and registry-index assignment**. The four final registry writes
+use `lua_settable`, not `lua_rawset`, so this note does not prove raw or durable
 registry placement. It should not be phrased as ownership, class identity, a
 source-level Luabind implementation, or persistence beyond the local call
 grammar.
@@ -152,9 +161,11 @@ B,U,T -> B,U,T,K -> B,U,T,K,T -> B,U,T
 ```
 
 The complete atlas contains one decoded direct call to this helper. Consumer
-`0x002ea820` allocates a four-byte userdata at `0x002ea82f`, calls the helper
-at `0x002ea839`, and immediately calls `lua_setmetatable(L,-2)` at
-`0x002ea846`. Thus, on normal return from either helper arm, the table left by
+`0x002ea820` allocates a four-byte userdata at `0x002ea82f` and calls the helper
+at `0x002ea839`. Four decoded non-call instructions follow at `0x002ea83e`,
+`0x002ea841`, `0x002ea843`, and `0x002ea844`; the next Lua API call is
+`lua_setmetatable(L,-2)` at `0x002ea846`. Thus, on normal return from either
+helper arm, the table left by
 the helper is consumed as that userdata's metatable. On the miss arm only, it
 is exactly the freshly created table containing the `0x002ea4b0` `__gc`
 closure; a cache hit accepts any table already present under the raw registry
@@ -184,7 +195,10 @@ use `class`, `property`, or `super`. The union therefore contains exactly five
 `__gc`-keyed sites among the ten exact native immediate-C-closure setter
 publications. This is a partition of that proved publication universe, not a
 claim that Lua code, dynamically keyed native code, or another unrecognized
-grammar cannot construct an `__gc` field.
+grammar cannot construct an `__gc` field. In particular, initializer helpers
+`0x002eb990` and `0x002eba60` contain additional staged
+`lua_pushcclosure`/`lua_rawset` `__gc` constructions outside this normalized
+ten-site immediate-closure setter universe.
 
 ## `class`, `property`, and `super` consumer boundary
 
@@ -206,19 +220,24 @@ later mutation remain outside this scan. It therefore cannot establish
 ordinary global lookup success, runtime reachability, consumer absence, or
 semantic meaning for those names.
 
-## Recommended fail-closed artifact shape
+## Promoted fail-closed artifact
 
-The narrow next artifact should be a build-keyed
-`pe_native_lua_cclosure_gc_metatable_consumers` census, composed from the exact
+The build-keyed `pe_native_lua_cclosure_gc_metatable_consumers` census is
+implemented in `src/observatory/native_lua_cclosure_gc_metatable_consumers.py`
+and composed from the exact
 atlas, Lua direct-call census, direct-setfield publication census, and
-table-key provenance census. It should retain exactly five `__gc`
+table-key provenance census. It retains exactly five `__gc`
 publication/consumer records, shared guard/caller facts for the first four,
-and the helper/cache/consumer facts for the fifth. Every record should include
+and the helper/cache/consumer facts for the fifth. The evidence also seals eight
+core bodies (1,924 bytes), 667 CFG nodes / 670 edges, 61 direct and 58 staged
+Lua calls, 66 semantic instruction points, 49 contiguous adjacency proofs,
+five callback identities, four initializer-subtree edges, and all seven exact
+atlas references to its central targets. Every record includes
 only normalized RVAs, instruction size/SHA-256 facts, literal metadata/hashes,
 direct-call import identities, a finite CFG edge path, and a declarative
 Lua-stack trace.
 
-Minimum exact checks:
+Implemented exact checks:
 
 1. Rebuild all record instruction facts from the bound PE and reject a changed
    atlas or prerequisite digest.
@@ -241,21 +260,25 @@ Minimum exact checks:
    same `B,U,T` stack shape at its consumer, and distinguish the first four
    `lua_gettable`/`lua_settable` operations from its raw registry access.
 
-Minimum adversarial tests should mutate one fact at a time: caller edge or
+The adversarial tests mutate one fact at a time: caller edge or
 fallthrough, state-register transfer, one literal byte/section
 writability/hash, registry selector, userdata size, API IAT/call form, `__gc`
 setter kind, metatable index, registry-store order, branch direction/gate
 target, fifth-helper type constant or duplicated-table index, raw/non-raw cache
 classification, predecessor/entry audit, and an invalid prerequisite canonical
-digest. Structural validation may replay stored hashes, paths, dominance, and
-VM traces, but instruction decoding, branch semantics, register-write
+digest. The CLI also refuses symlink, reparse-point, non-regular, differing,
+or concurrently changed output. Structural validation may replay stored hashes,
+paths, dominance, and VM traces, but instruction decoding, branch semantics, register-write
 classification, and literal bytes must remain exact-PE rebuild obligations.
 
 ## Explicit nonclaims
 
-This survey does not prove runtime execution, call success, frequency,
-persistence, lifetime, global availability, cache-hit provenance, table
+This survey and the promoted artifact do not prove runtime execution, call
+success, frequency, persistence, lifetime, global availability, cache-hit provenance, table
 identity beyond the local stack grammar, registry-reference validity after
 return, user-data meaning, source-level metatable ownership, source
 equivalence, subsystem purpose, absence of later mutation, absence of indirect
-callers, or completeness of all Lua bootstrap/consumer paths.
+callers, or completeness of all Lua bootstrap/consumer paths. Their entry
+audits cover atlas function entries and Ghidra-declared direct targets; indirect,
+exception, callback, or externally fabricated entries absent from those facts
+remain outside the proof.
