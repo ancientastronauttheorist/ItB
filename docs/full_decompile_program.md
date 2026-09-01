@@ -502,6 +502,27 @@ until core engine semantics are reconstructed.
   Adjacency and analysis labels prove no semantic kinship, execution order,
   exception behavior, ABI, target identity, state mutation, runtime effect,
   or Lua-side meaning.
+  The three non-cluster, non-deferred direct targets are now sealed as a
+  relationship-only residual set at `0x00372970`, `0x00007e70`, and
+  `0x003581b3`: 57 bytes, all 23 instructions, and three body-local CFGs
+  totaling 23 nodes / 21 edges. The 50-byte body preserves one conditional,
+  the `E8` call fallthrough, and an external `E9` transfer to `0x003574ca`;
+  the one-byte body is a `RET`, while the six-byte `FF 25` body is explicitly
+  an opaque indirect jump rather than a terminal return. The complete
+  PE-address universe is three `.text` immediates and one absolute-memory
+  `.rdata` operand. `call r32`, direct Lua, and locally evidenced staged Lua
+  partitions are empty. The exhaustive atlas scan finds 736 references:
+  719 `E8` calls plus 17 `E9` address uses from 560 owners and 563
+  target-owner groups, partitioned `3/252/481` across the targets. Five
+  residual parents, the five adjacent parents, and the deferred
+  `0x00372a53 -> 0x0039d580` row form an exact 11-edge `5/5/1` partition. Its
+  pretty-printed file SHA-256 is
+  `13784d112c47e9de5b0a92f7cfaac17245a98afb48214699ed516360b6d4d702`;
+  its canonical JSON SHA-256 is
+  `0783fffcd973eca3937ce01faa4d4f93b974540cfdaf004a301ce7ef0198fd5d`.
+  Relationship membership and decoded syntax do not prove semantic kinship,
+  ABI, purpose, runtime reachability, termination, target identity, effect,
+  data meaning, or Lua-side behavior.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

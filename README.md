@@ -131,6 +131,22 @@ pretty-printed and canonical SHA-256 values are
 `1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
 Adjacency and analysis labels prove no semantic kinship, execution order,
 exception behavior, ABI, target identity, or runtime effect.
+The pointer target's three non-cluster, non-deferred direct targets are now
+sealed as a second relationship-only boundary: `0x00372970`, `0x00007e70`,
+and `0x003581b3`, totaling 57 bytes and all 23 instructions. Their body-local
+CFGs total 23 nodes / 21 edges. The first retains an `E8` fallthrough and an
+external `E9` transfer to `0x003574ca`; the one-byte body is a `RET`, while the
+six-byte `FF 25` body is explicitly an opaque indirect jump rather than a
+terminal return. The complete PE-address universe is three `.text`
+immediates plus one `.rdata` absolute-memory operand, with no `call r32` or
+direct/staged Lua evidence. The whole-atlas frontier contains exactly 736
+references: 719 `E8` calls and 17 `E9` address uses from 560 owners, partitioned
+`3/252/481` across the three targets. Together with the adjacent receipt and
+one deferred `0x0039d580` edge, all 11 pointer-target direct edges are now
+explicitly partitioned `5/5/1`. The artifact's pretty-printed and canonical
+SHA-256 values are
+`13784d112c47e9de5b0a92f7cfaac17245a98afb48214699ed516360b6d4d702` and
+`0783fffcd973eca3937ce01faa4d4f93b974540cfdaf004a301ce7ef0198fd5d`.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

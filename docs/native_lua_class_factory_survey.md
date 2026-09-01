@@ -570,6 +570,62 @@ exception behavior, ABI, arguments, target identity, state mutation, success,
 normal return, runtime reachability, dynamic or computed references, data
 consumers, un-atlased code, or Lua-side behavior.
 
+## Dependent residual direct-target-set static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_static_boundary`.
+It canonical-pins the pointer-target and adjacent-cluster artifacts, then
+retains all eleven unique direct edges from `0x003729b0` as an exact partition:
+five residual parents, five adjacent-cluster parents, and one deferred
+`0x00372a53 -> 0x0039d580` parent. The adjacent rows exactly rejoin the cluster
+artifact, while all five residual rows independently cross-join the exhaustive
+target-reference scan.
+
+The residual set contains three noncontiguous atlas bodies. Target
+`0x00372970` is 50 bytes with all 21 instructions and a custom 21-node /
+21-edge body-local CFG. Conditional `JE` at `0x00372980` retains both local
+successors; the `E8` at `0x0037298a` retains fallthrough; final `E9` at
+`0x0037299d` has no body-local successor and exactly rejoins the separate
+out-of-body transfer to `0x003574ca`. Target `0x00007e70` is the one-byte
+`RET` with a 1-node / 0-edge terminal CFG. Target `0x003581b3` is one six-byte
+`FF 25` instruction and is represented as a 1-node / 0-edge opaque indirect
+jump, not as a terminal return.
+
+The complete declared outgoing-edge partition contains only the `E8` and
+`E9` from `0x00372970`, both to `0x003574ca`. The complete indirect-control
+partition contains only `FF 25` at `0x003581b3`. Its absolute-memory pointer
+location is VA `0x007d6580` / RVA `0x003d6580` in file-backed non-writable
+`.rdata`; the dynamic target remains unknown. Together with `JE`, `E8`, and
+external `E9`, the complete PE-address audit contains three immediate `.text`
+operands and one absolute-memory `.rdata` operand. All eight `call r32`
+encodings are audited and absent. Direct Lua records are absent from the
+pinned census, while staged Lua absence is bounded to the lack of local
+call-r32 syntax and does not classify a dynamic target.
+
+The full atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 736 target references survive: 719
+five-byte `E8` calls and 17 five-byte `E9` other-address uses. Target counts
+are `3/252/481` in body order and owner counts are `1/246/316`; the global
+partition has 560 owners and the target-owner partition has 563 groups. No
+absolute-memory target reference survives. The three independently pinned
+partition SHA-256 values are `7208e20dcdff5e939aef709c668036da819b44bd609ee34b5bbfe09109492587`,
+`cf1feca3f9046f1e0f2f06230bc009518f70b2f3926981fbcdf5e7848416bdac`,
+and `e66aafd7e8153496d8f89842adb8ee37412180600ff09edd908f341a2a7187f8`
+for the global-owner, target-owner, and target-reference projections.
+
+The artifact's pretty-printed file SHA-256 is
+`13784d112c47e9de5b0a92f7cfaac17245a98afb48214699ed516360b6d4d702`;
+its canonical JSON SHA-256 is
+`0783fffcd973eca3937ce01faa4d4f93b974540cfdaf004a301ce7ef0198fd5d`.
+Publication uses the same immutable locked writer as the adjacent receipt,
+including destination restriction, existing-content preservation, writer
+contention, and failed-private-publication cleanup. Relationship membership,
+analysis labels, decoded controls, and address syntax do not prove semantic
+kinship, ABI, purpose, input/output meaning, runtime reachability, execution
+order, termination, dynamic target identity, state mutation, success, effect,
+data consumers, un-atlased code, or Lua-side behavior.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`
