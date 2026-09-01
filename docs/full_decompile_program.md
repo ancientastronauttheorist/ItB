@@ -428,8 +428,25 @@ until core engine semantics are reconstructed.
   `ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
   The default Ghidra name is metadata only; source purpose, ABI, exception
   behavior, runtime reachability, normal return, and callee behavior remain
-  unproved. The next relationship-defined frontier is `0x00358477`, while
-  sibling target `0x00370dab` remains open.
+  unproved. Its first outgoing target is now closed below, while sibling target
+  `0x00370dab` remains open.
+  The dependent first-child boundary canonical-pins that receipt and rejoins
+  exact edge `0x00358498 -> 0x00358477`. It seals the complete 24-byte body,
+  all six instructions, and a 6-node / 5-edge CFG whose final `ret` remains
+  terminal syntax rather than a normal-return claim. The target's declared
+  outgoing-native, indirect-control, direct/staged Lua, eight-register call,
+  BND, segment-qualified, and interrupt partitions are all empty. Two exact
+  immediate operands land in non-writable file-backed `.rdata`; two zero
+  immediates are retained separately as non-PE literals. Its complete incoming
+  frontier is the single parent `E8` call from one owner. Its pretty-printed
+  file SHA-256 is
+  `7837f58f2f0b08968e29d42cb0e6da4aa405962e12b8ce956c9c8be187d2abc8`;
+  its canonical JSON SHA-256 is
+  `a82567f379b942b53f80b1f739a488e7de2637ea39e318f7a928af37900ae262`.
+  Analysis-label meaning, source identity, ABI, input/output behavior,
+  `.rdata` contents, runtime reachability, effects, and normal return remain
+  unproved. With no outgoing native edge, this relationship-defined branch is
+  closed; sibling target `0x00370dab` is the next open operator-new child.
   The operator-new target's smallest supported outgoing callee is now closed
   by a callnewh static boundary. It revalidates both the canonical-pinned
   operator-new evidence and the independently rebuilt exact

@@ -1024,8 +1024,62 @@ Publication validates one locked point-in-time snapshot. The default
 `FUN_0075848f` name remains analysis metadata only; source purpose, ABI,
 exception behavior, argument meaning, normal return, runtime reachability,
 source equivalence, callee behavior, computed or indirect references, data
-consumers, un-atlased code, and Lua-side references remain unproved. The next
-relationship-defined frontier is `0x00358477`; `0x00370dab` also remains open.
+consumers, un-atlased code, and Lua-side references remain unproved. Its first
+outgoing target is now closed below; `0x00370dab` remains open.
+
+## Native operator-new second-callee first-callee static boundary
+
+`scripts/itb_native_operator_new_second_callee_first_callee_static_boundary.py`
+canonical-pins the exact second-callee receipt, rejoins its
+`0x00358498 -> 0x00358477` edge, seals the relationship-defined target body
+and CFG, and scans every operand in every atlas range for the complete incoming
+reference frontier. It also proves the declared outgoing-native partition is
+empty before publishing that fact.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_operator_new_second_callee_first_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_first_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_operator_new_second_callee_first_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --operator-new-second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_first_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_operator_new_second_callee_first_callee_static_boundary`. It seals
+target `0x00358477`: 24 bytes, all six exact instruction points, and one
+6-node / 5-edge CFG. Its final `ret` is terminal syntax only. The target has no
+declared outgoing native edge, indirect control, direct or staged Lua call,
+register call, BND prefix, segment-qualified memory, or interrupt syntax. Two
+exact immediates name non-writable file-backed `.rdata` at RVAs `0x003f1a0c`
+and `0x003f1a04`; two zero immediates form a separate complete non-PE-literal
+partition.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one target reference survives from one
+owner: the parent five-byte immediate `E8` call at `0x00358498`. Comparison,
+absolute-memory, and other-address partitions are empty. The artifact's
+pretty-printed file SHA-256 is
+`7837f58f2f0b08968e29d42cb0e6da4aa405962e12b8ce956c9c8be187d2abc8`;
+its canonical JSON SHA-256 is
+`a82567f379b942b53f80b1f739a488e7de2637ea39e318f7a928af37900ae262`.
+Publication validates one locked point-in-time snapshot. The default
+`FUN_00758477` name and both `.rdata` contents remain metadata only. Source
+purpose, ABI, inputs, outputs, state mutation, runtime reachability, normal
+return, source equivalence, data consumers, un-atlased code, and Lua-side
+references remain unproved. With no outgoing native edge, this branch ends;
+sibling `0x00370dab` is the next open operator-new child.
 
 ## Native callnewh static boundary
 

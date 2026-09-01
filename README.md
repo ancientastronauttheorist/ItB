@@ -72,8 +72,23 @@ SHA-256 values are
 `ebc3514d67711d7774e51eecd4c881f9826ed6ec68f40ca462415e654ba7d856`.
 The default `FUN_0075848f` name remains analysis metadata only; source purpose,
 ABI, exception behavior, runtime reachability, normal return, and both callee
-semantics remain unclaimed. The next static frontier is the first outgoing
-target at `0x00358477`; sibling target `0x00370dab` also remains open.
+semantics remain unclaimed. Its first outgoing target is now closed by the
+dependent boundary below; sibling target `0x00370dab` remains open.
+The dependent first-child boundary rejoins exact edge
+`0x00358498 -> 0x00358477` and seals the complete 24-byte body, all six
+instructions, and its 6-node / 5-edge CFG. The final `ret` is recorded only as
+terminal syntax, without promoting normal-return behavior. The target has no
+outgoing declared native edge, indirect control, direct or staged Lua call,
+register call, BND prefix, segment-qualified memory, or interrupt syntax. Two
+exact immediate operands point into non-writable file-backed `.rdata`, while
+the two zero immediates are partitioned separately as non-PE literals. The
+whole-atlas frontier is exactly the parent `E8` call from one owner. Its
+pretty-printed and canonical SHA-256 values are
+`7837f58f2f0b08968e29d42cb0e6da4aa405962e12b8ce956c9c8be187d2abc8` and
+`a82567f379b942b53f80b1f739a488e7de2637ea39e318f7a928af37900ae262`.
+The default `FUN_00758477` name and both `.rdata` contents remain opaque; this
+relationship-defined branch ends here, leaving sibling `0x00370dab` as the
+next open operator-new child.
 The next callnewh boundary closes operator-new's exact
 `0x003574e3 -> 0x0038bbc4` edge and seals the 68-byte target body, all 30
 instructions, and its 30-node / 31-edge CFG. It retains two opaque direct

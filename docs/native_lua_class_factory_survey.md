@@ -394,8 +394,45 @@ The default `FUN_0075848f` name is analysis metadata only. Source purpose,
 ABI, exception behavior, argument or pointer meaning, normal return, runtime
 reachability, source equivalence, callee behavior, computed or indirect
 references, data consumers, un-atlased code, and Lua-side references remain
-unproved. The next relationship-defined target is the first outgoing callee at
-`0x00358477`; the second at `0x00370dab` remains a separate open boundary.
+unproved. The first outgoing callee is now closed below; the second at
+`0x00370dab` remains a separate open boundary.
+
+## Dependent operator-new second-callee first-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_operator_new_second_callee_first_callee_static_boundary.json`
+has analysis kind
+`pe_native_operator_new_second_callee_first_callee_static_boundary`. It
+canonical-pins the exact second-callee receipt and rejoins its
+`0x00358498 -> 0x00358477` edge. The independently rebuilt whole-atlas row
+pins the instruction bytes and SHA-256, owner and target atlas identities,
+immediate-`E8` form, and normalized Ghidra-edge identity.
+
+The artifact seals the complete 24-byte target body, all six instruction
+points, and its 6-node / 5-edge CFG. The last `ret` is represented as
+`terminal` with no successor; this is a syntactic boundary, not proof of normal
+return. The declared outgoing-native, indirect-control, direct and staged Lua,
+all eight register-call, BND-prefixed, segment-qualified, and interrupt
+partitions are empty. Two exact immediate operands name non-writable
+file-backed `.rdata`: VA `0x007f1a0c` / RVA `0x003f1a0c` at `0x00358481`,
+and VA `0x007f1a04` / RVA `0x003f1a04` at `0x00358488`. Their contents remain
+opaque. The zero immediates at `0x00358477` and `0x0035847d` are retained in a
+separate complete non-PE-literal partition.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly one target-entry
+reference survives from one owner: the five-byte immediate `E8` parent call at
+`0x00358498`. Comparison, absolute-memory, and other-address reference
+partitions are empty. The artifact's pretty-printed file SHA-256 is
+`7837f58f2f0b08968e29d42cb0e6da4aa405962e12b8ce956c9c8be187d2abc8`;
+its canonical JSON SHA-256 is
+`a82567f379b942b53f80b1f739a488e7de2637ea39e318f7a928af37900ae262`.
+
+The default `FUN_00758477` name is analysis metadata only. Source purpose,
+ABI, inputs, outputs, state mutation, `.rdata` contents, runtime reachability,
+normal return, source equivalence, data consumers, un-atlased code, and
+Lua-side references remain unproved. Because the body has no outgoing native
+edge, this relationship-defined branch ends here. Sibling `0x00370dab` is the
+next open operator-new child.
 
 ## Dependent callnewh static-boundary artifact
 
