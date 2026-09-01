@@ -178,7 +178,9 @@ unique targets. Four safe literals are re-read from the executable: `class`,
 the two factory validation messages, and the returned callback error message.
 The helper-internal `__luabind_classrep` literal and the initializer/helper body
 interpretations from the wider survey are intentionally not normalized in this
-version; the edge records assign them no behavior.
+base artifact; the edge records assign them no behavior. The dependent artifact
+below closes the three callback-side helper bodies without expanding the base
+factory claim or absorbing the distinct initializer.
 
 Finally, an exhaustive operand scan of all 25,490 atlas ranges, 3,735,718
 bytes, and 1,153,814 decoded instructions finds exactly two references to the
@@ -189,6 +191,53 @@ publication/return witnesses, literals, reviewed instruction points, sealed
 CFG paths and register writers, staged IAT/stage/call/path facts, ungrouped
 register calls, native edges, target records/scope/aggregates, method and
 summary fields, schema fields, and immutable-output protections.
+
+## Dependent class-return helper artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_return_helper_chain.json`
+has analysis kind `pe_native_lua_class_return_helper_chain`. It canonical-pins
+the exact factory artifact above, then seals helpers `0x002eb140`, `0x002eb560`,
+and `0x002ec050`: three bodies / 501 bytes and three CFGs / 190 nodes / 201
+edges. Its pretty-printed file SHA-256 is
+`aab9847af280484af26885f6390f586726fd173466b76d5f0b2cda104f836bec`;
+its canonical JSON SHA-256 is
+`33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
+
+The marker helper exact-reads `__luabind_classrep`, distinguishes the
+no-metatable arm, performs a metamethod-capable `lua_gettable` lookup, converts
+the result with `lua_toboolean`, and restores the prior stack on both normal
+metatable arms through `lua_settop(-3)`. This is a marker-field truth test, not
+a raw lookup, native type proof, or class-identity proof.
+
+The two-value helper iterates the second entry value through `lua_next`, skips
+keys equal to exact literals `__init` and `__finalize`, and otherwise requests
+`lua_settable` into the first entry value at stack index `-5`. The normalized
+trace preserves the iterator key and the two entry values on normal exhaustion;
+it does not claim raw assignment, metamethod absence, valid table inputs, or
+successful execution.
+
+The mutation helper remains deliberately field-level. It seals the argument
+`+4` assertion arm, traversal rooted at `[argument+4]+0x34`, both per-node
+native calls, the `+0x14` word copy, the internal-alias and external-input
+branches, both capacity-helper calls, two-word copy variants, and the final
+eight-byte append advance. No class, inheritance, relationship, container,
+ownership, or callee-behavior names are assigned.
+
+Across the three bodies the artifact joins all 14 direct Lua calls and all six
+EBX/EDI staged calls under a complete eight-encoding `call r32` audit. It also
+retains six outgoing native-call sites to five exact targets and re-reads all
+three helper literals from non-writable `.rdata`. An exhaustive scan of all
+25,490 atlas ranges, 3,735,718 bytes, and 1,153,814 instructions finds exactly
+six helper-entry references, all immediate `E8` calls: five from returned
+callback `0x002ec110` and the explicit alternate
+`0x002e7970 -> 0x002eb140` call at `0x002e7ce0`. Comparisons, absolute-memory
+operands, and other direct-address uses are empty. The alternate caller remains
+reference-only; its 1,348-byte body is not folded into this helper artifact.
+
+The factory-side initializer `0x002eacf0` remains a separate 612-byte
+construction and registry-reference/lifetime tranche. Runtime invocation,
+input validity, successful calls, dynamic or Lua-side consumers, ownership,
+lifetime, and source equivalence remain unproved.
 
 ## Explicit nonclaims
 

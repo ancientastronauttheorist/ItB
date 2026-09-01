@@ -17,10 +17,14 @@ verifies a normalized Ghidra function atlas without committing game binaries,
 disassembly, or bulk decompiler output. The current native-Lua frontier now
 includes executable-rebuilt `property` factory, consumer, mismatch-path,
 initializer, cleanup-chain, operator-dispatch, and native `__gc` metatable
-consumer artifacts, plus the 46-caller registry-holder local-use/release
-census. That census seals 47 bodies and the complete all-operand producer
-reference partition while leaving ownership and lifetime unclaimed. The
-mismatch chain
+consumer artifacts, the `class` factory and returned-callback helper chain,
+plus the 46-caller registry-holder local-use/release census. That census seals
+47 bodies and the complete all-operand producer reference partition while
+leaving ownership and lifetime unclaimed. The class-return helper chain seals
+three callback-side helpers / 501 bytes, all 20 direct or staged Lua calls,
+three literals, and the complete six-reference helper frontier, including the
+one alternate caller, while leaving the 612-byte factory initializer separate.
+The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
 two-upvalue wrapper loop; the cleanup chain seals its 201-byte callback/helper

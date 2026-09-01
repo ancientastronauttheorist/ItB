@@ -317,11 +317,14 @@ until core engine semantics are reconstructed.
   code generation, and runtime reachability. The immediate closure frontier is
   now completely dispositioned: ten of 13 sites are static table publications,
   two return the closure as one conditional Lua result, and one stores a
-  registry reference in a returned holder. Continue by promoting the remaining
-  surveyed consumer/lifetime seams, closing the class-return direct-consumer
-  frontier, and recovering dynamic
-  or indirect consumers, descriptor/bootstrap ownership, and actual runtime
-  reachability without merging conditional paths or ABI assumptions.
+  registry reference in a returned holder. The class-return direct-address
+  frontier is now closed: the factory artifact finds only the returned
+  callback's producer and no direct native consumer, while the dependent helper
+  artifact seals all three callback-side callees and every atlas-decoded direct
+  reference to them. Continue with the distinct class initializer and the
+  remaining dynamic or indirect consumers, descriptor/bootstrap ownership,
+  lifetime seams, and actual runtime reachability without merging conditional
+  paths or ABI assumptions.
   The follow-up survey in
   `docs/native_lua_registration_bootstrap_survey.md` now accompanies the
   promoted exact five-site artifact: four conditional userdata/metatable
@@ -345,6 +348,18 @@ until core engine semantics are reconstructed.
   atlas scan covers 25,312 functions and proves the only 46 references to the
   producer are the declared immediate `E8` calls. Its canonical JSON SHA-256 is
   `395603c2a163925fc202a5a35791200859313872c242fe5901e4de8c05ab892f`.
+  The dependent class-return helper artifact now closes the callback-side
+  static helper seam without assigning source-level class semantics. It seals
+  helpers `0x002eb140`, `0x002eb560`, and `0x002ec050`: 501 bytes, 190 CFG
+  nodes / 201 edges, all 14 direct and six staged Lua calls, a complete
+  eight-encoding register-call audit, three literals, and six outgoing native
+  edges to five exact targets. Its all-operand atlas partition contains exactly
+  six immediate direct calls: five from returned callback `0x002ec110` and one
+  explicit alternate `0x002e7970 -> 0x002eb140` edge. The alternate caller is
+  reference-only, and the 612-byte initializer `0x002eacf0` remains a separate
+  construction and registry-lifetime tranche. The artifact's canonical JSON
+  SHA-256 is
+  `33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

@@ -689,6 +689,64 @@ its canonical JSON SHA-256 is
 Existing byte-identical output is reused; differing, unrelated, or concurrently
 changed output is preserved and rejected.
 
+## Native Lua `class` returned-callback helper chain
+
+`scripts/itb_native_lua_class_return_helper_chain.py` canonical-pins the exact
+`class` factory artifact, seals the three helper bodies reached by its returned
+callback, and scans every atlas operand for the complete helper-entry reference
+frontier. The bounded slice deliberately excludes the factory-side initializer
+`0x002eacf0` and retains alternate caller `0x002e7970` as reference-only.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_lua_class_return_helper_chain.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-factory data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_factory_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_return_helper_chain.json
+
+python -X utf8 scripts/itb_native_lua_class_return_helper_chain.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-factory data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_factory_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_return_helper_chain.json
+```
+
+The artifact has analysis kind `pe_native_lua_class_return_helper_chain`. It
+seals helpers `0x002eb140`, `0x002eb560`, and `0x002ec050`: three bodies / 501
+bytes, three CFGs / 190 nodes / 201 edges, all 14 direct Lua calls, and all six
+EBX/EDI staged calls under a complete eight-encoding `call r32` audit. Three
+bounded literals are exact-reread from non-writable `.rdata`:
+`__luabind_classrep`, `__init`, and `__finalize`.
+
+The normalized claims remain deliberately local. The first helper retains only
+the argument-field guard, traversal, per-node calls, alias/external copy arms,
+and eight-byte append grammar. The marker helper records a metamethod-capable
+metatable-field truth test with normal stack restoration. The two-value helper
+records `lua_next` iteration, skips the two exact keys, and requests
+metamethod-capable assignment into the first entry value. It does not assign
+class, inheritance, container, ownership, lifetime, or callee semantics.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly six helper references survive, all immediate
+near calls: five from returned callback `0x002ec110` and the alternate
+`0x002e7970 -> 0x002eb140` call at `0x002e7ce0`. Comparisons,
+absolute-memory operands, and other direct-address uses are empty. Runtime
+invocation, valid input values, successful calls, dynamic or Lua-side
+consumers, and the separate 612-byte initializer remain unproved.
+
+The artifact's pretty-printed file SHA-256 is
+`aab9847af280484af26885f6390f586726fd173466b76d5f0b2cda104f836bec`;
+its canonical JSON SHA-256 is
+`33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
+Existing byte-identical output is reused; differing, unrelated, or concurrently
+changed output is preserved and rejected.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete
