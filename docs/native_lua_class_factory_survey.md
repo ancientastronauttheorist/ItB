@@ -848,8 +848,49 @@ The `__local_unwind4` Ghidra name is metadata only. The receipt does not prove
 source identity, purpose, unwind or exception behavior, ABI, inputs, outputs,
 invocation, effects, success, failure, termination, normal return, dynamic
 references, un-atlased execution, or Lua-side behavior. This closes the final
-opaque declared direct edge of the adjacent cluster. The next local frontiers
-are child `0x00378a34` and the un-atlased span beginning at `0x00378ad0`.
+opaque declared direct edge of the adjacent cluster.
+
+## Dependent adjacent-cluster fourth-callee child static boundary
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary`.
+It canonical-pins the fourth- and second-callee receipts, rejoins the fourth
+callee's exact `0x00378abb -> 0x00378a34` row, and requires both dependent
+adjacency records to identify the same child body.
+
+The target is exactly three bytes at `0x00378a34`: `CALL EAX; RET`. Both
+instructions and the 2-node / 1-edge CFG are sealed. The register-access
+frontier records that `CALL EAX` reads EAX and ESP and writes ESP, while the
+plain `RET` has no explicit operand. The remaining direct-native, direct and
+staged Lua, PE-address, non-PE literal, segment-qualified memory, BND,
+interrupt, and explicit-return-immediate partitions are empty. This is an
+opaque indirect control, not a static target claim.
+
+Exact PE checks bind the child to non-writable file-backed `.text` at file
+offset `0x00377e34`. The left atlas neighbor ends exactly at the child entry;
+the child ends at a nine-byte `CC` gap, followed by the 144-byte fourth-callee
+body. The gap and both neighbor bodies are hash-pinned. This proves layout and
+backing only.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly two immediate
+`E8` target-entry references survive, at `0x003789d0` and `0x00378abb`, from
+owners `0x00378965` and `0x00378a40`. Both owner CFGs are sealed. The unique
+predecessor of each child call loads EAX immediately from computed memory:
+`[EBX+ESI*4+8]` in the first owner and `[EBX+8]` in the second. Exact paired
+windows also show that EAX is reloaded after each owner's earlier call to
+`0x00378a15`. No constant, relocation, absolute PE address, or import slot
+proves either runtime EAX value.
+
+The artifact's pretty-printed file SHA-256 is
+`61e0571607dd92e2861f06297a410c9766135c718b0420afbf3d7351d160b570`;
+its canonical JSON SHA-256 is
+`71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
+The Ghidra labels, source identity, EAX value, indirect destination, ABI,
+arguments, outputs, behavior, invocation, effects, success, failure,
+termination, and normal return remain unproved. The next local frontier is
+the un-atlased span beginning at `0x00378ad0`.
 
 ## Dependent residual direct-target-set static-boundary artifact
 

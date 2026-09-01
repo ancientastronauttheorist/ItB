@@ -1740,8 +1740,77 @@ syntax, addresses, and decoded control flow do not prove source identity,
 purpose, unwind or exception behavior, ABI, arguments, outputs, invocation,
 effects, success, failure, termination, normal return, dynamic references,
 un-atlased execution, or Lua-side behavior. This closes the adjacent cluster's
-last opaque declared direct edge. The next local frontiers are the opaque child
-at `0x00378a34` and the un-atlased span beginning at `0x00378ad0`.
+last opaque declared direct edge.
+
+## Native query adjacent-cluster fourth-callee child static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.py`
+canonical-pins the fourth- and second-callee artifacts, rejoins the exact
+fourth-callee edge to `0x00378a34`, seals the complete child body and CFG,
+checks both caller-side EAX loaders, and scans every atlas operand for the
+target-entry frontier.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --fourth-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json `
+  --second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --fourth-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_static_boundary.json `
+  --second-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_second_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_fourth_callee_child_static_boundary`.
+It seals `0x00378a34`: three exact bytes, both decoded instructions, and a
+2-node / 1-edge CFG. The body is `CALL EAX; RET`. The call is retained as one
+opaque register control whose static target is not proved; the return has no
+explicit immediate. Direct native, direct or staged Lua, PE-address, non-PE
+literal, segment-qualified memory, BND, and interrupt partitions are empty.
+
+The target is bound to file-backed non-writable `.text` at file offset
+`0x00377e34`. Its exact left atlas neighbor ends at the target entry. The
+target ends at a nine-byte `CC` gap, after which the 144-byte fourth-callee
+body begins at `0x00378a40`. Both neighbor bodies and the complete gap are
+hash-pinned without a semantic-kinship or runtime claim.
+
+The complete all-operand atlas traversal covers 25,312 functions, 25,490
+ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly two target-entry
+references survive, both immediate `E8` calls: `0x003789d0` from owner
+`0x00378965` and `0x00378abb` from owner `0x00378a40`. No absolute-memory,
+comparison, or other-address entry reference survives.
+
+Both owner CFGs and exact caller windows are sealed. The unique CFG
+predecessor of each child call loads EAX immediately from input-dependent
+computed memory: `[EBX+ESI*4+8]` in the first owner and `[EBX+8]` in the
+second. Each window also rejoins the pinned second-callee receipt's preceding
+call and proves that EAX is reloaded afterward. Neither slice supplies a
+constant, relocation, absolute PE address, import slot, or concrete indirect
+target.
+
+The artifact's pretty-printed file SHA-256 is
+`61e0571607dd92e2861f06297a410c9766135c718b0420afbf3d7351d160b570`;
+its canonical JSON SHA-256 is
+`71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves differing existing output,
+and removes a failed private publication. Analysis labels, EAX contents,
+indirect destination, source identity, ABI, arguments, outputs, invocation,
+behavior, effects, success, failure, termination, and normal return remain
+unproved. The next local frontier is the un-atlased span beginning at
+`0x00378ad0`.
 
 ## Native query pointer-target residual direct-target-set static boundary
 

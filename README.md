@@ -245,9 +245,20 @@ pretty-printed and canonical SHA-256 values are
 `1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
 The `__local_unwind4` spelling is analysis metadata only; unwind behavior,
 ABI, inputs, outputs, execution, effects, and normal return remain unproved.
-The adjacent cluster now has zero opaque declared direct edges; its next local
-frontiers are the fourth callee's three-byte child at `0x00378a34` and the
-un-atlased span beginning at `0x00378ad0`.
+The adjacent cluster now has zero opaque declared direct edges. The dependent
+fourth-callee child boundary seals the complete three-byte `CALL EAX; RET`
+body at `0x00378a34`, both instructions, and its 2-node / 1-edge CFG. It
+rejoins the fourth-callee edge and both adjacent-boundary views, while the
+full atlas contains exactly two immediate `E8` entry references from two
+owners. In both callers, the unique CFG predecessor loads EAX immediately
+from input-dependent computed memory before the call; neither slice proves a
+constant, relocation, PE address, import slot, or concrete indirect target.
+The artifact's pretty-printed and canonical SHA-256 values are
+`61e0571607dd92e2861f06297a410c9766135c718b0420afbf3d7351d160b570` and
+`71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
+The analysis labels, EAX value, indirect destination, ABI, behavior,
+execution, effects, and normal return remain explicitly unclaimed. The next
+local frontier is the un-atlased span beginning at `0x00378ad0`.
 The pointer target's three non-cluster, non-deferred direct targets are now
 sealed as a second relationship-only boundary: `0x00372970`, `0x00007e70`,
 and `0x003581b3`, totaling 57 bytes and all 23 instructions. Their body-local

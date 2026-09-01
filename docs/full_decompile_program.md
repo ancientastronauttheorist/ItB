@@ -636,8 +636,27 @@ until core engine semantics are reconstructed.
   `1faeeefe0ee5d9bc9a85ad673133dc7936a02cfea50beb5cd70d72fc36bcb9c5`.
   The `__local_unwind4` label is metadata only. Purpose, unwind behavior, ABI,
   execution, effects, success, failure, and normal return remain unproved.
-  The cluster now has zero opaque declared direct edges; the next local
-  frontiers are child `0x00378a34` and the un-atlased span at `0x00378ad0`.
+  The cluster now has zero opaque declared direct edges.
+  The dependent adjacent-cluster fourth-callee child boundary canonical-pins
+  both the fourth- and second-callee receipts and seals the exact three-byte
+  body at `0x00378a34`, both decoded instructions, and its 2-node / 1-edge
+  CFG. Its only control transfer is opaque `CALL EAX`, followed by a
+  no-immediate `RET`; direct native, direct or staged Lua, PE-address,
+  literal, segment-qualified, BND, and interrupt partitions are empty. The
+  nine-byte right gap and both nearest atlas neighbors are PE-backed and
+  hash-pinned. An exhaustive all-atlas operand traversal finds exactly two
+  immediate `E8` entry references from owners `0x00378965` and `0x00378a40`.
+  Each owner has a complete exact CFG slice whose unique call predecessor
+  loads EAX immediately from input-dependent computed memory, after a paired
+  call to the second-callee target. Neither slice proves a constant,
+  relocation, absolute PE address, import slot, or concrete indirect target.
+  Its pretty-printed file SHA-256 is
+  `61e0571607dd92e2861f06297a410c9766135c718b0420afbf3d7351d160b570`;
+  its canonical JSON SHA-256 is
+  `71f87f861758ba8ef7f7d9a6ac435bb05df38d81e7ff5c8e7fe8c95a4fb0e193`.
+  The target EAX value, runtime destination, analysis-label meaning, ABI,
+  behavior, execution, effects, success, failure, and normal return remain
+  unproved. The next local frontier is the un-atlased span at `0x00378ad0`.
   The three non-cluster, non-deferred direct targets are now sealed as a
   relationship-only residual set at `0x00372970`, `0x00007e70`, and
   `0x003581b3`: 57 bytes, all 23 instructions, and three body-local CFGs
