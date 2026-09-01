@@ -391,8 +391,28 @@ until core engine semantics are reconstructed.
   SHA-256 is
   `beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`;
   analysis labels do not establish CRT identity, dialog/display behavior,
-  termination, source equivalence, or runtime reachability. Its second direct
-  target is now closed below; three direct targets remain opaque.
+  termination, source equivalence, or runtime reachability. Its first and
+  second direct targets are now closed below; two direct targets remain opaque.
+  The dependent assertion-helper first-callee boundary canonical-pins that
+  receipt and independently rejoins exact edge
+  `0x00379ccd -> 0x0038e392`. It seals the exact 63-byte body, all 23
+  instruction points, and a 23-node / 23-edge CFG with three terminal `ret`
+  points retained as syntax only. Its complete outgoing partition contains
+  two opaque native calls at `0x0038e3bc -> 0x00385bcc` and
+  `0x0038e3c7 -> 0x00379ef2`; indirect, register, direct/staged Lua,
+  BND-prefixed, segment-qualified, and interrupt controls are empty. Three
+  absolute-memory operands name writable virtual-only `.data` VA
+  `0x008b7534` / RVA `0x004b7534`, and their three exact HIGHLOW relocation
+  sites are pinned. Four ordinary immediate operands are retained without
+  semantic interpretation. The exhaustive all-operand atlas scan finds only
+  the parent immediate `E8` reference from one owner. Its pretty-printed file
+  SHA-256 is
+  `bc6e195e133fba208b13344aea8e211e44fc57e0399d860af38f2ab9ed3383f0`;
+  its canonical JSON SHA-256 is
+  `e99d2b76879c1456c6ec44bf3fcbc38f2f50a456aae6416687f0cf1f09898da0`.
+  The `__set_error_mode` spelling remains analysis metadata only; CRT
+  identity, ABI, argument/global meaning, runtime execution, effects, child
+  behavior, and normal return remain unproved.
   The dependent assertion-helper second-callee boundary canonical-pins that
   receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

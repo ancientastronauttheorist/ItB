@@ -912,8 +912,73 @@ not claim perpetual immutability after release. Runtime reachability,
 invocation order or frequency, argument validity, CRT identity or ownership,
 dialog/display behavior, normal return, abort, termination, source
 equivalence, computed or indirect references, un-atlased code, and Lua-side
-references remain unproved. Its second direct target is now closed below; the
-other three remain opaque.
+references remain unproved. Its first and second direct targets are now closed
+below; the other two remain opaque.
+
+## Native assertion-helper first-callee static boundary
+
+`scripts/itb_native_assertion_helper_first_callee_static_boundary.py`
+canonical-pins the exact assertion-helper receipt, rejoins its
+`0x00379ccd -> 0x0038e392` edge, seals the relationship-defined target body
+and CFG, accounts for both outgoing native edges and the complete PE-address
+and non-control-immediate partitions, binds the body-local HIGHLOW relocation
+sites, and scans every operand in every atlas range for the complete incoming
+reference frontier.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --assertion-helper-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --assertion-helper-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_assertion_helper_first_callee_static_boundary`. It seals exact
+range `[0x0038e392,0x0038e3d1)`: 63 bytes, all 23 instruction points, and one
+23-node / 23-edge CFG. The three terminal `ret` points prove syntax only. Its
+complete outgoing-native partition retains opaque direct edges
+`0x0038e3bc -> 0x00385bcc` and `0x0038e3c7 -> 0x00379ef2`. Direct and staged
+Lua calls, indirect controls, the complete eight-register call audit,
+BND-prefixed controls, segment-qualified memory, and interrupt syntax are
+empty.
+
+The three absolute-memory operands at `0x0038e3a8`, `0x0038e3af`, and
+`0x0038e3b4` all name VA `0x008b7534` / RVA `0x004b7534`. That RVA lies in
+writable `.data` but beyond its raw-backed end, so it is virtual-only and has
+no file offset. The hash-pinned base-relocation directory contains the exact
+matching HIGHLOW sites `0x0038e3a9`, `0x0038e3b0`, and `0x0038e3b6`. Four
+ordinary immediates (`2`, `3`, `0x16`, and `0xffffffff`) are retained as
+opaque comparison/data syntax.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly one target reference survives: the parent
+five-byte immediate `E8` call at `0x00379ccd`, from one owner. Comparison,
+other-address, and absolute-memory entry references are empty. The artifact's
+pretty-printed file SHA-256 is
+`bc6e195e133fba208b13344aea8e211e44fc57e0399d860af38f2ab9ed3383f0`;
+its canonical JSON SHA-256 is
+`e99d2b76879c1456c6ec44bf3fcbc38f2f50a456aae6416687f0cf1f09898da0`.
+
+Publication validates one locked point-in-time snapshot and removes only its
+own newly linked inode if final validation fails. The `__set_error_mode`,
+`__errno`, and default Ghidra spellings remain metadata only. CRT identity,
+source purpose, ABI, inputs, outputs, global-state meaning, runtime
+reachability, ordering, effects, success, failure, normal return, dynamic or
+computed references, un-atlased code, Lua-side references, and both child
+behaviors remain unproved.
 
 ## Native assertion-helper second-callee static boundary
 

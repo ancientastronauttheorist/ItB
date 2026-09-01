@@ -42,8 +42,23 @@ edges, rejoins the initializer's six-instruction predecessor window,
 and partitions all 881 atlas references as immediate `E8` calls from 660
 owners. It records only exact instruction and non-writable `.rdata` pointer
 syntax: CRT identity, dialog/display behavior, termination, source
-equivalence, and runtime reachability remain explicitly unclaimed. Its second
-direct target is now closed below; three assertion-helper targets remain open.
+equivalence, and runtime reachability remain explicitly unclaimed. Its first
+and second direct targets are now closed below; two assertion-helper targets
+remain open.
+The dependent assertion-helper first-callee boundary rejoins exact edge
+`0x00379ccd -> 0x0038e392` and seals the complete 63-byte body, all 23
+instructions, and its 23-node / 23-edge CFG. The exhaustive atlas scan finds
+only that one immediate `E8` entry reference from one owner. Two outgoing
+native calls remain opaque. Three absolute operands name the same writable,
+virtual-only `.data` VA `0x008b7534` / RVA `0x004b7534`; all three exact
+HIGHLOW relocation sites are pinned, while the address itself has no file
+offset. Four non-control immediates are retained without assigning meaning.
+The artifact's pretty-printed and canonical SHA-256 values are
+`bc6e195e133fba208b13344aea8e211e44fc57e0399d860af38f2ab9ed3383f0`
+and `e99d2b76879c1456c6ec44bf3fcbc38f2f50a456aae6416687f0cf1f09898da0`.
+The `__set_error_mode` spelling remains analysis metadata only; CRT identity,
+ABI, argument and global-state meaning, runtime reachability, effects, child
+behavior, and normal return remain explicitly unclaimed.
 The dependent assertion-helper second-callee boundary rejoins exact edge
 `0x00379cdc -> 0x0038c89f` and seals the complete six-byte body, both
 instructions, and its 2-node / 1-edge CFG. The final `ret` is terminal syntax

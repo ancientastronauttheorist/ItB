@@ -318,8 +318,8 @@ comparison and branch, immediate `96`, two pointers into non-writable
 `.rdata`, and the direct helper call. The helper body has no direct Lua call,
 staged Lua dispatch, `call r32`, or retained literal. Its four outgoing direct
 calls are retained as opaque native edges, and the trailing `int3` does not
-prove termination. The second direct target is now closed below; the other
-three remain separate opaque boundaries.
+prove termination. The first and second direct targets are now closed below;
+the other two remain separate opaque boundaries.
 
 The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
 3,735,718 bytes, and 1,153,814 instructions. Exactly 881 helper-entry
@@ -329,6 +329,47 @@ empty. Runtime reachability, invocation order or frequency, argument validity,
 CRT identity or ownership, dialog/display behavior, normal return, abort,
 termination, source equivalence, computed or indirect references, un-atlased
 code, and Lua-side references remain unproved.
+
+## Dependent assertion-helper first-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_static_boundary.json`
+has analysis kind
+`pe_native_assertion_helper_first_callee_static_boundary`. It canonical-pins
+the exact assertion-helper receipt and rejoins its
+`0x00379ccd -> 0x0038e392` edge. The independently rebuilt entry-reference row
+pins the instruction bytes and SHA-256, owner and target atlas identities,
+immediate-`E8` form, and normalized Ghidra-edge identity.
+
+The artifact seals exact atlas range `[0x0038e392,0x0038e3d1)`: 63 bytes, all
+23 exact instruction points, and its 23-node / 23-edge CFG. Its three `ret`
+instructions are terminal CFG syntax only. The complete outgoing-native
+partition contains two opaque edges, `0x0038e3bc -> 0x00385bcc` and
+`0x0038e3c7 -> 0x00379ef2`. Direct/staged Lua calls, indirect controls, all
+eight `call r32` forms, BND-prefixed controls, segment-qualified memory, and
+interrupt syntax are empty.
+
+Three absolute-memory operands at `0x0038e3a8`, `0x0038e3af`, and
+`0x0038e3b4` all name VA `0x008b7534` / RVA `0x004b7534`. The RVA lies in
+writable `.data` but beyond its raw-backed end, so it is virtual-only and has
+no file offset. The exact PE base-relocation directory is hash-pinned and
+contains matching HIGHLOW sites at `0x0038e3a9`, `0x0038e3b0`, and
+`0x0038e3b6`. Four non-control immediates (`2`, `3`, `0x16`, and
+`0xffffffff`) remain opaque syntax.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly one target-entry
+reference survives: the parent five-byte immediate `E8` call at
+`0x00379ccd`, from one owner. Comparison, other-address, and absolute-memory
+entry-reference partitions are empty. The artifact's pretty-printed file
+SHA-256 is
+`bc6e195e133fba208b13344aea8e211e44fc57e0399d860af38f2ab9ed3383f0`;
+its canonical JSON SHA-256 is
+`e99d2b76879c1456c6ec44bf3fcbc38f2f50a456aae6416687f0cf1f09898da0`.
+
+The `__set_error_mode`, `__errno`, and default Ghidra spellings remain analysis
+metadata only. CRT identity, source purpose, ABI, arguments, outputs, global
+state, runtime reachability, ordering, effects, success, failure, normal
+return, and child behavior remain unproved.
 
 ## Dependent assertion-helper second-callee static-boundary artifact
 
