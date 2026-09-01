@@ -980,6 +980,80 @@ reachability, ordering, effects, success, failure, normal return, dynamic or
 computed references, un-atlased code, Lua-side references, and both child
 behaviors remain unproved.
 
+## Native assertion-helper first-callee direct-callee pair static boundary
+
+`scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.py`
+canonical-pins the first-callee receipt, rejoins both of its outgoing opaque
+parents, seals the two relationship-defined target bodies and CFGs, proves
+their complete outgoing/control and operand partitions, binds their exact
+HIGHLOW frontier, and scans every operand in every atlas range for the full
+paired incoming-reference frontier.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --first-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.json
+
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --first-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_assertion_helper_first_callee_direct_callee_pair_static_boundary`.
+It rejoins exact parents `0x0038e3bc -> 0x00385bcc` and
+`0x0038e3c7 -> 0x00379ef2`. Target `0x00385bcc` seals range
+`[0x00385bcc,0x00385bdf)`: 19 bytes, seven instructions, and a 7-node /
+6-edge CFG. Target `0x00379ef2` seals range
+`[0x00379ef2,0x00379f02)`: 16 bytes, nine instructions, and a 9-node /
+8-edge CFG. Their complete outgoing-native partitions retain opaque child
+edges `0x00385bcc -> 0x0038edb6` and `0x00379ef9 -> 0x00379e77`.
+
+The immediate at `0x00385bd5` names VA `0x008940d0` / RVA `0x004940d0`
+in raw-backed writable `.data`, file offset `0x004922d0`. The hash-pinned
+base-relocation directory contains the sole matching HIGHLOW site at
+`0x00385bd6`; the second body has no HIGHLOW site. Ordinary immediates `0x10`
+and `0x14` remain opaque. Direct/staged Lua calls, indirect controls, all eight
+register-call forms, import/IAT body controls, BND-prefixed controls,
+segment-qualified memory, and interrupt syntax are empty.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 479 target-entry references survive, all
+five-byte immediate `E8` calls. Target `0x00385bcc` has 308 references from
+202 owners; target `0x00379ef2` has 171 from 148 owners. Their union contains
+202 owners and 350 target-owner pairs. The artifact's pretty-printed file
+SHA-256 is
+`40a83312f9867bcf385e836eb9547398803d8628a29c3d4716aec7ba4c21a493`;
+its canonical JSON SHA-256 is
+`e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
+
+For a new output, publication retains a content-addressed stage named
+`.itb-observatory-stage-<pretty-printed-sha256>.json`, validates it through a
+locked descriptor, and creates the destination with an atomic no-overwrite
+hard link. The writer never unlinks, removes, renames, replaces, or truncates
+an existing pathname. A differing/incomplete retained stage or any failure
+after linking is preserved and blocks fail-closed until deliberate
+maintenance; an exact stage and output are idempotently reusable. Windows
+denies write/delete sharing and uses a mandatory full-range lock; POSIX locks
+cover cooperating writers. Neither platform claims perpetual immutability
+after the final locked snapshot.
+
+The `__errno` and default Ghidra spellings remain metadata only. CRT identity,
+source purpose, ABI, inputs, outputs, `.data` contents, runtime reachability,
+effects, success, failure, normal return, computed or dynamic references,
+un-atlased code, Lua-side references, and both child behaviors remain
+unproved.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

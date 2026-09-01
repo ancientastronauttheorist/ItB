@@ -413,6 +413,24 @@ until core engine semantics are reconstructed.
   The `__set_error_mode` spelling remains analysis metadata only; CRT
   identity, ABI, argument/global meaning, runtime execution, effects, child
   behavior, and normal return remain unproved.
+  Both of that first callee's outgoing targets are now closed together by a
+  dependent paired boundary. It canonical-pins the first-callee receipt,
+  rejoins exact edges `0x0038e3bc -> 0x00385bcc` and
+  `0x0038e3c7 -> 0x00379ef2`, and seals 35 bytes, all 16 instruction points,
+  and two CFGs totaling 16 nodes / 14 edges. The exhaustive all-operand atlas
+  frontier contains exactly 479 five-byte immediate `E8` calls: 308 from 202
+  owners to `0x00385bcc`, 171 from 148 owners to `0x00379ef2`, 202 unique
+  owners, and 350 target-owner pairs. The first target's exact immediate at
+  `0x00385bd5` names raw-backed writable `.data` VA `0x008940d0` / RVA
+  `0x004940d0`; the matching HIGHLOW site at `0x00385bd6` is the only one in
+  either body. Calls `0x00385bcc -> 0x0038edb6` and
+  `0x00379ef9 -> 0x00379e77` remain opaque child edges. The pretty-printed file
+  SHA-256 is
+  `40a83312f9867bcf385e836eb9547398803d8628a29c3d4716aec7ba4c21a493`;
+  the canonical JSON SHA-256 is
+  `e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
+  Analysis-label meaning, source identity, ABI, data contents, runtime
+  reachability, behavior, and normal return remain unproved.
   The dependent assertion-helper second-callee boundary canonical-pins that
   receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

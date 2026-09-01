@@ -371,6 +371,48 @@ metadata only. CRT identity, source purpose, ABI, arguments, outputs, global
 state, runtime reachability, ordering, effects, success, failure, normal
 return, and child behavior remain unproved.
 
+## Dependent assertion-helper first-callee direct-callee pair artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.json`
+has analysis kind
+`pe_native_assertion_helper_first_callee_direct_callee_pair_static_boundary`.
+It canonical-pins the first-callee receipt and rejoins both of its exact opaque
+parents: `0x0038e3bc -> 0x00385bcc` and
+`0x0038e3c7 -> 0x00379ef2`. Each join also matches the independently rebuilt
+all-atlas reference row on instruction bytes and SHA-256, source/owner and
+target atlas identities, immediate-`E8` form, and normalized declared-edge
+identity.
+
+The paired artifact seals two complete single-range bodies. Target
+`0x00385bcc` spans `[0x00385bcc,0x00385bdf)`: 19 bytes, seven instructions,
+and a 7-node / 6-edge CFG. Target `0x00379ef2` spans
+`[0x00379ef2,0x00379f02)`: 16 bytes, nine instructions, and a 9-node / 8-edge
+CFG. The complete outgoing-native partitions retain one opaque child each,
+`0x00385bcc -> 0x0038edb6` and `0x00379ef9 -> 0x00379e77`. Direct/staged Lua,
+indirect and register controls, import/IAT body controls, BND-prefixed,
+segment-qualified, and interrupt syntax are empty.
+
+The exact immediate at `0x00385bd5` names VA `0x008940d0` / RVA
+`0x004940d0` in raw-backed writable `.data`, at file offset `0x004922d0`.
+The hash-pinned relocation directory contains the sole matching HIGHLOW site
+at `0x00385bd6`; the second target has none. Ordinary immediates `0x10` and
+`0x14` remain opaque syntax.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly 479 references survive,
+all five-byte immediate `E8` calls: 308 references from 202 owners to
+`0x00385bcc`, and 171 from 148 owners to `0x00379ef2`. Their union has 202
+unique owners and 350 target-owner pairs. The artifact's pretty-printed file
+SHA-256 is
+`40a83312f9867bcf385e836eb9547398803d8628a29c3d4716aec7ba4c21a493`;
+its canonical JSON SHA-256 is
+`e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
+
+The `__errno` and default Ghidra names remain metadata only. CRT identity,
+source purpose, ABI, input/output meaning, `.data` contents, runtime
+reachability, effects, success, failure, normal return, and both child
+behaviors remain unproved.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

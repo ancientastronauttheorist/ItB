@@ -59,6 +59,21 @@ and `e99d2b76879c1456c6ec44bf3fcbc38f2f50a456aae6416687f0cf1f09898da0`.
 The `__set_error_mode` spelling remains analysis metadata only; CRT identity,
 ABI, argument and global-state meaning, runtime reachability, effects, child
 behavior, and normal return remain explicitly unclaimed.
+The dependent first-callee direct-callee pair boundary now closes both of
+those child edges. It rejoins `0x0038e3bc -> 0x00385bcc` and
+`0x0038e3c7 -> 0x00379ef2`, then seals 35 bytes, all 16 instructions, and the
+two 7-node / 6-edge and 9-node / 8-edge CFGs. Its exact all-atlas frontier is
+479 immediate `E8` calls: 308 references from 202 owners to `0x00385bcc` and
+171 from 148 owners to `0x00379ef2`, with 202 unique owners and 350
+target-owner pairs overall. One raw-backed writable `.data` immediate at
+`0x00385bd5` names VA `0x008940d0` / RVA `0x004940d0` and has the sole exact
+HIGHLOW site at `0x00385bd6`. The two child calls to `0x0038edb6` and
+`0x00379e77` remain opaque. Its pretty-printed and canonical SHA-256 values
+are `40a83312f9867bcf385e836eb9547398803d8628a29c3d4716aec7ba4c21a493`
+and `e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
+The `__errno` and default Ghidra spellings remain metadata only; ABI, source
+identity, data contents, runtime reachability, behavior, and normal return
+remain explicitly unclaimed.
 The dependent assertion-helper second-callee boundary rejoins exact edge
 `0x00379cdc -> 0x0038c89f` and seals the complete six-byte body, both
 instructions, and its 2-node / 1-edge CFG. The final `ret` is terminal syntax
