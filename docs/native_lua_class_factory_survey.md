@@ -456,6 +456,45 @@ meaning, success, state mutation, normal return, runtime reachability, source
 identity, callee behavior, dynamic or computed references, data consumers,
 un-atlased code, and Lua-side references remain unproved.
 
+## Dependent relationship-defined callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_local_helper_callee_static_boundary.json`
+has analysis kind `pe_native_query_local_helper_callee_static_boundary`. It
+canonical-pins the local-helper artifact and rejoins its sole native edge,
+`0x0038bc53 -> 0x00388c0d`, against the independently rebuilt whole-atlas
+reference row. The join includes the exact instruction size and SHA-256,
+source and target atlas identities, immediate-`E8` form, and normalized Ghidra
+edge.
+
+The artifact seals the complete 23-byte target body, all nine instruction
+points, and its 9-node / 8-edge CFG. The body contains no direct native edge,
+direct or staged Lua call, `call r32`, or retained literal. Its complete entry
+scan covers all 25,312 functions, 25,490 ranges, 3,735,718 bytes, and
+1,153,814 instructions. Exactly 29 references from 29 owners survive, all
+five-byte immediate `E8` calls; comparison, other-address, and
+absolute-memory entry-reference partitions are empty.
+
+Two absolute operand-syntax records remain. The add at `0x00388c16` names VA
+`0x008b70a8` / RVA `0x004b70a8` in the virtual-only writable `.data` tail.
+The indirect call at `0x00388c1c` names VA `0x007d6080` / RVA `0x003d6080`
+in file-backed non-writable `.rdata`. The sealed PE import table has exactly
+one matching row: `KERNEL32.dll!LeaveCriticalSection`, hint 825, with no
+ordinal. This is exact import-table metadata; it does not prove the call
+executes or assign synchronization behavior to the enclosing function.
+
+The artifact's pretty-printed file SHA-256 is
+`2a0f26e367e6527890757e7fdafa9f621e3a0b07566fd7624807a5781b44ef95`;
+its canonical JSON SHA-256 is
+`c41457569fcc4f412c35de53f7830d6e4049791a4991062d341d73a756437310`.
+Publication validates one locked point-in-time snapshot, normalizes inherited
+errors, blocks writer contention, preserves an existing published destination
+after failed final validation, and removes a failed private publication. The
+`___acrt_unlock` spelling remains analysis metadata only. Purpose,
+lock/unlock or synchronization semantics, ABI, argument meaning, state
+mutation, success, normal return, runtime reachability, source identity,
+pointed-to data, dynamic or computed references, data consumers, un-atlased
+code, and Lua-side references remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

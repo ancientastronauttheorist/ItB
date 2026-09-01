@@ -96,6 +96,21 @@ pretty-printed and canonical SHA-256 values are
 The default `FUN_0078bc51` and analysis-labeled callee names do not prove
 helper purpose, unlock/lock behavior, ABI, argument meaning, state mutation,
 normal return, runtime reachability, source identity, or callee behavior.
+The relationship-defined local-helper callee boundary closes exact edge
+`0x0038bc53 -> 0x00388c0d` and seals its complete 23-byte body, nine
+instructions, and 9-node / 8-edge CFG. Its whole-atlas entry frontier is 29
+immediate `E8` calls from 29 owners, with comparison, other-address, and
+absolute-memory entry references empty. One absolute add operand names the
+virtual-only writable `.data` tail, while one absolute-memory call uses a
+file-backed non-writable `.rdata` IAT slot whose unique sealed-PE import row is
+`KERNEL32.dll!LeaveCriticalSection` with hint 825. That row is PE metadata,
+not a claim about runtime execution or synchronization behavior. The
+artifact's pretty-printed and canonical SHA-256 values are
+`2a0f26e367e6527890757e7fdafa9f621e3a0b07566fd7624807a5781b44ef95` and
+`c41457569fcc4f412c35de53f7830d6e4049791a4991062d341d73a756437310`.
+The `___acrt_unlock` spelling remains an analysis label only; purpose,
+lock/unlock semantics, ABI, argument meaning, state mutation, success, normal
+return, runtime reachability, and pointed-to data remain unproved.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
