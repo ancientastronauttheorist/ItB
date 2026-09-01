@@ -1,0 +1,646 @@
+{
+  "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_third_callee_import_thunk_static_boundary",
+  "atlas": {
+    "analysis_kind": "pe_ghidra_program_facts",
+    "body_range_count": 25490,
+    "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+    "function_body_bytes": 3735718,
+    "function_count": 25312
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "control_flow_graph": {
+    "caller_entry_rva": "0x0039cb98",
+    "edge_count": 0,
+    "node_count": 1,
+    "nodes": [
+      {
+        "flow_kind": "indirect_jump",
+        "rva": "0x0039cb98",
+        "sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+        "size": 6,
+        "successor_rvas": [],
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": false
+      }
+    ],
+    "range_size": 6,
+    "range_start_rva": "0x0039cb98"
+  },
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "register_call_encoding_audit": [
+      {
+        "encoding": "ffd0",
+        "register": "EAX"
+      },
+      {
+        "encoding": "ffd1",
+        "register": "ECX"
+      },
+      {
+        "encoding": "ffd2",
+        "register": "EDX"
+      },
+      {
+        "encoding": "ffd3",
+        "register": "EBX"
+      },
+      {
+        "encoding": "ffd4",
+        "register": "ESP"
+      },
+      {
+        "encoding": "ffd5",
+        "register": "EBP"
+      },
+      {
+        "encoding": "ffd6",
+        "register": "ESI"
+      },
+      {
+        "encoding": "ffd7",
+        "register": "EDI"
+      }
+    ],
+    "sealed_instruction_count": 1,
+    "version": "5.0.7"
+  },
+  "direct_call_census": {
+    "analysis_kind": "pe_native_lua_direct_import_call_census",
+    "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+  },
+  "function_body": {
+    "atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+    "body_sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+    "body_size": 6,
+    "call_r32_audit": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ],
+    "control_flow_graph_canonical_sha256": "1b553e3e7adf738d6c579800a0b4a87fad454e18d1cba0243b6bd78ad9252580",
+    "direct_lua_calls": [],
+    "direct_lua_partition_complete": true,
+    "entry_rva": "0x0039cb98",
+    "range_size": 6,
+    "range_start_rva": "0x0039cb98",
+    "register_call_partition_complete": true,
+    "reviewed_points": [
+      {
+        "rva": "0x0039cb98",
+        "sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+        "size": 6,
+        "writes_ebx": false,
+        "writes_edi": false,
+        "writes_esi": false,
+        "writes_esp": false
+      }
+    ],
+    "role": "external_import_thunk_opaque_static_boundary",
+    "semantic_facts": {
+      "analysis_labels_opaque": true,
+      "import_metadata_only": true,
+      "relationship_defined_only": true,
+      "runtime_or_success_claimed": false,
+      "source_semantic_names_assigned": false
+    },
+    "staged_lua_dispatches": [],
+    "staged_lua_partition_complete": true,
+    "target_atlas_metadata": {
+      "metadata_only": true,
+      "name": "RtlUnwind",
+      "name_source": "DEFAULT",
+      "namespace": "KERNEL32.DLL",
+      "thunk": true
+    },
+    "target_pe_backing": {
+      "contents_or_runtime_behavior_opaque": true,
+      "file_backed": true,
+      "file_offset": "0x0039bf98",
+      "section_characteristics": "0x60000020",
+      "section_name": ".text",
+      "section_rva": "0x00001000",
+      "section_virtual_size": 4016974,
+      "section_writable": false
+    }
+  },
+  "method": {
+    "not_claimed": [
+      "analysis-label meaning, source identity, ABI, inputs, outputs, behavior, success, failure, exception, throw, or normal return",
+      "runtime reachability, invocation, ordering, frequency, state mutation, termination, target resolution, execution, or effect",
+      "contents or runtime meaning of the IAT slot or imported target",
+      "computed, indirect, data, un-atlased, dynamic, or Lua-side references"
+    ],
+    "structural_boundary": "The receipt seals one FF25 absolute-memory indirect jump, descriptor ILT IAT hint and name PE bytes, the rejoined parent edge, and complete target and IAT-slot atlas operand traversals."
+  },
+  "native_calls": {
+    "bnd_prefixed_control_partition_complete": true,
+    "bnd_prefixed_control_syntax": [],
+    "call_r32_audit": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ],
+    "indirect_control_partition_complete": true,
+    "non_pe_immediate_operand_partition_complete": true,
+    "non_pe_immediate_operands": [],
+    "opaque_indirect_controls": [
+      {
+        "control_encoding": "ff25",
+        "instruction": {
+          "rva": "0x0039cb98",
+          "sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+          "size": 6
+        },
+        "operand_access": "read",
+        "operand_class": "absolute_memory",
+        "operand_index": 0,
+        "operand_rva": "0x003d6170",
+        "operand_va": "0x007d6170",
+        "role": "opaque_absolute_memory_indirect_jump",
+        "runtime_execution_or_behavior_opaque": true,
+        "runtime_target_opaque": true
+      }
+    ],
+    "opaque_interrupt_partition_complete": true,
+    "opaque_interrupt_syntax": [],
+    "outgoing_direct": [],
+    "outgoing_direct_partition_complete": true,
+    "pe_address_operand_partition_complete": true,
+    "pe_address_operands": [
+      {
+        "contents_or_runtime_behavior_opaque": true,
+        "control_syntax": "x86_absolute_memory_indirect_jump_ff25",
+        "file_backed": true,
+        "import_metadata_only": true,
+        "instruction": {
+          "rva": "0x0039cb98",
+          "sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+          "size": 6
+        },
+        "operand_access": "read",
+        "operand_class": "absolute_memory",
+        "operand_index": 0,
+        "operand_rva": "0x003d6170",
+        "operand_va": "0x007d6170",
+        "pe_import_metadata": {
+          "evidence_class": "fact",
+          "hint": 1048,
+          "iat_rva": "0x003d6170",
+          "library": "KERNEL32.dll",
+          "name": "RtlUnwind",
+          "ordinal": null
+        },
+        "raw_pe_import_table_binding": {
+          "descriptor_count": 10,
+          "descriptor_file_offset": "0x0048dd30",
+          "descriptor_index": 7,
+          "descriptor_rva": "0x0048ed30",
+          "descriptor_sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+          "descriptor_size": 20,
+          "first_thunk_rva": "0x003d6000",
+          "forwarder_chain": 0,
+          "hint": 1048,
+          "hint_and_name_nul_terminated_sha256": "2450fd92b600521950069d40872922d88d7e26c6d6eceafbed60afb9812974cb",
+          "hint_and_name_nul_terminated_size": 12,
+          "iat_slot_file_offset": "0x003d5170",
+          "iat_slot_raw_value": "0x00490d30",
+          "iat_slot_rva": "0x003d6170",
+          "iat_slot_sha256": "2e964745bc4c58ca4f2c1c775ba21e17a8922a25064d96a0774b0fc8eed19ff3",
+          "iat_terminator_file_offset": "0x003d522c",
+          "iat_terminator_rva": "0x003d622c",
+          "import_by_name_file_offset": "0x0048fd30",
+          "import_by_name_rva": "0x00490d30",
+          "import_directory_file_offset": "0x0048dca4",
+          "import_directory_rva": "0x0048eca4",
+          "import_directory_sha256": "788f7357cb31ba62895740d67e0d8a0f6bf962c467ec801a29cf9044d522fd65",
+          "import_directory_size": 220,
+          "import_record_count": 342,
+          "kernel32_import_count": 139,
+          "kernel32_thunk_terminator_index": 139,
+          "library_name_file_offset": "0x0048f5fe",
+          "library_name_rva": "0x004905fe",
+          "library_nul_terminated_sha256": "f8efc1f27ef6c525f7fd20dcb8d65e8197e97410eced20db4d323dfbf230a2a4",
+          "library_nul_terminated_size": 13,
+          "lookup_terminator_file_offset": "0x0048dfac",
+          "lookup_terminator_rva": "0x0048efac",
+          "lookup_thunk_file_offset": "0x0048def0",
+          "lookup_thunk_raw_value": "0x00490d30",
+          "lookup_thunk_rva": "0x0048eef0",
+          "lookup_thunk_sha256": "2e964745bc4c58ca4f2c1c775ba21e17a8922a25064d96a0774b0fc8eed19ff3",
+          "matching_iat_slot_count": 1,
+          "matching_name_count": 1,
+          "metadata_only": true,
+          "name": "RtlUnwind",
+          "named_import_count": 342,
+          "null_descriptor_file_offset": "0x0048dd6c",
+          "null_descriptor_index": 10,
+          "null_descriptor_rva": "0x0048ed6c",
+          "null_descriptor_sha256": "de47c9b27eb8d300dbb5f2c353e632c393262cf06340c4fa7f1b40c4cbd36f90",
+          "null_descriptor_size": 20,
+          "ordinal_import_count": 0,
+          "original_first_thunk_rva": "0x0048ed80",
+          "pe_bits": 32,
+          "thunk_index": 92,
+          "thunk_terminator_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+          "thunk_terminator_size": 4,
+          "timestamp": 0
+        },
+        "role": "typed_pe_import_iat_operand",
+        "section_characteristics": "0x40000040",
+        "section_name": ".rdata",
+        "section_rva": "0x003d6000",
+        "section_writable": false
+      }
+    ],
+    "register_call_partition_complete": true,
+    "segment_qualified_memory_partition_complete": true,
+    "segment_qualified_memory_syntax": []
+  },
+  "parent_rejoin_edge": {
+    "ghidra_declared_direct_edge": {
+      "instruction_rva": "0x00378b7d",
+      "source_entry_rva": "0x00378b6e",
+      "target_entry_rva": "0x0039cb98",
+      "target_name_sha256": "3d859f62aadd9aa78b7bd2d1ca6fa56e5bee6a744dee0f410a74fa1785a97035",
+      "target_rva": "0x0039cb98"
+    },
+    "instruction": {
+      "rva": "0x00378b7d",
+      "sha256": "1bf6aac09857661da870fb8aa4d8b6b3d8f9c750fafdbf2550f03e7da710cc76",
+      "size": 5
+    },
+    "role": "opaque_declared_direct_edge",
+    "source_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+    "source_body_sha256": "e4c5374582d34dcaf8ef3cd401b6bcc2e38a1cc1ab6950af7eaf0ce7129c3286",
+    "source_body_size": 25,
+    "source_entry_rva": "0x00378b6e",
+    "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+    "target_body_sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+    "target_body_size": 6,
+    "target_entry_rva": "0x0039cb98"
+  },
+  "parent_static_boundary": {
+    "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary",
+    "canonical_sha256": "1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5"
+  },
+  "schema_version": 1,
+  "summary": {
+    "call_r32_count": 0,
+    "direct_lua_call_count": 0,
+    "iat_slot_reference_count": 2,
+    "native_direct_edge_count": 0,
+    "opaque_indirect_control_count": 1,
+    "pe_address_operand_count": 1,
+    "reviewed_import_thunk_bytes": 6,
+    "reviewed_import_thunk_count": 1,
+    "schema_violations": 0,
+    "sealed_control_flow_graph_count": 1,
+    "sealed_control_flow_graph_edge_count": 0,
+    "sealed_control_flow_graph_node_count": 1,
+    "sealed_instruction_count": 1,
+    "staged_lua_dispatch_count": 0,
+    "target_reference_count": 3
+  },
+  "whole_atlas_iat_slot_use_scan": {
+    "aggregates": {
+      "absolute_memory_operand_count": 2,
+      "indirect_call_count": 1,
+      "indirect_jump_count": 1,
+      "owner_count": 2,
+      "reference_count": 2
+    },
+    "owner_partition": [
+      {
+        "owner_atlas_record_sha256": "e1ff809a46f40cb8ed1f186321959fdd9a4c7694dd9e0596e1c250fb308bd13b",
+        "owner_entry_rva": "0x00371000",
+        "reference_count": 1
+      },
+      {
+        "owner_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "owner_entry_rva": "0x0039cb98",
+        "reference_count": 1
+      }
+    ],
+    "partition_sha256": {
+      "owner_partition": "6ecdea808d8904feb4d2829c06b8258cbc4101bc18e1e197a6283badf69f69a9"
+    },
+    "references": [
+      {
+        "control_syntax": "x86_absolute_memory_indirect_call_ff15",
+        "instruction_rva": "0x00371024",
+        "instruction_sha256": "811e9d58df00ae081abcafa1d3e4183eb4f4757d06855297e9ced5cc4ac75667",
+        "instruction_size": 6,
+        "operand_access": "read",
+        "operand_class": "absolute_memory",
+        "operand_index": 0,
+        "operand_rva": "0x003d6170",
+        "operand_va": "0x007d6170",
+        "owner_atlas_record_sha256": "e1ff809a46f40cb8ed1f186321959fdd9a4c7694dd9e0596e1c250fb308bd13b",
+        "owner_entry_rva": "0x00371000"
+      },
+      {
+        "control_syntax": "x86_absolute_memory_indirect_jump_ff25",
+        "instruction_rva": "0x0039cb98",
+        "instruction_sha256": "ffc413f0835bbd8fe8ffadeea407c5e87981b4bbe61676bebb1253a2b9d3f458",
+        "instruction_size": 6,
+        "operand_access": "read",
+        "operand_class": "absolute_memory",
+        "operand_index": 0,
+        "operand_rva": "0x003d6170",
+        "operand_va": "0x007d6170",
+        "owner_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "owner_entry_rva": "0x0039cb98"
+      }
+    ],
+    "references_canonical_sha256": "c5dcc8e8beabce3031811f50bb86951e71f564be00be88c5d08ba1256227e791",
+    "scanned_operand_rva": "0x003d6170",
+    "scanned_operand_va": "0x007d6170",
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    }
+  },
+  "whole_atlas_reference_scan": {
+    "aggregates": {
+      "comparison_count": 0,
+      "direct_call_count": 3,
+      "memory_operand_count": 0,
+      "other_address_count": 0,
+      "owner_count": 3,
+      "reference_count": 3,
+      "target_count": 1,
+      "target_owner_count": 3
+    },
+    "owner_partition": [
+      {
+        "owner_atlas_record_sha256": "fb7ccdd6763c0e720899e85d14807536fed151f65b66ce0bb2a7aa4f91ff767b",
+        "owner_entry_rva": "0x00378840",
+        "reference_count": 1
+      },
+      {
+        "owner_atlas_record_sha256": "ff85646fbf11165d0a1c06e141836f40d94786e14f342e678d939ec9abc091d2",
+        "owner_entry_rva": "0x00378900",
+        "reference_count": 1
+      },
+      {
+        "owner_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "owner_entry_rva": "0x00378b6e",
+        "reference_count": 1
+      }
+    ],
+    "partition_sha256": {
+      "owner_partition": "cddb714b1dbe52d2306141d582a957d11e664607609a14270f288d082efff585",
+      "target_owner_partition": "b1010c7e6c7371094eb32586a5b6be16de549816afdfbe6cbd90c1567044b82e",
+      "target_partition": "9a85aede2b378f405f672967104d51c149a63877b8449edd289b738c262bfa1d",
+      "target_reference_partition": "c0f229f643465a024c67bd064e188e7aa6886f6177e4572c26cfceb36dcc5c8e"
+    },
+    "references": [
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378889",
+          "source_entry_rva": "0x00378840",
+          "target_entry_rva": "0x0039cb98",
+          "target_name_sha256": "3d859f62aadd9aa78b7bd2d1ca6fa56e5bee6a744dee0f410a74fa1785a97035",
+          "target_rva": "0x0039cb98"
+        },
+        "instruction_rva": "0x00378889",
+        "instruction_sha256": "1302078511ef69bfc529e72a719347fe988705808e2678495eaa0dc47033caa2",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "fb7ccdd6763c0e720899e85d14807536fed151f65b66ce0bb2a7aa4f91ff767b",
+        "owner_entry_rva": "0x00378840",
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_rva": "0x0039cb98",
+        "target_va": "0x0079cb98",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378913",
+          "source_entry_rva": "0x00378900",
+          "target_entry_rva": "0x0039cb98",
+          "target_name_sha256": "3d859f62aadd9aa78b7bd2d1ca6fa56e5bee6a744dee0f410a74fa1785a97035",
+          "target_rva": "0x0039cb98"
+        },
+        "instruction_rva": "0x00378913",
+        "instruction_sha256": "78b8438e97d9ae7ee89c8086c4528053ea090b99197c6300b9ca647121d4fc56",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "ff85646fbf11165d0a1c06e141836f40d94786e14f342e678d939ec9abc091d2",
+        "owner_entry_rva": "0x00378900",
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_rva": "0x0039cb98",
+        "target_va": "0x0079cb98",
+        "use_class": "direct_call"
+      },
+      {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00378b7d",
+          "source_entry_rva": "0x00378b6e",
+          "target_entry_rva": "0x0039cb98",
+          "target_name_sha256": "3d859f62aadd9aa78b7bd2d1ca6fa56e5bee6a744dee0f410a74fa1785a97035",
+          "target_rva": "0x0039cb98"
+        },
+        "instruction_rva": "0x00378b7d",
+        "instruction_sha256": "1bf6aac09857661da870fb8aa4d8b6b3d8f9c750fafdbf2550f03e7da710cc76",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "owner_entry_rva": "0x00378b6e",
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_rva": "0x0039cb98",
+        "target_va": "0x0079cb98",
+        "use_class": "direct_call"
+      }
+    ],
+    "references_canonical_sha256": "4b2ca46780be9d3fb31422d8bfb7a1d085fbbb64667552fcd42d94452cea56b9",
+    "scope": {
+      "all_declared_ranges_decoded": true,
+      "atlas_body_range_count": 25490,
+      "atlas_function_count": 25312,
+      "decoded_bytes": 3735718,
+      "decoded_instructions": 1153814,
+      "operand_classes": [
+        "absolute_memory",
+        "immediate"
+      ]
+    },
+    "target_owner_partition": [
+      {
+        "owner_atlas_record_sha256": "fb7ccdd6763c0e720899e85d14807536fed151f65b66ce0bb2a7aa4f91ff767b",
+        "owner_entry_rva": "0x00378840",
+        "reference_count": 1,
+        "target_rva": "0x0039cb98"
+      },
+      {
+        "owner_atlas_record_sha256": "ff85646fbf11165d0a1c06e141836f40d94786e14f342e678d939ec9abc091d2",
+        "owner_entry_rva": "0x00378900",
+        "reference_count": 1,
+        "target_rva": "0x0039cb98"
+      },
+      {
+        "owner_atlas_record_sha256": "e58ae61360dfe3582ded9e78d44ae9c56e1226ebad653da407ed81b5f39ab4bc",
+        "owner_entry_rva": "0x00378b6e",
+        "reference_count": 1,
+        "target_rva": "0x0039cb98"
+      }
+    ],
+    "target_partition": [
+      {
+        "owner_count": 3,
+        "reference_count": 3,
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_rva": "0x0039cb98"
+      }
+    ],
+    "target_reference_partition": [
+      {
+        "reference_count": 3,
+        "target_atlas_record_sha256": "52917cb57766349ba4060b37b1d09f0b0d4ef87be974755358ec90d6c78467d6",
+        "target_rva": "0x0039cb98"
+      }
+    ],
+    "target_rvas": [
+      "0x0039cb98"
+    ],
+    "target_vas": [
+      "0x0079cb98"
+    ]
+  }
+}
