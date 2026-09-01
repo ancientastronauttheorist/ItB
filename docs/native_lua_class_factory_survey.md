@@ -393,6 +393,40 @@ indirect-callee identity or behavior, normal return, runtime reachability,
 dynamic-target resolution, source equivalence, data consumers, un-atlased
 code, and Lua-side references remain unproved.
 
+## Dependent query-new-handler static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json`
+has analysis kind `pe_native_query_new_handler_static_boundary`. It
+canonical-pins the exact callnewh artifact and rejoins its sole
+`0x0038bbd5 -> 0x0038bc08` edge. The join is independently checked against the
+fresh whole-atlas reference record, including instruction, source/target
+atlas, immediate-`E8`, and normalized Ghidra-edge identity.
+
+The artifact seals the 70-byte target body, all 19 exact instruction points,
+and its 19-node / 18-edge CFG. It retains four opaque direct native edges:
+`0x0038bc0f -> 0x003584b0`, `0x0038bc1a -> 0x00388bc5`,
+`0x0038bc41 -> 0x0038bc51`, and `0x0038bc48 -> 0x003584f6`. It also records
+the absolute pointer push at `0x0038bc0a` into non-writable file-backed
+`.rdata`, the absolute read at `0x0038bc24` from writable file-backed `.data`,
+and the absolute read at `0x0038bc2f` from the writable virtual-only tail of
+`.data`. Pointer contents and runtime values remain opaque.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly one target-entry
+reference survives from one owner, a five-byte immediate `E8` call;
+comparison, absolute-memory, and other-address reference partitions are empty.
+Direct and staged Lua calls, the complete eight-register call audit, and
+retained literals are empty. The artifact's pretty-printed file SHA-256 is
+`a0e4913c271166ee3ebd0e429f86161d47f9108c5201d2de6d4219bae8b85263`;
+its canonical JSON SHA-256 is
+`742e341a855de34731177afd53b385c67fbd64f3d277fedf8ba6c8e9bbf61705`.
+
+The `__query_new_handler`, SEH, lock, and security spellings remain analysis
+metadata only. Handler or allocation behavior, pointer contents, ABI, success,
+ownership, lifetime, source identity, direct-callee behavior, normal return,
+runtime reachability, computed or indirect references, data consumers,
+un-atlased code, and Lua-side references remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

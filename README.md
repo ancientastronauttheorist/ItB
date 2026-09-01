@@ -70,6 +70,20 @@ SHA-256 values are
 The `__callnewh` spelling remains analysis metadata only; allocation,
 new-handler, ABI, success, ownership, lifetime, callee identity or behavior,
 runtime reachability, and dynamic-target resolution remain unclaimed.
+The dependent query-new-handler boundary closes the sole exact
+`0x0038bbd5 -> 0x0038bc08` predecessor and seals 70 bytes, all 19
+instructions, and its 19-node / 18-edge CFG. Four outgoing direct calls remain
+opaque. It retains one non-writable `.rdata` pointer push and two writable
+`.data` reads, explicitly distinguishing the second read's virtual-only RVA
+from file-backed data. The complete incoming frontier is one immediate `E8`
+call from one owner, with no direct/staged Lua calls, `call r32`, or retained
+literals. Its pretty-printed and canonical SHA-256 values are
+`a0e4913c271166ee3ebd0e429f86161d47f9108c5201d2de6d4219bae8b85263` and
+`742e341a855de34731177afd53b385c67fbd64f3d277fedf8ba6c8e9bbf61705`.
+The `__query_new_handler` spelling and all outgoing names remain analysis
+metadata only; handler, allocation, SEH, lock, security, pointer contents,
+ABI, success, ownership, lifetime, runtime behavior, and callee semantics are
+unclaimed.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry

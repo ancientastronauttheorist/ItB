@@ -430,6 +430,23 @@ until core engine semantics are reconstructed.
   success, ownership, lifetime, callee identity or behavior, normal return,
   runtime reachability, dynamic-target resolution, and source equivalence
   remain unproved.
+  The sole direct callnewh-to-query target is now closed by a dependent static
+  boundary. It canonical-pins the callnewh artifact, independently revalidates
+  exact predecessor `0x0038bbd5 -> 0x0038bc08`, and seals the 70-byte body,
+  all 19 instructions, and its 19-node / 18-edge CFG. Four outgoing direct
+  native calls remain opaque. The artifact retains one absolute pointer push
+  into non-writable file-backed `.rdata`, one read from writable file-backed
+  `.data`, and one read from the writable virtual-only tail of `.data`; pointer
+  contents and values remain opaque. Its all-atlas entry frontier is exactly
+  one immediate `E8` call from one owner. Direct and staged Lua calls,
+  `call r32`, and literals are empty. Its pretty-printed file SHA-256 is
+  `a0e4913c271166ee3ebd0e429f86161d47f9108c5201d2de6d4219bae8b85263`;
+  its canonical JSON SHA-256 is
+  `742e341a855de34731177afd53b385c67fbd64f3d277fedf8ba6c8e9bbf61705`.
+  The `__query_new_handler`, SEH, lock, and security spellings remain analysis
+  metadata only; handler/allocation behavior, pointer contents, ABI, success,
+  ownership, lifetime, normal return, runtime reachability, source identity,
+  and callee semantics remain unproved.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a
