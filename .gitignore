@@ -13,6 +13,7 @@ tmp/
 # and proprietary game bytes stay local; only normalized build-keyed facts are
 # eligible for data/observatory/programs/.
 .local_decompile/
+data/observatory/programs/.itb-observatory-stage-*.json
 
 # Live-run artifacts are intentionally local by default. Historical fixtures
 # already tracked in Git remain tracked; force-add a specific new artifact when
