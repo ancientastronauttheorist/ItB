@@ -116,6 +116,21 @@ SHA-256 values are
 The `__except_handler4` spelling remains analysis metadata only; exception,
 handler, stack, register, security, ABI, target identity, runtime behavior,
 and Lua-side meaning remain unproved.
+Four of that target's direct callees now form a layout-only adjacent-cluster
+boundary across `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, all
+51 instructions, and four CFGs totaling 51 nodes / 47 edges. The cluster has
+three opaque outgoing native edges, one unresolved `call ECX`, and one final
+`jmp ESI`; an intervening call prevents a register-provenance claim for the
+jump. Its complete PE-address operand universe is four file-backed `.text`
+immediates and zero absolute-memory operands. The whole-atlas frontier is
+exactly the five parent `E8` calls from sole owner `0x003729b0`, partitioned
+`1/1/1/2` across the four targets. Direct and staged Lua evidence is empty,
+without claiming that a dynamic target is non-Lua. The artifact's
+pretty-printed and canonical SHA-256 values are
+`c7da48c159c104db62ce6f0a6c47e31e2739179d9435a49c52e2dfc3014bbaea` and
+`1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
+Adjacency and analysis labels prove no semantic kinship, execution order,
+exception behavior, ABI, target identity, or runtime effect.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

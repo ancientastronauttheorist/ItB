@@ -484,6 +484,24 @@ until core engine semantics are reconstructed.
   exception or handler behavior, stack, register, security, ABI, target
   identity, state mutation, success, normal return, runtime execution, data
   meaning, and Lua-side references remain unproved.
+  Four direct targets are now sealed as a layout-only adjacent cluster over
+  `0x00378b3e..0x00378b9e`: 96 bytes, four distinct bodies, 51 instructions,
+  and four CFGs totaling 51 nodes / 47 edges. All five parent `E8` records are
+  cross-joined to the independently rebuilt whole-atlas frontier, which has
+  sole owner `0x003729b0` and target partition `1/1/1/2`. Three outgoing
+  direct edges remain opaque. The complete register-call audit contains only
+  `call ECX` at `0x00378b4e`; final `jmp ESI` at `0x00378b6c` is separately
+  retained without a target-provenance claim across the intervening call. The
+  complete PE-address operand universe is four file-backed non-writable
+  `.text` immediates, including one opaque interior-body push, and zero
+  absolute-memory operands. Direct/staged Lua evidence is empty without
+  excluding a dynamic Lua target. Its pretty-printed file SHA-256 is
+  `c7da48c159c104db62ce6f0a6c47e31e2739179d9435a49c52e2dfc3014bbaea`;
+  its canonical JSON SHA-256 is
+  `1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
+  Adjacency and analysis labels prove no semantic kinship, execution order,
+  exception behavior, ABI, target identity, state mutation, runtime effect,
+  or Lua-side meaning.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

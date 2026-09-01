@@ -516,6 +516,60 @@ state mutation, target identity, success, normal return, runtime reachability,
 dynamic or computed references, data consumers, un-atlased code, and Lua-side
 references remain unproved.
 
+## Dependent adjacent-callee cluster static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary`.
+It canonical-pins the pointer-target artifact and rejoins five exact parent
+edges. Each parent record is independently cross-joined to its whole-atlas
+reference row on instruction identity, source/owner and target atlas identity,
+and normalized Ghidra edge.
+
+The sealed span is `0x00378b3e..0x00378b9e` exclusive: 96 bytes with SHA-256
+`90bbfc64c1432f6b635812d241f996137a7e02d88381c66e66955102f1f9d48d`.
+It contains four distinct, exactly adjacent atlas bodies at `0x00378b3e`,
+`0x00378b55`, `0x00378b6e`, and `0x00378b87`. Together they contain all 51
+instruction points and four CFGs totaling 51 nodes / 47 edges. The adjacency
+receipt proves layout only, not shared purpose, execution order, or semantic
+kinship.
+
+Three exact outgoing direct edges remain opaque:
+`0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
+`0x00378b92 -> 0x00378a40`. The complete `FF D0` through `FF D7` audit finds
+only `call ECX` at `0x00378b4e`. Final `jmp ESI` at `0x00378b6c` is retained
+as a separate opaque indirect-control record. The exact `MOV ESI,ECX` bytes at
+`0x00378b57` precede an intervening direct call at `0x00378b5d`, so this
+artifact does not claim that a register value survives to or identifies the
+jump target.
+
+The complete PE-address operand audit scans both immediate and absolute-memory
+classes. Exactly four operand-zero immediates survive, all naming file-backed
+non-writable `.text`; no absolute-memory operand survives. Three immediates
+belong to the outgoing `E8` records. The opaque `PUSH` at `0x00378b77` names
+VA `0x00778b82` / RVA `0x00378b82` inside the same body, without assigning its
+purpose or runtime use. Direct and staged Lua evidence is empty, but the
+unresolved ECX target is not thereby proved non-Lua.
+
+The whole-atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly five entry references survive, all
+five-byte immediate `E8` calls from sole owner `0x003729b0`; the target
+partition is `1/1/1/2` in entry order. Comparison, other-address, and
+absolute-memory target-reference partitions are empty, and structural
+validation requires the exact target and owner partitions.
+
+The artifact's pretty-printed file SHA-256 is
+`c7da48c159c104db62ce6f0a6c47e31e2739179d9435a49c52e2dfc3014bbaea`;
+its canonical JSON SHA-256 is
+`1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing evidence after
+failed final validation, and removes a failed private publication. Analysis
+labels, adjacency, decoded registers, and address syntax do not prove purpose,
+exception behavior, ABI, arguments, target identity, state mutation, success,
+normal return, runtime reachability, dynamic or computed references, data
+consumers, un-atlased code, or Lua-side behavior.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`

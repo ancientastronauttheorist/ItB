@@ -1226,6 +1226,87 @@ target identity, state mutation, success, normal return, runtime reachability,
 dynamic or computed references, data consumers, un-atlased code, or Lua-side
 references.
 
+## Native query pointer-target adjacent-callee cluster static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.py`
+canonical-pins the first-callee pointer-target artifact, rejoins five exact
+parent edges, and seals four distinct atlas bodies whose ranges happen to be
+contiguous. The shared span is a layout receipt only and carries no claim of
+semantic kinship or execution order.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --pointer-target-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --pointer-target-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_adjacent_callee_cluster_static_boundary`.
+Its layout-only span is `0x00378b3e..0x00378b9e` exclusive: 96 bytes with
+SHA-256
+`90bbfc64c1432f6b635812d241f996137a7e02d88381c66e66955102f1f9d48d`.
+It contains four separate bodies:
+
+- `0x00378b3e`: 23 bytes, 16 instructions, 16-node / 15-edge CFG.
+- `0x00378b55`: 25 bytes, 11 instructions, 11-node / 10-edge CFG.
+- `0x00378b6e`: 25 bytes, 15 instructions, 15-node / 14-edge CFG.
+- `0x00378b87`: 23 bytes, 9 instructions, 9-node / 8-edge CFG.
+
+The five parent joins are `0x00372a2a -> 0x00378b3e`,
+`0x00372b10 -> 0x00378b55`, `0x00372a80 -> 0x00378b6e`, and
+`0x00372ac9 -> 0x00378b87` plus `0x00372af1 -> 0x00378b87`. Each copied
+parent record is cross-checked against an independently rebuilt whole-atlas
+row, including instruction, source/owner and target atlas identities, and the
+normalized Ghidra edge.
+
+The cluster's complete declared outgoing-edge partition is
+`0x00378b5d -> 0x00378a15`, `0x00378b7d -> 0x0039cb98`, and
+`0x00378b92 -> 0x00378a40`. The complete eight-register call audit contains
+only `call ECX` at `0x00378b4e`. The final `jmp ESI` at `0x00378b6c` is
+retained as opaque indirect-control syntax. Although `0x00378b57` has exact
+`MOV ESI,ECX` bytes, the intervening direct call at `0x00378b5d` prevents this
+static receipt from assigning provenance or target identity to the jump.
+
+The exact PE-address operand universe is four operand-zero immediates, all in
+file-backed non-writable `.text`, with no absolute-memory operand. Three are
+the outgoing `E8` targets. The remaining `PUSH` at `0x00378b77` names VA
+`0x00778b82` / RVA `0x00378b82`, an address inside the same body; its purpose
+remains opaque. Direct and staged Lua evidence is empty, but this does not
+prove that the dynamic ECX target is non-Lua.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly five target references survive, all
+five-byte immediate `E8` calls from sole owner `0x003729b0`. Target counts are
+`1/1/1/2` in entry order; comparison, other-address, and absolute-memory
+partitions are empty. Structural verification requires the exact target and
+owner partitions.
+
+The artifact's pretty-printed file SHA-256 is
+`c7da48c159c104db62ce6f0a6c47e31e2739179d9435a49c52e2dfc3014bbaea`;
+its canonical JSON SHA-256 is
+`1385ca599a7442b2b18a45206619d520b19db1b5a2fa9c0ba5b54908831462a5`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing evidence after
+failed final validation, and removes a failed private publication. Adjacency,
+analysis labels, decoded registers, and addresses do not prove shared purpose,
+execution order, exception behavior, ABI, argument meaning, target identity,
+state mutation, success, normal return, runtime reachability, dynamic or
+computed references, data consumers, un-atlased code, or Lua-side behavior.
+
 ## Native query-new-handler local-helper static boundary
 
 `scripts/itb_native_query_new_handler_local_helper_static_boundary.py`
