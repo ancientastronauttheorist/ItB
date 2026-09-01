@@ -5,7 +5,9 @@ identity-mismatch traces are normalized by the dependent mismatch-path
 artifact. The initializer's marker, `__gc` closure placement, and 13-entry
 operator-wrapper construction loop are normalized by a second dependent
 artifact. Cleanup-callback behavior, the wrapper callback, cleanup helper, and
-native-recognizer frontier remain survey-only facts.
+native-recognizer frontier remain survey-only facts; their reviewed artifact
+split and exact acceptance packet are frozen in
+`docs/native_lua_property_callback_artifact_spec.md`.
 
 ## Bound inputs and notation
 
@@ -182,7 +184,8 @@ and seven direct Lua-import calls. It:
    vtable call and conditional native free-like tail through `0x002e9fc0`;
 6. returns zero Lua results at `0x002e9fc4`-`0x002e9fc8`.
 
-The `__finalize` literal is ten bytes, with NUL-inclusive SHA-256
+The `__finalize` literal is ten bytes excluding its NUL terminator and 11 bytes
+including it, with NUL-inclusive SHA-256
 `2da9eac9965b6b70aa210a588888733805c3214ecd627e37afd1aa1909b100b7`.
 This is a finite guarded lookup and call followed by a native cleanup-shaped
 tail. It does not prove runtime `__gc` dispatch, call success, finalization,
@@ -263,7 +266,9 @@ result reaches the call arm; nil continues to the other input. If neither
 input yields a value, the body clears the Lua stack, pushes
 `No such operator defined` from `0x0043c4a4`, and calls `lua_error` at
 `0x002ea26b`. The message is 24 bytes with NUL-inclusive SHA-256
-`d16f10ee15af8c2e95b531a7149f4063e4c2239b47ac228e943c74e08712ad56`.
+`d16f10ee15af8c2e95b531a7149f4063e4c2239b47ac228e943c74e08712ad56`;
+that length excludes the one-byte NUL terminator, so the hashed span is 25
+bytes.
 
 On success, `lua_insert(L,1)` at `0x002ea27e` moves the selected value below
 the original inputs. Captured Boolean upvalue two is read twice through staged
