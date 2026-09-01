@@ -15,11 +15,11 @@ extends the existing build-keyed Engine Observatory into a measurable
 whole-program reconstruction. Its first pipeline exports and independently
 verifies a normalized Ghidra function atlas without committing game binaries,
 disassembly, or bulk decompiler output. The current native-Lua frontier now
-includes executable-rebuilt `property` factory, consumer, and mismatch-path
-artifacts; the latest one replays the getter and setter mismatch arms across
-78 exact instruction points while preserving the getter's buried stack values
-and the setter's conditional absolute-slot-four interpretation. See the
-[residual-path survey](docs/native_lua_property_residual_survey.md).
+includes executable-rebuilt `property` factory, consumer, mismatch-path, and
+initializer artifacts. The mismatch chain replays both callback arms across
+78 exact instruction points; the initializer chain additionally seals the
+marker, zero-upvalue `__gc` placement, and ordered 13-entry two-upvalue wrapper
+loop. See the [residual-path survey](docs/native_lua_property_residual_survey.md).
 
 ### Lightning War retrospective
 

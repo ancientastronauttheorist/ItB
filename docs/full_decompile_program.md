@@ -375,9 +375,16 @@ until core engine semantics are reconstructed.
   76-direct-caller frontier for the reusable numeric-slot-one recognizer. The
   residual helper target partition has 79 exact operands when the `__gc`
   cleanup helper is included. The two mismatch traces have now been promoted
-  into the dependent executable-rebuilt artifact above. The initializer marker,
-  `__gc`, operator-wrapper, cleanup-helper, and recognizer portions remain a
-  reviewed survey awaiting further normalized artifacts.
+  into the dependent executable-rebuilt artifact above. A second dependent
+  initializer artifact now seals the 245-byte source body and 89-node / 91-edge
+  CFG identity, 15 exact literals, the marker and zero-upvalue `__gc` closure
+  placements, and the ordered 13-row / two-upvalue wrapper loop. Its 52-byte
+  pointer array is exact-reread, with true Boolean flags only at `__unm` and
+  `__len`; its canonical JSON SHA-256 is
+  `b76b3d46d30da4801a3bc4f67be78d3818f847557a0b275f6048120873b44bc4`.
+  Cleanup-callback behavior, the wrapper callback, the cleanup helper, and the
+  76-caller recognizer frontier remain reviewed survey facts awaiting further
+  normalized artifacts.
   `docs/native_lua_class_factory_survey.md` follows the global `class` callback
   through its exact string, numeric-string, and embedded-NUL guards, 72-byte
   userdata initialization and global assignment, into a returned one-upvalue

@@ -312,14 +312,34 @@ counts, nonclaims, summaries, schemas, and immutable-output behavior. Exact
 verification rebuilds through the complete prerequisite chain; PE-free
 verification repeats the derivation from the structurally verified consumer.
 
+## Normalized executable-rebuilt initializer artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_property_initializer_chain.json`
+has analysis kind `pe_native_lua_property_initializer_chain`, pretty-printed
+file SHA-256
+`21aa8589ea24fc5b0f468781bb27c299d7df3f75927fc2202dbe5d08dec18872`,
+and canonical JSON SHA-256
+`b76b3d46d30da4801a3bc4f67be78d3818f847557a0b275f6048120873b44bc4`.
+
+The artifact recursively verifies the consumer chain, binds its 245-byte
+initializer body and 89-node / 91-edge CFG identity, and rejoins 33 relevant
+points to direct or register-staged Lua API calls. Exact validation rereads 15
+NUL-terminated literals and the 52-byte ordered pointer array. It normalizes
+the `__luabind_class` true marker, zero-upvalue `__gc` closure placement, and
+all 13 two-upvalue wrapper placements. Upvalue one is the exact key and upvalue
+two is a Boolean true only for `__unm` and `__len`.
+
+This is construction and placement evidence only. It does not normalize
+behavior inside the cleanup or wrapper callbacks, prove runtime dispatch, or
+assign source-level class, property, operator, or metamethod semantics.
+
 The adjacent
 `docs/native_lua_property_residual_survey.md` supplies the promoted mismatch
-derivation and also maps the initializer's remaining marker, `__gc`, and 13
-two-upvalue wrapper closures. It identifies the wrapper callback, its
+and initializer derivations. It also identifies the wrapper callback, its
 numeric-slot-one getter test, a reusable 76-caller native recognizer using the
-same test, and the `__gc` callback's sole direct cleanup helper. Those latter
-initializer, wrapper, helper, and caller-frontier proofs remain outside the
-normalized artifacts until they are encoded and tested.
+same test, and the `__gc` callback's sole direct cleanup helper. Those callback,
+helper, and caller-frontier proofs remain outside the normalized artifacts
+until they are encoded and tested.
 
 ## Explicit nonclaims
 
