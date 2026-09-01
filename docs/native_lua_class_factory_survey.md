@@ -301,6 +301,34 @@ success, pointer validity, aliasing, tree/container/sentinel identity,
 ownership, lifetime, computed references, indirect calls, and Lua-side
 consumers remain unproved.
 
+## Dependent assertion-helper static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json`
+has analysis kind `pe_native_assertion_helper_static_boundary`. It
+canonical-pins the exact class-initializer artifact and rejoins its remaining
+`0x002eae76 -> 0x00379cc2` edge. The artifact seals the 72-byte target body,
+all 29 exact instruction points, and its 29-node / 30-edge CFG. Its
+pretty-printed file SHA-256 is
+`7fd6879c031ba4e665024789f3cbf9308c49ea3c649ca300b441ada38d9ade5e`;
+its canonical JSON SHA-256 is
+`beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`.
+
+The predecessor window records only exact syntax: the initializer's sentinel
+comparison and branch, immediate `96`, two pointers into non-writable
+`.rdata`, and the direct helper call. The helper body has no direct Lua call,
+staged Lua dispatch, `call r32`, or retained literal. Its four outgoing direct
+calls remain opaque native edges, and the trailing `int3` does not prove
+termination.
+
+The all-operand atlas scan covers all 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions. Exactly 881 helper-entry
+references survive from 660 owners; every one is a five-byte immediate `E8`
+call. Comparison, absolute-memory, and other direct-address partitions are
+empty. Runtime reachability, invocation order or frequency, argument validity,
+CRT identity or ownership, dialog/display behavior, normal return, abort,
+termination, source equivalence, computed or indirect references, un-atlased
+code, and Lua-side references remain unproved.
+
 ## Explicit nonclaims
 
 This survey does not prove that `class` is globally available at runtime, that

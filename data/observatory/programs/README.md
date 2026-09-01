@@ -857,6 +857,63 @@ reachability, normal return, allocation success, pointer validity, source
 type, tree/container/sentinel identity, ownership, lifetime, computed
 references, indirect calls, and Lua-side consumers remain unproved.
 
+## Native assertion-helper static boundary
+
+`scripts/itb_native_assertion_helper_static_boundary.py` canonical-pins the
+exact class-initializer artifact, rejoins its remaining
+`0x002eae76 -> 0x00379cc2` edge, seals the exact target body and CFG, and scans
+every atlas operand for the complete target-entry reference frontier. The
+normalized artifact records byte-, control-flow-, and pointer-section syntax;
+it does not promote Ghidra's analysis labels into source or runtime semantics.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-initializer data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json
+
+python -X utf8 scripts/itb_native_assertion_helper_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --class-initializer data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_initializer_chain.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_assertion_helper_static_boundary`. It seals helper `0x00379cc2`:
+72 bytes, all 29 exact instruction points, and one 29-node / 30-edge CFG. Its
+four outgoing direct calls remain opaque native edges. The body contains no
+direct Lua call, staged Lua dispatch, `call r32`, or retained literal, and its
+trailing `int3` does not prove termination.
+
+The six-instruction initializer window retains the sentinel comparison and
+branch, immediate `96`, two pointers proven only to lie in non-writable
+`.rdata`, and the direct helper call. The all-operand scan covers 25,312
+functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly
+881 helper references survive from 660 owners, all five-byte immediate `E8`
+calls; comparison, absolute-memory, and other direct-address partitions are
+empty.
+
+The artifact's pretty-printed file SHA-256 is
+`7fd6879c031ba4e665024789f3cbf9308c49ea3c649ca300b441ada38d9ade5e`;
+its canonical JSON SHA-256 is
+`beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`.
+Publication validates a stable locked destination at one explicit point in
+time: Windows denies write/delete sharing and holds a mandatory full-range
+lock; POSIX uses an advisory exclusive lock for cooperating writers. It does
+not claim perpetual immutability after release. Runtime reachability,
+invocation order or frequency, argument validity, CRT identity or ownership,
+dialog/display behavior, normal return, abort, termination, source
+equivalence, computed or indirect references, un-atlased code, and Lua-side
+references remain unproved.
+
 ## Native Lua `super` rebinding chain
 
 `scripts/itb_native_lua_super_rebinding.py` exact-verifies the complete

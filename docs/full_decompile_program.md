@@ -380,6 +380,18 @@ until core engine semantics are reconstructed.
   `994b4af188a8017d0dce172a53a9598b9cdf7a48d2faef1fbcbfa5ffcbbf2ddb`;
   allocation success, source type, container, ownership, lifetime, caller
   execution, and runtime reachability remain unproved.
+  The initializer's second formerly opaque edge is now closed by a distinct
+  assertion-helper static boundary. It seals the exact 72-byte `0x00379cc2`
+  body and 29-node / 30-edge CFG, retains four outgoing direct calls as opaque
+  native edges, and rejoins the six-instruction initializer predecessor window
+  without decoding its two non-writable `.rdata` pointers into source text.
+  The exact all-operand atlas scan partitions 881 references from 660 owners;
+  every survivor is a five-byte immediate `E8` call, with comparison,
+  absolute-memory, and other-address partitions empty. The canonical JSON
+  SHA-256 is
+  `beeebb2dadd0ef2a77742f9296760fd09afe5c566c7b46bf36d2dd3cf8e441b4`;
+  analysis labels do not establish CRT identity, dialog/display behavior,
+  termination, source equivalence, or runtime reachability.
   Two adjacent returned-closure surveys now trace the remaining static factory
   edges. `docs/native_lua_property_factory_survey.md` follows the global
   `property` callback through its exact one-or-two-argument grammar into a

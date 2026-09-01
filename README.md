@@ -18,8 +18,8 @@ disassembly, or bulk decompiler output. The current native-Lua frontier now
 includes executable-rebuilt `property` factory, consumer, mismatch-path,
 initializer, cleanup-chain, operator-dispatch, and native `__gc` metatable
 consumer artifacts, the `class` factory, returned-callback helper chain, and
-factory-side class initializer and its formerly opaque `0x0007c600` native
-helper,
+factory-side class initializer, its formerly opaque `0x0007c600` native
+helper, and the initializer's remaining analysis-labeled assertion-helper edge,
 plus the 46-caller registry-holder local-use/release census. That census seals
 47 bodies and the complete all-operand producer reference partition while
 leaving ownership and lifetime unclaimed. The class-return helper chain seals
@@ -35,6 +35,13 @@ analysis-labeled `operator_new` target, nine bounded caller grammar witnesses,
 and the complete nine-reference direct-call frontier. Allocation success,
 source type, container, ownership, lifetime, and runtime behavior remain
 explicitly unclaimed.
+The adjacent assertion-helper boundary seals the exact 72-byte `0x00379cc2`
+body and 29-node / 30-edge CFG, retains all four outgoing native calls as
+opaque edges, rejoins the initializer's six-instruction predecessor window,
+and partitions all 881 atlas references as immediate `E8` calls from 660
+owners. It records only exact instruction and non-writable `.rdata` pointer
+syntax: CRT identity, dialog/display behavior, termination, source
+equivalence, and runtime reachability remain explicitly unclaimed.
 The mismatch chain
 replays both callback arms across 78 exact instruction points; the initializer
 chain seals the marker, zero-upvalue `__gc` placement, and ordered 13-entry
