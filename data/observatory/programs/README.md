@@ -1083,6 +1083,70 @@ identity, callee behavior, normal return, runtime reachability, computed or
 indirect references, data consumers, un-atlased code, and Lua-side references
 remain unproved.
 
+## Native query-handler first-callee static boundary
+
+`scripts/itb_native_query_handler_first_callee_static_boundary.py`
+canonical-pins the query-handler evidence, rejoins exact predecessor
+`0x0038bc0f -> 0x003584b0`, seals the complete relationship-defined target
+body and CFG, and scans every atlas operand for the target-entry frontier. The
+target's `__SEH_prolog4` spelling is retained only as analysis metadata.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_static_boundary`. It seals target
+`0x003584b0`: 70 bytes, all 21 exact instruction points, and one 21-node /
+20-edge CFG. The body has no direct native edge, direct or staged Lua call,
+`call r32`, or retained literal.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 66 target-entry references survive from
+66 owners, all five-byte immediate `E8` calls. Comparison, other-address, and
+absolute-memory entry-reference partitions are empty, and structural
+verification requires the explicit 66-owner partition.
+
+Five exact syntax records remain opaque. The immediate at `0x003584b0` names
+VA `0x007729b0` / RVA `0x003729b0` in file-backed non-writable `.text`; its
+contents and target identity are not assigned here. The memory push at
+`0x003584b5` and destination write at `0x003584ee` use segment-relative
+`FS:[0]` operands and are not represented as PE absolute addresses. The
+absolute read at `0x003584cd` names VA `0x00893f28` / RVA `0x00493f28` in
+file-backed writable `.data`. The final instruction at `0x003584f4` has exact
+two-byte BND-prefixed-return syntax. Executable validation derives each
+operand class, access direction, segment or absolute value, section span, and
+instruction identity through Capstone without assigning runtime meaning.
+
+The artifact's pretty-printed file SHA-256 is
+`f4d43affe98441996f1d10086438c93136b181665c2039b9b1ae18beb618e6b4`;
+its canonical JSON SHA-256 is
+`b08dc12a2f4951817e4e7c24dbdfc4afec03550c2828d7d14c1d757404517d73`.
+Publication validates one locked point-in-time snapshot, requires the exact
+owner partition during structural verification, normalizes inherited errors,
+blocks writer contention, preserves existing published evidence after failed
+final validation, and removes a failed private publication. The analysis
+label does not prove purpose, SEH, prolog, exception, stack, register,
+security-cookie, ABI, argument meaning, state mutation, success, normal
+return, runtime reachability, source identity, or operand contents. Dynamic,
+computed, indirect, data, un-atlased, and Lua-side references remain unproved.
+
 ## Native query-new-handler local-helper static boundary
 
 `scripts/itb_native_query_new_handler_local_helper_static_boundary.py`

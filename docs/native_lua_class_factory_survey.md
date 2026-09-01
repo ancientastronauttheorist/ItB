@@ -427,6 +427,46 @@ ownership, lifetime, source identity, direct-callee behavior, normal return,
 runtime reachability, computed or indirect references, data consumers,
 un-atlased code, and Lua-side references remain unproved.
 
+## Dependent query-handler first-callee static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_static_boundary.json`
+has analysis kind `pe_native_query_handler_first_callee_static_boundary`. It
+canonical-pins the query-handler artifact and rejoins direct edge
+`0x0038bc0f -> 0x003584b0` against the independently rebuilt entry-reference
+row. The join pins exact instruction bytes, size, and SHA-256; source and
+target atlas identities; immediate-`E8` form; and the normalized Ghidra edge.
+
+The artifact seals the complete 70-byte target body, all 21 instruction
+points, and its 21-node / 20-edge CFG. It has no direct native edge, direct or
+staged Lua call, `call r32`, or retained literal. The whole-atlas scan covers
+25,312 functions, 25,490 ranges, 3,735,718 bytes, and 1,153,814 instructions.
+Exactly 66 target-entry references from 66 owners survive, all five-byte
+immediate `E8` calls. Comparison, other-address, and absolute-memory
+entry-reference partitions are empty.
+
+Five exact syntax receipts remain opaque. The immediate at `0x003584b0`
+names VA `0x007729b0` / RVA `0x003729b0` in file-backed non-writable `.text`.
+The memory push at `0x003584b5` and destination write at `0x003584ee` use
+segment-relative `FS:[0]` operands and are not represented as PE absolute
+addresses. The absolute read at `0x003584cd` names VA `0x00893f28` / RVA
+`0x00493f28` in file-backed writable `.data`. The final instruction at
+`0x003584f4` has exact two-byte BND-prefixed-return syntax. Executable
+validation derives each syntax record through Capstone; contents and runtime
+meaning remain unassigned.
+
+The artifact's pretty-printed file SHA-256 is
+`f4d43affe98441996f1d10086438c93136b181665c2039b9b1ae18beb618e6b4`;
+its canonical JSON SHA-256 is
+`b08dc12a2f4951817e4e7c24dbdfc4afec03550c2828d7d14c1d757404517d73`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing published
+evidence after failed final validation, and removes a failed private
+publication. The `__SEH_prolog4` analysis label does not prove purpose, SEH,
+prolog, exception, stack, register, security-cookie, ABI, argument meaning,
+state mutation, success, normal return, runtime reachability, source identity,
+operand contents, dynamic or computed references, data consumers, un-atlased
+code, or Lua-side references.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`

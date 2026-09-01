@@ -447,6 +447,23 @@ until core engine semantics are reconstructed.
   metadata only; handler/allocation behavior, pointer contents, ABI, success,
   ownership, lifetime, normal return, runtime reachability, source identity,
   and callee semantics remain unproved.
+  The query handler's first direct target is now closed by a separate,
+  relationship-defined boundary. It canonical-pins the query-handler artifact,
+  independently rejoins exact edge `0x0038bc0f -> 0x003584b0`, and seals the
+  target's complete 70-byte body, 21 instructions, and 21-node / 20-edge CFG.
+  Its all-atlas entry frontier is 66 five-byte immediate `E8` calls from 66
+  owners; comparison, other-address, and absolute-memory entry references are
+  empty. The body has no direct native edge, Lua call, register call, or
+  retained literal. Five opaque syntax records distinguish an absolute
+  immediate into file-backed `.text`, an `FS:[0]` memory push, a writable
+  file-backed `.data` read, an `FS:[0]` destination write, and a BND-prefixed
+  return. Its pretty-printed file SHA-256 is
+  `f4d43affe98441996f1d10086438c93136b181665c2039b9b1ae18beb618e6b4`;
+  its canonical JSON SHA-256 is
+  `b08dc12a2f4951817e4e7c24dbdfc4afec03550c2828d7d14c1d757404517d73`.
+  The `__SEH_prolog4` analysis label does not prove purpose, SEH, prolog,
+  exception, stack, register, security-cookie, ABI, state mutation, success,
+  normal return, runtime execution, source identity, or operand contents.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

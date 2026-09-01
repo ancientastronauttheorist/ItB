@@ -84,6 +84,21 @@ The `__query_new_handler` spelling and all outgoing names remain analysis
 metadata only; handler, allocation, SEH, lock, security, pointer contents,
 ABI, success, ownership, lifetime, runtime behavior, and callee semantics are
 unclaimed.
+The query handler's relationship-defined first callee boundary closes exact
+edge `0x0038bc0f -> 0x003584b0` and seals the complete 70-byte,
+21-instruction, 21-node / 20-edge body. Its full entry frontier is 66
+five-byte immediate `E8` calls from 66 owners, with comparison,
+other-address, and absolute-memory references empty. The body has no outgoing
+direct native edge, Lua call, register call, or retained literal. Five opaque
+syntax receipts distinguish an absolute immediate into file-backed `.text`,
+an `FS:[0]` memory push, a writable file-backed `.data` read, an `FS:[0]`
+destination write, and a BND-prefixed return. The artifact's pretty-printed
+and canonical SHA-256 values are
+`f4d43affe98441996f1d10086438c93136b181665c2039b9b1ae18beb618e6b4` and
+`b08dc12a2f4951817e4e7c24dbdfc4afec03550c2828d7d14c1d757404517d73`.
+The `__SEH_prolog4` spelling remains an analysis label only; purpose, SEH,
+prolog, exception, stack, register, security-cookie, ABI, state mutation,
+success, normal return, and runtime execution remain unproved.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at
