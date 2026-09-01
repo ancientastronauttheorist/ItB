@@ -99,6 +99,23 @@ and canonical SHA-256 values are
 The `__SEH_prolog4` spelling remains an analysis label only; purpose, SEH,
 prolog, exception, stack, register, security-cookie, ABI, state mutation,
 success, normal return, and runtime execution remain unproved.
+The first callee's absolute-immediate pointer target is now closed by a
+separate relationship-defined boundary. It rejoins the exact five-byte push at
+`0x003584b0`, then seals target `0x003729b0`: 358 bytes, all 120 instructions,
+and its 120-node / 130-edge CFG. Eleven direct native edges remain opaque, as
+does the sole `call ESI` at `0x00372a71`; the earlier ESI load does not prove
+the register's value survives the intervening direct call. Six exact PE
+operand receipts cover file-backed `.data` and `.rdata`, while direct/staged
+Lua calls and retained literals are empty. The full atlas contains exactly
+three target references from three owners, all identical immediate pushes
+classified as `other_address`, with no direct-call, comparison, or
+absolute-memory references. The artifact's pretty-printed and canonical
+SHA-256 values are
+`0fc22f514989853df44f285396b4f59683ee94f703fcc355b566ad6518783c4d` and
+`41ee47debe789243dfe9fd9566958846cd79cb82549acb99eafc9e2b5cfd9349`.
+The `__except_handler4` spelling remains analysis metadata only; exception,
+handler, stack, register, security, ABI, target identity, runtime behavior,
+and Lua-side meaning remain unproved.
 The query local-helper boundary closes exact edge
 `0x0038bc41 -> 0x0038bc51` and seals its complete 9-byte body, four
 instructions, and 4-node / 3-edge CFG. Its sole outgoing direct edge at

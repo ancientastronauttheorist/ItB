@@ -467,6 +467,55 @@ state mutation, success, normal return, runtime reachability, source identity,
 operand contents, dynamic or computed references, data consumers, un-atlased
 code, or Lua-side references.
 
+## Dependent first-callee pointer-target static-boundary artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_static_boundary.json`
+has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_static_boundary`. It
+canonical-pins the first-callee and query-handler artifacts and rejoins the
+five-byte `PUSH imm32` at `0x003584b0`. That exact syntax names VA
+`0x007729b0` / RVA `0x003729b0` in file-backed non-writable `.text`; both the
+predecessor receipt and independently rebuilt all-atlas row classify it as an
+opaque `other_address` use, not a direct call.
+
+The artifact seals the complete 358-byte target body, all 120 exact instruction
+points, and its 120-node / 130-edge CFG. Eleven direct native edges are joined
+to exact source and target atlas records and normalized Ghidra edges, but their
+semantics remain opaque. Direct and staged Lua-call partitions and retained
+literals are empty. The complete `FF D0` through `FF D7` audit finds only
+`call ESI` at `0x00372a71`. The `.rdata` ESI load at `0x00372a5f` is preserved
+as syntax only: intervening direct call `0x00372a6c` means this static receipt
+does not claim that value survives to or identifies the later register call.
+
+Six non-control PE operand receipts remain opaque. The read at `0x003729cd`
+names VA `0x00893f28` / RVA `0x00493f28` in file-backed writable `.data`.
+The read at `0x00372a45`, immediate at `0x00372a4e`, and ESI-load syntax at
+`0x00372a5f` name VA `0x007f2750` / RVA `0x003f2750` in file-backed
+non-writable `.rdata`. The immediates at `0x00372ab9` and `0x00372ae4` name the
+`.data` address. Exact operand indexes, access modes, absent memory base/index/
+segment registers, section characteristics, and instruction identities are
+pinned without assigning pointed-to contents or runtime behavior.
+
+The whole-atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly three entry references survive, owned by
+`0x003584b0`, `0x0039d580`, and `0x0039d770`. All three are identical
+five-byte immediate pushes classified as `other_address`; direct-call,
+comparison, and absolute-memory target-reference partitions are empty. The
+explicit three-owner partition is required during structural validation.
+
+The artifact's pretty-printed file SHA-256 is
+`0fc22f514989853df44f285396b4f59683ee94f703fcc355b566ad6518783c4d`;
+its canonical JSON SHA-256 is
+`41ee47debe789243dfe9fd9566958846cd79cb82549acb99eafc9e2b5cfd9349`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing evidence after
+failed final validation, and removes a failed private publication. The
+`__except_handler4` label remains analysis metadata only. Purpose, exception
+or handler behavior, stack/register/security semantics, ABI, argument meaning,
+state mutation, target identity, success, normal return, runtime reachability,
+dynamic or computed references, data consumers, un-atlased code, and Lua-side
+references remain unproved.
+
 ## Dependent query local-helper static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_local_helper_static_boundary.json`

@@ -464,6 +464,26 @@ until core engine semantics are reconstructed.
   The `__SEH_prolog4` analysis label does not prove purpose, SEH, prolog,
   exception, stack, register, security-cookie, ABI, state mutation, success,
   normal return, runtime execution, source identity, or operand contents.
+  The first callee's absolute-immediate pointer target is now closed by a
+  dependent relationship-defined boundary. It canonical-pins the first-callee
+  artifact, rejoins the exact five-byte push at `0x003584b0`, and seals target
+  `0x003729b0`: 358 bytes, all 120 instructions, and its 120-node / 130-edge
+  CFG. Eleven exact outgoing native edges remain opaque. Direct/staged Lua
+  calls and literals are empty; the full eight-register audit contains only
+  `call ESI` at `0x00372a71`. The earlier ESI load at `0x00372a5f` does not
+  establish the later call target across intervening direct call
+  `0x00372a6c`. Six exact PE operands retain only `.data`/`.rdata` address,
+  access, and section metadata. The all-atlas frontier is exactly three
+  identical immediate pushes from three owners, all `other_address` uses, with
+  direct-call, comparison, and absolute-memory partitions empty. Its
+  pretty-printed file SHA-256 is
+  `0fc22f514989853df44f285396b4f59683ee94f703fcc355b566ad6518783c4d`;
+  its canonical JSON SHA-256 is
+  `41ee47debe789243dfe9fd9566958846cd79cb82549acb99eafc9e2b5cfd9349`.
+  The `__except_handler4` spelling remains analysis metadata only; purpose,
+  exception or handler behavior, stack, register, security, ABI, target
+  identity, state mutation, success, normal return, runtime execution, data
+  meaning, and Lua-side references remain unproved.
   The query handler's 9-byte local target is now closed by a separate,
   recursively pinned boundary. It rejoins and independently revalidates
   `0x0038bc41 -> 0x0038bc51`, seals all four instructions and the 4-node /

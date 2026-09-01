@@ -1147,6 +1147,85 @@ security-cookie, ABI, argument meaning, state mutation, success, normal
 return, runtime reachability, source identity, or operand contents. Dynamic,
 computed, indirect, data, un-atlased, and Lua-side references remain unproved.
 
+## Native query-handler first-callee pointer-target static boundary
+
+`scripts/itb_native_query_handler_first_callee_pointer_target_static_boundary.py`
+canonical-pins the first-callee and query-handler evidence, rejoins the exact
+absolute-immediate pointer syntax at `0x003584b0`, seals the complete pointed-to
+body and CFG, and scans every atlas immediate and absolute-memory operand for
+the target frontier. The target's `__except_handler4` spelling is retained only
+as analysis metadata.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --first-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_static_boundary.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_static_boundary.json
+
+python -X utf8 scripts/itb_native_query_handler_first_callee_pointer_target_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --first-callee-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_static_boundary.json `
+  --query-handler-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_query_new_handler_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_static_boundary.json
+```
+
+The artifact has analysis kind
+`pe_native_query_handler_first_callee_pointer_target_static_boundary`. The
+predecessor is the exact five-byte `PUSH imm32` at `0x003584b0`, naming VA
+`0x007729b0` / RVA `0x003729b0` in file-backed non-writable `.text`; it is an
+opaque address use, not a declared direct call. The artifact seals target
+`0x003729b0`: 358 bytes, all 120 exact instruction points, and one 120-node /
+130-edge CFG.
+
+Eleven exact native direct edges remain opaque:
+`0x003729db -> 0x00372970`, `0x003729e4 -> 0x00007e70`,
+`0x00372a2a -> 0x00378b3e`, `0x00372a53 -> 0x0039d580`,
+`0x00372a6c -> 0x003581b3`, `0x00372a80 -> 0x00378b6e`,
+`0x00372ac9 -> 0x00378b87`, `0x00372ad2 -> 0x00372970`,
+`0x00372af1 -> 0x00378b87`, `0x00372b00 -> 0x00372970`, and
+`0x00372b10 -> 0x00378b55`. Direct and staged Lua calls and retained literals
+are empty. The complete eight-register audit contains only `call ESI` at
+`0x00372a71`. Although `0x00372a5f` has exact ESI-load syntax, the intervening
+direct call at `0x00372a6c` prevents this static receipt from assigning the
+later call's target identity.
+
+Six non-control PE operand records remain opaque. `0x003729cd` reads VA
+`0x00893f28` / RVA `0x00493f28` in writable `.data`. `0x00372a45` reads VA
+`0x007f2750` / RVA `0x003f2750` in non-writable `.rdata`; `0x00372a4e` carries
+the same address as an immediate, and `0x00372a5f` loads from it into ESI.
+The immediates at `0x00372ab9` and `0x00372ae4` name the `.data` address. All
+six operands are file-backed, and their contents and runtime meanings remain
+unassigned.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly three target references survive, from
+owners `0x003584b0`, `0x0039d580`, and `0x0039d770`. Each has identical
+five-byte immediate-push syntax and is classified as `other_address`; direct
+call, comparison, and absolute-memory target-reference partitions are empty.
+Structural verification requires the exact three-owner partition.
+
+The artifact's pretty-printed file SHA-256 is
+`0fc22f514989853df44f285396b4f59683ee94f703fcc355b566ad6518783c4d`;
+its canonical JSON SHA-256 is
+`41ee47debe789243dfe9fd9566958846cd79cb82549acb99eafc9e2b5cfd9349`.
+Publication validates one locked point-in-time snapshot, rejects writer
+contention, normalizes inherited errors, preserves existing published evidence
+after failed final validation, and removes a failed private publication. The
+analysis label and decoded syntax do not prove purpose, exception or handler
+behavior, stack or security semantics, ABI, argument meaning, register values,
+target identity, state mutation, success, normal return, runtime reachability,
+dynamic or computed references, data consumers, un-atlased code, or Lua-side
+references.
+
 ## Native query-new-handler local-helper static boundary
 
 `scripts/itb_native_query_new_handler_local_helper_static_boundary.py`
