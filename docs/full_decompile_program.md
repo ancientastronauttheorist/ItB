@@ -431,6 +431,26 @@ until core engine semantics are reconstructed.
   `e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
   Analysis-label meaning, source identity, ABI, data contents, runtime
   reachability, behavior, and normal return remain unproved.
+  The pair's first outgoing child now has its own dependent static boundary.
+  It canonical-pins the paired receipt, rejoins exact edge
+  `0x00385bcc -> 0x0038edb6`, and seals range
+  `[0x0038edb6,0x0038ee3b)`: 133 bytes, all 53 instruction points, and a
+  53-node / 57-edge CFG. Six outgoing immediate `E8` calls remain opaque.
+  Three body-local `FF 15` controls are bound through raw import-descriptor,
+  ILT, IAT, hint, and import-name syntax to metadata spellings
+  `GetLastError` and `SetLastError`; external IAT-consumer closure is not
+  claimed. Two absolute-memory operands name raw-backed writable `.data` VA
+  `0x00894290` / RVA `0x00494290`, and one immediate names virtual-only
+  `.data` VA `0x008b7550` / RVA `0x004b7550`. Six exact HIGHLOW sites and four
+  ordinary comparison/data literals are pinned. The exhaustive all-operand
+  atlas scan finds exactly six target-entry references from six owners, all
+  five-byte immediate `E8` calls. The pretty-printed file SHA-256 is
+  `eac8de889925d07bc807f1ec676c143348d2729bc51d6ecbc402f08ca2ef3eab`;
+  the canonical JSON SHA-256 is
+  `314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc`.
+  CRT identity, ABI, behavior, runtime reachability, child semantics, and
+  normal return remain unproved. The pair's second child at `0x00379e77`
+  remains opaque.
   The dependent assertion-helper second-callee boundary canonical-pins that
   receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

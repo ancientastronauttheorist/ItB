@@ -413,6 +413,47 @@ source purpose, ABI, input/output meaning, `.data` contents, runtime
 reachability, effects, success, failure, normal return, and both child
 behaviors remain unproved.
 
+## Dependent direct-callee pair first-target child artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary.json`
+has analysis kind
+`pe_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary`.
+It canonical-pins the paired predecessor and rejoins its exact
+`0x00385bcc -> 0x0038edb6` edge. The parent row is also present in the
+independently rebuilt whole-atlas reference frontier.
+
+The artifact seals `[0x0038edb6,0x0038ee3b)`: 133 bytes, all 53 instruction
+points, and a 53-node / 57-edge CFG. Its complete outgoing-native partition
+contains six opaque direct edges at `0x0038edd0`, `0x0038ede2`, `0x0038edf0`,
+`0x0038edff`, `0x0038ee11`, and `0x0038ee17`. Direct/staged Lua calls,
+register calls, other indirect controls, BND-prefixed controls,
+segment-qualified memory, and interrupt syntax are empty.
+
+The body contains three absolute-IAT `FF 15` controls. Raw PE import syntax
+binds `0x007d6114` to metadata spelling `GetLastError` and `0x007d60dc` to
+metadata spelling `SetLastError`; no external IAT-consumer closure or runtime
+meaning is claimed. Absolute-memory operands at `0x0038edc5` and `0x0038edf9`
+name raw-backed writable `.data` VA `0x00894290` / RVA `0x00494290`, file
+offset `0x00492490`. The immediate at `0x0038ee0b` names virtual-only writable
+`.data` VA `0x008b7550` / RVA `0x004b7550` and has no file offset. The
+hash-pinned relocation directory contains all six corresponding HIGHLOW sites.
+Four non-PE immediates (`0xffffffff`, `0x364`, `1`, and `0xc`) remain opaque
+comparison/data syntax.
+
+The all-operand scan covers all 25,312 functions, 25,490 ranges, 3,735,718
+bytes, and 1,153,814 instructions. Exactly six target-entry references survive
+from six owners, all five-byte immediate `E8` calls. The artifact's
+pretty-printed file SHA-256 is
+`eac8de889925d07bc807f1ec676c143348d2729bc51d6ecbc402f08ca2ef3eab`;
+its canonical JSON SHA-256 is
+`314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc`.
+
+The `___acrt_getptd_noexit`, `GetLastError`, and `SetLastError` spellings are
+analysis/import metadata only. CRT identity, source purpose, ABI, inputs,
+outputs, data or IAT contents, runtime reachability, effects, success,
+failure, normal return, and all six child behaviors remain unproved. The
+paired predecessor's second child at `0x00379e77` remains opaque.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

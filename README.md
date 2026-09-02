@@ -74,6 +74,21 @@ and `e1a04d9e847b1ec61e57e24cb02c03eea6b35aae5a1ad059cdd4339ebb939378`.
 The `__errno` and default Ghidra spellings remain metadata only; ABI, source
 identity, data contents, runtime reachability, behavior, and normal return
 remain explicitly unclaimed.
+The paired boundary's first opaque child is now closed by a distinct dependent
+receipt. It rejoins `0x00385bcc -> 0x0038edb6`, seals the complete 133-byte
+body, all 53 instructions, and its 53-node / 57-edge CFG, and retains six
+outgoing native calls as opaque edges. Three body-local `FF 15` controls are
+bound to raw PE import syntax for `GetLastError` and `SetLastError`; those names
+remain import metadata. Two operands name raw-backed writable `.data` VA
+`0x00894290`, while one immediate names virtual-only `.data` VA `0x008b7550`.
+All six matching HIGHLOW sites and four non-PE literals are pinned. The full
+atlas contains exactly six entry references from six owners, all immediate
+`E8` calls. Its pretty-printed and canonical SHA-256 values are
+`eac8de889925d07bc807f1ec676c143348d2729bc51d6ecbc402f08ca2ef3eab`
+and `314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc`.
+CRT identity, ABI, behavior, runtime reachability, external IAT-consumer
+closure, and all child behavior remain unclaimed; the paired boundary's other
+child at `0x00379e77` remains opaque.
 The dependent assertion-helper second-callee boundary rejoins exact edge
 `0x00379cdc -> 0x0038c89f` and seals the complete six-byte body, both
 instructions, and its 2-node / 1-edge CFG. The final `ret` is terminal syntax
