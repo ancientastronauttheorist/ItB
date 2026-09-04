@@ -452,7 +452,35 @@ The `___acrt_getptd_noexit`, `GetLastError`, and `SetLastError` spellings are
 analysis/import metadata only. CRT identity, source purpose, ABI, inputs,
 outputs, data or IAT contents, runtime reachability, effects, success,
 failure, normal return, and all six child behaviors remain unproved. The
-paired predecessor's second child at `0x00379e77` remains opaque.
+paired predecessor's second child now has the structural receipt below.
+
+## Dependent direct-callee pair second-target child artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json`
+has schema 2 and analysis kind `pe_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2`.
+It rejoins the paired predecessor's `0x00379ef9 -> 0x00379e77` edge and
+seals `[0x00379e77,0x00379ef1)`: 122 bytes, 43 instruction points, and a
+43-node / 44-edge CFG. Three outgoing direct edges lead to `0x0038edb6`,
+`0x003574ca`, and `0x00379f1f`. Two opaque indirect calls use ESI and
+raw-backed `.rdata` slot RVA `0x003d6580`, respectively. That slot lies exactly
+at the IAT's exclusive end and is not an imported-function binding.
+
+Four PE-address operands, four HIGHLOW sites, two ordinary literals, and the
+complete two-reference/two-owner incoming frontier are retained. The finite
+CFG terminates at the final E8 because its fallthrough is beyond the declared
+body; this does not prove no-return behavior. CRT identity, ABI, data meaning,
+runtime reachability, indirect targets, callee behavior, and return semantics
+remain unproved.
+
+Schema 1 remains preserved. Schema 2 fixes only its duplicate native-call
+ESI audit omission and adds schema/kind and `supersedes` provenance. The body
+audit was already correct; all other structural facts are unchanged. Build,
+validation, encoding, and publication use standalone machinery without
+changing the first child's module state. The active raw SHA-256 is
+`9d5def6e41d69c2e2e231110c494f8a9f0e763c51b2df67102a73f133d27c1b5`;
+its canonical JSON SHA-256 is
+`918628e05e4579a40127416853ed5e1af91fa6516e86798a48107a65f433be19`.
+See `data/observatory/programs/README.md` for commands and legacy hashes.
 
 ## Dependent assertion-helper second-callee static-boundary artifact
 

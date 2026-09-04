@@ -9,31 +9,67 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import Counter
 from collections.abc import Mapping
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import capstone.x86_const as x86
 
-from src.observatory import (
-    native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary as _base,
-)
 from src.observatory.native_function_accounting import atlas_record_sha256
 from src.observatory.native_lua_cclosure_setfield_publications import (
     _array,
+    _assert_publication_safe,
     _atlas_functions,
+    _decode_range,
     _hex,
     _mapping,
     _rva,
+    _validate_json_tree,
 )
-from src.observatory.native_lua_class_return_helper_chain import _canonical_sha256
+from src.observatory.native_lua_class_return_helper_chain import (
+    _REGISTER_NAMES,
+    _canonical_bytes,
+    _canonical_sha256,
+    _source_identity,
+)
+from src.observatory.native_lua_direct_calls import (
+    ANALYSIS_KIND as DIRECT_KIND,
+    SUPPORTED_CAPSTONE_VERSION,
+    _decoder,
+    _load_executable,
+    validate_native_lua_direct_call_census,
+    validate_native_lua_direct_call_structure,
+)
+from src.observatory.native_assertion_helper_first_callee_direct_callee_pair_static_boundary import (
+    ANALYSIS_KIND as PREDECESSOR_KIND,
+)
 
-SCHEMA_VERSION = 1
-ANALYSIS_KIND = "pe_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary"
+SCHEMA_VERSION = 2
+ANALYSIS_KIND = "pe_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2"
 VERIFICATION_KIND = ANALYSIS_KIND + "_verification"
 STRUCTURE_VERIFICATION_KIND = ANALYSIS_KIND + "_structure_verification"
+
+_EXE = "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9"
+_FACTS = "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+_DIRECT = "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+_SUPERSEDES = {
+    "artifact": "windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary.json",
+    "raw_sha256": "25b174666130d3a5120dc4f01a66cdf3c5cdf657dd9010a2ba89f4137c902d0e",
+    "canonical_sha256": "149115c259e411889adc3acee6bccb5c84a09b7ac8acafa0060726d5ee3703ed",
+    "reason": "Correct the case-sensitive ESI register-call audit generator; executable "
+    "and structural boundary unchanged.",
+    "corrected_path": "native_calls.call_r32_audit[6].call_rvas",
+}
+
+_BASE = 0x400000
+_SCOPE = {
+    "atlas_function_count": 25312,
+    "atlas_body_range_count": 25490,
+    "decoded_bytes": 3735718,
+    "decoded_instructions": 1153814,
+    "all_declared_ranges_decoded": True,
+    "operand_classes": ["absolute_memory", "immediate"],
+}
 
 _ENTRY, _SIZE = 0x379E77, 122
 _RAW = "8bff558bec51a1283f890033c58945fc56e8294f010085c074358bb05c03000085f6742bff7518ff7514ff7510ff750cff75088bceff1580657d00ffd68b4dfc83c41433cd5ee808d6fdff8be55dc3ff75188b35283f89008bceff7514333580708b0083e11fff7510d3ceff750cff750885f675bee82e000000"
@@ -71,6 +107,110 @@ def _bad(message: str) -> None:
     raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
         message
     )
+
+
+def _same(left: Any, right: Any) -> bool:
+    return _canonical_bytes(left) == _canonical_bytes(right)
+
+
+def _compact(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            value, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
+
+
+def _instruction(rva: int, raw: str) -> dict[str, Any]:
+    value = bytes.fromhex(raw)
+    return {
+        "rva": _hex(rva),
+        "size": len(value),
+        "sha256": hashlib.sha256(value).hexdigest(),
+    }
+
+
+def _edges(facts: Mapping[str, Any]) -> dict[int, Mapping[str, Any]]:
+    result: dict[int, Mapping[str, Any]] = {}
+    for value in _array(facts.get("ghidra_declared_direct_calls"), "declared calls"):
+        edge = _mapping(value, "declared call")
+        site = _rva(edge.get("instruction_rva"), "declared call site")
+        if site in result:
+            _bad("duplicate declared direct call")
+        result[site] = edge
+    return result
+
+
+def _edge(edge: Mapping[str, Any]) -> dict[str, Any]:
+    name = edge.get("target_name")
+    if type(name) is not str:
+        _bad("declared edge lacks analysis name")
+    return {
+        "instruction_rva": _hex(_rva(edge.get("instruction_rva"), "edge site")),
+        "source_entry_rva": _hex(_rva(edge.get("source_entry_rva"), "edge source")),
+        "target_entry_rva": _hex(
+            _rva(edge.get("target_entry_rva"), "edge target entry")
+        ),
+        "target_rva": _hex(_rva(edge.get("target_rva"), "edge target")),
+        "target_name_sha256": hashlib.sha256(name.encode()).hexdigest(),
+    }
+
+
+def _points(rows: list[Any]) -> list[dict[str, Any]]:
+    result = []
+    for row in rows:
+        _, writes = row.regs_access()
+        names = {row.reg_name(reg).lower() for reg in writes}
+        raw = bytes(row.bytes)
+        result.append(
+            {
+                "rva": _hex(row.address - _BASE),
+                "size": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "writes_ebx": "ebx" in names,
+                "writes_esi": "esi" in names,
+                "writes_edi": "edi" in names,
+                "writes_esp": "esp" in names,
+            }
+        )
+    return result
+
+
+def _preflight(
+    predecessor: Mapping[str, Any], direct: Mapping[str, Any], facts: Mapping[str, Any]
+) -> dict[str, Any]:
+    identity = dict(_mapping(facts.get("identity"), "program facts identity"))
+    if (
+        identity.get("executable_sha256") != _EXE
+        or not _same(predecessor.get("build_identity"), identity)
+        or not _same(direct.get("build_identity"), identity)
+    ):
+        _bad("prerequisite identity differs")
+    if (
+        predecessor.get("analysis_kind") != PREDECESSOR_KIND
+        or _canonical_sha256(predecessor) != _PREDECESSOR
+    ):
+        _bad("direct-callee pair predecessor differs")
+    summary = _mapping(facts.get("summary"), "program facts summary")
+    return {
+        "program_facts": {
+            **_source_identity(
+                facts, "pe_ghidra_program_facts", _FACTS, "program facts"
+            ),
+            "function_count": summary.get("function_count"),
+            "body_range_count": summary.get("body_range_count"),
+            "function_body_bytes": summary.get("function_body_bytes"),
+        },
+        "direct_callee_pair_static_boundary": _source_identity(
+            predecessor,
+            PREDECESSOR_KIND,
+            _PREDECESSOR,
+            "direct-callee pair predecessor",
+        ),
+        "direct_call_census": _source_identity(
+            direct, DIRECT_KIND, _DIRECT, "direct-call census"
+        ),
+    }
 
 
 def _target(facts: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -114,17 +254,17 @@ def _parent(
         _rva(row.get("source_entry_rva"), "predecessor source"),
         _rva(row.get("target_entry_rva"), "predecessor target"),
         row.get("target_atlas_record_sha256"),
-    ) != (_PARENT[0], _PARENT[1], _ENTRY, _ATLAS) or not _base._same(
-        instruction, _base._instruction(_PARENT[0], _PARENT[2])
+    ) != (_PARENT[0], _PARENT[1], _ENTRY, _ATLAS) or not _same(
+        instruction, _instruction(_PARENT[0], _PARENT[2])
     ):
         _bad("second child predecessor edge differs")
     return [row]
 
 
 def _decode(raw: bytes = bytes.fromhex(_RAW)) -> list[Any]:
-    decoder, _ = _base._decoder()
+    decoder, _ = _decoder()
     decoder.detail = True
-    rows = list(decoder.disasm(raw, _base._BASE + _ENTRY))
+    rows = list(decoder.disasm(raw, _BASE + _ENTRY))
     if len(rows) != 43 or b"".join(bytes(row.bytes) for row in rows) != raw:
         _bad("second child bytes do not decode exactly")
     return rows
@@ -137,25 +277,25 @@ def _graph(rows: list[Any] | None = None) -> dict[str, Any]:
     fallthrough would silently extend it into unowned CC bytes.
     """
     if rows is None:
-        decoder, _ = _base._decoder()
+        decoder, _ = _decoder()
         decoder.detail = True
-        decoded = list(decoder.disasm(bytes.fromhex(_RAW), _base._BASE + _ENTRY))
+        decoded = list(decoder.disasm(bytes.fromhex(_RAW), _BASE + _ENTRY))
     else:
         decoded = rows
     if len(decoded) != 43 or b"".join(
         bytes(row.bytes) for row in decoded
     ) != bytes.fromhex(_RAW):
         _bad("second child instruction decode differs")
-    by_rva = {row.address - _base._BASE: row for row in decoded}
+    by_rva = {row.address - _BASE: row for row in decoded}
     nodes = []
     for row in decoded:
-        rva = row.address - _base._BASE
+        rva = row.address - _BASE
         raw = bytes(row.bytes)
         _, writes = row.regs_access()
         names = {row.reg_name(value).lower() for value in writes}
         successor: list[int]
         if rva in (0x379E8F, 0x379E99, 0x379EEA):
-            target = int(row.operands[0].imm) - _base._BASE
+            target = int(row.operands[0].imm) - _BASE
             successor = sorted({target, rva + len(raw)})
             flow = "direct_conditional_branch"
         elif rva == 0x379EEC:
@@ -249,16 +389,23 @@ def _relocations(image: Any | None) -> dict[str, Any]:
                 "entry_raw": raw,
                 "type": "HIGHLOW",
                 "value_va": _hex(value),
-                "value_rva": _hex(value - _base._BASE),
+                "value_rva": _hex(value - _BASE),
             }
             for site, at, file, value, raw in _RELOCS
         ],
     }
 
 
+def _register_calls() -> list[dict[str, Any]]:
+    return [
+        {"register": name, "call_rvas": ["0x00379eb2"] if name == "ESI" else []}
+        for name in _REGISTER_NAMES
+    ]
+
+
 def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[str, Any]:
     _target(facts)
-    edges = _base._edges(facts)
+    edges = _edges(facts)
     functions = _atlas_functions(facts)
     outgoing = []
     for site, target, raw in _OUTGOING:
@@ -276,13 +423,13 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
         outgoing.append(
             {
                 "role": "opaque_native_direct_edge",
-                "instruction": _base._instruction(site, raw),
+                "instruction": _instruction(site, raw),
                 "source_entry_rva": _hex(_ENTRY),
                 "target_entry_rva": _hex(target),
                 "target_rva": _hex(target),
                 "target_atlas_record_sha256": atlas_record_sha256(function),
                 "callee_behavior_opaque": True,
-                "ghidra_declared_direct_edge": _base._edge(edge),
+                "ghidra_declared_direct_edge": _edge(edge),
             }
         )
     if {
@@ -297,12 +444,12 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
         (0x379EC9, "8b35283f8900", 0x893F28),
         (0x379ED4, "333580708b00", 0x8B7080),
     ):
-        rva = va - _base._BASE
+        rva = va - _BASE
         backed = rva == 0x493F28
         data.append(
             {
                 "role": "opaque_absolute_memory_data_address_syntax",
-                "instruction": _base._instruction(site, raw),
+                "instruction": _instruction(site, raw),
                 "operand_class": "absolute_memory",
                 "operand_index": 1,
                 "operand_access": "read",
@@ -323,13 +470,13 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
     controls = [
         {
             "role": "opaque_register_indirect_call",
-            "instruction": _base._instruction(0x379EB2, "ffd6"),
+            "instruction": _instruction(0x379EB2, "ffd6"),
             "register": "esi",
             "contents_or_runtime_behavior_opaque": True,
         },
         {
             "role": "opaque_absolute_memory_indirect_control_syntax",
-            "instruction": _base._instruction(0x379EAC, "ff1580657d00"),
+            "instruction": _instruction(0x379EAC, "ff1580657d00"),
             "control_syntax": "call_absolute_memory",
             "operand_class": "absolute_memory",
             "operand_index": 0,
@@ -341,7 +488,7 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
     data.append(
         {
             "role": "opaque_absolute_memory_rdata_control_slot_syntax",
-            "instruction": _base._instruction(0x379EAC, "ff1580657d00"),
+            "instruction": _instruction(0x379EAC, "ff1580657d00"),
             "operand_class": "absolute_memory",
             "operand_index": 0,
             "operand_access": "read",
@@ -372,13 +519,13 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
         "non_pe_immediate_literals": [
             {
                 "role": "opaque_data_literal",
-                "instruction": _base._instruction(0x379EB7, "83c414"),
+                "instruction": _instruction(0x379EB7, "83c414"),
                 "operand_index": 1,
                 "value_u32": "0x00000014",
             },
             {
                 "role": "opaque_data_literal",
-                "instruction": _base._instruction(0x379EDA, "83e11f"),
+                "instruction": _instruction(0x379EDA, "83e11f"),
                 "operand_index": 1,
                 "value_u32": "0x0000001f",
             },
@@ -390,17 +537,14 @@ def _native_calls(facts: Mapping[str, Any], image: Any | None = None) -> dict[st
         "bnd_prefixed_control_partition_complete": True,
         "opaque_interrupt_syntax": [],
         "opaque_interrupt_partition_complete": True,
-        "call_r32_audit": [
-            {"register": name, "call_rvas": ["0x00379eb2"] if name == "esi" else []}
-            for name in _base._REGISTER_NAMES
-        ],
+        "call_r32_audit": _register_calls(),
         "register_call_partition_complete": True,
         "base_relocation_scan": _relocations(image),
     }
 
 
 def _expected_scan(facts: Mapping[str, Any]) -> dict[str, Any]:
-    edges, functions = _base._edges(facts), _atlas_functions(facts)
+    edges, functions = _edges(facts), _atlas_functions(facts)
     rows = []
     for site, owner, raw in _INCOMING:
         edge, function = edges.get(site), functions.get(owner)
@@ -415,12 +559,12 @@ def _expected_scan(facts: Mapping[str, Any]) -> dict[str, Any]:
                 "owner_atlas_record_sha256": atlas_record_sha256(function),
                 "target_rva": _hex(_ENTRY),
                 "target_atlas_record_sha256": _ATLAS,
-                "target_va": _hex(_base._BASE + _ENTRY),
+                "target_va": _hex(_BASE + _ENTRY),
                 "operand_class": "immediate",
                 "operand_index": 0,
                 "use_class": "direct_call",
                 "call_form": "x86_relative_near_call_e8",
-                "ghidra_declared_direct_edge": _base._edge(edge),
+                "ghidra_declared_direct_edge": _edge(edge),
             }
         )
     owners = [
@@ -448,16 +592,16 @@ def _expected_scan(facts: Mapping[str, Any]) -> dict[str, Any]:
         }
     ]
     hashes = {
-        "references": _base._compact(rows),
-        "target_partition": _base._compact(target),
-        "owner_partition": _base._compact(owners),
-        "target_owner_partition": _base._compact(target_owner),
-        "target_reference_partition": _base._compact(target_ref),
+        "references": _compact(rows),
+        "target_partition": _compact(target),
+        "owner_partition": _compact(owners),
+        "target_owner_partition": _compact(target_owner),
+        "target_reference_partition": _compact(target_ref),
     }
     return {
         "target_rvas": [_hex(_ENTRY)],
-        "target_vas": [_hex(_base._BASE + _ENTRY)],
-        "scope": dict(_base._SCOPE),
+        "target_vas": [_hex(_BASE + _ENTRY)],
+        "scope": dict(_SCOPE),
         "references": rows,
         "target_partition": target,
         "owner_partition": owners,
@@ -492,7 +636,7 @@ def _scan(
             size = item.get("size")
             if type(size) is not int or size <= 0:
                 _bad("invalid atlas range")
-            rows = _base._decode_range(data, image, start, size, decoder)
+            rows = _decode_range(data, image, start, size, decoder)
             for row in rows:
                 for index, operand in enumerate(row.operands):
                     if operand.type == x86.X86_OP_IMM:
@@ -529,21 +673,53 @@ def _evidence(
     image: Any | None = None,
     scan: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    value = _ORIGINAL_EVIDENCE(
-        predecessor, direct, facts, rows=rows, image=image, scan=scan
-    )
-    body = value["function_body"]
-    body.update(
-        {
-            "role": "relationship_defined_direct_callee_pair_second_target_child_static_boundary",
-            "control_flow_graph_canonical_sha256": _CFG,
-            "call_r32_audit": [
-                {
-                    "register": name,
-                    "call_rvas": ["0x00379eb2"] if name == "ESI" else [],
-                }
-                for name in _base._REGISTER_NAMES
+    decoded = _decode() if rows is None else rows
+    raw = b"".join(bytes(row.bytes) for row in decoded)
+    if raw != bytes.fromhex(_RAW) or hashlib.sha256(raw).hexdigest() != _BODY:
+        _bad("child body differs")
+    _target(facts)
+    expected_scan = _expected_scan(facts)
+    received_scan = expected_scan if scan is None else dict(scan)
+    if not _same(received_scan, expected_scan):
+        _bad("target-reference receipt differs")
+    parent = _parent(predecessor, facts)
+    if parent[0]["instruction"]["rva"] not in {
+        row["instruction_rva"] for row in received_scan["references"]
+    }:
+        _bad("predecessor edge does not join scan")
+    value = {
+        "schema_version": SCHEMA_VERSION,
+        "analysis_kind": ANALYSIS_KIND,
+        "supersedes": dict(_SUPERSEDES),
+        "build_identity": dict(
+            _mapping(facts.get("identity"), "program facts identity")
+        ),
+        **_preflight(predecessor, direct, facts),
+        "decoder": {
+            "name": "capstone",
+            "version": SUPPORTED_CAPSTONE_VERSION,
+            "architecture": "x86",
+            "mode_bits": 32,
+            "sealed_instruction_count": 43,
+            "register_call_encoding_audit": [
+                {"register": name, "encoding": f"ff{0xD0 + index:02x}"}
+                for index, name in enumerate(_REGISTER_NAMES)
             ],
+        },
+        "function_body": {
+            "role": "relationship_defined_direct_callee_pair_second_target_child_static_boundary",
+            "entry_rva": _hex(_ENTRY),
+            "atlas_record_sha256": _ATLAS,
+            "body_size": _SIZE,
+            "body_sha256": _BODY,
+            "range_start_rva": _hex(_ENTRY),
+            "range_size": _SIZE,
+            "control_flow_graph_canonical_sha256": _CFG,
+            "reviewed_points": _points(decoded),
+            "direct_lua_calls": [],
+            "staged_lua_dispatches": [],
+            "call_r32_audit": _register_calls(),
+            "register_call_partition_complete": True,
             "ghidra_analysis_metadata": {
                 "name": "FUN_00779e77",
                 "namespace": "Global",
@@ -551,125 +727,76 @@ def _evidence(
                 "thunk": False,
                 "metadata_only": True,
             },
-        }
-    )
-    value["decoder"]["sealed_instruction_count"] = 43
-    value["method"][
-        "structural_boundary"
-    ] = "The receipt seals 122 decoded PE bytes, three opaque direct edges, two opaque indirect controls, four PE address operands including a raw-backed rdata control slot, four HIGHLOW sites, one declared predecessor edge, and an exhaustive all-operand atlas frontier."
-    value["method"]["not_claimed"] = [
-        "CRT, assertion, security-cookie, Watson, CFG-guard, ABI, purpose, source identity, input, output, behavior, success, failure, or normal-return semantics",
-        "a noreturn property for the final E8 whose syntactic fallthrough lies outside the declared atlas body",
-        "runtime identity, target, invocation, ordering, frequency, mutation, or effects for either indirect control",
-        "contents or runtime meaning of the PE-address operands or the raw .rdata control-slot initializer",
-        "computed, data, un-atlased, generated, runtime-fabricated, dynamic, or Lua-side references",
-    ]
-    value["summary"].update(
-        {
-            "reviewed_target_bytes": 122,
-            "sealed_instruction_count": 43,
-            "sealed_control_flow_graph_node_count": 43,
-            "sealed_control_flow_graph_edge_count": value["control_flow_graph"][
-                "edge_count"
+            "semantic_facts": {
+                "relationship_defined_only": True,
+                "analysis_labels_opaque": True,
+                "source_semantic_names_assigned": False,
+                "runtime_or_success_claimed": False,
+            },
+        },
+        "control_flow_graph": _graph(decoded),
+        "predecessor_parent_edges": parent,
+        "native_calls": _native_calls(facts, image),
+        "whole_atlas_reference_scan": received_scan,
+        "method": {
+            "not_claimed": [
+                "CRT, assertion, security-cookie, Watson, CFG-guard, ABI, purpose, "
+                "source identity, input, output, behavior, success, failure, or "
+                "normal-return semantics",
+                "a noreturn property for the final E8 whose syntactic fallthrough "
+                "lies outside the declared atlas body",
+                "runtime identity, target, invocation, ordering, frequency, mutation, "
+                "or effects for either indirect control",
+                "contents or runtime meaning of the PE-address operands or the raw "
+                ".rdata control-slot initializer",
+                "computed, data, un-atlased, generated, runtime-fabricated, dynamic, "
+                "or Lua-side references",
             ],
-            "native_direct_edge_count": 3,
+            "structural_boundary": "The receipt seals 122 decoded PE bytes, three opaque direct "
+            "edges, two opaque indirect controls, four PE address operands "
+            "including a raw-backed rdata control slot, four HIGHLOW "
+            "sites, one declared predecessor edge, and an exhaustive "
+            "all-operand atlas frontier.",
+        },
+        "summary": {
+            "bnd_prefixed_control_syntax_count": 0,
             "call_r32_count": 1,
-            "opaque_indirect_control_count": 2,
-            "import_and_iat_body_control_count": 0,
+            "direct_lua_call_count": 0,
             "highlow_relocation_site_count": 4,
+            "import_and_iat_body_control_count": 0,
+            "native_direct_edge_count": 3,
             "non_pe_immediate_literal_count": 2,
+            "opaque_indirect_control_count": 2,
+            "opaque_interrupt_syntax_count": 0,
             "pe_address_operand_count": 4,
+            "reviewed_target_bytes": 122,
+            "reviewed_target_count": 1,
+            "schema_violations": 0,
+            "sealed_control_flow_graph_count": 1,
+            "sealed_control_flow_graph_edge_count": 44,
+            "sealed_control_flow_graph_node_count": 43,
+            "sealed_instruction_count": 43,
+            "segment_qualified_memory_syntax_count": 0,
+            "staged_lua_dispatch_count": 0,
             "target_reference_count": 2,
-            "target_reference_owner_count": 2,
             "target_reference_direct_call_count": 2,
-        }
-    )
+            "target_reference_memory_operand_count": 0,
+            "target_reference_other_address_count": 0,
+            "target_reference_owner_count": 2,
+        },
+    }
     return value
 
 
-_ORIGINAL_EVIDENCE = _base._evidence
-
-
-@contextmanager
-def _configured() -> Iterator[None]:
-    values = {
-        name: getattr(_base, name)
-        for name in (
-            "ANALYSIS_KIND",
-            "VERIFICATION_KIND",
-            "STRUCTURE_VERIFICATION_KIND",
-            "_ENTRY",
-            "_SIZE",
-            "_RAW",
-            "_BODY",
-            "_ATLAS",
-            "_CFG",
-            "_PREDECESSOR",
-            "_PARENT",
-            "_OUTGOING",
-            "_INCOMING",
-            "_target",
-            "_parent",
-            "_decode",
-            "_graph",
-            "_native_calls",
-            "_expected_scan",
-            "_scan",
-            "_evidence",
-        )
-    }
+def _normalize(operation: Any) -> Any:
     try:
-        (
-            _base.ANALYSIS_KIND,
-            _base.VERIFICATION_KIND,
-            _base.STRUCTURE_VERIFICATION_KIND,
-        ) = (ANALYSIS_KIND, VERIFICATION_KIND, STRUCTURE_VERIFICATION_KIND)
-        (
-            _base._ENTRY,
-            _base._SIZE,
-            _base._RAW,
-            _base._BODY,
-            _base._ATLAS,
-            _base._CFG,
-            _base._PREDECESSOR,
-            _base._PARENT,
-            _base._OUTGOING,
-            _base._INCOMING,
-        ) = (
-            _ENTRY,
-            _SIZE,
-            _RAW,
-            _BODY,
-            _ATLAS,
-            _CFG,
-            _PREDECESSOR,
-            _PARENT,
-            _OUTGOING,
-            _INCOMING,
-        )
-        (
-            _base._target,
-            _base._parent,
-            _base._decode,
-            _base._graph,
-            _base._native_calls,
-            _base._expected_scan,
-            _base._scan,
-            _base._evidence,
-        ) = (
-            _target,
-            _parent,
-            _decode,
-            _graph,
-            _native_calls,
-            _expected_scan,
-            _scan,
-            _evidence,
-        )
-        yield
-    finally:
-        for name, value in values.items():
-            setattr(_base, name, value)
+        return operation()
+    except NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError:
+        raise
+    except Exception as exc:
+        raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
+            str(exc)
+        ) from exc
 
 
 def build_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary(
@@ -680,33 +807,66 @@ def build_native_assertion_helper_first_callee_direct_callee_pair_second_target_
     *,
     inventory: Mapping[str, Any],
 ) -> dict[str, Any]:
-    try:
-        with _configured():
-            return _base.build_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary(
-                executable, predecessor, direct, facts, inventory=inventory
-            )
-    except NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError:
-        raise
-    except Exception as exc:
-        raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
-            str(exc)
-        ) from exc
+    def run() -> dict[str, Any]:
+        for value, label in (
+            (predecessor, "predecessor"),
+            (direct, "direct"),
+            (facts, "facts"),
+            (inventory, "inventory"),
+        ):
+            _validate_json_tree(value, label)
+        prerequisite = validate_native_lua_direct_call_census(
+            executable, direct, facts, inventory=inventory
+        )
+        if (
+            prerequisite.get("status") != "verified"
+            or prerequisite.get("evidence_sha256") != _DIRECT
+        ):
+            _bad("direct-call exact prerequisite failed")
+        data, image, digest = _load_executable(executable)
+        if digest != _EXE or image.image_base != _BASE:
+            _bad("executable identity or image base differs")
+        offset = image.rva_to_file_offset(_ENTRY)
+        if offset is None or data[offset : offset + _SIZE] != bytes.fromhex(_RAW):
+            _bad("executable child bytes differ")
+        decoder, _ = _decoder()
+        result = _evidence(
+            predecessor,
+            direct,
+            facts,
+            rows=_decode(data[offset : offset + _SIZE]),
+            image=image,
+            scan=_scan(data, image, decoder, facts),
+        )
+        replay, replay_image, replay_digest = _load_executable(executable)
+        if (
+            replay_digest != digest
+            or replay != data
+            or replay_image.image_base != _BASE
+        ):
+            _bad("executable changed during exact rebuild")
+        _assert_publication_safe(result)
+        validate_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_structure(
+            result, predecessor, direct, facts
+        )
+        return result
+
+    return _normalize(run)
 
 
 def encode_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary(
     value: Mapping[str, Any],
 ) -> str:
-    try:
-        with _configured():
-            return _base.encode_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary(
-                value
-            )
-    except NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError:
-        raise
-    except Exception as exc:
-        raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
-            str(exc)
-        ) from exc
+    return _normalize(
+        lambda: json.dumps(
+            _mapping(value, "encoded evidence"),
+            sort_keys=True,
+            indent=2,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    )
 
 
 def validate_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_structure(
@@ -715,17 +875,27 @@ def validate_native_assertion_helper_first_callee_direct_callee_pair_second_targ
     direct: Mapping[str, Any],
     facts: Mapping[str, Any],
 ) -> dict[str, Any]:
-    try:
-        with _configured():
-            return _base.validate_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary_structure(
-                evidence, predecessor, direct, facts
-            )
-    except NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError:
-        raise
-    except Exception as exc:
-        raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
-            str(exc)
-        ) from exc
+    def run() -> dict[str, Any]:
+        _validate_json_tree(evidence, "evidence")
+        prerequisite = validate_native_lua_direct_call_structure(direct, facts)
+        if (
+            prerequisite.get("status") != "structurally_verified"
+            or prerequisite.get("evidence_sha256") != _DIRECT
+        ):
+            _bad("direct-call structural prerequisite failed")
+        if not _same(evidence, _evidence(predecessor, direct, facts)):
+            _bad("evidence structure differs")
+        _assert_publication_safe(evidence)
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "analysis_kind": STRUCTURE_VERIFICATION_KIND,
+            "status": "structurally_verified",
+            "build_identity": dict(evidence["build_identity"]),
+            "evidence_sha256": _canonical_sha256(evidence),
+            "summary": dict(evidence["summary"]),
+        }
+
+    return _normalize(run)
 
 
 def validate_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary(
@@ -737,14 +907,20 @@ def validate_native_assertion_helper_first_callee_direct_callee_pair_second_targ
     *,
     inventory: Mapping[str, Any],
 ) -> dict[str, Any]:
-    try:
-        with _configured():
-            return _base.validate_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary(
-                executable, evidence, predecessor, direct, facts, inventory=inventory
-            )
-    except NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError:
-        raise
-    except Exception as exc:
-        raise NativeAssertionHelperFirstCalleeDirectCalleePairSecondTargetChildStaticBoundaryError(
-            str(exc)
-        ) from exc
+    def run() -> dict[str, Any]:
+        _validate_json_tree(evidence, "evidence")
+        rebuilt = build_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary(
+            executable, predecessor, direct, facts, inventory=inventory
+        )
+        if not _same(evidence, rebuilt):
+            _bad("evidence differs from exact rebuild")
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "analysis_kind": VERIFICATION_KIND,
+            "status": "verified",
+            "build_identity": dict(rebuilt["build_identity"]),
+            "evidence_sha256": _canonical_sha256(rebuilt),
+            "summary": dict(rebuilt["summary"]),
+        }
+
+    return _normalize(run)

@@ -1116,7 +1116,78 @@ unlinks, removes, renames, replaces, or truncates a pathname. CRT identity,
 source purpose, ABI, inputs, outputs, data and IAT contents, runtime
 reachability, effects, normal return, computed or dynamic references,
 un-atlased code, Lua-side references, and all six child behaviors remain
-unproved. The pair's second child at `0x00379e77` remains opaque.
+unproved. The pair's second child now has the structural receipt below.
+
+## Native assertion-helper direct-callee pair second-target child boundary
+
+`scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary.py`
+owns its build, validation, encoding, and immutable writer machinery without
+reconfiguring or delegating to the first-child module. The active artifact is
+`windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json`, schema 2,
+with analysis kind `pe_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2`.
+
+It canonical-pins the paired predecessor and rejoins exact parent edge
+`0x00379ef9 -> 0x00379e77` from owner `0x00379ef2`. It seals
+`[0x00379e77,0x00379ef1)`: 122 bytes, 43 instruction points, and a 43-node /
+44-edge CFG. Three direct native edges lead to `0x0038edb6`, `0x003574ca`,
+and `0x00379f1f`; their behavior remains opaque. The final `E8` at
+`0x00379eec` ends the declared body, so the finite graph has no fallthrough
+there. This does not prove that the callee never returns.
+
+Two opaque indirect controls use register ESI at `0x00379eb2` and an
+absolute-memory slot at `0x00379eac`. The latter reads raw-backed,
+non-writable `.rdata` VA `0x007d6580` / RVA `0x003d6580`, exactly at the
+exclusive end of the IAT directory; it is not an import binding. Two data
+operands name raw-backed writable `.data` RVA `0x00493f28`; another names
+virtual-only `.data` RVA `0x004b7080`. Together with the control slot these
+make four PE-address operands and four HIGHLOW sites. Two ordinary literals
+remain opaque. The all-operand scan of 25,312 functions, 25,490 ranges,
+3,735,718 bytes, and 1,153,814 instructions finds exactly two target-entry
+references from two owners, both immediate `E8` calls including the parent.
+
+The original schema-1 artifact remains preserved. Its body register-call audit
+correctly recorded ESI, but its duplicate `native_calls.call_r32_audit` omitted
+that site due to a case-sensitive generator comparison. Schema 2 corrects only
+that audit plus schema/kind and `supersedes` provenance. The executable, body,
+CFG, references, and other facts are unchanged. Both active register audits
+agree; the active validator rejects the legacy inconsistent receipt. This
+correction makes no semantic or coverage promotion.
+
+The active pretty-printed file SHA-256 is
+`9d5def6e41d69c2e2e231110c494f8a9f0e763c51b2df67102a73f133d27c1b5`;
+its canonical JSON SHA-256 is
+`918628e05e4579a40127416853ed5e1af91fa6516e86798a48107a65f433be19`.
+Legacy raw and canonical hashes remain, respectively,
+`25b174666130d3a5120dc4f01a66cdf3c5cdf657dd9010a2ba89f4137c902d0e` and
+`149115c259e411889adc3acee6bccb5c84a09b7ac8acafa0060726d5ee3703ed`.
+
+Build and verify the normalized artifact with:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --direct-callee-pair-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json
+
+python -X utf8 scripts/itb_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --direct-callee-pair-static-boundary data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json
+```
+
+For PE-free consistency validation, use `verify-structure` with the same
+predecessor, direct-call, program-facts, and evidence arguments, omitting
+`--executable` and `--inventory`. Structural consistency is not binary proof.
+The writer retains content-addressed staging and atomic no-overwrite hard-link
+publication, with no pathname deletion or replacement. CRT identity, ABI,
+source purpose, runtime execution, data contents, indirect targets, callee
+behavior, and normal-return semantics remain unproved.
 
 ## Native assertion-helper second-callee static boundary
 

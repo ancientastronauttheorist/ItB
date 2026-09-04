@@ -449,10 +449,28 @@ until core engine semantics are reconstructed.
   the canonical JSON SHA-256 is
   `314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc`.
   CRT identity, ABI, behavior, runtime reachability, child semantics, and
-  normal return remain unproved. The pair's second child at `0x00379e77`
-  remains opaque.
-  The dependent assertion-helper second-callee boundary canonical-pins that
-  receipt and independently rejoins exact edge
+  normal return remain unproved.
+  The pair's second child now has a dependent schema-2 static boundary. It
+  rejoins `0x00379ef9 -> 0x00379e77` and seals 122 bytes, 43 instruction
+  points, and a 43-node / 44-edge CFG. Three outgoing direct edges and two
+  indirect controls remain behaviorally opaque. The absolute-memory control
+  slot at RVA `0x003d6580` is at the exclusive end of the IAT and belongs to
+  raw-backed `.rdata`, not an import. Four PE-address operands, four HIGHLOW
+  sites, two ordinary literals, and two incoming references from two owners
+  are pinned. The final E8's terminal graph node is a declared-body boundary,
+  not a no-return claim. Schema 2 corrects a case-sensitive ESI omission in the
+  duplicate native-call audit; the immutable schema-1 receipt remains retained
+  and hash-bound by `supersedes`. The standalone validator and writer no longer
+  mutate first-child module globals. The active file SHA-256 is
+  `9d5def6e41d69c2e2e231110c494f8a9f0e763c51b2df67102a73f133d27c1b5`;
+  its canonical JSON SHA-256 is
+  `918628e05e4579a40127416853ed5e1af91fa6516e86798a48107a65f433be19`.
+  Both immediate pair-child structures are now closed; their callee semantics
+  and the whole assertion-helper graph are not. CRT identity, ABI, runtime
+  reachability, indirect targets, child behavior, and normal return remain
+  unproved.
+  The dependent assertion-helper second-callee boundary canonical-pins the
+  assertion-helper parent receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction
   points, and a 2-node / 1-edge CFG whose final `ret` remains terminal syntax,
   not a normal-return claim. The declared outgoing-native, indirect-control,
