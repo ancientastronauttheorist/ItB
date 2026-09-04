@@ -1261,6 +1261,81 @@ python -X utf8 scripts/itb_native_assertion_helper_second_child_callee_frontier.
 For `verify-structure`, pass the five source receipts and `--evidence`, and
 omit `--executable` and `--inventory`.
 
+## Assertion descendant pair
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_descendant_pair.json`
+has schema 1 and analysis kind `pe_native_assertion_helper_descendant_pair`.
+
+The paired receipt consumes the preceding frontier's two native edges:
+`0x00379f21 -> 0x0039cb92` and `0x00379f3a -> 0x00379d28`, both from
+`0x00379f1f`. Source edges, target atlas identities, and exact caller bytes
+are rechecked. The source frontier is canonical-pinned; its entire original
+analysis is not rerun.
+
+Target `0x0039cb92` spans six bytes and one instruction. Its single-node CFG
+has no local successor: the instruction jumps through IAT slot RVA
+`0x003d6010`, bound by raw descriptor/ILT/IAT/import-name hashes to metadata
+spelling `IsProcessorFeaturePresent`. This proves an import transfer boundary,
+not imported behavior or a reviewed compiler/runtime exclusion.
+
+Target `0x00379d28` spans 315 bytes and 78 instructions, with a 78-node /
+81-edge instruction CFG. Five native calls reach three distinct targets:
+`0x003586b6` twice, `0x00370960` twice, and `0x003574ca` once. Three body-local
+import calls bind metadata spellings `IsDebuggerPresent`,
+`SetUnhandledExceptionFilter`, and `UnhandledExceptionFilter`. Four
+conditional branches and one return are retained as syntax. Calls have only
+possible fallthrough edges; runtime return and exception semantics are unproved.
+
+Across both bodies, 124 explicit operands include 44 memory expressions,
+ten ordinary immediates, five absolute PE-address operands, and six
+segment-register source operands. The SS/CS/DS/ES/FS/GS operands are stored
+into EBP-relative word destinations; there are no segment-relative memory
+dereferences in these bodies. Decoder access flags and memory-shaped operands
+remain syntax: in particular, LEA does not establish a runtime memory read.
+Five HIGHLOW sites cover the mapped data operand and four import controls.
+
+The complete atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. The six-byte target has six incoming references
+from six owners; the larger target has two from two owners. Their union is
+eight references from six owners, all immediate five-byte calls. Both source
+edges occur in that incoming frontier. Global IAT consumers, computed and
+un-atlased references, native child behavior, imported implementations, runtime
+context/exception-record identity, and accounting promotions remain outside
+this proof.
+
+Exact validation verifies the PE and direct-call census, caller and target
+body bytes, decoded controls/operands, raw import and relocation witnesses,
+and complete atlas entry references. PE-free validation recognizes the
+hash-pinned normalized receipt and recomputes source/parent/graph/operand/count
+joins; it does not independently prove the binary. Publication contains no
+instruction bytes or disassembly and preserves immutable no-overwrite staging.
+The file SHA-256 is
+`0c7fbea632343e29a05e8e9ec67f695021bbc8154e2bc7d2661e6ac8c859c1bc`;
+canonical JSON SHA-256 is
+`47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b`.
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_descendant_pair.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --frontier data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_descendant_pair.json
+
+python -X utf8 scripts/itb_native_assertion_helper_descendant_pair.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --frontier data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_descendant_pair.json
+
+```
+
+For `verify-structure`, keep the three source arguments and `--evidence` and
+omit `--executable` and `--inventory`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

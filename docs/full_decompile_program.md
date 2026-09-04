@@ -484,8 +484,24 @@ until core engine semantics are reconstructed.
   `19a5d65db948083b985d0eca8757db5c4663d5892decdef69a1c87fb6b5de9f3`;
   canonical JSON SHA-256 is
   `39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb`.
-  The parent's indirect controls, new targets `0x0039cb92` and `0x00379d28`,
-  runtime behavior, and ownership/exclusion promotions remain open.
+  The parent's indirect controls, runtime behavior, and ownership/exclusion
+  promotions remain open. The two target bodies are now sealed by the
+  descendant-pair receipt: `0x0039cb92` is a six-byte, one-instruction import
+  jump with no local CFG edge; `0x00379d28` is a 315-byte, 78-instruction body
+  with 81 CFG edges. Together they retain five native calls, four import
+  controls, 124 explicit operands, and five HIGHLOW sites. Six segment-register
+  source operands use ordinary EBP-relative destinations, not segment-relative
+  dereferences; decoder access flags and LEA operands do not establish runtime
+  memory effects. The complete atlas scan finds eight incoming references
+  across six owners (six/six for the thunk and two/two for the larger body).
+  Both source edges are rechecked against caller bytes and incoming records.
+  The artifact raw SHA-256 is
+  `0c7fbea632343e29a05e8e9ec67f695021bbc8154e2bc7d2661e6ac8c859c1bc`;
+  canonical JSON SHA-256 is
+  `47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b`.
+  Imported implementations, the larger body's three native targets, context
+  identity, exception behavior, and ownership/exclusion proofs remain outside
+  this structural receipt.
   The dependent assertion-helper second-callee boundary canonical-pins the
   assertion-helper parent receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

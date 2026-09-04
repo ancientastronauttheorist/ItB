@@ -519,6 +519,55 @@ the canonical JSON SHA-256 is
 Existing artifacts are unchanged. See `data/observatory/programs/README.md`
 for the exact verifier scope, hash-pinned structural validator, and commands.
 
+## Assertion descendant-pair artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_descendant_pair.json`
+seals the two direct native targets of the preceding frontier's new body.
+
+The paired receipt consumes the preceding frontier's two native edges:
+`0x00379f21 -> 0x0039cb92` and `0x00379f3a -> 0x00379d28`, both from
+`0x00379f1f`. Source edges, target atlas identities, and exact caller bytes
+are rechecked. The source frontier is canonical-pinned; its entire original
+analysis is not rerun.
+
+Target `0x0039cb92` spans six bytes and one instruction. Its single-node CFG
+has no local successor: the instruction jumps through IAT slot RVA
+`0x003d6010`, bound by raw descriptor/ILT/IAT/import-name hashes to metadata
+spelling `IsProcessorFeaturePresent`. This proves an import transfer boundary,
+not imported behavior or a reviewed compiler/runtime exclusion.
+
+Target `0x00379d28` spans 315 bytes and 78 instructions, with a 78-node /
+81-edge instruction CFG. Five native calls reach three distinct targets:
+`0x003586b6` twice, `0x00370960` twice, and `0x003574ca` once. Three body-local
+import calls bind metadata spellings `IsDebuggerPresent`,
+`SetUnhandledExceptionFilter`, and `UnhandledExceptionFilter`. Four
+conditional branches and one return are retained as syntax. Calls have only
+possible fallthrough edges; runtime return and exception semantics are unproved.
+
+Across both bodies, 124 explicit operands include 44 memory expressions,
+ten ordinary immediates, five absolute PE-address operands, and six
+segment-register source operands. The SS/CS/DS/ES/FS/GS operands are stored
+into EBP-relative word destinations; there are no segment-relative memory
+dereferences in these bodies. Decoder access flags and memory-shaped operands
+remain syntax: in particular, LEA does not establish a runtime memory read.
+Five HIGHLOW sites cover the mapped data operand and four import controls.
+
+The complete atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. The six-byte target has six incoming references
+from six owners; the larger target has two from two owners. Their union is
+eight references from six owners, all immediate five-byte calls. Both source
+edges occur in that incoming frontier. Global IAT consumers, computed and
+un-atlased references, native child behavior, imported implementations, runtime
+context/exception-record identity, and accounting promotions remain outside
+this proof.
+
+The raw artifact SHA-256 is
+`0c7fbea632343e29a05e8e9ec67f695021bbc8154e2bc7d2661e6ac8c859c1bc`;
+the canonical JSON SHA-256 is
+`47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b`.
+See `data/observatory/programs/README.md` for exact commands and validation
+scope. Prior artifacts are unchanged; no runtime or ownership promotion is made.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

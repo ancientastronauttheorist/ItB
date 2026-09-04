@@ -1,0 +1,4214 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_descendant_pair",
+  "base_relocations": {
+    "directory": {
+      "file_offset": "0x00510a00",
+      "rva": "0x00539000",
+      "sha256": "06630f9047636fb68afba81d89dbc1ef2f21c459b684d57d1d2bcaeb3750dfa3",
+      "size": 218648
+    },
+    "sites": [
+      {
+        "entry_file_offset": "0x00532e86",
+        "entry_sha256": "3ba8ed19cbedd2ebf5ccde18b2fed4a9c78d83e21b9f13f0680579dd8a96fb4d",
+        "operand": {
+          "file_offset": "0x00379134",
+          "rva": "0x00379d34",
+          "sha256": "fa076b4b92660a20e9e57576dbfa92ed46a7a84880306d3880ce14a86a5ea45e",
+          "size": 4
+        },
+        "owner_entry_rva": "0x00379d28",
+        "site_rva": "0x00379d34",
+        "type": "HIGHLOW",
+        "value_va": "0x00893f28"
+      },
+      {
+        "entry_file_offset": "0x00532e88",
+        "entry_sha256": "ab2cd774889293a061562883ef36019d203ac809e3562e4571907e991a8e6171",
+        "operand": {
+          "file_offset": "0x00379222",
+          "rva": "0x00379e22",
+          "sha256": "713ae8dd5ce8aae23ee64b7e011e1ca7c541a12cedf94a73352be9a3952daf3e",
+          "size": 4
+        },
+        "owner_entry_rva": "0x00379d28",
+        "site_rva": "0x00379e22",
+        "type": "HIGHLOW",
+        "value_va": "0x007d6008"
+      },
+      {
+        "entry_file_offset": "0x00532e8a",
+        "entry_sha256": "d5668bf805c0dc75b27717667b024f5639b598c0f1fb60a30a3e5aab02e73314",
+        "operand": {
+          "file_offset": "0x0037922c",
+          "rva": "0x00379e2c",
+          "sha256": "661115d3e6637565147c886dccf80a201db4046a5f553a11f14fb15bc5ef0334",
+          "size": 4
+        },
+        "owner_entry_rva": "0x00379d28",
+        "site_rva": "0x00379e2c",
+        "type": "HIGHLOW",
+        "value_va": "0x007d60e4"
+      },
+      {
+        "entry_file_offset": "0x00532e8c",
+        "entry_sha256": "4012a29077bae9483c84948ce81c5648612d5ac8e81c704cfcd4df7ed7c04e32",
+        "operand": {
+          "file_offset": "0x00379239",
+          "rva": "0x00379e39",
+          "sha256": "19a3ed6e2a2d61dddf87bdf9f92badcd611031d1bbe8416a2bf1fb1fc83af95c",
+          "size": 4
+        },
+        "owner_entry_rva": "0x00379d28",
+        "site_rva": "0x00379e39",
+        "type": "HIGHLOW",
+        "value_va": "0x007d6018"
+      },
+      {
+        "entry_file_offset": "0x00533c02",
+        "entry_sha256": "958589cdfd6409fe8c6b9c7b410a6e28f7e8dc7fdf5da06c5b768cf8dcb6cae6",
+        "operand": {
+          "file_offset": "0x0039bf94",
+          "rva": "0x0039cb94",
+          "sha256": "4a746fc1822667d7a387ae3b38f4ace7fcb60d39c879c24e9d617b32a439a844",
+          "size": 4
+        },
+        "owner_entry_rva": "0x0039cb92",
+        "site_rva": "0x0039cb94",
+        "type": "HIGHLOW",
+        "value_va": "0x007d6010"
+      }
+    ]
+  },
+  "bodies": [
+    {
+      "analysis_metadata": {
+        "metadata_only": true,
+        "name": "___acrt_call_reportfault",
+        "name_source": "ANALYSIS",
+        "namespace": "Global",
+        "thunk": false
+      },
+      "atlas_record_sha256": "f965c1e4051ac1d32b50a9d5d1cbc494aa0071606fad8bf2b34cdcc58f27bb9b",
+      "body_sha256": "636d0da8095430211856a90a00a74b292186f6931c9043a1d9fd26b44351c95a",
+      "body_size": 315,
+      "control_flow_graph": {
+        "edge_count": 81,
+        "entry_rva": "0x00379d28",
+        "node_count": 78,
+        "nodes": [
+          {
+            "decoder_reads_registers": [
+              "edi"
+            ],
+            "decoder_writes_registers": [
+              "edi"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d28",
+            "sha256": "a904529e1b089420ec3656cc6483691fb43d23dd29a47f2fb7602832df5f2489",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d2a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d2a",
+            "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379d2b"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "ebp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d2b",
+            "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d2d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "eflags",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d2d",
+            "sha256": "397a9f37c0d3cf66aab461b8d11394263bbd397f915dc755df26cf8c23ccfa3f",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d33"
+            ]
+          },
+          {
+            "decoder_reads_registers": [],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d33",
+            "sha256": "fb411162b29d74c22c65bab2722f82b7eb48e520f5e230139a6fdff51960ded6",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379d38"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax",
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d38",
+            "sha256": "35dc60dbffd5cdb36769afdf5363ea9e2a99611cf0ac9efad038ae97f2a3cf93",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d3a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d3a",
+            "sha256": "24e6162364023f42472be1fcd86d6459122d282c57d85e6f97109cc58a36f95d",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379d3d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d3d",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4,
+            "successor_rvas": [
+              "0x00379d41"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "edi",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d41",
+            "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379d42"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eflags"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "direct_conditional_branch",
+            "operand_size_override": false,
+            "rva": "0x00379d42",
+            "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d44",
+              "0x00379d4d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d44",
+            "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379d47"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eip",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d47",
+            "sha256": "c84e67fd01a4eb120e64b81a136156bdeadec65720e32404a6b3fe930cb7a0f7",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379d4c"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "ecx",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d4c",
+            "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379d4d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d4d",
+            "sha256": "888e7f20cbb913bfbb5862de2ef958f3ae8d17cab73355191d4b93ae2f85ac21",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d4f"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d4f",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d55"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d55",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d57"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d57",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379d58"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eip",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d58",
+            "sha256": "0e146ad61272b2d36bf919b9e2c5efd71b848d6b9689befef7b9ec2aa701515e",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379d5d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d5d",
+            "sha256": "ed0944fc0e47105a583da7a2a7e9ed8ab401f6b4d7564531ec524a5ed0717305",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379d62"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d62",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d68"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d68",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379d6a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d6a",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379d6b"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eip",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d6b",
+            "sha256": "40fe6a3c91a0716be17cfa7c420f2e94f0e9d07e10289661c672c2a18e67ae58",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379d70"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d70",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d76"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "eflags",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d76",
+            "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379d79"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d79",
+            "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d7f"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d7f",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d85"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d85",
+            "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d8b"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d8b",
+            "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d91"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "ecx"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d91",
+            "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d97"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "edx"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d97",
+            "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379d9d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "ebx"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379d9d",
+            "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379da3"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "esi"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379da3",
+            "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379da9"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "edi"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379da9",
+            "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379daf"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "ss"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379daf",
+            "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379db6"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "cs",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379db6",
+            "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379dbd"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ds",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379dbd",
+            "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379dc4"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "es"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379dc4",
+            "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379dcb"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "fs"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379dcb",
+            "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379dd2"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "gs"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": true,
+            "rva": "0x00379dd2",
+            "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+            "size": 7,
+            "successor_rvas": [
+              "0x00379dd9"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eflags",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379dd9",
+            "sha256": "6e3faf1e27d45fca70234ae8f6f0a734622cff8a6ea824b7f60d3ffafa2a4654",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379dda"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379dda",
+            "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379de0"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379de0",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379de3"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379de3",
+            "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379de9"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379de9",
+            "sha256": "2088c3cee97ccc1e7e6a184d129e7f742c5e6d683f58eb389d271017defa4130",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379dec"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379dec",
+            "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379df2"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379df2",
+            "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+            "size": 10,
+            "successor_rvas": [
+              "0x00379dfc"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379dfc",
+            "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379dff"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379dff",
+            "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e05"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e05",
+            "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379e08"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e08",
+            "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e0e"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e0e",
+            "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379e11"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e11",
+            "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e17"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e17",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379e1a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "ebp"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e1a",
+            "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e20"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e20",
+            "sha256": "2a8a65cc999adeb7ad3b8fdfe73d906e0119b25d37513d5624fda39070c21c15",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e26"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e26",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e28"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax"
+            ],
+            "decoder_writes_registers": [
+              "edi"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e28",
+            "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e2a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e2a",
+            "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e30"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eax"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e30",
+            "sha256": "c595964eb14981709d2fdf3741d2fad93222b5cb8bd455f1b64142ab778b10a0",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e36"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e36",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379e37"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e37",
+            "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+            "size": 6,
+            "successor_rvas": [
+              "0x00379e3d"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eax"
+            ],
+            "decoder_writes_registers": [
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e3d",
+            "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e3f"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eflags"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "direct_conditional_branch",
+            "operand_size_override": false,
+            "rva": "0x00379e3f",
+            "sha256": "608aa931e63de1eacbc8cf15780393212dd62677929bfbfb3f5c31b63e62a4df",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e41",
+              "0x00379e54"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "edi"
+            ],
+            "decoder_writes_registers": [
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e41",
+            "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e43"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eflags"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "direct_conditional_branch",
+            "operand_size_override": false,
+            "rva": "0x00379e43",
+            "sha256": "bb52e9e6db182172c9062587fc4bdd0a673150f95815e0bcbae120469101acdd",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e45",
+              "0x00379e54"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e45",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4,
+            "successor_rvas": [
+              "0x00379e49"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eflags"
+            ],
+            "decoder_writes_registers": [],
+            "flow_kind": "direct_conditional_branch",
+            "operand_size_override": false,
+            "rva": "0x00379e49",
+            "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e4b",
+              "0x00379e54"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e4b",
+            "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379e4e"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eip",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e4e",
+            "sha256": "21bd173780b6d17a31d4bd837aa120eb56a6db397e7dc07a6680d1646057189c",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379e53"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "ecx",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e53",
+            "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379e54"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "ecx"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e54",
+            "sha256": "c26455b636d391f60792bd918b33b4f0bf95e21475e4473858fbda23559bb8cd",
+            "size": 3,
+            "successor_rvas": [
+              "0x00379e57"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp",
+              "ecx"
+            ],
+            "decoder_writes_registers": [
+              "ecx",
+              "eflags"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e57",
+            "sha256": "3fa77304f6d8c860315d6fffb5134ce2f23be29771f6a0ebd8d01a9fa3379926",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e59"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "edi",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e59",
+            "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379e5a"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "eip",
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "call_possible_fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e5a",
+            "sha256": "36a64a8bc4046547a95ff8d03e91294c616d1077787414d7095dec8777cd642d",
+            "size": 5,
+            "successor_rvas": [
+              "0x00379e5f"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "ebp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e5f",
+            "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+            "size": 2,
+            "successor_rvas": [
+              "0x00379e61"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "ebp",
+              "esp"
+            ],
+            "flow_kind": "fallthrough",
+            "operand_size_override": false,
+            "rva": "0x00379e61",
+            "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+            "size": 1,
+            "successor_rvas": [
+              "0x00379e62"
+            ]
+          },
+          {
+            "decoder_reads_registers": [
+              "esp"
+            ],
+            "decoder_writes_registers": [
+              "esp"
+            ],
+            "flow_kind": "return_syntax",
+            "operand_size_override": false,
+            "rva": "0x00379e62",
+            "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+            "size": 1,
+            "successor_rvas": []
+          }
+        ]
+      },
+      "entry_rva": "0x00379d28",
+      "native_controls": {
+        "direct_calls": [
+          {
+            "behavior_opaque": true,
+            "declared_edge": {
+              "instruction_rva": "0x00379d47",
+              "source_entry_rva": "0x00379d28",
+              "target_entry_rva": "0x003586b6",
+              "target_name_sha256": "67b97e7a0176f221f91250c09462404363da5ee3521a580c63b3fd8e6508cdde",
+              "target_rva": "0x003586b6"
+            },
+            "instruction": {
+              "rva": "0x00379d47",
+              "sha256": "c84e67fd01a4eb120e64b81a136156bdeadec65720e32404a6b3fe930cb7a0f7",
+              "size": 5
+            },
+            "target_atlas_record_sha256": "487bf1f213ec3f1d5ef5a3f3ab4f5e9de1c7c3738a69edb7e0f810f12557ed7d",
+            "target_entry_rva": "0x003586b6"
+          },
+          {
+            "behavior_opaque": true,
+            "declared_edge": {
+              "instruction_rva": "0x00379d58",
+              "source_entry_rva": "0x00379d28",
+              "target_entry_rva": "0x00370960",
+              "target_name_sha256": "ce84eda1af2c430366d375027e94cc750357d49b679b42188ef1ff0d994a9afb",
+              "target_rva": "0x00370960"
+            },
+            "instruction": {
+              "rva": "0x00379d58",
+              "sha256": "0e146ad61272b2d36bf919b9e2c5efd71b848d6b9689befef7b9ec2aa701515e",
+              "size": 5
+            },
+            "target_atlas_record_sha256": "7daad6a811e51b3a97da0b3ffe13bd3bde971b8d8fdedb31e0c51732a6233be3",
+            "target_entry_rva": "0x00370960"
+          },
+          {
+            "behavior_opaque": true,
+            "declared_edge": {
+              "instruction_rva": "0x00379d6b",
+              "source_entry_rva": "0x00379d28",
+              "target_entry_rva": "0x00370960",
+              "target_name_sha256": "ce84eda1af2c430366d375027e94cc750357d49b679b42188ef1ff0d994a9afb",
+              "target_rva": "0x00370960"
+            },
+            "instruction": {
+              "rva": "0x00379d6b",
+              "sha256": "40fe6a3c91a0716be17cfa7c420f2e94f0e9d07e10289661c672c2a18e67ae58",
+              "size": 5
+            },
+            "target_atlas_record_sha256": "7daad6a811e51b3a97da0b3ffe13bd3bde971b8d8fdedb31e0c51732a6233be3",
+            "target_entry_rva": "0x00370960"
+          },
+          {
+            "behavior_opaque": true,
+            "declared_edge": {
+              "instruction_rva": "0x00379e4e",
+              "source_entry_rva": "0x00379d28",
+              "target_entry_rva": "0x003586b6",
+              "target_name_sha256": "67b97e7a0176f221f91250c09462404363da5ee3521a580c63b3fd8e6508cdde",
+              "target_rva": "0x003586b6"
+            },
+            "instruction": {
+              "rva": "0x00379e4e",
+              "sha256": "21bd173780b6d17a31d4bd837aa120eb56a6db397e7dc07a6680d1646057189c",
+              "size": 5
+            },
+            "target_atlas_record_sha256": "487bf1f213ec3f1d5ef5a3f3ab4f5e9de1c7c3738a69edb7e0f810f12557ed7d",
+            "target_entry_rva": "0x003586b6"
+          },
+          {
+            "behavior_opaque": true,
+            "declared_edge": {
+              "instruction_rva": "0x00379e5a",
+              "source_entry_rva": "0x00379d28",
+              "target_entry_rva": "0x003574ca",
+              "target_name_sha256": "7c59a082da6ddbc4047dc1186d8839d98d7afdde161916133a718017ee5562c7",
+              "target_rva": "0x003574ca"
+            },
+            "instruction": {
+              "rva": "0x00379e5a",
+              "sha256": "36a64a8bc4046547a95ff8d03e91294c616d1077787414d7095dec8777cd642d",
+              "size": 5
+            },
+            "target_atlas_record_sha256": "931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0",
+            "target_entry_rva": "0x003574ca"
+          }
+        ],
+        "import_controls": [
+          {
+            "behavior_opaque": true,
+            "binding": {
+              "descriptor": {
+                "file_offset": "0x0048dd30",
+                "rva": "0x0048ed30",
+                "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+                "size": 20
+              },
+              "iat_slot": {
+                "file_offset": "0x003d5008",
+                "rva": "0x003d6008",
+                "sha256": "91061d13c0615d24be040012f6dbddb2463e5402e0f855f0262fefaf4fa4a894",
+                "size": 4
+              },
+              "ilt_entry": {
+                "file_offset": "0x0048dd88",
+                "rva": "0x0048ed88",
+                "sha256": "91061d13c0615d24be040012f6dbddb2463e5402e0f855f0262fefaf4fa4a894",
+                "size": 4
+              },
+              "import_by_name": {
+                "file_offset": "0x0048fa34",
+                "rva": "0x00490a34",
+                "sha256": "2f1018c8a2ba142bd9cd75336f26d8ca3bf15ec484d68a68d4888f430d8c29e3",
+                "size": 20
+              },
+              "metadata": {
+                "evidence_class": "fact",
+                "hint": 768,
+                "iat_rva": "0x003d6008",
+                "library": "KERNEL32.dll",
+                "name": "IsDebuggerPresent",
+                "ordinal": null
+              },
+              "name_metadata_only": true
+            },
+            "control_kind": "call",
+            "instruction": {
+              "rva": "0x00379e20",
+              "sha256": "2a8a65cc999adeb7ad3b8fdfe73d906e0119b25d37513d5624fda39070c21c15",
+              "size": 6
+            },
+            "slot_rva": "0x003d6008"
+          },
+          {
+            "behavior_opaque": true,
+            "binding": {
+              "descriptor": {
+                "file_offset": "0x0048dd30",
+                "rva": "0x0048ed30",
+                "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+                "size": 20
+              },
+              "iat_slot": {
+                "file_offset": "0x003d50e4",
+                "rva": "0x003d60e4",
+                "sha256": "288d12d18ccaf7ffbb83acb8e302170e9bbcbcb7f0abed0d885b52b7b5e4695c",
+                "size": 4
+              },
+              "ilt_entry": {
+                "file_offset": "0x0048de64",
+                "rva": "0x0048ee64",
+                "sha256": "288d12d18ccaf7ffbb83acb8e302170e9bbcbcb7f0abed0d885b52b7b5e4695c",
+                "size": 4
+              },
+              "import_by_name": {
+                "file_offset": "0x0048f58e",
+                "rva": "0x0049058e",
+                "sha256": "ed0aa1cde363d40184a2d921355662ccb0ecd5c0dd532c7793429c7478dc3010",
+                "size": 30
+              },
+              "metadata": {
+                "evidence_class": "fact",
+                "hint": 1189,
+                "iat_rva": "0x003d60e4",
+                "library": "KERNEL32.dll",
+                "name": "SetUnhandledExceptionFilter",
+                "ordinal": null
+              },
+              "name_metadata_only": true
+            },
+            "control_kind": "call",
+            "instruction": {
+              "rva": "0x00379e2a",
+              "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+              "size": 6
+            },
+            "slot_rva": "0x003d60e4"
+          },
+          {
+            "behavior_opaque": true,
+            "binding": {
+              "descriptor": {
+                "file_offset": "0x0048dd30",
+                "rva": "0x0048ed30",
+                "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+                "size": 20
+              },
+              "iat_slot": {
+                "file_offset": "0x003d5018",
+                "rva": "0x003d6018",
+                "sha256": "3625f5da824068d558e712c0a25cf84d78677d759e65f2573d0dc86f8bfa6d3a",
+                "size": 4
+              },
+              "ilt_entry": {
+                "file_offset": "0x0048dd98",
+                "rva": "0x0048ed98",
+                "sha256": "3625f5da824068d558e712c0a25cf84d78677d759e65f2573d0dc86f8bfa6d3a",
+                "size": 4
+              },
+              "import_by_name": {
+                "file_offset": "0x0048f9d2",
+                "rva": "0x004909d2",
+                "sha256": "eb9dffa74b0280f1f033ad79ee889d7594b9ba15cad218e41a0801fed5c2baf8",
+                "size": 27
+              },
+              "metadata": {
+                "evidence_class": "fact",
+                "hint": 1235,
+                "iat_rva": "0x003d6018",
+                "library": "KERNEL32.dll",
+                "name": "UnhandledExceptionFilter",
+                "ordinal": null
+              },
+              "name_metadata_only": true
+            },
+            "control_kind": "call",
+            "instruction": {
+              "rva": "0x00379e37",
+              "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+              "size": 6
+            },
+            "slot_rva": "0x003d6018"
+          }
+        ],
+        "interrupts": [],
+        "partitions_complete_for_pinned_bodies": true,
+        "register_calls": [
+          {
+            "call_rvas": [],
+            "register": "EAX"
+          },
+          {
+            "call_rvas": [],
+            "register": "ECX"
+          },
+          {
+            "call_rvas": [],
+            "register": "EDX"
+          },
+          {
+            "call_rvas": [],
+            "register": "EBX"
+          },
+          {
+            "call_rvas": [],
+            "register": "ESP"
+          },
+          {
+            "call_rvas": [],
+            "register": "EBP"
+          },
+          {
+            "call_rvas": [],
+            "register": "ESI"
+          },
+          {
+            "call_rvas": [],
+            "register": "EDI"
+          }
+        ]
+      },
+      "operands": [
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d28",
+            "sha256": "a904529e1b089420ec3656cc6483691fb43d23dd29a47f2fb7602832df5f2489",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d28",
+            "sha256": "a904529e1b089420ec3656cc6483691fb43d23dd29a47f2fb7602832df5f2489",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d2a",
+            "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ebp",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d2b",
+            "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ebp",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d2b",
+            "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "esp",
+          "size": 4
+        },
+        {
+          "decoder_access": 3,
+          "instruction": {
+            "rva": "0x00379d2d",
+            "sha256": "397a9f37c0d3cf66aab461b8d11394263bbd397f915dc755df26cf8c23ccfa3f",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "esp",
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d2d",
+            "sha256": "397a9f37c0d3cf66aab461b8d11394263bbd397f915dc755df26cf8c23ccfa3f",
+            "size": 6
+          },
+          "kind": "immediate",
+          "operand_index": 1,
+          "size": 4,
+          "value_u32": "0x00000328"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d33",
+            "sha256": "fb411162b29d74c22c65bab2722f82b7eb48e520f5e230139a6fdff51960ded6",
+            "size": 5
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "absolute_pe_address": {
+            "contents_and_runtime_meaning_opaque": true,
+            "file_backed": true,
+            "file_offset": "0x00492128",
+            "rva": "0x00493f28",
+            "section_characteristics": "0xc0000040",
+            "section_name": ".data",
+            "section_rva": "0x00492000",
+            "section_writable": true,
+            "va": "0x00893f28"
+          },
+          "base": null,
+          "decoder_access": 1,
+          "displacement": 8994600,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d33",
+            "sha256": "fb411162b29d74c22c65bab2722f82b7eb48e520f5e230139a6fdff51960ded6",
+            "size": 5
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 3,
+          "instruction": {
+            "rva": "0x00379d38",
+            "sha256": "35dc60dbffd5cdb36769afdf5363ea9e2a99611cf0ac9efad038ae97f2a3cf93",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d38",
+            "sha256": "35dc60dbffd5cdb36769afdf5363ea9e2a99611cf0ac9efad038ae97f2a3cf93",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ebp",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d3a",
+            "sha256": "24e6162364023f42472be1fcd86d6459122d282c57d85e6f97109cc58a36f95d",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d3a",
+            "sha256": "24e6162364023f42472be1fcd86d6459122d282c57d85e6f97109cc58a36f95d",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 8,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d3d",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d3d",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4
+          },
+          "kind": "immediate",
+          "operand_index": 1,
+          "size": 4,
+          "value_u32": "0xffffffff"
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d41",
+            "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d42",
+            "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00779d4d"
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 8,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d44",
+            "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d47",
+            "sha256": "c84e67fd01a4eb120e64b81a136156bdeadec65720e32404a6b3fe930cb7a0f7",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x007586b6"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d4c",
+            "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ecx",
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d4d",
+            "sha256": "888e7f20cbb913bfbb5862de2ef958f3ae8d17cab73355191d4b93ae2f85ac21",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00000050"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d4f",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -800,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d4f",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d55",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00000000"
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d57",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d58",
+            "sha256": "0e146ad61272b2d36bf919b9e2c5efd71b848d6b9689befef7b9ec2aa701515e",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00770960"
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d5d",
+            "sha256": "ed0944fc0e47105a583da7a2a7e9ed8ab401f6b4d7564531ec524a5ed0717305",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x000002cc"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d62",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -720,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d62",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d68",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00000000"
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d6a",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d6b",
+            "sha256": "40fe6a3c91a0716be17cfa7c420f2e94f0e9d07e10289661c672c2a18e67ae58",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00770960"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d70",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -800,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d70",
+            "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 3,
+          "instruction": {
+            "rva": "0x00379d76",
+            "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "esp",
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379d76",
+            "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+            "size": 3
+          },
+          "kind": "immediate",
+          "operand_index": 1,
+          "size": 4,
+          "value_u32": "0x00000018"
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -808,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d79",
+            "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d79",
+            "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379d7f",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -720,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d7f",
+            "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -804,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d85",
+            "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d85",
+            "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -544,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d8b",
+            "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d8b",
+            "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -548,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d91",
+            "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d91",
+            "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ecx",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -552,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d97",
+            "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d97",
+            "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "edx",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -556,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379d9d",
+            "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379d9d",
+            "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ebx",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -560,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379da3",
+            "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379da3",
+            "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "esi",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -564,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379da9",
+            "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379da9",
+            "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -520,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379daf",
+            "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379daf",
+            "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ss",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -532,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379db6",
+            "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379db6",
+            "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "cs",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -568,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dbd",
+            "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dbd",
+            "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ds",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -572,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dc4",
+            "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dc4",
+            "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "es",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -576,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dcb",
+            "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dcb",
+            "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "fs",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -580,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dd2",
+            "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+            "size": 7
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 2
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dd2",
+            "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+            "size": 7
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "gs",
+          "size": 2
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -528,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dda",
+            "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379de0",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379de0",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -536,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379de3",
+            "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379de3",
+            "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379de9",
+            "sha256": "2088c3cee97ccc1e7e6a184d129e7f742c5e6d683f58eb389d271017defa4130",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379de9",
+            "sha256": "2088c3cee97ccc1e7e6a184d129e7f742c5e6d683f58eb389d271017defa4130",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -524,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dec",
+            "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dec",
+            "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -720,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379df2",
+            "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+            "size": 10
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379df2",
+            "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+            "size": 10
+          },
+          "kind": "immediate",
+          "operand_index": 1,
+          "size": 4,
+          "value_u32": "0x00010001"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379dfc",
+            "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "eax",
+          "decoder_access": 1,
+          "displacement": -4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dfc",
+            "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -540,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379dff",
+            "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379dff",
+            "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e05",
+            "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 12,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e05",
+            "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -800,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e08",
+            "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e08",
+            "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e0e",
+            "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 16,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e0e",
+            "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -796,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e11",
+            "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e11",
+            "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e17",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e17",
+            "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 2,
+          "displacement": -788,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e1a",
+            "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e1a",
+            "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "absolute_pe_address": {
+            "contents_and_runtime_meaning_opaque": true,
+            "file_backed": true,
+            "file_offset": "0x003d5008",
+            "rva": "0x003d6008",
+            "section_characteristics": "0x40000040",
+            "section_name": ".rdata",
+            "section_rva": "0x003d6000",
+            "section_writable": false,
+            "va": "0x007d6008"
+          },
+          "base": null,
+          "decoder_access": 1,
+          "displacement": 8216584,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e20",
+            "sha256": "2a8a65cc999adeb7ad3b8fdfe73d906e0119b25d37513d5624fda39070c21c15",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e26",
+            "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00000000"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e28",
+            "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e28",
+            "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "absolute_pe_address": {
+            "contents_and_runtime_meaning_opaque": true,
+            "file_backed": true,
+            "file_offset": "0x003d50e4",
+            "rva": "0x003d60e4",
+            "section_characteristics": "0x40000040",
+            "section_name": ".rdata",
+            "section_rva": "0x003d6000",
+            "section_writable": false,
+            "va": "0x007d60e4"
+          },
+          "base": null,
+          "decoder_access": 1,
+          "displacement": 8216804,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e2a",
+            "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e30",
+            "sha256": "c595964eb14981709d2fdf3741d2fad93222b5cb8bd455f1b64142ab778b10a0",
+            "size": 6
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -808,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e30",
+            "sha256": "c595964eb14981709d2fdf3741d2fad93222b5cb8bd455f1b64142ab778b10a0",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e36",
+            "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "absolute_pe_address": {
+            "contents_and_runtime_meaning_opaque": true,
+            "file_backed": true,
+            "file_offset": "0x003d5018",
+            "rva": "0x003d6018",
+            "section_characteristics": "0x40000040",
+            "section_name": ".rdata",
+            "section_rva": "0x003d6000",
+            "section_writable": false,
+            "va": "0x007d6018"
+          },
+          "base": null,
+          "decoder_access": 1,
+          "displacement": 8216600,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e37",
+            "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e3d",
+            "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e3d",
+            "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "eax",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e3f",
+            "sha256": "608aa931e63de1eacbc8cf15780393212dd62677929bfbfb3f5c31b63e62a4df",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00779e54"
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e41",
+            "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e41",
+            "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e43",
+            "sha256": "bb52e9e6db182172c9062587fc4bdd0a673150f95815e0bcbae120469101acdd",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00779e54"
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 8,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e45",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": false,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e45",
+            "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+            "size": 4
+          },
+          "kind": "immediate",
+          "operand_index": 1,
+          "size": 4,
+          "value_u32": "0xffffffff"
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e49",
+            "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+            "size": 2
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x00779e54"
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": 8,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e4b",
+            "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e4e",
+            "sha256": "21bd173780b6d17a31d4bd837aa120eb56a6db397e7dc07a6680d1646057189c",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x007586b6"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e53",
+            "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ecx",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e54",
+            "sha256": "c26455b636d391f60792bd918b33b4f0bf95e21475e4473858fbda23559bb8cd",
+            "size": 3
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ecx",
+          "size": 4
+        },
+        {
+          "base": "ebp",
+          "decoder_access": 1,
+          "displacement": -4,
+          "index": null,
+          "instruction": {
+            "rva": "0x00379e54",
+            "sha256": "c26455b636d391f60792bd918b33b4f0bf95e21475e4473858fbda23559bb8cd",
+            "size": 3
+          },
+          "kind": "memory_expression",
+          "operand_index": 1,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        },
+        {
+          "decoder_access": 3,
+          "instruction": {
+            "rva": "0x00379e57",
+            "sha256": "3fa77304f6d8c860315d6fffb5134ce2f23be29771f6a0ebd8d01a9fa3379926",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ecx",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e57",
+            "sha256": "3fa77304f6d8c860315d6fffb5134ce2f23be29771f6a0ebd8d01a9fa3379926",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ebp",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e59",
+            "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "edi",
+          "size": 4
+        },
+        {
+          "control_target": true,
+          "decoder_access": 0,
+          "instruction": {
+            "rva": "0x00379e5a",
+            "sha256": "36a64a8bc4046547a95ff8d03e91294c616d1077787414d7095dec8777cd642d",
+            "size": 5
+          },
+          "kind": "immediate",
+          "operand_index": 0,
+          "size": 4,
+          "value_u32": "0x007574ca"
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e5f",
+            "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "esp",
+          "size": 4
+        },
+        {
+          "decoder_access": 1,
+          "instruction": {
+            "rva": "0x00379e5f",
+            "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+            "size": 2
+          },
+          "kind": "register",
+          "operand_index": 1,
+          "register": "ebp",
+          "size": 4
+        },
+        {
+          "decoder_access": 2,
+          "instruction": {
+            "rva": "0x00379e61",
+            "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+            "size": 1
+          },
+          "kind": "register",
+          "operand_index": 0,
+          "register": "ebp",
+          "size": 4
+        }
+      ],
+      "points": [
+        {
+          "rva": "0x00379d28",
+          "sha256": "a904529e1b089420ec3656cc6483691fb43d23dd29a47f2fb7602832df5f2489",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d2a",
+          "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+          "size": 1
+        },
+        {
+          "rva": "0x00379d2b",
+          "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d2d",
+          "sha256": "397a9f37c0d3cf66aab461b8d11394263bbd397f915dc755df26cf8c23ccfa3f",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d33",
+          "sha256": "fb411162b29d74c22c65bab2722f82b7eb48e520f5e230139a6fdff51960ded6",
+          "size": 5
+        },
+        {
+          "rva": "0x00379d38",
+          "sha256": "35dc60dbffd5cdb36769afdf5363ea9e2a99611cf0ac9efad038ae97f2a3cf93",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d3a",
+          "sha256": "24e6162364023f42472be1fcd86d6459122d282c57d85e6f97109cc58a36f95d",
+          "size": 3
+        },
+        {
+          "rva": "0x00379d3d",
+          "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+          "size": 4
+        },
+        {
+          "rva": "0x00379d41",
+          "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+          "size": 1
+        },
+        {
+          "rva": "0x00379d42",
+          "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d44",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3
+        },
+        {
+          "rva": "0x00379d47",
+          "sha256": "c84e67fd01a4eb120e64b81a136156bdeadec65720e32404a6b3fe930cb7a0f7",
+          "size": 5
+        },
+        {
+          "rva": "0x00379d4c",
+          "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+          "size": 1
+        },
+        {
+          "rva": "0x00379d4d",
+          "sha256": "888e7f20cbb913bfbb5862de2ef958f3ae8d17cab73355191d4b93ae2f85ac21",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d4f",
+          "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d55",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d57",
+          "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+          "size": 1
+        },
+        {
+          "rva": "0x00379d58",
+          "sha256": "0e146ad61272b2d36bf919b9e2c5efd71b848d6b9689befef7b9ec2aa701515e",
+          "size": 5
+        },
+        {
+          "rva": "0x00379d5d",
+          "sha256": "ed0944fc0e47105a583da7a2a7e9ed8ab401f6b4d7564531ec524a5ed0717305",
+          "size": 5
+        },
+        {
+          "rva": "0x00379d62",
+          "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d68",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "rva": "0x00379d6a",
+          "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+          "size": 1
+        },
+        {
+          "rva": "0x00379d6b",
+          "sha256": "40fe6a3c91a0716be17cfa7c420f2e94f0e9d07e10289661c672c2a18e67ae58",
+          "size": 5
+        },
+        {
+          "rva": "0x00379d70",
+          "sha256": "2ed2b74c4a23743d5060151f0cc03180ed725e4dcddd041a6917506092e2854e",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d76",
+          "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+          "size": 3
+        },
+        {
+          "rva": "0x00379d79",
+          "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d7f",
+          "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d85",
+          "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d8b",
+          "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d91",
+          "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d97",
+          "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+          "size": 6
+        },
+        {
+          "rva": "0x00379d9d",
+          "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+          "size": 6
+        },
+        {
+          "rva": "0x00379da3",
+          "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+          "size": 6
+        },
+        {
+          "rva": "0x00379da9",
+          "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+          "size": 6
+        },
+        {
+          "rva": "0x00379daf",
+          "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+          "size": 7
+        },
+        {
+          "rva": "0x00379db6",
+          "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+          "size": 7
+        },
+        {
+          "rva": "0x00379dbd",
+          "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+          "size": 7
+        },
+        {
+          "rva": "0x00379dc4",
+          "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+          "size": 7
+        },
+        {
+          "rva": "0x00379dcb",
+          "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+          "size": 7
+        },
+        {
+          "rva": "0x00379dd2",
+          "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+          "size": 7
+        },
+        {
+          "rva": "0x00379dd9",
+          "sha256": "6e3faf1e27d45fca70234ae8f6f0a734622cff8a6ea824b7f60d3ffafa2a4654",
+          "size": 1
+        },
+        {
+          "rva": "0x00379dda",
+          "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+          "size": 6
+        },
+        {
+          "rva": "0x00379de0",
+          "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+          "size": 3
+        },
+        {
+          "rva": "0x00379de3",
+          "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+          "size": 6
+        },
+        {
+          "rva": "0x00379de9",
+          "sha256": "2088c3cee97ccc1e7e6a184d129e7f742c5e6d683f58eb389d271017defa4130",
+          "size": 3
+        },
+        {
+          "rva": "0x00379dec",
+          "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+          "size": 6
+        },
+        {
+          "rva": "0x00379df2",
+          "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+          "size": 10
+        },
+        {
+          "rva": "0x00379dfc",
+          "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+          "size": 3
+        },
+        {
+          "rva": "0x00379dff",
+          "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e05",
+          "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+          "size": 3
+        },
+        {
+          "rva": "0x00379e08",
+          "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e0e",
+          "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+          "size": 3
+        },
+        {
+          "rva": "0x00379e11",
+          "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e17",
+          "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+          "size": 3
+        },
+        {
+          "rva": "0x00379e1a",
+          "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e20",
+          "sha256": "2a8a65cc999adeb7ad3b8fdfe73d906e0119b25d37513d5624fda39070c21c15",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e26",
+          "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e28",
+          "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e2a",
+          "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e30",
+          "sha256": "c595964eb14981709d2fdf3741d2fad93222b5cb8bd455f1b64142ab778b10a0",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e36",
+          "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+          "size": 1
+        },
+        {
+          "rva": "0x00379e37",
+          "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+          "size": 6
+        },
+        {
+          "rva": "0x00379e3d",
+          "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e3f",
+          "sha256": "608aa931e63de1eacbc8cf15780393212dd62677929bfbfb3f5c31b63e62a4df",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e41",
+          "sha256": "b463fde2f176b10c0e80b1f97881ca31237a98500f6a80da7581395d4c0fc86d",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e43",
+          "sha256": "bb52e9e6db182172c9062587fc4bdd0a673150f95815e0bcbae120469101acdd",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e45",
+          "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+          "size": 4
+        },
+        {
+          "rva": "0x00379e49",
+          "sha256": "e6332f7e34686e19d5ad393559009f37d77126d1221407bfdee68bec60234a29",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e4b",
+          "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+          "size": 3
+        },
+        {
+          "rva": "0x00379e4e",
+          "sha256": "21bd173780b6d17a31d4bd837aa120eb56a6db397e7dc07a6680d1646057189c",
+          "size": 5
+        },
+        {
+          "rva": "0x00379e53",
+          "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+          "size": 1
+        },
+        {
+          "rva": "0x00379e54",
+          "sha256": "c26455b636d391f60792bd918b33b4f0bf95e21475e4473858fbda23559bb8cd",
+          "size": 3
+        },
+        {
+          "rva": "0x00379e57",
+          "sha256": "3fa77304f6d8c860315d6fffb5134ce2f23be29771f6a0ebd8d01a9fa3379926",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e59",
+          "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+          "size": 1
+        },
+        {
+          "rva": "0x00379e5a",
+          "sha256": "36a64a8bc4046547a95ff8d03e91294c616d1077787414d7095dec8777cd642d",
+          "size": 5
+        },
+        {
+          "rva": "0x00379e5f",
+          "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+          "size": 2
+        },
+        {
+          "rva": "0x00379e61",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x00379e62",
+          "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+          "size": 1
+        }
+      ]
+    },
+    {
+      "analysis_metadata": {
+        "metadata_only": true,
+        "name": "IsProcessorFeaturePresent",
+        "name_source": "DEFAULT",
+        "namespace": "KERNEL32.DLL",
+        "thunk": true
+      },
+      "atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+      "body_sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+      "body_size": 6,
+      "control_flow_graph": {
+        "edge_count": 0,
+        "entry_rva": "0x0039cb92",
+        "node_count": 1,
+        "nodes": [
+          {
+            "decoder_reads_registers": [],
+            "decoder_writes_registers": [],
+            "flow_kind": "opaque_import_jump",
+            "operand_size_override": false,
+            "rva": "0x0039cb92",
+            "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+            "size": 6,
+            "successor_rvas": []
+          }
+        ]
+      },
+      "entry_rva": "0x0039cb92",
+      "native_controls": {
+        "direct_calls": [],
+        "import_controls": [
+          {
+            "behavior_opaque": true,
+            "binding": {
+              "descriptor": {
+                "file_offset": "0x0048dd30",
+                "rva": "0x0048ed30",
+                "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+                "size": 20
+              },
+              "iat_slot": {
+                "file_offset": "0x003d5010",
+                "rva": "0x003d6010",
+                "sha256": "4a4a07bfd0b46732c457558065401cc422a188a7e84dfb482d179bd610989a61",
+                "size": 4
+              },
+              "ilt_entry": {
+                "file_offset": "0x0048dd90",
+                "rva": "0x0048ed90",
+                "sha256": "4a4a07bfd0b46732c457558065401cc422a188a7e84dfb482d179bd610989a61",
+                "size": 4
+              },
+              "import_by_name": {
+                "file_offset": "0x0048fa02",
+                "rva": "0x00490a02",
+                "sha256": "bd0a4eda3c3cad901506880438be40e8c7fe64cb99de20e10c67759b071b7f47",
+                "size": 28
+              },
+              "metadata": {
+                "evidence_class": "fact",
+                "hint": 772,
+                "iat_rva": "0x003d6010",
+                "library": "KERNEL32.dll",
+                "name": "IsProcessorFeaturePresent",
+                "ordinal": null
+              },
+              "name_metadata_only": true
+            },
+            "control_kind": "jump",
+            "instruction": {
+              "rva": "0x0039cb92",
+              "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+              "size": 6
+            },
+            "slot_rva": "0x003d6010"
+          }
+        ],
+        "interrupts": [],
+        "partitions_complete_for_pinned_bodies": true,
+        "register_calls": [
+          {
+            "call_rvas": [],
+            "register": "EAX"
+          },
+          {
+            "call_rvas": [],
+            "register": "ECX"
+          },
+          {
+            "call_rvas": [],
+            "register": "EDX"
+          },
+          {
+            "call_rvas": [],
+            "register": "EBX"
+          },
+          {
+            "call_rvas": [],
+            "register": "ESP"
+          },
+          {
+            "call_rvas": [],
+            "register": "EBP"
+          },
+          {
+            "call_rvas": [],
+            "register": "ESI"
+          },
+          {
+            "call_rvas": [],
+            "register": "EDI"
+          }
+        ]
+      },
+      "operands": [
+        {
+          "absolute_pe_address": {
+            "contents_and_runtime_meaning_opaque": true,
+            "file_backed": true,
+            "file_offset": "0x003d5010",
+            "rva": "0x003d6010",
+            "section_characteristics": "0x40000040",
+            "section_name": ".rdata",
+            "section_rva": "0x003d6000",
+            "section_writable": false,
+            "va": "0x007d6010"
+          },
+          "base": null,
+          "decoder_access": 1,
+          "displacement": 8216592,
+          "index": null,
+          "instruction": {
+            "rva": "0x0039cb92",
+            "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+            "size": 6
+          },
+          "kind": "memory_expression",
+          "operand_index": 0,
+          "scale": 1,
+          "segment": null,
+          "size": 4
+        }
+      ],
+      "points": [
+        {
+          "rva": "0x0039cb92",
+          "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+          "size": 6
+        }
+      ]
+    }
+  ],
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "version": "5.0.7"
+  },
+  "method": {
+    "exact_validation": "Exact PE and direct-call census verification, caller edge and target body byte checks, decoded bodies, raw import and relocation witnesses, and a complete all-operand atlas entry-reference scan. The source frontier is canonical-pinned without rerunning its entire original analysis.",
+    "not_claimed": [
+      "CRT identity, ABI, ownership, context-record identity, exception or reporting semantics, runtime behavior, or accounting-level promotion",
+      "Decoder memory expressions, register accesses and operand-size overrides are syntax; LEA does not establish a memory read, nor do segment-register operands establish runtime state",
+      "Call fallthrough is a syntactic possibility, and the indirect import jump is a transfer boundary; neither establishes continuation, termination or normal return",
+      "Global IAT consumer closure, computed, indirect, data-only, un-atlased, generated or Lua-side target-entry references",
+      "Recursive closure of native descendants or either imported implementation"
+    ],
+    "scope": "Both direct native callees of the pinned 51-byte assertion descendant; all explicit decoded operands and body control partitions are retained.",
+    "structural_validation": "Hash-pinned normalized receipt consistency and recomputed source, parent, graph, operand and count joins; not independent binary evidence."
+  },
+  "parent_edges": [
+    {
+      "edge": {
+        "behavior_opaque": true,
+        "declared_edge": {
+          "instruction_rva": "0x00379f21",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00379f21",
+          "sha256": "2c9147ea9f8f7ecb558cea39d1edb011a63fd0c1ae1959e8f6546b0d20217959",
+          "size": 5
+        },
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      "source_canonical_sha256": "39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb",
+      "source_path": [
+        "native_controls",
+        "direct_calls",
+        0
+      ]
+    },
+    {
+      "edge": {
+        "behavior_opaque": true,
+        "declared_edge": {
+          "instruction_rva": "0x00379f3a",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x00379d28",
+          "target_name_sha256": "1b9c5de24bcec5a48f981c2e449c3eb060be7a1c5f0099c0c08e177281261385",
+          "target_rva": "0x00379d28"
+        },
+        "instruction": {
+          "rva": "0x00379f3a",
+          "sha256": "9a58db49bb2350d0387dfabc9d822110cab43932309c2889d55d805581d9e68b",
+          "size": 5
+        },
+        "target_atlas_record_sha256": "f965c1e4051ac1d32b50a9d5d1cbc494aa0071606fad8bf2b34cdcc58f27bb9b",
+        "target_entry_rva": "0x00379d28"
+      },
+      "source_canonical_sha256": "39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb",
+      "source_path": [
+        "native_controls",
+        "direct_calls",
+        1
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "source_receipts": {
+    "direct_calls": {
+      "analysis_kind": "pe_native_lua_direct_import_call_census",
+      "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+    },
+    "frontier": {
+      "analysis_kind": "pe_native_assertion_helper_second_child_callee_frontier",
+      "canonical_sha256": "39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "absolute_pe_address_operands": 5,
+    "cfg_edges": 81,
+    "cfg_nodes": 79,
+    "explicit_operands": 124,
+    "highlow_sites": 5,
+    "import_controls": 4,
+    "incoming_owners": 6,
+    "incoming_references": 8,
+    "instructions": 79,
+    "memory_expression_operands": 44,
+    "ordinary_immediates": 10,
+    "outgoing_native_edges": 5,
+    "parent_edges": 2,
+    "segment_register_operands": 6,
+    "target_bytes": 321,
+    "target_count": 2
+  },
+  "whole_atlas_reference_scan": {
+    "owner_count": 6,
+    "reference_count": 8,
+    "references": [
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00357b75",
+          "source_entry_rva": "0x00357b6a",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00357b75",
+          "sha256": "53a83b7d8c828fb30d1db99cb34f3ef39a9efff5068be6a8a626d05b2323b8df",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "324c7636ddd286b956053bb39fa045719f388d5254e441ce98b33d77d11fb074",
+        "owner_entry_rva": "0x00357b6a",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00357c7c",
+          "source_entry_rva": "0x00357c71",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00357c7c",
+          "sha256": "03baa9aa6760b26686783adde86c401a5ad5315d7e4eef29f94ba35311326851",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "34cee74141620b8de324a94f04fe3dd885a816a6139131ddee8f43ab5785752e",
+        "owner_entry_rva": "0x00357c71",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00358026",
+          "source_entry_rva": "0x0035800d",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00358026",
+          "sha256": "3c90581d3ef8e9735a3e97b45a00984dfb104049bccda245327522f78800b1c0",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "7e8c41f5d76a4703f1d1ec2c2573a16eaf27022d0082a9c7708e64a4c6e9163c",
+        "owner_entry_rva": "0x0035800d",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00358528",
+          "source_entry_rva": "0x0035851b",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00358528",
+          "sha256": "f9ae6dda3a442f70a2fa4b409a8db674eb2372a2d552ec0163e3bd06bbfc1ee8",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "62c30753e9ddcec2be947cc7f388687335ff143d7352955ef8ab62556480aa15",
+        "owner_entry_rva": "0x0035851b",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00379f21",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00379f21",
+          "sha256": "2c9147ea9f8f7ecb558cea39d1edb011a63fd0c1ae1959e8f6546b0d20217959",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "697696782a1427361f7866422ee2ca01fb0144a34fcacc55b5bb5f73125d7ae5",
+        "owner_entry_rva": "0x00379f1f",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00379f3a",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x00379d28",
+          "target_name_sha256": "1b9c5de24bcec5a48f981c2e449c3eb060be7a1c5f0099c0c08e177281261385",
+          "target_rva": "0x00379d28"
+        },
+        "instruction": {
+          "rva": "0x00379f3a",
+          "sha256": "9a58db49bb2350d0387dfabc9d822110cab43932309c2889d55d805581d9e68b",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "697696782a1427361f7866422ee2ca01fb0144a34fcacc55b5bb5f73125d7ae5",
+        "owner_entry_rva": "0x00379f1f",
+        "target_atlas_record_sha256": "f965c1e4051ac1d32b50a9d5d1cbc494aa0071606fad8bf2b34cdcc58f27bb9b",
+        "target_entry_rva": "0x00379d28"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003891ac",
+          "source_entry_rva": "0x00389190",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x003891ac",
+          "sha256": "b597d597882ee9f9c69ad92693e87a1f38a1bdcffa95473209ac558a28b536e2",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "0bea8bde88bfd39c21f692d6e7b1c5f426624479d2a400d624dae9c9956bd018",
+        "owner_entry_rva": "0x00389190",
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003891c3",
+          "source_entry_rva": "0x00389190",
+          "target_entry_rva": "0x00379d28",
+          "target_name_sha256": "1b9c5de24bcec5a48f981c2e449c3eb060be7a1c5f0099c0c08e177281261385",
+          "target_rva": "0x00379d28"
+        },
+        "instruction": {
+          "rva": "0x003891c3",
+          "sha256": "05c8477478ea48ac2f7cca24489f39b83821ddebdb7767677a9d9f731acab5a4",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "0bea8bde88bfd39c21f692d6e7b1c5f426624479d2a400d624dae9c9956bd018",
+        "owner_entry_rva": "0x00389190",
+        "target_atlas_record_sha256": "f965c1e4051ac1d32b50a9d5d1cbc494aa0071606fad8bf2b34cdcc58f27bb9b",
+        "target_entry_rva": "0x00379d28"
+      }
+    ],
+    "references_canonical_sha256": "9629a16d9ff2745853a771df018089240caed48aacd942f93ec7ceef4a6f7200",
+    "scope": {
+      "bytes": 3735718,
+      "functions": 25312,
+      "instructions": 1153814,
+      "ranges": 25490
+    },
+    "target_partitions": [
+      {
+        "entry_rva": "0x00379d28",
+        "owner_count": 2,
+        "reference_count": 2
+      },
+      {
+        "entry_rva": "0x0039cb92",
+        "owner_count": 6,
+        "reference_count": 6
+      }
+    ]
+  }
+}
