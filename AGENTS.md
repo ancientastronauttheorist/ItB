@@ -42,11 +42,8 @@ change is complete.
   Keep small edits, tightly coupled implementation, integration, final
   validation, Git operations, and live-session decisions with the primary
   agent.
-- Choose `gpt-5.6-terra` or `gpt-5.6-sol` per task instead of applying one
-  blanket default. Prefer Terra for routine bounded research, implementation,
-  and validation; prefer Sol when the task needs deeper ambiguous reasoning,
-  high-risk semantic analysis, or a demanding independent review. Pass the
-  chosen model override explicitly when spawning, using a bounded context fork
+- Use `gpt-6-astra` for subagents. Pass the model override explicitly when
+  spawning, using a bounded context fork
   plus a self-contained task packet because full-history forks cannot take a
   model override.
 - Run at most two subagents concurrently unless a clearly independent larger
