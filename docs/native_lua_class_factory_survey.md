@@ -482,6 +482,43 @@ its canonical JSON SHA-256 is
 `918628e05e4579a40127416853ed5e1af91fa6516e86798a48107a65f433be19`.
 See `data/observatory/programs/README.md` for commands and legacy hashes.
 
+## Assertion second-child direct-callee frontier artifact
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json`
+composes the two reused body proofs and the new target boundary.
+
+The second-child direct-callee frontier now joins all three outgoing edges
+from `0x00379e77`. Edge `0x00379e88 -> 0x0038edb6` reuses the first-child
+receipt, and `0x00379ebd -> 0x003574ca` reuses the query-handler residual-callee
+receipt. Each join agrees with its source edge, target atlas identity, and an
+exact incoming-reference row in the reused receipt. Edge
+`0x00379eec -> 0x00379f1f` receives a new 51-byte body boundary containing
+20 instructions and a 20-node / 20-edge CFG.
+
+The new body has two direct native calls (`0x00379f21 -> 0x0039cb92` and
+`0x00379f3a -> 0x00379d28`), two absolute-memory imported calls, one
+`INT 0x29`, six ordinary immediate operands, and two HIGHLOW relocations.
+Raw descriptor/ILT/IAT/import-name hashes bind the imported calls to metadata
+spellings `GetCurrentProcess` and `TerminateProcess`. Those names and the
+Ghidra label `__invoke_watson` do not establish behavior. The interrupt's edge
+to the next instruction is labeled `opaque_interrupt_possible_fallthrough`;
+call edges likewise express only possible fallthrough. No runtime continuation,
+termination, or normal-return claim follows from this graph.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 45 references from 45 owners point to the
+new target, all immediate five-byte calls, including its parent. All three
+immediate parent direct-callee bodies are now accounted for structurally;
+the parent's indirect controls, the new body's two native descendants, and
+all callee behaviors remain unresolved. There is no accounting-level promotion.
+
+The active raw SHA-256 is
+`19a5d65db948083b985d0eca8757db5c4663d5892decdef69a1c87fb6b5de9f3`;
+the canonical JSON SHA-256 is
+`39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb`.
+Existing artifacts are unchanged. See `data/observatory/programs/README.md`
+for the exact verifier scope, hash-pinned structural validator, and commands.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

@@ -469,6 +469,23 @@ until core engine semantics are reconstructed.
   and the whole assertion-helper graph are not. CRT identity, ABI, runtime
   reachability, indirect targets, child behavior, and normal return remain
   unproved.
+  The second child's direct-callee frontier now composes all three edges:
+  the existing `0x0038edb6` and `0x003574ca` body receipts are joined through
+  exact incoming-reference rows, while `0x00379f1f` receives a new 51-byte,
+  20-instruction boundary and 20-node / 20-edge CFG. That body has two direct
+  native calls, two imported calls, one opaque interrupt, six ordinary
+  immediates, two HIGHLOW sites, and 45 incoming references from 45 owners.
+  Import metadata and possible interrupt/call fallthrough do not prove
+  runtime termination or return. Exact validation rechecks the source caller
+  and reused body bytes, new body/import/relocation facts, and complete atlas
+  operand scan; reused receipts remain canonical-pinned without rerunning
+  their whole original analyses. PE-free validation is explicitly hash-pinned
+  receipt consistency, not binary proof. The file SHA-256 is
+  `19a5d65db948083b985d0eca8757db5c4663d5892decdef69a1c87fb6b5de9f3`;
+  canonical JSON SHA-256 is
+  `39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb`.
+  The parent's indirect controls, new targets `0x0039cb92` and `0x00379d28`,
+  runtime behavior, and ownership/exclusion promotions remain open.
   The dependent assertion-helper second-callee boundary canonical-pins the
   assertion-helper parent receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

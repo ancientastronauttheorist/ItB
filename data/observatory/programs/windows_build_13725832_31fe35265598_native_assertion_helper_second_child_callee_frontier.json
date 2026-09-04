@@ -1,0 +1,1751 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_second_child_callee_frontier",
+  "base_relocations": {
+    "directory": {
+      "file_offset": "0x00510a00",
+      "rva": "0x00539000",
+      "sha256": "06630f9047636fb68afba81d89dbc1ef2f21c459b684d57d1d2bcaeb3750dfa3",
+      "size": 218648
+    },
+    "sites": [
+      {
+        "entry_file_offset": "0x00532e98",
+        "entry_sha256": "42364f96a58c76fc7a5538f26a0b3d21653a5e2daaab140a77a06ee4b63bb042",
+        "operand": {
+          "file_offset": "0x00379345",
+          "rva": "0x00379f45",
+          "sha256": "2c62e7b0e8c71efc8a54f16ec667de59f7d7e93155a355aab61a5e6a1c583e25",
+          "size": 4
+        },
+        "site_rva": "0x00379f45",
+        "type": "HIGHLOW",
+        "value_va": "0x007d60f0"
+      },
+      {
+        "entry_file_offset": "0x00532e9a",
+        "entry_sha256": "431691f4976699cd06a067b1740bad8452acb33d9d558ae94fe0661f632162dd",
+        "operand": {
+          "file_offset": "0x0037934c",
+          "rva": "0x00379f4c",
+          "sha256": "52be501b1a5606eb1f25d4f33fb3bb124ba910a67708caad32f1cdf110a58d3e",
+          "size": 4
+        },
+        "site_rva": "0x00379f4c",
+        "type": "HIGHLOW",
+        "value_va": "0x007d6014"
+      }
+    ]
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "control_flow_graph": {
+    "edge_count": 20,
+    "entry_rva": "0x00379f1f",
+    "node_count": 20,
+    "nodes": [
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f1f",
+        "sha256": "bc0e0a5949342fc99cffb241b80a1c526a859f8805583c8913100379cb643120",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f21"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "call_possible_fallthrough",
+        "rva": "0x00379f21",
+        "sha256": "2c9147ea9f8f7ecb558cea39d1edb011a63fd0c1ae1959e8f6546b0d20217959",
+        "size": 5,
+        "successor_rvas": [
+          "0x00379f26"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f26",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f28"
+        ],
+        "writes_registers": [
+          "eflags"
+        ]
+      },
+      {
+        "flow_kind": "direct_conditional_branch",
+        "rva": "0x00379f28",
+        "sha256": "58b821595e7051b1409a38f7c48f7b1153019dce5f9e8b78241111e6dd4a67cb",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f2a",
+          "0x00379f2f"
+        ],
+        "writes_registers": []
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f2a",
+        "sha256": "af398567cec4766dbc12d87503d2dedd539952851eaee19b49df3bba88aff49e",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f2c"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f2c",
+        "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f2d"
+        ],
+        "writes_registers": [
+          "ecx",
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "opaque_interrupt_possible_fallthrough",
+        "rva": "0x00379f2d",
+        "sha256": "cde60391fdd88745523e1fb00399098a3ccf2c23e2d9010e121612872ca49229",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f2f"
+        ],
+        "writes_registers": []
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f2f",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f30"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f30",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f32"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f32",
+        "sha256": "a50b73ff3e9289f94d21ba851fe2b5b93c3c0c9217bde90c38cb831eaadae065",
+        "size": 5,
+        "successor_rvas": [
+          "0x00379f37"
+        ],
+        "writes_registers": [
+          "esi"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f37",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f38"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f38",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2,
+        "successor_rvas": [
+          "0x00379f3a"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "call_possible_fallthrough",
+        "rva": "0x00379f3a",
+        "sha256": "9a58db49bb2350d0387dfabc9d822110cab43932309c2889d55d805581d9e68b",
+        "size": 5,
+        "successor_rvas": [
+          "0x00379f3f"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f3f",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3,
+        "successor_rvas": [
+          "0x00379f42"
+        ],
+        "writes_registers": [
+          "eflags",
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f42",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f43"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "call_possible_fallthrough",
+        "rva": "0x00379f43",
+        "sha256": "908348f25d6fc07e3246a7e20a63b21020f0ea832da9ce4fd603ffb7b58d6304",
+        "size": 6,
+        "successor_rvas": [
+          "0x00379f49"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f49",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f4a"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "call_possible_fallthrough",
+        "rva": "0x00379f4a",
+        "sha256": "aa36aa82e6dadbbacc1760b01f08e23e9064ed9b5fbe79fc3a00204f1027a0e3",
+        "size": 6,
+        "successor_rvas": [
+          "0x00379f50"
+        ],
+        "writes_registers": [
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "fallthrough",
+        "rva": "0x00379f50",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1,
+        "successor_rvas": [
+          "0x00379f51"
+        ],
+        "writes_registers": [
+          "esi",
+          "esp"
+        ]
+      },
+      {
+        "flow_kind": "return_syntax",
+        "rva": "0x00379f51",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1,
+        "successor_rvas": [],
+        "writes_registers": [
+          "esp"
+        ]
+      }
+    ]
+  },
+  "decoder": {
+    "architecture": "x86",
+    "mode_bits": 32,
+    "name": "capstone",
+    "version": "5.0.7"
+  },
+  "direct_callee_joins": [
+    {
+      "behavior_opaque": true,
+      "evidence": "first_child",
+      "incoming_reference": {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379e88",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x0038edb6",
+          "target_name_sha256": "06c98fdc101677e707301b7e6a8230d41e7262f42ab00480ccd876f9123e7c8a",
+          "target_rva": "0x0038edb6"
+        },
+        "instruction_rva": "0x00379e88",
+        "instruction_sha256": "74f6c809b8c45ec2fc5dc28ca6ed65fe75b8cd73dea6a6f873bf365347f36c1a",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "7c9d8be241338ff5da672410792f04d2c6e1f74186ea42a3881000790bbafd2f",
+        "owner_entry_rva": "0x00379e77",
+        "target_atlas_record_sha256": "b5c70c924e8dbcfa802a08fbf2559bd9a8cc3df5d38c614b8cc04a9f3f4bb9b6",
+        "target_rva": "0x0038edb6",
+        "target_va": "0x0078edb6",
+        "use_class": "direct_call"
+      },
+      "parent_edge": {
+        "callee_behavior_opaque": true,
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379e88",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x0038edb6",
+          "target_name_sha256": "06c98fdc101677e707301b7e6a8230d41e7262f42ab00480ccd876f9123e7c8a",
+          "target_rva": "0x0038edb6"
+        },
+        "instruction": {
+          "rva": "0x00379e88",
+          "sha256": "74f6c809b8c45ec2fc5dc28ca6ed65fe75b8cd73dea6a6f873bf365347f36c1a",
+          "size": 5
+        },
+        "role": "opaque_native_direct_edge",
+        "source_entry_rva": "0x00379e77",
+        "target_atlas_record_sha256": "b5c70c924e8dbcfa802a08fbf2559bd9a8cc3df5d38c614b8cc04a9f3f4bb9b6",
+        "target_entry_rva": "0x0038edb6",
+        "target_rva": "0x0038edb6"
+      },
+      "reference_path": [
+        "whole_atlas_reference_scan",
+        "references",
+        0
+      ],
+      "source_canonical_sha256": "314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc",
+      "target_atlas_record_sha256": "b5c70c924e8dbcfa802a08fbf2559bd9a8cc3df5d38c614b8cc04a9f3f4bb9b6"
+    },
+    {
+      "behavior_opaque": true,
+      "evidence": "reused_callee",
+      "incoming_reference": {
+        "call_form": "x86_relative_near_call_e8",
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379ebd",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x003574ca",
+          "target_name_sha256": "7c59a082da6ddbc4047dc1186d8839d98d7afdde161916133a718017ee5562c7",
+          "target_rva": "0x003574ca"
+        },
+        "instruction_rva": "0x00379ebd",
+        "instruction_sha256": "b7099b087bbe48684b0e407ddeaf7eed182c95e6b740f764fcd0f83d7a27196f",
+        "instruction_size": 5,
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "7c9d8be241338ff5da672410792f04d2c6e1f74186ea42a3881000790bbafd2f",
+        "owner_entry_rva": "0x00379e77",
+        "target_atlas_record_sha256": "931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0",
+        "target_rva": "0x003574ca",
+        "target_va": "0x007574ca",
+        "use_class": "direct_call"
+      },
+      "parent_edge": {
+        "callee_behavior_opaque": true,
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379ebd",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x003574ca",
+          "target_name_sha256": "7c59a082da6ddbc4047dc1186d8839d98d7afdde161916133a718017ee5562c7",
+          "target_rva": "0x003574ca"
+        },
+        "instruction": {
+          "rva": "0x00379ebd",
+          "sha256": "b7099b087bbe48684b0e407ddeaf7eed182c95e6b740f764fcd0f83d7a27196f",
+          "size": 5
+        },
+        "role": "opaque_native_direct_edge",
+        "source_entry_rva": "0x00379e77",
+        "target_atlas_record_sha256": "931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0",
+        "target_entry_rva": "0x003574ca",
+        "target_rva": "0x003574ca"
+      },
+      "reference_path": [
+        "whole_atlas_reference_scan",
+        "references",
+        1694
+      ],
+      "source_canonical_sha256": "8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1",
+      "target_atlas_record_sha256": "931454ae86cb6a227c6182c1abea3b232ee77a68a443b5a98f358f2418ff44b0"
+    },
+    {
+      "behavior_opaque": true,
+      "evidence": "new_function_body",
+      "parent_edge": {
+        "callee_behavior_opaque": true,
+        "ghidra_declared_direct_edge": {
+          "instruction_rva": "0x00379eec",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00379eec",
+          "sha256": "bab6c3367edd05a0223aff63cfc2700e26d271f72bd9a3d9a7c0128aa38713e0",
+          "size": 5
+        },
+        "role": "opaque_native_direct_edge",
+        "source_entry_rva": "0x00379e77",
+        "target_atlas_record_sha256": "697696782a1427361f7866422ee2ca01fb0144a34fcacc55b5bb5f73125d7ae5",
+        "target_entry_rva": "0x00379f1f",
+        "target_rva": "0x00379f1f"
+      },
+      "target_atlas_record_sha256": "697696782a1427361f7866422ee2ca01fb0144a34fcacc55b5bb5f73125d7ae5"
+    }
+  ],
+  "function_body": {
+    "analysis_metadata": {
+      "metadata_only": true,
+      "name": "__invoke_watson",
+      "name_source": "ANALYSIS"
+    },
+    "atlas_record_sha256": "697696782a1427361f7866422ee2ca01fb0144a34fcacc55b5bb5f73125d7ae5",
+    "body_sha256": "cee94b4583219523725afbfd16dbcf538173e6cfe47800c70d3246796b6c6a20",
+    "body_size": 51,
+    "entry_rva": "0x00379f1f",
+    "points": [
+      {
+        "rva": "0x00379f1f",
+        "sha256": "bc0e0a5949342fc99cffb241b80a1c526a859f8805583c8913100379cb643120",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f21",
+        "sha256": "2c9147ea9f8f7ecb558cea39d1edb011a63fd0c1ae1959e8f6546b0d20217959",
+        "size": 5
+      },
+      {
+        "rva": "0x00379f26",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f28",
+        "sha256": "58b821595e7051b1409a38f7c48f7b1153019dce5f9e8b78241111e6dd4a67cb",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f2a",
+        "sha256": "af398567cec4766dbc12d87503d2dedd539952851eaee19b49df3bba88aff49e",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f2c",
+        "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f2d",
+        "sha256": "cde60391fdd88745523e1fb00399098a3ccf2c23e2d9010e121612872ca49229",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f2f",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f30",
+        "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f32",
+        "sha256": "a50b73ff3e9289f94d21ba851fe2b5b93c3c0c9217bde90c38cb831eaadae065",
+        "size": 5
+      },
+      {
+        "rva": "0x00379f37",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f38",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      },
+      {
+        "rva": "0x00379f3a",
+        "sha256": "9a58db49bb2350d0387dfabc9d822110cab43932309c2889d55d805581d9e68b",
+        "size": 5
+      },
+      {
+        "rva": "0x00379f3f",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      {
+        "rva": "0x00379f42",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f43",
+        "sha256": "908348f25d6fc07e3246a7e20a63b21020f0ea832da9ce4fd603ffb7b58d6304",
+        "size": 6
+      },
+      {
+        "rva": "0x00379f49",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f4a",
+        "sha256": "aa36aa82e6dadbbacc1760b01f08e23e9064ed9b5fbe79fc3a00204f1027a0e3",
+        "size": 6
+      },
+      {
+        "rva": "0x00379f50",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x00379f51",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ]
+  },
+  "method": {
+    "exact_validation": "Exact PE and direct-call census verification, caller and reused body byte checks, new body decoding, raw import and relocation witnesses, and a complete atlas operand scan. Prior receipts are canonical-pinned; their entire original analyses are not rerun.",
+    "not_claimed": [
+      "CRT identity, ABI, ownership, source equivalence, runtime reachability, effects, or callee behavior",
+      "Interrupt and call fallthrough edges are syntactic possibilities, not evidence of runtime continuation, termination or normal return",
+      "Computed, indirect, data-only, un-atlased, generated or Lua-side entry references",
+      "Recursive closure of the assertion helper graph or any accounting-level promotion"
+    ],
+    "scope": "All three immediate direct callees of the pinned second-child receipt; two prior body receipts are joined without duplicating their evidence.",
+    "structural_validation": "Hash-pinned normalized receipt consistency plus source, edge, graph and count joins; no executable evidence is inferred from consistency alone."
+  },
+  "native_controls": {
+    "direct_calls": [
+      {
+        "behavior_opaque": true,
+        "declared_edge": {
+          "instruction_rva": "0x00379f21",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x0039cb92",
+          "target_name_sha256": "bb4ef40768522c3ce43710b6911414b1ca39087140668f71840ef69828fe44bd",
+          "target_rva": "0x0039cb92"
+        },
+        "instruction": {
+          "rva": "0x00379f21",
+          "sha256": "2c9147ea9f8f7ecb558cea39d1edb011a63fd0c1ae1959e8f6546b0d20217959",
+          "size": 5
+        },
+        "target_atlas_record_sha256": "495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e",
+        "target_entry_rva": "0x0039cb92"
+      },
+      {
+        "behavior_opaque": true,
+        "declared_edge": {
+          "instruction_rva": "0x00379f3a",
+          "source_entry_rva": "0x00379f1f",
+          "target_entry_rva": "0x00379d28",
+          "target_name_sha256": "1b9c5de24bcec5a48f981c2e449c3eb060be7a1c5f0099c0c08e177281261385",
+          "target_rva": "0x00379d28"
+        },
+        "instruction": {
+          "rva": "0x00379f3a",
+          "sha256": "9a58db49bb2350d0387dfabc9d822110cab43932309c2889d55d805581d9e68b",
+          "size": 5
+        },
+        "target_atlas_record_sha256": "f965c1e4051ac1d32b50a9d5d1cbc494aa0071606fad8bf2b34cdcc58f27bb9b",
+        "target_entry_rva": "0x00379d28"
+      }
+    ],
+    "import_calls": [
+      {
+        "behavior_opaque": true,
+        "binding": {
+          "descriptor": {
+            "file_offset": "0x0048dd30",
+            "rva": "0x0048ed30",
+            "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+            "size": 20
+          },
+          "iat_slot": {
+            "file_offset": "0x003d50f0",
+            "rva": "0x003d60f0",
+            "sha256": "ad1e627653830a85ad37d35bf475130f267d7d4f8cc9be3cdaad9669b177623c",
+            "size": 4
+          },
+          "ilt_entry": {
+            "file_offset": "0x0048de70",
+            "rva": "0x0048ee70",
+            "sha256": "ad1e627653830a85ad37d35bf475130f267d7d4f8cc9be3cdaad9669b177623c",
+            "size": 4
+          },
+          "import_by_name": {
+            "file_offset": "0x0048f558",
+            "rva": "0x00490558",
+            "sha256": "5d94f984ba11e5d2085017ddfbbbed1ee35fbc2c7f012c8bc7d989282858eece",
+            "size": 20
+          },
+          "import_name_metadata_only": true,
+          "metadata": {
+            "evidence_class": "fact",
+            "hint": 448,
+            "iat_rva": "0x003d60f0",
+            "library": "KERNEL32.dll",
+            "name": "GetCurrentProcess",
+            "ordinal": null
+          }
+        },
+        "instruction": {
+          "rva": "0x00379f43",
+          "sha256": "908348f25d6fc07e3246a7e20a63b21020f0ea832da9ce4fd603ffb7b58d6304",
+          "size": 6
+        },
+        "operand_index": 0,
+        "slot_rva": "0x003d60f0"
+      },
+      {
+        "behavior_opaque": true,
+        "binding": {
+          "descriptor": {
+            "file_offset": "0x0048dd30",
+            "rva": "0x0048ed30",
+            "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+            "size": 20
+          },
+          "iat_slot": {
+            "file_offset": "0x003d5014",
+            "rva": "0x003d6014",
+            "sha256": "3c38ad980f6d41b84590ad861884f9df4683f0d358c6103ea2cddaa48592e9b1",
+            "size": 4
+          },
+          "ilt_entry": {
+            "file_offset": "0x0048dd94",
+            "rva": "0x0048ed94",
+            "sha256": "3c38ad980f6d41b84590ad861884f9df4683f0d358c6103ea2cddaa48592e9b1",
+            "size": 4
+          },
+          "import_by_name": {
+            "file_offset": "0x0048f9ee",
+            "rva": "0x004909ee",
+            "sha256": "b862748c120e4b958de335972607f9cded141e4ebc0e176f9aad3508654747ce",
+            "size": 19
+          },
+          "import_name_metadata_only": true,
+          "metadata": {
+            "evidence_class": "fact",
+            "hint": 1216,
+            "iat_rva": "0x003d6014",
+            "library": "KERNEL32.dll",
+            "name": "TerminateProcess",
+            "ordinal": null
+          }
+        },
+        "instruction": {
+          "rva": "0x00379f4a",
+          "sha256": "aa36aa82e6dadbbacc1760b01f08e23e9064ed9b5fbe79fc3a00204f1027a0e3",
+          "size": 6
+        },
+        "operand_index": 0,
+        "slot_rva": "0x003d6014"
+      }
+    ],
+    "interrupts": [
+      {
+        "instruction": {
+          "rva": "0x00379f2d",
+          "sha256": "cde60391fdd88745523e1fb00399098a3ccf2c23e2d9010e121612872ca49229",
+          "size": 2
+        },
+        "runtime_behavior_opaque": true,
+        "vector": 41
+      }
+    ],
+    "ordinary_immediates": [
+      {
+        "instruction": {
+          "rva": "0x00379f1f",
+          "sha256": "bc0e0a5949342fc99cffb241b80a1c526a859f8805583c8913100379cb643120",
+          "size": 2
+        },
+        "meaning_opaque": true,
+        "operand_index": 0,
+        "value_u32": "0x00000017"
+      },
+      {
+        "instruction": {
+          "rva": "0x00379f2a",
+          "sha256": "af398567cec4766dbc12d87503d2dedd539952851eaee19b49df3bba88aff49e",
+          "size": 2
+        },
+        "meaning_opaque": true,
+        "operand_index": 0,
+        "value_u32": "0x00000005"
+      },
+      {
+        "instruction": {
+          "rva": "0x00379f30",
+          "sha256": "5bbc5bfabfc3553dfedc9330b8318b2f152eb1da00cb08f894cc88b395a0b178",
+          "size": 2
+        },
+        "meaning_opaque": true,
+        "operand_index": 0,
+        "value_u32": "0x00000001"
+      },
+      {
+        "instruction": {
+          "rva": "0x00379f32",
+          "sha256": "a50b73ff3e9289f94d21ba851fe2b5b93c3c0c9217bde90c38cb831eaadae065",
+          "size": 5
+        },
+        "meaning_opaque": true,
+        "operand_index": 1,
+        "value_u32": "0xc0000417"
+      },
+      {
+        "instruction": {
+          "rva": "0x00379f38",
+          "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+          "size": 2
+        },
+        "meaning_opaque": true,
+        "operand_index": 0,
+        "value_u32": "0x00000002"
+      },
+      {
+        "instruction": {
+          "rva": "0x00379f3f",
+          "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+          "size": 3
+        },
+        "meaning_opaque": true,
+        "operand_index": 1,
+        "value_u32": "0x0000000c"
+      }
+    ],
+    "partitions_complete_for_pinned_body": true,
+    "register_calls": [
+      {
+        "call_rvas": [],
+        "register": "EAX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ECX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDX"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBX"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESP"
+      },
+      {
+        "call_rvas": [],
+        "register": "EBP"
+      },
+      {
+        "call_rvas": [],
+        "register": "ESI"
+      },
+      {
+        "call_rvas": [],
+        "register": "EDI"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source_receipts": {
+    "direct_calls": {
+      "analysis_kind": "pe_native_lua_direct_import_call_census",
+      "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+    },
+    "first_child": {
+      "analysis_kind": "pe_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary",
+      "canonical_sha256": "314c5817e3a1560c446853474cc0f86fbf3a8195fb60f48c85822a3ed8aca3bc"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    },
+    "reused_callee": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary",
+      "canonical_sha256": "8e8a4c0d5c462bf20417b529313e634a76030214c34c35f0875e506a4f57f8b1"
+    },
+    "second_child": {
+      "analysis_kind": "pe_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2",
+      "canonical_sha256": "918628e05e4579a40127416853ed5e1af91fa6516e86798a48107a65f433be19"
+    }
+  },
+  "summary": {
+    "cfg_edges": 20,
+    "cfg_nodes": 20,
+    "highlow_sites": 2,
+    "import_controls": 2,
+    "incoming_owners": 45,
+    "incoming_references": 45,
+    "instructions": 20,
+    "interrupt_controls": 1,
+    "new_body_bytes": 51,
+    "new_target_bodies": 1,
+    "ordinary_literals": 6,
+    "outgoing_native_edges": 2,
+    "parent_direct_edges": 3,
+    "reused_target_bodies": 2
+  },
+  "whole_atlas_reference_scan": {
+    "owner_count": 45,
+    "reference_count": 45,
+    "references": [
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00379b2b",
+          "source_entry_rva": "0x003795ec",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00379b2b",
+          "sha256": "4df7a9d48fdb6e062aee764507ef700f09034d2ff3a9219932c8a51e85253bf9",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "8d7c1b350af86f5ca7231b1a22d04bd7e05851e5fddbe36124294162206e5a73",
+        "owner_entry_rva": "0x003795ec",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00379eec",
+          "source_entry_rva": "0x00379e77",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00379eec",
+          "sha256": "bab6c3367edd05a0223aff63cfc2700e26d271f72bd9a3d9a7c0128aa38713e0",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "7c9d8be241338ff5da672410792f04d2c6e1f74186ea42a3881000790bbafd2f",
+        "owner_entry_rva": "0x00379e77",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00379f19",
+          "source_entry_rva": "0x00379f02",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00379f19",
+          "sha256": "77d571e20d1f45d20660dbce00be7ecbc1ffa04178ab3111829bb1b2c26faab8",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "ff6cea443a7bee5084134e08541a12be0070d5828312906a81185478063e544c",
+        "owner_entry_rva": "0x00379f02",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0037f657",
+          "source_entry_rva": "0x0037f638",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0037f657",
+          "sha256": "8f41fc8e6d0b9b99f1b19b62435ef2eb169c41cf9ac5bdc2256cd3e75630e2b9",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "d797107e859a749a52a4729fe412f68d3f81edb6b446eb3aa8ca90ee6b676d58",
+        "owner_entry_rva": "0x0037f638",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0037f67c",
+          "source_entry_rva": "0x0037f65d",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0037f67c",
+          "sha256": "b2e4ba03beb4227355fa27135e2c2d67afea33e0e4b72535c7b7a77330628855",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "df2f875a66ac240831a0bf8fab93efb60c7737c043dc67f353c47fa3ae1d8d8d",
+        "owner_entry_rva": "0x0037f65d",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00384c60",
+          "source_entry_rva": "0x00384a19",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00384c60",
+          "sha256": "48810047b2f318feb900ac361b374f8124527edb2d1872bf998ceeadd46af552",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f1851a6bec4aaf1340b6457767e1bca802980fb20b61f1e51847e734d346b9fc",
+        "owner_entry_rva": "0x00384a19",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00384e71",
+          "source_entry_rva": "0x00384cfb",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00384e71",
+          "sha256": "9d82b432ff55576e4b8d933978a429ea81c6dc311c657e0ea2d1e68bb8ad4bb6",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9e4ceafad64b0943ace80a293bc9208823feba2dd1b93e7e98c470ef00287f6c",
+        "owner_entry_rva": "0x00384cfb",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00388130",
+          "source_entry_rva": "0x0038808e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00388130",
+          "sha256": "ae12723775ac36d7debfcd55bed176227f22f5468b4a7a64e71e5dcc3f7223d4",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "77e7d4c8f03aff9fb5ffe0a5aac94109fe4d165c72b078b19e271c81f6673ada",
+        "owner_entry_rva": "0x0038808e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00388a21",
+          "source_entry_rva": "0x0038898a",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00388a21",
+          "sha256": "c1fe4fda0ae2a3f9d6a24dbc06a8f34f5b47976a12256f254356c579fd1edc8a",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "987d6593749bf7b89fbf84463d22174ee0712376e92ba7eaca13feb6d2d651c9",
+        "owner_entry_rva": "0x0038898a",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00388a8e",
+          "source_entry_rva": "0x00388a27",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00388a8e",
+          "sha256": "655c214e91ba35c4eab8d0085822efe8160c4c9f1781fdc83c0ce6691404c416",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "bcb4129dc19d04a451571e0b3249437c083191e712abb8544f2657a7427b11e5",
+        "owner_entry_rva": "0x00388a27",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00388d14",
+          "source_entry_rva": "0x00388cb9",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00388d14",
+          "sha256": "931cd569a85e63c8f65bdfc5a6ac548b962c5e3ea6eb2e244ba9371356eb6fbb",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "4a95f539ff2acbfcf5f889e71eb4083a663ac0537afca3b9d79762ece0f3b8ca",
+        "owner_entry_rva": "0x00388cb9",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003898a0",
+          "source_entry_rva": "0x0038979e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x003898a0",
+          "sha256": "5433844a8f3fb88b4ebc8c3ddb9a874bcd10d00d8d1e5be9486cad5e7c8a9ff6",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "060a3f4ae2387403580b8611067c09c49ad7d66748123d16b45d49b9403ae009",
+        "owner_entry_rva": "0x0038979e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003899bf",
+          "source_entry_rva": "0x003898af",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x003899bf",
+          "sha256": "827dba1ba7ba486c9e20c715a638193b7340c26cfb406da4d3fc2bcf38471ca3",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "632065b78628a7f028ccec9f4a39a2c5d3739152f37a53f1fcd809cbf4f60fe9",
+        "owner_entry_rva": "0x003898af",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038a73f",
+          "source_entry_rva": "0x00389c68",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038a73f",
+          "sha256": "8ba5b7e9ecb3e48ac3d586f1441f01c7116931bced91069bcad25d35989a23e2",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f2a847d5e938ae2d64edc25bc3b6a091d676522a4dab6160c167ec5ef8fc37e1",
+        "owner_entry_rva": "0x00389c68",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038ae68",
+          "source_entry_rva": "0x0038ad0d",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038ae68",
+          "sha256": "70e0609c1593db71b3bd1cb449a5e3c95da981e867d32188c7260c8a3beca432",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "a95712a44a95b1dac5a4ec7c335dc9d01d3be1861c62af9550fbfd803524fdeb",
+        "owner_entry_rva": "0x0038ad0d",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038afc9",
+          "source_entry_rva": "0x0038ae6e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038afc9",
+          "sha256": "7f70ff1bdaebfad689e1f8d7ae17d294e00a9674efd6e7500fd627f3f6253a7c",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "b55fc3af39066502a3cac99daaab5001beff41890223cdffe7ba634093b93634",
+        "owner_entry_rva": "0x0038ae6e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038b6c7",
+          "source_entry_rva": "0x0038afcf",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038b6c7",
+          "sha256": "e7656a7d341f9bcf7d8d44e30234e1e5cfc629b9527b6d768bbc0e1f4d96d602",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "4a785d1de9a6cf298c7a1ec37988fab09df6ef74e6f549069a8640bd900a2d95",
+        "owner_entry_rva": "0x0038afcf",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038c219",
+          "source_entry_rva": "0x0038c14e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038c219",
+          "sha256": "fd86a3b92a5bae0caee45dc962af888af0ac9b8357abb3b273d64b6799e8c70e",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "8922b8e37dcc52e2cbd5b967754381d9b50ffaea1d49b3995746ad490c589f26",
+        "owner_entry_rva": "0x0038c14e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038cdcd",
+          "source_entry_rva": "0x0038cd6d",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038cdcd",
+          "sha256": "a0a57db0f715c2531bfbf77591159f873527c4b3f09e523710b3cfca98380c40",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "283422fc425bb9d91437a413805301b667d7499c3eb9a703a98934d4d305953b",
+        "owner_entry_rva": "0x0038cd6d",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038ce9a",
+          "source_entry_rva": "0x0038ce30",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038ce9a",
+          "sha256": "63206443668fce195266b7b39d849fe85ad76073f243e4a076b6ea41158b2522",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "a0461b8f958b46178e7dd26b901bae71393974b9eb8e2cdd0811d3fc8f413d34",
+        "owner_entry_rva": "0x0038ce30",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038cfc9",
+          "source_entry_rva": "0x0038cea0",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038cfc9",
+          "sha256": "baecdf1a56f51e1230a81b038f5a3066e9fa323cdfe0c9ca487fdaca167274ac",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "b4d2e611871a7d921cf9c448854d5443395e4add7324e25f8b8cf6d248452c78",
+        "owner_entry_rva": "0x0038cea0",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038d3d1",
+          "source_entry_rva": "0x0038d060",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038d3d1",
+          "sha256": "58a0fd68763fa0e850319e32d83973f510b21682c78f73e01d1199d67ecdbaf6",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "0864bee7c379c9d796f65a715ac86710be079bfea393530aec52856c2f471537",
+        "owner_entry_rva": "0x0038d060",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038d412",
+          "source_entry_rva": "0x0038d3d7",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038d412",
+          "sha256": "2d2a89818c7efb773e25135c846699fafdac1ce077532ff967d78f7b188a7aff",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "16f09826b81fd053c36696f431c73878c522b927425da9d125c41c3ce7bea5c7",
+        "owner_entry_rva": "0x0038d3d7",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038d62b",
+          "source_entry_rva": "0x0038d498",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038d62b",
+          "sha256": "eebdcddf8111a9926c13a45bc1e4de4e54865d80e04a2483efb2d8d72c268ad9",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f175a81a85a8746516c1543de822316f09f447a6836bd81dc95d47a1d9211707",
+        "owner_entry_rva": "0x0038d498",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038d910",
+          "source_entry_rva": "0x0038d631",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038d910",
+          "sha256": "3fa97306cb0161539aa5fac9565a89d76fe9b74d05ca8ee95912ce8c2f09eb34",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e644dfe041b03db796f3d5f10397f53193505025e94c4d27a21540597fa4bd43",
+        "owner_entry_rva": "0x0038d631",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038dcdc",
+          "source_entry_rva": "0x0038d916",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038dcdc",
+          "sha256": "6818c8090dca36599e8a15999878c994034ad6b5531188d45261001fbf18dba8",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "808475064b3a0f54015a8ec8b30275de30c9777458c719b7b740b312d8492d7f",
+        "owner_entry_rva": "0x0038d916",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0038ddcc",
+          "source_entry_rva": "0x0038dd7c",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0038ddcc",
+          "sha256": "8feb527a2ab1cfe69bf757aee1d237c0bbd7fd959ffe398c918a71d6d40b193d",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "ee5925f5034028d68459c6ff788d2bcbd98ff2c16da940699b93f79fcf5c15cb",
+        "owner_entry_rva": "0x0038dd7c",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003905b3",
+          "source_entry_rva": "0x0039046e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x003905b3",
+          "sha256": "871cf596fe918be2b8eb8136952f25d387ab31a437ef63fd35c00e335ae122c7",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "325518fbac80d64c1eb9629687b239102c28cc95d96ab8cea46fa78c9a940615",
+        "owner_entry_rva": "0x0039046e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003908d7",
+          "source_entry_rva": "0x003907e5",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x003908d7",
+          "sha256": "08ba0590c4d42ebdec425b75c6c0aa8baf5035307212c011f65bfc125b39e86a",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "a3cfed54019a45a0b5f28513158d1b5629cf0aea60e4eb6ba2290a37040b8784",
+        "owner_entry_rva": "0x003907e5",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0039320c",
+          "source_entry_rva": "0x00393030",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0039320c",
+          "sha256": "36fdd7ab237a6b1b579027f5aa09141ba9ecb93a48a7361d86c79a29452a12e9",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f9c043209b82d2840591ce27f29cb24fddb7101fa2a199a39b74330e4044fcb9",
+        "owner_entry_rva": "0x00393030",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00393ea9",
+          "source_entry_rva": "0x00393cfd",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00393ea9",
+          "sha256": "47fc8cd25b977a3856a7104c1624458872a64be44db420dd8594bca6815fbf33",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "c75db88d5a47d870d23ccfe7e4e98f61b0dc9d573cf7892f07d09682c72aadab",
+        "owner_entry_rva": "0x00393cfd",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00395535",
+          "source_entry_rva": "0x00395354",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00395535",
+          "sha256": "3e952b06c8d2b65e673af317a9055aa9e925786f4013961c98d4eb2fa0b202c4",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "9070fc5c2da773dbae9ce9adfd8386b8a16ebe285081dba8973326d7f4bed751",
+        "owner_entry_rva": "0x00395354",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00395685",
+          "source_entry_rva": "0x0039553b",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00395685",
+          "sha256": "e10d0386b4ba43136048bdbcfa966e0dfab5852201ed1f7215411d54640f2a04",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "e060da270000ad03deea8c055430c8dbdb738a84bdec6766035bd0c88fcc7418",
+        "owner_entry_rva": "0x0039553b",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0039585a",
+          "source_entry_rva": "0x0039568b",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0039585a",
+          "sha256": "5807ed27e1e3af8af9a0ba6c58068eaccc2f109e11254bedc6911ef00b25cdb5",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "6c71cf5e11f1926b2404fbdeeb7359f02f22b9cd62af32fb46aebf86aa72719a",
+        "owner_entry_rva": "0x0039568b",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x003959b5",
+          "source_entry_rva": "0x00395860",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x003959b5",
+          "sha256": "2248a8241bcd2fdfcf5c7ac3b3d40d7c9a02ba431c90ad6ee1e26ace6a48eb98",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "dc482c8d393def5bff9e1fbec01108963e746887d806842a951bd5de157c5a0a",
+        "owner_entry_rva": "0x00395860",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00395cd8",
+          "source_entry_rva": "0x00395b4e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00395cd8",
+          "sha256": "21bd9c7dd0fe9823859a6f92add83b843f541fef756571e60df35b47f9f42675",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "dc5019234293dec3144e972115526ce5d21a89669ea33518a87abbf27542417c",
+        "owner_entry_rva": "0x00395b4e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00395d6e",
+          "source_entry_rva": "0x00395cde",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00395d6e",
+          "sha256": "c0f02b344e32b0f375fdf634ccc37ba0c484934e0313ab0bec1fc191ad78f99f",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "7939c6629e96a6bd37828e90e54c67510f91f38b5402e40d058525d0ec5f2560",
+        "owner_entry_rva": "0x00395cde",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00396af8",
+          "source_entry_rva": "0x003968c3",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00396af8",
+          "sha256": "cd23b43211b9a6d3c7e40bd01962209cfbd994f092281f152c83896efb64407f",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "628aa1443447d6ca3be042181407a71819d650011a3352bc0f3f699efe36ec62",
+        "owner_entry_rva": "0x003968c3",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00396ba9",
+          "source_entry_rva": "0x00396afe",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00396ba9",
+          "sha256": "780981804e36d14c958f68400968da59718f08ef051fc9a27073934bd04fef72",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "6b8f99e2a777d7288b24c4e2bbc3703ce37d1662d8e484203100723b4df8afa7",
+        "owner_entry_rva": "0x00396afe",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00397d4f",
+          "source_entry_rva": "0x00397ccc",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00397d4f",
+          "sha256": "f3563b099e21cd13c48cf3a12722bf3c9771cca66ef95e690a4da4809f5a7213",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "09b08b76edd6a470705ccc44fc47dfa29a68448cafa36314ba791de0bf083c72",
+        "owner_entry_rva": "0x00397ccc",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00398162",
+          "source_entry_rva": "0x00397e7e",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00398162",
+          "sha256": "2828d4c5232003e1b2706c6b582403453e9866eb7c00721b19639553b658be9c",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "139955670238365fe9db9c87d5a331f8eb99166622d575477c957c372746f15d",
+        "owner_entry_rva": "0x00397e7e",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00398223",
+          "source_entry_rva": "0x00398168",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00398223",
+          "sha256": "2f4eac22ac1e06b7512d8b82a7c8123cae2f8000cd7b665ca8900c8ad608f2f1",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "4c16d53f84a930d717a64bdfbdb195401d8767cebc49cfe91c907e4bf1b9bd7d",
+        "owner_entry_rva": "0x00398168",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x00398593",
+          "source_entry_rva": "0x003983ca",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x00398593",
+          "sha256": "15bcc07dd57f298a501401b22b4166bfb10d6b75cb62fb448b21ecc874a9b441",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "ae79433d9d97691e745b52f1499d9a1b0c172ca361950b1afeca27942be0361d",
+        "owner_entry_rva": "0x003983ca",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0039b0cd",
+          "source_entry_rva": "0x00399d37",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0039b0cd",
+          "sha256": "9fe7932ab03ae6d7f2d39387335067d6537b93ab62bd102ff87b65d9cd0a6a61",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "c992c7a89bfef3bb444328d351c05abe8f606463bad3b67bf823c74088041f3f",
+        "owner_entry_rva": "0x00399d37",
+        "target_rva": "0x00379f1f"
+      },
+      {
+        "declared_edge": {
+          "instruction_rva": "0x0039b6c1",
+          "source_entry_rva": "0x0039b61d",
+          "target_entry_rva": "0x00379f1f",
+          "target_name_sha256": "30666eb011081bc1bf6dc994c2f1706a6b7c90e64eaafad2f417da2273edfac4",
+          "target_rva": "0x00379f1f"
+        },
+        "instruction": {
+          "rva": "0x0039b6c1",
+          "sha256": "72bce15e09f91e2a85e72d368121487c90ae047a27a8495853c6b3c68bd77cee",
+          "size": 5
+        },
+        "operand_class": "immediate",
+        "operand_index": 0,
+        "owner_atlas_record_sha256": "f0ea757cfbf6424273302f9cdc682cc21fbb7f384fdb88871c8ff0c8de7b78f7",
+        "owner_entry_rva": "0x0039b61d",
+        "target_rva": "0x00379f1f"
+      }
+    ],
+    "references_canonical_sha256": "e5e16589ea073f173cfab13acb9112f056b60e684a9fd7f9dd8d015620581467",
+    "scope": {
+      "bytes": 3735718,
+      "functions": 25312,
+      "instructions": 1153814,
+      "ranges": 25490
+    }
+  }
+}

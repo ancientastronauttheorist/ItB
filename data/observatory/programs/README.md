@@ -1189,6 +1189,78 @@ publication, with no pathname deletion or replacement. CRT identity, ABI,
 source purpose, runtime execution, data contents, indirect targets, callee
 behavior, and normal-return semantics remain unproved.
 
+## Assertion second-child direct-callee frontier
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json`
+has schema 1 and analysis kind `pe_native_assertion_helper_second_child_callee_frontier`.
+
+The second-child direct-callee frontier now joins all three outgoing edges
+from `0x00379e77`. Edge `0x00379e88 -> 0x0038edb6` reuses the first-child
+receipt, and `0x00379ebd -> 0x003574ca` reuses the query-handler residual-callee
+receipt. Each join agrees with its source edge, target atlas identity, and an
+exact incoming-reference row in the reused receipt. Edge
+`0x00379eec -> 0x00379f1f` receives a new 51-byte body boundary containing
+20 instructions and a 20-node / 20-edge CFG.
+
+The new body has two direct native calls (`0x00379f21 -> 0x0039cb92` and
+`0x00379f3a -> 0x00379d28`), two absolute-memory imported calls, one
+`INT 0x29`, six ordinary immediate operands, and two HIGHLOW relocations.
+Raw descriptor/ILT/IAT/import-name hashes bind the imported calls to metadata
+spellings `GetCurrentProcess` and `TerminateProcess`. Those names and the
+Ghidra label `__invoke_watson` do not establish behavior. The interrupt's edge
+to the next instruction is labeled `opaque_interrupt_possible_fallthrough`;
+call edges likewise express only possible fallthrough. No runtime continuation,
+termination, or normal-return claim follows from this graph.
+
+The all-operand scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes,
+and 1,153,814 instructions. Exactly 45 references from 45 owners point to the
+new target, all immediate five-byte calls, including its parent. All three
+immediate parent direct-callee bodies are now accounted for structurally;
+the parent's indirect controls, the new body's two native descendants, and
+all callee behaviors remain unresolved. There is no accounting-level promotion.
+
+The builder independently verifies the exact PE and direct-call census,
+rechecks the caller's three edges and both reused body byte identities, then
+decodes the new body, raw import/relocation witnesses, and the whole-atlas
+reference scan. It pins existing receipts by canonical hash; it does not
+rerun their entire original analyses. The PE-free validator checks the
+hash-pinned normalized receipt and recomputes source/edge/graph joins and
+counts. That consistency check is not independent binary evidence.
+
+New publication contains normalized facts and hashes, without instruction
+bytes or disassembly. The writer keeps the retained content-addressed stage
+and no-overwrite hard-link protocol, and requires the sealed frontier identity.
+Pretty-printed file SHA-256:
+`19a5d65db948083b985d0eca8757db5c4663d5892decdef69a1c87fb6b5de9f3`.
+Canonical JSON SHA-256:
+`39a712704c58f0789580ebac647ce13ae23681a1df12f0dc93d549159e37ddeb`.
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_second_child_callee_frontier.py build `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --second-child data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json `
+  --first-child data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary.json `
+  --reused-callee data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --output data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json
+
+python -X utf8 scripts/itb_native_assertion_helper_second_child_callee_frontier.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --second-child data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_second_target_child_static_boundary_v2.json `
+  --first-child data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_first_callee_direct_callee_pair_first_target_child_static_boundary.json `
+  --reused-callee data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_child_callee_frontier.json
+
+```
+
+For `verify-structure`, pass the five source receipts and `--evidence`, and
+omit `--executable` and `--inventory`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`
