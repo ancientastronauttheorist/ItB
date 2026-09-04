@@ -1406,6 +1406,27 @@ For `build`, replace `verify` with `build` and `--evidence` with `--output`.
 For `verify-structure`, retain the four sources and `--evidence`, omitting
 `--executable` and `--inventory`.
 
+## Assertion fill-conformance artifact
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_fill_conformance.json`
+(schema 1, `pe_native_assertion_helper_fill_conformance`) adds isolated exact-body
+emulation evidence for `0x00370960`. An independent byte-fill specification
+matches 14,616 finite matrix vectors and four null-destination zero-length
+vectors. A direction-flag-set REP control is rejected for an out-of-interval
+write. The traces cover 89 of 89 instruction nodes and 102 of 102 CFG edges;
+repeated same-address REP events are excluded from that coverage count.
+
+The receipt pins Unicorn 2.1.4, native core `(2, 1, 33621247)` and explicit
+`UC_CPU_X86_HASWELL` model 19. Checks cover the destination-byte contract,
+individual write bounds and write union, permitted data reads, return sentinel,
+stack increment and preserved registers. Neither finite branch coverage nor
+emulation is promoted to a universal, native-game, CRT-identity or ownership
+claim. Full scope and reproduction commands are in
+[`docs/native_fill_conformance.md`](../../../docs/native_fill_conformance.md).
+
+Raw SHA-256: `2b252e9dfa988551c8a110d90abe539f20c00bbc62bea27c34f6441d6d67bcbf`.
+Canonical SHA-256: `6f4bba8750713184f5de2bf119b36605078e4386e05712a2f686b6e744801246`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

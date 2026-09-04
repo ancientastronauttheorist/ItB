@@ -508,8 +508,13 @@ until core engine semantics are reconstructed.
   159 incoming calls across 122 owners; neither new body has outgoing calls.
   On normal completion, the small body's first instruction clears a 32-bit
   global location through a read-modify-write operation; its global purpose
-  remains unknown. The larger body's REP and SIMD paths remain structurally described,
-  with no full memset semantics, runtime proof or accounting promotion.
+  remains unknown. A subsequent fill-conformance receipt now supplies an
+  independent byte-fill specification and isolated exact-body emulation for
+  14,620 positive cases, plus one expected DF-set rejection. All 89 instruction
+  nodes and 102 CFG edges are observed across scalar, REP and SIMD vectors.
+  This is finite emulation evidence, not proof of all inputs, real-game
+  execution, CRT identity or an accounting promotion. See
+  `docs/native_fill_conformance.md` for domains, hashes and replay commands.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

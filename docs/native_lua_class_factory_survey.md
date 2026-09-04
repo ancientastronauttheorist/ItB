@@ -589,6 +589,17 @@ has raw SHA-256 `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714e
 See `data/observatory/programs/README.md` for counts, validation scope and
 commands. Existing artifacts and accounting promotions are unchanged.
 
+## Assertion fill-conformance follow-up
+
+The larger leaf now has an independent byte-fill specification and isolated
+exact-body Unicorn conformance evidence: 14,620 positive cases, one expected
+DF-set rejection, and all 89 instruction nodes / 102 CFG edges observed.
+The finite matrix covers scalar, REP and SIMD dispatch combinations, alignment
+and length boundaries, value truncation and unrelated dispatch-global bits.
+It does not prove all inputs, native game execution or a compiler/runtime
+exclusion. See `docs/native_fill_conformance.md` for the sealed hashes,
+write/read/register checks, assumptions and exact replay commands.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`
