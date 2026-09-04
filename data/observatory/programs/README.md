@@ -1336,6 +1336,76 @@ python -X utf8 scripts/itb_native_assertion_helper_descendant_pair.py verify `
 For `verify-structure`, keep the three source arguments and `--evidence` and
 omit `--executable` and `--inventory`.
 
+## Assertion leaf-callee artifact
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_leaf_callees.json`
+(schema 1, analysis kind `pe_native_assertion_helper_leaf_callees`) closes the
+remaining two body boundaries beneath `0x00379d28`. All five parent native
+calls are rejoined: two to `0x003586b6`, two to `0x00370960`, and one to the
+previously sealed `0x003574ca`. The last join includes the existing receipt's
+exact incoming-reference record; its body is not counted as newly analyzed.
+
+The new bodies cover 354 bytes and 91 instructions:
+
+- `0x003586b6`: eight bytes, two instructions, two CFG nodes and one edge.
+  Its first instruction performs a 32-bit read-modify-write at RVA
+  `0x004b6e58`. The independently checked instruction grammar establishes a
+  zero result conditional on normal completion of that instruction, followed
+  by near-return syntax. The location is writable, virtual-only `.data`;
+  the receipt supplies no initial file contents, variable purpose, ownership,
+  execution observation, concurrency guarantee, or normal function-return proof.
+- `0x00370960`: 346 bytes, 89 instructions, 89 CFG nodes and 102 edges.
+  Sixteen conditional branches, one unconditional internal branch, and three
+  returns are retained. The analysis metadata calls it `_memset`; that label
+  is not a semantic or compiler/runtime exclusion proof. REP STOSB appears as
+  one syntactic node with possible-completion fallthrough. Its micro-iterations
+  are not expanded. Scalar and SIMD memory expressions remain decoder syntax;
+  direction, bounds, CPU support, exceptions, completion and full fill behavior
+  are unproved. Legacy `66` prefixes are recorded without assuming every one
+  means a word-sized operand.
+
+Neither new body contains a call, import control, interrupt, indirect jump,
+external branch or local fallthrough escape. The receipt records 157 explicit
+operands, 34 memory expressions, 29 ordinary immediates, four absolute memory
+operands and four HIGHLOW relocations. The repeated-string destination includes
+an implicit ES segment; it is distinct from the preceding receipt's explicit
+segment-register stores. LEA memory expressions do not imply a memory read.
+
+The complete atlas scan covers 25,312 functions, 25,490 ranges, 3,735,718 bytes
+and 1,153,814 instructions. It finds two incoming calls from one owner for the
+small body and 157 calls from 122 owners for the larger body, totaling 159
+calls from 122 owners. Four parent edges join those new incoming references.
+All observed entry references are immediate calls; computed, indirect,
+data-only and un-atlased references remain outside the scan.
+
+Exact verification replays the PE/direct-call prerequisites, parent caller
+bytes, new body controls and operands, raw relocation witnesses and all-atlas
+entry-reference scan. Parent and reused receipts are canonical-pinned without
+rerunning their full analyses. PE-free verification recognizes the sealed
+normalized artifact and checks internal joins; it is not independent binary
+proof. Publication is immutable and contains no disassembly or copied bytes.
+No accounting level or runtime ownership is promoted by this artifact.
+
+Raw SHA-256: `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`.
+Canonical JSON SHA-256: `1ef7c1874b83e871f3afa9d482c2c6f01cd541c50f81b342605d80946a93f3c2`.
+
+Build and verify with the same four source arguments:
+
+```powershell
+python -X utf8 scripts/itb_native_assertion_helper_leaf_callees.py verify `
+  --executable "B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe" `
+  --inventory data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json `
+  --pair data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_descendant_pair.json `
+  --reused-callee data/observatory/programs/windows_build_13725832_31fe35265598_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_static_boundary.json `
+  --direct-calls data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_direct_call_census.json `
+  --program-facts data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json `
+  --evidence data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_leaf_callees.json
+```
+
+For `build`, replace `verify` with `build` and `--evidence` with `--output`.
+For `verify-structure`, retain the four sources and `--evidence`, omitting
+`--executable` and `--inventory`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

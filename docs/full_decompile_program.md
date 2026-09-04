@@ -499,9 +499,21 @@ until core engine semantics are reconstructed.
   `0c7fbea632343e29a05e8e9ec67f695021bbc8154e2bc7d2661e6ac8c859c1bc`;
   canonical JSON SHA-256 is
   `47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b`.
-  Imported implementations, the larger body's three native targets, context
-  identity, exception behavior, and ownership/exclusion proofs remain outside
-  this structural receipt.
+  Imported implementations, context identity, exception behavior, and
+  ownership/exclusion proofs remain outside this structural receipt.
+  A subsequent leaf-callee receipt rejoins all five native calls from
+  `0x00379d28`, reusing `0x003574ca` and sealing `0x003586b6` (eight bytes,
+  two instructions) and `0x00370960` (346 bytes, 89 instructions). It records
+  103 instruction CFG edges, 157 explicit operands, four HIGHLOW sites and
+  159 incoming calls across 122 owners; neither new body has outgoing calls.
+  On normal completion, the small body's first instruction clears a 32-bit
+  global location through a read-modify-write operation; its global purpose
+  remains unknown. The larger body's REP and SIMD paths remain structurally described,
+  with no full memset semantics, runtime proof or accounting promotion.
+  Leaf-callee raw SHA-256 is
+  `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
+  canonical JSON SHA-256 is
+  `1ef7c1874b83e871f3afa9d482c2c6f01cd541c50f81b342605d80946a93f3c2`.
   The dependent assertion-helper second-callee boundary canonical-pins the
   assertion-helper parent receipt and independently rejoins exact edge
   `0x00379cdc -> 0x0038c89f`. It seals all six target bytes, both instruction

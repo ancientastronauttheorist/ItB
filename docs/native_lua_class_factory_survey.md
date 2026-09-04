@@ -568,6 +568,27 @@ the canonical JSON SHA-256 is
 See `data/observatory/programs/README.md` for exact commands and validation
 scope. Prior artifacts are unchanged; no runtime or ownership promotion is made.
 
+## Assertion leaf-callee artifact
+
+The descendant-pair helper's five native calls now join two new exact body
+boundaries and the existing `0x003574ca` receipt. New target `0x003586b6`
+covers eight bytes and two instructions; target `0x00370960` covers 346 bytes
+and 89 instructions. Their instruction CFGs have one and 102 edges. The
+all-atlas entry-reference scan finds 159 calls across 122 owners, with no
+outgoing calls from either new body.
+
+On normal completion, the smaller body's first instruction clears a 32-bit
+location at RVA `0x004b6e58`, using a checked read-modify-write operation.
+The location's purpose and ownership remain unknown. The larger body's
+`_memset` name remains analysis metadata. Its REP node, implicit ES operand,
+SIMD prefixes, memory expressions and return syntax are qualified separately
+from runtime fill behavior, bounds, direction and exception semantics.
+
+`data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_leaf_callees.json`
+has raw SHA-256 `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea` and canonical SHA-256 `1ef7c1874b83e871f3afa9d482c2c6f01cd541c50f81b342605d80946a93f3c2`.
+See `data/observatory/programs/README.md` for counts, validation scope and
+commands. Existing artifacts and accounting promotions are unchanged.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`
