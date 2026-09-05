@@ -1509,6 +1509,20 @@ See [`docs/native_import_arguments.md`](../../../docs/native_import_arguments.md
 Canonical SHA-256: `a5db0b615b94a1291132a500fd025a74aeb4b0f8b78409f5d91bb30a6d4e282f`.
 Raw SHA-256: `0c37b9bd564224d0d2593a3b9d9b573aadbf42e847b40587fada7a188c6c6933`.
 
+## Conditional assertion return tail
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_return_tail.json`
+seals the final 44 bytes and 17 caller instructions, the tiny helper and the
+four-instruction equality checker. Its independent predicate and integer
+model cover 1,728 cases and 16 Boolean partitions, including 864 modeled
+returns and 864 open mismatch transfers. The third import is assumed to
+return with five protected stack words; pointed-to records may change and
+current-global equality is a separate condition. See
+[`docs/native_return_tail.md`](../../../docs/native_return_tail.md).
+
+Canonical SHA-256: `fd5c3c19346955ad9a667cdf1f53757fa98f29948f6a26216f431d8e267ec703`.
+Raw SHA-256: `b4d31821692dbc968d50e5ad4c6e7c445d5e6b96de19eed747abbb76ff93669e`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

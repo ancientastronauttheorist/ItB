@@ -59,6 +59,10 @@ resolution, API side effects, complete function behavior and whole-program
 coverage remain outside this proof. No debugger, process filter or game state
 is changed by the analysis.
 
+`docs/native_return_tail.md` now describes the conditional continuation after
+this third call, including the optional helper, equality check and mismatch
+transfer. It explicitly permits mutation of the pointed-to records.
+
 ## Reproduction
 
 ```powershell

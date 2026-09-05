@@ -547,6 +547,12 @@ until core engine semantics are reconstructed.
   assumptions for the preceding two imports. All three import bindings are
   rechecked against the PE; imported execution and the return tail remain
   open. See `docs/native_import_arguments.md`.
+  The final 44-byte, 17-instruction return tail now has 16 Boolean predicate
+  partitions and 1,728 integer-model cases, including a newly specified
+  four-instruction equality checker. Its 864 direct modeled returns and
+  864 open mismatch transfers remain conditional on the third import's
+  return contract and protected words; the record buffers may change.
+  See `docs/native_return_tail.md` for stack restoration and explicit gaps.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is
