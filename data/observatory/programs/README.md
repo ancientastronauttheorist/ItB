@@ -1588,6 +1588,21 @@ raw SHA-256: `56a5956cf5f69e6f74f962681b53969775c2b5615da6b301cfece85f35285f08`.
 See [`native marker specification`](../../../docs/native_lua_class_marker_semantics.md)
 and [`reference experiment`](../../../docs/lua51_marker_reference.md).
 
+## Filtered Lua assignment semantics and reference runtime
+
+`windows_build_13725832_31fe35265598_native_lua_filtered_assignment_semantics.json`
+specifies 180 bytes and 71 instructions with 2,560 finite transcript cases.
+Canonical SHA-256: `b62b6409f2f3f3a003732bc106f5e4e3f0eaf543d2b246984a6513cc658a1b27`.
+Raw SHA-256: `b702b24ca55a586ac3be3acf0e8d357623d3431c707821d46647b2308779fc1b`.
+
+`lua_5_1_5_x86_filtered_assignment_reference.json` separately records 48 actual
+upstream API experiments, including six protected errors and redirected writes.
+Canonical SHA-256: `7d82034b09049dd4eefa96cb02f004dfc15661e8572d4a2267ec4e0473185b35`.
+Raw SHA-256: `aa3a701d5b74f4e774727e21db0a4eeaa0953f935bf4fb9e4cd141ea80bb80ee`.
+
+See [`native specification`](../../../docs/native_lua_filtered_assignment_semantics.md)
+and [`reference experiment`](../../../docs/lua51_filtered_assignment_reference.md).
+
 ## Conditional complete failure frontier
 
 `windows_build_13725832_31fe35265598_native_assertion_helper_failure_composition.json`

@@ -1,0 +1,2564 @@
+{
+  "analysis_kind": "lua51_filtered_assignment_reference_conformance",
+  "columns": [
+    "mode",
+    "source_pattern",
+    "prefix_pair",
+    "pcall_status",
+    "assignment_requests",
+    "newindex_calls",
+    "before_top",
+    "after_top",
+    "prefix_ok",
+    "key_equal_calls",
+    "destination_match",
+    "destination_entries"
+  ],
+  "configuration": {
+    "architecture": "x86",
+    "game_dll_loaded": false,
+    "msvc_version": "14.29.30133",
+    "pointer_bytes": 4,
+    "sdk_version": "10.0.19041.0"
+  },
+  "experiment": {
+    "compiled_sources": [
+      "lapi.c",
+      "lauxlib.c",
+      "lbaselib.c",
+      "lcode.c",
+      "ldblib.c",
+      "ldebug.c",
+      "ldo.c",
+      "ldump.c",
+      "lfunc.c",
+      "lgc.c",
+      "linit.c",
+      "liolib.c",
+      "llex.c",
+      "lmathlib.c",
+      "lmem.c",
+      "loadlib.c",
+      "lobject.c",
+      "lopcodes.c",
+      "loslib.c",
+      "lparser.c",
+      "lstate.c",
+      "lstring.c",
+      "lstrlib.c",
+      "ltable.c",
+      "ltablib.c",
+      "ltm.c",
+      "lundump.c",
+      "lvm.c",
+      "lzio.c"
+    ],
+    "include_closure": [
+      {
+        "components": [
+          "lapi.h"
+        ],
+        "root": "lua",
+        "sha256": "4aea4c1b975d43184f4f1fd1a42c79cf11d74d2801315740cec07fe9abebb56d"
+      },
+      {
+        "components": [
+          "lauxlib.h"
+        ],
+        "root": "lua",
+        "sha256": "c741f9c1587f29fd08a79acbe0c46884768a47f89bee4147669f774c5cf50fc0"
+      },
+      {
+        "components": [
+          "lcode.h"
+        ],
+        "root": "lua",
+        "sha256": "97d5a37f3b1b19eda1ef39607b3358aa0f7e917568ccd27ed0f14bc6a70d4b17"
+      },
+      {
+        "components": [
+          "ldebug.h"
+        ],
+        "root": "lua",
+        "sha256": "d036f0dbb996bdecd48d505746f72c31b82fb2fc38f111b780568338d4ed9e9c"
+      },
+      {
+        "components": [
+          "ldo.h"
+        ],
+        "root": "lua",
+        "sha256": "591ad9a90098d3fbf06839da3de752d2c2585cbf5801dde4cdaffe12b23a182e"
+      },
+      {
+        "components": [
+          "lfunc.h"
+        ],
+        "root": "lua",
+        "sha256": "3cea0071ffda94eac378adb5f1ecb467ef2ffafff4315459e4ccdf05b5119da4"
+      },
+      {
+        "components": [
+          "lgc.h"
+        ],
+        "root": "lua",
+        "sha256": "fbab2b989515377729d4c029dd58b3b6242877a88a7c4cfa703ea0deeb069a1e"
+      },
+      {
+        "components": [
+          "llex.h"
+        ],
+        "root": "lua",
+        "sha256": "0f3715d22b025727ef11debd641600a123b81718d195cd8445ac6378814458e6"
+      },
+      {
+        "components": [
+          "llimits.h"
+        ],
+        "root": "lua",
+        "sha256": "1910669296681d9d2814ca46c325063724bb634c0428dae4e5ff59be54e0b758"
+      },
+      {
+        "components": [
+          "lmem.h"
+        ],
+        "root": "lua",
+        "sha256": "abd1258418486c69bf5a93ceea3a1b9f8af2c7497a4fa6c27b442ffec2c5bbb1"
+      },
+      {
+        "components": [
+          "lobject.h"
+        ],
+        "root": "lua",
+        "sha256": "274c18373fbbad71bfebd534cae4b2d2e49934abf6672f44735edc6646fb6a8b"
+      },
+      {
+        "components": [
+          "lopcodes.h"
+        ],
+        "root": "lua",
+        "sha256": "a15fe349da7c1e73b563e8c3249fe7d535eccc844cb30ec80b4e335b0699279b"
+      },
+      {
+        "components": [
+          "lparser.h"
+        ],
+        "root": "lua",
+        "sha256": "84512d6540b83ab599cd8de5a1c8c4deaf71ff353f8e4fbc2e4ca135ba4e9ef0"
+      },
+      {
+        "components": [
+          "lstate.h"
+        ],
+        "root": "lua",
+        "sha256": "dc64ea7ec74d7c1efaeaf6a9e2257f0b7856a5c988747948af2e76cf079d20fe"
+      },
+      {
+        "components": [
+          "lstring.h"
+        ],
+        "root": "lua",
+        "sha256": "c0e8af4eb33e3357be79f906e7e1191ba53a3a790d36ca15b50471d3a339e1f0"
+      },
+      {
+        "components": [
+          "ltable.h"
+        ],
+        "root": "lua",
+        "sha256": "219e6ac2bf43aaa93093c6bcd571c012660325e6b87ea3d6c1b40679a0acfd64"
+      },
+      {
+        "components": [
+          "ltm.h"
+        ],
+        "root": "lua",
+        "sha256": "54f4c2fa76b8ed8d48163e31807a19999f5d65b009ae862cb757e0773f2aa485"
+      },
+      {
+        "components": [
+          "lua.h"
+        ],
+        "root": "lua",
+        "sha256": "470551c185f058360f8d0f9e5c54a29a3950f78af6a93f3fe9e4039a380c7b87"
+      },
+      {
+        "components": [
+          "luaconf.h"
+        ],
+        "root": "lua",
+        "sha256": "0410ff22f66c275ba8fcee1fa87a0749d26d7952ed30d3bc9161688b39775464"
+      },
+      {
+        "components": [
+          "lualib.h"
+        ],
+        "root": "lua",
+        "sha256": "13f880e9dd997a0f7fd0b17ccd949c98f33e95bd120f084de66084e888217413"
+      },
+      {
+        "components": [
+          "lundump.h"
+        ],
+        "root": "lua",
+        "sha256": "9f3a2924d1585620993a70eea6cf3def34acb8322b2d9c3629bcdacc037edc64"
+      },
+      {
+        "components": [
+          "lvm.h"
+        ],
+        "root": "lua",
+        "sha256": "db4b79dc7f4e7656078aa527350fbf14b2fde5d136ccf1cb4f3dc397def5fb67"
+      },
+      {
+        "components": [
+          "lzio.h"
+        ],
+        "root": "lua",
+        "sha256": "0ec77d0179bf29c1ccab97028fed761944d5c21c02808e10cd7b5883b58b2ca6"
+      },
+      {
+        "components": [
+          "concurrencysal.h"
+        ],
+        "root": "msvc",
+        "sha256": "1ea9a2e32a6ff298ad7904610cc71028caa9b172399a579ca90a120d1b1aec12"
+      },
+      {
+        "components": [
+          "excpt.h"
+        ],
+        "root": "msvc",
+        "sha256": "191ab83e320a5e9712fe483257fecae14cb0c158a4517b620f3fddb1aa6ef23b"
+      },
+      {
+        "components": [
+          "limits.h"
+        ],
+        "root": "msvc",
+        "sha256": "2b97d79074cd0d170919231947d453af2f47baf2054d63018008caf19fa31d2d"
+      },
+      {
+        "components": [
+          "sal.h"
+        ],
+        "root": "msvc",
+        "sha256": "6e0f89319d372b60b80a4138a0641d4adc26389f950c061797fb166180f19796"
+      },
+      {
+        "components": [
+          "setjmp.h"
+        ],
+        "root": "msvc",
+        "sha256": "529dce71c496d77b104b85876c65d8d6e61d7aed2d9e4b64c1011491fd566f10"
+      },
+      {
+        "components": [
+          "stdarg.h"
+        ],
+        "root": "msvc",
+        "sha256": "5d61d0b6734ef0832c30064800e8d01b3f12d29d24c8b1bd07b3ece3b72a9330"
+      },
+      {
+        "components": [
+          "vadefs.h"
+        ],
+        "root": "msvc",
+        "sha256": "200b49c2efd26bc7a92e9dfa3b847cc612b237dff5c7291d9f901d39b4a5e52e"
+      },
+      {
+        "components": [
+          "vcruntime.h"
+        ],
+        "root": "msvc",
+        "sha256": "28fb1fd59d1d46b03487925f8f6399eeb5aa0c57742e12094f473b1b40eb292d"
+      },
+      {
+        "components": [
+          "vcruntime_string.h"
+        ],
+        "root": "msvc",
+        "sha256": "b05204f6814d1d7b7ca729b41d4192d0e47722f162c0b1d322f994bf9650af63"
+      },
+      {
+        "components": [
+          "shared",
+          "WTypesbase.h"
+        ],
+        "root": "sdk",
+        "sha256": "4026039090b9f186158fb13f2bdabde7b2a835815b3f44da46d564ffe9474f07"
+      },
+      {
+        "components": [
+          "shared",
+          "apiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "700a79b181668539bbc2fe9da27c3d1d36e3def3341e8ed16e6011e99c524dfd"
+      },
+      {
+        "components": [
+          "shared",
+          "apisetcconv.h"
+        ],
+        "root": "sdk",
+        "sha256": "5892590dbea96d90176bd6bc67944c95f97e8e67a617e39ed9fb78ccfd35e40d"
+      },
+      {
+        "components": [
+          "shared",
+          "basetsd.h"
+        ],
+        "root": "sdk",
+        "sha256": "8eaef7bb1985f584e8305463494334fc55aad56d98e59e7346273cecacf81a5a"
+      },
+      {
+        "components": [
+          "shared",
+          "bcrypt.h"
+        ],
+        "root": "sdk",
+        "sha256": "6c86d53bb9f86a92f51be14980ca7d62e4e866b9fe143834faddcfe999e95940"
+      },
+      {
+        "components": [
+          "shared",
+          "cderr.h"
+        ],
+        "root": "sdk",
+        "sha256": "bf32afdc975ba03781b01dfc7b3a450787cc213257a3f4b7f53ec168ce07dd7c"
+      },
+      {
+        "components": [
+          "shared",
+          "driverspecs.h"
+        ],
+        "root": "sdk",
+        "sha256": "9cf7e9e1c9b55c7c351e87ff5a98e362b6ffdb511c3309ab9cf46b62b0dace42"
+      },
+      {
+        "components": [
+          "shared",
+          "guiddef.h"
+        ],
+        "root": "sdk",
+        "sha256": "0c08463fbc5a23a8862e57699e2f30dd14cd3db4a40903e4fca9392a57942dae"
+      },
+      {
+        "components": [
+          "shared",
+          "inaddr.h"
+        ],
+        "root": "sdk",
+        "sha256": "a2ae281be066b6a2164ae5639dca411d8b03842ff91b216396203b1e62038572"
+      },
+      {
+        "components": [
+          "shared",
+          "kernelspecs.h"
+        ],
+        "root": "sdk",
+        "sha256": "e844c7726c42736df74445b36351dc01e29bccee7d57ea208f77f61aa4c2b191"
+      },
+      {
+        "components": [
+          "shared",
+          "ktmtypes.h"
+        ],
+        "root": "sdk",
+        "sha256": "68d2848d00ae33282fb265880f8166f2b5dc60cd7a26db652450a5b44d44ee11"
+      },
+      {
+        "components": [
+          "shared",
+          "minwindef.h"
+        ],
+        "root": "sdk",
+        "sha256": "a9cf08be8407a196104124d5ade2308e204e47d3252bcd2ad20d0f2137843d62"
+      },
+      {
+        "components": [
+          "shared",
+          "poppack.h"
+        ],
+        "root": "sdk",
+        "sha256": "a50d0ef5cfe96d634a41ee9a97749c147165f8656cdfed5df53bc24c8adb1210"
+      },
+      {
+        "components": [
+          "shared",
+          "pshpack1.h"
+        ],
+        "root": "sdk",
+        "sha256": "dee27f2712b9e72ca78a404834735303d16bdb21c8aa3addaca7dbca22664529"
+      },
+      {
+        "components": [
+          "shared",
+          "pshpack2.h"
+        ],
+        "root": "sdk",
+        "sha256": "971d19074639cb36134bb40776cb2f817c53cbd05d748b52468f571932bbcc49"
+      },
+      {
+        "components": [
+          "shared",
+          "pshpack4.h"
+        ],
+        "root": "sdk",
+        "sha256": "1cb4d07a218ec43c7935b431b16146fc0f3d29d43bd192f12959051d62c48d57"
+      },
+      {
+        "components": [
+          "shared",
+          "pshpack8.h"
+        ],
+        "root": "sdk",
+        "sha256": "47f3972a1211e3a5ac32b18fae1a824db087dc7dc562d152e9ccab9b297faef0"
+      },
+      {
+        "components": [
+          "shared",
+          "rpc.h"
+        ],
+        "root": "sdk",
+        "sha256": "063bd35df91c85b029064abe19d635d985e414c9733c60ee8ca8ce937c98d6d5"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcasync.h"
+        ],
+        "root": "sdk",
+        "sha256": "5e91801cee17b175a397cc56ff08790783d4fcdbc8d52fe7bb7461ccfa369a85"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcdce.h"
+        ],
+        "root": "sdk",
+        "sha256": "9cbecb8e06e66a792ac6b1543141dde660b9c5235e244c0cc60acad3ac00db63"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcdcep.h"
+        ],
+        "root": "sdk",
+        "sha256": "df032ed7952b84113857284d86e7365b158cc57f955a5c0580e57e96c6df5ba2"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcndr.h"
+        ],
+        "root": "sdk",
+        "sha256": "0faff12e628dad1729def28e97de5dc39d32ec9df67457c706e0c45111fe2ac6"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcnterr.h"
+        ],
+        "root": "sdk",
+        "sha256": "e7faf417f3d0dfdffd51813bcd5b24ece5db853d4088e1cb161cb27f2cc4148a"
+      },
+      {
+        "components": [
+          "shared",
+          "rpcsal.h"
+        ],
+        "root": "sdk",
+        "sha256": "c15959eb632ab0f27d2bcb3b6873cd2873bdd5669069409d936ef993dcb1c108"
+      },
+      {
+        "components": [
+          "shared",
+          "sdkddkver.h"
+        ],
+        "root": "sdk",
+        "sha256": "8af081872a0d03592cef7df997c6b3aeede7e702f1b288dac358e5efa5c8efb2"
+      },
+      {
+        "components": [
+          "shared",
+          "sdv_driverspecs.h"
+        ],
+        "root": "sdk",
+        "sha256": "99fd81f9464150f56963c3bbafaa95f93b837c221c4237e6e399a85e00ea9f39"
+      },
+      {
+        "components": [
+          "shared",
+          "specstrings.h"
+        ],
+        "root": "sdk",
+        "sha256": "7fa62aa9a8f6f4b1e68d6f75d7f4b04d2b1b1b4bb6c58a01e53bc7f27168028a"
+      },
+      {
+        "components": [
+          "shared",
+          "specstrings_strict.h"
+        ],
+        "root": "sdk",
+        "sha256": "49b12898b42bcf53e5f8fb75e6db1a5d3ffb7a9f394e50df3351e0824d4a8b42"
+      },
+      {
+        "components": [
+          "shared",
+          "specstrings_undef.h"
+        ],
+        "root": "sdk",
+        "sha256": "6aba76eabbec627edadba5ab29304d9e2ff4eb9da165fd81a9095c851f405a01"
+      },
+      {
+        "components": [
+          "shared",
+          "stralign.h"
+        ],
+        "root": "sdk",
+        "sha256": "70ad1126003b54743cb8d19d30e68db6dcfc4bdfbf2303143536b166e6ba1f93"
+      },
+      {
+        "components": [
+          "shared",
+          "tvout.h"
+        ],
+        "root": "sdk",
+        "sha256": "8c359d2dff894d546f3eced2fe9463dfa4824bffc6c8c71ecd8feef02e7eae21"
+      },
+      {
+        "components": [
+          "shared",
+          "winapifamily.h"
+        ],
+        "root": "sdk",
+        "sha256": "bda507d14f2e40023d344cb943cbd98af26de8a47f3b0f5fac694d2025711af1"
+      },
+      {
+        "components": [
+          "shared",
+          "windef.h"
+        ],
+        "root": "sdk",
+        "sha256": "040535b19a60264e5fe6971f7cb13cbf24be17abeeaa8acd21e44f5d7dfe8d22"
+      },
+      {
+        "components": [
+          "shared",
+          "winerror.h"
+        ],
+        "root": "sdk",
+        "sha256": "c9072ab06ff394267ffc5c625f2d3da2162dc112e6dc7ea0fcce490c5688c8eb"
+      },
+      {
+        "components": [
+          "shared",
+          "winpackagefamily.h"
+        ],
+        "root": "sdk",
+        "sha256": "8f74e254896094a3884e6975fd24b3493846514065f47d2666df53cdea45b8ea"
+      },
+      {
+        "components": [
+          "shared",
+          "winsmcrd.h"
+        ],
+        "root": "sdk",
+        "sha256": "d692cc4fe3b409bbbf175df4ef4d648813d366001e479de06631650d548a517e"
+      },
+      {
+        "components": [
+          "shared",
+          "wnnc.h"
+        ],
+        "root": "sdk",
+        "sha256": "fb3aaeef324b5d00ce0a6ae11702dcc3c1de65fa0a10caaab4336b97d3adf493"
+      },
+      {
+        "components": [
+          "shared",
+          "wtypes.h"
+        ],
+        "root": "sdk",
+        "sha256": "5555bd509d94b7224010b77e7edda4de3df52bf10a70ec084c42759e5a35fdc3"
+      },
+      {
+        "components": [
+          "ucrt",
+          "assert.h"
+        ],
+        "root": "sdk",
+        "sha256": "29c72ba22de014c31bf88d7cc9bcb1f21544454267abe49ff3cd276c068f1931"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt.h"
+        ],
+        "root": "sdk",
+        "sha256": "2f8969a33aa931b30eb0fc848b3b56ffc86f9e7b9c763a44e045b00367bc8c8b"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_malloc.h"
+        ],
+        "root": "sdk",
+        "sha256": "01856bfafb16516d02ce6223e01a102607df188820d8998295b8201ef3ac09fc"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_math.h"
+        ],
+        "root": "sdk",
+        "sha256": "75792604d2e16e6ffbf522c5552059369e0009a91d5e111d18917b7acf17e913"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_memcpy_s.h"
+        ],
+        "root": "sdk",
+        "sha256": "f2e091841c3efe2f187fe703a0f562cce654ca82e68c343698b06ec67f9ba039"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_memory.h"
+        ],
+        "root": "sdk",
+        "sha256": "18ca520416579183bc369c0a8e555914db5c7577075b9359173fc6bc45595560"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_search.h"
+        ],
+        "root": "sdk",
+        "sha256": "f14c6d9c88e674fc4c61103c32c57054b712b2aca791ee2a62e85e415f39a71e"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_stdio_config.h"
+        ],
+        "root": "sdk",
+        "sha256": "a7e100624320a8e0123890c5008bcb2281c1273ca7ce5bb1d297f987fdbe79a0"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_wctype.h"
+        ],
+        "root": "sdk",
+        "sha256": "b622b24cbda842a1736987f38c9deb5076e51af018630842a127bebd9104076e"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_wstdio.h"
+        ],
+        "root": "sdk",
+        "sha256": "a10bbf4667b3aada380a6b80df853f9fbddc3cc691ca57389b3b6759f119e515"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_wstdlib.h"
+        ],
+        "root": "sdk",
+        "sha256": "98b62ac5fb4291961c19ecf5c1b2e641b437f9042054f1a56ebdfd0deb71eca1"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_wstring.h"
+        ],
+        "root": "sdk",
+        "sha256": "63c623a827f102bf51019aa1f6b744add483cd66ed247802e93b5dbc6a7adf12"
+      },
+      {
+        "components": [
+          "ucrt",
+          "corecrt_wtime.h"
+        ],
+        "root": "sdk",
+        "sha256": "ea9dc93a150c4c77aec156cb3d472756d16fb749e7ad2d7d7dde63745bd3f55a"
+      },
+      {
+        "components": [
+          "ucrt",
+          "ctype.h"
+        ],
+        "root": "sdk",
+        "sha256": "d76be70c02d8ce49260e84862f3e9e3902ed219b8816b3cf8c4e57b9fd2183dd"
+      },
+      {
+        "components": [
+          "ucrt",
+          "errno.h"
+        ],
+        "root": "sdk",
+        "sha256": "c64e8df96f057fdebc0474bd765cee3ae17de34a2b1fc9d197597321f2d1e447"
+      },
+      {
+        "components": [
+          "ucrt",
+          "locale.h"
+        ],
+        "root": "sdk",
+        "sha256": "877aa49e1f22814dd5634e785d305210d3c7ac0a1274e8552ce4f687a91ac4cb"
+      },
+      {
+        "components": [
+          "ucrt",
+          "math.h"
+        ],
+        "root": "sdk",
+        "sha256": "fb747990091c8c6e4ed8b4cfb40ed14eadd37547153607459e9ddef71c64edff"
+      },
+      {
+        "components": [
+          "ucrt",
+          "stddef.h"
+        ],
+        "root": "sdk",
+        "sha256": "3f1f7eeefad270928749c89a2a2094ccc3f38829b1d8c197f6ce7483ead2284c"
+      },
+      {
+        "components": [
+          "ucrt",
+          "stdio.h"
+        ],
+        "root": "sdk",
+        "sha256": "06cbab3a501306fdd9176a00a83e5bb92ea4d7863cfd666355743527cf99edc6"
+      },
+      {
+        "components": [
+          "ucrt",
+          "stdlib.h"
+        ],
+        "root": "sdk",
+        "sha256": "1576fdb40eb225dff53489db2fd52e41c7bb24f1e621e4a95c2c7f4a7216949c"
+      },
+      {
+        "components": [
+          "ucrt",
+          "string.h"
+        ],
+        "root": "sdk",
+        "sha256": "796b2226809790078984b919542d818ce74190d2110b119f93c2a7c3882b5de5"
+      },
+      {
+        "components": [
+          "ucrt",
+          "time.h"
+        ],
+        "root": "sdk",
+        "sha256": "46a1d1c099bf364c22ae77fdbfbe5f376d2a95f2d39882b0c249cce630f83036"
+      },
+      {
+        "components": [
+          "um",
+          "OAIdl.h"
+        ],
+        "root": "sdk",
+        "sha256": "524fa06234db9362c5ef0ab613b7cf1679cc673e9d5e3fada88ada6fbcab08d8"
+      },
+      {
+        "components": [
+          "um",
+          "ObjIdl.h"
+        ],
+        "root": "sdk",
+        "sha256": "4b59bc0710cd0c60b40924878dd8d1608e23052951ed42b1b807192b4646ad29"
+      },
+      {
+        "components": [
+          "um",
+          "ObjIdlbase.h"
+        ],
+        "root": "sdk",
+        "sha256": "4065e8c173715c8df7c0264e29a348ab0ccdaca140d57610f91e474b925b8857"
+      },
+      {
+        "components": [
+          "um",
+          "Ole2.h"
+        ],
+        "root": "sdk",
+        "sha256": "b6ae126457df48ff338c768761f132e772f83596e71901b0d42a6cb9149b554c"
+      },
+      {
+        "components": [
+          "um",
+          "OleAuto.h"
+        ],
+        "root": "sdk",
+        "sha256": "8b3792c86215f73643fe114da8d47fa1d175ecd7d2442e1e002b8b9384d7393f"
+      },
+      {
+        "components": [
+          "um",
+          "PropIdl.h"
+        ],
+        "root": "sdk",
+        "sha256": "8aa1124fb14c10435febd37833ae203bd86554c88554002e1c46cac78c0b990c"
+      },
+      {
+        "components": [
+          "um",
+          "PropIdlBase.h"
+        ],
+        "root": "sdk",
+        "sha256": "7895806e0ee61aa3580ce05e9a0cce5577b14224e117531213b3cccc9c9f6525"
+      },
+      {
+        "components": [
+          "um",
+          "Unknwn.h"
+        ],
+        "root": "sdk",
+        "sha256": "b497eeef64d1309b745bec6e5ca6d62e99fb2f39efedaa28880dd7883b750a69"
+      },
+      {
+        "components": [
+          "um",
+          "Unknwnbase.h"
+        ],
+        "root": "sdk",
+        "sha256": "16921298a302b47b99395db32be7fdc7e40926a2729e9428b059f69cf92f1d98"
+      },
+      {
+        "components": [
+          "um",
+          "WinBase.h"
+        ],
+        "root": "sdk",
+        "sha256": "12cbac36ad4d446d63ba591de61cdf5aada58244e3cdb9cbb84a00b89c32f0bc"
+      },
+      {
+        "components": [
+          "um",
+          "WinNls.h"
+        ],
+        "root": "sdk",
+        "sha256": "922acaa15aeaa634e2c644efea3f840c0765ab41a3096661e9edf641a207bd3b"
+      },
+      {
+        "components": [
+          "um",
+          "WinUser.h"
+        ],
+        "root": "sdk",
+        "sha256": "94ef5b1817d4caf650bbbc7fd871877395d5f26b13cc8df35295e807fb60994c"
+      },
+      {
+        "components": [
+          "um",
+          "Windows.h"
+        ],
+        "root": "sdk",
+        "sha256": "65ccd069fe343519a7ec0698ccaf5a6f0388f1af180b959b8271902b983cb099"
+      },
+      {
+        "components": [
+          "um",
+          "apiquery2.h"
+        ],
+        "root": "sdk",
+        "sha256": "e26bd3157303c9e9d0d3a2438d141f9f53b7022d7ac01102933d3cf21f6bfbb9"
+      },
+      {
+        "components": [
+          "um",
+          "cguid.h"
+        ],
+        "root": "sdk",
+        "sha256": "a43350999722c3e45bf98a193931590b20d85c67d7bb19eabcc25ceb66431aee"
+      },
+      {
+        "components": [
+          "um",
+          "combaseapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "3157d1247e9943e1079325b26d4aa88b9bd37e4f30b5c5350c301c93796f6969"
+      },
+      {
+        "components": [
+          "um",
+          "coml2api.h"
+        ],
+        "root": "sdk",
+        "sha256": "3f5abb062ee28f41ccda71d2ed1a80692e636ad26a807e41ddd433ecdeef0dff"
+      },
+      {
+        "components": [
+          "um",
+          "commdlg.h"
+        ],
+        "root": "sdk",
+        "sha256": "8b98a194569e52ca87266b5a8d676ccba67538ce7851571003db8f7a606b0d2b"
+      },
+      {
+        "components": [
+          "um",
+          "consoleapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "32fedc6ab62f40bd528b3f9c5f41a09977ff3fecf289c367ccc17c84fa2a63e3"
+      },
+      {
+        "components": [
+          "um",
+          "consoleapi2.h"
+        ],
+        "root": "sdk",
+        "sha256": "68560d3e2e72b6c268f323afff5981c665fb1ca80679c0070fa366063a683fcd"
+      },
+      {
+        "components": [
+          "um",
+          "consoleapi3.h"
+        ],
+        "root": "sdk",
+        "sha256": "83a4608d5cdcc33741b0ddc729fda0ebcf46294ab3deba1d29a4e3ff25f9fd37"
+      },
+      {
+        "components": [
+          "um",
+          "datetimeapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "82df405cd7a7c492b2089824497290cda2e11229d2e47cec8575c4edc6c6ff1a"
+      },
+      {
+        "components": [
+          "um",
+          "dde.h"
+        ],
+        "root": "sdk",
+        "sha256": "dfa78b30d4c4a6bd7fc0db7e2df4041c589db7068b5c5020c5671b674416df11"
+      },
+      {
+        "components": [
+          "um",
+          "ddeml.h"
+        ],
+        "root": "sdk",
+        "sha256": "c97abab2627346d786459fc86a5da696f930c85c622a78732a71b7ad0790c1dc"
+      },
+      {
+        "components": [
+          "um",
+          "debugapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "f28475b9d584d2c82ba0351ae49b35e1661dae73e8617b853acba885a0805a61"
+      },
+      {
+        "components": [
+          "um",
+          "dlgs.h"
+        ],
+        "root": "sdk",
+        "sha256": "12b23d2256c80141d61044010c9fc16610a8ae0086c7dbe8376295d4b5f06f31"
+      },
+      {
+        "components": [
+          "um",
+          "dpapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "a98783da8086def831c97880296504468a043b01e7eb35e500a70198f33582bc"
+      },
+      {
+        "components": [
+          "um",
+          "enclaveapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "b9b6a5ed2381e75a46b613a92d8f7752cfb5490d3549a5daaf9b51845b641cbc"
+      },
+      {
+        "components": [
+          "um",
+          "errhandlingapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "450513eb18beadd2b71cb7a93b6a96412127820fd6d2465235c602ff6b1cb5ee"
+      },
+      {
+        "components": [
+          "um",
+          "fibersapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "c70b064f18014861155d52bbfe9273edd2dc26a015dfd75c95943acb7945f2f7"
+      },
+      {
+        "components": [
+          "um",
+          "fileapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "247b452643769f771164034761db7c7ded1f1f6f6ae5b51662ce50e2be3cef2f"
+      },
+      {
+        "components": [
+          "um",
+          "fileapifromapp.h"
+        ],
+        "root": "sdk",
+        "sha256": "85d2d44cc1208ef8e667f83bbb5b9fbefeb00f92b272948ae1d89394098aaeef"
+      },
+      {
+        "components": [
+          "um",
+          "handleapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "e8e3646bdfb223b696814a71f988781a39829594694691b19b3e622f9b9bf9ab"
+      },
+      {
+        "components": [
+          "um",
+          "heapapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "dcd1a810b5c9403caaddc114a96ba81b78132b15162237069b3e3c6ee8f15eaa"
+      },
+      {
+        "components": [
+          "um",
+          "ime_cmodes.h"
+        ],
+        "root": "sdk",
+        "sha256": "27904e900938749c12a4d1e741afd564198a57a24724c1ddd36cd3302224df26"
+      },
+      {
+        "components": [
+          "um",
+          "imm.h"
+        ],
+        "root": "sdk",
+        "sha256": "942d0b80eb7d186ee935fce8064ccdcdea3a49b39bcc03f55208b7c37e289779"
+      },
+      {
+        "components": [
+          "um",
+          "interlockedapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "7e0fb7058d24501c973c189074760415ead94148452faacb29d8117d87795385"
+      },
+      {
+        "components": [
+          "um",
+          "ioapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "ab9feaaa843c7da8d17dc80e5e7c837f7be12944c7f158061068eea23b08fff8"
+      },
+      {
+        "components": [
+          "um",
+          "jobapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "5b81df742751ecd041dae7d832eafac2395cf5af93689590666359d821e63f38"
+      },
+      {
+        "components": [
+          "um",
+          "jobapi2.h"
+        ],
+        "root": "sdk",
+        "sha256": "5dad93c1fb0ed5571609bfec7dce9debf28c0cdb6c7180bc97c201cf8b4ebb5a"
+      },
+      {
+        "components": [
+          "um",
+          "joystickapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "27d5fe7cf6c75ca8f41d5a76b68e84ae20dec9d4738cc29cc910bad418d3738c"
+      },
+      {
+        "components": [
+          "um",
+          "libloaderapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "164da964920251c33f049a8695a53abfc5de85c7a738aa4d93259e695f268d20"
+      },
+      {
+        "components": [
+          "um",
+          "lzexpand.h"
+        ],
+        "root": "sdk",
+        "sha256": "55e2fe7b987a83eeb10466a2f38411f406480362accce187fdc222af36656061"
+      },
+      {
+        "components": [
+          "um",
+          "mciapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "7a25316d515aaa4ac5e01f667f98d1dce448c7d24f38845c2b6d703b8cf1d547"
+      },
+      {
+        "components": [
+          "um",
+          "mcx.h"
+        ],
+        "root": "sdk",
+        "sha256": "4ee416b2d24e45cfc5d35ce5b34833b64b34fd9a39957c66d75509f6d3b8f972"
+      },
+      {
+        "components": [
+          "um",
+          "memoryapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "27a2cbc1a638b1238e71660cec984ebb67d4dd13b38f58a387fd5083bff59109"
+      },
+      {
+        "components": [
+          "um",
+          "minwinbase.h"
+        ],
+        "root": "sdk",
+        "sha256": "e5f802f228a4e4afdab208944de93c4b3ae5d052eb1fa72d8f60da0723c5edd8"
+      },
+      {
+        "components": [
+          "um",
+          "mmeapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "b6562439b80a3a9498a220fe2b3b982627b3ce792ae43d70ee2bc33b6bec0e52"
+      },
+      {
+        "components": [
+          "um",
+          "mmiscapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "8a04bb76250904989d044ac1426bacc37ecc9dc2d71d60a8af3867d2048acb7b"
+      },
+      {
+        "components": [
+          "um",
+          "mmiscapi2.h"
+        ],
+        "root": "sdk",
+        "sha256": "074e26b448f24a843fa8b18ebadd275d3a6fcc5cc891fe4210eba03a3ba86491"
+      },
+      {
+        "components": [
+          "um",
+          "mmsyscom.h"
+        ],
+        "root": "sdk",
+        "sha256": "e312d128602e8e6d51456f12229f81b0228ad1c8ea6c9ac438053966a7d20c8f"
+      },
+      {
+        "components": [
+          "um",
+          "mmsystem.h"
+        ],
+        "root": "sdk",
+        "sha256": "86d1387337af7793c583262108c1d671413ea5d6eaff597e0161ad6b604e33e0"
+      },
+      {
+        "components": [
+          "um",
+          "msxml.h"
+        ],
+        "root": "sdk",
+        "sha256": "b04d4b2ae380f321b71764e16991bcd4e4edc8d3fdb1db24dcc1bad5b252cf2a"
+      },
+      {
+        "components": [
+          "um",
+          "namedpipeapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "4288e25686760f34f5279b7f05ba1bc11b78dcba6b79e4bc336dbd46fd6b0b7a"
+      },
+      {
+        "components": [
+          "um",
+          "namespaceapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "796dd05a92b5ab791f4d80f3b4d1f28d778a1a5c116c4f55a3f933adb92948fe"
+      },
+      {
+        "components": [
+          "um",
+          "nb30.h"
+        ],
+        "root": "sdk",
+        "sha256": "69759909f41583263f20cadfe1a013f023ba89a6a7752dccc16240b1e9b5fc1b"
+      },
+      {
+        "components": [
+          "um",
+          "ncrypt.h"
+        ],
+        "root": "sdk",
+        "sha256": "76e245d7b51d56a7273cf1f0b78c240863531fda19aa549510f3b06d9c691a7b"
+      },
+      {
+        "components": [
+          "um",
+          "objbase.h"
+        ],
+        "root": "sdk",
+        "sha256": "14d465a8f602f2394c5455f67f129756fc525b26ad9c3099d3f6d943cafb5007"
+      },
+      {
+        "components": [
+          "um",
+          "oleidl.h"
+        ],
+        "root": "sdk",
+        "sha256": "1844c669abbecfba0126f44fcdbc7d338808f7b56187465fee7c9095ce241380"
+      },
+      {
+        "components": [
+          "um",
+          "playsoundapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "0ede70537e4315a93ac93f0d2b5b5b3d7658142ef151c342ea81b52689ee8efe"
+      },
+      {
+        "components": [
+          "um",
+          "processenv.h"
+        ],
+        "root": "sdk",
+        "sha256": "d466d8b321fd106daffabe6ffc30942850350e69c45797807886e233d2004f62"
+      },
+      {
+        "components": [
+          "um",
+          "processthreadsapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "0458991b732e909c035afe0f16a1ea2de1c393b49151de69084c3070194948e1"
+      },
+      {
+        "components": [
+          "um",
+          "processtopologyapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "eb6b408dca984dec0b70863f686feb1a37dd139ac65abf8df41eda6a1bdc48f4"
+      },
+      {
+        "components": [
+          "um",
+          "profileapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "5f48ade26910f32530e265547509cb94f1b28315f5f333c1eb45802b20845ffe"
+      },
+      {
+        "components": [
+          "um",
+          "prsht.h"
+        ],
+        "root": "sdk",
+        "sha256": "c894f54ac5e0584457f176f668b20b14577b06aa2ba5ce321e243c46248ea242"
+      },
+      {
+        "components": [
+          "um",
+          "realtimeapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "806dfe253a8b7c6cbdfc9588d268897fc044ef6db018ef892d851d11f7045b03"
+      },
+      {
+        "components": [
+          "um",
+          "reason.h"
+        ],
+        "root": "sdk",
+        "sha256": "30540eb35daa79c7a5cb98059430df480e86b549b7980247288da8a2801add1d"
+      },
+      {
+        "components": [
+          "um",
+          "rpcnsi.h"
+        ],
+        "root": "sdk",
+        "sha256": "f49466a31875d34a6e5c02f301d81b7a78f25cb947f3d6e6ea712ab356b42c8e"
+      },
+      {
+        "components": [
+          "um",
+          "rpcnsip.h"
+        ],
+        "root": "sdk",
+        "sha256": "7c8138b43e028724e0fd143be29c40de5b5650a3e0f87356662a77dbad186712"
+      },
+      {
+        "components": [
+          "um",
+          "securityappcontainer.h"
+        ],
+        "root": "sdk",
+        "sha256": "fe2e72b79e1c01ab7f41360dd887537acb4993fd78047b5f4bb13cde8691e2b9"
+      },
+      {
+        "components": [
+          "um",
+          "securitybaseapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "3433e71e2493e218c3127360213f47513631ad44c7c2fc0f1c2b88424e6b81d9"
+      },
+      {
+        "components": [
+          "um",
+          "servprov.h"
+        ],
+        "root": "sdk",
+        "sha256": "32bcea5a74cade183a48f1eab71b6d5406223a0e67247ab94e1eac44a10f4b85"
+      },
+      {
+        "components": [
+          "um",
+          "shellapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "e8146c7b6047320d600430026d16d270b07ba0edfa7267d881a2b56a6fa5a51f"
+      },
+      {
+        "components": [
+          "um",
+          "stringapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "4e4db63102439bfcc0d1ff2b65238891bab70ab153fa789606dfc7eae7029282"
+      },
+      {
+        "components": [
+          "um",
+          "synchapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "9b4fec3304746b23ae4c2def310ebb0b080da9c84d00a70848f17304783f93f1"
+      },
+      {
+        "components": [
+          "um",
+          "sysinfoapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "d10e6f1da8f023cf56c5d8f7caf710e87c472544b15648a11e2c3d1c51d116b0"
+      },
+      {
+        "components": [
+          "um",
+          "systemtopologyapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "b2af776b4f27f16ce6981a11356cbc18638b86907e7caacc1e0cb2ce6fa94fa0"
+      },
+      {
+        "components": [
+          "um",
+          "threadpoolapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "389289c0bf7ddaa504a99a2301a84abf37f61aa7b4edd8228887d1bab2db5eb3"
+      },
+      {
+        "components": [
+          "um",
+          "threadpoollegacyapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "15bf321dd482a473721d7c525f12196528dbdc0b56bff5ad91d67a2c76d379fe"
+      },
+      {
+        "components": [
+          "um",
+          "timeapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "6ec246af2a5409c3075bec27e924392ded071f972951fc82e36af03ef972a8de"
+      },
+      {
+        "components": [
+          "um",
+          "timezoneapi.h"
+        ],
+        "root": "sdk",
+        "sha256": "235ef1bab253c70071e1398973222d3023b948ecd727eb4e0fd122590dfb3a69"
+      },
+      {
+        "components": [
+          "um",
+          "urlmon.h"
+        ],
+        "root": "sdk",
+        "sha256": "23201d621ec40e95ba99db653d89440a1c667f8ae8f83bdbc59249a79efde740"
+      },
+      {
+        "components": [
+          "um",
+          "utilapiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "53e84fb89bb2ef53586e14c5c1e1c01f54ce469cfe1991ef5a53f66b6b216dff"
+      },
+      {
+        "components": [
+          "um",
+          "verrsrc.h"
+        ],
+        "root": "sdk",
+        "sha256": "ff9bee8ee5b7aa81eaf79a1eab0e93bd307601e87d3b80a73f24984e9c951c61"
+      },
+      {
+        "components": [
+          "um",
+          "wincon.h"
+        ],
+        "root": "sdk",
+        "sha256": "98e33720f9ec8fded808ab94f111b8335d0ba2fd2246a5adab3aab2ce05503d9"
+      },
+      {
+        "components": [
+          "um",
+          "wincontypes.h"
+        ],
+        "root": "sdk",
+        "sha256": "209e79fdbbb30971740e59b2da2d6c86e27c0e9dd02bee9cbc21736fbd2426ad"
+      },
+      {
+        "components": [
+          "um",
+          "wincrypt.h"
+        ],
+        "root": "sdk",
+        "sha256": "cf336a0a793a2f9a9e0ce295d960af2732c59073e4af545f6c98e2d1b0436711"
+      },
+      {
+        "components": [
+          "um",
+          "winefs.h"
+        ],
+        "root": "sdk",
+        "sha256": "9db6c6c3188c7a4822f7484c554846795d859f498b7568f8014abad513437000"
+      },
+      {
+        "components": [
+          "um",
+          "wingdi.h"
+        ],
+        "root": "sdk",
+        "sha256": "bb866ffbdb97c3e22eb546db17c64639f433371c95fca83988301c1da7783294"
+      },
+      {
+        "components": [
+          "um",
+          "winioctl.h"
+        ],
+        "root": "sdk",
+        "sha256": "4adf521490dab4b0a0b1390b9ff4862c5a05293a969e1836a026d437b27000fd"
+      },
+      {
+        "components": [
+          "um",
+          "winnetwk.h"
+        ],
+        "root": "sdk",
+        "sha256": "83b5d372f9e44178613f4524bab64eb53a9fa68d1b6905eed9af61352eac50ec"
+      },
+      {
+        "components": [
+          "um",
+          "winnt.h"
+        ],
+        "root": "sdk",
+        "sha256": "b6516692d618a7fbc3c8af93aa3edfd607428e6a0313114d422e2d79d1f6f75c"
+      },
+      {
+        "components": [
+          "um",
+          "winperf.h"
+        ],
+        "root": "sdk",
+        "sha256": "2cd370a6e41129d18aeedcf3e10b123665fa793236d8dea31b36c8586a2b5809"
+      },
+      {
+        "components": [
+          "um",
+          "winreg.h"
+        ],
+        "root": "sdk",
+        "sha256": "5adaa4ba7ebbabf315f6cd8373a4ac84a620be9e2a0901968e956bf7d62943a3"
+      },
+      {
+        "components": [
+          "um",
+          "winscard.h"
+        ],
+        "root": "sdk",
+        "sha256": "ee43c5a32fd009da030047a0df19a66e02ed6387f54af0162ec9bd6f9854e845"
+      },
+      {
+        "components": [
+          "um",
+          "winsock.h"
+        ],
+        "root": "sdk",
+        "sha256": "f5d2165d8609daf35bfc796846f67c8f6129e47b4c6536aefba90f9488520737"
+      },
+      {
+        "components": [
+          "um",
+          "winspool.h"
+        ],
+        "root": "sdk",
+        "sha256": "6e03f063b6128e7693bca7f60a09b7ab8abfbfa98613a80b636027cf7ca47f83"
+      },
+      {
+        "components": [
+          "um",
+          "winsvc.h"
+        ],
+        "root": "sdk",
+        "sha256": "253adaf60fef0871154901306649ea934ae1be1ecdcdaa97e6b9ff1fe4fc3c0c"
+      },
+      {
+        "components": [
+          "um",
+          "winver.h"
+        ],
+        "root": "sdk",
+        "sha256": "c60e137e7ff88582f72e50fe74904f5773502d229f78234ea83abb2688f6e8ae"
+      },
+      {
+        "components": [
+          "um",
+          "wow64apiset.h"
+        ],
+        "root": "sdk",
+        "sha256": "f92a667bccd98b85f66eafa23244f2783fae8d8fd307733efebba025d2d89ef9"
+      }
+    ],
+    "probe_source_sha256": "7c63e22ea3318c605ea7c71f9f487982fcef020372d0c01cf6afd72a75040d2c",
+    "rows": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        2,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        0,
+        1,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        3,
+        1,
+        0,
+        1,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        4,
+        0,
+        0,
+        1,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        4,
+        1,
+        0,
+        1,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        5,
+        0,
+        0,
+        6,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        0,
+        5,
+        1,
+        0,
+        6,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        2,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        3,
+        0,
+        0,
+        1,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        1,
+        3,
+        1,
+        0,
+        1,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        1,
+        4,
+        0,
+        0,
+        1,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        1,
+        4,
+        1,
+        0,
+        1,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        1,
+        5,
+        0,
+        0,
+        6,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        1,
+        5,
+        1,
+        0,
+        6,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        0,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        1,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        2,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        3,
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        2,
+        3,
+        1,
+        0,
+        1,
+        1,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        2,
+        4,
+        0,
+        0,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        2,
+        4,
+        1,
+        0,
+        1,
+        1,
+        4,
+        4,
+        1,
+        0,
+        1,
+        1
+      ],
+      [
+        2,
+        5,
+        0,
+        0,
+        6,
+        6,
+        2,
+        2,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        2,
+        5,
+        1,
+        0,
+        6,
+        6,
+        4,
+        4,
+        1,
+        0,
+        1,
+        6
+      ],
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        0,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        1,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        1,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        2,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        2,
+        1,
+        0,
+        0,
+        0,
+        4,
+        4,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        3,
+        3,
+        0,
+        2,
+        1,
+        1,
+        2,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        3,
+        3,
+        1,
+        2,
+        1,
+        1,
+        4,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        3,
+        4,
+        0,
+        2,
+        1,
+        1,
+        2,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        3,
+        4,
+        1,
+        2,
+        1,
+        1,
+        4,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        3,
+        5,
+        0,
+        2,
+        1,
+        1,
+        2,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        3,
+        5,
+        1,
+        2,
+        1,
+        1,
+        4,
+        -1,
+        0,
+        0,
+        -1,
+        0
+      ]
+    ],
+    "source_manifest": [
+      {
+        "name": "lapi.c",
+        "sha256": "6aa0d9fdd88b13fe46568ad6722ecf44164fb84476cfdf6480cf05b5704935f8",
+        "size": 22708
+      },
+      {
+        "name": "lapi.h",
+        "sha256": "4aea4c1b975d43184f4f1fd1a42c79cf11d74d2801315740cec07fe9abebb56d",
+        "size": 262
+      },
+      {
+        "name": "lauxlib.c",
+        "sha256": "b564650bf4aca2757b9966311d32c8d5fea8803f6f33d72a856448d3b5d6d992",
+        "size": 17417
+      },
+      {
+        "name": "lauxlib.h",
+        "sha256": "c741f9c1587f29fd08a79acbe0c46884768a47f89bee4147669f774c5cf50fc0",
+        "size": 5777
+      },
+      {
+        "name": "lbaselib.c",
+        "sha256": "b14c49fae6fa4690662185bf842cb05d87756585d2f5bdd8495251fde83ef331",
+        "size": 17045
+      },
+      {
+        "name": "lcode.c",
+        "sha256": "027030bbef34115588bd4a64cf4c8c18236a56936835475a154277478767bac5",
+        "size": 21170
+      },
+      {
+        "name": "lcode.h",
+        "sha256": "97d5a37f3b1b19eda1ef39607b3358aa0f7e917568ccd27ed0f14bc6a70d4b17",
+        "size": 2750
+      },
+      {
+        "name": "ldblib.c",
+        "sha256": "eb8b056711f037e764f746d989f4e40621d8f9ff45add3336790c389849ed0ab",
+        "size": 10092
+      },
+      {
+        "name": "ldebug.c",
+        "sha256": "afa5840195befaec55177273c8168748026b38df3243767fc740cc7ced0c4c8f",
+        "size": 16840
+      },
+      {
+        "name": "ldebug.h",
+        "sha256": "d036f0dbb996bdecd48d505746f72c31b82fb2fc38f111b780568338d4ed9e9c",
+        "size": 1061
+      },
+      {
+        "name": "ldo.c",
+        "sha256": "d5942081ba661286327e30e22af5d11a1f4308d1f029a203c342b5f541cfa9b6",
+        "size": 14892
+      },
+      {
+        "name": "ldo.h",
+        "sha256": "591ad9a90098d3fbf06839da3de752d2c2585cbf5801dde4cdaffe12b23a182e",
+        "size": 1897
+      },
+      {
+        "name": "ldump.c",
+        "sha256": "30d83d766351bb053b3d20793a6bcd2ef0210e8fad76a7032abbe574bafa0ca3",
+        "size": 3114
+      },
+      {
+        "name": "lfunc.c",
+        "sha256": "525681d79098958530e5c937f7cbe94a4dafa679746ffdb16258f82b7ece29ce",
+        "size": 4618
+      },
+      {
+        "name": "lfunc.h",
+        "sha256": "3cea0071ffda94eac378adb5f1ecb467ef2ffafff4315459e4ccdf05b5119da4",
+        "size": 1125
+      },
+      {
+        "name": "lgc.c",
+        "sha256": "35be212ad0e4d89336f50f11cd0e991c04fe59b023ec03a626bf3f98e69fd1dc",
+        "size": 20053
+      },
+      {
+        "name": "lgc.h",
+        "sha256": "fbab2b989515377729d4c029dd58b3b6242877a88a7c4cfa703ea0deeb069a1e",
+        "size": 3159
+      },
+      {
+        "name": "linit.c",
+        "sha256": "c0c97c45862f6c978620a9682cd2201f0fc29c2afbcab824ba20d26cc1745e56",
+        "size": 765
+      },
+      {
+        "name": "liolib.c",
+        "sha256": "a40f1d2c4aed9835885264cc6caf81c3bd2d5db93af3d313cc0478db37d93169",
+        "size": 13466
+      },
+      {
+        "name": "llex.c",
+        "sha256": "f1ade23f957e69f164ff28e133b201dff5d81726c390b060110b60907831e79b",
+        "size": 12501
+      },
+      {
+        "name": "llex.h",
+        "sha256": "0f3715d22b025727ef11debd641600a123b81718d195cd8445ac6378814458e6",
+        "size": 2177
+      },
+      {
+        "name": "llimits.h",
+        "sha256": "1910669296681d9d2814ca46c325063724bb634c0428dae4e5ff59be54e0b758",
+        "size": 2349
+      },
+      {
+        "name": "lmathlib.c",
+        "sha256": "e2933a56332d567cdd69f0fe514d638a8f82da6878754ff259e77cf2157263c3",
+        "size": 5831
+      },
+      {
+        "name": "lmem.c",
+        "sha256": "e63c50cb1c75356bd4123c9ca05f77bd0cd99e05c099cf6d1bf472086761e9c5",
+        "size": 2172
+      },
+      {
+        "name": "lmem.h",
+        "sha256": "abd1258418486c69bf5a93ceea3a1b9f8af2c7497a4fa6c27b442ffec2c5bbb1",
+        "size": 1494
+      },
+      {
+        "name": "loadlib.c",
+        "sha256": "b01bc465bb2e280fb45d24aea98d5ddd9dfd0999f44422e1151aafa1d7f5385c",
+        "size": 19216
+      },
+      {
+        "name": "lobject.c",
+        "sha256": "d704915c79c721556cc5850d741ed3bef1611221356f0e3a2f0ee5cfd5fd3632",
+        "size": 5498
+      },
+      {
+        "name": "lobject.h",
+        "sha256": "274c18373fbbad71bfebd534cae4b2d2e49934abf6672f44735edc6646fb6a8b",
+        "size": 8502
+      },
+      {
+        "name": "lopcodes.c",
+        "sha256": "63cd74edc75970092a8ce078c4ab970efa1ee18de960d00eb826d49fe98d8a76",
+        "size": 2884
+      },
+      {
+        "name": "lopcodes.h",
+        "sha256": "a15fe349da7c1e73b563e8c3249fe7d535eccc844cb30ec80b4e335b0699279b",
+        "size": 8086
+      },
+      {
+        "name": "loslib.c",
+        "sha256": "f0d5892f152cf7e1001b086e48774ccb6e567d11f1bf521f27050c15d9a0f040",
+        "size": 5992
+      },
+      {
+        "name": "lparser.c",
+        "sha256": "3590f24bab5763af673182e40d33194a7de6f5eabe5432c02a548d44225d2b63",
+        "size": 36696
+      },
+      {
+        "name": "lparser.h",
+        "sha256": "84512d6540b83ab599cd8de5a1c8c4deaf71ff353f8e4fbc2e4ca135ba4e9ef0",
+        "size": 2261
+      },
+      {
+        "name": "lstate.c",
+        "sha256": "c36d6b9354aaa30b5323b4984f3172783f69e0deb3186c2ef6f16a8281c59c29",
+        "size": 5674
+      },
+      {
+        "name": "lstate.h",
+        "sha256": "dc64ea7ec74d7c1efaeaf6a9e2257f0b7856a5c988747948af2e76cf079d20fe",
+        "size": 5011
+      },
+      {
+        "name": "lstring.c",
+        "sha256": "aa7e934c435d870b9d937ac2fb03dbfa15d367012d46e7e995a2ad8d440f2f6d",
+        "size": 3110
+      },
+      {
+        "name": "lstring.h",
+        "sha256": "c0e8af4eb33e3357be79f906e7e1191ba53a3a790d36ca15b50471d3a339e1f0",
+        "size": 814
+      },
+      {
+        "name": "lstrlib.c",
+        "sha256": "e8048c79ae34be0fd29aa8db1a341cd600f5e09b9133b5810910e07b855a32d5",
+        "size": 23561
+      },
+      {
+        "name": "ltable.c",
+        "sha256": "3a853ce89bf5e834ec53f2a0dd2386eb8b84accbe5fdc18dabd7515b819f0f7c",
+        "size": 16263
+      },
+      {
+        "name": "ltable.h",
+        "sha256": "219e6ac2bf43aaa93093c6bcd571c012660325e6b87ea3d6c1b40679a0acfd64",
+        "size": 1184
+      },
+      {
+        "name": "ltablib.c",
+        "sha256": "e934dc4b2fc117a501c717302a00147f7b44eea978ef87a58a3e40e9bfe45d20",
+        "size": 7343
+      },
+      {
+        "name": "ltm.c",
+        "sha256": "9759ae5d1aa3b11e1c7faa6c0f65e05c7126417f7f8f3f989d82fc170b07f891",
+        "size": 1650
+      },
+      {
+        "name": "ltm.h",
+        "sha256": "54f4c2fa76b8ed8d48163e31807a19999f5d65b009ae862cb757e0773f2aa485",
+        "size": 1018
+      },
+      {
+        "name": "lua.c",
+        "sha256": "eb9ad1894926f0f807934ae52147cf9767ede0fbd01e9a1044dc4847caa9b73d",
+        "size": 10163
+      },
+      {
+        "name": "lua.h",
+        "sha256": "470551c185f058360f8d0f9e5c54a29a3950f78af6a93f3fe9e4039a380c7b87",
+        "size": 11688
+      },
+      {
+        "name": "luac.c",
+        "sha256": "b22ad97edb37c2a4b117ef81489bfc6eee15d58d4476ea149abbef7aabf8773d",
+        "size": 4661
+      },
+      {
+        "name": "luaconf.h",
+        "sha256": "0410ff22f66c275ba8fcee1fa87a0749d26d7952ed30d3bc9161688b39775464",
+        "size": 22299
+      },
+      {
+        "name": "lualib.h",
+        "sha256": "13f880e9dd997a0f7fd0b17ccd949c98f33e95bd120f084de66084e888217413",
+        "size": 1026
+      },
+      {
+        "name": "lundump.c",
+        "sha256": "55ccb55abde44e94e6c4d0bafc94f5870d2674d1944e9a81f6537d9ac92e8ebc",
+        "size": 4629
+      },
+      {
+        "name": "lundump.h",
+        "sha256": "9f3a2924d1585620993a70eea6cf3def34acb8322b2d9c3629bcdacc037edc64",
+        "size": 890
+      },
+      {
+        "name": "lvm.c",
+        "sha256": "b560aad0a1b8bfc4e4b732b2393e8f8ecc68b6c772e6d25763d6ef71c38ab709",
+        "size": 23242
+      },
+      {
+        "name": "lvm.h",
+        "sha256": "db4b79dc7f4e7656078aa527350fbf14b2fde5d136ccf1cb4f3dc397def5fb67",
+        "size": 1159
+      },
+      {
+        "name": "lzio.c",
+        "sha256": "892bc24d898c19cbedceba419c68f910b99321c0b462be2c2c00b9d763563173",
+        "size": 1628
+      },
+      {
+        "name": "lzio.h",
+        "sha256": "0ec77d0179bf29c1ccab97028fed761944d5c21c02808e10cd7b5883b58b2ca6",
+        "size": 1556
+      },
+      {
+        "name": "print.c",
+        "sha256": "3c3b1c1dd17896e428b9742614c90ec10776ced65813eb648f02dee649892f2f",
+        "size": 4944
+      }
+    ],
+    "toolchain_sha256": {
+      "cl.exe": "33d0e40a63959649c8a6d400ab3786a78b4fce2a4f6b7215a47844c194ad314d",
+      "link.exe": "86fb8566bbdb587311c5754357df1f7905cc6a811731c0864293da8d659cf673",
+      "winnt.h": "b6516692d618a7fbc3c8af93aa3edfd607428e6a0313114d422e2d79d1f6f75c"
+    }
+  },
+  "key_classes": [
+    "init",
+    "finalize",
+    "ordinary_string",
+    "zero_number",
+    "empty_string",
+    "userdata_with_equal_handler",
+    "false_boolean",
+    "embedded_nul_string"
+  ],
+  "modes": [
+    "direct_table",
+    "redirect_table",
+    "callback_userdata",
+    "error_userdata"
+  ],
+  "schema_version": 1,
+  "scope": {
+    "claim": "Finite official Lua 5.1.5 filtered assignment API experiment",
+    "not_claimed": [
+      "Installed Lua DLL equivalence",
+      "Native helper execution",
+      "Arbitrary iteration order or source mutation termination",
+      "Raw writes to destination under metamethods",
+      "Normal helper cleanup after errors",
+      "Whole-game accounting promotion"
+    ]
+  },
+  "source_masks": [
+    0,
+    1,
+    2,
+    4,
+    7,
+    255
+  ],
+  "summary": {
+    "cases": 48,
+    "game_code_executions": 0,
+    "native_helper_executions": 0,
+    "normal_returns": 42,
+    "protected_errors": 6
+  },
+  "upstream_archive_sha256": "2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333"
+}

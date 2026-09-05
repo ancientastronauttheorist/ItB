@@ -1,0 +1,1210 @@
+{
+  "analysis_kind": "pe_native_lua_filtered_assignment_semantics",
+  "body": {
+    "bytes": 180,
+    "entry_rva": "0x002ec050",
+    "exclusive_end_rva": "0x002ec104",
+    "nodes": 71,
+    "points": [
+      {
+        "rva": "0x002ec050",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec051",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec053",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec054",
+        "sha256": "a1b0226d706d4a72ca354508fcaa2b721f8e4e80a24d8a28302ca881cae8a23f",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec05a",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec05c",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec05d",
+        "sha256": "143bb3bab0bb558070f55e488a957bffb8146464d8e67d3c9cf9763f653ac99e",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec063",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec066",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec068",
+        "sha256": "1ee86698e4e3aafddafc71c585ed6e6b8f38a2b227aad9fe08bef7657284f975",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec06e",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec06f",
+        "sha256": "bc47ecfb87cc938338a34d357fc0db35e52cc3f90d302ae0f4e3e96fca03979c",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec075",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec076",
+        "sha256": "ff3cb3ff61c3f7b248685c30091280283a4475f9e10c5a71a3d26c25aa1a5dbf",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec07c",
+        "sha256": "eabfa5c76d1038002d4162da7eec65f68ce1fa581ec1898b6751b53ad6935a57",
+        "size": 4
+      },
+      {
+        "rva": "0x002ec080",
+        "sha256": "f59efbe0e5eb24e92df99aa4c8067a3e54c1fee59d70b44be2c8f0b9f732a73f",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec085",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec086",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec088",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec08a",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec08c",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec08d",
+        "sha256": "4f6182f54c39aae28a6c5d6bdbe9bf1b327d15bab1a4dae5db43f11d76906f14",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec093",
+        "sha256": "bacd38b7288cc73b76e62635e00549f5af84d3cb38f26a2c7192748135c51aef",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec096",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec098",
+        "sha256": "fe8edeeb98cc6d3b93cf2d57000254b84bd9eba34b4df7ce4b87db8b937b7703",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec09a",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec09c",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec09d",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec09f",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec0a2",
+        "sha256": "e4a225fe2fdefefb0fbd9856db28cf41dd344bf09eeeee46fd315ba0cadbafaf",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0a4",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0a6",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0a7",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0a9",
+        "sha256": "4d508a93f9643d4166a0525d10baf47b94ace703165b1ea65853967e37b81455",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec0ae",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0af",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0b1",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0b3",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0b5",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0b6",
+        "sha256": "4f6182f54c39aae28a6c5d6bdbe9bf1b327d15bab1a4dae5db43f11d76906f14",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec0bc",
+        "sha256": "3e5d8666de6e41e2d3fe8a422da67fff00bdcc78f6e436101c6d6bf0a6f84c44",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec0bf",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0c1",
+        "sha256": "fe8edeeb98cc6d3b93cf2d57000254b84bd9eba34b4df7ce4b87db8b937b7703",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0c3",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0c5",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0c6",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0c8",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec0cb",
+        "sha256": "1995018cae99ede5f21ecde078879577258ef4d850d00aa7c3c75e6f0636d208",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0cd",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0cf",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0d0",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0d2",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0d4",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0d5",
+        "sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec0db",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0dd",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0de",
+        "sha256": "81ecb31d4af61caf0571a19ec5c65734f9800c911b5e9cc492c6ade615d3f251",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec0e4",
+        "sha256": "813a12f053cf6b4c6f0e470fd8ee1b3fa677c8e53e97e1d5e966265f781c052d",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0e6",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0e7",
+        "sha256": "c7236c61ae860cc144b4d0a27207ba2dd0b409550c7c4abfcd90e86e0b9d83d5",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec0ed",
+        "sha256": "d193215966c0c2ea90eb3d09234103fa2a412146cdbc404f0647ffcd2014b4cb",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec0f0",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0f2",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec0f3",
+        "sha256": "143bb3bab0bb558070f55e488a957bffb8146464d8e67d3c9cf9763f653ac99e",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec0f9",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec0fc",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec0fe",
+        "sha256": "55903192812301d53e5a68917e87177d6d8ad2bbcd1bc30298022bc26132907f",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec100",
+        "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec101",
+        "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec102",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec103",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "858858c41d39d402bbe07a163aa922c44453c99e6cae68c8b14437ee9d41328e"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "call_summary": {
+    "api_effects": [
+      {
+        "api": "lua_pushnil",
+        "effect": "Push nil seed"
+      },
+      {
+        "api": "lua_next",
+        "effect": "Pop key and either push the next key and value with nonzero result or push nothing with zero result"
+      },
+      {
+        "api": "lua_pushstring",
+        "effect": "Push the selected exact string literal"
+      },
+      {
+        "api": "lua_equal",
+        "effect": "Compare exact Lua values without stack change; this helper compares string literals so only equal string keys match"
+      },
+      {
+        "api": "lua_settop",
+        "effect": "Remove the specified suffix using a valid negative top index"
+      },
+      {
+        "api": "lua_pushvalue",
+        "effect": "Push a copy of the indexed value"
+      },
+      {
+        "api": "lua_insert",
+        "effect": "Move the top value into the indexed position"
+      },
+      {
+        "api": "lua_settable",
+        "effect": "Consume key and value and request normal assignment; newindex behavior may redirect or have side effects"
+      }
+    ],
+    "argument_bytes": {
+      "lua_equal": 12,
+      "lua_insert": 8,
+      "lua_next": 8,
+      "lua_pushnil": 4,
+      "lua_pushstring": 8,
+      "lua_pushvalue": 8,
+      "lua_settable": 8,
+      "lua_settop": 8
+    },
+    "callee_argument_cleanup_bytes": 0,
+    "callee_return_pop_bytes": 4,
+    "convention": "x86 cdecl",
+    "memory_policy": "Retain only incoming return word and actually established saved ESI, EBX and EDI words after each normal API summary",
+    "not_assumed": [
+      "Raw assignment, absent metamethods, destination table contents after side effects",
+      "Iteration order, source immutability, distinct source and destination, or unconditional termination"
+    ],
+    "premises": [
+      "Normal APIs with valid state, source table, indices and sufficient Lua and native stack capacity",
+      "Destination supports each requested normal assignment; errors and nonlocal exits are outside the relation",
+      "The next transcript consists of valid successive calls and eventually exhausts; it is not a fixed initial source snapshot",
+      "Source mutation or aliasing from assignment side effects must still satisfy each later next call premise",
+      "Live imported targets match the named summaries; the PE IAT witnesses prove static bindings only",
+      "Caller saved native words and ABI nonvolatiles survive; abstract API stack effects preserve the lower entry values"
+    ],
+    "preserved_registers": [
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "staged_binding_premise": "Loaded EBX and EDI callable values implement their named Lua summaries and survive calls as nonvolatile values",
+    "volatile_outputs": [
+      "eax",
+      "ecx",
+      "edx",
+      "eflags"
+    ]
+  },
+  "direct_lua_calls": [
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec054",
+      "iat_rva": "0x003d64b8",
+      "import_name": "lua_pushnil",
+      "instruction_sha256": "a1b0226d706d4a72ca354508fcaa2b721f8e4e80a24d8a28302ca881cae8a23f",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec05d",
+      "iat_rva": "0x003d64b4",
+      "import_name": "lua_next",
+      "instruction_sha256": "143bb3bab0bb558070f55e488a957bffb8146464d8e67d3c9cf9763f653ac99e",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec08d",
+      "iat_rva": "0x003d64c4",
+      "import_name": "lua_equal",
+      "instruction_sha256": "4f6182f54c39aae28a6c5d6bdbe9bf1b327d15bab1a4dae5db43f11d76906f14",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec0b6",
+      "iat_rva": "0x003d64c4",
+      "import_name": "lua_equal",
+      "instruction_sha256": "4f6182f54c39aae28a6c5d6bdbe9bf1b327d15bab1a4dae5db43f11d76906f14",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec0d5",
+      "iat_rva": "0x003d64e4",
+      "import_name": "lua_pushvalue",
+      "instruction_sha256": "e782fc817a7e30ab9cce2c042d188e009e2fb8cb294ac871a13e5a9abec05d20",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec0de",
+      "iat_rva": "0x003d6514",
+      "import_name": "lua_insert",
+      "instruction_sha256": "81ecb31d4af61caf0571a19ec5c65734f9800c911b5e9cc492c6ade615d3f251",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec0e7",
+      "iat_rva": "0x003d6550",
+      "import_name": "lua_settable",
+      "instruction_sha256": "c7236c61ae860cc144b4d0a27207ba2dd0b409550c7c4abfcd90e86e0b9d83d5",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002ec0f3",
+      "iat_rva": "0x003d64b4",
+      "import_name": "lua_next",
+      "instruction_sha256": "143bb3bab0bb558070f55e488a957bffb8146464d8e67d3c9cf9763f653ac99e",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    }
+  ],
+  "imports": [
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5494",
+        "rva": "0x003d6494",
+        "sha256": "6b80e1a9bbd252fa20d57796c7c630dc383032fa8619cfad2f59ae02c7b47bae",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 80,
+        "iat_rva": "0x003d6494",
+        "library": "lua5.1.dll",
+        "name": "lua_pushstring",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54b4",
+        "rva": "0x003d64b4",
+        "sha256": "8e2839b160372881503f4bef9aa61a6839ef593cc44715363a717ddc5d77f28f",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 69,
+        "iat_rva": "0x003d64b4",
+        "library": "lua5.1.dll",
+        "name": "lua_next",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54b8",
+        "rva": "0x003d64b8",
+        "sha256": "92bbf72e589a803c4dd12d6c5c22e30864b1807bf6a5a0008fc9b48d2b7e3454",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 78,
+        "iat_rva": "0x003d64b8",
+        "library": "lua5.1.dll",
+        "name": "lua_pushnil",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54c4",
+        "rva": "0x003d64c4",
+        "sha256": "8f797211f24e13670f068503c1201f9b2e8754ce8dad63ca4cd161094f4332f3",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 43,
+        "iat_rva": "0x003d64c4",
+        "library": "lua5.1.dll",
+        "name": "lua_equal",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54e4",
+        "rva": "0x003d64e4",
+        "sha256": "975698b457d23c261d5ee778bac5ef3832f0cfdbb77612d115cb0905cfa095aa",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 82,
+        "iat_rva": "0x003d64e4",
+        "library": "lua5.1.dll",
+        "name": "lua_pushvalue",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5510",
+        "rva": "0x003d6510",
+        "sha256": "5d68de5bb05d1453a66f9bc071957a63df78dd36d9fba3d22da3c7e8af6349c3",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 100,
+        "iat_rva": "0x003d6510",
+        "library": "lua5.1.dll",
+        "name": "lua_settop",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5514",
+        "rva": "0x003d6514",
+        "sha256": "f4485b4294bd12d180819dd10536bb56a5f61b584f1371f16922febfbd4fe593",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 59,
+        "iat_rva": "0x003d6514",
+        "library": "lua5.1.dll",
+        "name": "lua_insert",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5550",
+        "rva": "0x003d6550",
+        "sha256": "abc408db06543018e40eb5cbd699ed7af5dafd50379e44aeb820816b3fd6774d",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 99,
+        "iat_rva": "0x003d6550",
+        "library": "lua5.1.dll",
+        "name": "lua_settable",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    }
+  ],
+  "iteration_partitions": [
+    {
+      "api_calls_including_next": 4,
+      "assignment_call_index": -5,
+      "assignment_destination_entry_index": -2,
+      "assignment_requested": false,
+      "iterator_key_retained": true,
+      "key_class": "init",
+      "lua_stack_delta_before_next": -1,
+      "path": "skip_init",
+      "value_consumed": true
+    },
+    {
+      "api_calls_including_next": 7,
+      "assignment_call_index": -5,
+      "assignment_destination_entry_index": -2,
+      "assignment_requested": false,
+      "iterator_key_retained": true,
+      "key_class": "finalize",
+      "lua_stack_delta_before_next": -1,
+      "path": "skip_finalize",
+      "value_consumed": true
+    },
+    {
+      "api_calls_including_next": 10,
+      "assignment_call_index": -5,
+      "assignment_destination_entry_index": -2,
+      "assignment_requested": true,
+      "iterator_key_retained": true,
+      "key_class": "other",
+      "lua_stack_delta_before_next": -1,
+      "path": "assign",
+      "value_consumed": true
+    }
+  ],
+  "literals": [
+    {
+      "text": "__init",
+      "witness": {
+        "file_offset": "0x0041ff68",
+        "rva": "0x00420f68",
+        "sha256": "bbd60ce6705e249e0cffaa2e7e02fb2a3915650144e2faba59b0188a89895185",
+        "size": 7
+      }
+    },
+    {
+      "text": "__finalize",
+      "witness": {
+        "file_offset": "0x0043b50c",
+        "rva": "0x0043c50c",
+        "sha256": "2da9eac9965b6b70aa210a588888733805c3214ecd627e37afd1aa1909b100b7",
+        "size": 11
+      }
+    }
+  ],
+  "loop_invariant": {
+    "assignment_before_call": [
+      "prefix",
+      "destination",
+      "source",
+      "iterator_key",
+      "duplicate_key",
+      "value"
+    ],
+    "assignment_index": -5,
+    "before_next": [
+      "prefix",
+      "destination",
+      "source",
+      "iterator_key"
+    ],
+    "entry_lua_stack": [
+      "prefix",
+      "destination",
+      "source"
+    ],
+    "induction": "Initialization establishes the loop suffix; each of three local paths consumes value and retains the same iterator key; a normal next step either reestablishes the suffix or removes the key on exhaustion",
+    "loop_body_entry": [
+      "prefix",
+      "destination",
+      "source",
+      "iterator_key",
+      "value"
+    ],
+    "native_loop_back_rva": "0x002ec080",
+    "native_loop_esp_entry_delta": -12,
+    "normal_return": [
+      "prefix",
+      "destination",
+      "source"
+    ],
+    "source_index_at_next": -2
+  },
+  "matrix": {
+    "key_class_transcripts": [
+      [],
+      [
+        "init"
+      ],
+      [
+        "finalize"
+      ],
+      [
+        "other"
+      ],
+      [
+        "init",
+        "init"
+      ],
+      [
+        "init",
+        "finalize"
+      ],
+      [
+        "init",
+        "other"
+      ],
+      [
+        "finalize",
+        "init"
+      ],
+      [
+        "finalize",
+        "finalize"
+      ],
+      [
+        "finalize",
+        "other"
+      ],
+      [
+        "other",
+        "init"
+      ],
+      [
+        "other",
+        "finalize"
+      ],
+      [
+        "other",
+        "other"
+      ],
+      [
+        "init",
+        "init",
+        "init"
+      ],
+      [
+        "init",
+        "init",
+        "finalize"
+      ],
+      [
+        "init",
+        "init",
+        "other"
+      ],
+      [
+        "init",
+        "finalize",
+        "init"
+      ],
+      [
+        "init",
+        "finalize",
+        "finalize"
+      ],
+      [
+        "init",
+        "finalize",
+        "other"
+      ],
+      [
+        "init",
+        "other",
+        "init"
+      ],
+      [
+        "init",
+        "other",
+        "finalize"
+      ],
+      [
+        "init",
+        "other",
+        "other"
+      ],
+      [
+        "finalize",
+        "init",
+        "init"
+      ],
+      [
+        "finalize",
+        "init",
+        "finalize"
+      ],
+      [
+        "finalize",
+        "init",
+        "other"
+      ],
+      [
+        "finalize",
+        "finalize",
+        "init"
+      ],
+      [
+        "finalize",
+        "finalize",
+        "finalize"
+      ],
+      [
+        "finalize",
+        "finalize",
+        "other"
+      ],
+      [
+        "finalize",
+        "other",
+        "init"
+      ],
+      [
+        "finalize",
+        "other",
+        "finalize"
+      ],
+      [
+        "finalize",
+        "other",
+        "other"
+      ],
+      [
+        "other",
+        "init",
+        "init"
+      ],
+      [
+        "other",
+        "init",
+        "finalize"
+      ],
+      [
+        "other",
+        "init",
+        "other"
+      ],
+      [
+        "other",
+        "finalize",
+        "init"
+      ],
+      [
+        "other",
+        "finalize",
+        "finalize"
+      ],
+      [
+        "other",
+        "finalize",
+        "other"
+      ],
+      [
+        "other",
+        "other",
+        "init"
+      ],
+      [
+        "other",
+        "other",
+        "finalize"
+      ],
+      [
+        "other",
+        "other",
+        "other"
+      ]
+    ],
+    "lua_prefix_lengths": [
+      0,
+      2
+    ],
+    "native_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "volatile_eax": [
+      0,
+      4294967295
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "b524295b2a79569838367e1ed941a077d2aad13a5b19bcaaecb80b4f8fb03ed1",
+    "instruction_union_rvas": [
+      "0x002ec050",
+      "0x002ec051",
+      "0x002ec053",
+      "0x002ec054",
+      "0x002ec05a",
+      "0x002ec05c",
+      "0x002ec05d",
+      "0x002ec063",
+      "0x002ec066",
+      "0x002ec068",
+      "0x002ec06e",
+      "0x002ec06f",
+      "0x002ec075",
+      "0x002ec076",
+      "0x002ec07c",
+      "0x002ec080",
+      "0x002ec085",
+      "0x002ec086",
+      "0x002ec088",
+      "0x002ec08a",
+      "0x002ec08c",
+      "0x002ec08d",
+      "0x002ec093",
+      "0x002ec096",
+      "0x002ec098",
+      "0x002ec09a",
+      "0x002ec09c",
+      "0x002ec09d",
+      "0x002ec09f",
+      "0x002ec0a2",
+      "0x002ec0a4",
+      "0x002ec0a6",
+      "0x002ec0a7",
+      "0x002ec0a9",
+      "0x002ec0ae",
+      "0x002ec0af",
+      "0x002ec0b1",
+      "0x002ec0b3",
+      "0x002ec0b5",
+      "0x002ec0b6",
+      "0x002ec0bc",
+      "0x002ec0bf",
+      "0x002ec0c1",
+      "0x002ec0c3",
+      "0x002ec0c5",
+      "0x002ec0c6",
+      "0x002ec0c8",
+      "0x002ec0cb",
+      "0x002ec0cd",
+      "0x002ec0cf",
+      "0x002ec0d0",
+      "0x002ec0d2",
+      "0x002ec0d4",
+      "0x002ec0d5",
+      "0x002ec0db",
+      "0x002ec0dd",
+      "0x002ec0de",
+      "0x002ec0e4",
+      "0x002ec0e6",
+      "0x002ec0e7",
+      "0x002ec0ed",
+      "0x002ec0f0",
+      "0x002ec0f2",
+      "0x002ec0f3",
+      "0x002ec0f9",
+      "0x002ec0fc",
+      "0x002ec0fe",
+      "0x002ec100",
+      "0x002ec101",
+      "0x002ec102",
+      "0x002ec103"
+    ],
+    "negative_controls": [
+      {
+        "name": "wrong_assignment_index",
+        "rejected": true
+      },
+      {
+        "name": "wrong_iterator_cleanup",
+        "rejected": true
+      },
+      {
+        "name": "wrong_native_cleanup",
+        "rejected": true
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "conditional_exact_integer_and_abstract_Lua_loop_model",
+    "finite_domain": "All three key classes at lengths zero through three, with separate loop invariant for any finite valid transcript",
+    "not_claimed": [
+      "Actual game or Lua execution, complete class identity or caller semantics",
+      "Raw assignment, preserved destination contents, source immutability or predetermined traversal order",
+      "Arbitrary source mutation remains valid for next, unconditional exhaustion, or absence of errors and nonlocal exits",
+      "ABI validity of every synthetic stack residue, hardware faults or full game recreation",
+      "Atlas accounting promotion or rerun of upstream matrices"
+    ],
+    "semantic_basis": "Lua 5.1 reference manual C API effects under declared normal-return summaries"
+  },
+  "source_receipts": {
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "direct_calls": {
+      "analysis_kind": "pe_native_lua_direct_import_call_census",
+      "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "staged_lua_calls": [
+    {
+      "api": "lua_pushstring",
+      "iat_rva": "0x003d6494",
+      "point": {
+        "rva": "0x002ec086",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2
+      },
+      "register": "ebx"
+    },
+    {
+      "api": "lua_settop",
+      "iat_rva": "0x003d6510",
+      "point": {
+        "rva": "0x002ec09d",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      "register": "edi"
+    },
+    {
+      "api": "lua_settop",
+      "iat_rva": "0x003d6510",
+      "point": {
+        "rva": "0x002ec0a7",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      "register": "edi"
+    },
+    {
+      "api": "lua_pushstring",
+      "iat_rva": "0x003d6494",
+      "point": {
+        "rva": "0x002ec0af",
+        "sha256": "a0f2635247118130ada359293eaee713c4dff99516d7c80a4614fbb6b4fa60bb",
+        "size": 2
+      },
+      "register": "ebx"
+    },
+    {
+      "api": "lua_settop",
+      "iat_rva": "0x003d6510",
+      "point": {
+        "rva": "0x002ec0c6",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      "register": "edi"
+    },
+    {
+      "api": "lua_settop",
+      "iat_rva": "0x003d6510",
+      "point": {
+        "rva": "0x002ec0d0",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      "register": "edi"
+    }
+  ],
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_import_executions": 0,
+    "cases": 2560,
+    "direct_import_sites": 8,
+    "finite_transcripts": 40,
+    "modeled_nodes": 71,
+    "staged_import_sites": 6,
+    "static_bytes": 180,
+    "static_nodes": 71,
+    "unique_imports": 8
+  }
+}

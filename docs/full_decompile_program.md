@@ -366,6 +366,12 @@ until core engine semantics are reconstructed.
   Lua 5.1.5 reference build checks 70 finite API cases, including 14 protected
   errors, without loading the game DLL. See
   `docs/native_lua_class_marker_semantics.md` and `docs/lua51_marker_reference.md`.
+  The filtered-assignment helper now has a conditional 180-byte, 71-instruction
+  specification with 2,560 cases and an explicit finite-next loop invariant.
+  A separate Lua reference build checks 48 redirected-assignment and error
+  cases. Neither proof assumes fixed traversal order or raw destination writes.
+  See `docs/native_lua_filtered_assignment_semantics.md` and
+  `docs/lua51_filtered_assignment_reference.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six

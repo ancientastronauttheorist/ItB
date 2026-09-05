@@ -155,7 +155,7 @@ def parse_probe(text):
     return rows
 
 
-def _measure(archive: Path):
+def _measure(archive: Path, *, source_text=None, parse_output=None):
     _require(os.name == "nt", "fixed reference build requires Windows")
     payload = archive.read_bytes()
     _require(
@@ -197,7 +197,7 @@ def _measure(archive: Path):
                 )
             )
     _require(len(source_manifest) > 40, "source manifest incomplete")
-    source = probe_source()
+    source = probe_source() if source_text is None else source_text
     (work / "probe.c").write_bytes(source.encode("ascii"))
     env = dict(os.environ)
     for key in list(env):
@@ -282,7 +282,9 @@ def _measure(archive: Path):
     (work / "probe.stdout").write_bytes(ran.stdout)
     (work / "probe.stderr").write_bytes(ran.stderr)
     _require(ran.returncode == 0 and not ran.stderr, "reference experiment failed")
-    rows = parse_probe(ran.stdout.decode("ascii"))
+    rows = (parse_probe if parse_output is None else parse_output)(
+        ran.stdout.decode("ascii")
+    )
     _require(
         all(
             hashlib.sha256((source_dir / r["name"]).read_bytes()).hexdigest()
