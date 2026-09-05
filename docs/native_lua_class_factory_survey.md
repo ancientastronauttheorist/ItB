@@ -1047,9 +1047,8 @@ only as non-PE immediate syntax.
 
 The sole PE-address operand is the `MOV EBX,0x00894010` immediate at
 `0x00378a17`. It resolves to file-backed writable `.data` RVA `0x00494010`,
-file offset `0x00492210`. The exact four bytes `20 05 93 19` and their SHA-256
-are sealed, while their contents, consumers, and runtime meaning remain
-opaque.
+file offset `0x00492210`. The exact four-byte witness and its SHA-256 are
+sealed, while its consumers and runtime meaning remain opaque.
 
 The complete all-operand atlas traversal covers 25,312 functions, 25,490
 ranges, 3,735,718 bytes, and 1,153,814 instructions. Exactly four target-entry
@@ -1118,7 +1117,7 @@ unowned by the atlas and total 119 sealed bytes; this is layout evidence only.
 
 The complete outgoing native partition has two edges. The exact
 `0x00378aae -> 0x00378a15` row rejoins the pinned second-callee reference,
-while `0x00378abb -> 0x00378a34` retains an opaque `FF D0 C3` child. Direct and
+while `0x00378abb -> 0x00378a34` retains an opaque three-byte child. Direct and
 staged Lua calls, register calls, and other indirect controls are empty. The
 receipt separately retains six non-PE immediate literals and three
 FS-qualified absolute-memory forms without assigning behavior.
@@ -1450,9 +1449,9 @@ Its enriched CFG has 56 nodes / 55 edges and canonical SHA-256
 `020e22523160d01f527e80e62320f1052dc8654755d8aee3b8a88ae4dcc14048`.
 `CD 29` at `0x00357b81` is retained solely as static terminal opaque interrupt
 syntax, not a claim of runtime interrupt or termination behavior. Two opaque
-direct calls remain: `E8 18 50 04 00` at `0x00357b75 -> 0x0039cb92` (SHA-256
+direct calls remain: `0x00357b75 -> 0x0039cb92` (SHA-256
 `53a83b7d8c828fb30d1db99cb34f3ef39a9efff5068be6a8a626d05b2323b8df`) and
-`E8 E1 FE FF FF` at `0x00357c5c -> 0x00357b42` (SHA-256
+`0x00357c5c -> 0x00357b42` (SHA-256
 `d26d2f0423b8246000842d5f509221ff9bd0a727fd2fdbe6dfd975e060afd344`).
 
 The complete PE-address partition contains four immediates and 24 writable
@@ -1473,8 +1472,8 @@ its canonical JSON SHA-256 is
 has analysis kind
 `pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_import_thunk_static_boundary`.
 It canonically pins relationship-only target `0x0039cb92`, rejoins its parent
-`E8` at `0x00357b75`, and seals the complete one-instruction body:
-`FF 25 10 60 7D 00`, six bytes, with body SHA-256
+`E8` at `0x00357b75`, and seals the complete six-byte, one-instruction body
+with body SHA-256
 `247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7` and
 atlas-record SHA-256
 `495f4729075f0f38c369905e1cd00f3f3d9b1eb5247caf5ce112fec3e6066f4e`.
@@ -1513,7 +1512,7 @@ Its formerly retained sibling is sealed by the boundary below.
 has analysis kind
 `pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_second_callee_static_boundary`.
 It canonically pins relationship-only target `0x00357b42`, rejoins parent
-`E8 E1 FE FF FF` at `0x00357c5c`, and seals the complete 40-byte / 12-
+direct call at `0x00357c5c`, and seals the complete 40-byte / 12-
 instruction body. Its body SHA-256 is
 `5a4568c1047a793bff70d7632cc28b29500160dea29a7a4b913c8416835bee26`;
 its atlas-record SHA-256 is
