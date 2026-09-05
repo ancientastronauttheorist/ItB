@@ -565,6 +565,10 @@ until core engine semantics are reconstructed.
   checked with 256 integer-model cases. All untouched global bytes remain
   arbitrary, including upper halves of selector fields. See
   `docs/native_failure_stores.md` for the ordered memory oracle and call stop.
+  The final wrapper and return chain now have 192 conditional integer-model
+  cases over 53 bytes and 19 instructions. Imported behavior remains abstract;
+  recovered outer words are slice-entry values, not presumed original values.
+  See `docs/native_failure_return.md` for the protected-word contracts.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

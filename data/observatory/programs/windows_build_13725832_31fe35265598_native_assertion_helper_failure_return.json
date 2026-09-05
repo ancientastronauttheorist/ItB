@@ -1,0 +1,460 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_failure_return",
+  "assumed_import_summaries": {
+    "get_current_process_additional_protected_G_interval": [
+      -820,
+      -816
+    ],
+    "imports": [
+      {
+        "argument_bytes": 4,
+        "name": "SetUnhandledExceptionFilter",
+        "return_stack_increment": 8
+      },
+      {
+        "argument_bytes": 4,
+        "name": "UnhandledExceptionFilter",
+        "return_stack_increment": 8
+      },
+      {
+        "argument_bytes": 0,
+        "name": "GetCurrentProcess",
+        "return_stack_increment": 4
+      },
+      {
+        "argument_bytes": 8,
+        "name": "TerminateProcess",
+        "return_stack_increment": 12
+      }
+    ],
+    "model_memory_policy": "Forget every unprotected word after each abstract import",
+    "nonreturn": "If any import fails to return normally, later instructions and final return are not established",
+    "normal_return_assumed_for_each_import": true,
+    "other_memory": "Unspecified including globals, pair contents and record contents",
+    "outer_words": "Values at this slice entry; earlier query may already have changed original owner words",
+    "pending_status_word": 3221226505,
+    "preserved_registers": [
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "protected_memory_G_intervals": [
+      [
+        -816,
+        -804
+      ],
+      [
+        0,
+        8
+      ],
+      [
+        816,
+        824
+      ]
+    ],
+    "volatile_outputs": [
+      "eax",
+      "ecx",
+      "edx",
+      "eflags"
+    ]
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "import_bindings": [
+    {
+      "argument_bytes": 4,
+      "binding": {
+        "descriptor": {
+          "file_offset": "0x0048dd30",
+          "rva": "0x0048ed30",
+          "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+          "size": 20
+        },
+        "iat_slot": {
+          "file_offset": "0x003d50e4",
+          "rva": "0x003d60e4",
+          "sha256": "288d12d18ccaf7ffbb83acb8e302170e9bbcbcb7f0abed0d885b52b7b5e4695c",
+          "size": 4
+        },
+        "ilt_entry": {
+          "file_offset": "0x0048de64",
+          "rva": "0x0048ee64",
+          "sha256": "288d12d18ccaf7ffbb83acb8e302170e9bbcbcb7f0abed0d885b52b7b5e4695c",
+          "size": 4
+        },
+        "import_by_name": {
+          "file_offset": "0x0048f58e",
+          "rva": "0x0049058e",
+          "sha256": "ed0aa1cde363d40184a2d921355662ccb0ecd5c0dd532c7793429c7478dc3010",
+          "size": 30
+        },
+        "metadata": {
+          "evidence_class": "fact",
+          "hint": 1189,
+          "iat_rva": "0x003d60e4",
+          "library": "KERNEL32.dll",
+          "name": "SetUnhandledExceptionFilter",
+          "ordinal": null
+        },
+        "name_metadata_only": true
+      },
+      "instruction": {
+        "rva": "0x00357b47",
+        "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+        "size": 6
+      }
+    },
+    {
+      "argument_bytes": 4,
+      "binding": {
+        "descriptor": {
+          "file_offset": "0x0048dd30",
+          "rva": "0x0048ed30",
+          "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+          "size": 20
+        },
+        "iat_slot": {
+          "file_offset": "0x003d5018",
+          "rva": "0x003d6018",
+          "sha256": "3625f5da824068d558e712c0a25cf84d78677d759e65f2573d0dc86f8bfa6d3a",
+          "size": 4
+        },
+        "ilt_entry": {
+          "file_offset": "0x0048dd98",
+          "rva": "0x0048ed98",
+          "sha256": "3625f5da824068d558e712c0a25cf84d78677d759e65f2573d0dc86f8bfa6d3a",
+          "size": 4
+        },
+        "import_by_name": {
+          "file_offset": "0x0048f9d2",
+          "rva": "0x004909d2",
+          "sha256": "eb9dffa74b0280f1f033ad79ee889d7594b9ba15cad218e41a0801fed5c2baf8",
+          "size": 27
+        },
+        "metadata": {
+          "evidence_class": "fact",
+          "hint": 1235,
+          "iat_rva": "0x003d6018",
+          "library": "KERNEL32.dll",
+          "name": "UnhandledExceptionFilter",
+          "ordinal": null
+        },
+        "name_metadata_only": true
+      },
+      "instruction": {
+        "rva": "0x00357b50",
+        "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+        "size": 6
+      }
+    },
+    {
+      "argument_bytes": 0,
+      "binding": {
+        "descriptor": {
+          "file_offset": "0x0048dd30",
+          "rva": "0x0048ed30",
+          "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+          "size": 20
+        },
+        "iat_slot": {
+          "file_offset": "0x003d50f0",
+          "rva": "0x003d60f0",
+          "sha256": "ad1e627653830a85ad37d35bf475130f267d7d4f8cc9be3cdaad9669b177623c",
+          "size": 4
+        },
+        "ilt_entry": {
+          "file_offset": "0x0048de70",
+          "rva": "0x0048ee70",
+          "sha256": "ad1e627653830a85ad37d35bf475130f267d7d4f8cc9be3cdaad9669b177623c",
+          "size": 4
+        },
+        "import_by_name": {
+          "file_offset": "0x0048f558",
+          "rva": "0x00490558",
+          "sha256": "5d94f984ba11e5d2085017ddfbbbed1ee35fbc2c7f012c8bc7d989282858eece",
+          "size": 20
+        },
+        "metadata": {
+          "evidence_class": "fact",
+          "hint": 448,
+          "iat_rva": "0x003d60f0",
+          "library": "KERNEL32.dll",
+          "name": "GetCurrentProcess",
+          "ordinal": null
+        },
+        "name_metadata_only": true
+      },
+      "instruction": {
+        "rva": "0x00357b5b",
+        "sha256": "908348f25d6fc07e3246a7e20a63b21020f0ea832da9ce4fd603ffb7b58d6304",
+        "size": 6
+      }
+    },
+    {
+      "argument_bytes": 8,
+      "binding": {
+        "descriptor": {
+          "file_offset": "0x0048dd30",
+          "rva": "0x0048ed30",
+          "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+          "size": 20
+        },
+        "iat_slot": {
+          "file_offset": "0x003d5014",
+          "rva": "0x003d6014",
+          "sha256": "3c38ad980f6d41b84590ad861884f9df4683f0d358c6103ea2cddaa48592e9b1",
+          "size": 4
+        },
+        "ilt_entry": {
+          "file_offset": "0x0048dd94",
+          "rva": "0x0048ed94",
+          "sha256": "3c38ad980f6d41b84590ad861884f9df4683f0d358c6103ea2cddaa48592e9b1",
+          "size": 4
+        },
+        "import_by_name": {
+          "file_offset": "0x0048f9ee",
+          "rva": "0x004909ee",
+          "sha256": "b862748c120e4b958de335972607f9cded141e4ebc0e176f9aad3508654747ce",
+          "size": 19
+        },
+        "metadata": {
+          "evidence_class": "fact",
+          "hint": 1216,
+          "iat_rva": "0x003d6014",
+          "library": "KERNEL32.dll",
+          "name": "TerminateProcess",
+          "ordinal": null
+        },
+        "name_metadata_only": true
+      },
+      "instruction": {
+        "rva": "0x00357b62",
+        "sha256": "aa36aa82e6dadbbacc1760b01f08e23e9064ed9b5fbe79fc3a00204f1027a0e3",
+        "size": 6
+      }
+    }
+  ],
+  "owner_continuation": {
+    "bytes": 4,
+    "points": [
+      {
+        "rva": "0x00379e5f",
+        "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+        "size": 2
+      },
+      {
+        "rva": "0x00379e61",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x00379e62",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ]
+  },
+  "parent_tail": {
+    "bytes": 9,
+    "points": [
+      {
+        "rva": "0x00357c5c",
+        "sha256": "d26d2f0423b8246000842d5f509221ff9bd0a727fd2fdbe6dfd975e060afd344",
+        "size": 5
+      },
+      {
+        "rva": "0x00357c61",
+        "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+        "size": 2
+      },
+      {
+        "rva": "0x00357c63",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x00357c64",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ]
+  },
+  "relation": {
+    "final_eax_source": "TerminateProcess normal return",
+    "final_ebp_source": "outer word at F at this slice entry",
+    "final_esp_F_offset": 8,
+    "final_target_source": "outer word at F+4 at this slice entry",
+    "original_owner_words_not_assumed": true
+  },
+  "results_sha256": "4fdad29930387b45aaaadf3ac95497e99394531858371f94ac9c71e8962096a5",
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "exact_grammar_and_conditional_integer_model",
+    "not_claimed": [
+      "Actual imported behavior or termination",
+      "Original outer words survived the preceding query",
+      "Global record preservation or object validity",
+      "Unconditional failure-owner semantics or accounting promotion"
+    ],
+    "premises": [
+      "Mapped nonwrapping ordinary 32-bit integer and stack semantics",
+      "All four imports return under declared summaries",
+      "F equals G plus 816; parent and wrapper headers and observed outer words remain protected",
+      "Argument is the declared pair address; pair contents and globals are unspecified"
+    ]
+  },
+  "source_receipts": {
+    "dispatch": {
+      "analysis_kind": "pe_native_assertion_helper_failure_dispatch",
+      "canonical_sha256": "9cddbfb1e39e64523390c31bac7bdaa12b6906593495235527d406db465e4e13"
+    },
+    "frontier": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary",
+      "canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    },
+    "tail": {
+      "analysis_kind": "pe_native_assertion_helper_return_tail",
+      "canonical_sha256": "fd5c3c19346955ad9a667cdf1f53757fa98f29948f6a26216f431d8e267ec703"
+    }
+  },
+  "summary": {
+    "actual_import_executions": 0,
+    "decoded_bytes": 53,
+    "model_cases": 192,
+    "owner_continuation_nodes": 3,
+    "parent_tail_nodes": 4,
+    "wrapper_nodes": 12
+  },
+  "vector_sha256": "af8eedee628396052bd30ffabb7335060489ff3139f590ec6a003aa82866be80",
+  "wrapper": {
+    "bytes": 40,
+    "points": [
+      {
+        "rva": "0x00357b42",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x00357b43",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b45",
+        "sha256": "91046df2aa008410555df240b14243aa348b37cd16582c9d8a80ca305afccab2",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b47",
+        "sha256": "e7eaae8668603a3a6a72c3bd99c9d4804f5569e768c6ed9253529ee38529ef5d",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b4d",
+        "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+        "size": 3
+      },
+      {
+        "rva": "0x00357b50",
+        "sha256": "c6dec1f44a671a726199be969dd0392967f3889832d2201a91fab92427b93ad7",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b56",
+        "sha256": "9389891ee42444dd98d5f5d1511529d101c4de751b4724fa8eb305803a78fcd2",
+        "size": 5
+      },
+      {
+        "rva": "0x00357b5b",
+        "sha256": "908348f25d6fc07e3246a7e20a63b21020f0ea832da9ce4fd603ffb7b58d6304",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b61",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1
+      },
+      {
+        "rva": "0x00357b62",
+        "sha256": "aa36aa82e6dadbbacc1760b01f08e23e9064ed9b5fbe79fc3a00204f1027a0e3",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b68",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x00357b69",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "5a4568c1047a793bff70d7632cc28b29500160dea29a7a4b913c8416835bee26"
+  }
+}

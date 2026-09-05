@@ -1558,6 +1558,18 @@ unknown-byte retention and three rejected mutations. See
 Canonical SHA-256: `9c572888c6cf4a50c4bd406c43c60cd455fdd57c59a0a57c0c832bfbbacfd240`.
 Raw SHA-256: `cb12a468a04fd3e2b00609fce5a5d2aefe9f2beed8487f0d7cf2af9c6ac431ca`.
 
+## Conditional failure return chain
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_failure_return.json`
+specifies the 40-byte wrapper and 13 bytes of parent/owner continuations.
+Its 192 integer-model cases retain only explicitly protected memory after
+four abstract imports. The resulting return uses observed outer words and
+the last import's EAX, with no unconditional termination claim. See
+[`docs/native_failure_return.md`](../../../docs/native_failure_return.md).
+
+Canonical SHA-256: `0971cfa63e07affc80e0574319382099d9c41b29b5a380d1eb70a40e832a3444`.
+Raw SHA-256: `b3c17b81879e71274072ca47e94efa454ab1a5690cd0134152593429e356cca4`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`
