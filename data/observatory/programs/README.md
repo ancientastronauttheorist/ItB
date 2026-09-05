@@ -1570,6 +1570,24 @@ the last import's EAX, with no unconditional termination claim. See
 Canonical SHA-256: `0971cfa63e07affc80e0574319382099d9c41b29b5a380d1eb70a40e832a3444`.
 Raw SHA-256: `b3c17b81879e71274072ca47e94efa454ab1a5690cd0134152593429e356cca4`.
 
+## Lua class-marker semantics and reference runtime
+
+`windows_build_13725832_31fe35265598_native_lua_class_marker_semantics.json`
+specifies all 84 bytes and 32 instructions of the marker helper under explicit
+normal Lua API contracts. Its 576 models preserve the distinction between AL
+and full EAX. Canonical SHA-256:
+`fb30c2feb6bcbc4583ee415585405a130b1219952d23c9aecdf56103158a7c7d`;
+raw SHA-256: `03efb733a13e11d102174abe2231c5a36f43df58f15d272a5ad32d2c19692540`.
+
+`lua_5_1_5_x86_marker_reference.json` separately records 70 actual official
+Lua 5.1.5 API experiments, including 14 protected errors. It is a reference
+runtime receipt, not installed-game-DLL conformance. Canonical SHA-256:
+`e6212ef1dc1f91861a894dfafca844607c8e4a2aecf9e95dd4fea8c565ef9a34`;
+raw SHA-256: `56a5956cf5f69e6f74f962681b53969775c2b5615da6b301cfece85f35285f08`.
+
+See [`native marker specification`](../../../docs/native_lua_class_marker_semantics.md)
+and [`reference experiment`](../../../docs/lua51_marker_reference.md).
+
 ## Conditional complete failure frontier
 
 `windows_build_13725832_31fe35265598_native_assertion_helper_failure_composition.json`

@@ -1,0 +1,651 @@
+{
+  "analysis_kind": "pe_native_lua_class_marker_semantics",
+  "body": {
+    "bytes": 84,
+    "entry_rva": "0x002eb560",
+    "exclusive_end_rva": "0x002eb5b4",
+    "nodes": 32,
+    "points": [
+      {
+        "rva": "0x002eb560",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb561",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb563",
+        "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb564",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb565",
+        "sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb56b",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb56e",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb570",
+        "sha256": "17dc64d49bbde7c8a2294fe27e6b08751cd4171d0d72b282e2698ad53402dc46",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb572",
+        "sha256": "0eaa462bd786e07a51ddb88f6d2212282bdb0951715873f37997ff8b06efdadf",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb577",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb578",
+        "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb57e",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb580",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb581",
+        "sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb587",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb589",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb58a",
+        "sha256": "3dca66d00ee853da86c2da0da9c20589ed24cee747bb5a2dd8978504c844337c",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb590",
+        "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb593",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb595",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb596",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb598",
+        "sha256": "b2a2028749af082a496044f7e1e70ceb4d21b57aedc24eacb85fc7373caa7b04",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb59a",
+        "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb5a0",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb5a3",
+        "sha256": "90ef8690a679d25d77655565ce4ad197255f49a3eaa58f9a96fc2aa903fe72a2",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb5a5",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5a6",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5a7",
+        "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb5ad",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb5b0",
+        "sha256": "35b660100acac77a09eed3bdd6b22a8db7b27c1e8c4c4ed44bd52d51c9084b03",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb5b2",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5b3",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "6f1c89224988d0fbcb9d3ded8b5c49f5652a871da1b7acb850dac37d75604bec"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "call_summary": {
+    "arguments_bytes_each_call": 8,
+    "callee_argument_cleanup_bytes": 0,
+    "callee_return_pop_bytes": 4,
+    "convention": "x86 cdecl",
+    "lua_effects": [
+      {
+        "api": "lua_getmetatable",
+        "arguments": [
+          "state",
+          "incoming_index"
+        ],
+        "effect": "Absent metatable leaves stack unchanged and returns zero; present metatable pushes it and returns one"
+      },
+      {
+        "api": "lua_pushstring",
+        "arguments": [
+          "state",
+          "marker_literal"
+        ],
+        "effect": "Push marker string"
+      },
+      {
+        "api": "lua_gettable",
+        "arguments": [
+          "state",
+          "minus_two"
+        ],
+        "effect": "Consume key and push lookup result; ordinary indexing may invoke metamethods"
+      },
+      {
+        "api": "lua_toboolean",
+        "arguments": [
+          "state",
+          "minus_one"
+        ],
+        "effect": "Return zero for nil or false, one otherwise; no stack change"
+      },
+      {
+        "api": "lua_settop",
+        "arguments": [
+          "state",
+          "minus_three"
+        ],
+        "effect": "Remove lookup result and metatable; EAX is an arbitrary void-call clobber"
+      }
+    ],
+    "memory_policy": "After each abstract API return retain only saved ESI and incoming return words; later arguments are freshly pushed",
+    "premises": [
+      "All called APIs return normally without errors or nonlocal exits",
+      "Lua state, incoming index and stack capacity are valid for the declared API operations",
+      "Cdecl preservation and protected native words hold; ordinary integer and mapped stack semantics apply",
+      "Abstract Lua stack effects preserve the entry prefix; heap and global side effects are unconstrained"
+    ],
+    "preserved_registers": [
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "protected_entry_esp_relative_words": [
+      -4,
+      0
+    ],
+    "volatile_outputs": [
+      "eax",
+      "ecx",
+      "edx",
+      "eflags"
+    ]
+  },
+  "direct_lua_calls": [
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb565",
+      "iat_rva": "0x003d6534",
+      "import_name": "lua_getmetatable",
+      "instruction_sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb578",
+      "iat_rva": "0x003d6494",
+      "import_name": "lua_pushstring",
+      "instruction_sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb581",
+      "iat_rva": "0x003d64bc",
+      "import_name": "lua_gettable",
+      "instruction_sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb58a",
+      "iat_rva": "0x003d64f8",
+      "import_name": "lua_toboolean",
+      "instruction_sha256": "3dca66d00ee853da86c2da0da9c20589ed24cee747bb5a2dd8978504c844337c",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb59a",
+      "iat_rva": "0x003d6510",
+      "import_name": "lua_settop",
+      "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    },
+    {
+      "call_form": "x86_absolute_iat_indirect_call_ff15",
+      "call_rva": "0x002eb5a7",
+      "iat_rva": "0x003d6510",
+      "import_name": "lua_settop",
+      "instruction_sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+      "instruction_size": 6,
+      "library": "lua5.1.dll"
+    }
+  ],
+  "imports": [
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5494",
+        "rva": "0x003d6494",
+        "sha256": "6b80e1a9bbd252fa20d57796c7c630dc383032fa8619cfad2f59ae02c7b47bae",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 80,
+        "iat_rva": "0x003d6494",
+        "library": "lua5.1.dll",
+        "name": "lua_pushstring",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54bc",
+        "rva": "0x003d64bc",
+        "sha256": "bfe6354d0482d66d4bedc7765593a732fd1afc92fbc3b9e8fefbe5395a361bc7",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 56,
+        "iat_rva": "0x003d64bc",
+        "library": "lua5.1.dll",
+        "name": "lua_gettable",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d54f8",
+        "rva": "0x003d64f8",
+        "sha256": "1019c8fdb82176af63212013fc37224de0e8e69301e8e3a41130ac9eed59fbda",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 103,
+        "iat_rva": "0x003d64f8",
+        "library": "lua5.1.dll",
+        "name": "lua_toboolean",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5510",
+        "rva": "0x003d6510",
+        "sha256": "5d68de5bb05d1453a66f9bc071957a63df78dd36d9fba3d22da3c7e8af6349c3",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 100,
+        "iat_rva": "0x003d6510",
+        "library": "lua5.1.dll",
+        "name": "lua_settop",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    {
+      "iat_slot": {
+        "file_offset": "0x003d5534",
+        "rva": "0x003d6534",
+        "sha256": "79774633540d755a0f3daea6613eec13d4b6bb0fe7b6993fbf023766b1450927",
+        "size": 4
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 54,
+        "iat_rva": "0x003d6534",
+        "library": "lua5.1.dll",
+        "name": "lua_getmetatable",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    }
+  ],
+  "marker_literal": {
+    "text": "__luabind_classrep",
+    "witness": {
+      "file_offset": "0x0043b738",
+      "rva": "0x0043c738",
+      "sha256": "5fa36f996468bb3565904a71089b4b7625279e0b4ef434b62c1c5f19b4762663",
+      "size": 19
+    }
+  },
+  "matrix": {
+    "abstract_cases": [
+      {
+        "has_metatable": false,
+        "value_kind": "nil"
+      },
+      {
+        "has_metatable": true,
+        "value_kind": "nil"
+      },
+      {
+        "has_metatable": true,
+        "value_kind": "false"
+      },
+      {
+        "has_metatable": true,
+        "value_kind": "zero"
+      },
+      {
+        "has_metatable": true,
+        "value_kind": "empty_string"
+      },
+      {
+        "has_metatable": true,
+        "value_kind": "table"
+      }
+    ],
+    "last_void_eax": [
+      0,
+      305419896,
+      4294967295
+    ],
+    "lua_prefix_lengths": [
+      1,
+      3
+    ],
+    "native_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "a0a8575f7a6ab28cf0bd28c7768e8035476caf595797a076d0fac58554f023d0",
+    "instruction_union_rvas": [
+      "0x002eb560",
+      "0x002eb561",
+      "0x002eb563",
+      "0x002eb564",
+      "0x002eb565",
+      "0x002eb56b",
+      "0x002eb56e",
+      "0x002eb570",
+      "0x002eb572",
+      "0x002eb577",
+      "0x002eb578",
+      "0x002eb57e",
+      "0x002eb580",
+      "0x002eb581",
+      "0x002eb587",
+      "0x002eb589",
+      "0x002eb58a",
+      "0x002eb590",
+      "0x002eb593",
+      "0x002eb595",
+      "0x002eb596",
+      "0x002eb598",
+      "0x002eb59a",
+      "0x002eb5a0",
+      "0x002eb5a3",
+      "0x002eb5a5",
+      "0x002eb5a6",
+      "0x002eb5a7",
+      "0x002eb5ad",
+      "0x002eb5b0",
+      "0x002eb5b2",
+      "0x002eb5b3"
+    ],
+    "negative_controls": [
+      {
+        "name": "wide_result",
+        "rejected": true
+      },
+      {
+        "name": "wrong_cleanup",
+        "rejected": true
+      },
+      {
+        "name": "wrong_lookup_index",
+        "rejected": true
+      }
+    ]
+  },
+  "path_partition_representative_final_void_eax": 0,
+  "path_partitions": [
+    {
+      "al": 0,
+      "api_calls": 1,
+      "eax": 0,
+      "eax_upper_source": "zero_getmetatable_result",
+      "lua_stack_delta": 0,
+      "lua_stack_prefix_restored": true,
+      "native_esp_delta": 4,
+      "path": "no_metatable",
+      "preserved_registers": [
+        "ebx",
+        "esi",
+        "edi",
+        "ebp"
+      ]
+    },
+    {
+      "al": 0,
+      "api_calls": 5,
+      "eax": 0,
+      "eax_upper_source": "last_void_settop_clobber",
+      "lua_stack_delta": 0,
+      "lua_stack_prefix_restored": true,
+      "native_esp_delta": 4,
+      "path": "false_marker",
+      "preserved_registers": [
+        "ebx",
+        "esi",
+        "edi",
+        "ebp"
+      ]
+    },
+    {
+      "al": 1,
+      "api_calls": 5,
+      "eax": 1,
+      "eax_upper_source": "last_void_settop_clobber",
+      "lua_stack_delta": 0,
+      "lua_stack_prefix_restored": true,
+      "native_esp_delta": 4,
+      "path": "truthy_marker",
+      "preserved_registers": [
+        "ebx",
+        "esi",
+        "edi",
+        "ebp"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "conditional_exact_integer_and_abstract_Lua_stack_model",
+    "not_claimed": [
+      "Actual Lua or game execution, class identity, raw table lookup or absence of metamethod side effects",
+      "Heap or globals preserved merely because stack prefix values are restored",
+      "Whole EAX is a Boolean on metatable paths; only AL is normalized",
+      "Errors, nonlocal exits, hardware faults, arbitrary native alignment validity or unconditional API behavior",
+      "Full game recreation or atlas accounting promotion"
+    ],
+    "semantic_basis": "Lua 5.1 reference manual C API stack effects, under explicit normal-return summaries",
+    "upstream_matrices_rerun": false
+  },
+  "source_receipts": {
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "direct_calls": {
+      "analysis_kind": "pe_native_lua_direct_import_call_census",
+      "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_import_executions": 0,
+    "cases": 576,
+    "direct_import_sites": 6,
+    "modeled_nodes": 32,
+    "path_classes": 3,
+    "static_bytes": 84,
+    "static_nodes": 32,
+    "unique_imports": 5
+  }
+}

@@ -360,6 +360,12 @@ until core engine semantics are reconstructed.
   explicit alternate `0x002e7970 -> 0x002eb140` edge. The alternate caller is
   reference-only. The artifact's canonical JSON SHA-256 is
   `33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095`.
+  The marker helper now has a conditional 84-byte, 32-instruction semantic
+  specification with 576 independent native/Lua-stack model cases. Its AL-only
+  return and metamethod-capable lookup remain explicit. A separate official
+  Lua 5.1.5 reference build checks 70 finite API cases, including 14 protected
+  errors, without loading the game DLL. See
+  `docs/native_lua_class_marker_semantics.md` and `docs/lua51_marker_reference.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
