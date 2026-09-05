@@ -1618,6 +1618,17 @@ Raw SHA-256: `c3f752ec1862c41021b3e4e4cc2e2ee1488851d96ab8624328837ce1201b7798`.
 
 See [`append specification and replay`](../../../docs/native_lua_class_vector_append.md).
 
+## Finite Lua helper reference contracts
+
+`windows_build_13725832_31fe35265598_native_lua_helper_reference_contracts.json`
+compares 98 normal reference rows to supported marker/assignment abstract
+projections, with 20 protected errors excluded. It validates seven pinned
+sources and performs no new native/reference execution. See
+[`contract projections`](../../../docs/native_lua_helper_reference_contracts.md).
+
+Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
+Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
+
 ## Conditional complete failure frontier
 
 `windows_build_13725832_31fe35265598_native_assertion_helper_failure_composition.json`

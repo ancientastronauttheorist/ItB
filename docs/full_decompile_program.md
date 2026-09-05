@@ -377,6 +377,10 @@ until core engine semantics are reconstructed.
   explicit summaries; alias rebasing, ordered overlap and null destinations
   are distinguished. See `docs/native_lua_class_vector_append.md` for the
   exclusive boundary and remaining tree/allocator work.
+  A finite contract join now checks 98 normal upstream Lua reference rows
+  against only the supported abstract Boolean/count/stack projections. Twenty
+  protected errors remain excluded; no traversal order, native EAX or installed
+  DLL equivalence is inferred. See `docs/native_lua_helper_reference_contracts.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six

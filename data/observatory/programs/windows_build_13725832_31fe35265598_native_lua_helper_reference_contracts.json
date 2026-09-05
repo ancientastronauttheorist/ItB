@@ -1,0 +1,2114 @@
+{
+  "analysis_kind": "lua_helper_reference_contracts",
+  "comparisons": [
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 0
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 1
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 2
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 3
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 4
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 5
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 6
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 7
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 8
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 9
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 10
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 11
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 12
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "no_metatable",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 13
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 14
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 15
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 16
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 17
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 18
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 19
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 20
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 21
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 22
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 23
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 24
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 25
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 26
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 27
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 28
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 29
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 30
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 31
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 32
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 33
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 34
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 35
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 36
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 37
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 38
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 39
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 40
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 41
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 42
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 43
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 44
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 0,
+        "path": "false_marker",
+        "prefix_restored": true,
+        "reference_result": 0
+      },
+      "reference_row_index": 45
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 46
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 47
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 48
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 49
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 50
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 51
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 52
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 53
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 54
+    },
+    {
+      "family": "marker",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Boolean result against AL predicate",
+          "Lua stack delta",
+          "Entry prefix preservation"
+        ],
+        "lua_stack_delta": 0,
+        "native_contract_al": 1,
+        "path": "truthy_marker",
+        "prefix_restored": true,
+        "reference_result": 1
+      },
+      "reference_row_index": 55
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 0
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 1
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 2
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 3
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 4
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 5
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 6
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 7
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 8
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 9
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 10
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 11
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 12
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 13
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 14
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 15
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 16
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 17
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 18
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 19
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 20
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 21
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 22
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 23
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 24
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 25
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 26
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 27
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 28
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 29
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 30
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 31
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 32
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 1
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 1,
+        "reference_assignment_requests": 1,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 33
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 34
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 1,
+          "other": 6
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 6,
+        "reference_assignment_requests": 6,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 35
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 36
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 37
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 38
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 0,
+          "init": 1,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 39
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 40
+    },
+    {
+      "family": "assignment",
+      "matched": true,
+      "projection": {
+        "compared": [
+          "Assignment request count independent of order",
+          "Lua stack delta",
+          "Entry values preservation"
+        ],
+        "entry_values_restored": true,
+        "key_class_inventory": {
+          "finalize": 1,
+          "init": 0,
+          "other": 0
+        },
+        "lua_stack_delta": 0,
+        "native_contract_assignment_requests": 0,
+        "reference_assignment_requests": 0,
+        "reference_next_order_observed": false
+      },
+      "reference_row_index": 41
+    }
+  ],
+  "excluded_protected_errors": [
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 56
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 57
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 58
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 59
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 60
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 61
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 62
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 63
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 64
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 65
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 66
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 67
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 68
+    },
+    {
+      "family": "marker",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 69
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 42
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 43
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 44
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 45
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 46
+    },
+    {
+      "family": "assignment",
+      "normal_contract_applied": false,
+      "protected_status": 2,
+      "reference_row_index": 47
+    }
+  ],
+  "negative_controls": [
+    {
+      "name": "wrong_marker_result",
+      "rejected": true
+    },
+    {
+      "name": "wrong_assignment_request_count",
+      "rejected": true
+    },
+    {
+      "name": "wrong_assignment_stack_delta",
+      "rejected": true
+    }
+  ],
+  "projection_contract": {
+    "assignment": "Compare reference request counts to the permutation-invariant abstract filter count and normal Lua stack restoration",
+    "assignment_inventory_order": "No iteration order is recorded, reconstructed or compared",
+    "marker": "Compare reference Boolean result to the abstract native AL predicate and normal Lua stack restoration",
+    "not_compared": [
+      "Native EAX upper bits, native return registers or native stack behavior",
+      "Native instruction traces or byte execution",
+      "Destination heap effects beyond assignment requests",
+      "Normal cleanup on protected error paths"
+    ]
+  },
+  "proof_domains": {
+    "all_reference_vectors_executed_by_native_model": false,
+    "assignment_native": {
+      "finite_model_cases": 2560,
+      "kind": "Exact integer and abstract finite next-transcript model"
+    },
+    "assignment_reference": {
+      "excluded_errors": 6,
+      "kind": "Statically linked upstream Lua 5.1.5 reference experiment",
+      "normal_comparisons": 42,
+      "reference_cases": 48
+    },
+    "marker_native": {
+      "finite_model_cases": 576,
+      "kind": "Exact integer and abstract Lua stack model"
+    },
+    "marker_reference": {
+      "excluded_errors": 14,
+      "kind": "Statically linked upstream Lua 5.1.5 reference experiment",
+      "normal_comparisons": 56,
+      "reference_cases": 70
+    },
+    "reference_sources_recompiled": false,
+    "upstream_matrices_rerun": false
+  },
+  "schema_version": 1,
+  "scope": {
+    "conditions": [
+      "All seven source receipts retain exact sealed identities and existing source validators pass",
+      "Only the recorded normal reference rows enter the normal abstract contracts",
+      "Native and reference component domains remain separate; projections compare only common semantic observations"
+    ],
+    "evidence_class": "finite_reference_to_abstract_API_contract_projection",
+    "not_claimed": [
+      "Identity or equivalence of the installed Lua DLL with upstream reference sources",
+      "Native helper execution by the reference C experiments, byte conformance or end-to-end native Lua execution",
+      "Observed or predicted next order, all reference vectors covered by the native finite matrices, or unconditional termination",
+      "Normal helper cleanup after errors, preserved heap or globals, or generic metamethod behavior",
+      "Whole-game recreation or atlas accounting promotion"
+    ]
+  },
+  "source_receipts": {
+    "assignment_native": {
+      "analysis_kind": "pe_native_lua_filtered_assignment_semantics",
+      "canonical_sha256": "b62b6409f2f3f3a003732bc106f5e4e3f0eaf543d2b246984a6513cc658a1b27"
+    },
+    "assignment_reference": {
+      "analysis_kind": "lua51_filtered_assignment_reference_conformance",
+      "canonical_sha256": "7d82034b09049dd4eefa96cb02f004dfc15661e8572d4a2267ec4e0473185b35"
+    },
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "direct_calls": {
+      "analysis_kind": "pe_native_lua_direct_import_call_census",
+      "canonical_sha256": "07ed5edabe6fba37a89dd9542f197e75e58e1a2b064b5940e424847b1f843608"
+    },
+    "marker_native": {
+      "analysis_kind": "pe_native_lua_class_marker_semantics",
+      "canonical_sha256": "fb30c2feb6bcbc4583ee415585405a130b1219952d23c9aecdf56103158a7c7d"
+    },
+    "marker_reference": {
+      "analysis_kind": "lua51_marker_reference_conformance",
+      "canonical_sha256": "e6212ef1dc1f91861a894dfafca844607c8e4a2aecf9e95dd4fea8c565ef9a34"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "assignment_normal_comparisons": 42,
+    "assignment_request_sum": 48,
+    "excluded_protected_errors": 20,
+    "marker_normal_comparisons": 56,
+    "marker_path_counts": {
+      "false_marker": 12,
+      "no_metatable": 14,
+      "truthy_marker": 30
+    },
+    "new_native_executions": 0,
+    "new_reference_executions": 0,
+    "normal_comparisons": 98
+  }
+}
