@@ -1,0 +1,377 @@
+{
+  "analysis_kind": "pe_native_lua_tree_successor_semantics",
+  "body": {
+    "bytes": 79,
+    "entry_rva": "0x0006df30",
+    "exclusive_end_rva": "0x0006df7f",
+    "nodes": 31,
+    "points": [
+      {
+        "rva": "0x0006df30",
+        "sha256": "e19d89b46b58837da936f52ca6af6946ed3478f68d4d44dc5d193541db7f1428",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df32",
+        "sha256": "93727d1723051642ce3629e16ce2e70af9a48bf72826e2f3eacefb1b2c4aa179",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df34",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df38",
+        "sha256": "dd0038b606775812eceaec84ca2582c54cf82953b27bbdd771b4416b875268c2",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df3a",
+        "sha256": "8df8fccc616867547d618b0f52b4aaeadd0699dbcecf705db094a6b6934faa42",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df3d",
+        "sha256": "b7547d0c683de3b3d76e5adc6f27746eade8e11c4f62b14354e6ece2b9c4569c",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df41",
+        "sha256": "5f019e1ac2f2317815db4cfaf94dd4e218a47189b9e1f2a2b75bcf2bb57fea4e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df43",
+        "sha256": "85041a0b25ed7b917ea9cc7ee7e912da1fece2d849ea5ee107f18f800123e64f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df45",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df49",
+        "sha256": "bb52e9e6db182172c9062587fc4bdd0a673150f95815e0bcbae120469101acdd",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df4b",
+        "sha256": "2ae7df4edc1b5f7269dd806e060711cdb6d1bd1aa0b17edbb06415945070f3a2",
+        "size": 5
+      },
+      {
+        "rva": "0x0006df50",
+        "sha256": "0e72eeffe8e4ac7dfe9abd68ba709e020123e8aaf94576b6cd3f452c41e3ef4f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df52",
+        "sha256": "85041a0b25ed7b917ea9cc7ee7e912da1fece2d849ea5ee107f18f800123e64f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df54",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df58",
+        "sha256": "067633f6e431ba26dbc95b8d9319e529ccc9444c5c174aa7c8a67ca88d5f1c18",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5a",
+        "sha256": "587e5ed0ff7c93c43c214b6cd2b6c4d93dd6b151748286cfd2f164494eb7c611",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5c",
+        "sha256": "694f340cabb4304e65640d800f40fe68387dcdb4c2e86dd3c1b7ee6d75235a1e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5e",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      },
+      {
+        "rva": "0x0006df5f",
+        "sha256": "8837463159c94fab9f88f79941386968f9ffa67aa078f55226c75edc4572f42f",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df62",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df66",
+        "sha256": "98a1d97320f14c574690067bb38dc63be3a43585486e2c332ec6794b6f3c2d88",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df68",
+        "sha256": "66e9fe267fc14e21124a536bddf0dceab450ed6db433357704b9ff5d0a93b433",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df6a",
+        "sha256": "af6583dc355597f401b86e256e056761eb33fec12a2496499bfafab59e1a1f92",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df6d",
+        "sha256": "525cc8f73fc005ebf5f61edf504cd2c9671a11e3c3675096bd1da2fc6cdd2369",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df6f",
+        "sha256": "ed32d7788f90c5945e4ff8bbbec974bfdff3949948304fb2a7e07f7eecb33376",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df71",
+        "sha256": "8837463159c94fab9f88f79941386968f9ffa67aa078f55226c75edc4572f42f",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df74",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df78",
+        "sha256": "ac60a591b0222fe91d61bfb220492a9a132f7c2c60366037e9fa7401af71efab",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7a",
+        "sha256": "ed32d7788f90c5945e4ff8bbbec974bfdff3949948304fb2a7e07f7eecb33376",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7c",
+        "sha256": "694f340cabb4304e65640d800f40fe68387dcdb4c2e86dd3c1b7ee6d75235a1e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7e",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "539e52ffef66379c5aa4c31b81f540f6b75b9b347b09e1af9d146a42ee7d8991"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "domain": {
+    "link_offsets": {
+      "left": 0,
+      "parent": 4,
+      "right": 8
+    },
+    "maximum_nodes": 128,
+    "node_bytes_read_domain": 14,
+    "requirements": [
+      "One nonzero-byte sentinel and normal nodes with zero sentinel byte",
+      "Mapped disjoint node records with consistent parent and child links, one root and finite acyclic topology",
+      "Iterator slot and native return word are disjoint from nodes and from each other",
+      "Static tree links remain unchanged during this call-free helper"
+    ],
+    "sentinel_flag_offset": 13
+  },
+  "incoming_edge": {
+    "condition": "each_traversed_node",
+    "ghidra_declared_direct_edge": {
+      "instruction_rva": "0x002eb1ab",
+      "source_entry_rva": "0x002eb140",
+      "target_entry_rva": "0x0006df30",
+      "target_name_sha256": "420721efb419bacc5c0b62fc38dc31bc95610e54859b5db96dc508c02940c790",
+      "target_rva": "0x0006df30"
+    },
+    "instruction": {
+      "rva": "0x002eb1ab",
+      "sha256": "6698845839f1bd2f6780b8560eeaf2ce9aa6b94b33b684f8f95b91c18bda36b8",
+      "size": 5
+    },
+    "role": "per_node_helper_two",
+    "source_atlas_record_sha256": "5b6ec6d1ff84c254d0afac7331d2a42362afe0a2d71ccecf3c38d5acacf1edb2",
+    "source_entry_rva": "0x002eb140",
+    "target_atlas_record_sha256": "8b3c6e8e3ea649f1d56a8bd4679792c3b97bcb7e095b85b4de20652e8a46f8a1",
+    "target_body_sha256": "539e52ffef66379c5aa4c31b81f540f6b75b9b347b09e1af9d146a42ee7d8991",
+    "target_body_size": 79,
+    "target_entry_rva": "0x0006df30"
+  },
+  "matrix": {
+    "frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "sentinel_bytes": [
+      1,
+      255
+    ],
+    "shapes": [
+      "balanced",
+      "left_chain",
+      "right_chain",
+      "single",
+      "empty"
+    ],
+    "starts": "Every fixture node including sentinel"
+  },
+  "model_evidence": {
+    "cases_sha256": "009e49c2795ad647e9ee216fa118d27d8e50ddf5b96f744085f27a1174d6436e",
+    "instruction_union_rvas": [
+      "0x0006df30",
+      "0x0006df32",
+      "0x0006df34",
+      "0x0006df38",
+      "0x0006df3a",
+      "0x0006df3d",
+      "0x0006df41",
+      "0x0006df43",
+      "0x0006df45",
+      "0x0006df49",
+      "0x0006df4b",
+      "0x0006df50",
+      "0x0006df52",
+      "0x0006df54",
+      "0x0006df58",
+      "0x0006df5a",
+      "0x0006df5c",
+      "0x0006df5e",
+      "0x0006df5f",
+      "0x0006df62",
+      "0x0006df66",
+      "0x0006df68",
+      "0x0006df6a",
+      "0x0006df6d",
+      "0x0006df6f",
+      "0x0006df71",
+      "0x0006df74",
+      "0x0006df78",
+      "0x0006df7a",
+      "0x0006df7c",
+      "0x0006df7e"
+    ],
+    "negative_controls": [
+      {
+        "kind": "domain_rejection",
+        "name": "cyclic_topology",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_intermediate_slot_write",
+        "rejected": true
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "event_policy": "Explicit data operands and RET stack read are recorded; the multibyte NOP makes no data-memory access",
+    "evidence_class": "exact_integer_graph_model_with_independent_inorder_successor_oracle",
+    "normal_relation": "Slot becomes inorder successor or sentinel, with exact intermediate ancestor writes; sentinel entry leaves slot unchanged; EAX and EDX return the slot pointer and ESP advances four",
+    "not_claimed": [
+      "Tree ordering by keys, balancing, container identity or generic validity of arbitrary native pointers",
+      "Behavior or termination on cyclic, malformed, aliased or concurrently mutated links",
+      "Hardware execution, native fault behavior, caller tree insertion semantics or full owner recreation",
+      "Lua or game execution and atlas accounting promotion"
+    ]
+  },
+  "source_receipts": {
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_native_executions": 0,
+    "calls": 0,
+    "cases": 672,
+    "modeled_nodes": 31,
+    "static_bytes": 79,
+    "static_nodes": 31
+  }
+}

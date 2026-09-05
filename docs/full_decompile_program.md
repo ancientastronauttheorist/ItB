@@ -381,6 +381,11 @@ until core engine semantics are reconstructed.
   against only the supported abstract Boolean/count/stack projections. Twenty
   protected errors remain excluded; no traversal order, native EAX or installed
   DLL equivalence is inferred. See `docs/native_lua_helper_reference_contracts.md`.
+- The call-free tree successor now has an independent inorder specification
+  and exact 79-byte/31-node graph model across 672 cases. Finite consistent
+  topology and disjoint storage are explicit premises; native execution,
+  insertion, growth and whole-owner recreation remain outside this proof.
+  See `docs/native_lua_tree_successor_semantics.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
