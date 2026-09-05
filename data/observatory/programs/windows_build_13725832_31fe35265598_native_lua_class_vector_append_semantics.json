@@ -1,0 +1,657 @@
+{
+  "analysis_kind": "pe_native_lua_class_vector_append_semantics",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "growth_static_witness": {
+    "bytes": 94,
+    "entry_rva": "0x002eb620",
+    "explicit_stack_argument_memory_operands": 0,
+    "implementation_modeled": false,
+    "nodes": 40,
+    "points": [
+      {
+        "rva": "0x002eb620",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb621",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb623",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb624",
+        "sha256": "fdb746152be90ad2490bfcbf003d331e06c9986ebaa921dded20294e93d2bfdc",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb627",
+        "sha256": "aea5a96a034ea0197e5c038dca4c8d1cc13d444edcce9ef519f7f78d642467e6",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb629",
+        "sha256": "d2c23446f280d691b42e27a51640b18b6e8100d7b889bdde3467ba6c05177144",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb62c",
+        "sha256": "7577a09acf7e50649151ce886e07799ccb31c2a5aaab3a30e7281493b0be21bc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb62e",
+        "sha256": "999ce0dbd11522573d56120b07d151abb16df3409860366be12652cb0f2dd3f1",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb631",
+        "sha256": "1ea67153973d48b650d9c8abeb82a1d9cf4bfc1d811e7deb4a616f48e09d569b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb634",
+        "sha256": "e72d310dbb213f4c2e34da28935b38905332ee3628a04df2dd13859fd769c6c5",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb636",
+        "sha256": "acb3f8f08ed08474bff9f38ad2f202cb971bd82909103726d41f4d009f96f113",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb638",
+        "sha256": "6fbdb5e50eb66b94929e3da397c061f76ba68eff40d334c081c3262f52d3d2e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb63a",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb63b",
+        "sha256": "e077208d1623f1abac06f1f2f00aca4f5834ea724314e93aaebb71fa8946b835",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb640",
+        "sha256": "68e44c971ed4f228341752a0ee75c042ff59e90b4a44c54c9687c0c0a33a24db",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb643",
+        "sha256": "a51914475e973a2f049d7292f473d0d53f50a376607ef6c5b90e56c9fc5f0263",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb645",
+        "sha256": "7577a09acf7e50649151ce886e07799ccb31c2a5aaab3a30e7281493b0be21bc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb647",
+        "sha256": "1ea67153973d48b650d9c8abeb82a1d9cf4bfc1d811e7deb4a616f48e09d569b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb64a",
+        "sha256": "398c41f325d3613fbfe42caa6fc74291d259ab3428b8dfae4eb3029b7c122f06",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb64c",
+        "sha256": "ba633acbbdf63a2df0556d68e9569dce95173ff3890ef6f548b9cb010008305d",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb64e",
+        "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb64f",
+        "sha256": "a5267ad4f5d8599c4982744da9eafb33ded70e489ea62b1cd2b0d1bb642133fe",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb652",
+        "sha256": "6b3abe7b30d64eef0441e29f68b0eabf17526b476fa2495d67f1a901e3e73ec5",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb654",
+        "sha256": "aea5a96a034ea0197e5c038dca4c8d1cc13d444edcce9ef519f7f78d642467e6",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb656",
+        "sha256": "64d541d89b408d27a3639c7950921e0c649a342f60ff63850661f0ca6e48b4a7",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb658",
+        "sha256": "e2be51bd30c968b6a89d0e2f303bbc00aa0b85dca2087c43eb4a4e2fee7b1216",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65a",
+        "sha256": "e2dbf5748636785d95e4dd5113125ecd5e92e0a32b2b11eb9e92fe7b337833c8",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65c",
+        "sha256": "ec239cc61bddbe2c023753a6b1f1a079297efe3d3bd7a7f3bbe85aa774156a94",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65e",
+        "sha256": "21ea6950534772997b02c2bf3345ba3cd68c179d7aaa18f3d15db12f9f6961a0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb661",
+        "sha256": "076befd637402e8cd0d35c03d2be866d53d6102d8ba4442d622f630227017cfc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb663",
+        "sha256": "1c85e37aa6a65e5d50c39d77d7f956662df2912ba942adb460f33a7d89c441d4",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb666",
+        "sha256": "516d98b8f7e112c7ab40cf0397e0c0231765f39a38298f43fccc3f60a7f096e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb668",
+        "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb669",
+        "sha256": "89e0aa57887d46becd7e0589026b9ce5422bc3a7e3baaaf69dd3dceb4652684a",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb66e",
+        "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb66f",
+        "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb670",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb671",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb674",
+        "sha256": "384d3690015fc222c6e8d28384d9c0120ba1d3f5f1ec96175babacf8cb1db7ec",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb679",
+        "sha256": "35f0e7fe47d8511922a5912158b2da903e0600426fe3f4c17a5b0bf3c013b1f7",
+        "size": 5
+      }
+    ],
+    "return_point": {
+      "rva": "0x002eb671",
+      "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+      "size": 3
+    },
+    "sha256": "42f88276ce53abc0e706022e598d7ae0dcc7d19efc0b5a320498f2ac7f8c9f5d"
+  },
+  "growth_summary": {
+    "live_layout_fields": [
+      "begin",
+      "end",
+      "capacity"
+    ],
+    "native_entry_frame_offset": -40,
+    "native_return_frame_offset": -32,
+    "normal_return_stack_delta_from_callee_entry": 8,
+    "not_claimed": [
+      "Actual growth or allocator semantics, allocation success, exception behavior or full growth-body implementation"
+    ],
+    "premises": [
+      "Growth returns normally with its RET4 convention; imported allocation and nested callees are not executed",
+      "The object identity, frame local object pointer, native saved words and ABI nonvolatiles survive",
+      "Post-growth begin and end and mapped payload bytes are declared summary outputs",
+      "Relocated old element contents are preserved only for vectors explicitly declaring that growth premise",
+      "External source words remain readable when copied; pointer classification alone does not establish their lifetime",
+      "The pushed word has no observable effect under the summary; the direct growth body has no explicit stack-argument memory operand"
+    ],
+    "preserved_registers": [
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "pushed_argument_bytes": 4,
+    "pushed_word_sources": {
+      "external_argument_at_or_above_end": "entry_ecx",
+      "external_argument_below_begin": "loaded_begin",
+      "internal": "loaded_begin"
+    },
+    "target_rva": "0x002eb620",
+    "this_object_offset": 4,
+    "volatile_outputs": [
+      "eax",
+      "ecx",
+      "edx",
+      "eflags"
+    ]
+  },
+  "matrix": {
+    "frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "payload_seeds": [
+      0,
+      1
+    ],
+    "profiles": [
+      "internal_first",
+      "internal_second",
+      "internal_unaligned",
+      "internal_last_byte",
+      "external_below",
+      "external_at_end",
+      "external_above",
+      "external_forward_overlap",
+      "null_destination",
+      "growth_internal",
+      "growth_unaligned",
+      "growth_external",
+      "growth_null"
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "a4132b8374e3713df1583d7da59f822fffcc2db7e16d4f2501a4627fbd04561d",
+    "instruction_union_rvas": [
+      "0x002eb1bb",
+      "0x002eb1be",
+      "0x002eb1c1",
+      "0x002eb1c3",
+      "0x002eb1c5",
+      "0x002eb1c8",
+      "0x002eb1ca",
+      "0x002eb1cc",
+      "0x002eb1ce",
+      "0x002eb1d1",
+      "0x002eb1d4",
+      "0x002eb1d6",
+      "0x002eb1d7",
+      "0x002eb1da",
+      "0x002eb1df",
+      "0x002eb1e2",
+      "0x002eb1e4",
+      "0x002eb1e6",
+      "0x002eb1e9",
+      "0x002eb1ec",
+      "0x002eb1ee",
+      "0x002eb1f2",
+      "0x002eb1f5",
+      "0x002eb1f7",
+      "0x002eb1fa",
+      "0x002eb1fc",
+      "0x002eb1fd",
+      "0x002eb200",
+      "0x002eb205",
+      "0x002eb208",
+      "0x002eb20a",
+      "0x002eb20c",
+      "0x002eb20e",
+      "0x002eb210",
+      "0x002eb213",
+      "0x002eb216"
+    ],
+    "negative_controls": [
+      {
+        "name": "wrong_element_shift",
+        "rejected": true
+      },
+      {
+        "name": "wrong_second_source_word",
+        "rejected": true
+      },
+      {
+        "name": "wrong_end_increment",
+        "rejected": true
+      }
+    ]
+  },
+  "owner_join": {
+    "bytes": 237,
+    "entry_rva": "0x002eb140",
+    "nodes": 87,
+    "points_sha256": "0e682f8eb11430aa36fb72b0b954b3d83f9b205baf92e40f3c79ada7f073041f",
+    "sha256": "2184616f615a261d2b3781fe7f0840780afd79150544323341f668f58f9b821b"
+  },
+  "schema_version": 1,
+  "scope": {
+    "copy_order": [
+      "read_first_word",
+      "write_first_word",
+      "read_second_word",
+      "write_second_word",
+      "read_current_end",
+      "write_end_plus_eight"
+    ],
+    "entry_premises": [
+      "Owner frame is established with slice ESP at frame minus32 and local object pointer at frame minus12",
+      "EDI holds the source argument and object fields at offsets4,8,12 give begin,end,capacity",
+      "Frame and object metadata do not overlap copied payload or modeled growth buffers; every accessed word is mapped"
+    ],
+    "event_policy": "Events record explicit data operands; growth argument and return-word construction are represented separately by the growth call frame observations",
+    "evidence_class": "conditional_exact_integer_and_ordered_memory_append_slice",
+    "integer_domain": "Unsigned32 range classification, signed arithmetic shift of wrapped difference and modulo32 effective addresses and end update",
+    "not_claimed": [
+      "Alignment, valid vector geometry, available capacity or memory safety from pointer classification alone",
+      "A snapshot copy when words overlap; the second source read may observe the first write",
+      "Actual growth, allocator or full owner semantics, tree insertion, cookie epilogue or Lua execution",
+      "Validity of external source after arbitrary growth; each read needs its declared mapped-memory premise",
+      "Unconditional alias safety or atlas accounting promotion"
+    ],
+    "null_destination": "Skips both payload words but still increments the end field from zero to eight"
+  },
+  "slice": {
+    "bytes": 95,
+    "entry_rva": "0x002eb1bb",
+    "exclusive_end_rva": "0x002eb21a",
+    "nodes": 36,
+    "points": [
+      {
+        "rva": "0x002eb1bb",
+        "sha256": "e993f141347884090a72a0ca3fbb07e3a1e1f292ce2b007f5bcc9237ac71060e",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1be",
+        "sha256": "1781395ecac1f03760894fa4ba528b8de1bcff4981886ab8412aadd7c3a13a22",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1c1",
+        "sha256": "bce56f8a2a7d7c1da091045691fa1b9cabe6040514f6c900cca9f37cfbfa94d3",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1c3",
+        "sha256": "ad328846aa18b32a335816374511cac1063c704b8c57999e51da9f908290a7a4",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1c5",
+        "sha256": "16289f8f8ba08de3d484d18b6d6b5e57d397df23121ccc4b70b5f308a91ac18b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1c8",
+        "sha256": "7f888b1ccfbf05af467a4f222f477091b546d25417a540c5f747d795d1c7a7b1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1ca",
+        "sha256": "f608f58c7b4f027ca90156cfd8279c3c3861baf7661faffdfd008f34f01539d5",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1cc",
+        "sha256": "ba633acbbdf63a2df0556d68e9569dce95173ff3890ef6f548b9cb010008305d",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1ce",
+        "sha256": "a5267ad4f5d8599c4982744da9eafb33ded70e489ea62b1cd2b0d1bb642133fe",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1d1",
+        "sha256": "26012c1041522c34802b5954ac1786afd3ebd6639b3b52b56b961e18e1b27882",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1d4",
+        "sha256": "e782e5bf1da0ed772627c84052b2d0392c1eef3dfba7aea25856ab3d85f05eaa",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1d6",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb1d7",
+        "sha256": "8fecb5bc19743d1bb1c86e0fa1019a69776a0dc2f74a89202db0a63e87ae89c0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1da",
+        "sha256": "1f75ede19146580b6bd7c7f65f9a7c56851464a424ba1db8b9ea5d296ca8cfbc",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb1df",
+        "sha256": "5a82a316bf08f9f058392a57c4fb87b00bf18f2e6d93efc17b97aa29bf926485",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1e2",
+        "sha256": "464dfd9c3da84dcbf887d11bfa478d3efc10c6725af3206aeb2e3bf2c1900481",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1e4",
+        "sha256": "512f26ada3c3d634ac3c6b12b7b33cb50bb0963c3f6d9924241619c84ec78ff2",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1e6",
+        "sha256": "16289f8f8ba08de3d484d18b6d6b5e57d397df23121ccc4b70b5f308a91ac18b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1e9",
+        "sha256": "3eb31f8550126584ff9f2153de1d05c8855c584f41a6fcae74ec0cdc90870a62",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1ec",
+        "sha256": "ed32d7788f90c5945e4ff8bbbec974bfdff3949948304fb2a7e07f7eecb33376",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1ee",
+        "sha256": "f48d742831b7d5ec6bd81337107e8e2bce828e1cbc82a983e7f73de35d421993",
+        "size": 4
+      },
+      {
+        "rva": "0x002eb1f2",
+        "sha256": "eb9b0d440a6c9460f922f945d440657fd2ff98db32d02d1fc37774c92b1d12f1",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1f5",
+        "sha256": "c296a7be78d6a32b06be234c1aef06d4f95a785cde128f7d63328de344932ff8",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1f7",
+        "sha256": "26012c1041522c34802b5954ac1786afd3ebd6639b3b52b56b961e18e1b27882",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb1fa",
+        "sha256": "e782e5bf1da0ed772627c84052b2d0392c1eef3dfba7aea25856ab3d85f05eaa",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb1fc",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb1fd",
+        "sha256": "8fecb5bc19743d1bb1c86e0fa1019a69776a0dc2f74a89202db0a63e87ae89c0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb200",
+        "sha256": "c8f13391213c0bd6d0007ee240d422d0af3018a2ea942c5a9cb690e4b021b6cc",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb205",
+        "sha256": "26491b1ee43b99a005f3add88db47d65ca8b61be304eeb5cfc20f352f465b29d",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb208",
+        "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb20a",
+        "sha256": "fe8edeeb98cc6d3b93cf2d57000254b84bd9eba34b4df7ce4b87db8b937b7703",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb20c",
+        "sha256": "26d462ac6ae109bbd28b3573d64536e3810f64f1ff3c0b68858799a5058c682e",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb20e",
+        "sha256": "a52154f6ae9b203b56f6ce53c7f4efd334fad4c468c128869d75d8ebc46ab313",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb210",
+        "sha256": "6fee2262bf1cbe76668f098788e29b9b766d5fb10d88c3b875f097d75dd02d87",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb213",
+        "sha256": "924188d8a625584577bbc9445f5326eb7d9abca9e1ba8ce5ed55ef03340c39ea",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb216",
+        "sha256": "74a5598e51aaf3dac582c3aec6c2cfb2b3f334dbb6dd648c32fd7256874eae95",
+        "size": 4
+      }
+    ],
+    "sha256": "cd96ff6a4dc0b10e7fff495f508cf8e970bc796e69136d3588e64384aa7c1e0b"
+  },
+  "source_receipts": {
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_growth_calls": 0,
+    "actual_import_executions": 0,
+    "cases": 416,
+    "modeled_growth_calls": 128,
+    "modeled_nodes": 36,
+    "slice_bytes": 95,
+    "slice_nodes": 36
+  }
+}

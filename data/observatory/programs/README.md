@@ -1603,6 +1603,21 @@ Raw SHA-256: `aa3a701d5b74f4e774727e21db0a4eeaa0953f935bf4fb9e4cd141ea80bb80ee`.
 See [`native specification`](../../../docs/native_lua_filtered_assignment_semantics.md)
 and [`reference experiment`](../../../docs/lua51_filtered_assignment_reference.md).
 
+## Conditional class-vector append and bounded replay
+
+`windows_build_13725832_31fe35265598_native_lua_class_vector_append_semantics.json`
+specifies the 95-byte append interval with 416 integer/ordered-memory cases.
+Canonical SHA-256: `d17dc4796b23572e79a65784de0cc689a0f333005420997461a183c5a022a93c`.
+Raw SHA-256: `ef64ab85719c9764808721a0e99689e75af987a51441553b5b7f0e54e3021495`.
+
+`windows_build_13725832_31fe35265598_native_lua_class_vector_append_conformance.json`
+records 144 exact x86 replays: 34 executed ordinary sites and two summarized
+growth CALL sites. No real growth helper executes.
+Canonical SHA-256: `f5fad9a1bf7b10cb90fb6731a47906592f80089caa4805592d2ad0e7ce75075a`.
+Raw SHA-256: `c3f752ec1862c41021b3e4e4cc2e2ee1488851d96ab8624328837ce1201b7798`.
+
+See [`append specification and replay`](../../../docs/native_lua_class_vector_append.md).
+
 ## Conditional complete failure frontier
 
 `windows_build_13725832_31fe35265598_native_assertion_helper_failure_composition.json`

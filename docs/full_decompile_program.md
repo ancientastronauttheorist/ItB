@@ -372,6 +372,11 @@ until core engine semantics are reconstructed.
   cases. Neither proof assumes fixed traversal order or raw destination writes.
   See `docs/native_lua_filtered_assignment_semantics.md` and
   `docs/lua51_filtered_assignment_reference.md`.
+  The remaining helper's 95-byte append interval now has 416 independent
+  integer/memory cases and 144 exact bounded x86 replays. Growth calls remain
+  explicit summaries; alias rebasing, ordered overlap and null destinations
+  are distinguished. See `docs/native_lua_class_vector_append.md` for the
+  exclusive boundary and remaining tree/allocator work.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
