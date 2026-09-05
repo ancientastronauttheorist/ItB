@@ -63,7 +63,7 @@ Start by composing the now-specified iterator `0x0006df30` with the prefix,
 then investigate insertion `0x002e81f0`. Source/destination aliasing can permit
 insertion to change the traversed topology. A whole-prefix contract needs
 explicit finite traversal, result-slot and value-read lifetime premises.
-The assertion call at `0x00379cc2` when the argument's second word is zero
+The assertion call to `0x00379cc2` from `0x002eb16e` when the argument's second word is zero
 does not itself establish nonreturn; the later reread and dereference still
 need a valid-state premise if that call returns.
 
