@@ -1,0 +1,759 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_owner_composition",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "coverage": {
+    "body_sha256": "636d0da8095430211856a90a00a74b292186f6931c9043a1d9fd26b44351c95a",
+    "bytes": 315,
+    "disjoint_complete_partition": true,
+    "exclusive_end_rva": "0x00379e63",
+    "instruction_points_sha256": "4a9d2355179374f51f12494ab736a2b2903b52b8e522d8314295bde7cdef8dba",
+    "instructions": 78,
+    "owner_entry_rva": "0x00379d28",
+    "segments": [
+      {
+        "body_sha256": "d70d35603e0c32e1590e98c39792309e2a7149adcb4376219d03e84d0c81ea19",
+        "bytes": 248,
+        "exclusive_end_rva": "0x00379e20",
+        "instruction_points_sha256": "cdf109c98417a7c5218bf0a39df8f62ed4882aa32a8c5ff25b6d96e920581402",
+        "instructions": 55,
+        "source": "handoff",
+        "start_rva": "0x00379d28"
+      },
+      {
+        "body_sha256": "0cf314e9a259a1bc49a2018bc9b73f45a17ae79bbc4ca675285fc9d0a58eee0e",
+        "bytes": 23,
+        "exclusive_end_rva": "0x00379e37",
+        "instruction_points_sha256": "e55fb8397116393d0c4746c198cfb312c2c20893297154960554381ee8e54f18",
+        "instructions": 6,
+        "source": "arguments",
+        "start_rva": "0x00379e20"
+      },
+      {
+        "body_sha256": "8988dd431b525466ccc47797444c82621355351c3c4a4a521c6ed093690df886",
+        "bytes": 44,
+        "exclusive_end_rva": "0x00379e63",
+        "instruction_points_sha256": "10c348229547e7a30bbd65b1c567a621c08f138652bd2729b4aec8f5c09d9ce7",
+        "instructions": 17,
+        "source": "tail",
+        "start_rva": "0x00379e37"
+      }
+    ]
+  },
+  "interfaces": {
+    "all_import_returns_are_premises": true,
+    "entry_to_first_import": {
+      "boundary_rva": "0x00379e20",
+      "cookie_value_relation": "Protected slot equals prefix cookie seed XOR frame",
+      "ebp_frame_offset": 0,
+      "esp_frame_offset": -812,
+      "protected_cookie_frame_offset": -4,
+      "record_frame_regions": [
+        [
+          -808,
+          -800
+        ],
+        [
+          -800,
+          -720
+        ],
+        [
+          -720,
+          -4
+        ]
+      ],
+      "return_word_frame_offset": 4,
+      "saved_ebp_frame_offset": 0,
+      "saved_edi_frame_offset": -812,
+      "selector_frame_offset": 8
+    },
+    "first_two_imports": {
+      "callee_argument_cleanup_bytes": [
+        0,
+        4
+      ],
+      "caller_memory_preserved_from_frame_offset": -812,
+      "first_arguments": [],
+      "first_return_provenance": "Copied from EAX into EDI before second import",
+      "normal_return_assumed": true,
+      "preserved_nonvolatile_registers": [
+        "ebx",
+        "esi",
+        "edi",
+        "ebp"
+      ],
+      "second_arguments": [
+        0
+      ],
+      "second_return_use": "Discarded when EAX is replaced by pointer-pair address"
+    },
+    "frame_relation": "Established EBP equals owner entry ESP minus four",
+    "prefix_specific_architectural_diversion_excluded": true,
+    "tail_to_modeled_boundary": {
+      "direct_return_condition": "Recovered word equals current global comparison word",
+      "mismatch_boundary": "0x00357b6a with caller continuation still on stack",
+      "recovered_word": "Protected slot XOR frame equals prefix cookie seed",
+      "saved_edi_slot_final_preservation_claimed": false,
+      "saved_edi_slot_note": "The equality-check CALL overwrites this slot after its old value has been restored to EDI"
+    },
+    "third_import_entry": {
+      "argument_at_pre_call_esp": {
+        "frame_offset": -808
+      },
+      "boundary_rva": "0x00379e37",
+      "edi_source": "first_import_return",
+      "esp_frame_offset": -816
+    },
+    "third_import_return": {
+      "callee_argument_cleanup_bytes": 4,
+      "esp_frame_offset": -812,
+      "global_memory_preservation_claimed": false,
+      "normal_return_assumed": true,
+      "preserved_nonvolatile_registers": [
+        "ebx",
+        "esi",
+        "edi",
+        "ebp"
+      ],
+      "protected_word_frame_offsets": [
+        -812,
+        -4,
+        0,
+        4,
+        8
+      ],
+      "record_memory_preservation_claimed": false
+    }
+  },
+  "open_failure_frontier": {
+    "entry_rva": "0x00357b6a",
+    "prior_structural_bytes": 251,
+    "prior_structural_nodes": 56,
+    "semantics": "Open beyond the transfer; eventual return, failure behavior and external effects are not established",
+    "source_canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+  },
+  "proof_domains": {
+    "arguments": {
+      "kind": "exact static grammar and conditional symbolic import transfer",
+      "matrix_rerun": false
+    },
+    "composition": "Disjoint full-owner instruction coverage and explicit interface compatibility; these evidence domains remain distinct",
+    "handoff": {
+      "cases": 256,
+      "kind": "finite exact same-instance prefix emulation",
+      "matrix": {
+        "cookies": [
+          0,
+          1804289383
+        ],
+        "dispatch_words": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "frame_alignments": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "selectors": [
+          0,
+          4294967295
+        ]
+      },
+      "matrix_rerun": false
+    },
+    "tail": {
+      "cases": 1728,
+      "kind": "exact grammar and conditional finite integer model",
+      "matrix": {
+        "current_global_equals_recovered": [
+          0,
+          1
+        ],
+        "first_returns": [
+          0,
+          1,
+          4294967295
+        ],
+        "frame_alignments": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "prefix_cookie_seeds": [
+          0,
+          1804289383
+        ],
+        "selectors": [
+          0,
+          1,
+          4294967295
+        ],
+        "third_returns": [
+          0,
+          1,
+          4294967295
+        ]
+      },
+      "matrix_rerun": false
+    }
+  },
+  "relation_partitions": [
+    {
+      "current_compare_equal": false,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": false,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 1,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": false
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": 0,
+        "helper_call_count": 2,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": true,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": 0,
+        "helper_call_count": 2,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": true,
+        "pre_helper_called": true,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": false,
+      "selector_representative": 0,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": false,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "established_frame",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": -816,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "0x00357b6a",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "open_external_transfer",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": true
+    },
+    {
+      "current_compare_equal": true,
+      "first_return_zero": true,
+      "relation": {
+        "eax_source": "third_import_return",
+        "ebp_source": "owner_entry_ebp",
+        "ebx_source": "owner_entry_ebx",
+        "ecx_source": "prefix_cookie_seed",
+        "edi_source": "owner_entry_edi",
+        "esi_source": "owner_entry_esi",
+        "esp_owner_entry_delta": 4,
+        "global_clear_word_at_modeled_boundary": null,
+        "helper_call_count": 0,
+        "instruction_target": "owner_entry_return_word",
+        "mismatch_future_behavior": "unproved beyond the external transfer boundary",
+        "modeled_boundary": "direct_caller_return",
+        "post_helper_called": false,
+        "pre_helper_called": false,
+        "prefix_selector_sampled": true,
+        "record_contents_after_third_import": "unspecified"
+      },
+      "selector_marker": true,
+      "selector_representative": 4294967295,
+      "third_return_zero": true
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "conditions": [
+      "All imported calls return normally under the separately stated stack and protection assumptions",
+      "The prefix uses its declared finite matrix; relation values outside that matrix do not acquire prefix execution proof",
+      "The current comparison global is independent of prefix seed; equality closes the direct modeled return path only",
+      "Ordinary nonwrapping integer and stack semantics; no prefix-specific architectural diversion"
+    ],
+    "evidence_class": "whole_owner_conditional_composition_without_accounting_promotion",
+    "not_claimed": [
+      "All inputs, CPU states, addresses or imported implementation effects",
+      "Unchanged records or global memory across the third imported call",
+      "Mismatch target never returns or has any specific failure semantics",
+      "Real game execution, whole-game recreation, authentic context capture or native hardware correctness",
+      "Atlas level three or level six semantic promotion or global accounting changes"
+    ],
+    "source_validation": "Canonical sealed source identities, complete disjoint point coverage and interface joins plus fresh full-owner PE decode and per-segment body hashes; dependent matrices and SDK probe are not rerun"
+  },
+  "source_receipts": {
+    "arguments": {
+      "analysis_kind": "pe_native_assertion_helper_import_arguments",
+      "canonical_sha256": "a5db0b615b94a1291132a500fd025a74aeb4b0f8b78409f5d91bb30a6d4e282f"
+    },
+    "caller": {
+      "analysis_kind": "pe_native_assertion_helper_caller_fill",
+      "canonical_sha256": "b89d1873e56c4afb27c96229c05a1a0516732a5bdc3d2151173baeb5d4a5b653"
+    },
+    "failure_frontier": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary",
+      "canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+    },
+    "handoff": {
+      "analysis_kind": "pe_native_assertion_helper_import_handoff",
+      "canonical_sha256": "21ed5942d039ec0e16c94f40447f0e15bebea6d74298a1af448eb93f55ce7712"
+    },
+    "pair": {
+      "analysis_kind": "pe_native_assertion_helper_descendant_pair",
+      "canonical_sha256": "47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    },
+    "tail": {
+      "analysis_kind": "pe_native_assertion_helper_return_tail",
+      "canonical_sha256": "fd5c3c19346955ad9a667cdf1f53757fa98f29948f6a26216f431d8e267ec703"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "new_dynamic_executions": 0,
+    "owner_bytes": 315,
+    "owner_instructions": 78,
+    "relation_partitions": 16,
+    "segments": 3,
+    "transitive_matrices_rerun": 0
+  }
+}

@@ -553,6 +553,11 @@ until core engine semantics are reconstructed.
   864 open mismatch transfers remain conditional on the third import's
   return contract and protected words; the record buffers may change.
   See `docs/native_return_tail.md` for stack restoration and explicit gaps.
+  The three intervals now form a checked complete 315-byte, 78-instruction
+  owner partition. A conditional owner relation joins their stack interfaces
+  while retaining distinct finite and abstract evidence domains and the open
+  mismatch frontier. No new dynamic runs or accounting promotions are implied.
+  See `docs/native_owner_composition.md`.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is
