@@ -618,6 +618,11 @@ instructions. It performs 22 frame stores plus a temporary flags-stack write,
 with six reads. The stored pointer is computed within the slice; register and
 flags fields describe boundary values, not original caller-entry state.
 See `docs/native_frame_stores.md` for exact hashes, field widths and assumptions.
+
+The same-instance composition in `docs/native_import_handoff.md` now closes
+the actual caller-matrix provenance gap at this boundary: 256 cases carry
+the prefix's checked register and flag values into the independent store
+overlay. It still stops before the first imported instruction.
 Full-prefix reachability of the sampled volatile values and import-call
 behavior remain open.
 

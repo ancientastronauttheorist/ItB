@@ -249,7 +249,11 @@ def _execute(
     vector: tuple[int, int, int, int, int],
     *,
     direction: bool = False,
+    _extension: Any = None,
 ) -> dict[str, Any]:
+    # A private additive continuation may inspect executed boundaries and reuse
+    # this instance only after every original prefix oracle has passed. Default
+    # execution and receipt values remain unchanged.
     u = _runtime()
     from unicorn import x86_const as x
 
@@ -337,6 +341,8 @@ def _execute(
     def instruction(_uc: Any, address: int, size: int, _data: Any) -> None:
         nonlocal pc, active
         pc = address - BASE
+        if _extension is not None:
+            _extension.observe(uc, pc)
         if pc not in points:
             fail("instruction escaped sealed prefix or callees")
             return
@@ -455,8 +461,8 @@ def _execute(
             if not okay:
                 fail("data read escaped declared inputs")
 
-    uc.hook_add(u.UC_HOOK_CODE, instruction)
-    uc.hook_add(u.UC_HOOK_MEM_READ | u.UC_HOOK_MEM_WRITE, memory)
+    instruction_hook = uc.hook_add(u.UC_HOOK_CODE, instruction)
+    memory_hook = uc.hook_add(u.UC_HOOK_MEM_READ | u.UC_HOOK_MEM_WRITE, memory)
     uc.emu_start(BASE + PARENT, BASE + STOP, timeout=5000000, count=200000)
     _require(not failure, failure[0] if failure else "replay failed")
     _require(
@@ -496,7 +502,13 @@ def _execute(
             bytes(uc.mem_read(page, 0x1000)) == bytes(want),
             "global page oracle differs",
         )
-    return {
+    extension_result = None
+    if _extension is not None:
+        _extension.observe(uc, STOP)
+        uc.hook_del(instruction_hook)
+        uc.hook_del(memory_hook)
+        extension_result = _extension.finish(uc, f, actual)
+    result = {
         "vector": list(vector),
         "fill_observations": outcomes,
         "visited_rvas": [f"0x{p:08x}" for p in sorted(visited)],
@@ -504,6 +516,9 @@ def _execute(
         "small_write_count": small_writes,
         "stack_sha256": hashlib.sha256(actual).hexdigest(),
     }
+    if _extension is not None:
+        result["extension"] = extension_result
+    return result
 
 
 def _build_unsealed(executable: Path, sources: Mapping[str, Any]) -> dict[str, Any]:

@@ -77,6 +77,11 @@ This caller-fill receipt remains unchanged. The follow-up's independent
 volatile-register/flag samples are not claimed reachable through this prefix,
 and the first import call and later behavior remain open.
 
+`docs/native_import_handoff.md` now joins the actual prefix state to the stores
+on this caller matrix. It checks volatile values and writer provenance before
+continuing the same emulator instance to the first import boundary. This
+original caller receipt remains byte-for-byte unchanged.
+
 ## Scope and reproduction
 
 This combines selected setup grammar, static interval arithmetic and finite

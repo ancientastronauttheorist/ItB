@@ -529,6 +529,12 @@ until core engine semantics are reconstructed.
   explicit; the sampled volatile inputs are not claimed reachable through the
   earlier prefix. The first import call, record identity and later behavior
   remain open. See `docs/native_frame_stores.md` for the exact field map.
+  A further same-instance composition now reaches exclusive `0x00379e20`
+  from owner entry in 256 cases. It independently checks the actual volatile
+  register values, last-writer provenance and cleanup flags before applying
+  the store overlay. All 55 caller-prefix nodes are observed; the imported
+  routines and whole-function return remain open. See
+  `docs/native_import_handoff.md` for the composed proof and reproduction.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

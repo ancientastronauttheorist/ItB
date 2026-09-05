@@ -1468,6 +1468,20 @@ for the field map, upper-halfword preservation, finite domain and commands.
 Raw SHA-256: `09515f803d5b7bf9e6534a62540fbfb740f89d9b32216f2d6508e9ae1a54aef0`.
 Canonical SHA-256: `69afa7ae52de9fe086d15f92350394518db88be433f7b9b3f5607c1a0a36d0b1`.
 
+## Assertion import-handoff artifact
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_import_handoff.json`
+joins the caller prefix and stores in the same emulator instance through
+exclusive `0x00379e20`. Its 256 cases check actual volatile values against
+independent arithmetic and check last-writer provenance before continuing
+into the store overlay. There are 512 fill observations, 128 optional-helper
+executions and 55 covered caller-prefix nodes. A changed boundary ECX is
+rejected. Imports, record identity and whole-function return remain outside
+this proof. See [`docs/native_import_handoff.md`](../../../docs/native_import_handoff.md).
+
+Raw SHA-256: `c8262ccee8149477fc52f49e5a5fdc22cf4b7d6898f1eea26a763ab169c7af39`.
+Canonical SHA-256: `21ed5942d039ec0e16c94f40447f0e15bebea6d74298a1af448eb93f55ce7712`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

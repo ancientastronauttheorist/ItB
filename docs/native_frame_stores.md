@@ -83,6 +83,11 @@ establish their full-prefix reachability or identify an original CPU context.
 Structure/ABI names, later import behavior, whole-function return, native game
 execution, faults, concurrency, ownership and accounting promotions remain open.
 
+The additive receipt in `docs/native_import_handoff.md` now carries the actual
+prefix state into this slice on the caller's 256-case matrix. It supplies
+independent volatile-value and last-writer checks, without changing the
+arbitrary-boundary domain or identity of this store-only receipt.
+
 Unicorn is pinned to 2.1.4, native core `(2, 1, 33621247)`, explicit
 `UC_CPU_X86_HASWELL` model 19, 32-bit flat-segment mode. Existing source
 receipts remain immutable and canonical-pinned. Exact verification rechecks
