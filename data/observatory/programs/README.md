@@ -1536,6 +1536,17 @@ there are no new dynamic executions or accounting promotions. See
 Canonical SHA-256: `62844b54a1fdbc5b3c466bf9a20e87a1ec91c6f18c0cf5e1f26379fd8fe01dbe`.
 Raw SHA-256: `bff4fd11aceaf941d7ea7d79b25da8b23f45e11e2a93a9168475abce4cbbd129`.
 
+## Conditional failure dispatch
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_failure_dispatch.json`
+binds the mismatch continuation's feature-query thunk and specifies its frame
+and branch through exclusive unexecuted interrupt/fallback stops. The 96
+integer-model cases contain no actual imports or interrupt executions. See
+[`docs/native_failure_dispatch.md`](../../../docs/native_failure_dispatch.md).
+
+Canonical SHA-256: `9cddbfb1e39e64523390c31bac7bdaa12b6906593495235527d406db465e4e13`.
+Raw SHA-256: `531e1a6f00b39a3c80b12cdada984c847ecc134611927a238b06d2c36bdf2525`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

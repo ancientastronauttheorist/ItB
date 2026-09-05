@@ -558,6 +558,9 @@ until core engine semantics are reconstructed.
   while retaining distinct finite and abstract evidence domains and the open
   mismatch frontier. No new dynamic runs or accounting promotions are implied.
   See `docs/native_owner_composition.md`.
+  The mismatch continuation now has a conditional feature-query dispatch
+  proof: 96 integer-model cases stop before either the interrupt or fallback
+  instruction. Neither boundary executes. See `docs/native_failure_dispatch.md`.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

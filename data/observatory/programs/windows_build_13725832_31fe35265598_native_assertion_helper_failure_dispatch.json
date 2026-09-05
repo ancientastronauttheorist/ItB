@@ -1,0 +1,393 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_failure_dispatch",
+  "assumed_query_summary": {
+    "argument_bytes": 4,
+    "argument_value": 23,
+    "callee_argument_cleanup_bytes": 4,
+    "callee_entry_to_return_esp_increment": 8,
+    "iat_slot_rva": "0x003d6010",
+    "import_name": "IsProcessorFeaturePresent",
+    "normal_return_assumed": true,
+    "other_memory": "Unspecified; no preservation of new locals, outgoing scratch, inherited records or global memory",
+    "preserved_registers": [
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "protected_memory_G_intervals": [
+      [
+        0,
+        4
+      ],
+      [
+        4,
+        8
+      ]
+    ],
+    "return_to_call_continuation_rva": "0x00357b7a",
+    "thunk_entry_rva": "0x0039cb92",
+    "thunk_stack_effect": "tail jump adds no return word",
+    "unknown_outputs": [
+      "eax",
+      "ecx",
+      "edx",
+      "eflags"
+    ]
+  },
+  "branch_partitions": [
+    {
+      "outcome": {
+        "boundary": "before_interrupt",
+        "eax_source": "query return",
+        "ebp_source": "new frame G",
+        "ecx_source": "constant two from push and pop",
+        "ecx_value": 2,
+        "esp_G_offset": -804,
+        "exclusive_stop_rva": "0x00357b81",
+        "fallback_instruction_executed": false,
+        "interrupt_executed": false,
+        "interrupt_vector_if_reached": 41,
+        "query_argument": 23,
+        "zero_flag": false
+      },
+      "query_return_zero": false
+    },
+    {
+      "outcome": {
+        "boundary": "before_fallback",
+        "eax_source": "query return",
+        "ebp_source": "new frame G",
+        "ecx_source": "opaque query clobber",
+        "ecx_value": null,
+        "esp_G_offset": -804,
+        "exclusive_stop_rva": "0x00357b83",
+        "fallback_instruction_executed": false,
+        "interrupt_executed": false,
+        "interrupt_vector_if_reached": null,
+        "query_argument": 23,
+        "zero_flag": true
+      },
+      "query_return_zero": true
+    }
+  ],
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "exclusive_stops": {
+    "nonzero_query": {
+      "rva": "0x00357b81",
+      "sha256": "cde60391fdd88745523e1fb00399098a3ccf2c23e2d9010e121612872ca49229",
+      "size": 2
+    },
+    "zero_query": {
+      "rva": "0x00357b83",
+      "sha256": "cd4fa513e169e42ec6c1e72a7217830a3a7888105002a0ea440ec93f19904976",
+      "size": 5
+    }
+  },
+  "frame": {
+    "entry_esp_F_offset": -812,
+    "entry_esp_G_offset": 4,
+    "inherited_frame": "F from prior owner",
+    "inherited_return_G_offset": 4,
+    "inherited_return_value": "prior caller continuation word",
+    "lowest_explicit_stack_G_offset": -812,
+    "new_frame": "G equals F minus 816",
+    "new_frame_F_offset": -816,
+    "nonzero_push_pop_scratch_G_offset": -808,
+    "query_argument": 23,
+    "query_argument_G_offset": -808,
+    "query_callee_entry_esp_G_offset": -812,
+    "query_return_esp_F_offset": -1620,
+    "query_return_esp_G_offset": -804,
+    "reserved_local_bytes": 804,
+    "reserved_locals_G_interval": [
+      -804,
+      0
+    ],
+    "saved_old_ebp_G_offset": 0,
+    "saved_old_ebp_value": "F"
+  },
+  "matrix": {
+    "inherited_frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "query_returns": [
+      0,
+      1,
+      4294967295
+    ],
+    "volatile_outputs": [
+      {
+        "ecx": 287454020,
+        "edx": 1432778632
+      },
+      {
+        "ecx": 4293844428,
+        "edx": 3148519816
+      }
+    ]
+  },
+  "modeled_visited_rvas": [
+    "0x00357b6a",
+    "0x00357b6b",
+    "0x00357b6d",
+    "0x00357b73",
+    "0x00357b75",
+    "0x00357b7a",
+    "0x00357b7c",
+    "0x00357b7e",
+    "0x00357b80",
+    "0x0039cb92"
+  ],
+  "query_call_join": {
+    "instruction": {
+      "rva": "0x00357b75",
+      "sha256": "53a83b7d8c828fb30d1db99cb34f3ef39a9efff5068be6a8a626d05b2323b8df",
+      "size": 5
+    },
+    "source_path": [
+      "native_calls",
+      "outgoing_direct",
+      0
+    ],
+    "target_entry_rva": "0x0039cb92"
+  },
+  "query_import_join": {
+    "behavior_opaque": true,
+    "binding": {
+      "descriptor": {
+        "file_offset": "0x0048dd30",
+        "rva": "0x0048ed30",
+        "sha256": "fe01ec3285fd8be5c0857ae597b2ac4a14de3579860f5f3577a6bdbe8595bc10",
+        "size": 20
+      },
+      "iat_slot": {
+        "file_offset": "0x003d5010",
+        "rva": "0x003d6010",
+        "sha256": "4a4a07bfd0b46732c457558065401cc422a188a7e84dfb482d179bd610989a61",
+        "size": 4
+      },
+      "ilt_entry": {
+        "file_offset": "0x0048dd90",
+        "rva": "0x0048ed90",
+        "sha256": "4a4a07bfd0b46732c457558065401cc422a188a7e84dfb482d179bd610989a61",
+        "size": 4
+      },
+      "import_by_name": {
+        "file_offset": "0x0048fa02",
+        "rva": "0x00490a02",
+        "sha256": "bd0a4eda3c3cad901506880438be40e8c7fe64cb99de20e10c67759b071b7f47",
+        "size": 28
+      },
+      "metadata": {
+        "evidence_class": "fact",
+        "hint": 772,
+        "iat_rva": "0x003d6010",
+        "library": "KERNEL32.dll",
+        "name": "IsProcessorFeaturePresent",
+        "ordinal": null
+      },
+      "name_metadata_only": true
+    },
+    "control_kind": "jump",
+    "instruction": {
+      "rva": "0x0039cb92",
+      "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+      "size": 6
+    },
+    "slot_rva": "0x003d6010"
+  },
+  "query_thunk": {
+    "entry_rva": "0x0039cb92",
+    "points": [
+      {
+        "rva": "0x0039cb92",
+        "sha256": "247575b8ff280345c05bf6c58c3620b861c076bb718663401c6c729f4542cee7",
+        "size": 6
+      }
+    ],
+    "stack_effect": "Indirect tail jump with no additional return address"
+  },
+  "results_sha256": "82c156ef316633e18376a4383a6bbdcf727b647430078bd5fc09b8f389e2a8d0",
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "exact_dispatch_grammar_and_conditional_finite_integer_model",
+    "not_claimed": [
+      "Actual query import execution, feature availability or imported side effects",
+      "Interrupt execution, termination, exception dispatch or hardware behavior",
+      "Fallback instruction execution or later global record writes and reporting behavior",
+      "Unchanged local buffers or globals, full failure-function semantics or accounting promotion"
+    ],
+    "premises": [
+      "Entry arrives from the previously modeled mismatch transfer with inherited frame and continuation word",
+      "Query returns normally under the declared x86 stdcall summary and protects the two frame-header words",
+      "Nonwrapping mapped ordinary 32-bit integer and stack semantics; other query memory effects are unspecified"
+    ],
+    "source_validation": "Canonical owner and static frontier receipts plus freshly decoded complete frontier and thunk and raw query import binding witnesses; earlier matrices are not rerun"
+  },
+  "source_receipts": {
+    "frontier": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary",
+      "canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+    },
+    "owner": {
+      "analysis_kind": "pe_native_assertion_helper_owner_composition",
+      "canonical_sha256": "62844b54a1fdbc5b3c466bf9a20e87a1ec91c6f18c0cf5e1f26379fd8fe01dbe"
+    },
+    "pair": {
+      "analysis_kind": "pe_native_assertion_helper_descendant_pair",
+      "canonical_sha256": "47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "static_prefix": {
+    "bytes": 25,
+    "contains_unexecuted_interrupt_witness": true,
+    "exclusive_end_rva": "0x00357b83",
+    "instruction_points": [
+      {
+        "rva": "0x00357b6a",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x00357b6b",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b6d",
+        "sha256": "0205e1001f198ab796082e88d30cb94cb16c818aa36a7b383f5361bdacfef6c5",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b73",
+        "sha256": "bc0e0a5949342fc99cffb241b80a1c526a859f8805583c8913100379cb643120",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b75",
+        "sha256": "53a83b7d8c828fb30d1db99cb34f3ef39a9efff5068be6a8a626d05b2323b8df",
+        "size": 5
+      },
+      {
+        "rva": "0x00357b7a",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b7c",
+        "sha256": "58b821595e7051b1409a38f7c48f7b1153019dce5f9e8b78241111e6dd4a67cb",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b7e",
+        "sha256": "c7258cbd5890101bf934d2f9cc038cc12a4d3bd66741410d6d047d060aadece7",
+        "size": 2
+      },
+      {
+        "rva": "0x00357b80",
+        "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+        "size": 1
+      },
+      {
+        "rva": "0x00357b81",
+        "sha256": "cde60391fdd88745523e1fb00399098a3ccf2c23e2d9010e121612872ca49229",
+        "size": 2
+      }
+    ],
+    "sha256": "bf3672c61f8477c0fc6e009747548ca11ffa66222f465aa3c328c2328ea846fd",
+    "start_rva": "0x00357b6a"
+  },
+  "summary": {
+    "actual_import_executions": 0,
+    "before_fallback": 32,
+    "before_interrupt": 64,
+    "fallback_instruction_executions": 0,
+    "interrupt_executions": 0,
+    "model_cases": 96,
+    "modeled_prefix_nodes": 9,
+    "modeled_thunk_nodes": 1,
+    "static_prefix_bytes": 25,
+    "static_prefix_nodes": 10
+  },
+  "vector_sha256": "3852f56b016b4f8333f782a78abb65b5d5c3ca1bc405dc3eca67cf8486a76488"
+}
