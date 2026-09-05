@@ -1,0 +1,752 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_failure_stores",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "global_fields": [
+    {
+      "destination_rva": "0x004b6c28",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Eax",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "zero_query_eax",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c24",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Ecx",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "ecx",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c20",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Edx",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "edx",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c1c",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Ebx",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "ebx",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c18",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Esi",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "esi",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c14",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Edi",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "edi",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c40",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegSs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "ss",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c34",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegCs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "cs",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c10",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegDs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "ds",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c0c",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegEs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "es",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c08",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegFs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "fs",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c04",
+      "remaining_field_bytes_preserved": 2,
+      "sdk_field": "SegGs",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "gs",
+      "write_width": 2
+    },
+    {
+      "destination_rva": "0x004b6c38",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "EFlags",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "flags",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c2c",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Ebp",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "saved_ebp",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c30",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Eip",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "inherited_return",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6c3c",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "Esp",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "frame_plus_8",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b78",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "ContextFlags",
+      "sdk_field_width": 4,
+      "sdk_structure": "CONTEXT",
+      "source": "context_flags",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b34",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "ExceptionAddress",
+      "sdk_field_width": 4,
+      "sdk_structure": "EXCEPTION_RECORD",
+      "source": "inherited_return",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b28",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "ExceptionCode",
+      "sdk_field_width": 4,
+      "sdk_structure": "EXCEPTION_RECORD",
+      "source": "status_code",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b2c",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "ExceptionFlags",
+      "sdk_field_width": 4,
+      "sdk_structure": "EXCEPTION_RECORD",
+      "source": "one",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b38",
+      "remaining_field_bytes_preserved": 0,
+      "sdk_field": "NumberParameters",
+      "sdk_field_width": 4,
+      "sdk_structure": "EXCEPTION_RECORD",
+      "source": "one",
+      "write_width": 4
+    },
+    {
+      "destination_rva": "0x004b6b3c",
+      "remaining_field_bytes_preserved": 56,
+      "sdk_field": "ExceptionInformation",
+      "sdk_field_width": 60,
+      "sdk_structure": "EXCEPTION_RECORD",
+      "source": "parameter_two",
+      "write_width": 4
+    }
+  ],
+  "matrix": {
+    "frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "initial_pattern_seeds": [
+      49,
+      199
+    ],
+    "input_sets": [
+      0,
+      1
+    ],
+    "pushed_flag_images": [
+      70,
+      86,
+      582,
+      1622
+    ]
+  },
+  "oracle_controls": [
+    {
+      "expected_rejection": "memory event differs",
+      "mutation": "widen_selector"
+    },
+    {
+      "expected_rejection": "memory event differs",
+      "mutation": "wrong_register"
+    },
+    {
+      "expected_rejection": "memory event differs",
+      "mutation": "omit_dead_read"
+    }
+  ],
+  "reads": [
+    {
+      "instruction_rva": "0x00357bd1",
+      "offset_or_rva": -808,
+      "region": "frame",
+      "source": "flags",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357bd7",
+      "offset_or_rva": 0,
+      "region": "frame",
+      "source": "saved_ebp",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357bdf",
+      "offset_or_rva": 4,
+      "region": "frame",
+      "source": "inherited_return",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357bef",
+      "offset_or_rva": -804,
+      "region": "frame",
+      "source": "dead_local",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357bff",
+      "offset_or_rva": 4942896,
+      "region": "global",
+      "source": "inherited_return",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357c29",
+      "offset_or_rva": -808,
+      "region": "frame",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357c39",
+      "offset_or_rva": -808,
+      "region": "frame",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357c3d",
+      "offset_or_rva": 4800296,
+      "region": "global",
+      "source": "current_cookie",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357c49",
+      "offset_or_rva": -808,
+      "region": "frame",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "instruction_rva": "0x00357c4d",
+      "offset_or_rva": 4800292,
+      "region": "global",
+      "source": "current_other",
+      "width": 4
+    }
+  ],
+  "results_sha256": "f23d62e15792d93c05a2c4455590d8ab1a98211ed50c9a61b5d479e86f9d352d",
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "exact_fallback_grammar_and_independent_global_and_stack_overlays",
+    "not_claimed": [
+      "Zero-filled globals, zero selector upper halves or runtime pair contents",
+      "Synthetic nonzero selectors and all other boundary samples are reachable through the original prefix",
+      "Final flags equal the earlier stored PUSHFD image or represent an original context",
+      "Actual CPU, game, import, interrupt or final direct-call execution; later return or reporting behavior",
+      "Native fault behavior, concurrency or accounting promotion"
+    ],
+    "premises": [
+      "EAX is zero and ESP is G minus 804 after the abstract zero query return",
+      "All read addresses including dead local G minus 804 are mapped; no external interference within slice",
+      "Incoming global page and local scratch are arbitrary; only explicit bytes are overwritten",
+      "Stored PUSHFD image is compatible with zero TEST, RF and VM clearing and bit-one convention; AF and remaining bits are opaque"
+    ],
+    "source_validation": "Canonical dispatch, frontier and SDK layout receipts plus fresh complete frontier decode and static pair file witness; prior matrices and SDK compiler are not rerun"
+  },
+  "slice": {
+    "bytes": 217,
+    "exclusive_stop_rva": "0x00357c5c",
+    "owner_entry_rva": "0x00357b6a",
+    "points": [
+      {
+        "rva": "0x00357b83",
+        "sha256": "cd4fa513e169e42ec6c1e72a7217830a3a7888105002a0ea440ec93f19904976",
+        "size": 5
+      },
+      {
+        "rva": "0x00357b88",
+        "sha256": "745db0bd75732d678b6fc99fc06fecee15921585c58fc9ba29bcb8ae671cb524",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b8e",
+        "sha256": "a99bd51686e144ac65c789f77622dcb2a548663caf319973c9f2445e7abdc3f6",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b94",
+        "sha256": "a1e85880214d9cb3bd577571efe56e741a1191a60578bfa5db3abd8188eeacbf",
+        "size": 6
+      },
+      {
+        "rva": "0x00357b9a",
+        "sha256": "ef68d4e1c96ccca3223e489661a2807050b66f94b9cc997aa5eb9c7eb5ca1e65",
+        "size": 6
+      },
+      {
+        "rva": "0x00357ba0",
+        "sha256": "fa7b5feb70dd79bf08f4ca59e55c13f758e954737c563454c42ec03a111c9bb4",
+        "size": 6
+      },
+      {
+        "rva": "0x00357ba6",
+        "sha256": "079f009c416c34955794602c1fe884937c70ef704875d859862de1f1113c0d60",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bad",
+        "sha256": "eca31f051ca97e0df466f3a68bd7614b4ce1e6a1198c99e8840fd24a1238e45f",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bb4",
+        "sha256": "7a3dc1ed8fa9177ce9783b4ec816ac80dbfdd98d1bee33347733d7f2d105804e",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bbb",
+        "sha256": "4951003491fefee6ea60c0784aa5fe58ded1087258e7dff6a73bfa26a32701ba",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bc2",
+        "sha256": "fd2fd30d4bfb5630032bd74f9b5330e4fa79761aa8dac096f85a455a7133c749",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bc9",
+        "sha256": "c5e9645db5cf414bc05288b5c36261137ada49741170fc89bad199e8bfd8aa1b",
+        "size": 7
+      },
+      {
+        "rva": "0x00357bd0",
+        "sha256": "6e3faf1e27d45fca70234ae8f6f0a734622cff8a6ea824b7f60d3ffafa2a4654",
+        "size": 1
+      },
+      {
+        "rva": "0x00357bd1",
+        "sha256": "4cfe948926bcf75fad669ce5be5bbe79f42f2303f71324b2fbeede63615ee949",
+        "size": 6
+      },
+      {
+        "rva": "0x00357bd7",
+        "sha256": "3a0722d0e8a54f7c8434ee2e666637326843803504e244886d973608c43931c0",
+        "size": 3
+      },
+      {
+        "rva": "0x00357bda",
+        "sha256": "5320505afd3d13c3ac13b36ecb4a7eb18a6c0646998d912fa73813c1a713205e",
+        "size": 5
+      },
+      {
+        "rva": "0x00357bdf",
+        "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+        "size": 3
+      },
+      {
+        "rva": "0x00357be2",
+        "sha256": "48c36ceecb58b2be68410069296ab7eefb3d507ea1b5fba60926aa9244b01998",
+        "size": 5
+      },
+      {
+        "rva": "0x00357be7",
+        "sha256": "987b9bf858c0b11cf6a86eece4acdb8f4edbb3807b728c7b76e03764cebbda9f",
+        "size": 3
+      },
+      {
+        "rva": "0x00357bea",
+        "sha256": "7623750a2b582498b41ec80fe707572db18e60c52fdbcef91972bcbe158f6cab",
+        "size": 5
+      },
+      {
+        "rva": "0x00357bef",
+        "sha256": "074642fda3d59ba805769e721ff52e4e97243c0fa5575ac1432e01cd21f422f2",
+        "size": 6
+      },
+      {
+        "rva": "0x00357bf5",
+        "sha256": "b8db3d25bdfcdc9e493cd866b0d678505aafc25d9a14bbd4718833a37b0e400c",
+        "size": 10
+      },
+      {
+        "rva": "0x00357bff",
+        "sha256": "f28c8a04b4720e57b2e82dad88c00fe4071d2054fce7b6fb90009cdcbb7236f0",
+        "size": 5
+      },
+      {
+        "rva": "0x00357c04",
+        "sha256": "fb027bb6a7cd57bda2e7d2be268d263981acdedfb84e669028f2ceb01133df68",
+        "size": 5
+      },
+      {
+        "rva": "0x00357c09",
+        "sha256": "7fb1d5a0cdeaa037564ee214d4f0bae9e91909159c384ec91c730c41ab801280",
+        "size": 10
+      },
+      {
+        "rva": "0x00357c13",
+        "sha256": "5d2bbcb41f5256c267fa432238b582cb41f1bb778fc0b9bd247e66ac65cf2d35",
+        "size": 10
+      },
+      {
+        "rva": "0x00357c1d",
+        "sha256": "1a179323c4feb8d49c9d980190266618e0583fd207a32d1896f9819d06125643",
+        "size": 10
+      },
+      {
+        "rva": "0x00357c27",
+        "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+        "size": 2
+      },
+      {
+        "rva": "0x00357c29",
+        "sha256": "4b68ab3847feda7d6c62c1fbcbeebfa35eab7351ed5e78f4ddadea5df64b8015",
+        "size": 1
+      },
+      {
+        "rva": "0x00357c2a",
+        "sha256": "ae70182347fb2159453621c5887116a765f2b3b7c93b5f372fe76881af067002",
+        "size": 3
+      },
+      {
+        "rva": "0x00357c2d",
+        "sha256": "420a7fbe3db5becd5b3a4b4995ecf7945e07a66d94c99000003240d6823772ca",
+        "size": 10
+      },
+      {
+        "rva": "0x00357c37",
+        "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+        "size": 2
+      },
+      {
+        "rva": "0x00357c39",
+        "sha256": "4b68ab3847feda7d6c62c1fbcbeebfa35eab7351ed5e78f4ddadea5df64b8015",
+        "size": 1
+      },
+      {
+        "rva": "0x00357c3a",
+        "sha256": "ae70182347fb2159453621c5887116a765f2b3b7c93b5f372fe76881af067002",
+        "size": 3
+      },
+      {
+        "rva": "0x00357c3d",
+        "sha256": "d4187940399618a604774fd601bb62b189176bcf6cd46a995bf459c44994409b",
+        "size": 6
+      },
+      {
+        "rva": "0x00357c43",
+        "sha256": "81002ef992fe0e10c402b01aff8193abe47b305f48714b7b8c9c6f809886cc44",
+        "size": 4
+      },
+      {
+        "rva": "0x00357c47",
+        "sha256": "784bf273fe3b2dd4e1c2201308ea08cc8219d71aa98e5775e6dae770be9308a2",
+        "size": 2
+      },
+      {
+        "rva": "0x00357c49",
+        "sha256": "4b68ab3847feda7d6c62c1fbcbeebfa35eab7351ed5e78f4ddadea5df64b8015",
+        "size": 1
+      },
+      {
+        "rva": "0x00357c4a",
+        "sha256": "6b767aa56800c37496d6e9a76f16d48c00bd2d545fecec9f835774201599cb7a",
+        "size": 3
+      },
+      {
+        "rva": "0x00357c4d",
+        "sha256": "693e9eeddb262cc485fdbf2bd0dc417982ce074468b08ba6336deb76c767e1c1",
+        "size": 6
+      },
+      {
+        "rva": "0x00357c53",
+        "sha256": "81002ef992fe0e10c402b01aff8193abe47b305f48714b7b8c9c6f809886cc44",
+        "size": 4
+      },
+      {
+        "rva": "0x00357c57",
+        "sha256": "bfde126b5703faa0a67b167bb5727d863ad21d3be11fb32997ec92e35d027e0e",
+        "size": 5
+      }
+    ],
+    "sha256": "d2222f1e3cc2846f7f66a263af32a87aede26bca1fcaaaee5188ad05be8a3a78",
+    "start_rva": "0x00357b83",
+    "unexecuted_stop_instruction": {
+      "rva": "0x00357c5c",
+      "sha256": "d26d2f0423b8246000842d5f509221ff9bd0a727fd2fdbe6dfd975e060afd344",
+      "size": 5
+    }
+  },
+  "source_receipts": {
+    "dispatch": {
+      "analysis_kind": "pe_native_assertion_helper_failure_dispatch",
+      "canonical_sha256": "9cddbfb1e39e64523390c31bac7bdaa12b6906593495235527d406db465e4e13"
+    },
+    "frontier": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary",
+      "canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+    },
+    "layout": {
+      "analysis_kind": "windows_x86_exception_layout_compatibility",
+      "canonical_sha256": "c71a3142e5fc172a6a686a1b83f3bce3a9af181142c8386276ed481f2861acef"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "stack_writes": [
+    {
+      "G_offset": -808,
+      "instruction_rva": "0x00357bd0",
+      "source": "flags",
+      "width": 4
+    },
+    {
+      "G_offset": -808,
+      "instruction_rva": "0x00357c27",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "G_offset": -808,
+      "instruction_rva": "0x00357c37",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "G_offset": -8,
+      "instruction_rva": "0x00357c43",
+      "source": "current_cookie",
+      "width": 4
+    },
+    {
+      "G_offset": -808,
+      "instruction_rva": "0x00357c47",
+      "source": "four",
+      "width": 4
+    },
+    {
+      "G_offset": -4,
+      "instruction_rva": "0x00357c53",
+      "source": "current_other",
+      "width": 4
+    },
+    {
+      "G_offset": -808,
+      "instruction_rva": "0x00357c57",
+      "source": "pair_address",
+      "width": 4
+    }
+  ],
+  "static_pair": {
+    "initial_target_rvas": [
+      "0x004b6b28",
+      "0x004b6b78"
+    ],
+    "runtime_contents": "Unspecified after abstract query; slice pushes address without reading pair",
+    "witness": {
+      "file_offset": "0x003f09f8",
+      "rva": "0x003f19f8",
+      "sha256": "ee71715960b4093033fcd41c1d949d15b7f08b9a12c5b88d03f9d1c467e5ba9c",
+      "size": 8
+    }
+  },
+  "summary": {
+    "actual_import_executions": 0,
+    "bytes": 217,
+    "cases": 256,
+    "global_writes_per_case": 22,
+    "global_written_bytes": 76,
+    "instructions": 42,
+    "negative_controls": 3,
+    "reads_per_case": 10,
+    "stack_writes_per_case": 7,
+    "stack_written_bytes": 12
+  },
+  "transfer": {
+    "argument_at_final_esp": {
+      "meaning": "address only; runtime pair contents are unspecified",
+      "value_rva": "0x003f19f8"
+    },
+    "dead_read": {
+      "G_offset": -804,
+      "instruction_rva": "0x00357bef",
+      "value_use": "overwritten before observable use",
+      "width": 4
+    },
+    "entry_eax": 0,
+    "entry_esp_G_offset": -804,
+    "final_eax": 4,
+    "final_ecx_source": "current word at global RVA 0x00493f24",
+    "final_esp_G_offset": -808,
+    "final_flags": "Not the stored image; IMUL defines CF and OF as zero for its zero result while SF ZF AF PF are undefined, then count-zero SHL preserves that state",
+    "preserved_registers": [
+      "edx",
+      "ebx",
+      "esi",
+      "edi",
+      "ebp"
+    ],
+    "scratch_final": {
+      "G_offset": -808,
+      "value": "pair address replaces earlier flags and repeated four values"
+    },
+    "stored_flags": {
+      "af": "undefined after TEST and unconstrained here",
+      "known_mask": 198855,
+      "known_value": 70,
+      "other_bits": "opaque boundary image inputs",
+      "rf_vm": "cleared in PUSHFD image"
+    },
+    "zero_fill_premise": false
+  },
+  "vector_sha256": "ac7bc6ac218ab57ff2c3c672f23a89133d09e34aff4da2d6d97ad1b8bacf488e"
+}

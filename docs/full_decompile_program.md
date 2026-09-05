@@ -561,6 +561,10 @@ until core engine semantics are reconstructed.
   The mismatch continuation now has a conditional feature-query dispatch
   proof: 96 integer-model cases stop before either the interrupt or fallback
   instruction. Neither boundary executes. See `docs/native_failure_dispatch.md`.
+  Its zero-query fallback now has a 217-byte, 42-instruction store specification
+  checked with 256 integer-model cases. All untouched global bytes remain
+  arbitrary, including upper halves of selector fields. See
+  `docs/native_failure_stores.md` for the ordered memory oracle and call stop.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

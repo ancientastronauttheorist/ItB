@@ -1547,6 +1547,17 @@ integer-model cases contain no actual imports or interrupt executions. See
 Canonical SHA-256: `9cddbfb1e39e64523390c31bac7bdaa12b6906593495235527d406db465e4e13`.
 Raw SHA-256: `531e1a6f00b39a3c80b12cdada984c847ecc134611927a238b06d2c36bdf2525`.
 
+## Conditional failure fallback stores
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_failure_stores.json`
+specifies 217 bytes and 42 instructions before the final fallback call.
+Its 256 integer models check 22 global and seven stack writes, ten reads,
+unknown-byte retention and three rejected mutations. See
+[`docs/native_failure_stores.md`](../../../docs/native_failure_stores.md).
+
+Canonical SHA-256: `9c572888c6cf4a50c4bd406c43c60cd455fdd57c59a0a57c0c832bfbbacfd240`.
+Raw SHA-256: `cb12a468a04fd3e2b00609fce5a5d2aefe9f2beed8487f0d7cf2af9c6ac431ca`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`
