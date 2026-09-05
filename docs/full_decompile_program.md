@@ -515,6 +515,13 @@ until core engine semantics are reconstructed.
   This is finite emulation evidence, not proof of all inputs, real-game
   execution, CRT identity or an accounting promotion. See
   `docs/native_fill_conformance.md` for domains, hashes and replay commands.
+  A separate caller-fill composition receipt checks the 81-byte prefix of
+  `0x00379d28` through exclusive stop `0x00379d79`: adjacent/disjoint 80- and
+  716-byte regions, protected slot and saved-state preservation, exact call
+  frames and shared 24-byte cleanup. Its 256 prefix cases yield 512 fill
+  observations and 128 optional-helper executions. All 25 prefix nodes are
+  observed; later stores and whole-caller behavior remain open. See
+  `docs/native_caller_fill.md` for finite-domain and static-proof distinctions.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

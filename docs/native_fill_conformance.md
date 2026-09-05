@@ -64,10 +64,11 @@ segments, CPU feature availability, faults, concurrency, timing, flags and
 volatile-register results are outside the claim. CRT identity, global ownership,
 real-game execution and accounting promotions remain open.
 
-The parent's two call sites stage lengths 80 and 716. Those exact lengths are
-not members of this boundary-focused matrix. Connecting the caller to the fill
-contract still requires argument-stack and destination-region proofs plus
-caller-specific conformance vectors; this receipt does not claim that join.
+The parent's lengths 80 and 716 are not members of this boundary-focused
+matrix. A separate additive receipt now checks their argument stacks,
+destination intervals and 256 exact-prefix executions with 512 fill calls;
+see `docs/native_caller_fill.md`. This original receipt remains unchanged and
+does not itself claim the caller join.
 
 PE-free verification checks the sealed normalized receipt and regenerates the
 finite vector identities. Exact verification reruns the body in the emulator;

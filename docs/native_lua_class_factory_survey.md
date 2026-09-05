@@ -600,6 +600,16 @@ It does not prove all inputs, native game execution or a compiler/runtime
 exclusion. See `docs/native_fill_conformance.md` for the sealed hashes,
 write/read/register checks, assumptions and exact replay commands.
 
+## Assertion caller-fill composition
+
+A separate receipt connects the caller's 80- and 716-byte zero regions to
+exact fill execution. The regions are disjoint and adjacent, ending before
+the protected slot. All 256 caller-prefix cases pass both fills and the shared
+argument cleanup, with checks for whole-stack preservation, exact per-fill
+write bounds and the optional four-byte global clear. The proof stops before
+`0x00379d79`; later stores and whole-function behavior remain open. See
+`docs/native_caller_fill.md` for the 512 observations, exact hashes and limits.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

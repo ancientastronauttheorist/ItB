@@ -1427,6 +1427,28 @@ claim. Full scope and reproduction commands are in
 Raw SHA-256: `2b252e9dfa988551c8a110d90abe539f20c00bbc62bea27c34f6441d6d67bcbf`.
 Canonical SHA-256: `6f4bba8750713184f5de2bf119b36605078e4386e05712a2f686b6e744801246`.
 
+## Assertion caller-fill artifact
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_caller_fill.json`
+(schema 1, `pe_native_assertion_helper_caller_fill`) checks the 81-byte prefix
+of `0x00379d28` through exclusive boundary `0x00379d79`, including its two
+calls to the fill body and the optional eight-byte helper. Static interval
+arithmetic establishes adjacent, disjoint 80- and 716-byte destinations before
+the protected four-byte slot. Finite replay passes 256 prefix cases, 512 fill
+observations and 128 optional-helper executions. All 25 prefix nodes are
+observed; 111 total nodes across prefix/callees does not mean full-path coverage.
+A DF-set negative control rejects an out-of-region write in the second fill.
+
+Checks include exact argument and return frames, per-fill and final stack
+oracles, individual permitted writes, register preservation, global-page
+invariants, and shared 24-byte argument cleanup. Whole-caller return, later
+pointer stores, runtime identity and accounting promotions remain open.
+See [`docs/native_caller_fill.md`](../../../docs/native_caller_fill.md) for
+frame intervals, domain limits, emulator pins and reproduction commands.
+
+Raw SHA-256: `4206855ecf4c727e3a85ab9bb8fa5c2f37ecb1c51b2f7eb1f696c049d9754d48`.
+Canonical SHA-256: `b89d1873e56c4afb27c96229c05a1a0516732a5bdc3d2151173baeb5d4a5b653`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`
