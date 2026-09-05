@@ -1,0 +1,305 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_failure_composition",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "coverage": {
+    "body_sha256": "0a7f470e5151d95873547c1201fe9ad8d4c502d6afc9b530de59d9390eb9c0ed",
+    "disjoint_complete_static_partition": true,
+    "exclusive_end_rva": "0x00357c65",
+    "frontier_entry_rva": "0x00357b6a",
+    "modeled_instruction_union": 55,
+    "points_sha256": "3686e8eea0b50bed2d5a738ef8095cabf7c9a8832e35c87bfa035d46a42c55d6",
+    "segments": [
+      {
+        "bytes": 25,
+        "exclusive_end_rva": "0x00357b83",
+        "modeled_nodes": 9,
+        "points_sha256": "01d4a6f8247e8b5aeb4a406626f29e1a9b03481e78d5d4c13779c8b2fdd109dd",
+        "source": "dispatch",
+        "start_rva": "0x00357b6a",
+        "static_nodes": 10
+      },
+      {
+        "bytes": 217,
+        "exclusive_end_rva": "0x00357c5c",
+        "modeled_nodes": 42,
+        "points_sha256": "6e202e2445f2ecaaca358dc406b4bd68c7755f56a82f99a937558150efd90e5c",
+        "source": "stores",
+        "start_rva": "0x00357b83",
+        "static_nodes": 42
+      },
+      {
+        "bytes": 9,
+        "exclusive_end_rva": "0x00357c65",
+        "modeled_nodes": 4,
+        "points_sha256": "4d620822699e1a54a25b1e9c3f70a52524ce452965d8eed51e2b9fc7c61f6921",
+        "source": "returns",
+        "start_rva": "0x00357c5c",
+        "static_nodes": 4
+      }
+    ],
+    "static_bytes": 251,
+    "static_instructions": 56,
+    "subsidiaries": [
+      {
+        "bytes": 40,
+        "counted_in_frontier": false,
+        "exclusive_end_rva": "0x00357b6a",
+        "nodes": 12,
+        "points_sha256": "1d49e7d97cd3b3b35d95cc6f77b502fba26bb40d4bb06a6ea3d35b5841425cd7",
+        "role": "wrapper",
+        "start_rva": "0x00357b42"
+      },
+      {
+        "already_in_prior_owner_partition": true,
+        "bytes": 4,
+        "counted_in_frontier": false,
+        "exclusive_end_rva": "0x00379e63",
+        "nodes": 3,
+        "points_sha256": "5ee04bf7ee9fa3d7da319c1d5048424e7cac3774ca166eef1cfa21707a9d42bf",
+        "role": "owner_continuation",
+        "start_rva": "0x00379e5f"
+      }
+    ],
+    "unexecuted_boundary_instruction_rvas": [
+      "0x00357b81"
+    ]
+  },
+  "interfaces": {
+    "concrete_upstream_vectors_concatenated": false,
+    "dispatch_to_stores": {
+      "boundary_rva": "0x00357b83",
+      "eax": 0,
+      "ebp_source": "G",
+      "esp_G_offset": -804,
+      "flags_image_known_mask": 198855,
+      "flags_image_known_value": 70,
+      "unknown_memory": "Only G header words were protected across query; globals, records and other stack words are unspecified"
+    },
+    "frames": {
+      "F_G_offset": 816,
+      "G_F_offset": -816,
+      "H_G_offset": -816
+    },
+    "global_preservation_across_wrapper_claimed": false,
+    "interface_domain": "Symbolic frame offsets and explicit memory contracts; component synthetic matrices remain separate",
+    "new_return_memory_premises": {
+      "earlier_query_protects_outer_words": false,
+      "outer_words": "Values at return-tranche entry after the earlier query; not necessarily original owner words",
+      "pending_status_during_handle_query_G_interval": [
+        -820,
+        -816
+      ],
+      "protected_G_intervals": [
+        [
+          -816,
+          -804
+        ],
+        [
+          0,
+          8
+        ],
+        [
+          816,
+          824
+        ]
+      ]
+    },
+    "normal_import_return_counts": {
+      "query": 1,
+      "wrapper_on_zero_branch": 4
+    },
+    "return_interface": {
+      "eax_source": "last wrapper import return",
+      "ebp_source": "current outer word at F",
+      "esp_F_offset": 8,
+      "esp_G_offset": 824,
+      "target_source": "current outer word at F plus four"
+    },
+    "stores_to_returns": {
+      "argument_address_rva": "0x003f19f8",
+      "boundary_rva": "0x00357c5c",
+      "eax": 4,
+      "ecx_source": "current global word at RVA 0x00493f24",
+      "esp_G_offset": -808,
+      "runtime_pair_contents_proved": false
+    }
+  },
+  "proof_domains": {
+    "all_concrete_vectors_composed": false,
+    "dispatch": {
+      "cases": 96,
+      "evidence": "conditional integer model of query and exclusive branch stops"
+    },
+    "returns": {
+      "cases": 192,
+      "evidence": "conditional integer model with stronger header and current outer word protection"
+    },
+    "stores": {
+      "cases": 256,
+      "evidence": "independent arbitrary-memory overlays and ordered events on synthetic boundaries"
+    },
+    "upstream_model_matrices_rerun": false
+  },
+  "relation_partitions": [
+    {
+      "query_return_zero": false,
+      "relation": {
+        "boundary": "before_interrupt",
+        "eax_source": "query return",
+        "ebp_source": "new frame G",
+        "ebp_value": null,
+        "ecx_edx_source": "query output except ECX replaced with two",
+        "ecx_value": 2,
+        "esp_F_offset": -1620,
+        "esp_G_offset": -804,
+        "instruction_pointer": 7699329,
+        "interrupt_executed": false,
+        "nonvolatile_source": "EBX ESI EDI at failure-entry boundary under import preservation premises",
+        "original_owner_words_guaranteed": false,
+        "pair_and_record_contents": "unspecified after imports",
+        "query_normal_return_assumed": true,
+        "termination_guaranteed": false,
+        "wrapper_normal_returns_assumed": 0
+      }
+    },
+    {
+      "query_return_zero": true,
+      "relation": {
+        "boundary": "conditional_outer_return",
+        "eax_source": "final wrapper import return",
+        "ebp_source": "current outer word at F",
+        "ebp_value_source": "current outer word at F",
+        "ecx_edx_source": "last wrapper import volatile outputs",
+        "ecx_value": null,
+        "esp_F_offset": 8,
+        "esp_G_offset": 824,
+        "instruction_pointer_source": "current outer word at F plus four",
+        "interrupt_executed": false,
+        "nonvolatile_source": "EBX ESI EDI at failure-entry boundary under import preservation premises",
+        "original_owner_words_guaranteed": false,
+        "pair_and_record_contents": "unspecified after imports",
+        "query_normal_return_assumed": true,
+        "termination_guaranteed": false,
+        "wrapper_normal_returns_assumed": 4
+      }
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "conditions": [
+      "Query returns normally; its zero branch reaches stores under mapped read and arbitrary-memory premises",
+      "On the zero branch all four wrapper imports return normally under new stronger frame-header and current outer-word protection premises",
+      "Current outer words need not equal original owner words because the earlier query did not protect them",
+      "Component finite domains remain distinct; only static partitions and explicit symbolic interfaces are composed"
+    ],
+    "evidence_class": "conditional_failure_frontier_interface_composition",
+    "not_claimed": [
+      "Interrupt effects or execution, imported implementation behavior, actual process termination or nonreturn",
+      "Original owner EBP or return word preservation across the earlier query",
+      "Runtime pair validity or preserved record contents after wrapper imports",
+      "A single end-to-end emulation or validity of every Cartesian product of component vectors",
+      "Unconditional complete failure semantics, real game recreation or atlas accounting promotion"
+    ],
+    "source_validation": "Canonical sealed component identities plus full frontier, wrapper and owner-continuation decode and partition checks; upstream models and SDK probes are not rerun"
+  },
+  "source_receipts": {
+    "dispatch": {
+      "analysis_kind": "pe_native_assertion_helper_failure_dispatch",
+      "canonical_sha256": "9cddbfb1e39e64523390c31bac7bdaa12b6906593495235527d406db465e4e13"
+    },
+    "frontier": {
+      "analysis_kind": "pe_native_query_handler_first_callee_pointer_target_residual_direct_target_set_callee_external_target_static_boundary",
+      "canonical_sha256": "0d8bb3aecc53090dc5282844885ed327e79541ebaad4b7ca928e0494f86b08a9"
+    },
+    "owner": {
+      "analysis_kind": "pe_native_assertion_helper_owner_composition",
+      "canonical_sha256": "62844b54a1fdbc5b3c466bf9a20e87a1ec91c6f18c0cf5e1f26379fd8fe01dbe"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    },
+    "returns": {
+      "analysis_kind": "pe_native_assertion_helper_failure_return",
+      "canonical_sha256": "0971cfa63e07affc80e0574319382099d9c41b29b5a380d1eb70a40e832a3444"
+    },
+    "stores": {
+      "analysis_kind": "pe_native_assertion_helper_failure_stores",
+      "canonical_sha256": "9c572888c6cf4a50c4bd406c43c60cd455fdd57c59a0a57c0c832bfbbacfd240"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_import_executions": 0,
+    "frontier_static_bytes": 251,
+    "frontier_static_nodes": 56,
+    "interrupt_executions": 0,
+    "modeled_frontier_union_nodes": 55,
+    "new_model_executions": 0,
+    "reused_owner_continuation_bytes": 4,
+    "reused_owner_continuation_nodes": 3,
+    "subsidiary_wrapper_bytes": 40,
+    "subsidiary_wrapper_nodes": 12,
+    "unexecuted_interrupt_nodes": 1
+  }
+}

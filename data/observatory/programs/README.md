@@ -1570,6 +1570,17 @@ the last import's EAX, with no unconditional termination claim. See
 Canonical SHA-256: `0971cfa63e07affc80e0574319382099d9c41b29b5a380d1eb70a40e832a3444`.
 Raw SHA-256: `b3c17b81879e71274072ca47e94efa454ab1a5690cd0134152593429e356cca4`.
 
+## Conditional complete failure frontier
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_failure_composition.json`
+joins the disjoint 251-byte, 56-instruction failure body and its conditional
+dispatch/store/return interfaces. The interrupt remains unexecuted, subsidiary
+bodies stay separate and no component model matrices are rerun. See
+[`docs/native_failure_composition.md`](../../../docs/native_failure_composition.md).
+
+Canonical SHA-256: `c0355a6465a09de57f596c73594e93ce9dfd5cbc7bb3ad76ab44a06f6da31f6d`.
+Raw SHA-256: `07e9da2406545ed4ee1ae7f917d010cfbcb436622a9cd3b515c4bc3f5d1440ac`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

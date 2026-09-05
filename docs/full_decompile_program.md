@@ -569,6 +569,10 @@ until core engine semantics are reconstructed.
   cases over 53 bytes and 19 instructions. Imported behavior remains abstract;
   recovered outer words are slice-entry values, not presumed original values.
   See `docs/native_failure_return.md` for the protected-word contracts.
+  A complete failure-frontier composition now checks the disjoint 251-byte,
+  56-instruction body and the conditional component interfaces. One interrupt
+  remains an unexecuted boundary; subsidiary bodies and prior finite domains
+  are kept distinct. See `docs/native_failure_composition.md`.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is
