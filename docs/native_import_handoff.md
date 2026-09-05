@@ -73,6 +73,10 @@ nonzero segment-selector behavior, execute imported routines, prove whole
 function return or justify a whole-program coverage promotion. The existing
 caller and store receipts retain their original scopes and identities.
 
+An external x86 SDK measurement now establishes byte-layout compatibility
+for these fields; see `docs/windows_exception_layout.md`. It does not change
+this receipt's scope or prove that the later imports consume valid objects.
+
 ## Reproduction
 
 Use the optional Unicorn installation described in `docs/native_fill_conformance.md`:

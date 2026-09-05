@@ -1482,6 +1482,20 @@ this proof. See [`docs/native_import_handoff.md`](../../../docs/native_import_ha
 Raw SHA-256: `c8262ccee8149477fc52f49e5a5fdc22cf4b7d6898f1eea26a763ab169c7af39`.
 Canonical SHA-256: `21ed5942d039ec0e16c94f40447f0e15bebea6d74298a1af448eb93f55ce7712`.
 
+## Windows x86 exception-layout compatibility
+
+`windows_build_13725832_31fe35265598_windows_exception_layout.json` records an
+independent compiled SDK probe: 33 measured fields, three structure sizes,
+four-byte pointers and `CONTEXT_CONTROL`. Its map matches all 22 frame stores
+while preserving six two-byte writes inside four-byte selector fields.
+The 162 included headers are hashed. This proves compatibility with the
+selected SDK layout, without identifying the game's compiler or proving
+import consumption or native object validity. See
+[`docs/windows_exception_layout.md`](../../../docs/windows_exception_layout.md).
+
+Canonical SHA-256: `c71a3142e5fc172a6a686a1b83f3bce3a9af181142c8386276ed481f2861acef`.
+Raw SHA-256: `dc11ac81b491707444e5b54cbe6edbf8b25d9985b757d9e4fe4c444e8fb5cd55`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

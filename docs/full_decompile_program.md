@@ -535,6 +535,12 @@ until core engine semantics are reconstructed.
   the store overlay. All 55 caller-prefix nodes are observed; the imported
   routines and whole-function return remain open. See
   `docs/native_import_handoff.md` for the composed proof and reproduction.
+  A separate compiled x86 SDK probe measures 33 fields, matches the 8/80/716
+  byte regions and all 22 frame stores, and retains 162 included-header hashes.
+  Its compatibility map preserves the six two-byte selector writes inside
+  four-byte SDK fields. This is external layout evidence, without identifying
+  the game's toolchain or proving import consumption. See
+  `docs/windows_exception_layout.md`.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is
