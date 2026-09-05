@@ -71,6 +71,16 @@ Growth at `0x002eb620` remains 94 bytes/40 nodes of actual behavior to replace
 the tested summaries. Its child `0x002eb680` is 101 bytes/46 nodes with three
 nested calls. Static RET4 evidence alone is not an allocator contract.
 
+Last read-only dependency inspection found direct calls `0x002eb669` to
+`0x002eb680` and `0x002eb679` to `0x003435d9`. The first child in turn calls
+`0x0008a920` from `0x002eb690`, `0x0036e580` from `0x002eb6a1`, and
+`0x00007800` from `0x002eb6c3`. These are decoded call edges, with callee
+effects still unproved. A smaller proposed next tranche is the growth
+capacity decision, stopping before child execution at `0x002eb669`, at the
+no-growth cleanup `0x002eb66f`, or at the failure block `0x002eb674`.
+This proposal has no new sealed arithmetic contract; derive and validate its
+u32 and signed-shift behavior before replacing any existing growth premise.
+
 For the owner epilogue, let F be its frame pointer. It restores EDI, ESI and
 EBX, derives ECX from `[F-4] xor F`, and calls checker `0x003574ca` from
 `0x002eb222`. Under cookie equality and a normal checker return, the owner
