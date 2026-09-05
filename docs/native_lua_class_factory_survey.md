@@ -610,6 +610,17 @@ write bounds and the optional four-byte global clear. The proof stops before
 `0x00379d79`; later stores and whole-function behavior remain open. See
 `docs/native_caller_fill.md` for the 512 observations, exact hashes and limits.
 
+## Assertion frame-store follow-up
+
+The next 167-byte slice now has a normalized transfer map and independent
+whole-stack overlay, with 256 finite boundary-state cases passing all 30
+instructions. It performs 22 frame stores plus a temporary flags-stack write,
+with six reads. The stored pointer is computed within the slice; register and
+flags fields describe boundary values, not original caller-entry state.
+See `docs/native_frame_stores.md` for exact hashes, field widths and assumptions.
+Full-prefix reachability of the sampled volatile values and import-call
+behavior remain open.
+
 ## Dependent assertion-helper second-callee static-boundary artifact
 
 `data/observatory/programs/windows_build_13725832_31fe35265598_native_assertion_helper_second_callee_static_boundary.json`

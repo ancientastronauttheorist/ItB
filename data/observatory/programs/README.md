@@ -1449,6 +1449,25 @@ frame intervals, domain limits, emulator pins and reproduction commands.
 Raw SHA-256: `4206855ecf4c727e3a85ab9bb8fa5c2f37ecb1c51b2f7eb1f696c049d9754d48`.
 Canonical SHA-256: `b89d1873e56c4afb27c96229c05a1a0516732a5bdc3d2151173baeb5d4a5b653`.
 
+## Assertion frame-store artifact
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_frame_stores.json`
+(schema 1, `pe_native_assertion_helper_frame_stores`) covers the 167-byte,
+30-instruction slice `[0x00379d79,0x00379e20)`. A generic symbolic transfer
+grammar matches an independent field overlay. All 256 finite boundary-state
+cases pass exact ordered memory-event and whole-stack checks: 22 frame stores,
+one temporary flags-stack write and six reads per case. Two incorrect oracles
+are rejected. The first import instruction remains unexecuted.
+
+Current pointer/register/flags provenance is kept separate from original
+caller-state or context-structure claims. Runtime segments are zero; nonzero
+selector runtime behavior and arbitrary volatile-input prefix reachability
+remain unproved. See [`docs/native_frame_stores.md`](../../../docs/native_frame_stores.md)
+for the field map, upper-halfword preservation, finite domain and commands.
+
+Raw SHA-256: `09515f803d5b7bf9e6534a62540fbfb740f89d9b32216f2d6508e9ae1a54aef0`.
+Canonical SHA-256: `69afa7ae52de9fe086d15f92350394518db88be433f7b9b3f5607c1a0a36d0b1`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

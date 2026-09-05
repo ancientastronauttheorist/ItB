@@ -68,6 +68,15 @@ Unicorn 2.1.4, native core `(2, 1, 33621247)`, and explicit
 `UC_CPU_X86_HASWELL` model 19 in 32-bit mode with flat segments. The game
 process and installation are not modified.
 
+## Additive store-slice follow-up
+
+A separate receipt now describes `[0x00379d79,0x00379e20)` with a declarative
+field overlay and 256 finite boundary-state replays. It covers 22 frame stores
+plus the temporary flags-stack write; see `docs/native_frame_stores.md`.
+This caller-fill receipt remains unchanged. The follow-up's independent
+volatile-register/flag samples are not claimed reachable through this prefix,
+and the first import call and later behavior remain open.
+
 ## Scope and reproduction
 
 This combines selected setup grammar, static interval arithmetic and finite

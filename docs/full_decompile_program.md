@@ -522,6 +522,13 @@ until core engine semantics are reconstructed.
   observations and 128 optional-helper executions. All 25 prefix nodes are
   observed; later stores and whole-caller behavior remain open. See
   `docs/native_caller_fill.md` for finite-domain and static-proof distinctions.
+  The following `[0x00379d79,0x00379e20)` slice now has a symbolic store map
+  matched to an independent overlay and 256 finite boundary-state replays.
+  All 30 instructions, 22 frame stores, one temporary flags write and six
+  reads are checked per case. Current pointer/register/flag provenance is
+  explicit; the sampled volatile inputs are not claimed reachable through the
+  earlier prefix. The first import call, record identity and later behavior
+  remain open. See `docs/native_frame_stores.md` for the exact field map.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

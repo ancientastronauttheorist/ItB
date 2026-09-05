@@ -1,0 +1,815 @@
+{
+  "analysis_kind": "pe_native_assertion_helper_frame_stores",
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "emulator": {
+    "bits": 32,
+    "cpu_model": {
+      "id": 19,
+      "name": "UC_CPU_X86_HASWELL"
+    },
+    "flat_segments": true,
+    "instruction_limit": 1000,
+    "name": "Unicorn",
+    "native_core_version": [
+      2,
+      1,
+      33621247
+    ],
+    "timeout_microseconds": 5000000,
+    "version": "2.1.4"
+  },
+  "entry_join": {
+    "caller_stop_rva": "0x00379d79",
+    "eax_ebp_offset": -800,
+    "esp_ebp_offset": -812,
+    "volatile_inputs": "ECX EDX and boundary flags sampled independently; full-prefix reachability is unproved",
+    "zero_union": [
+      -800,
+      -4
+    ]
+  },
+  "grammar": {
+    "final_eax": "return_word",
+    "final_esp_offset": -812,
+    "flags_source": "opaque PUSHFD image of slice-boundary flags, not original caller-entry flags",
+    "reads": [
+      {
+        "instruction": {
+          "rva": "0x00379dda",
+          "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+          "size": 6
+        },
+        "offset": -816,
+        "source": "pushed_flags_image",
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379de0",
+          "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+          "size": 3
+        },
+        "offset": 4,
+        "source": "return_word",
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dfc",
+          "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+          "size": 3
+        },
+        "offset": 0,
+        "source": "saved_ebp",
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e05",
+          "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+          "size": 3
+        },
+        "offset": 12,
+        "source": "incoming_word_12",
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e0e",
+          "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+          "size": 3
+        },
+        "offset": 16,
+        "source": "incoming_word_16",
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e17",
+          "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+          "size": 3
+        },
+        "offset": 4,
+        "source": "return_word",
+        "width": 4
+      }
+    ],
+    "source_provenance": "Boundary ECX and EDX are free inputs here; their reachability through the preceding fill prefix is not proved.",
+    "stores": [
+      {
+        "instruction": {
+          "rva": "0x00379d79",
+          "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+          "size": 6
+        },
+        "offset": -808,
+        "source": "frame_minus_800",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379d85",
+          "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+          "size": 6
+        },
+        "offset": -804,
+        "source": "frame_minus_720",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379d8b",
+          "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+          "size": 6
+        },
+        "offset": -544,
+        "source": "frame_minus_720",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379d91",
+          "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+          "size": 6
+        },
+        "offset": -548,
+        "source": "ecx",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379d97",
+          "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+          "size": 6
+        },
+        "offset": -552,
+        "source": "edx",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379d9d",
+          "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+          "size": 6
+        },
+        "offset": -556,
+        "source": "ebx",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379da3",
+          "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+          "size": 6
+        },
+        "offset": -560,
+        "source": "esi",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379da9",
+          "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+          "size": 6
+        },
+        "offset": -564,
+        "source": "edi",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379daf",
+          "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+          "size": 7
+        },
+        "offset": -520,
+        "source": "ss",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379db6",
+          "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+          "size": 7
+        },
+        "offset": -532,
+        "source": "cs",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dbd",
+          "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+          "size": 7
+        },
+        "offset": -568,
+        "source": "ds",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dc4",
+          "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+          "size": 7
+        },
+        "offset": -572,
+        "source": "es",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dcb",
+          "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+          "size": 7
+        },
+        "offset": -576,
+        "source": "fs",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dd2",
+          "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+          "size": 7
+        },
+        "offset": -580,
+        "source": "gs",
+        "temporary": false,
+        "width": 2
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dd9",
+          "sha256": "6e3faf1e27d45fca70234ae8f6f0a734622cff8a6ea824b7f60d3ffafa2a4654",
+          "size": 1
+        },
+        "offset": -816,
+        "source": "pushed_flags_image",
+        "temporary": true,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dda",
+          "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+          "size": 6
+        },
+        "offset": -528,
+        "source": "pushed_flags_image",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379de3",
+          "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+          "size": 6
+        },
+        "offset": -536,
+        "source": "return_word",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dec",
+          "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+          "size": 6
+        },
+        "offset": -524,
+        "source": "frame_plus_4",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379df2",
+          "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+          "size": 10
+        },
+        "offset": -720,
+        "source": "constant_65537",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379dff",
+          "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+          "size": 6
+        },
+        "offset": -540,
+        "source": "saved_ebp",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e08",
+          "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+          "size": 6
+        },
+        "offset": -800,
+        "source": "incoming_word_12",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e11",
+          "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+          "size": 6
+        },
+        "offset": -796,
+        "source": "incoming_word_16",
+        "temporary": false,
+        "width": 4
+      },
+      {
+        "instruction": {
+          "rva": "0x00379e1a",
+          "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+          "size": 6
+        },
+        "offset": -788,
+        "source": "return_word",
+        "temporary": false,
+        "width": 4
+      }
+    ]
+  },
+  "matrix": {
+    "eflags_values": [
+      2,
+      514,
+      582,
+      2263
+    ],
+    "frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "input_sets": [
+      {
+        "incoming_word_12": 287454020,
+        "incoming_word_16": 1432778632,
+        "return_word": 270544960,
+        "saved_ebp": 1164413355,
+        "slot_seed": 0
+      },
+      {
+        "incoming_word_12": 4293844428,
+        "incoming_word_16": 3148519816,
+        "return_word": 540033104,
+        "saved_ebp": 2557891634,
+        "slot_seed": 1804289383
+      }
+    ],
+    "register_sets": [
+      {
+        "ebx": 878082202,
+        "ecx": 305419896,
+        "edi": 1450744508,
+        "edx": 591751049,
+        "esi": 1164413355
+      },
+      {
+        "ebx": 3703216246,
+        "ecx": 4275878552,
+        "edi": 3130553940,
+        "edx": 3989547399,
+        "esi": 3416885093
+      }
+    ],
+    "segment_selectors": {
+      "cs": 0,
+      "ds": 0,
+      "es": 0,
+      "fs": 0,
+      "gs": 0,
+      "ss": 0
+    }
+  },
+  "oracle_controls": [
+    {
+      "expected_rejection": "write event differs",
+      "mutation": "widen_segment"
+    },
+    {
+      "expected_rejection": "write event differs",
+      "mutation": "wrong_register"
+    }
+  ],
+  "overlay_fields": [
+    {
+      "offset": -808,
+      "source": "frame_minus_800",
+      "width": 4
+    },
+    {
+      "offset": -804,
+      "source": "frame_minus_720",
+      "width": 4
+    },
+    {
+      "offset": -544,
+      "source": "frame_minus_720",
+      "width": 4
+    },
+    {
+      "offset": -548,
+      "source": "ecx",
+      "width": 4
+    },
+    {
+      "offset": -552,
+      "source": "edx",
+      "width": 4
+    },
+    {
+      "offset": -556,
+      "source": "ebx",
+      "width": 4
+    },
+    {
+      "offset": -560,
+      "source": "esi",
+      "width": 4
+    },
+    {
+      "offset": -564,
+      "source": "edi",
+      "width": 4
+    },
+    {
+      "offset": -520,
+      "source": "ss",
+      "width": 2
+    },
+    {
+      "offset": -532,
+      "source": "cs",
+      "width": 2
+    },
+    {
+      "offset": -568,
+      "source": "ds",
+      "width": 2
+    },
+    {
+      "offset": -572,
+      "source": "es",
+      "width": 2
+    },
+    {
+      "offset": -576,
+      "source": "fs",
+      "width": 2
+    },
+    {
+      "offset": -580,
+      "source": "gs",
+      "width": 2
+    },
+    {
+      "offset": -816,
+      "source": "pushed_flags_image",
+      "width": 4
+    },
+    {
+      "offset": -528,
+      "source": "pushed_flags_image",
+      "width": 4
+    },
+    {
+      "offset": -536,
+      "source": "return_word",
+      "width": 4
+    },
+    {
+      "offset": -524,
+      "source": "frame_plus_4",
+      "width": 4
+    },
+    {
+      "offset": -720,
+      "source": "constant_65537",
+      "width": 4
+    },
+    {
+      "offset": -540,
+      "source": "saved_ebp",
+      "width": 4
+    },
+    {
+      "offset": -800,
+      "source": "incoming_word_12",
+      "width": 4
+    },
+    {
+      "offset": -796,
+      "source": "incoming_word_16",
+      "width": 4
+    },
+    {
+      "offset": -788,
+      "source": "return_word",
+      "width": 4
+    }
+  ],
+  "results_sha256": "2b39610da5dc48357fa6544bc1edf1482159a23af3dedeffcecd39958f590107",
+  "schema_version": 1,
+  "scope": {
+    "checks": [
+      "Exact ordered read and write events and complete linear slice trace",
+      "Independent whole-stack overlay including the stale PUSHFD temporary",
+      "Unchanged non-EAX general registers, EBP ESP and sampled flags; final EAX equals incoming return word"
+    ],
+    "evidence_class": "normalized_store_transfer_grammar_and_finite_boundary_state_emulation",
+    "not_claimed": [
+      "Arbitrary sampled volatile inputs are reachable after the preceding fill prefix",
+      "Original caller-entry register or flag capture; context identity or ABI classification",
+      "Nonzero segment-selector runtime behavior; RF VM or other unsampled flag images",
+      "First import call or later code execution; whole-function return or reporting behavior",
+      "Real game or hardware execution, faults, concurrency, timing, ownership or accounting promotion"
+    ],
+    "source_validation": "Canonical source receipts plus exact PE and complete owner instruction witnesses; earlier emulation matrices and whole-atlas analyses are not rerun."
+  },
+  "slice": {
+    "exclusive_stop_rva": "0x00379e20",
+    "owner_entry_rva": "0x00379d28",
+    "points": [
+      {
+        "rva": "0x00379d79",
+        "sha256": "35a62f6411b0339521cf7ec35b9d531beeee6fe70e1cb0af7837d5de530fc50e",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d7f",
+        "sha256": "be7edf648dda265f1c87617bb88f98f933df3451028679459e45d166997bd890",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d85",
+        "sha256": "b7e58ba2fb7054caebe68f0c050206eed2508328151cb8efa00e155ae9b3ae31",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d8b",
+        "sha256": "599c072ceffd8498c1ce423b4e9741b8a32c37165b4d001b1d9fc46f87ab44e4",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d91",
+        "sha256": "8e960da8644aae103ca9f33bb47e4d1ca462618c6790883272223d835b86ec4a",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d97",
+        "sha256": "0d69a04b162aeda144d1e92ae8a2a56a9c410622c2b36a3a0bfc7b4bd58d1d77",
+        "size": 6
+      },
+      {
+        "rva": "0x00379d9d",
+        "sha256": "b09f812c874387652f7e6df401a2eacbd0b94b34222b6814dba88854b0f50ca5",
+        "size": 6
+      },
+      {
+        "rva": "0x00379da3",
+        "sha256": "a6d77912b9ec07abfa3af49e6102a628350af35139b8d9f480ed1d4db21a0d78",
+        "size": 6
+      },
+      {
+        "rva": "0x00379da9",
+        "sha256": "0898d1e8b95190fd8495534d58089a2dd65717db60419c37a8627d4b2b7b67a9",
+        "size": 6
+      },
+      {
+        "rva": "0x00379daf",
+        "sha256": "7078f6d0eba3d7cbb76185f5282693080bf92b20f3d8704d2d7c2fd52111addb",
+        "size": 7
+      },
+      {
+        "rva": "0x00379db6",
+        "sha256": "f2ef2313a5d612c4c869ed8eff6f5f19cfb353d16590a522878ef651a1b99f90",
+        "size": 7
+      },
+      {
+        "rva": "0x00379dbd",
+        "sha256": "61abbc4caa4a7e7359aefeee05812577c1d99424c447b99cfeb97c241c3d02b7",
+        "size": 7
+      },
+      {
+        "rva": "0x00379dc4",
+        "sha256": "19792366831f0761ec68510c0eb29a3b2b6b0b205577f53fef6c548ee2ef6e42",
+        "size": 7
+      },
+      {
+        "rva": "0x00379dcb",
+        "sha256": "bc570caa7a10535e2f88c44fd1a02f7b09b028cc8ec86a22cc3cf29a45f1aefb",
+        "size": 7
+      },
+      {
+        "rva": "0x00379dd2",
+        "sha256": "917319bac1a90fa4a7e3b955a0957f82ef7be38fa2c93f6d74bf16c3b8b418ec",
+        "size": 7
+      },
+      {
+        "rva": "0x00379dd9",
+        "sha256": "6e3faf1e27d45fca70234ae8f6f0a734622cff8a6ea824b7f60d3ffafa2a4654",
+        "size": 1
+      },
+      {
+        "rva": "0x00379dda",
+        "sha256": "ab576fbfba3d87a7818a8788f4978bdce404649b4cbbdc63c414f5032dc7a2b4",
+        "size": 6
+      },
+      {
+        "rva": "0x00379de0",
+        "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+        "size": 3
+      },
+      {
+        "rva": "0x00379de3",
+        "sha256": "833496dbe48b4337cce9975d8ae96b7ecea5c1012c8284d9cb1d17f02a6df635",
+        "size": 6
+      },
+      {
+        "rva": "0x00379de9",
+        "sha256": "2088c3cee97ccc1e7e6a184d129e7f742c5e6d683f58eb389d271017defa4130",
+        "size": 3
+      },
+      {
+        "rva": "0x00379dec",
+        "sha256": "7da27d1f5e5498bdeb699123399bdbe1e2e9631e9a634fa7f0005ed783b87591",
+        "size": 6
+      },
+      {
+        "rva": "0x00379df2",
+        "sha256": "720981448a2d0afc96018a5db15782ddf6c74c828ddd551df23e25a6bd48a975",
+        "size": 10
+      },
+      {
+        "rva": "0x00379dfc",
+        "sha256": "bae3636bd791a20461821c1b68b6ca28a83eba66e7ef3c9b7ae9fc367342df00",
+        "size": 3
+      },
+      {
+        "rva": "0x00379dff",
+        "sha256": "bde9466297fc5d26a0ae61b933987257413651cab8dbd55bb90f17aa3c16ce17",
+        "size": 6
+      },
+      {
+        "rva": "0x00379e05",
+        "sha256": "ebd6d8b83d6282d7f62820a8c8c53606978b118e9c384d313a3a3a64544a31b7",
+        "size": 3
+      },
+      {
+        "rva": "0x00379e08",
+        "sha256": "04898e480dae693b147b3ed00514554d6f77a482bf66dae05ca708fa71b4aee9",
+        "size": 6
+      },
+      {
+        "rva": "0x00379e0e",
+        "sha256": "18b6553b3908e2b80c9822670701d123424a36f7437fb35f0165e2a63d9ccbfe",
+        "size": 3
+      },
+      {
+        "rva": "0x00379e11",
+        "sha256": "62b494244efa96b7b95d0448692d332afb4f3458c15bf07a8584ef4a69244aca",
+        "size": 6
+      },
+      {
+        "rva": "0x00379e17",
+        "sha256": "bb3296b5d88ac4044be49bb91c0689fb9cc683236709f0ec7198a431408ff3a9",
+        "size": 3
+      },
+      {
+        "rva": "0x00379e1a",
+        "sha256": "bf629f78f822bab4eeb3c401180d52a91effc1afddc66373e0a2c96b4e597a67",
+        "size": 6
+      }
+    ],
+    "sha256": "efc91a5d9325d4767c8f063bcabbdd7ea4d69bb072775bbe79485bd3e0cb10ed",
+    "size": 167,
+    "start_rva": "0x00379d79",
+    "unexecuted_stop_instruction": {
+      "rva": "0x00379e20",
+      "sha256": "2a8a65cc999adeb7ad3b8fdfe73d906e0119b25d37513d5624fda39070c21c15",
+      "size": 6
+    }
+  },
+  "source_receipts": {
+    "caller": {
+      "analysis_kind": "pe_native_assertion_helper_caller_fill",
+      "canonical_sha256": "b89d1873e56c4afb27c96229c05a1a0516732a5bdc3d2151173baeb5d4a5b653"
+    },
+    "pair": {
+      "analysis_kind": "pe_native_assertion_helper_descendant_pair",
+      "canonical_sha256": "47421700f38e3dbf3f5283bf89d3beb5d6421d32eaf05938ad58989908f93d0b"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "cases": 256,
+    "frame_stores_per_case": 22,
+    "frame_written_bytes": 76,
+    "instructions_per_case": 30,
+    "negative_controls": 2,
+    "read_events_per_case": 6,
+    "temporary_stores_per_case": 1,
+    "temporary_written_bytes": 4,
+    "write_events_per_case": 23
+  },
+  "vector_sha256": "1c348306d1ff4e5ebc655c6cc277130d74efd597bae674e5f8f40fb22b1d9fc4"
+}
