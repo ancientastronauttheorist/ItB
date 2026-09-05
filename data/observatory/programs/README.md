@@ -1496,6 +1496,19 @@ import consumption or native object validity. See
 Canonical SHA-256: `c71a3142e5fc172a6a686a1b83f3bce3a9af181142c8386276ed481f2861acef`.
 Raw SHA-256: `dc11ac81b491707444e5b54cbe6edbf8b25d9985b757d9e4fe4c444e8fb5cd55`.
 
+## Conditional assertion import arguments
+
+`windows_build_13725832_31fe35265598_native_assertion_helper_import_arguments.json`
+seals six instructions and 23 bytes from the first import to the unexecuted
+`UnhandledExceptionFilter` call. Its symbolic transfer assumes normal stdcall
+returns and preserved caller-owned frame memory; it derives a null argument
+for the second call and the pair pointer F-808 at ESP F-816 for the third. Three
+IAT bindings are freshly rechecked. No imported implementation is executed.
+See [`docs/native_import_arguments.md`](../../../docs/native_import_arguments.md).
+
+Canonical SHA-256: `a5db0b615b94a1291132a500fd025a74aeb4b0f8b78409f5d91bb30a6d4e282f`.
+Raw SHA-256: `0c37b9bd564224d0d2593a3b9d9b573aadbf42e847b40587fada7a188c6c6933`.
+
 ## Native assertion-helper second-callee static boundary
 
 `scripts/itb_native_assertion_helper_second_callee_static_boundary.py`

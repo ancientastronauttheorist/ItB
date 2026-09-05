@@ -541,6 +541,12 @@ until core engine semantics are reconstructed.
   four-byte SDK fields. This is external layout evidence, without identifying
   the game's toolchain or proving import consumption. See
   `docs/windows_exception_layout.md`.
+  The six-instruction import-argument slice now symbolically passes the
+  compatible pair at F-808 to the named `UnhandledExceptionFilter` boundary,
+  under explicit normal-stdcall-return and caller-frame preservation
+  assumptions for the preceding two imports. All three import bindings are
+  rechecked against the PE; imported execution and the return tail remain
+  open. See `docs/native_import_arguments.md`.
   Leaf-callee raw SHA-256 is
   `0fbc28fb7e55a61538e74d07c667eb39796febe5ee181c345997f5f6180714ea`;
   canonical JSON SHA-256 is

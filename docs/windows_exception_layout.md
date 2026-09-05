@@ -21,6 +21,9 @@ This establishes layout compatibility with the measured SDK. It does not
 prove which SDK or compiler built the game, nor that an imported routine
 actually consumes these objects. The current exact emulation stops before
 the first import; that later call sequence needs its own proof.
+`docs/native_import_arguments.md` now supplies a conditional symbolic join to
+the third import's argument, with normal-return and frame-preservation
+assumptions. Actual imported execution remains outside both receipts.
 The byte-offset correspondence also does not establish native object
 alignment or the validity of typed pointers for every synthetic frame address.
 
