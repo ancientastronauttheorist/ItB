@@ -1626,7 +1626,10 @@ projections, with 20 protected errors excluded. It validates seven pinned
 sources and performs no new native/reference execution. See
 [`contract projections`](../../../docs/native_lua_helper_reference_contracts.md).
 
-### Call-free tree successor semantics
+Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
+Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
+
+## Call-free tree successor semantics
 
 `windows_build_13725832_31fe35265598_native_lua_tree_successor_semantics.json`
 records a 79-byte/31-node graph checked against an independent inorder oracle
@@ -1636,8 +1639,8 @@ consistent acyclic topology and disjoint node, slot and return-word storage.
 No insertion, allocator or accounting promotion follows. See
 [`tree successor specification`](../../../docs/native_lua_tree_successor_semantics.md).
 
-Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
-Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
+Canonical SHA-256: `4d03a8bfc8ef34f5c700e7d5aa8a8a1a81967978a80d284b9342201c961ba7fd`.
+Raw SHA-256: `552515f52dbbd4ac323e0b896c975ce20bbe2444abeaa3300e92596982ba8592`.
 
 ## Conditional complete failure frontier
 
