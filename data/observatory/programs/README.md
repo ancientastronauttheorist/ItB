@@ -1629,6 +1629,15 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Initial HeapAlloc handoff
+
+`windows_build_13725832_31fe35265598_native_heap_allocation_handoff.json`
+records 1,440 cases and static PE identity for the `HeapAlloc` import.
+`windows_build_13725832_31fe35265598_native_heap_allocation_handoff_conformance.json`
+records 1,776 exact replays across 19 sites, stopping before any CALL or IAT
+dereference. The IAT page remains unmapped. See the
+[`heap handoff specification`](../../../docs/native_heap_allocation_handoff.md).
+
 ## Conditional allocation retry protocol
 
 `windows_build_13725832_31fe35265598_native_allocation_retry_semantics.json`

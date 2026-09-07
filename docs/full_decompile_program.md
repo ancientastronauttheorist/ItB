@@ -403,6 +403,10 @@ until core engine semantics are reconstructed.
   cases and 640 exact x86 replays. Actual CALL instructions execute while
   callees receive explicit host summaries; no callee instruction executes.
   See `docs/native_allocation_retry.md` for termination and preservation premises.
+- The initial candidate thunk and heap wrapper now reach a statically verified
+  `HeapAlloc` import boundary through 1,440 graph cases and 1,776 exact x86
+  replays. No CALL or runtime IAT dereference executes. See
+  `docs/native_heap_allocation_handoff.md` for the narrower downstream size guard.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
