@@ -1,0 +1,690 @@
+{
+  "analysis_kind": "pe_native_lua_vector_allocation_return_semantics",
+  "body": {
+    "bytes": 91,
+    "entry_rva": "0x0008a920",
+    "exclusive_end_rva": "0x0008a97b",
+    "nodes": 34,
+    "points": [
+      {
+        "rva": "0x0008a920",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a921",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a923",
+        "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a926",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a928",
+        "sha256": "c8bc5eda4e19eb51796b9caed51ddd9921393a92a900634ead6e5c3e87fe732d",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a92a",
+        "sha256": "6b3abe7b30d64eef0441e29f68b0eabf17526b476fa2495d67f1a901e3e73ec5",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a92c",
+        "sha256": "fda557d71a110b6fb6a609d5f68c02973a9e541d6e52b891fd648c847f23c752",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a92e",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a92f",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a932",
+        "sha256": "0a43d2738f0d08ff0b28ad10eb3e36729ae70d059d9734f9075edd86a5911b79",
+        "size": 5
+      },
+      {
+        "rva": "0x0008a937",
+        "sha256": "cbac233b61bb6210bf71c1df4d9b0e469a280889507b7fb4e97dedc7ce3c3a01",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a939",
+        "sha256": "49359dc23bef91c348cdf22edceea348a2aecfdc36987636aeba5952e0a700d5",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a93c",
+        "sha256": "cf2978a70b80f55cfd69c11e90b302c4ee4ee7f84f55ff7295778f63efee0ee7",
+        "size": 5
+      },
+      {
+        "rva": "0x0008a941",
+        "sha256": "88f45b29c143f124b8d220dbe99342cd9df82ee385250769b3484d7034f7bed9",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a943",
+        "sha256": "176384fdb9068d432f1b5be6380cd31db77bac3bb213c7fe218ba0e1ea4d25f3",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a946",
+        "sha256": "656489db5162c68c01e330bcd0d40e22deaebf16a8c369fb63229a200aee42c3",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a948",
+        "sha256": "21369ea08ff0c2a83cb92b461d2e6957b4a57353f785b5a95295596b69be91dc",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a94a",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a94b",
+        "sha256": "3b2f1c636fef8a5e6131d3d66345dab5d837b0cbb46236d1ffa5fd1214c6b489",
+        "size": 5
+      },
+      {
+        "rva": "0x0008a950",
+        "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a953",
+        "sha256": "176384fdb9068d432f1b5be6380cd31db77bac3bb213c7fe218ba0e1ea4d25f3",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a956",
+        "sha256": "647c29bbb5424d3bde6da734e7114322aa3f69502abf30e82bf3e92468a247cf",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a959",
+        "sha256": "e1d9e933404907781c2f6279b675d92488d7f7a6dbfb288d24f31f15bff2d7e0",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a95c",
+        "sha256": "fda557d71a110b6fb6a609d5f68c02973a9e541d6e52b891fd648c847f23c752",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a95e",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a95f",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a962",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a963",
+        "sha256": "d28a50d8d774e8b72b76ee218f780a7f28e9012ef01ec9f511d248f2324b6067",
+        "size": 5
+      },
+      {
+        "rva": "0x0008a968",
+        "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a96b",
+        "sha256": "0e72eeffe8e4ac7dfe9abd68ba709e020123e8aaf94576b6cd3f452c41e3ef4f",
+        "size": 2
+      },
+      {
+        "rva": "0x0008a96d",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x0008a96e",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      },
+      {
+        "rva": "0x0008a971",
+        "sha256": "966c6e8bb6f9135b4d4a2cf67b4903eaaa96cd8cc86f651a0529126afbf735bf",
+        "size": 5
+      },
+      {
+        "rva": "0x0008a976",
+        "sha256": "442b7efdc741240aba458908ea2c130cd6ec206f0c5d3bdb11b05e5761b3ec98",
+        "size": 5
+      }
+    ],
+    "sha256": "e13e3be9b5e53d78d61aaaacc91b9c7c3183b77ef1f005bd2010bc1aa9b9830e"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "matrix": {
+    "frame_alignments": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "frame_base": 805310464,
+    "pointer_inputs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      268435456,
+      268435457,
+      268435458,
+      268435459,
+      268435460,
+      268435461,
+      268435462,
+      268435463,
+      268435464,
+      268435465,
+      268435466,
+      268435467,
+      268435468,
+      268435469,
+      268435470,
+      268435471,
+      268435472,
+      268435473,
+      268435474,
+      268435475,
+      268435476,
+      268435477,
+      268435478,
+      268435479,
+      268435480,
+      268435481,
+      268435482,
+      268435483,
+      268435484,
+      268435485,
+      268435486,
+      268435487,
+      268435488,
+      268435489,
+      268435490,
+      268435491,
+      268435492,
+      268435493,
+      268435494,
+      268435495,
+      268435496,
+      268435497,
+      268435498,
+      268435499,
+      268435500,
+      268435501,
+      268435502,
+      268435503,
+      268435504,
+      268435505,
+      268435506,
+      268435507,
+      268435508,
+      268435509,
+      268435510,
+      268435511,
+      268435512,
+      268435513,
+      268435514,
+      268435515,
+      268435516,
+      268435517,
+      268435518,
+      268435519,
+      2147483584,
+      2147483585,
+      2147483586,
+      2147483587,
+      2147483588,
+      2147483589,
+      2147483590,
+      2147483591,
+      2147483592,
+      2147483593,
+      2147483594,
+      2147483595,
+      2147483596,
+      2147483597,
+      2147483598,
+      2147483599,
+      2147483600,
+      2147483601,
+      2147483602,
+      2147483603,
+      2147483604,
+      2147483605,
+      2147483606,
+      2147483607,
+      2147483608,
+      2147483609,
+      2147483610,
+      2147483611,
+      2147483612,
+      2147483613,
+      2147483614,
+      2147483615,
+      2147483616,
+      2147483617,
+      2147483618,
+      2147483619,
+      2147483620,
+      2147483621,
+      2147483622,
+      2147483623,
+      2147483624,
+      2147483625,
+      2147483626,
+      2147483627,
+      2147483628,
+      2147483629,
+      2147483630,
+      2147483631,
+      2147483632,
+      2147483633,
+      2147483634,
+      2147483635,
+      2147483636,
+      2147483637,
+      2147483638,
+      2147483639,
+      2147483640,
+      2147483641,
+      2147483642,
+      2147483643,
+      2147483644,
+      2147483645,
+      2147483646,
+      2147483647,
+      4294967232,
+      4294967233,
+      4294967234,
+      4294967235,
+      4294967236,
+      4294967237,
+      4294967238,
+      4294967239,
+      4294967240,
+      4294967241,
+      4294967242,
+      4294967243,
+      4294967244,
+      4294967245,
+      4294967246,
+      4294967247,
+      4294967248,
+      4294967249,
+      4294967250,
+      4294967251,
+      4294967252,
+      4294967253,
+      4294967254,
+      4294967255,
+      4294967256,
+      4294967257,
+      4294967258,
+      4294967259,
+      4294967260,
+      4294967261,
+      4294967262,
+      4294967263,
+      4294967264,
+      4294967265,
+      4294967266,
+      4294967267,
+      4294967268,
+      4294967269,
+      4294967270,
+      4294967271,
+      4294967272,
+      4294967273,
+      4294967274,
+      4294967275,
+      4294967276,
+      4294967277,
+      4294967278,
+      4294967279,
+      4294967280,
+      4294967281,
+      4294967282,
+      4294967283,
+      4294967284,
+      4294967285,
+      4294967286,
+      4294967287,
+      4294967288,
+      4294967289,
+      4294967290,
+      4294967291,
+      4294967292,
+      4294967293,
+      4294967294,
+      4294967295
+    ],
+    "seeds": [
+      0,
+      4294967295
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "159b2991c1724e8d0ee887f197efb06ce8bfd397fe7d0c1b7aaf37ff5ef6670d",
+    "instruction_union_rvas": [
+      "0x0008a950",
+      "0x0008a953",
+      "0x0008a956",
+      "0x0008a959",
+      "0x0008a95c",
+      "0x0008a95e",
+      "0x0008a95f",
+      "0x0008a968",
+      "0x0008a96b",
+      "0x0008a96d",
+      "0x0008a96e"
+    ],
+    "negative_controls": [
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_alignment_padding",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_alignment_mask",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_metadata_value",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_small_cleanup",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_return_pop",
+        "rejected": true
+      },
+      {
+        "kind": "domain_rejection",
+        "name": "metadata_frame_overlap",
+        "rejected": true
+      }
+    ],
+    "storage_cases_sha256": "29b3fb4ad87e55417c6afc1647e4707ac7ee851bff85d4f7848c1a2344123ef4"
+  },
+  "schema_version": 1,
+  "scope": {
+    "entry_premises": [
+      "An opaque allocator has returned to the selected tail with EAX pointer P",
+      "EBP is F and ESP is F minus four; saved caller EBP and continuation are mapped at F and F plus four",
+      "This finite model uses F equal to the declared frame base plus one of sixteen alignments; frame arithmetic does not wrap",
+      "Large path metadata word at wrapped aligned pointer minus four is mapped and byte-disjoint from protected frame words",
+      "No concurrent mutation or hardware faults; all preservation is relative to post-call entry state"
+    ],
+    "evidence_class": "conditional_exact_integer_graph_model_of_post_allocator_return_tails",
+    "flags_policy": "Large AND leaves auxiliary carry undefined and recorded null; small path preserves six flags from the stack ADD",
+    "machine_relation": "Large path returns wrapped pointer P plus thirty-five rounded down to a multiple of thirty-two and writes P in the preceding word; small path returns P; both restore caller EBP and finish ESP at F plus twelve",
+    "not_claimed": [
+      "Allocator execution, allocation success, mapped memory validity inferred from pointer arithmetic or original caller volatile-register preservation",
+      "Aliasing metadata with protected frame words, full resize behavior, release behavior or exceptions",
+      "API or game execution, replacement of append growth premises, whole owner equivalence or accounting promotion"
+    ],
+    "storage_relation": "Given an existing positive payload block of payload bytes plus thirty-five with no address wrap, aligned pointer is thirty-two times ceiling of P plus four divided by thirty-two, leading slack is four through thirty-five, and metadata and payload fit inside the block"
+  },
+  "source_receipts": {
+    "allocation_semantics": {
+      "analysis_kind": "pe_native_lua_vector_allocation_semantics",
+      "canonical_sha256": "9081f912a66487224a7924c126fad24a38d8cbdb4f37cb69e3e45902074f805c"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_allocator_calls": 0,
+    "actual_native_executions": 0,
+    "cases": 16384,
+    "modeled_bytes": 27,
+    "modeled_nodes": 11,
+    "static_bytes": 91,
+    "static_nodes": 34,
+    "storage_geometry_cases": 605
+  },
+  "tails": [
+    {
+      "bytes": 18,
+      "entry_rva": "0x0008a950",
+      "exclusive_end_rva": "0x0008a962",
+      "nodes": 7,
+      "path": "large",
+      "points": [
+        {
+          "rva": "0x0008a950",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3
+        },
+        {
+          "rva": "0x0008a953",
+          "sha256": "176384fdb9068d432f1b5be6380cd31db77bac3bb213c7fe218ba0e1ea4d25f3",
+          "size": 3
+        },
+        {
+          "rva": "0x0008a956",
+          "sha256": "647c29bbb5424d3bde6da734e7114322aa3f69502abf30e82bf3e92468a247cf",
+          "size": 3
+        },
+        {
+          "rva": "0x0008a959",
+          "sha256": "e1d9e933404907781c2f6279b675d92488d7f7a6dbfb288d24f31f15bff2d7e0",
+          "size": 3
+        },
+        {
+          "rva": "0x0008a95c",
+          "sha256": "fda557d71a110b6fb6a609d5f68c02973a9e541d6e52b891fd648c847f23c752",
+          "size": 2
+        },
+        {
+          "rva": "0x0008a95e",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x0008a95f",
+          "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+          "size": 3
+        }
+      ]
+    },
+    {
+      "bytes": 9,
+      "entry_rva": "0x0008a968",
+      "exclusive_end_rva": "0x0008a971",
+      "nodes": 4,
+      "path": "small",
+      "points": [
+        {
+          "rva": "0x0008a968",
+          "sha256": "268c54fe317c183f03f29b931f4606343f6824184bd185ed1eca129db5729a8d",
+          "size": 3
+        },
+        {
+          "rva": "0x0008a96b",
+          "sha256": "0e72eeffe8e4ac7dfe9abd68ba709e020123e8aaf94576b6cd3f452c41e3ef4f",
+          "size": 2
+        },
+        {
+          "rva": "0x0008a96d",
+          "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+          "size": 1
+        },
+        {
+          "rva": "0x0008a96e",
+          "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+          "size": 3
+        }
+      ]
+    }
+  ]
+}

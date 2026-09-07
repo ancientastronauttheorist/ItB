@@ -1629,6 +1629,16 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Conditional allocation return tails
+
+`windows_build_13725832_31fe35265598_native_lua_vector_allocation_return_semantics.json`
+records 16,384 post-call machine cases and 605 conditional storage layouts.
+`windows_build_13725832_31fe35265598_native_lua_vector_allocation_return_conformance.json`
+records 792 exact-byte replays of the 27-byte/11-node tails. Metadata writes,
+pointer wrapping and post-call preservation are explicit; actual allocation
+success is not inferred. See the
+[`return-tail specification`](../../../docs/native_lua_vector_allocation_return.md).
+
 ## Vector allocation request decision
 
 `windows_build_13725832_31fe35265598_native_lua_vector_allocation_semantics.json`
