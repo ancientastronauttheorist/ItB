@@ -1629,6 +1629,16 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Vector allocation request decision
+
+`windows_build_13725832_31fe35265598_native_lua_vector_allocation_semantics.json`
+records 19,744 graph cases and an exact static caller chain.
+`windows_build_13725832_31fe35265598_native_lua_vector_allocation_conformance.json`
+records 672 exact-byte replays across zero return, small/large requests and
+two failure frontiers. Nineteen of 34 static nodes execute; all CALLs are
+exclusive stop boundaries. See the
+[`allocation request specification`](../../../docs/native_lua_vector_allocation.md).
+
 ## Vector growth capacity decision
 
 `windows_build_13725832_31fe35265598_native_lua_vector_growth_semantics.json`

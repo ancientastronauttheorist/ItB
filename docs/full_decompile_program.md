@@ -391,6 +391,10 @@ until core engine semantics are reconstructed.
   body. The apparent size-limit failure is unreachable by the signed-shift
   image argument. Allocation and cleanup remain outside this boundary.
   See `docs/native_lua_vector_growth.md`.
+- The allocation-request helper now has 19,744 graph cases and 672 exact
+  x86 replays over its 19 decision/zero-return nodes. Small/large byte requests
+  and distinct size/padding failures are specified; allocator calls and
+  post-call tails remain outside this proof. See `docs/native_lua_vector_allocation.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
