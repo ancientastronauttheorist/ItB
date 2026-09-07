@@ -436,6 +436,9 @@ until core engine semantics are reconstructed.
 - Integrated small-vector resize now executes allocation, short copy and
   deallocation machinery across 5,120 cases and 187 sites, with only successful
   heap API responses supplied. See `docs/native_small_vector_resize.md`.
+- The feature-enabled forward REP byte path has 1,120 graph cases and 1,344
+  exact replays over 68 bytes and 23 sites, with explicit BT flag definedness.
+  See `docs/native_rep_byte_copy.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
