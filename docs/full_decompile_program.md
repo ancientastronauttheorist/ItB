@@ -415,6 +415,9 @@ until core engine semantics are reconstructed.
   frame and storage checks. A separate 2,576-case integrated replay executes
   66 native sites through supplied first-attempt heap success; imported code
   remains external. See `docs/native_vector_allocation_composition.md`.
+- The vector deallocation guard has 15,680 model cases and 2,832 exact replays
+  over its 25 guarded sites, including the allocation-metadata inverse. Free
+  and failure callees remain external. See `docs/native_vector_deallocation.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
