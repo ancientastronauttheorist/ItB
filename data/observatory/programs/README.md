@@ -1629,6 +1629,17 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Vector growth capacity decision
+
+`windows_build_13725832_31fe35265598_native_lua_vector_growth_semantics.json`
+records 16,528 graph cases across 33 decision sites in a 94-byte/40-node body.
+`windows_build_13725832_31fe35265598_native_lua_vector_growth_conformance.json`
+separately records 3,168 exact x86 replays with no child call execution.
+The size-limit failure is unreachable because its required word is outside
+the arithmetic-shift image. Ordinary geometry, arbitrary u32 fields and
+unproved allocation behavior are distinguished in the
+[`growth decision specification`](../../../docs/native_lua_vector_growth.md).
+
 ## Call-free tree successor semantics
 
 `windows_build_13725832_31fe35265598_native_lua_tree_successor_semantics.json`

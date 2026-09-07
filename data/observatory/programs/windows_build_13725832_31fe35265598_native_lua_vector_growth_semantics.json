@@ -1,0 +1,414 @@
+{
+  "analysis_kind": "pe_native_lua_vector_growth_semantics",
+  "body": {
+    "bytes": 94,
+    "entry_rva": "0x002eb620",
+    "exclusive_end_rva": "0x002eb67e",
+    "nodes": 40,
+    "points": [
+      {
+        "rva": "0x002eb620",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb621",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb623",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb624",
+        "sha256": "fdb746152be90ad2490bfcbf003d331e06c9986ebaa921dded20294e93d2bfdc",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb627",
+        "sha256": "aea5a96a034ea0197e5c038dca4c8d1cc13d444edcce9ef519f7f78d642467e6",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb629",
+        "sha256": "d2c23446f280d691b42e27a51640b18b6e8100d7b889bdde3467ba6c05177144",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb62c",
+        "sha256": "7577a09acf7e50649151ce886e07799ccb31c2a5aaab3a30e7281493b0be21bc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb62e",
+        "sha256": "999ce0dbd11522573d56120b07d151abb16df3409860366be12652cb0f2dd3f1",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb631",
+        "sha256": "1ea67153973d48b650d9c8abeb82a1d9cf4bfc1d811e7deb4a616f48e09d569b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb634",
+        "sha256": "e72d310dbb213f4c2e34da28935b38905332ee3628a04df2dd13859fd769c6c5",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb636",
+        "sha256": "acb3f8f08ed08474bff9f38ad2f202cb971bd82909103726d41f4d009f96f113",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb638",
+        "sha256": "6fbdb5e50eb66b94929e3da397c061f76ba68eff40d334c081c3262f52d3d2e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb63a",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb63b",
+        "sha256": "e077208d1623f1abac06f1f2f00aca4f5834ea724314e93aaebb71fa8946b835",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb640",
+        "sha256": "68e44c971ed4f228341752a0ee75c042ff59e90b4a44c54c9687c0c0a33a24db",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb643",
+        "sha256": "a51914475e973a2f049d7292f473d0d53f50a376607ef6c5b90e56c9fc5f0263",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb645",
+        "sha256": "7577a09acf7e50649151ce886e07799ccb31c2a5aaab3a30e7281493b0be21bc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb647",
+        "sha256": "1ea67153973d48b650d9c8abeb82a1d9cf4bfc1d811e7deb4a616f48e09d569b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb64a",
+        "sha256": "398c41f325d3613fbfe42caa6fc74291d259ab3428b8dfae4eb3029b7c122f06",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb64c",
+        "sha256": "ba633acbbdf63a2df0556d68e9569dce95173ff3890ef6f548b9cb010008305d",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb64e",
+        "sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb64f",
+        "sha256": "a5267ad4f5d8599c4982744da9eafb33ded70e489ea62b1cd2b0d1bb642133fe",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb652",
+        "sha256": "6b3abe7b30d64eef0441e29f68b0eabf17526b476fa2495d67f1a901e3e73ec5",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb654",
+        "sha256": "aea5a96a034ea0197e5c038dca4c8d1cc13d444edcce9ef519f7f78d642467e6",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb656",
+        "sha256": "64d541d89b408d27a3639c7950921e0c649a342f60ff63850661f0ca6e48b4a7",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb658",
+        "sha256": "e2be51bd30c968b6a89d0e2f303bbc00aa0b85dca2087c43eb4a4e2fee7b1216",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65a",
+        "sha256": "e2dbf5748636785d95e4dd5113125ecd5e92e0a32b2b11eb9e92fe7b337833c8",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65c",
+        "sha256": "ec239cc61bddbe2c023753a6b1f1a079297efe3d3bd7a7f3bbe85aa774156a94",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb65e",
+        "sha256": "21ea6950534772997b02c2bf3345ba3cd68c179d7aaa18f3d15db12f9f6961a0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb661",
+        "sha256": "076befd637402e8cd0d35c03d2be866d53d6102d8ba4442d622f630227017cfc",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb663",
+        "sha256": "1c85e37aa6a65e5d50c39d77d7f956662df2912ba942adb460f33a7d89c441d4",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb666",
+        "sha256": "516d98b8f7e112c7ab40cf0397e0c0231765f39a38298f43fccc3f60a7f096e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb668",
+        "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb669",
+        "sha256": "89e0aa57887d46becd7e0589026b9ce5422bc3a7e3baaaf69dd3dceb4652684a",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb66e",
+        "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb66f",
+        "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb670",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb671",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb674",
+        "sha256": "384d3690015fc222c6e8d28384d9c0120ba1d3f5f1ec96175babacf8cb1db7ec",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb679",
+        "sha256": "35f0e7fe47d8511922a5912158b2da903e0600426fe3f4c17a5b0bf3c013b1f7",
+        "size": 5
+      }
+    ],
+    "sha256": "42f88276ce53abc0e706022e598d7ae0dcc7d19efc0b5a320498f2ac7f8c9f5d"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "failure_unreachability": {
+    "reason": "Unsigned wrapped MAX_ELEMENTS minus size is below one exactly when size equals MAX_ELEMENTS, outside the SAR3 image",
+    "required_size_word": 536870911,
+    "sar3_unsigned_image": [
+      [
+        0,
+        268435455
+      ],
+      [
+        4026531840,
+        4294967295
+      ]
+    ]
+  },
+  "frontiers": {
+    "no_growth_cleanup": "0x002eb66f",
+    "resize_call": "0x002eb669",
+    "unreachable_failure_block": "0x002eb674"
+  },
+  "matrix": {
+    "frame_alignments": [
+      0,
+      1,
+      7,
+      15
+    ],
+    "input_tuples": 2066,
+    "inputs_sha256": "0e724b4c371f289a632218df77afa96f655bd442c2049fb5ad03a1e2e3579cd7",
+    "seeds": [
+      0,
+      4294967295
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "c71bf6a184c44fb57f36bbd90758c31d84bef3f5b8e78c79701bf9eaf74021b2",
+    "instruction_union_rvas": [
+      "0x002eb620",
+      "0x002eb621",
+      "0x002eb623",
+      "0x002eb624",
+      "0x002eb627",
+      "0x002eb629",
+      "0x002eb62c",
+      "0x002eb62e",
+      "0x002eb631",
+      "0x002eb634",
+      "0x002eb636",
+      "0x002eb638",
+      "0x002eb63a",
+      "0x002eb63b",
+      "0x002eb640",
+      "0x002eb643",
+      "0x002eb645",
+      "0x002eb647",
+      "0x002eb64a",
+      "0x002eb64c",
+      "0x002eb64e",
+      "0x002eb64f",
+      "0x002eb652",
+      "0x002eb654",
+      "0x002eb656",
+      "0x002eb658",
+      "0x002eb65a",
+      "0x002eb65c",
+      "0x002eb65e",
+      "0x002eb661",
+      "0x002eb663",
+      "0x002eb666",
+      "0x002eb668"
+    ],
+    "negative_controls": [
+      {
+        "kind": "semantic_mutation",
+        "name": "logical_size_shift",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_spare_shift",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_capacity_half",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_minimum_increment",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_metadata_read",
+        "rejected": true
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "evidence_class": "exact_integer_graph_model_with_independent_u32_capacity_specification",
+    "machine_relation": "No growth exactly when u32(capacity-end) >= 8; otherwise compute signed SAR3 size and capacity words and wrapped unsigned guarded growth, stopping before the resize call",
+    "not_claimed": [
+      "Resize child, allocator, failure callee or cleanup execution",
+      "Successful allocation, element relocation, exception behavior or return convention semantics",
+      "Actual API or game execution, replacement of append growth summaries, whole owner equivalence or accounting promotion"
+    ],
+    "ordinary_geometry": "Ordered nonwrapping fields with eight-byte element differences and total byte span below 2**31: retain spare capacity; at full capacity request the larger of size plus one and capacity plus floor of half capacity",
+    "premises": [
+      "Mapped stable three-word object and disjoint mapped stack slots",
+      "No asynchronous mutation or hardware faults during the bounded decision",
+      "Synthetic u32 fields need not describe allocated storage"
+    ],
+    "state_policy": "All eight general registers, six arithmetic flags at boundary, every explicit ordered word access, and unchanged fixture words checked; EIP is the stop RVA"
+  },
+  "source_receipts": {
+    "append_semantics": {
+      "analysis_kind": "pe_native_lua_class_vector_append_semantics",
+      "canonical_sha256": "d17dc4796b23572e79a65784de0cc689a0f333005420997461a183c5a022a93c"
+    },
+    "chain": {
+      "analysis_kind": "pe_native_lua_class_return_helper_chain",
+      "canonical_sha256": "33ad87a98131700dce12bd34a7febea3159b6f461710f0b8296d95ded1b37095"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_child_calls": 0,
+    "actual_native_executions": 0,
+    "cases": 16528,
+    "failure_frontiers": 0,
+    "modeled_nodes": 33,
+    "no_growth_frontiers": 11616,
+    "resize_frontiers": 4912,
+    "static_bytes": 94,
+    "static_nodes": 40
+  }
+}

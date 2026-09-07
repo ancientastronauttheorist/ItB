@@ -386,6 +386,11 @@ until core engine semantics are reconstructed.
   topology and disjoint storage are explicit premises; native execution,
   insertion, growth and whole-owner recreation remain outside this proof.
   See `docs/native_lua_tree_successor_semantics.md`.
+- The vector growth-capacity decision now has 16,528 graph cases and 3,168
+  exact x86 replays, covering 33 decision nodes within the 94-byte/40-node
+  body. The apparent size-limit failure is unreachable by the signed-shift
+  image argument. Allocation and cleanup remain outside this boundary.
+  See `docs/native_lua_vector_growth.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
