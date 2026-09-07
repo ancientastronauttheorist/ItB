@@ -430,6 +430,9 @@ until core engine semantics are reconstructed.
 - Copy lengths below 32 now have 18,432 graph cases and 28,672 exact replays
   over 171 bytes and 65 scalar sites, with overlap-safe snapshot semantics.
   Larger feature paths remain open. See `docs/native_small_copy.md`.
+- Feature-zero scalar copy lengths 32 through 2048 now have 3,168 graph cases
+  and 1,620 exact replays across 498 bytes and 176 sites, including REP and
+  native tail tables. See `docs/native_scalar_copy.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
