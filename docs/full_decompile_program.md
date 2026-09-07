@@ -433,6 +433,9 @@ until core engine semantics are reconstructed.
 - Feature-zero scalar copy lengths 32 through 2048 now have 3,168 graph cases
   and 1,620 exact replays across 498 bytes and 176 sites, including REP and
   native tail tables. See `docs/native_scalar_copy.md`.
+- Integrated small-vector resize now executes allocation, short copy and
+  deallocation machinery across 5,120 cases and 187 sites, with only successful
+  heap API responses supplied. See `docs/native_small_vector_resize.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
