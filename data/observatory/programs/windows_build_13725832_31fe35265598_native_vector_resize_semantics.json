@@ -1,0 +1,423 @@
+{
+  "analysis_kind": "pe_native_vector_resize_semantics",
+  "body": {
+    "bytes": 101,
+    "entry_rva": "0x002eb680",
+    "exclusive_end_rva": "0x002eb6e5",
+    "nodes": 46,
+    "points": [
+      {
+        "rva": "0x002eb680",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb681",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb683",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb684",
+        "sha256": "9d27c73deb951f5182086b0ea30b9f4cce17914f003cfdf997ee52b487dcfc94",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb687",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb688",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb689",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb68a",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb68b",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb68d",
+        "sha256": "24e6162364023f42472be1fcd86d6459122d282c57d85e6f97109cc58a36f95d",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb690",
+        "sha256": "19c10fdbff6551b76cbc0a60ca6ce3555138bcf125833e4c15f7ca2d7f95bb99",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb695",
+        "sha256": "54e28ec66bcd769d61f3d104e007004f351d2cd1ed634230b0d16ecd6795d5c0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb697",
+        "sha256": "684765db31f3b28ef5ef4e8ee346bcefba1cab078ed6467a983f65aa84feee98",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb699",
+        "sha256": "16289f8f8ba08de3d484d18b6d6b5e57d397df23121ccc4b70b5f308a91ac18b",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb69c",
+        "sha256": "44d548a32fa2ad3ad302416ab0c38f87bde9a74a9d87549cefb25aec71f2de8a",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb69e",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb69f",
+        "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6a0",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6a1",
+        "sha256": "07349306e9c813ff4669a9c3b858769cebaaf5bd82066e6c6760af5471f72eea",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb6a6",
+        "sha256": "acb3f8f08ed08474bff9f38ad2f202cb971bd82909103726d41f4d009f96f113",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6a8",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6ab",
+        "sha256": "b18c5d12283d0069baa4030ae4aa6a35d6216291dcda16f832026826246433a7",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6ae",
+        "sha256": "efe1c5e733b58206b9e6c35de584f6bc6d9a0c19da62da3231dff7a3e8ebbdc0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6b0",
+        "sha256": "161f3ad84729bd369eacd5dc3815444c4c11defbe65ee6280c417018184cc439",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6b3",
+        "sha256": "a85236fbf7a5bb506bb3b9c29922262f96380dd5c97edf8bced6f3bebbf94b95",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6b5",
+        "sha256": "58fa647efa065bcc12c78b62b4f922263aca998530ca6c5a62dde0c79b327afd",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6b7",
+        "sha256": "1781395ecac1f03760894fa4ba528b8de1bcff4981886ab8412aadd7c3a13a22",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6ba",
+        "sha256": "21468b58a75fe3691345571a1133fe291fd6aac12d33daf79ca7f53bf31810cb",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6bc",
+        "sha256": "8d38f9f0b8aaf50c1b5a8db595dc1e9dbab0ce00381920e869144cbfbbcfa034",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6be",
+        "sha256": "999ce0dbd11522573d56120b07d151abb16df3409860366be12652cb0f2dd3f1",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6c1",
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6c2",
+        "sha256": "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6c3",
+        "sha256": "8f7083561241b22fd268859f16903c53642dbe6ec6f2730ef3cb3ef11c5be43b",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb6c8",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6cb",
+        "sha256": "c8ff8176efd9394aa7190f62b07cbcbf608de9169651a7486360d09c1f111064",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6ce",
+        "sha256": "e366a30f22e786c013d45fff82bd07cf1a7f02005cc5128c7b1e738355d362d6",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6d1",
+        "sha256": "995a716ace44c577c9fcd179dea3bf872b080863bcf849b56d4dc9d370b63bb9",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6d4",
+        "sha256": "b447ee43f0238df39e3d3a75266822f682255d269705de0762fb1ba0fa44265c",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6d7",
+        "sha256": "f49d9e55cb77604907965d963c4fd7b25f39e7ad6aee1b0542ba1da026799d21",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb6da",
+        "sha256": "6eaef7f6b7489043a110404072ca5eb0c2cbdd27c1bf1a303b372af0f6328374",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6dc",
+        "sha256": "d2e2adf7177b7a8afddbc12d1634cf23ea1a71020f6a1308070a16400fb68fde",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6dd",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6de",
+        "sha256": "245843abef9e72e7efac30138a994bf6301e7e1d7d7042a33d42e863d2638811",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6df",
+        "sha256": "73090cde81947ce4ddb9e494c8ee74c489ffd7d889463e92d1d33f000b44355d",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb6e1",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb6e2",
+        "sha256": "e598d0c3ba86d917b177d7adde0556aa99bc355543c57aee0a3e50b684dd7e99",
+        "size": 3
+      }
+    ],
+    "sha256": "b2eec25d6e8deb0a2b1709138997cd94211555ef9e3e7b865be93df0d466084c"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "matrix": {
+    "alignments": [
+      0,
+      1,
+      7,
+      15
+    ],
+    "input_tuples": 54,
+    "inputs_sha256": "b8bfe09e56e4ac33edefc80d63865ce5f7c65ae225fef6cf799ee5d9259fbc8e",
+    "seeds": [
+      0,
+      4294967295
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "01f73aecd9bc8c882d40815f6383f338a1ebcc88f435de31ce5659a3e9e7a7e8",
+    "instruction_union_rvas": [
+      "0x002eb680",
+      "0x002eb681",
+      "0x002eb683",
+      "0x002eb684",
+      "0x002eb687",
+      "0x002eb688",
+      "0x002eb689",
+      "0x002eb68a",
+      "0x002eb68b",
+      "0x002eb68d",
+      "0x002eb690",
+      "0x002eb695",
+      "0x002eb697",
+      "0x002eb699",
+      "0x002eb69c",
+      "0x002eb69e",
+      "0x002eb69f",
+      "0x002eb6a0",
+      "0x002eb6a1",
+      "0x002eb6a6",
+      "0x002eb6a8",
+      "0x002eb6ab",
+      "0x002eb6ae",
+      "0x002eb6b0",
+      "0x002eb6b3",
+      "0x002eb6b5",
+      "0x002eb6b7",
+      "0x002eb6ba",
+      "0x002eb6bc",
+      "0x002eb6be",
+      "0x002eb6c1",
+      "0x002eb6c2",
+      "0x002eb6c3",
+      "0x002eb6c8",
+      "0x002eb6cb",
+      "0x002eb6ce",
+      "0x002eb6d1",
+      "0x002eb6d4",
+      "0x002eb6d7",
+      "0x002eb6da",
+      "0x002eb6dc",
+      "0x002eb6dd",
+      "0x002eb6de",
+      "0x002eb6df",
+      "0x002eb6e1",
+      "0x002eb6e2"
+    ],
+    "negative_controls": [
+      {
+        "mutation": "wrong_pointer_stride",
+        "rejected": true
+      },
+      {
+        "mutation": "wrong_copy_length",
+        "rejected": true
+      },
+      {
+        "mutation": "wrong_free_stride",
+        "rejected": true
+      },
+      {
+        "mutation": "wrong_new_begin",
+        "rejected": true
+      }
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "arithmetic": "Copy byte length is modular end minus begin; restored end uses the signed arithmetic-shift element count and therefore clears the low three length bits in 32-bit arithmetic",
+    "not_claimed": [
+      "Actual allocation, byte-copy or deallocation effects, ownership or valid mapped payload storage without premises",
+      "Callee failure paths, changing object metadata across calls, arbitrary external volatile responses or integrated child execution",
+      "Complete vector resize equivalence, game execution or whole-program accounting promotion"
+    ],
+    "premises": [
+      "Three supplied normal-return child summaries preserve nonvolatile registers and every modeled frame and object word, including pushed arguments",
+      "Allocation consumes four argument bytes on return; copy and deallocation consume none",
+      "Allocation supplies the requested new pointer; child volatile registers and flags use declared independent fixed samples",
+      "Synthetic machine words need not describe valid storage; ordinary ordered geometry is an additional separate contract"
+    ],
+    "relation": "The owner always calls copy, including zero byte count; it rereads old begin and end afterward, conditionally deallocates nonzero begin, writes new capacity then end then begin and restores the original frame with eight bytes consumed"
+  },
+  "source_receipts": {
+    "allocation_semantics": {
+      "analysis_kind": "pe_native_lua_vector_allocation_semantics",
+      "canonical_sha256": "9081f912a66487224a7924c126fad24a38d8cbdb4f37cb69e3e45902074f805c"
+    },
+    "deallocation_semantics": {
+      "analysis_kind": "pe_native_vector_deallocation_semantics",
+      "canonical_sha256": "7db0ff16946971f721c3d8246af544a5d009095004a63453285f72d4b05de351"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_native_executions": 0,
+    "cases": 432,
+    "modeled_sites": 46,
+    "opaque_summaries": 1168
+  }
+}

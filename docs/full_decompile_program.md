@@ -418,6 +418,9 @@ until core engine semantics are reconstructed.
 - The vector deallocation guard has 15,680 model cases and 2,832 exact replays
   over its 25 guarded sites, including the allocation-metadata inverse. Free
   and failure callees remain external. See `docs/native_vector_deallocation.md`.
+- The full resize owner now has 432 graph cases and 1,600 exact replays over
+  its 101-byte, 46-site body. Allocation, copy and deallocation remain explicit
+  normal-return summaries. See `docs/native_vector_resize.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
