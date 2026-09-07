@@ -421,6 +421,9 @@ until core engine semantics are reconstructed.
 - The full resize owner now has 432 graph cases and 1,600 exact replays over
   its 101-byte, 46-site body. Allocation, copy and deallocation remain explicit
   normal-return summaries. See `docs/native_vector_resize.md`.
+- The two free thunks and wrapper now have 736 graph cases and 1,472 exact
+  replays across 68 bytes and 24 sites. API, accessor and mapper responses
+  remain external. See `docs/native_heap_free_protocol.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
