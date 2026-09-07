@@ -424,6 +424,9 @@ until core engine semantics are reconstructed.
 - The two free thunks and wrapper now have 736 graph cases and 1,472 exact
   replays across 68 bytes and 24 sites. API, accessor and mapper responses
   remain external. See `docs/native_heap_free_protocol.md`.
+- Joined vector deallocation now executes its guard, free wrapper and return
+  tail in one state across 992 exact cases and 53 sites, with fresh ancestor
+  protection. See `docs/native_vector_deallocation_composition.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
