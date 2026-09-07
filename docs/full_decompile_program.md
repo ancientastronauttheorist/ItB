@@ -439,6 +439,9 @@ until core engine semantics are reconstructed.
 - The feature-enabled forward REP byte path has 1,120 graph cases and 1,344
   exact replays over 68 bytes and 23 sites, with explicit BT flag definedness.
   See `docs/native_rep_byte_copy.md`.
+- Small-vector growth now executes its complete normal child chain in 1,152
+  exact cases across 198 sites, including spare-capacity returns and correct
+  RET 4 cleanup. See `docs/native_small_vector_growth.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
