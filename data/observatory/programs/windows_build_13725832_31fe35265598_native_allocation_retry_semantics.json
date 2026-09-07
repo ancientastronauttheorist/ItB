@@ -1,0 +1,394 @@
+{
+  "analysis_kind": "pe_native_allocation_retry_semantics",
+  "body": {
+    "bytes": 51,
+    "entry_rva": "0x003574db",
+    "exclusive_end_rva": "0x0035750e",
+    "nodes": 20,
+    "points": [
+      {
+        "rva": "0x003574db",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x003574dc",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x003574de",
+        "sha256": "c296a7be78d6a32b06be234c1aef06d4f95a785cde128f7d63328de344932ff8",
+        "size": 2
+      },
+      {
+        "rva": "0x003574e0",
+        "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+        "size": 3
+      },
+      {
+        "rva": "0x003574e3",
+        "sha256": "8a4732f31aa2b887d5eb7140ac2a84caeed918ba87606ae3a8fe592fe1f680d8",
+        "size": 5
+      },
+      {
+        "rva": "0x003574e8",
+        "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+        "size": 1
+      },
+      {
+        "rva": "0x003574e9",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x003574eb",
+        "sha256": "98a1d97320f14c574690067bb38dc63be3a43585486e2c332ec6794b6f3c2d88",
+        "size": 2
+      },
+      {
+        "rva": "0x003574ed",
+        "sha256": "1c26ed310a40f547d9c969e62f74f8d7958e4ec39ab5cc42fcf9f3aa8b2aca82",
+        "size": 4
+      },
+      {
+        "rva": "0x003574f1",
+        "sha256": "22385441b9a81d8f8f35d17728263bf757d980dafe02b886cb4c0d4504501de5",
+        "size": 2
+      },
+      {
+        "rva": "0x003574f3",
+        "sha256": "2bd5d9e4d53bd35056ba8d9d19b54df8aa51b7198b09548b0b380583419e8580",
+        "size": 5
+      },
+      {
+        "rva": "0x003574f8",
+        "sha256": "4e48ab6b84301af8b8fa92c04373b79b5d6f0f37d207c775c98fbce001ff67fe",
+        "size": 2
+      },
+      {
+        "rva": "0x003574fa",
+        "sha256": "cb049991846620b1256eb40d5231f863b73d264d779a476c482c68f2ec0da72f",
+        "size": 5
+      },
+      {
+        "rva": "0x003574ff",
+        "sha256": "e2f9b4d1d362ada46920c5ba13c1702096533aa07bd0133903f72f0938dc627d",
+        "size": 3
+      },
+      {
+        "rva": "0x00357502",
+        "sha256": "74d5967491b4bd06987338b5456f09a0ecfc42d15c31480b4eec83d502caef39",
+        "size": 5
+      },
+      {
+        "rva": "0x00357507",
+        "sha256": "18f5384d58bcb1bba0bcd9e6a6781d1a6ac2cc280c330ecbab6cb7931b721552",
+        "size": 1
+      },
+      {
+        "rva": "0x00357508",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x0035750a",
+        "sha256": "94cf8568ef2b086b4d10b00a622fac36f78884f786fb4e4332e859a9482d063d",
+        "size": 2
+      },
+      {
+        "rva": "0x0035750c",
+        "sha256": "cfae0d4248f7142f7b17f826cd7a519280e312577690e957830d23dcf35a3fff",
+        "size": 1
+      },
+      {
+        "rva": "0x0035750d",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "452b4c981b0a2567c6f4fc35b20076deca45a6b3509707358212028d21db5bfa"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "incoming_edges": [
+    {
+      "instruction": {
+        "rva": "0x0008a94b",
+        "sha256": "3b2f1c636fef8a5e6131d3d66345dab5d837b0cbb46236d1ffa5fd1214c6b489",
+        "size": 5
+      },
+      "target_entry_rva": "0x003574db"
+    },
+    {
+      "instruction": {
+        "rva": "0x0008a963",
+        "sha256": "d28a50d8d774e8b72b76ee218f780a7f28e9012ef01ec9f511d248f2324b6067",
+        "size": 5
+      },
+      "target_entry_rva": "0x003574db"
+    }
+  ],
+  "matrix": {
+    "entry_stack_base": 805310464,
+    "frame_alignments": [
+      0,
+      1,
+      7,
+      15
+    ],
+    "maximum_responses": 64,
+    "profiles_per_request": 9,
+    "requests": [
+      0,
+      1,
+      8,
+      4088,
+      4131,
+      4294967291,
+      4294967295
+    ],
+    "seeds": [
+      0,
+      4294967295
+    ]
+  },
+  "model_evidence": {
+    "cases_sha256": "f23b51dcbff61f4194d4bf7c848c7f55c3a5ee875cf493b5d9273f19a2698959",
+    "instruction_union_rvas": [
+      "0x003574db",
+      "0x003574dc",
+      "0x003574de",
+      "0x003574e0",
+      "0x003574e3",
+      "0x003574e8",
+      "0x003574e9",
+      "0x003574eb",
+      "0x003574ed",
+      "0x003574f1",
+      "0x003574f3",
+      "0x003574f8",
+      "0x003574fa",
+      "0x003574ff",
+      "0x00357502",
+      "0x00357507",
+      "0x00357508",
+      "0x0035750a",
+      "0x0035750c",
+      "0x0035750d"
+    ],
+    "negative_controls": [
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_request_push",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_handler_test",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_minus_one_guard",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_retry_branch",
+        "rejected": true
+      },
+      {
+        "kind": "semantic_mutation",
+        "name": "wrong_cleanup_register",
+        "rejected": true
+      }
+    ],
+    "upstream_request_examples": [
+      {
+        "element_count": 1,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 8,
+        "request_modulo_eight": 0
+      },
+      {
+        "element_count": 2,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 16,
+        "request_modulo_eight": 0
+      },
+      {
+        "element_count": 511,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 4088,
+        "request_modulo_eight": 0
+      },
+      {
+        "element_count": 512,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 4131,
+        "request_modulo_eight": 3
+      },
+      {
+        "element_count": 513,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 4139,
+        "request_modulo_eight": 3
+      },
+      {
+        "element_count": 536870906,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 4294967283,
+        "request_modulo_eight": 3
+      },
+      {
+        "element_count": 536870907,
+        "minus_one_failure_excluded_under_stable_request": true,
+        "nonzero": true,
+        "not_minus_one": true,
+        "request": 4294967291,
+        "request_modulo_eight": 3
+      }
+    ]
+  },
+  "opaque_calls": [
+    {
+      "kind": "candidate",
+      "request_argument": true,
+      "site_rva": "0x00357502",
+      "target_rva": "0x00379f52"
+    },
+    {
+      "kind": "handler",
+      "request_argument": true,
+      "site_rva": "0x003574e3",
+      "target_rva": "0x0038bbc4"
+    },
+    {
+      "kind": "minus_one_failure",
+      "request_argument": false,
+      "site_rva": "0x003574f3",
+      "target_rva": "0x0035848f"
+    },
+    {
+      "kind": "failure",
+      "request_argument": false,
+      "site_rva": "0x003574fa",
+      "target_rva": "0x003435bc"
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "event_policy": "Instruction word accesses and CALL continuation writes are distinguished from opaque normal-return continuation reads; these reads do not execute a real callee",
+    "evidence_class": "conditional_exact_graph_model_with_independent_finite_retry_protocol",
+    "not_claimed": [
+      "Actual heap allocation, handler effects, exception behavior or failure-callee nonreturn",
+      "Preservation or valid pointer lifetime absent the explicit opaque summaries",
+      "API or game execution, allocation success, full resize behavior, whole owner equivalence or accounting promotion"
+    ],
+    "protocol_relation": "Try candidate first; zero candidate invokes handler with the same stable request; nonzero handler retries; zero handler selects one of two opaque failure calls by request equality to minus one; either failure retries if its supplied response returns normally",
+    "success_relation": "A nonzero candidate response returns with EAX that response, ECX the request, EDX its last sampled output, caller EBP restored and entry ESP advanced four",
+    "summary_premises": [
+      "Every supplied response is an opaque normal cdecl return with specified EAX and sampled ECX, EDX and arithmetic flags",
+      "All callees preserve EBP, EBX, ESI, EDI, the caller request word, saved EBP and caller continuation",
+      "Apart from the caller CALL continuation write, every opaque summary leaves every modeled memory word unchanged, including the pushed argument word later popped into ECX",
+      "Mapped stable disjoint frame words at the declared finite stack base and alignments; no asynchronous mutation or faults",
+      "CALL writes its continuation and the opaque normal-return summary reads that word and restores caller ESP without argument cleanup"
+    ],
+    "termination_policy": "At most sixty-four supplied responses; reject missing, unused or out-of-order records unless explicit frontier mode stops before the next unsupplied call; no universal termination claim",
+    "upstream_corollary": "Allocation-decision emitted requests are positive and below the maximum unsigned word; the minus-one failure arm is excluded only while the caller request remains stable"
+  },
+  "source_receipts": {
+    "allocation_semantics": {
+      "analysis_kind": "pe_native_lua_vector_allocation_semantics",
+      "canonical_sha256": "9081f912a66487224a7924c126fad24a38d8cbdb4f37cb69e3e45902074f805c"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "actual_callee_calls": 0,
+    "actual_native_executions": 0,
+    "cases": 504,
+    "frontier_cases": 280,
+    "modeled_nodes": 20,
+    "returned_cases": 224,
+    "static_bytes": 51,
+    "static_nodes": 20,
+    "summarized_calls": 1344
+  }
+}

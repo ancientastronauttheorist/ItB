@@ -1629,6 +1629,16 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Conditional allocation retry protocol
+
+`windows_build_13725832_31fe35265598_native_allocation_retry_semantics.json`
+records 504 finite protocol cases across the 51-byte/20-node wrapper.
+`windows_build_13725832_31fe35265598_native_allocation_retry_conformance.json`
+records 640 exact wrapper replays, 1,600 actual CALL instructions and zero
+callee instruction executions. Response transcripts and memory-preservation
+premises are explicit. See the
+[`retry protocol specification`](../../../docs/native_allocation_retry.md).
+
 ## Conditional allocation return tails
 
 `windows_build_13725832_31fe35265598_native_lua_vector_allocation_return_semantics.json`

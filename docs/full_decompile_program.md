@@ -399,6 +399,10 @@ until core engine semantics are reconstructed.
   exact x86 replays across 27 bytes/11 sites, with explicit metadata-storage
   and post-call frame premises. Allocation success remains unproved.
   See `docs/native_lua_vector_allocation_return.md`.
+- The allocation retry wrapper has a finite conditional protocol, 504 graph
+  cases and 640 exact x86 replays. Actual CALL instructions execute while
+  callees receive explicit host summaries; no callee instruction executes.
+  See `docs/native_allocation_retry.md` for termination and preservation premises.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
