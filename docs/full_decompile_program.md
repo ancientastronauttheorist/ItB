@@ -407,6 +407,10 @@ until core engine semantics are reconstructed.
   `HeapAlloc` import boundary through 1,440 graph cases and 1,776 exact x86
   replays. No CALL or runtime IAT dereference executes. See
   `docs/native_heap_allocation_handoff.md` for the narrower downstream size guard.
+- The full heap wrapper, candidate thunk and call-free retry-flag getter now
+  have a 39-site conditional protocol with 1,792 graph cases and 1,280 exact
+  replays. Imported allocation, handler and error-accessor effects remain
+  explicit premises. See `docs/native_heap_allocation_protocol.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six

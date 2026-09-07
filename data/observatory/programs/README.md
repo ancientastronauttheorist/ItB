@@ -1629,6 +1629,15 @@ sources and performs no new native/reference execution. See
 Canonical SHA-256: `a7c0b4544d1263bf6bcfcf9c2cae613eddd86b1367c1e9fb7d23d2075e545ebf`.
 Raw SHA-256: `f309f0703dd1598878d089e780e1c7a69b5fe7eb6d5379b695d5554c01bf36f1`.
 
+## Conditional heap wrapper protocol
+
+`windows_build_13725832_31fe35265598_native_heap_allocation_protocol.json`
+records 1,792 cases across the wrapper, thunk and exact retry-flag getter.
+`windows_build_13725832_31fe35265598_native_heap_allocation_protocol_conformance.json`
+records 1,280 exact replays with 2,080 external CALL instructions, 864 complete
+flag-getter calls and zero external callee instruction executions. See the
+[`heap protocol specification`](../../../docs/native_heap_allocation_protocol.md).
+
 ## Initial HeapAlloc handoff
 
 `windows_build_13725832_31fe35265598_native_heap_allocation_handoff.json`
