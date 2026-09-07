@@ -427,6 +427,9 @@ until core engine semantics are reconstructed.
 - Joined vector deallocation now executes its guard, free wrapper and return
   tail in one state across 992 exact cases and 53 sites, with fresh ancestor
   protection. See `docs/native_vector_deallocation_composition.md`.
+- Copy lengths below 32 now have 18,432 graph cases and 28,672 exact replays
+  over 171 bytes and 65 scalar sites, with overlap-safe snapshot semantics.
+  Larger feature paths remain open. See `docs/native_small_copy.md`.
   The adjacent class-initializer artifact closes the formerly separate
   `0x002eacf0` tranche without assigning source class or lifetime semantics. It
   seals 612 bytes and a 185-node / 191-edge CFG, joins all 20 direct and six
