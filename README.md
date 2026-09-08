@@ -10,8 +10,12 @@ Recent unlocks: **Miner Inconvenience** is confirmed from Cataclysm run `2026070
 
 Current milestone: **70/70 proven and Steam-client-cache confirmed. The achievement hunt is complete.** Future work can focus on maintenance, regressions, and making the live bot more robust rather than chasing another unlock.
 
-The [joined vector allocation proof](docs/native_vector_allocation_composition.md)
-now includes 2,576 integrated x86 replay cases through a supplied heap response.
+The [September 7 decompilation handoff](docs/decompile_handoff_2026_09_07.md)
+records the joined native vector append/return proof, tree insertion through
+node construction, predecessor traversal, and node attachment through its
+bounded black-parent return. Exact executable replay and independent reviews cover
+the stated bounded paths; balancing, hint dispatch and exception behavior
+remain active work.
 
 New long-term track: the [full-decompile program](docs/full_decompile_program.md)
 extends the existing build-keyed Engine Observatory into a measurable

@@ -17,6 +17,19 @@ pseudocode. Local analysis may use the owner's installed game and a private
 Ghidra project. Git stores tools, build identities, normalized facts, analyst
 claims, clean-room specifications, tests, and independently written code.
 
+## September 7 checkpoint
+
+The [September 7 handoff](decompile_handoff_2026_09_07.md) records 33 bounded
+implementation checkpoints after `4f5ff3d5`, ending at `20eb5ab4`. The latest
+native compositions cover [vector append and return](native_lua_class_vector_suffix.md)
+and [tree insertion through node construction](native_tree_insert_construction.md).
+Standalone [predecessor](native_tree_predecessor.md) and
+[attachment](native_tree_attachment.md) proofs close additional tree machinery.
+The [black-parent return](native_tree_attachment_return.md) is also joined.
+Red-parent balancing, hint dispatch, exception behavior and the
+complete class-owner composition remain open. These receipts do not promote
+whole-program accounting or establish complete decompilation.
+
 ## Canonical target
 
 The initial target is the currently installed Windows build:
