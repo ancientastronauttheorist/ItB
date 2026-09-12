@@ -50,3 +50,21 @@ The CLI supports build, verify and verify-structure with --program-facts and
 executable SHA. Errors, nonlocal exits, arbitrary iterator lengths, actual Lua
 heap effects and enclosing callback composition remain open. Accounting
 promotions are zero.
+
+## Actual callback mappings
+
+An optional caller mapping provides entry, return_address, all native registers
+and immutable stack_pages. The guard validates the full 48-byte live scratch
+interval, original return word, nonwrapping RET result and disjoint data pages.
+The callback return may share the helper's native code page while remaining
+outside its executed body; the runner maps that page once. Prefix length one
+is now available to the fixture, while the sealed corpus and model-contract
+digest retain their original prefixes zero and three.
+
+The original suite and [caller-mapping tests](../tests/test_itb_native_lua_table_transfer_caller_mapping.py)
+passed **46 tests in 15.15 seconds**, including a byte-identical rebuild of the
+original 320-case receipt and 16 isolated native caller cases. They exercise
+both callback frames, prefixes one/three, empty and each filtering path, retained
+rawgeti argument words and the local record above the callee frame. Complete
+mapped pages are checked. Independent review: **GO**. Lua-state continuity
+between the two calls and complete enclosing callback execution remain open.

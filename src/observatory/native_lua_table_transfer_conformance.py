@@ -105,13 +105,13 @@ def _model_contract():
     return json.loads(json.dumps(contract))
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     a, length = vector["alignment"], vector["prefix_length"]
     _require(
         type(a) is int
         and a in (0, 1, 7, 15)
         and type(length) is int
-        and length in (0, 3),
+        and length in (0, 1, 3),
         "invalid transfer frame geometry",
     )
     _require(
@@ -147,13 +147,135 @@ def _fixture(vector):
             put(literal + i, b, 1)
     for name, slot in SLOTS.items():
         put(BASE + slot, TARGETS[name])
-    return dict(
+    fixture = dict(
         entry=entry,
         registers=initial,
         pages={p: bytes(v) for p, v in pages.items()},
         endpoint=endpoint,
         relation=relation,
         iat_page=iat_page,
+    )
+    if caller is not None:
+        _require(
+            type(caller) is dict
+            and set(caller) == {"entry", "return_address", "registers", "stack_pages"},
+            "invalid transfer caller fields",
+        )
+        reserved = {
+            (BASE + START) & ~0xFFF,
+            IMPORT,
+            iat_page,
+            *{literal & ~0xFFF for literal in LITERALS},
+        }
+        supplied = caller["stack_pages"]
+        _require(
+            type(supplied) is dict and bool(supplied), "invalid transfer caller pages"
+        )
+        _require(
+            all(type(p) is int and p not in reserved for p in supplied),
+            "transfer caller pages alias reserved storage",
+        )
+        fixture.update(
+            entry=caller["entry"],
+            endpoint=caller["return_address"],
+            registers=(
+                dict(caller["registers"])
+                if type(caller["registers"]) is dict
+                else caller["registers"]
+            ),
+            pages={
+                **{
+                    p: v
+                    for p, v in fixture["pages"].items()
+                    if not STACK <= p < STACK + 0x4000
+                },
+                **supplied,
+            },
+        )
+    _check_fixture(vector, fixture)
+    return fixture
+
+
+def _check_fixture(vector, fixture):
+    entry, endpoint = fixture["entry"], fixture["endpoint"]
+    _require(type(entry) is int and 48 <= entry < 2**32 - 4, "invalid transfer entry")
+    _require(
+        type(endpoint) is int and 0 <= endpoint < 2**32, "invalid transfer endpoint"
+    )
+    _require(
+        not BASE + START <= endpoint < BASE + END and endpoint & ~0xFFF != IMPORT,
+        "transfer endpoint aliases executed code",
+    )
+    regs = fixture["registers"]
+    _require(
+        type(regs) is dict
+        and set(regs) == {"eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"}
+        and all(type(v) is int and 0 <= v < 2**32 for v in regs.values())
+        and regs["esp"] == entry
+        and regs["ecx"] != 0,
+        "invalid transfer caller registers",
+    )
+    pages = fixture["pages"]
+    _require(
+        type(pages) is dict
+        and all(
+            type(p) is int
+            and 0 <= p <= 2**32 - 4096
+            and p % 4096 == 0
+            and type(v) is bytes
+            and len(v) == 4096
+            for p, v in pages.items()
+        ),
+        "invalid transfer mapped pages",
+    )
+    execution = {(BASE + START) & ~0xFFF, endpoint & ~0xFFF, IMPORT}
+    _require(
+        not execution.intersection(pages), "transfer execution pages alias storage"
+    )
+    _require(
+        fixture["iat_page"] == (BASE + SLOTS["lua_next"]) & ~0xFFF,
+        "transfer IAT page differs",
+    )
+    reserved = {
+        *{(BASE + slot) & ~0xFFF for slot in SLOTS.values()},
+        *{literal & ~0xFFF for literal in LITERALS},
+    }
+    _require(
+        all(
+            a & ~0xFFF in pages and a & ~0xFFF not in reserved
+            for a in range(entry - 48, entry + 4)
+        ),
+        "transfer frame outside distinct mapped stack",
+    )
+
+    def raw(address, size):
+        _require(
+            all((address + i) & ~0xFFF in pages for i in range(size)),
+            "transfer read outside mapped storage",
+        )
+        return bytes(
+            pages[(address + i) & ~0xFFF][(address + i) & 0xFFF] for i in range(size)
+        )
+
+    _require(
+        int.from_bytes(raw(entry, 4), "little") == endpoint,
+        "transfer caller return word differs",
+    )
+    _require(
+        all(raw(a, len(v)) == v for a, v in LITERALS.items()),
+        "transfer mapped literal differs",
+    )
+    _require(
+        all(
+            int.from_bytes(raw(BASE + slot, 4), "little") == TARGETS[name]
+            for name, slot in SLOTS.items()
+        ),
+        "transfer mapped IAT differs",
+    )
+    _require(
+        fixture["relation"]
+        == model.transfer_requests(vector["kinds"], vector["prefix_length"]),
+        "transfer caller relation differs",
     )
 
 
@@ -171,6 +293,7 @@ def _response(vector, record, index):
 
 
 def _expected(vector, fixture):
+    _check_fixture(vector, fixture)
     entry = fixture["entry"]
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
@@ -307,18 +430,18 @@ def _expected(vector, fixture):
     )
 
 
-def _run_case(code, points, vector, negative=None):
+def _run_case(code, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     m = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
         m.mem_map(page, 4096)
         m.mem_write(page, payload)
-    for page in ((BASE + START) & ~0xFFF, RETURN, IMPORT):
+    for page in sorted({(BASE + START) & ~0xFFF, fixture["endpoint"] & ~0xFFF, IMPORT}):
         m.mem_map(page, 4096)
         m.mem_write(page, b"\xcc" * 4096)
     m.mem_write(BASE + START, code)

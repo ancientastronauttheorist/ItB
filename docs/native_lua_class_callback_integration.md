@@ -68,17 +68,18 @@ nested helpers still require their proven registration contracts.
 
 ## Work required before claiming composition
 
-1. Map helper entries, return addresses, caller registers and preserved ancestor
-   stack storage to these actual frames. Standalone fixture addresses are not
-   evidence that the composition preserves this caller.
+1. Compose helper entries, return addresses, caller registers and preserved ancestor
+   stack storage at these actual frames. The marker and table helpers now accept
+   checked caller mappings and have focused native cases at these continuations;
+   a single continuous callback execution is still required.
 2. Parameterize the class record address and contents. Existing class fixtures
    use a fixed record at 0x14000200; this caller supplies F-16 with first word
    zero. Its object pages must also retain the registry-reference fields and
    final word-zero data.
 3. Carry one abstract Lua stack across all calls. With one entry argument,
    the first table helper has prefix length one and the second length three.
-   The sealed table corpus covers prefixes zero and three, so the first
-   actual prefix needs explicit proof. Both transfers preserve their two
+   The sealed table corpus covers prefixes zero and three; separate actual-caller
+   tests now cover prefix one at the first continuation. Both transfers preserve their two
    values: four registry values remain above the entry prefix immediately
    before callback return. Result count zero lets the host handle the frame;
    the native callback does not pop those values itself.

@@ -140,7 +140,7 @@ def test_exact_native_return_and_all_protected_storage(cases):
         ("alignment", True),
         ("alignment", 2),
         ("alignment", -1),
-        ("prefix_length", 1),
+        ("prefix_length", 2),
         ("prefix_length", True),
         ("kinds", ()),
         ("kinds", ["other"] * 4),

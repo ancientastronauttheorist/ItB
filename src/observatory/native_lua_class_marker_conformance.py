@@ -65,7 +65,7 @@ def vectors():
     ]
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     a, length = vector["alignment"], vector["prefix_length"]
     _require(
         type(a) is int and 0 <= a < 16 and type(length) is int and length in (1, 3),
@@ -104,13 +104,149 @@ def _fixture(vector):
         put(LITERAL + i, b, 1)
     for slot, name in CALLS.values():
         put(BASE + slot, TARGETS[name])
-    return dict(
+    fixture = dict(
         entry=entry,
         registers=initial,
         pages={p: bytes(v) for p, v in pages.items()},
         endpoint=endpoint,
         relation=relation,
         iat_page=iat_page,
+    )
+
+    if caller is not None:
+        _require(
+            type(caller) is dict
+            and set(caller) == {"entry", "return_address", "registers", "stack_pages"},
+            "invalid marker caller mapping",
+        )
+        entry, endpoint = caller["entry"], caller["return_address"]
+        _require(
+            type(caller["stack_pages"]) is dict and caller["stack_pages"],
+            "invalid caller stack pages",
+        )
+        reserved = {LITERAL & ~0xFFF, iat_page, (BASE + START) & ~0xFFF, IMPORT}
+        _require(
+            type(endpoint) is int and 0 <= endpoint < 2**32,
+            "invalid marker return address",
+        )
+        reserved.add(endpoint & ~0xFFF)
+        for page, payload in caller["stack_pages"].items():
+            _require(
+                type(page) is int
+                and 0 <= page <= 2**32 - 4096
+                and page % 4096 == 0
+                and type(payload) is bytes
+                and len(payload) == 4096,
+                "invalid caller stack page",
+            )
+            _require(page not in reserved, "caller stack aliases reserved storage")
+        fixture.update(
+            entry=entry,
+            endpoint=endpoint,
+            registers=(
+                dict(caller["registers"])
+                if type(caller["registers"]) is dict
+                else caller["registers"]
+            ),
+            pages={
+                **{
+                    page: payload
+                    for page, payload in fixture["pages"].items()
+                    if not STACK <= page < STACK + 0x4000
+                },
+                **caller["stack_pages"],
+            },
+        )
+    _check_fixture(vector, fixture)
+    return fixture
+
+
+def _check_fixture(vector, fixture):
+    entry, endpoint = fixture["entry"], fixture["endpoint"]
+    _require(
+        type(entry) is int and 32 <= entry <= 2**32 - 5, "invalid marker entry address"
+    )
+    _require(
+        type(endpoint) is int and 0 <= endpoint < 2**32, "invalid marker return address"
+    )
+    registers = fixture["registers"]
+    _require(
+        type(registers) is dict
+        and set(registers) == {"eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"}
+        and all(type(v) is int and 0 <= v < 2**32 for v in registers.values()),
+        "invalid marker caller registers",
+    )
+    _require(
+        registers["esp"] == entry and registers["ecx"] != 0,
+        "marker caller entry registers differ",
+    )
+    pages = fixture["pages"]
+    _require(
+        type(pages) is dict
+        and all(
+            type(p) is int
+            and 0 <= p <= 2**32 - 4096
+            and p % 4096 == 0
+            and type(v) is bytes
+            and len(v) == 4096
+            for p, v in pages.items()
+        ),
+        "invalid marker mapped pages",
+    )
+    endpoints = {(BASE + START) & ~0xFFF, IMPORT, endpoint & ~0xFFF}
+    _require(
+        len(endpoints) == 3 and not endpoints.intersection(pages),
+        "marker execution pages alias storage",
+    )
+    _require(
+        all(address & ~0xFFF in pages for address in range(entry - 32, entry + 4)),
+        "marker frame outside mapped stack",
+    )
+
+    reserved_data = {
+        LITERAL & ~0xFFF,
+        *{(BASE + slot) & ~0xFFF for slot, _ in CALLS.values()},
+    }
+    _require(
+        all(
+            (address & ~0xFFF) not in reserved_data
+            for address in range(entry - 32, entry + 4)
+        ),
+        "marker frame aliases literal or import storage",
+    )
+
+    def raw(address, width=4):
+        _require(
+            all((address + i) & ~0xFFF in pages for i in range(width)),
+            "marker read outside mapped storage",
+        )
+        return bytes(
+            pages[(address + i) & ~0xFFF][(address + i) & 0xFFF] for i in range(width)
+        )
+
+    _require(
+        int.from_bytes(raw(entry), "little") == endpoint,
+        "marker caller return word differs",
+    )
+    _require(
+        raw(LITERAL, len(LITERAL_BYTES)) == LITERAL_BYTES,
+        "marker mapped literal differs",
+    )
+    _require(
+        all(
+            int.from_bytes(raw(BASE + slot), "little") == TARGETS[name]
+            for slot, name in CALLS.values()
+        ),
+        "marker mapped IAT differs",
+    )
+    _require(
+        fixture["relation"]
+        == semantics.marker_spec(
+            vector["has_metatable"],
+            semantics.lua_truth(vector["value_kind"]),
+            vector["final_void_eax"],
+        ),
+        "marker caller relation differs",
     )
 
 
@@ -131,6 +267,7 @@ def _response(vector, name, index):
 
 
 def _expected(vector, fixture):
+    _check_fixture(vector, fixture)
     entry = fixture["entry"]
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
@@ -278,18 +415,18 @@ def _stack_model(vector, fixture):
     return {p: bytes(v) for p, v in pages.items()}
 
 
-def _run_case(code, points, vector, negative=None):
+def _run_case(code, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     m = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
         m.mem_map(page, 4096)
         m.mem_write(page, payload)
-    for page in ((BASE + START) & ~0xFFF, RETURN, IMPORT):
+    for page in ((BASE + START) & ~0xFFF, fixture["endpoint"] & ~0xFFF, IMPORT):
         m.mem_map(page, 4096)
         m.mem_write(page, b"\xcc" * 4096)
     m.mem_write(BASE + START, code)

@@ -51,3 +51,20 @@ actual Lua heap effects, metamethod execution, errors/nonlocal exits, installed
 DLL equivalence and enclosing callers remain outside this proof. No accounting
 promotion occurs. The earlier [semantic specification](native_lua_class_marker_semantics.md)
 and upstream reference-runtime experiment retain their separate scopes.
+
+## Actual callback mappings
+
+The fixture now accepts an optional caller mapping with entry, return_address,
+all eight native registers and complete immutable stack_pages. It validates the
+live 32-byte callee scratch interval, original return word, disjoint native
+code/endpoint/import/literal storage, uint32 values and nonwrapping RET result.
+The native runner accepts the checked fixture and preserves the caller's full
+mapped ancestor storage. Default fixture values and the sealed corpus are unchanged.
+
+The [caller-mapping tests](../tests/test_itb_native_lua_class_marker_caller_mapping.py)
+passed **31 tests in 9.51 seconds**, including a byte-identical rebuild of the
+original 576-case receipt and nine isolated native cases. Those cases exercise
+both actual callback continuations, upvalue index -10003 and argument index one,
+all three marker paths, caller nonvolatile registers and a crossing-page frame.
+Independent review: **GO**. This is helper mapping evidence; it does not execute
+the enclosing callback or establish continuity of its Lua state.
