@@ -52,7 +52,10 @@ operation](native_lua_class_internal_spare_return_conformance.md) also returns
 after appending a complete aligned record already inside the vector. The
 [internal growth operation](native_lua_class_internal_growth_return_conformance.md)
 also preserves the argument index across reallocation and copies its record
-from the new buffer after the old buffer is freed. These receipts do not promote whole-program accounting or establish
+from the new buffer after the old buffer is freed. The [whole class byte-key
+proof](native_lua_class_byte_key_return_conformance.md) carries the longer string
+layouts through that complete operation. A [standalone logical
+model](native_lua_class_operation_semantics.md) joins tree transfer and append. These receipts do not promote whole-program accounting or establish
 complete decompilation.
 
 ## Canonical target
