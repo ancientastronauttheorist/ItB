@@ -140,7 +140,7 @@ def test_invalid_mapping_rejected(module, kind):
         options["object_base"] = STACK
         regs["ecx"] = STACK + 0x100
     elif kind == "old":
-        vector["has_old"] = True
+        vector.update(has_old=True, old_capacity=512, requested=513)
     elif kind == "pointer_low":
         vector["new_pointer"] = allocation.DATA - 1
     elif kind == "pointer_high":
@@ -189,3 +189,137 @@ def test_allocation_mapping_rejected(kind):
             buffers[1],
             stack_base=stack_base,
         )
+
+
+@pytest.mark.parametrize("module", [resize, growth])
+@pytest.mark.parametrize("size", [0, 1, 2, 3])
+def test_relocated_old_live_records_copy_and_successful_free(module, size):
+    vector, regs, buffers = fixture(module, 7)
+    vector.update(
+        has_old=True,
+        old_size=size,
+        old_capacity=size,
+        requested=max(size + 1, size + size // 2),
+    )
+    result = run(module, vector, regs, buffers)
+    g = result["geometry"]
+    wanted = bytearray(buffers[1])
+    a, b = g["new_begin"] - module.NEW, g["old_begin"] - module.OLD
+    wanted[a : a + size * 8] = buffers[2][b : b + size * 8]
+    assert result["new"] == bytes(wanted)
+    assert result["old"] == buffers[2]
+    assert result["registers"]["esp"] == regs["esp"] + 8
+    assert result["registers"]["edx"] == 0xB0000001
+    for register in ("ebx", "esi", "edi", "ebp"):
+        assert result["registers"][register] == regs[register]
+    free_calls = [
+        e
+        for e in result["events"]
+        if e["access"] == "read" and e["address"] == module.FREE_IAT
+    ]
+    assert len(free_calls) == 1
+    for i, value in enumerate(
+        (g["new_begin"], g["new_begin"] + 8 * size, g["new_capacity"])
+    ):
+        assert (
+            int.from_bytes(
+                result["object"][
+                    CONTEXT - OBJECT + 4 * i : CONTEXT - OBJECT + 4 * i + 4
+                ],
+                "little",
+            )
+            == value
+        )
+
+
+@pytest.mark.parametrize("module", [resize, growth])
+@pytest.mark.parametrize("kind", ["short_old", "old_stack_alias", "old_object_alias"])
+def test_relocated_old_mapping_guards(module, kind):
+    vector, regs, buffers = fixture(module)
+    vector.update(has_old=True, old_size=3, old_capacity=3, requested=4)
+    options = {}
+    if kind == "short_old":
+        buffers[2] = buffers[2][:0x110]
+    elif kind == "old_stack_alias":
+        options["stack_base"] = module.OLD
+        regs["esp"] = module.OLD + 0x1000
+    else:
+        options["object_base"] = module.OLD
+        regs["ecx"] = module.OLD + 0x100
+    with pytest.raises(RuntimeError):
+        run(module, vector, regs, buffers, **options)
+
+
+def free_fixture(joined=False):
+    from src.observatory import native_heap_free_protocol_conformance as free
+    from src.observatory import (
+        native_vector_deallocation_conformance_joined as joined_module,
+    )
+
+    module = joined_module if joined else free
+    _, regs, buffers = fixture(resize)
+    vector = dict(
+        pointer=resize.OLD + 0x100,
+        heap=0x12345678,
+        responses=[dict(kind="heap_free", eax=1)],
+    )
+    if joined:
+        vector.update(count=3, stride=8, metadata=None)
+    return module, vector, regs, buffers[0], bytes(4096)
+
+
+@pytest.mark.parametrize("joined", [False, True])
+@pytest.mark.parametrize("null", [False, True])
+def test_successful_free_actual_stack(joined, null):
+    module, vector, regs, stack, error = free_fixture(joined)
+    if null:
+        vector.update(pointer=0, responses=[])
+        if joined:
+            vector["count"] = 0
+    result = module._expected(vector, regs, stack, error, stack_base=STACK)
+    assert result["protocol"]["returned"]
+    assert result["error"] == error
+    assert result["registers"]["esp"] == regs["esp"] + 4
+    wanted = bytearray(stack)
+    for e in result["events"]:
+        if e["access"] == "write":
+            assert STACK <= e["address"] <= STACK + len(stack) - 4
+            at = e["address"] - STACK
+            wanted[at : at + 4] = e["value"].to_bytes(4, "little")
+    assert result["stack"] == bytes(wanted)
+    assert len(result["stack"]) == len(stack)
+
+
+@pytest.mark.parametrize("joined", [False, True])
+@pytest.mark.parametrize(
+    "kind",
+    ["bool", "wrap", "frame_low", "frame_high", "unfinished", "failure", "overlap"],
+)
+def test_free_mapping_guards(joined, kind):
+    module, vector, regs, stack, error = free_fixture(joined)
+    base = STACK
+    if kind == "bool":
+        base = True
+    elif kind == "wrap":
+        base = 2**32 - 1
+    elif kind == "frame_low":
+        regs["esp"] = STACK + 10
+    elif kind == "frame_high":
+        regs["esp"] = STACK + len(stack) - 4
+    elif kind == "unfinished":
+        vector["responses"] = []
+    elif kind == "failure":
+        vector["responses"] = [dict(kind="heap_free", eax=0)]
+    elif kind == "overlap":
+        base = module.ERROR_PAGE
+        regs["esp"] = base + 0x1000
+    with pytest.raises(RuntimeError):
+        module._expected(vector, regs, stack, error, stack_base=base)
+
+
+@pytest.mark.parametrize("address", [STACK + 0x100, allocation.DATA + 0x100])
+def test_relocated_deallocation_metadata_cannot_alias_writable_buffers(address):
+    module, vector, regs, stack, error = free_fixture(True)
+    vector.update(pointer=address, count=512, metadata=address - 32)
+    with pytest.raises(RuntimeError, match="metadata overlaps"):
+        module._expected(vector, regs, stack, error, stack_base=STACK)

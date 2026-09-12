@@ -208,15 +208,35 @@ def _expected(
     _require(
         all(a[1] <= b[0] for a, b in zip(spans, spans[1:])), "resize mappings overlap"
     )
-    _require(
-        not vector["has_old"]
-        or (
-            stack_base == STACK
-            and object_base == OBJECT
-            and "new_pointer" not in vector
-        ),
-        "relocated old storage unsupported",
-    )
+    relocated = stack_base != STACK or object_base != OBJECT or "new_pointer" in vector
+    if vector["has_old"]:
+        _require(
+            len(original_old) <= 2**32 - OLD
+            and OLD <= g["old_begin"] <= g["old_end"] <= OLD + len(original_old),
+            "old live storage outside mapped buffer",
+        )
+        old_span = (OLD, OLD + len(original_old))
+        _require(
+            all(old_span[1] <= a or b <= old_span[0] for a, b in spans),
+            "old storage overlaps resize mappings",
+        )
+        _require(
+            g["old_capacity"] <= OLD + len(original_old),
+            "old capacity outside mapped buffer",
+        )
+        _require(
+            g["old_metadata"] is None
+            or OLD <= g["old_metadata"]
+            and g["old_metadata"] + 4 <= OLD + len(original_old),
+            "old metadata outside mapped buffer",
+        )
+        if relocated:
+            _require(
+                vector["old_capacity"] <= 4
+                and vector["requested"] <= 4
+                and g["old_capacity"] <= OLD + len(original_old),
+                "relocated old storage outside small geometry",
+            )
     stack, new, old, objects = map(
         bytearray, (original_stack, original_new, original_old, original_object)
     )
@@ -316,7 +336,9 @@ def _expected(
             responses=[dict(kind="heap_free", eax=1)],
             heap=HEAP,
         )
-        freed = deallocator._expected(free_vector, regs, stack, new[:0x1000])
+        freed = deallocator._expected(
+            free_vector, regs, stack, new[:0x1000], stack_base=stack_base
+        )
         _require(
             freed["events"][-1]
             == dict(access="read", address=s - 36, width=4, value=RETURN),

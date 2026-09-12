@@ -62,8 +62,8 @@ its earlier tree-node allocations.
 
 Validation checks nonwrapping actual buffers, complete frame/object containment,
 separate storage and actual allocation-request containment. Relocated old-storage
-cases are explicitly rejected until the deallocation join supports that mapping;
-the current caller use is an initially null/empty vector.
+cases were initially rejected until the deallocation join supported that mapping.
+The first native caller proof covers an initially null/empty vector.
 
 Independent review: **GO**. Mapping tests: **43 passed**, covering actual base
 addresses, alignments, preserved storage, default equivalence and invalid/short
@@ -71,3 +71,22 @@ mappings. All three original exact CLI receipts rebuilt byte-for-byte unchanged,
 including the final allocation-buffer guard. These tests are oracle checks; the
 new native caller execution is established separately by the class composition.
 See [caller-mapping tests](../tests/test_itb_native_vector_caller_mapping.py).
+
+## Actual caller storage with a successful old-buffer free
+
+The HeapFree protocol and joined vector-deallocation oracles now also accept an
+explicit stack base. They validate actual frame bounds, nonwrapping buffers,
+error-page separation and metadata aliases. Relocated free contracts require a
+completed successful HeapFree response (or the null-pointer return); failure
+protocols retain their original fixture domain.
+
+Resize forwards the real stack base into deallocation. Relocated old buffers
+are admitted only for capacities/requests at most four records, with all live
+bytes, capacity and any metadata inside the actual old buffer. Old, new, object
+and stack buffers must remain disjoint. Successful free responses supply the
+known volatile register contract; this is not a claim about actual heap effects.
+
+Independent review: **GO**. The expanded mapping suite passed **77 tests**.
+The original HeapFree, joined deallocation, resize and growth exact CLI receipts
+all rebuilt byte-for-byte unchanged. Whole-class native old-buffer execution is
+a separate integration proof; these mapping tests check the ordered oracles.

@@ -104,17 +104,56 @@ def vectors():
     return result
 
 
-def _expected(vector, initial, original_stack, original_error):
+def _expected(vector, initial, original_stack, original_error, *, stack_base=STACK):
     p, n, k, m = [vector[key] for key in ("pointer", "count", "stride", "metadata")]
     g = guard_oracle.oracle(p, n, k, m)
     s = initial["esp"]
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(original_stack),
+        "invalid stack mapping",
+    )
+    _require(
+        type(s) is int
+        and stack_base <= s - 32
+        and s + 16 <= stack_base + len(original_stack),
+        "deallocation frame outside stack mapping",
+    )
+    _require(
+        len(original_error) <= 2**32 - ERROR_PAGE
+        and (
+            stack_base + len(original_stack) <= ERROR_PAGE
+            or ERROR_PAGE + len(original_error) <= stack_base
+        ),
+        "deallocation mappings overlap or wrap",
+    )
+    if stack_base != STACK:
+        _require(
+            g["free_argument"] is not None,
+            "relocated deallocation requires valid guard",
+        )
+        if g["metadata_read"]:
+            metadata_address = p - 4
+            _require(
+                0 <= metadata_address <= 2**32 - 4
+                and (
+                    metadata_address + 4 <= stack_base
+                    or stack_base + len(original_stack) <= metadata_address
+                )
+                and (
+                    metadata_address + 4 <= ERROR_PAGE
+                    or ERROR_PAGE + len(original_error) <= metadata_address
+                ),
+                "relocated metadata overlaps mapped buffers",
+            )
     stack = bytearray(original_stack)
     events = []
 
     def event(access, address, value):
         events.append(dict(access=access, address=address, width=4, value=value))
         if access == "write":
-            stack[address - STACK : address - STACK + 4] = value.to_bytes(4, "little")
+            stack[address - stack_base : address - stack_base + 4] = value.to_bytes(
+                4, "little"
+            )
 
     w = lambda a, v: event("write", a, v)
     r = lambda a, v: event("read", a, v)
@@ -152,7 +191,11 @@ def _expected(vector, initial, original_stack, original_error):
         pointer=g["free_argument"], heap=vector["heap"], responses=vector["responses"]
     )
     inner = free_oracle._expected(
-        inner_vector, dict(regs, esp=s - 12), stack, original_error
+        inner_vector,
+        dict(regs, esp=s - 12),
+        stack,
+        original_error,
+        stack_base=stack_base,
     )
     child_events = inner["events"]
     if inner["protocol"]["returned"]:

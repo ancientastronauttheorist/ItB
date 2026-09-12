@@ -148,9 +148,37 @@ def _volatile(index):
     )
 
 
-def _expected(vector, initial, stack, error):
+def _expected(vector, initial, stack, error, *, stack_base=STACK):
     relation = protocol_oracle(vector["pointer"], vector["responses"])
     entry = initial["esp"]
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(stack),
+        "invalid stack mapping",
+    )
+    _require(
+        type(entry) is int
+        and stack_base <= entry - 20
+        and entry + 8 <= stack_base + len(stack),
+        "free frame outside stack mapping",
+    )
+    _require(
+        len(error) <= 2**32 - ERROR_PAGE
+        and (
+            stack_base + len(stack) <= ERROR_PAGE
+            or ERROR_PAGE + len(error) <= stack_base
+        ),
+        "free mappings overlap or wrap",
+    )
+    if stack_base != STACK:
+        _require(
+            relation["returned"]
+            and (
+                vector["pointer"] == 0
+                or len(vector["responses"]) == 1
+                and vector["responses"][0]["eax"] != 0
+            ),
+            "relocated free requires successful HeapFree",
+        )
     frame = entry - 4
     pointer = vector["pointer"]
     memory = bytearray(stack)
@@ -162,9 +190,13 @@ def _expected(vector, initial, stack, error):
 
     def write(address, value):
         target, base = (
-            (memory, STACK)
-            if STACK <= address < STACK + 0x4000
+            (memory, stack_base)
+            if stack_base <= address < stack_base + len(memory)
             else (error_memory, ERROR_PAGE)
+        )
+        _require(
+            base <= address and address + 4 <= base + len(target),
+            "free write outside mapped buffer",
         )
         target[address - base : address - base + 4] = value.to_bytes(4, "little")
         events.append(dict(access="write", address=address, width=4, value=value))

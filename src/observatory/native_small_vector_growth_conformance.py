@@ -150,15 +150,47 @@ def _expected(
         and obj + 12 <= object_base + len(original_object),
         "growth object outside mapping",
     )
-    _require(
-        not vector["has_old"]
-        or (
-            stack_base == STACK
-            and object_base == OBJECT
-            and "new_pointer" not in vector
-        ),
-        "relocated old storage unsupported",
+    relocated = stack_base != STACK or object_base != OBJECT or "new_pointer" in vector
+    if relocated and vector["has_old"]:
+        _require(
+            vector["old_capacity"] <= 4 and vector["requested"] <= 4,
+            "relocated old storage outside small geometry",
+        )
+    spans = sorted(
+        (
+            (stack_base, stack_base + len(original_stack)),
+            (object_base, object_base + len(original_object)),
+            (NEW, NEW + len(original_new)),
+        )
     )
+    _require(
+        all(a[1] <= b[0] for a, b in zip(spans, spans[1:])), "growth mappings overlap"
+    )
+    if vector["has_old"]:
+        _require(
+            len(original_old) <= 2**32 - OLD
+            and OLD <= g["old_begin"] <= g["old_end"] <= OLD + len(original_old),
+            "old live storage outside mapped buffer",
+        )
+        _require(
+            all(OLD + len(original_old) <= a or b <= OLD for a, b in spans),
+            "old storage overlaps growth mappings",
+        )
+        _require(
+            g["old_capacity"] <= OLD + len(original_old),
+            "old capacity outside mapped buffer",
+        )
+        _require(
+            g["old_metadata"] is None
+            or OLD <= g["old_metadata"]
+            and g["old_metadata"] + 4 <= OLD + len(original_old),
+            "old metadata outside mapped buffer",
+        )
+        if relocated:
+            _require(
+                g["old_capacity"] <= OLD + len(original_old),
+                "old capacity outside mapped buffer",
+            )
     stack = bytearray(original_stack)
     events = []
 
