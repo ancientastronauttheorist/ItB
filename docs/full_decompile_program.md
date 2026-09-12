@@ -43,7 +43,9 @@ The [external spare-capacity class operation](native_lua_class_spare_return_conf
 then appends its argument record and reaches the real cookie-checked caller
 return. The [initially null-vector operation](native_lua_class_empty_vector_return_conformance.md)
 also executes the first allocation and append before returning. Nonempty vector
-growth, internal argument reuse and exceptional class behavior remain open. These receipts do not promote whole-program accounting or establish
+growth and exceptional class behavior remain open. The [internal spare-capacity
+operation](native_lua_class_internal_spare_return_conformance.md) also returns
+after appending a complete aligned record already inside the vector. These receipts do not promote whole-program accounting or establish
 complete decompilation.
 
 ## Canonical target
