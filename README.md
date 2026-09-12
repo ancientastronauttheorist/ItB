@@ -14,7 +14,8 @@ The September 11 decompilation pass now joins canonical red-black balancing,
 all lower-bound hint positions, and the [whole insertion owner](docs/native_tree_insert_return.md).
 The [class tree-copy loop](docs/native_lua_class_tree_conformance.md) executes
 repeated native insertions and successor traversal, including existing-key
-payload overwrites. The [external spare-capacity class operation](docs/native_lua_class_spare_return_conformance.md)
+payload overwrites. The [initially null-vector class operation](docs/native_lua_class_empty_vector_return_conformance.md)
+also executes its first allocation and append through the real caller return. The [external spare-capacity class operation](docs/native_lua_class_spare_return_conformance.md)
 now reaches its real caller return after vector append and cookie checking.
 Exact executable replay and independent models cover these finite domains;
 vector growth, other caller domains and exceptional behavior remain active work.

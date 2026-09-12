@@ -41,8 +41,9 @@ inserted and existing keys in a finite canonical corpus. The
 insertion and native successor calls with unconditional payload overwrite.
 The [external spare-capacity class operation](native_lua_class_spare_return_conformance.md)
 then appends its argument record and reaches the real cookie-checked caller
-return. Vector growth, internal argument reuse and exceptional class behavior
-remain open. These receipts do not promote whole-program accounting or establish
+return. The [initially null-vector operation](native_lua_class_empty_vector_return_conformance.md)
+also executes the first allocation and append before returning. Nonempty vector
+growth, internal argument reuse and exceptional class behavior remain open. These receipts do not promote whole-program accounting or establish
 complete decompilation.
 
 ## Canonical target
