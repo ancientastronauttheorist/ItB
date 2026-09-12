@@ -64,9 +64,29 @@ def successful_oracle(count, pointer):
     )
 
 
-def _expected(vector, initial, original_stack, original_data):
+def _expected(vector, initial, original_stack, original_data, *, stack_base=STACK):
     expected = successful_oracle(vector["count"], vector["pointer"])
+    _require(
+        expected["request"] is None
+        or vector["pointer"] + expected["request"] <= DATA + len(original_data),
+        "supplied allocation outside mapped buffer",
+    )
     entry = initial["esp"]
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(original_stack),
+        "invalid stack mapping",
+    )
+    _require(
+        type(entry) is int
+        and stack_base <= entry - 48
+        and entry + 8 <= stack_base + len(original_stack),
+        "allocation frame outside stack mapping",
+    )
+    _require(
+        stack_base + len(original_stack) <= DATA
+        or DATA + len(original_data) <= stack_base,
+        "allocation mappings overlap",
+    )
     stack = bytearray(original_stack)
     payload = bytearray(original_data)
     events = []
@@ -76,7 +96,9 @@ def _expected(vector, initial, original_stack, original_data):
 
     def write(address, value):
         target, base = (
-            (stack, STACK) if STACK <= address < STACK + 0x4000 else (payload, DATA)
+            (stack, stack_base)
+            if stack_base <= address < stack_base + len(stack)
+            else (payload, DATA)
         )
         target[address - base : address - base + 4] = value.to_bytes(4, "little")
         events.append(dict(access="write", address=address, width=4, value=value))

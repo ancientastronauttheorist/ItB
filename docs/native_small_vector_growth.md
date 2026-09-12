@@ -50,3 +50,24 @@ Canonical SHA-256:
 `b3f0dff73c7b9eeabc82fb9044782e2bf9829c3798c91d0868ae69c967706b92`.
 Raw SHA-256:
 `4741638fe6ba63f417a7497b404abbed02cb2e05c0f2903d17de29b9b65cf6af`.
+
+## Actual caller storage for an initially null vector
+
+The allocation, small-resize and small-growth ordered oracles accept an explicit
+stack base. Resize/growth also accept an object-buffer base, and geometry accepts
+an explicit fresh pointer within the existing allocation buffer. Defaults retain
+the original sealed fixture addresses. These mappings let the enclosing class
+call use its real stack, receiver fields and a new vector block separate from
+its earlier tree-node allocations.
+
+Validation checks nonwrapping actual buffers, complete frame/object containment,
+separate storage and actual allocation-request containment. Relocated old-storage
+cases are explicitly rejected until the deallocation join supports that mapping;
+the current caller use is an initially null/empty vector.
+
+Independent review: **GO**. Mapping tests: **43 passed**, covering actual base
+addresses, alignments, preserved storage, default equivalence and invalid/short
+mappings. All three original exact CLI receipts rebuilt byte-for-byte unchanged,
+including the final allocation-buffer guard. These tests are oracle checks; the
+new native caller execution is established separately by the class composition.
+See [caller-mapping tests](../tests/test_itb_native_vector_caller_mapping.py).

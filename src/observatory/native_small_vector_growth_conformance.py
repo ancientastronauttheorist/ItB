@@ -117,18 +117,57 @@ def frame_join(g):
 
 
 def _expected(
-    vector, initial, original_stack, original_new, original_old, original_object
+    vector,
+    initial,
+    original_stack,
+    original_new,
+    original_old,
+    original_object,
+    *,
+    stack_base=STACK,
+    object_base=OBJECT,
 ):
     g = geometry(vector)
     s = initial["esp"]
     obj = initial["ecx"]
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(original_stack),
+        "invalid stack mapping",
+    )
+    _require(
+        type(object_base) is int and 0 <= object_base <= 2**32 - len(original_object),
+        "invalid object mapping",
+    )
+    _require(
+        type(s) is int
+        and stack_base <= s - 96
+        and s + 8 <= stack_base + len(original_stack),
+        "growth frame outside stack mapping",
+    )
+    _require(
+        type(obj) is int
+        and object_base <= obj
+        and obj + 12 <= object_base + len(original_object),
+        "growth object outside mapping",
+    )
+    _require(
+        not vector["has_old"]
+        or (
+            stack_base == STACK
+            and object_base == OBJECT
+            and "new_pointer" not in vector
+        ),
+        "relocated old storage unsupported",
+    )
     stack = bytearray(original_stack)
     events = []
 
     def event(access, address, value):
         events.append(dict(access=access, address=address, width=4, value=value))
         if access == "write":
-            stack[address - STACK : address - STACK + 4] = value.to_bytes(4, "little")
+            stack[address - stack_base : address - stack_base + 4] = value.to_bytes(
+                4, "little"
+            )
 
     w = lambda a, v: event("write", a, v)
     r = lambda a, v: event("read", a, v)
@@ -170,7 +209,14 @@ def _expected(
         esp=s - 20,
     )
     child = resize._expected(
-        vector, regs, stack, original_new, original_old, original_object
+        vector,
+        regs,
+        stack,
+        original_new,
+        original_old,
+        original_object,
+        stack_base=stack_base,
+        object_base=object_base,
     )
     _require(
         child["events"][-1]

@@ -120,7 +120,11 @@ def geometry(vector):
         "invalid alignment",
     )
     _require(vector["has_old"] or size == cap == 0, "null old storage must be empty")
-    new_raw = NEW + 0x100 + vector["new_alignment"]
+    new_raw = vector.get("new_pointer", NEW + 0x100 + vector["new_alignment"])
+    try:
+        allocator.successful_oracle(n, new_raw)
+    except Exception as exc:
+        raise ConformanceError(str(exc)) from exc
     old_raw = OLD + 0x100 + vector["old_alignment"] if vector["has_old"] else 0
     old_begin = (
         32 * ((old_raw + 35) // 32) if vector["has_old"] and cap >= 512 else old_raw
@@ -161,11 +165,58 @@ def frame_join(s):
 
 
 def _expected(
-    vector, initial, original_stack, original_new, original_old, original_object
+    vector,
+    initial,
+    original_stack,
+    original_new,
+    original_old,
+    original_object,
+    *,
+    stack_base=STACK,
+    object_base=OBJECT,
 ):
     g = geometry(vector)
     s = initial["esp"]
     obj = initial["ecx"]
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(original_stack),
+        "invalid stack mapping",
+    )
+    _require(
+        type(object_base) is int and 0 <= object_base <= 2**32 - len(original_object),
+        "invalid object mapping",
+    )
+    _require(
+        type(s) is int
+        and stack_base <= s - 76
+        and s + 8 <= stack_base + len(original_stack),
+        "resize frame outside stack mapping",
+    )
+    _require(
+        type(obj) is int
+        and object_base <= obj
+        and obj + 12 <= object_base + len(original_object),
+        "resize object outside mapping",
+    )
+    spans = sorted(
+        (
+            (stack_base, stack_base + len(original_stack)),
+            (object_base, object_base + len(original_object)),
+            (NEW, NEW + len(original_new)),
+        )
+    )
+    _require(
+        all(a[1] <= b[0] for a, b in zip(spans, spans[1:])), "resize mappings overlap"
+    )
+    _require(
+        not vector["has_old"]
+        or (
+            stack_base == STACK
+            and object_base == OBJECT
+            and "new_pointer" not in vector
+        ),
+        "relocated old storage unsupported",
+    )
     stack, new, old, objects = map(
         bytearray, (original_stack, original_new, original_old, original_object)
     )
@@ -175,9 +226,13 @@ def _expected(
         events.append(dict(access=access, address=address, width=width, value=value))
         if access == "write":
             target, base = (
-                (stack, STACK)
-                if STACK <= address < STACK + 0x4000
-                else (new, NEW) if NEW <= address < NEW + 0x4000 else (objects, OBJECT)
+                (stack, stack_base)
+                if stack_base <= address < stack_base + len(stack)
+                else (
+                    (new, NEW)
+                    if NEW <= address < NEW + len(new)
+                    else (objects, object_base)
+                )
             )
             target[address - base : address - base + width] = value.to_bytes(
                 width, "little"
@@ -196,7 +251,11 @@ def _expected(
     w(s - 28, BASE + 0x2EB695)
     regs = dict(initial, ebp=s - 4, esp=s - 28, eax=vector["requested"], esi=obj)
     allocated = allocator._expected(
-        dict(count=vector["requested"], pointer=g["new_raw"]), regs, stack, new
+        dict(count=vector["requested"], pointer=g["new_raw"]),
+        regs,
+        stack,
+        new,
+        stack_base=stack_base,
     )
     _require(
         allocated["events"][-1]
