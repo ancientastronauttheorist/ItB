@@ -67,3 +67,17 @@ The CLI supports `build`, `verify` and `verify-structure` with `--program-facts`
 The vector append and whole owner return, assertion failure, aliased trees,
 allocation failure, actual heap implementation, exception delivery and arbitrary
 strings remain outside this prefix. Whole-program accounting promotions are zero.
+
+## Explicit byte-key encodings
+
+The ordered prefix oracle accepts an optional fixture `key_bytes` mapping.
+It must cover exactly the union of canonical source and destination keys, with
+uint32 keys and distinct NUL-free byte strings of at most 64 bytes in strictly
+increasing unsigned lexicographic order. Child node/query byte arrays come from
+this checked mapping, retaining the independent numeric tree topology model.
+Default fixtures still use eight hexadecimal bytes per key.
+
+Independent review: **GO**. Mapping tests: **22 passed**. The original 192-case
+prefix exact CLI receipt rebuilt byte-for-byte unchanged. Native execution with
+relocated, longer source strings is established in the separate whole-class
+byte-key return proof.

@@ -201,7 +201,40 @@ def _fixture(vector):
     return fixture
 
 
+def _checked_key_bytes(fixture):
+    keys = [
+        node["key"]
+        for state in ("source_state", "destination_state")
+        for node in fixture[state]["tree"]["nodes"]
+    ]
+    _require(
+        all(type(k) is int and 0 <= k < 2**32 for k in keys),
+        "invalid canonical class key",
+    )
+    domain = sorted(set(keys))
+    mapping = fixture.get("key_bytes", {key: f"{key:08x}".encode() for key in domain})
+    _require(
+        type(mapping) is dict
+        and all(type(k) is int and 0 <= k < 2**32 for k in mapping)
+        and set(mapping) == set(domain),
+        "class byte-key domain differs",
+    )
+    _require(
+        all(
+            type(value) is bytes and len(value) <= 64 and b"\0" not in value
+            for value in mapping.values()
+        ),
+        "invalid class byte key",
+    )
+    ordered = [mapping[key] for key in domain]
+    _require(
+        all(a < b for a, b in zip(ordered, ordered[1:])), "class byte-key order differs"
+    )
+    return dict(mapping)
+
+
 def _expected(vector, fixture):
+    key_bytes = _checked_key_bytes(fixture)
     entry = fixture["stack"]
     frame = entry - 4
     initial = fixture["registers"]
@@ -279,14 +312,14 @@ def _expected(vector, fixture):
         cv = dict(
             nodes=[
                 dict(
-                    key=list(f'{node["key"]:08x}'.encode()),
+                    key=list(key_bytes[node["key"]]),
                     left=node["left"],
                     right=node["right"],
                 )
                 for node in destination["nodes"]
             ],
             root=destination["root"],
-            query=list(f"{key:08x}".encode()),
+            query=list(key_bytes[key]),
             frame_alignment=vector["frame_alignment"],
             nil_flag=vector["nil_flag"],
             seed=7,
