@@ -10,16 +10,16 @@ Recent unlocks: **Miner Inconvenience** is confirmed from Cataclysm run `2026070
 
 Current milestone: **70/70 proven and Steam-client-cache confirmed. The achievement hunt is complete.** Future work can focus on maintenance, regressions, and making the live bot more robust rather than chasing another unlock.
 
-The September 11 decompilation pass now joins
-[canonical red-black balancing](docs/native_tree_balancing_conformance.md) and
-[empty](docs/native_tree_empty_hint.md),
-[minimum/end](docs/native_tree_extreme_hint.md), and
-[interior lower-bound hints](docs/native_tree_interior_hint.md) through normal
-return. Exact executable replay covers predecessor traversal, both attachment
-choices, recoloring and rotations. The enclosing insertion owner and exception
-behavior remain active work. The [September 7 handoff](docs/decompile_handoff_2026_09_07.md)
-records the preceding construction and vector work. These are bounded proofs;
-whole-game reconstruction remains unfinished.
+The September 11 decompilation pass now joins canonical red-black balancing,
+all lower-bound hint positions, and the [whole insertion owner](docs/native_tree_insert_return.md).
+The [class tree-copy loop](docs/native_lua_class_tree_conformance.md) executes
+repeated native insertions and successor traversal, including existing-key
+payload overwrites. The [external spare-capacity class operation](docs/native_lua_class_spare_return_conformance.md)
+now reaches its real caller return after vector append and cookie checking.
+Exact executable replay and independent models cover these finite domains;
+vector growth, other caller domains and exceptional behavior remain active work.
+The [September 7 handoff](docs/decompile_handoff_2026_09_07.md) records the preceding
+construction and vector work. Whole-game reconstruction remains unfinished.
 
 New long-term track: the [full-decompile program](docs/full_decompile_program.md)
 extends the existing build-keyed Engine Observatory into a measurable

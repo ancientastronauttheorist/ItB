@@ -34,9 +34,16 @@ attachment/balancing through ordinary exception-registration restoration and
 cookie return. Interior hints include both comparisons and the actual
 predecessor call, with both possible attachment choices. Arbitrary hints,
 equality dispatch inside the hint helper, successor-side dispatch, allocation
-failure and exception delivery remain outside these proofs. The enclosing
-insertion owner and complete class-owner composition remain open. These receipts
-do not promote whole-program accounting or establish complete decompilation.
+failure and exception delivery remain outside these proofs. The
+[whole insertion owner](native_tree_insert_return.md) also returns normally for
+inserted and existing keys in a finite canonical corpus. The
+[class tree-copy prefix](native_lua_class_tree_conformance.md) composes repeated
+insertion and native successor calls with unconditional payload overwrite.
+The [external spare-capacity class operation](native_lua_class_spare_return_conformance.md)
+then appends its argument record and reaches the real cookie-checked caller
+return. Vector growth, internal argument reuse and exceptional class behavior
+remain open. These receipts do not promote whole-program accounting or establish
+complete decompilation.
 
 ## Canonical target
 
