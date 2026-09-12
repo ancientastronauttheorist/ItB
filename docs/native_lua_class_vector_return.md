@@ -45,3 +45,16 @@ Canonical SHA-256:
 `29a519177fe92e7233cd81556f2b1ab6c3b08cb8136fc5463064d6c48805c060`.
 Raw SHA-256:
 `e895c0cf6db9790b6759342660d243c5ac74faf8d4bc4f3a2bdd01bc53bd9c9c`.
+
+## Caller relocation
+
+The return relation accepts an explicit `return_address` and the ordered oracle
+accepts `stack_base`; both default to the original sealed fixture values. The
+stack mapping must contain the complete accessed frame without wrapping. This
+lets the enclosing class proof supply its actual stack and caller continuation.
+The mismatch endpoint remains the original failure boundary.
+
+Focused default/relocated oracle tests and the original return suite passed
+**30 tests**, including byte-identical rebuilding of the existing exact receipt.
+Independent review: **GO**. Relocated native execution belongs to the enclosing
+class composition; the interface change alone adds no native coverage.

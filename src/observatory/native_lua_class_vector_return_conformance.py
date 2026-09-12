@@ -60,11 +60,15 @@ def vectors():
     ]
 
 
-def return_spec(frame, cookie, current):
+def return_spec(frame, cookie, current, *, return_address=RETURN):
     _require(type(frame) is int and 32 <= frame < 2**32 - 12, "invalid frame")
     _require(
         all(type(v) is int and 0 <= v < 2**32 for v in (cookie, current)),
         "invalid cookie word",
+    )
+    _require(
+        type(return_address) is int and 0 <= return_address < 2**32,
+        "invalid return address",
     )
     equal = cookie == current
     return dict(
@@ -74,7 +78,7 @@ def return_spec(frame, cookie, current):
         checker_entry=frame - 24,
         continuation=CONTINUATION,
         final_esp=frame + 12 if equal else frame - 24,
-        endpoint=RETURN if equal else ESCAPE,
+        endpoint=return_address if equal else ESCAPE,
         flags=_sub_flags(cookie, current),
         flag_mask=0x8D5,
     )
@@ -136,12 +140,23 @@ def _expected(fixture):
     saved = fixture["saved"]
     regs = dict(fixture["registers"])
     stack = bytearray(fixture["stack"])
+    stack_base = fixture.get("stack_base", STACK)
+    _require(
+        type(stack_base) is int and 0 <= stack_base <= 2**32 - len(stack),
+        "invalid stack mapping",
+    )
+    _require(
+        stack_base <= f - 32 and f + 8 <= stack_base + len(stack),
+        "return frame outside stack mapping",
+    )
     events = []
 
     def event(access, address, value):
         events.append(dict(access=access, address=address, width=4, value=value))
         if access == "write":
-            stack[address - STACK : address - STACK + 4] = value.to_bytes(4, "little")
+            stack[address - stack_base : address - stack_base + 4] = value.to_bytes(
+                4, "little"
+            )
 
     r = lambda a, v: event("read", a, v)
     r(f - 4, fixture["cookie"] ^ f)
@@ -159,7 +174,7 @@ def _expected(fixture):
     if rel["equal"]:
         r(f - 24, CONTINUATION)
         r(f, saved["ebp"])
-        r(f + 4, RETURN)
+        r(f + 4, rel["endpoint"])
         regs["ebp"] = saved["ebp"]
     return dict(registers=regs, stack=bytes(stack), events=events, flags=rel["flags"])
 
