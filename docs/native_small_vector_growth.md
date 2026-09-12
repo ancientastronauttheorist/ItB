@@ -90,3 +90,23 @@ Independent review: **GO**. The expanded mapping suite passed **77 tests**.
 The original HeapFree, joined deallocation, resize and growth exact CLI receipts
 all rebuilt byte-for-byte unchanged. Whole-class native old-buffer execution is
 a separate integration proof; these mapping tests check the ordered oracles.
+
+## Actual old-buffer addresses for internal argument relocation
+
+Resize geometry accepts an explicit non-null `old_pointer` for the small
+capacity domain. Resize/growth oracles accept `old_base`, defaulting to the
+original old-buffer base, and use it for all live-copy indices, bounds and final
+snapshot checks. Explicit pointer plus capacity must fit DWORD pointer fields;
+wrapping endpoints and malformed/null explicit pointers are rejected. The
+whole old buffer remains disjoint from new storage, object storage and stack.
+
+This lets a class argument live inside old vector storage on its existing
+source metadata page, with the actual live vector interval kept separate from
+the source object and head. The native deallocation oracle still consumes the
+absolute old begin pointer. Old-page preservation is part of the supplied
+successful HeapFree contract; real heap behavior remains outside this model.
+
+Independent review: **GO**. The new old-buffer mapping tests plus existing
+caller tests passed **130 tests**. Both original resize and growth exact CLI
+receipts rebuilt byte-for-byte unchanged. Internal class reallocation is
+verified separately by its native composition.

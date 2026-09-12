@@ -126,6 +126,7 @@ def _expected(
     *,
     stack_base=STACK,
     object_base=OBJECT,
+    old_base=OLD,
 ):
     g = geometry(vector)
     s = initial["esp"]
@@ -150,7 +151,17 @@ def _expected(
         and obj + 12 <= object_base + len(original_object),
         "growth object outside mapping",
     )
-    relocated = stack_base != STACK or object_base != OBJECT or "new_pointer" in vector
+    _require(
+        type(old_base) is int and 0 <= old_base <= 2**32 - len(original_old),
+        "invalid old buffer mapping",
+    )
+    relocated = (
+        stack_base != STACK
+        or object_base != OBJECT
+        or old_base != OLD
+        or "new_pointer" in vector
+        or "old_pointer" in vector
+    )
     if relocated and vector["has_old"]:
         _require(
             vector["old_capacity"] <= 4 and vector["requested"] <= 4,
@@ -168,27 +179,30 @@ def _expected(
     )
     if vector["has_old"]:
         _require(
-            len(original_old) <= 2**32 - OLD
-            and OLD <= g["old_begin"] <= g["old_end"] <= OLD + len(original_old),
+            len(original_old) <= 2**32 - old_base
+            and old_base
+            <= g["old_begin"]
+            <= g["old_end"]
+            <= old_base + len(original_old),
             "old live storage outside mapped buffer",
         )
         _require(
-            all(OLD + len(original_old) <= a or b <= OLD for a, b in spans),
+            all(old_base + len(original_old) <= a or b <= old_base for a, b in spans),
             "old storage overlaps growth mappings",
         )
         _require(
-            g["old_capacity"] <= OLD + len(original_old),
+            g["old_capacity"] <= old_base + len(original_old),
             "old capacity outside mapped buffer",
         )
         _require(
             g["old_metadata"] is None
-            or OLD <= g["old_metadata"]
-            and g["old_metadata"] + 4 <= OLD + len(original_old),
+            or old_base <= g["old_metadata"]
+            and g["old_metadata"] + 4 <= old_base + len(original_old),
             "old metadata outside mapped buffer",
         )
         if relocated:
             _require(
-                g["old_capacity"] <= OLD + len(original_old),
+                g["old_capacity"] <= old_base + len(original_old),
                 "old capacity outside mapped buffer",
             )
     stack = bytearray(original_stack)
@@ -249,6 +263,7 @@ def _expected(
         original_object,
         stack_base=stack_base,
         object_base=object_base,
+        old_base=old_base,
     )
     _require(
         child["events"][-1]

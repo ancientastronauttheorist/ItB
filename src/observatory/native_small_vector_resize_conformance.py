@@ -126,6 +126,15 @@ def geometry(vector):
     except Exception as exc:
         raise ConformanceError(str(exc)) from exc
     old_raw = OLD + 0x100 + vector["old_alignment"] if vector["has_old"] else 0
+    if "old_pointer" in vector:
+        old_raw = vector["old_pointer"]
+        _require(
+            vector["has_old"]
+            and cap <= 4
+            and type(old_raw) is int
+            and 0 < old_raw <= 0xFFFFFFFF - 8 * cap,
+            "invalid explicit old pointer",
+        )
     old_begin = (
         32 * ((old_raw + 35) // 32) if vector["has_old"] and cap >= 512 else old_raw
     )
@@ -174,6 +183,7 @@ def _expected(
     *,
     stack_base=STACK,
     object_base=OBJECT,
+    old_base=OLD,
 ):
     g = geometry(vector)
     s = initial["esp"]
@@ -208,33 +218,46 @@ def _expected(
     _require(
         all(a[1] <= b[0] for a, b in zip(spans, spans[1:])), "resize mappings overlap"
     )
-    relocated = stack_base != STACK or object_base != OBJECT or "new_pointer" in vector
+    _require(
+        type(old_base) is int and 0 <= old_base <= 2**32 - len(original_old),
+        "invalid old buffer mapping",
+    )
+    relocated = (
+        stack_base != STACK
+        or object_base != OBJECT
+        or old_base != OLD
+        or "new_pointer" in vector
+        or "old_pointer" in vector
+    )
     if vector["has_old"]:
         _require(
-            len(original_old) <= 2**32 - OLD
-            and OLD <= g["old_begin"] <= g["old_end"] <= OLD + len(original_old),
+            len(original_old) <= 2**32 - old_base
+            and old_base
+            <= g["old_begin"]
+            <= g["old_end"]
+            <= old_base + len(original_old),
             "old live storage outside mapped buffer",
         )
-        old_span = (OLD, OLD + len(original_old))
+        old_span = (old_base, old_base + len(original_old))
         _require(
             all(old_span[1] <= a or b <= old_span[0] for a, b in spans),
             "old storage overlaps resize mappings",
         )
         _require(
-            g["old_capacity"] <= OLD + len(original_old),
+            g["old_capacity"] <= old_base + len(original_old),
             "old capacity outside mapped buffer",
         )
         _require(
             g["old_metadata"] is None
-            or OLD <= g["old_metadata"]
-            and g["old_metadata"] + 4 <= OLD + len(original_old),
+            or old_base <= g["old_metadata"]
+            and g["old_metadata"] + 4 <= old_base + len(original_old),
             "old metadata outside mapped buffer",
         )
         if relocated:
             _require(
                 vector["old_capacity"] <= 4
                 and vector["requested"] <= 4
-                and g["old_capacity"] <= OLD + len(original_old),
+                and g["old_capacity"] <= old_base + len(original_old),
                 "relocated old storage outside small geometry",
             )
     stack, new, old, objects = map(
@@ -302,7 +325,7 @@ def _expected(
     r(s - 32, g["new_begin"])
     last_word = 0
     for offset in range(0, g["copy_bytes"], 4):
-        at = g["old_begin"] - OLD + offset
+        at = g["old_begin"] - old_base + offset
         last_word = int.from_bytes(old[at : at + 4], "little")
         r(g["old_begin"] + offset, last_word)
         w(g["new_begin"] + offset, last_word)
@@ -377,7 +400,7 @@ def _expected(
     _require(
         (
             new[g["new_begin"] - NEW : g["new_end"] - NEW]
-            == old[g["old_begin"] - OLD : g["old_end"] - OLD]
+            == old[g["old_begin"] - old_base : g["old_end"] - old_base]
             if g["copy_bytes"]
             else True
         ),
