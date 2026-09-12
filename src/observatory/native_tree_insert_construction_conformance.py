@@ -182,11 +182,29 @@ def _factory_expected(vector, fixture):
 
 
 def _expected(vector, fixture):
+    mapping = leaf_replay.caller_mapping(vector, fixture)
     result = decision._expected(vector, fixture)
     if not result["allocate"]:
         return result
     o = fixture["stack"]
     p = fixture["node"]
+    _require(
+        type(p) is int and DATA <= p <= DATA + 0x4000 - 24,
+        "fresh allocation outside supplied data storage",
+    )
+    protected = [
+        (o - 148, o + 12),
+        (leaf.TREE, leaf.TREE + 8),
+        (leaf.HEAD, leaf.HEAD + 24),
+        (mapping["query_argument"], mapping["query_argument"] + 4),
+        (fixture.get("output", OUTPUT), fixture.get("output", OUTPUT) + 8),
+    ]
+    protected.extend((a, a + 24) for a in mapping["addresses"])
+    protected.extend((a, a + width) for a, width in mapping["read_ranges"])
+    _require(
+        all(p + 24 <= a or b <= p for a, b in protected),
+        "fresh allocation overlaps protected caller storage",
+    )
     n = o - 36
     pages = {p: bytearray(v) for p, v in result["pages"].items()}
     events = list(result["events"])
@@ -201,13 +219,13 @@ def _expected(vector, fixture):
     stack = b"".join(bytes(pages[STACK + i * 0x1000]) for i in range(2))
     data = b"".join(bytes(pages[DATA + i * 0x1000]) for i in range(4))
     child = _factory_expected(
-        dict(head=leaf.HEAD, key=leaf.QUERY),
+        dict(head=leaf.HEAD, key=mapping["query_pointer"]),
         dict(
             n=n,
             p=p,
             t=leaf.TREE,
             a=o - 8,
-            k=leaf.ARG,
+            k=mapping["query_argument"],
             registers=dict(result["registers"], esp=n),
             stack=stack,
             data=data,
@@ -231,7 +249,7 @@ def _expected(vector, fixture):
     for address, value in (
         (o - 24, p),
         (o - 28, p + 16),
-        (o - 32, leaf_replay._node(result["candidate"])),
+        (o - 32, leaf_replay._node(result["candidate"], mapping["addresses"])),
         (o - 36, o - 8),
     ):
         event("write", address, value)

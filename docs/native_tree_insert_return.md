@@ -64,3 +64,20 @@ This closes the finite canonical normal-return corpus, not all trees or
 exceptional behavior. Allocation failure, arbitrary hints, fallback dispatch,
 actual heap effects, Windows exception delivery, and the enclosing class-owner
 composition remain separate. Whole-program accounting promotions remain zero.
+
+## Explicit enclosing-caller mappings
+
+Insertion's lower-bound, decision, construction and final-return oracles accept
+caller-provided node addresses, key pointers, query-field address, query pointer
+and outer result-pair storage. Defaults retain the original synthetic fixture.
+This supports heterogeneous destination nodes and strings retained from source
+entries during the enclosing class loop, without global replacements.
+
+Mapping validation checks nonwrapping mapped storage, separate node records,
+protected output placement and a fresh allocation disjoint from live ancestors,
+existing records, output and source strings. Focused validation passed **19 tests**,
+including four isolated native cases with actual relocated pointers and a
+caller-local pair. All four existing exact receipts rebuilt byte-for-byte
+unchanged, including the final lower-bound metadata revision. Primary review:
+**GO**. These explicit mappings add caller flexibility, not broader claims about
+arbitrary aliasing or actual heap behavior.

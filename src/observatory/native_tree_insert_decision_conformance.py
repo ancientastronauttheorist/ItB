@@ -88,7 +88,41 @@ def _fixture(vector):
     return f
 
 
+def caller_output(fixture, mapping):
+    """Permit a caller-owned result pair outside the insertion's live frame."""
+    output = fixture.get("output", OUTPUT)
+    _require(type(output) is int and 0 <= output <= 2**32 - 8, "invalid caller output")
+    pages = fixture["pages"]
+    _require(
+        all(
+            ((output + j) & ~0xFFF) in pages
+            and len(pages[(output + j) & ~0xFFF]) > ((output + j) & 0xFFF)
+            for j in range(8)
+        ),
+        "unmapped caller output",
+    )
+    o = fixture["stack"]
+    protected = [
+        (max(0, o - 148), o + 12),
+        (leaf.TREE, leaf.TREE + 8),
+        (leaf.HEAD, leaf.HEAD + 24),
+        (mapping["query_argument"], mapping["query_argument"] + 4),
+    ]
+    protected.extend((a, a + 24) for a in mapping["addresses"])
+    protected.extend((a, a + width) for a, width in mapping["read_ranges"])
+    if "node" in fixture:
+        protected.append((fixture["node"], fixture["node"] + 24))
+    _require(
+        all(output + 8 <= a or b <= output for a, b in protected),
+        "caller output overlaps live storage",
+    )
+    return output
+
+
 def _expected(vector, fixture):
+    mapping = leaf_replay.caller_mapping(vector, fixture)
+    output = caller_output(fixture, mapping)
+    query_pointer = mapping["query_pointer"]
     o = fixture["stack"]
     initial = fixture["registers"]
     qarg = fixture["query_argument"]
@@ -113,16 +147,19 @@ def _expected(vector, fixture):
         w(o + offset, initial[reg])
     r(o + 8, qarg)
     w(o - 24, qarg)
-    r(o + 4, OUTPUT)
+    r(o + 4, output)
     w(o - 28, CONTINUATION)
-    child_initial = dict(initial, ebp=o - 4, ebx=leaf.TREE, edi=OUTPUT, esp=o - 28)
+    child_initial = dict(initial, ebp=o - 4, ebx=leaf.TREE, edi=output, esp=o - 28)
     child = leaf_replay.oracle(
-        vector, dict(registers=child_initial, stack=o - 28, return_address=CONTINUATION)
+        vector,
+        dict(
+            fixture, registers=child_initial, stack=o - 28, return_address=CONTINUATION
+        ),
     )
     for e in child["events"]:
         event(e["access"], e["address"], e["value"], e["width"])
     regs = dict(child["registers"])
-    candidate = leaf_replay._node(child["candidate"])
+    candidate = leaf_replay._node(child["candidate"], mapping["addresses"])
     regs["esi"] = candidate
     r(leaf.TREE, leaf.HEAD)
     allocate = candidate == leaf.HEAD
@@ -132,15 +169,15 @@ def _expected(vector, fixture):
     if not allocate:
         key = bytes(vector["nodes"][child["candidate"]]["key"])
         query = bytes(vector["query"])
-        key_address = leaf.KEYS + 256 * child["candidate"]
+        key_address = mapping["key_pointers"][child["candidate"]]
         r(o + 8, qarg)
         r(candidate + 16, key_address)
-        r(qarg, leaf.QUERY)
+        r(qarg, query_pointer)
         match = 0
         while match < len(query) and match < len(key) and query[match] == key[match]:
             match += 1
         for i in range(match + 1):
-            event("read", leaf.QUERY + i, query[i] if i < len(query) else 0, 1)
+            event("read", query_pointer + i, query[i] if i < len(query) else 0, 1)
             event("read", key_address + i, key[i] if i < len(key) else 0, 1)
         classification = -1 if query < key else 1 if query > key else 0
         _require(
@@ -166,13 +203,13 @@ def _expected(vector, fixture):
         regs.update(eax=o - 8, ecx=leaf.TREE, esp=o - 32)
         endpoint = BASE + STOP
     else:
-        w(OUTPUT, candidate)
-        event("write", OUTPUT + 4, 0, 1)
+        w(output, candidate)
+        event("write", output + 4, 0, 1)
         for offset, reg in ((-20, "edi"), (-16, "esi"), (-12, "ebx"), (-4, "ebp")):
             r(o + offset, initial[reg])
         r(o, fixture["return_address"])
         regs.update(
-            eax=OUTPUT,
+            eax=output,
             ebx=initial["ebx"],
             esi=initial["esi"],
             edi=initial["edi"],

@@ -51,11 +51,76 @@ def vectors():
     ]
 
 
-def _node(i):
-    return HEAD if i is None else NODES + 64 * i
+def _node(i, addresses=None):
+    return HEAD if i is None else NODES + 64 * i if addresses is None else addresses[i]
+
+
+def caller_mapping(vector, fixture):
+    """Resolve explicit caller pointers without changing default synthetic storage."""
+    count = len(vector["nodes"])
+    addresses = fixture.get("node_addresses", fixture.get("addresses"))
+    if addresses is None:
+        addresses = [NODES + 64 * i for i in range(count)]
+    _require(
+        type(addresses) in (list, tuple) and len(addresses) >= count,
+        "invalid caller node mapping",
+    )
+    addresses = list(addresses[:count])
+    keys = fixture.get("key_pointers", [KEYS + 256 * i for i in range(count)])
+    _require(
+        type(keys) in (list, tuple) and len(keys) == count, "invalid caller key mapping"
+    )
+    query_argument = fixture.get("query_argument", ARG)
+    query_pointer = fixture.get("query_pointer", QUERY)
+    ranges = [(a, 24) for a in addresses] + [(HEAD, 24), (TREE, 8)]
+    for address, width in (
+        ranges
+        + [(p, len(n["key"]) + 1) for p, n in zip(keys, vector["nodes"])]
+        + [(query_argument, 4), (query_pointer, len(vector["query"] or []) + 1)]
+    ):
+        _require(
+            type(address) is int and 0 <= address <= 2**32 - width,
+            "invalid caller pointer",
+        )
+    for i, (address, width) in enumerate(ranges):
+        _require(
+            all(
+                address + width <= other or other + size <= address
+                for other, size in ranges[:i]
+            ),
+            "overlapping caller node mapping",
+        )
+    pages = fixture.get("pages")
+    if pages is not None:
+        required = list(ranges)
+        required.extend((p, len(n["key"]) + 1) for p, n in zip(keys, vector["nodes"]))
+        if vector["root"] is not None or "query_pointer" in fixture:
+            required.extend(
+                [(query_argument, 4), (query_pointer, len(vector["query"] or []) + 1)]
+            )
+        _require(
+            all(
+                ((a + j) & ~0xFFF) in pages
+                and len(pages[(a + j) & ~0xFFF]) > ((a + j) & 0xFFF)
+                for a, width in required
+                for j in range(width)
+            ),
+            "unmapped caller storage",
+        )
+    return dict(
+        addresses=addresses,
+        key_pointers=list(keys),
+        query_argument=query_argument,
+        query_pointer=query_pointer,
+        read_ranges=[(p, len(n["key"]) + 1) for p, n in zip(keys, vector["nodes"])]
+        + [(query_pointer, len(vector["query"] or []) + 1)],
+    )
 
 
 def oracle(vector, fixture):
+    mapping = caller_mapping(vector, fixture)
+    node_at = lambda i: _node(i, mapping["addresses"])
+    query_argument, query_pointer = mapping["query_argument"], mapping["query_pointer"]
     nodes = vector["nodes"]
     query = None if vector["query"] is None else bytes(vector["query"])
     root = vector["root"]
@@ -76,20 +141,20 @@ def oracle(vector, fixture):
     write(s - 8, 4, regs["esi"])
     write(s - 12, 4, regs["edi"])
     read(TREE, 4, HEAD)
-    read(HEAD + 4, 4, _node(root))
-    read(_node(root) + 13, 1, nil if root is None else 0)
+    read(HEAD + 4, 4, node_at(root))
+    read(node_at(root) + 13, 1, nil if root is None else 0)
     if root is not None:
-        read(s + 4, 4, ARG)
+        read(s + 4, 4, query_argument)
         write(s - 16, 4, regs["ebx"])
-        read(ARG, 4, QUERY)
+        read(query_argument, 4, query_pointer)
     candidate = None
     node = root
     path = []
     while node is not None:
         path.append(node)
         key = bytes(nodes[node]["key"])
-        key_address = KEYS + 256 * node
-        read(_node(node) + 16, 4, key_address)
+        key_address = mapping["key_pointers"][node]
+        read(node_at(node) + 16, 4, key_address)
         matched = 0
         while (
             matched < len(key)
@@ -101,7 +166,7 @@ def oracle(vector, fixture):
         # first unequal position or equal terminator is read exactly once.
         for j in range(matched + 1):
             read(key_address + j, 1, key[j] if j < len(key) else 0)
-            read(QUERY + j, 1, query[j] if j < len(query) else 0)
+            read(query_pointer + j, 1, query[j] if j < len(query) else 0)
         dl = key[matched] if matched < len(key) else 0
         displacement = matched - (matched % 2)
         if key == query and matched % 2:
@@ -115,8 +180,8 @@ def oracle(vector, fixture):
         else:
             offset = 8
             child = nodes[node]["right"]
-        read(_node(node) + offset, 4, _node(child))
-        read(_node(child) + 13, 1, nil if child is None else 0)
+        read(node_at(node) + offset, 4, node_at(child))
+        read(node_at(child) + 13, 1, nil if child is None else 0)
         node = child
     # Check the stronger interpretation independently through an inorder list,
     # retaining the path result when that ordering premise does not hold.
@@ -145,7 +210,7 @@ def oracle(vector, fixture):
     read(s - 8, 4, regs["esi"])
     read(s - 4, 4, regs["ebp"])
     read(s, 4, fixture["return_address"])
-    regs.update(eax=_node(candidate), esp=s + 8)
+    regs.update(eax=node_at(candidate), esp=s + 8)
     flags = (int(nil.bit_count() % 2 == 0) << 2) | ((nil >> 7) << 7)
     return dict(
         registers=regs,

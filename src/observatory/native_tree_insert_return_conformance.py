@@ -185,6 +185,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    output = fixture.get("output", OUTPUT)
     prefix = construction._expected(fixture["construction_vector"], fixture)
     o = fixture["stack"]
     _require(prefix["ordered"], "canonical lower-bound order required")
@@ -234,14 +235,14 @@ def _expected(vector, fixture):
     events.extend(joined["events"])
     node = read(o - 8)
     _require(node == fixture["node"], "local hint result differs")
-    write(OUTPUT, node)
-    write(OUTPUT + 4, 1, 1)
+    write(output, node)
+    write(output + 4, 1, 1)
     for off in (-20, -16, -12, -4):
         read(o + off)
     endpoint = read(o)
     regs = dict(
         fixture["registers"],
-        eax=OUTPUT,
+        eax=output,
         ecx=joined["registers"]["ecx"],
         edx=joined["registers"]["edx"],
         esp=o + 12,
@@ -263,12 +264,12 @@ def _expected(vector, fixture):
     )
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     o = fixture["stack"]
     m = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
