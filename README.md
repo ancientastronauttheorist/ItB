@@ -10,17 +10,17 @@ Recent unlocks: **Miner Inconvenience** is confirmed from Cataclysm run `2026070
 
 Current milestone: **70/70 proven and Steam-client-cache confirmed. The achievement hunt is complete.** Future work can focus on maintenance, regressions, and making the live bot more robust rather than chasing another unlock.
 
-The September 11 decompilation pass now joins canonical red-black balancing,
-all lower-bound hint positions, and the [whole insertion owner](docs/native_tree_insert_return.md).
-The [class tree-copy loop](docs/native_lua_class_tree_conformance.md) executes
-repeated native insertions and successor traversal, including existing-key
-payload overwrites. The [initially null-vector class operation](docs/native_lua_class_empty_vector_return_conformance.md)
-also executes its first allocation and append through the real caller return. The [external spare-capacity class operation](docs/native_lua_class_spare_return_conformance.md)
-now reaches its real caller return after vector append and cookie checking.
-Exact executable replay and independent models cover these finite domains;
-vector growth, other caller domains and exceptional behavior remain active work.
-The [September 7 handoff](docs/decompile_handoff_2026_09_07.md) records the preceding
-construction and vector work. Whole-game reconstruction remains unfinished.
+The September 11 decompilation pass joins canonical red-black balancing and the
+[whole insertion owner](docs/native_tree_byte_key_insert_return_conformance.md),
+including variable byte keys. The [complete class operation](docs/native_lua_class_byte_key_return_conformance.md)
+now copies trees, overwrites existing payloads, grows small vectors, relocates
+internal argument records and returns through the native cookie check.
+A [standalone logical model](docs/native_lua_class_operation_semantics.md) covers
+the joined tree/record behavior. Native [marker](docs/native_lua_class_marker_conformance.md)
+and [filtered Lua transfer](docs/native_lua_table_transfer_conformance.md) helpers
+also return under explicit normal API contracts. Exact replay and independent review establish
+these finite domains; broader callers, failures and full-game reconstruction
+remain unfinished. See the [September 11 handoff](docs/decompile_handoff_2026_09_11.md).
 
 New long-term track: the [full-decompile program](docs/full_decompile_program.md)
 extends the existing build-keyed Engine Observatory into a measurable

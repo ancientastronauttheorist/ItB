@@ -55,8 +55,16 @@ also preserves the argument index across reallocation and copies its record
 from the new buffer after the old buffer is freed. The [whole class byte-key
 proof](native_lua_class_byte_key_return_conformance.md) carries the longer string
 layouts through that complete operation. A [standalone logical
-model](native_lua_class_operation_semantics.md) joins tree transfer and append. These receipts do not promote whole-program accounting or establish
-complete decompilation.
+model](native_lua_class_operation_semantics.md) joins tree transfer and append.
+The [native marker](native_lua_class_marker_conformance.md) and
+[filtered Lua transfer](native_lua_table_transfer_conformance.md) helpers now
+return under supplied normal Lua API contracts, with a separate
+[transfer request model](native_lua_table_transfer_semantics.md). The
+[enclosing callback requirements](native_lua_class_callback_integration.md)
+identify actual caller frames and the remaining composition gaps. These receipts
+do not promote whole-program accounting or establish complete decompilation.
+The [September 11 handoff](decompile_handoff_2026_09_11.md) records checkpoints,
+validation and the next task.
 
 ## Canonical target
 

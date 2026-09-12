@@ -92,3 +92,31 @@ Begin with a bounded successful external spare-vector case, then expand to
 existing normal class families. Null/false marker assertions, lua_error,
 allocation failure, VM/metamethod behavior and arbitrary object/tree domains
 remain separate work. This reconstruction makes no accounting promotion.
+
+## First class-record relocation tranche
+
+The smallest next change can keep the existing class stack base: if its entry
+is S, choose callback F=S+44 and map the caller record at S+28. Set its words
+to zero and SOURCE_OBJECT, set the native argument slot S+4 to S+28, and use
+the real continuation `BASE+0x002ec1bd`. This matches the callback's frame
+relationship without simultaneously generalizing every tree/object address.
+The actual incoming register contract also has EBP=F, EBX=Lua state,
+ESI=destination, EDI=source, EAX=record address and ECX=destination. A record-only
+relocation does not establish those caller register values; include them in the
+eventual joined fixture and nonvolatile-return checks.
+
+The fixed ARGUMENT assumptions are in the class-prefix fixture and entry
+oracle, plus the external-spare suffix's argument comparison, two source reads
+and independent append model. Add one checked fixture argument field with the
+old address as its default, and allow the native runners to consume it.
+The existing source/destination object addresses can remain finite premises
+for this tranche. Rebuild the old prefix and external-spare receipts unchanged.
+
+Pay special attention to the independent memory check: the prefix model
+currently takes final stack pages from the event oracle before reasserting its
+iterator and result pair. When the argument becomes caller-stack storage,
+independently restore/check its original eight bytes and the caller region
+at and above S+8 so a shared stack-page copy cannot conceal ancestor corruption.
+The word at S+8 is the callback's saved EDI slot and must be included.
+Exercise an argument corruption control at the actual local record and compare
+the appended record against the original supplied pair, not a post-run read.
