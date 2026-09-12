@@ -46,7 +46,10 @@ also executes the first allocation and append before returning. The [small old-v
 executes record copying and successful deallocation before its external append
 and caller return. Exceptional class behavior remains open. The [internal spare-capacity
 operation](native_lua_class_internal_spare_return_conformance.md) also returns
-after appending a complete aligned record already inside the vector. These receipts do not promote whole-program accounting or establish
+after appending a complete aligned record already inside the vector. The
+[internal growth operation](native_lua_class_internal_growth_return_conformance.md)
+also preserves the argument index across reallocation and copies its record
+from the new buffer after the old buffer is freed. These receipts do not promote whole-program accounting or establish
 complete decompilation.
 
 ## Canonical target
