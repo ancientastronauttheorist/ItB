@@ -1,0 +1,9064 @@
+{
+  "analysis_kind": "pe_native_lua_tree_successor_conformance",
+  "body": {
+    "bytes": 79,
+    "entry_rva": "0x0006df30",
+    "exclusive_end_rva": "0x0006df7f",
+    "nodes": 31,
+    "points": [
+      {
+        "rva": "0x0006df30",
+        "sha256": "e19d89b46b58837da936f52ca6af6946ed3478f68d4d44dc5d193541db7f1428",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df32",
+        "sha256": "93727d1723051642ce3629e16ce2e70af9a48bf72826e2f3eacefb1b2c4aa179",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df34",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df38",
+        "sha256": "dd0038b606775812eceaec84ca2582c54cf82953b27bbdd771b4416b875268c2",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df3a",
+        "sha256": "8df8fccc616867547d618b0f52b4aaeadd0699dbcecf705db094a6b6934faa42",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df3d",
+        "sha256": "b7547d0c683de3b3d76e5adc6f27746eade8e11c4f62b14354e6ece2b9c4569c",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df41",
+        "sha256": "5f019e1ac2f2317815db4cfaf94dd4e218a47189b9e1f2a2b75bcf2bb57fea4e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df43",
+        "sha256": "85041a0b25ed7b917ea9cc7ee7e912da1fece2d849ea5ee107f18f800123e64f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df45",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df49",
+        "sha256": "bb52e9e6db182172c9062587fc4bdd0a673150f95815e0bcbae120469101acdd",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df4b",
+        "sha256": "2ae7df4edc1b5f7269dd806e060711cdb6d1bd1aa0b17edbb06415945070f3a2",
+        "size": 5
+      },
+      {
+        "rva": "0x0006df50",
+        "sha256": "0e72eeffe8e4ac7dfe9abd68ba709e020123e8aaf94576b6cd3f452c41e3ef4f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df52",
+        "sha256": "85041a0b25ed7b917ea9cc7ee7e912da1fece2d849ea5ee107f18f800123e64f",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df54",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df58",
+        "sha256": "067633f6e431ba26dbc95b8d9319e529ccc9444c5c174aa7c8a67ca88d5f1c18",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5a",
+        "sha256": "587e5ed0ff7c93c43c214b6cd2b6c4d93dd6b151748286cfd2f164494eb7c611",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5c",
+        "sha256": "694f340cabb4304e65640d800f40fe68387dcdb4c2e86dd3c1b7ee6d75235a1e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df5e",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      },
+      {
+        "rva": "0x0006df5f",
+        "sha256": "8837463159c94fab9f88f79941386968f9ffa67aa078f55226c75edc4572f42f",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df62",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df66",
+        "sha256": "98a1d97320f14c574690067bb38dc63be3a43585486e2c332ec6794b6f3c2d88",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df68",
+        "sha256": "66e9fe267fc14e21124a536bddf0dceab450ed6db433357704b9ff5d0a93b433",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df6a",
+        "sha256": "af6583dc355597f401b86e256e056761eb33fec12a2496499bfafab59e1a1f92",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df6d",
+        "sha256": "525cc8f73fc005ebf5f61edf504cd2c9671a11e3c3675096bd1da2fc6cdd2369",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df6f",
+        "sha256": "ed32d7788f90c5945e4ff8bbbec974bfdff3949948304fb2a7e07f7eecb33376",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df71",
+        "sha256": "8837463159c94fab9f88f79941386968f9ffa67aa078f55226c75edc4572f42f",
+        "size": 3
+      },
+      {
+        "rva": "0x0006df74",
+        "sha256": "c9881742f1d502f3a7d8ff2fd6d9ff788d750da115fd846d2cf1eff34354075a",
+        "size": 4
+      },
+      {
+        "rva": "0x0006df78",
+        "sha256": "ac60a591b0222fe91d61bfb220492a9a132f7c2c60366037e9fa7401af71efab",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7a",
+        "sha256": "ed32d7788f90c5945e4ff8bbbec974bfdff3949948304fb2a7e07f7eecb33376",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7c",
+        "sha256": "694f340cabb4304e65640d800f40fe68387dcdb4c2e86dd3c1b7ee6d75235a1e",
+        "size": 2
+      },
+      {
+        "rva": "0x0006df7e",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      }
+    ],
+    "sha256": "539e52ffef66379c5aa4c31b81f540f6b75b9b347b09e1af9d146a42ee7d8991"
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "engine": {
+    "architecture": "x86_32",
+    "name": "Unicorn",
+    "version": "2.1.4"
+  },
+  "executed_rvas": [
+    "0x0006df30",
+    "0x0006df32",
+    "0x0006df34",
+    "0x0006df38",
+    "0x0006df3a",
+    "0x0006df3d",
+    "0x0006df41",
+    "0x0006df43",
+    "0x0006df45",
+    "0x0006df49",
+    "0x0006df4b",
+    "0x0006df50",
+    "0x0006df52",
+    "0x0006df54",
+    "0x0006df58",
+    "0x0006df5a",
+    "0x0006df5c",
+    "0x0006df5e",
+    "0x0006df5f",
+    "0x0006df62",
+    "0x0006df66",
+    "0x0006df68",
+    "0x0006df6a",
+    "0x0006df6d",
+    "0x0006df6f",
+    "0x0006df71",
+    "0x0006df74",
+    "0x0006df78",
+    "0x0006df7a",
+    "0x0006df7c",
+    "0x0006df7e"
+  ],
+  "negative_controls": [
+    {
+      "kind": "ancestor",
+      "rejected": true
+    },
+    {
+      "kind": "node_padding",
+      "rejected": true
+    },
+    {
+      "kind": "slot",
+      "rejected": true
+    }
+  ],
+  "observations_sha256": "8ede1cdb93add4a19b5caf5d76d5c0f761f7aa0c670884eac8fa33d10a0bf3cf",
+  "schema_version": 1,
+  "scope": {
+    "claim": "Native call-free successor and ordered iterator writes over a finite structural corpus",
+    "not_claimed": [
+      "Malformed or cyclic graphs, aliases, concurrent mutations, source key ordering or balancing",
+      "Caller insertion composition, hardware execution, Lua or game behavior or accounting promotion"
+    ],
+    "premises": [
+      "Stable finite disjoint node records with one nonzero sentinel, consistent links and an independent inorder successor",
+      "Address-generic protected byte map with distinct iterator slot and return word",
+      "Three node and slot alignments, three stack alignments, three register seeds, two sentinel bytes and both DF values"
+    ]
+  },
+  "source_receipts": {
+    "semantics": {
+      "analysis_kind": "pe_native_lua_tree_successor_semantics",
+      "canonical_sha256": "4d03a8bfc8ef34f5c700e7d5aa8a8a1a81967978a80d284b9342201c961ba7fd"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "cases": 972,
+    "executed_sites": 31,
+    "instruction_bytes": 79,
+    "normal_returns": 972,
+    "opaque_instructions": 0,
+    "paths": [
+      "parent_climb",
+      "right_subtree",
+      "sentinel_unchanged"
+    ],
+    "static_sites": 31
+  },
+  "vectors": [
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435840
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435847
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435855
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435904
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435911
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "balanced",
+      "start": 268435919
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "left_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "right_chain",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "single",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "empty",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435456
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435463
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435471
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435520
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435527
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435535
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435584
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435591
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435599
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435648
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435655
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435663
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435712
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435719
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435727
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 0,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 0,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435776
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 7,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 7,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435783
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 0,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 1,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 0,
+      "sentinel_byte": 1,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 0,
+      "node_alignment": 15,
+      "seed": 1,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    },
+    {
+      "alignment": 15,
+      "df": 1,
+      "node_alignment": 15,
+      "seed": 2,
+      "sentinel_byte": 255,
+      "shape": "deep_right_subtree",
+      "start": 268435791
+    }
+  ]
+}
