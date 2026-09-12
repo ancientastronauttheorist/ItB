@@ -97,6 +97,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    output = balancing._output_slot(fixture, fixture["s"] - 108, fixture["s"] + 20)
     h = fixture["s"]
     n = fixture["node"]
     entry = fixture["registers"]
@@ -129,10 +130,10 @@ def _expected(vector, fixture):
     write(0, h - 16)
     write(h - 20, h - 68)
     write(h - 36, attachment.TREE)
-    _require(read(h + 16) == n and read(h + 4) == OUTPUT, "hint arguments differ")
+    _require(read(h + 16) == n and read(h + 4) == output, "hint arguments differ")
     write(h - 8, 0)
     _require(read(attachment.TREE + 4) == 0, "empty tree required")
-    write(h - 40, OUTPUT)
+    write(h - 40, output)
     write(h - 32, n)
     write(h - 48, n)
     write(h - 72, n)
@@ -140,7 +141,7 @@ def _expected(vector, fixture):
     head = read(attachment.TREE)
     write(h - 80, head)
     write(h - 84, 1)
-    write(h - 88, OUTPUT)
+    write(h - 88, output)
     write(h - 92, BASE + 0x2E835D)
     child = dict(
         fixture,
@@ -151,7 +152,7 @@ def _expected(vector, fixture):
             entry,
             eax=attachment.TREE,
             ecx=attachment.TREE,
-            ebx=OUTPUT,
+            ebx=output,
             ebp=h - 4,
             esp=h - 92,
         ),
@@ -174,7 +175,7 @@ def _expected(vector, fixture):
     _require(read(h - 56) == BASE + 0x2E84D8, "checker return differs")
     read(h - 4)
     endpoint = read(h)
-    regs = dict(entry, eax=OUTPUT, ecx=restored, esp=h + 20)
+    regs = dict(entry, eax=output, ecx=restored, esp=h + 20)
     return dict(
         registers=regs,
         pages={p: bytes(v) for p, v in pages.items()},

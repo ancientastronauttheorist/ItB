@@ -200,7 +200,28 @@ def _fixture(vector):
     )
 
 
+def _output_slot(fixture, live_start, live_end):
+    output = fixture.get("output", OUTPUT)
+    _require(type(output) is int and 0 <= output <= 0xFFFFFFFC, "invalid output slot")
+    _require(
+        all((output + i) & ~0xFFF in fixture["pages"] for i in range(4)),
+        "unmapped output slot",
+    )
+    ranges = [
+        (live_start, live_end),
+        (attachment.TREE, attachment.TREE + 8),
+        (attachment.HEAD, attachment.HEAD + 24),
+    ]
+    ranges.extend((a, a + 24) for a in fixture["addresses"])
+    _require(
+        all(output + 4 <= lo or output >= hi for lo, hi in ranges),
+        "output overlaps live storage",
+    )
+    return output
+
+
 def _expected(vector, fixture):
+    output = _output_slot(fixture, fixture["s"] - 16, fixture["s"] + 24)
     v = dict(count=len(fixture["tree"]["nodes"]), selector=fixture["selector"])
     initial = attachment._expected(v, fixture)
     pages = {p: bytearray(v) for p, v in initial["pages"].items()}
@@ -310,13 +331,13 @@ def _expected(vector, fixture):
     read(s - 12)
     root = read(head + 4)
     write(root + 12, 1, 1)
-    _require(read(s + 4) == OUTPUT, "result pointer differs")
-    write(OUTPUT, n)
+    _require(read(s + 4) == output, "result pointer differs")
+    write(output, n)
     read(s - 8)
     read(s - 4)
     endpoint = read(s)
     _require(color == 1 and rotations <= 2, "canonical exit or rotation bound differs")
-    regs = dict(fixture["registers"], eax=OUTPUT, ecx=parent, edx=edx, esp=s + 24)
+    regs = dict(fixture["registers"], eax=output, ecx=parent, edx=edx, esp=s + 24)
     expected = dict(
         registers=regs,
         pages={p: bytes(v) for p, v in pages.items()},
@@ -354,9 +375,9 @@ def _model_pages(fixture, expected):
     for off, value in ((0, at(minimum)), (4, at(tree["root"])), (8, at(maximum))):
         put(attachment.HEAD + off, value)
     put(attachment.TREE + 4, len(tree["nodes"]))
-    put(OUTPUT, fixture["node"])
     for p in (attachment.STACK, attachment.STACK + 0x1000):
-        pages[p] = expected["pages"][p]
+        pages[p] = bytearray(expected["pages"][p])
+    put(fixture.get("output", OUTPUT), fixture["node"])
     return {p: bytes(v) for p, v in pages.items()}
 
 

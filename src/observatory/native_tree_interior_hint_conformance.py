@@ -172,6 +172,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    output = balancing._output_slot(fixture, fixture["s"] - 108, fixture["s"] + 20)
     h = fixture["s"]
     n = fixture["node"]
     entry = fixture["registers"]
@@ -204,12 +205,12 @@ def _expected(vector, fixture):
     write(0, h - 16)
     write(h - 20, h - 68)
     write(h - 36, attachment.TREE)
-    _require(read(h + 16) == n and read(h + 4) == OUTPUT, "hint arguments differ")
+    _require(read(h + 16) == n and read(h + 4) == output, "hint arguments differ")
     write(h - 8, 0)
     _require(
         read(attachment.TREE + 4) == len(fixture["tree"]["nodes"]), "tree count differs"
     )
-    write(h - 40, OUTPUT)
+    write(h - 40, output)
     write(h - 32, n)
     write(h - 48, n)
     head = read(attachment.TREE)
@@ -317,20 +318,20 @@ def _expected(vector, fixture):
     nil = read(pred_right + 13, 1)
     _require(read(h - 36) == attachment.TREE, "tree local differs")
     if nil:
-        _require(read(h - 40) == OUTPUT, "output local differs")
+        _require(read(h - 40) == output, "output local differs")
         parent = pred
         selector = 0
         write(h - 80, parent)
         write(h - 84, 0)
-        write(h - 88, OUTPUT)
+        write(h - 88, output)
         child_return = BASE + 0x2E8412
     else:
         parent = candidate
         selector = 1
         write(h - 80, parent)
-        _require(read(h - 40) == OUTPUT, "output local differs")
+        _require(read(h - 40) == output, "output local differs")
         write(h - 84, 1)
-        write(h - 88, OUTPUT)
+        write(h - 88, output)
         child_return = BASE + 0x2E8423
     _require(
         parent == fixture["parent"] and selector == fixture["selector"],
@@ -348,7 +349,7 @@ def _expected(vector, fixture):
             ecx=attachment.TREE,
             edx=edx,
             ebx=pred,
-            esi=OUTPUT,
+            esi=output,
             edi=head,
             ebp=h - 4,
             esp=h - 92,
@@ -372,7 +373,7 @@ def _expected(vector, fixture):
     read(h - 4)
     endpoint = read(h)
     regs = dict(
-        entry, eax=OUTPUT, ecx=restored, edx=expected["registers"]["edx"], esp=h + 20
+        entry, eax=output, ecx=restored, edx=expected["registers"]["edx"], esp=h + 20
     )
     return dict(
         registers=regs,

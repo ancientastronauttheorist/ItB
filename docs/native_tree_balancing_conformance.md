@@ -97,3 +97,19 @@ dispatch, full class-owner composition and whole-game accounting remain open.
 
 Validation: **36 focused tests passed**, including a byte-identical exact
 1,329-case CLI rebuild.
+
+## Caller-owned result slots
+
+The ordered oracle accepts an explicit `fixture["output"]`; omission retains
+the sealed default. A result is four mapped, nonwrapping bytes disjoint from the
+live callee frame, tree context, sentinel and node records. The hint oracles use
+the same contract. This permits the enclosing insertion owner's local result:
+if its entry is `O` and hint entry is `H=O-40`, the result is `O-8=H+32`.
+
+The independent model writes the result after copying separately verified
+ancestor pages. This ordering ensures that a corrupted result on a stack page
+cannot hide behind the ancestor copy. Focused local-output tests cover all four
+oracles, preserved neighbors, malformed and overlapping storage, actual argument
+mismatch, and deliberate corruption of that independent result. Existing default
+receipts retain their exact encodings; the interface change adds no native
+coverage or accounting promotion by itself.
