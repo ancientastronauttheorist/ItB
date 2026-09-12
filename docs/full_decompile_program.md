@@ -36,7 +36,10 @@ predecessor call, with both possible attachment choices. Arbitrary hints,
 equality dispatch inside the hint helper, successor-side dispatch, allocation
 failure and exception delivery remain outside these proofs. The
 [whole insertion owner](native_tree_insert_return.md) also returns normally for
-inserted and existing keys in a finite canonical corpus. The
+inserted and existing keys in a finite canonical corpus. The [byte-key
+insertion proof](native_tree_byte_key_insert_return_conformance.md) additionally
+covers empty/prefix strings, unsigned high-bit comparisons and 64-byte common
+prefixes. The
 [class tree-copy prefix](native_lua_class_tree_conformance.md) composes repeated
 insertion and native successor calls with unconditional payload overwrite.
 The [external spare-capacity class operation](native_lua_class_spare_return_conformance.md)
