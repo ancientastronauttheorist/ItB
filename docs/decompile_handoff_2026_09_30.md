@@ -27,6 +27,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `c6cab4dc` | Sealed both callback upvalue assertion prefixes through native helper entry. |
 | `565b7923` | Sealed the factory context assertion prefix with its actual allocated record and nested FS frames. |
 | `4b2c1587` | Joined actual native factory output to returned callback class-helper entry across an explicit host boundary. |
+| `ce4ebd18` | Validated native producer addresses matching the existing empty receiver/head grammar. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -308,6 +309,39 @@ unref arms, assertion behavior,
 real VM effects and arbitrary registry results remain outside these proofs.
 
 ## Environment and preservation
+
+Final continuation probe: the private
+`.local_decompile/sep30/probe_aligned_class.py` captures one actual aligned
+factory output, supplies an empty source and the independently modeled class
+caller, then reaches the native first-null class return with one eight-byte
+allocation. This is a single feasibility experiment, not a sealed callback
+composition or a new validated frontier. Its callback entry was not executed.
+The next durable proof must add finite native cases, controls, independent
+review and exact rebuilding while preserving the supplied host boundary.
+
+For that smallest profile, choose class entry C=`0x30001000` or
+`0x3000100f` and host callback entry T=C+48; the local pair is at C+28.
+The supplied source object/head remain `0x14000000`/`0x14000100` with an
+empty self-linked source. Empty keys avoid source-string writes over the
+factory's second-name page. Heap global `0x008b7634`, value `0x12345678`,
+and allocation IAT `0x007d6220` to target `0x05000000` already agree with
+the producer. The fresh vector is `0x06002000` plus the selected alignment.
+Derive the class vector's cookie from captured `0x00893f28`; assuming the
+old fixture's zero cookie caused the first probe to reject its final GPRs.
+Use nil flag one to retain the actual head marker `[1,1]`. The class helper
+may change U+4, U+8 and U+12 plus the fresh vector, while all other U words
+and all P bytes remain preserved. A nonempty source needs independent key
+storage because existing source keys at `0x15000000` overlap the factory's
+second-name storage. Stack/source adapters remain explicit supplied contracts.
+The new host frame reuses historical factory scratch; declare that reuse
+instead of promising its preservation. Current callback ancestors and its
+original local pair must remain preserved through class return. A continuous
+callback/class runner must also accept return `0x006ec1bd` inside its loaded
+callback code page; the legacy class-only runner insists on a separately
+mapped endpoint page. The candidate finite sweep is the eighteen aligned
+producer cases across vector alignments 0, 7 and 31, with empty source and
+destination. Four construction-data pages beginning at `0x06000000` are
+required by the existing growth oracle. No such new sweep is sealed yet.
 
 Exact PE: `B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe`.
 SHA-256: `31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9`.
