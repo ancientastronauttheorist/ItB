@@ -84,17 +84,29 @@ callback and table transfers. Supplied heap calls are distinguished by exact
 native continuations and checked requests. Larger vectors, internal storage,
 error paths and real VM behavior remain outside this finite proof.
 
+## Completed normal factory prefix
+
+[Documentation](native_lua_class_factory_prefix_conformance.md): 216 cases,
+83 selected sites, 71 executed sites and 231 selected bytes. Exact execution
+covered 56,952 native instructions and 1,512 supplied API calls. All 15 controls
+were rejected for their specified reasons. Model and conformance validation
+passed 102 tests with no skips, including the byte-identical exact CLI rebuild.
+Canonical SHA: `cebf742aac9945f22829e2d3b1b387ff618840217b3c9a2330a8335ca3a0d0ed`.
+File SHA: `dc56cc73bf36a0f1e642638f5d5f1b7ad80f7121f45dde197f0256f642bd9955`.
+
 ## Active continuation
 
-Next boundary: factory entry `0x002ec220` through the initializer call transfer
-at `0x002ec302`, stopping before the initializer at `0x002eacf0` executes.
-The normal accepted-name prefix is 231 bytes and has 71 executed instruction
-sites. Its seven Lua API calls remain supplied contracts. The first
+The normal factory prefix now reaches initializer entry `0x002eacf0`.
+Its seven Lua API calls remain supplied contracts. The first
 `lua_tolstring` pointer is measured by the inline NUL loop; the second pointer
 is passed to the initializer. Preserve independent pointer routing rather
 than assuming the pointers or bytes are equal. Error arms and null-userdata
 bypass are separate boundaries. No initializer, ownership or exception-handling
-claim follows from reaching this handoff.
+claim follows from reaching this handoff. Next useful continuation: the
+initializer's first 37 instructions through call `0x002ead8b`, stopping at
+helper entry `0x0007c600`. This adds concrete offset writes and nested FS
+registration before the self-linked record allocation frontier. The helper
+and successful allocation machinery are separate domains to compose next.
 
 ## Environment and preservation
 

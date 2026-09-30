@@ -67,6 +67,12 @@ reachability, semantic class identity, or source-level method syntax.
 
 ## Factory callback grammar (`0x002ec220`)
 
+The later [normal prefix execution proof](native_lua_class_factory_prefix_conformance.md)
+checks 216 supplied-contract fixtures continuously through initializer entry.
+It measures the first `lua_tolstring` pointer and passes the second pointer,
+without assuming pointer or byte equality. The initializer and remaining
+factory instructions are outside that execution boundary.
+
 The callback accepts a narrow normal path:
 
 | check or action | RVAs |
