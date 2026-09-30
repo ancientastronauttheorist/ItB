@@ -66,16 +66,31 @@ response. The normal final
 defined arithmetic flags are 0x44. There is no callback-local FS registration;
 nested helpers still require their proven registration contracts.
 
+## Completed standalone logical model
+
+The [independent callback model](native_lua_class_callback_semantics.md) now
+composes the existing logical class-operation and table-transfer models for
+the bounded external spare-vector case. It transfers/overwrites source tree
+payloads, appends `[0, source_pointer]`, requests both registry pairs in order,
+copies source word zero and returns zero results. Its continuous Lua request
+trace retains one argument plus four registry values, with helper prefixes one
+and three. The standalone suite passed **125 tests**, including every pair of
+category sequences up to length three. Markers, compatible registry values and
+normal responses remain explicit premises; this model is not a native callback
+execution receipt or a VM/heap behavior claim.
+
 ## Work required before claiming composition
 
 1. Compose helper entries, return addresses, caller registers and preserved ancestor
    stack storage at these actual frames. The marker and table helpers now accept
    checked caller mappings and have focused native cases at these continuations;
    a single continuous callback execution is still required.
-2. Parameterize the class record address and contents. Existing class fixtures
-   use a fixed record at 0x14000200; this caller supplies F-16 with first word
-   zero. Its object pages must also retain the registry-reference fields and
-   final word-zero data.
+2. Use the completed prefix/external spare-vector
+   [class record caller mapping](native_lua_class_record_caller_mapping.md):
+   this caller supplies F-16 with first word zero. Those helper fixtures now
+   accept the actual record and register layout; other class return families
+   retain their fixed record fixtures. The joined object pages must also retain
+   the registry-reference fields and final word-zero data.
 3. Carry one abstract Lua stack across all calls. With one entry argument,
    the first table helper has prefix length one and the second length three.
    The sealed table corpus covers prefixes zero and three; separate actual-caller
@@ -102,28 +117,25 @@ actual incoming registers and independent caller preservation. The
 Lua/heap import and literal contract. Complete callback execution still needs
 one continuous native run and Lua state.
 
-The smallest next change can keep the existing class stack base: if its entry
-is S, choose callback F=S+44 and map the caller record at S+28. Set its words
-to zero and SOURCE_OBJECT, set the native argument slot S+4 to S+28, and use
-the real continuation `BASE+0x002ec1bd`. This matches the callback's frame
-relationship without simultaneously generalizing every tree/object address.
-The actual incoming register contract also has EBP=F, EBX=Lua state,
-ESI=destination, EDI=source, EAX=record address and ECX=destination. A record-only
-relocation does not establish those caller register values; include them in the
+The completed helper mapping keeps the existing class stack base: for entry S,
+callback F=S+44 and the caller record is at S+28. Its words are zero and
+SOURCE_OBJECT, the native argument slot S+4 is S+28, and the real continuation
+is `BASE+0x002ec1bd`. This matches the callback's frame relationship without
+generalizing every tree/object address. The mapping also checks the actual
+incoming registers: EBP=F, EBX=Lua state, ESI=destination, EDI=source,
+EAX=record address and ECX=destination. Carry this checked contract into the
 eventual joined fixture and nonvolatile-return checks.
 
-The fixed ARGUMENT assumptions are in the class-prefix fixture and entry
-oracle, plus the external-spare suffix's argument comparison, two source reads
-and independent append model. Add one checked fixture argument field with the
-old address as its default, and allow the native runners to consume it.
-The existing source/destination object addresses can remain finite premises
-for this tranche. Rebuild the old prefix and external-spare receipts unchanged.
+The prefix and external-spare fixtures now accept a checked optional `caller`
+mapping while retaining the legacy record as their default. Their native
+runners consume its argument address, original pair, continuation and
+registers. The old prefix and external-spare receipts rebuilt byte for byte
+without changing their seals. Existing source/destination object addresses
+remain finite premises; arbitrary stack/object relocation is open.
 
-Pay special attention to the independent memory check: the prefix model
-currently takes final stack pages from the event oracle before reasserting its
-iterator and result pair. When the argument becomes caller-stack storage,
-independently restore/check its original eight bytes and the caller region
-at and above S+8 so a shared stack-page copy cannot conceal ancestor corruption.
-The word at S+8 is the callback's saved EDI slot and must be included.
-Exercise an argument corruption control at the actual local record and compare
-the appended record against the original supplied pair, not a post-run read.
+The prefix's independent memory check now restores original caller bytes at
+and above S+8 after taking modeled callee scratch pages and preserves the
+original eight record bytes. S+8 includes the callback's saved EDI slot. The
+spare append model compares against the original supplied pair, not a post-run
+read. Actual-record corruption controls require the exact ancestor-memory
+rejection. Preserve these independent checks in the continuous callback proof.
