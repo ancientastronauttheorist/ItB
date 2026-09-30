@@ -21,6 +21,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `f5b5186e` | Sealed normal factory prefix through its actual initializer handoff. |
 | `5df38776` | Sealed continuous factory and 37-instruction initializer prefix through record-helper entry. |
 | `89941b57` | Sealed native self-linked record allocation and construction through actual userdata offset 52 store. |
+| `3c08d3c0` | Sealed continuous complete normal factory and initializer returns with actual record, registry identities and closure upvalue. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -149,6 +150,24 @@ returns one closure with the actual userdata as its one upvalue. Metatable,
 registry and global assignments remain conditional supplied requests. The
 closure target is not invoked, and the epilogues do not verify security cookies.
 
+## Completed factory rejection prefixes
+
+[Documentation](native_lua_class_factory_error_conformance.md): 344 cases
+cover argument count, type, numeric and first-name-length rejection. The
+174-byte selected prefix has 63 static sites and 62 executed sites. Execution
+covers 81,528 native instructions and 2,000 supplied normal Lua responses,
+stopping at 344 lua_error import entries without executing imported code or
+supplying error responses. All 15 controls passed. Independent GO and 133
+focused tests passed without skips, including the byte-identical exact rebuild.
+
+Canonical SHA: `0e454398b0a47423e880932db975c82643358d6781115ced8989bb37a6a15952`.
+File SHA: `e43927841c891c22621ae2821e3e0f01c2d89487cde5aa22d45e23c9b1ec1d45`.
+The independent short-circuit model, runtime message identity, actual literal
+selection, retained pushstring argument cells, active FS chain, exact API GPRs,
+ordered data events and all mapped pages are checked. A supplied length
+mismatch proves the chosen message, not the live cause of an embedded NUL.
+Error handling, unwinding, factory return and live VM behavior remain excluded.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -159,9 +178,12 @@ than assuming the pointers or bytes are equal. Error arms and null-userdata
 bypass are separate boundaries. No initializer, ownership or exception-handling
 claim follows from that first handoff alone. Its following 37 initializer
 instructions are now checked by the separate composition above, and the normal
-return is closed by the complete proof. Next useful continuation: execute the
-factory argument-count, type, numeric and name-length rejection prefixes,
-stopping at the lua_error import entry before DLL behavior or unwinding. Keep
+return is closed by the complete proof. Factory rejection prefixes are also
+closed through lua_error entry. Next useful continuation: compose the returned
+callback with its actual native marker helpers for an argument whose marker
+is absent or false, stopping at its lua_error import entry. Preserve exact
+upvalue marker success, argument prefix restoration, AL-only truth guards and
+the retained parent pushstring frame. Keep
 the supplied normal registry context, three references, graph and ID-map
 pointers explicit. Prior-reference unref arms, assertion, real VM effects and
 arbitrary registry results remain outside the conditional proof.
