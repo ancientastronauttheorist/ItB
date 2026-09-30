@@ -43,10 +43,15 @@ the two original receipts and new caller cases ran separately as described above
 - [Existing spare receipt](../data/observatory/programs/windows_build_13725832_31fe35265598_native_lua_class_spare_return_conformance.json)
 - [Callback integration dossier](native_lua_class_callback_integration.md)
 
-This tranche proves finite helper mappings and their native executions. It does
-not yet execute the enclosing callback continuously. Shared Lua/heap import
-targets, literal pages, current stack/register state and one abstract Lua stack
-must be joined before that claim. Other class return families retain their
-existing fixed record fixtures. Allocation failure, assertion/error paths,
+This tranche proves finite helper mappings and their native executions. The
+subsequent [continuous callback proof](native_lua_class_callback_conformance.md)
+joins those external-spare cases with shared Lua/heap imports, current native
+state and one Lua token stack. The subsequent
+[first-allocation and small-growth mapping](native_lua_class_growth_record_caller_mapping.md)
+also accepts the callback's original local record. It passed 147 tests,
+including 48 native cases, four controls and byte-identical original 576-case
+first-null and 1,536-case old-growth rebuilds. Those growth families still need
+their enclosing callback composition. Internal-record return families retain
+their existing fixed fixtures. Allocation failure, assertion/error paths,
 actual Lua VM/heap instructions and broader object domains remain open. No
 whole-program accounting promotion occurs.

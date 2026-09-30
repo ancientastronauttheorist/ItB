@@ -55,7 +55,7 @@ def vectors():
     ]
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     alignment = vector["vector_alignment"]
     size, old_alignment = vector["old_size"], vector["old_alignment"]
     _require(type(alignment) is int and 0 <= alignment < 32, "invalid vector alignment")
@@ -66,7 +66,7 @@ def _fixture(vector):
         and 0 <= old_alignment < 32,
         "invalid old vector geometry",
     )
-    fixture = prefix._fixture(vector)
+    fixture = prefix._fixture(vector, caller=caller)
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
     _require(growth.OLD not in pages, "old vector overlaps class storage")
     pages[growth.OLD] = bytearray((i * 31 + (i >> 3) + 0x67) % 256 for i in range(4096))
@@ -95,6 +95,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    argument = prefix._checked_argument(fixture)
     result = prefix._expected(vector, fixture)
     pages = {p: bytearray(v) for p, v in result["pages"].items()}
     events = list(result["events"])
@@ -115,13 +116,13 @@ def _expected(vector, fixture):
     frame = fixture["stack"] - 4
     receiver = read(frame - 12)
     _require(
-        receiver == RECEIVER and regs["edi"] == ARGUMENT,
+        receiver == RECEIVER and regs["edi"] == argument,
         "external append receiver differs",
     )
     old_end = read(receiver + 8)
     _require(
         old_end == read(receiver + 12) == fixture["old_begin"] + 8 * vector["old_size"]
-        and ARGUMENT >= old_end,
+        and argument >= old_end,
         "old vector is not full and external",
     )
     # PUSH ECX passes an unused dummy; growth and every allocation/copy instruction remain native.
@@ -168,16 +169,16 @@ def _expected(vector, fixture):
     pages[RECEIVER & ~0xFFF] = bytearray(child["object"])
     regs = dict(child["registers"])
     _require(
-        regs["esp"] == frame - 32 and regs["edi"] == ARGUMENT,
+        regs["esp"] == frame - 32 and regs["edi"] == argument,
         "class growth ABI differs",
     )
     end = read(receiver + 8)
     _require(
         end == fixture["vector_end"] and end != 0, "grown vector allocation differs"
     )
-    first = read(ARGUMENT)
+    first = read(argument)
     write(end, first)
-    second = read(ARGUMENT + 4)
+    second = read(argument + 4)
     write(end + 4, second)
     write(receiver + 8, read(receiver + 8) + 8)
     regs.update(eax=second, ecx=end, esi=receiver)
@@ -224,8 +225,9 @@ def _model_pages(fixture, expected):
             at & 0xFFF
         ]
     # The vector model appends the unchanged two-word argument as a record.
+    argument = prefix._checked_argument(fixture)
     record = bytes(
-        fixture["pages"][(ARGUMENT + i) & ~0xFFF][(ARGUMENT + i) & 0xFFF]
+        fixture["pages"][(argument + i) & ~0xFFF][(argument + i) & 0xFFF]
         for i in range(8)
     )
     for i, b in enumerate(record):
@@ -242,12 +244,12 @@ def _model_pages(fixture, expected):
     return {p: bytes(v) for p, v in pages.items()}
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -359,6 +361,9 @@ def _run_case(codes, points, vector, negative=None):
         if address == BASE + 0x2EB222 and negative == "cookie":
             m.mem_write(returned.COOKIE, (vector["cookie"] ^ 1).to_bytes(4, "little"))
         if address == expected["endpoint"]:
+            if negative == "argument":
+                at = prefix._checked_argument(fixture)
+                m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
             if negative == "iterator":
                 m.mem_write(frame - 8, (SOURCE_HEAD ^ 1).to_bytes(4, "little"))
             if negative == "payload":

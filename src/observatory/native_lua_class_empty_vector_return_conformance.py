@@ -50,10 +50,10 @@ def vectors():
     ]
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     alignment = vector["vector_alignment"]
     _require(type(alignment) is int and 0 <= alignment < 32, "invalid vector alignment")
-    fixture = prefix._fixture(vector)
+    fixture = prefix._fixture(vector, caller=caller)
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
     for offset in (4, 8, 12):
         for i in range(4):
@@ -70,6 +70,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    argument = prefix._checked_argument(fixture)
     result = prefix._expected(vector, fixture)
     pages = {p: bytearray(v) for p, v in result["pages"].items()}
     events = list(result["events"])
@@ -90,7 +91,7 @@ def _expected(vector, fixture):
     frame = fixture["stack"] - 4
     receiver = read(frame - 12)
     _require(
-        receiver == RECEIVER and regs["edi"] == ARGUMENT,
+        receiver == RECEIVER and regs["edi"] == argument,
         "external append receiver differs",
     )
     _require(
@@ -140,16 +141,16 @@ def _expected(vector, fixture):
     pages[RECEIVER & ~0xFFF] = bytearray(child["object"])
     regs = dict(child["registers"])
     _require(
-        regs["esp"] == frame - 32 and regs["edi"] == ARGUMENT,
+        regs["esp"] == frame - 32 and regs["edi"] == argument,
         "class growth ABI differs",
     )
     end = read(receiver + 8)
     _require(
         end == fixture["vector_begin"] and end != 0, "first vector allocation differs"
     )
-    first = read(ARGUMENT)
+    first = read(argument)
     write(end, first)
-    second = read(ARGUMENT + 4)
+    second = read(argument + 4)
     write(end + 4, second)
     write(receiver + 8, read(receiver + 8) + 8)
     regs.update(eax=second, ecx=end, esi=receiver)
@@ -190,8 +191,9 @@ def _expected(vector, fixture):
 def _model_pages(fixture, expected):
     pages = {p: bytearray(v) for p, v in prefix._model_pages(fixture, expected).items()}
     # The vector model appends the unchanged two-word argument as a record.
+    argument = prefix._checked_argument(fixture)
     record = bytes(
-        fixture["pages"][(ARGUMENT + i) & ~0xFFF][(ARGUMENT + i) & 0xFFF]
+        fixture["pages"][(argument + i) & ~0xFFF][(argument + i) & 0xFFF]
         for i in range(8)
     )
     for i, b in enumerate(record):
@@ -208,12 +210,12 @@ def _model_pages(fixture, expected):
     return {p: bytes(v) for p, v in pages.items()}
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -291,6 +293,9 @@ def _run_case(codes, points, vector, negative=None):
         if address == BASE + 0x2EB222 and negative == "cookie":
             m.mem_write(returned.COOKIE, (vector["cookie"] ^ 1).to_bytes(4, "little"))
         if address == expected["endpoint"]:
+            if negative == "argument":
+                at = prefix._checked_argument(fixture)
+                m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
             if negative == "iterator":
                 m.mem_write(frame - 8, (SOURCE_HEAD ^ 1).to_bytes(4, "little"))
             if negative == "payload":
