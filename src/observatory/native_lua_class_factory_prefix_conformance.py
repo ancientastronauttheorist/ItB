@@ -339,9 +339,11 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
-    expected = _expected(vector, fixture)
     additional = continuation or {}
+    fixture = _fixture(vector)
+    if "extend_fixture" in additional:
+        fixture = additional["extend_fixture"](vector, fixture)
+    expected = _expected(vector, fixture)
     if additional:
         expected = additional["extend_expected"](vector, fixture, expected)
     endpoint = additional.get("endpoint", BASE + INITIALIZER)
@@ -372,7 +374,7 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
         for p in points
         if not any(a <= int(p["rva"], 16) < b for a, b in ERROR_RANGES)
     }
-    visited, events, calls = [], [], []
+    visited, events, calls, heap_calls = [], [], [], []
     resume = None
     finished = False
 
@@ -384,6 +386,40 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
 
     def on_code(m, address, size, user):
         nonlocal resume, finished
+        if address == additional.get("heap_target"):
+            requests = expected["heap_calls"]
+            _require(len(heap_calls) < len(requests), "extra factory heap call")
+            request = requests[len(heap_calls)]
+            sp = m.reg_read(ids["esp"])
+            if negative == "heap_request":
+                m.mem_write(
+                    sp + 12, (request["arguments"][2] ^ 1).to_bytes(4, "little")
+                )
+            _require(
+                sp == request["entry_esp"]
+                and [word(sp + 4 * i) for i in range(4)]
+                == [request["continuation"], *request["arguments"]]
+                and registers() == request["entry_registers"],
+                "factory heap request or ABI differs",
+            )
+            response = dict(request["response"])
+            if negative == "heap_response":
+                response["eax"] += 1
+            for r in ("eax", "ecx", "edx"):
+                m.reg_write(ids[r], response[r])
+            m.reg_write(x.UC_X86_REG_EFLAGS, response["eflags"])
+            m.reg_write(ids["esp"], sp + 16)
+            heap_calls.append(
+                dict(
+                    arguments=request["arguments"],
+                    response=response,
+                    entry_esp=sp,
+                    continuation=request["continuation"],
+                )
+            )
+            resume = request["continuation"]
+            m.emu_stop()
+            return
         if address in TARGETS.values():
             _require(len(calls) < len(expected["calls"]), "extra factory API call")
             call = expected["calls"][len(calls)]
@@ -463,7 +499,7 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     machine.hook_add(uc.UC_HOOK_CODE, on_code)
     machine.hook_add(uc.UC_HOOK_MEM_READ | uc.UC_HOOK_MEM_WRITE, on_memory)
     pc = BASE + START
-    for _ in range(9):
+    for _ in range(9 + len(expected.get("heap_calls", []))):
         resume = None
         machine.emu_start(pc, 0, count=2000)
         if finished:
@@ -471,6 +507,10 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
         _require(resume is not None, "factory missing continuation")
         pc = resume
     _require(finished and len(calls) == 7, "factory initializer handoff absent")
+    _require(
+        len(heap_calls) == len(expected.get("heap_calls", [])),
+        "factory heap request count differs",
+    )
     _require(
         registers() == expected["registers"]
         and machine.reg_read(x.UC_X86_REG_EFLAGS) & FLAG_MASK == expected["flags"],
@@ -484,7 +524,7 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     )
     _require(events == expected["events"], "factory memory events differ")
     _require(len(visited) == instruction_count, "factory instruction count differs")
-    return dict(
+    result = dict(
         vector=vector,
         trace_rvas=visited,
         api_calls=calls,
@@ -498,6 +538,9 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
         logical=json.loads(json.dumps(expected["logical"])),
         initializer_instructions=additional_instructions,
     )
+    if "heap_calls" in expected:
+        result["heap_calls"] = heap_calls
+    return result
 
 
 def _build_unsealed(executable, sources):

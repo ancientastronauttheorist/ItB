@@ -66,6 +66,11 @@ File SHA:
 CLI commands build, verify and verify-structure require all four source
 receipts. Exact execution and tests run in isolated subprocesses.
 
+The later [record construction proof](native_lua_class_factory_record_conformance.md)
+executes the helper and native allocation wrappers, then checks its actual
+returned pointer store at userdata offset 52. This prefix receipt retains
+its original endpoint and byte identity.
+
 This proof excludes self-linked helper execution, allocation machinery, later
 initializer Lua calls, both returns, remaining factory instructions, real Lua
 VM behavior, heap ownership, exceptions, error paths, arbitrary memory domains

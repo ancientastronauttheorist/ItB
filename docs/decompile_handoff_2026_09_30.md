@@ -19,6 +19,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `5344217e` | Actual callback record mapped through first-null vector allocation and small old-vector growth/copy/free. |
 | `c4c934b4` | Sealed continuous callback through first-null and small old-full vector growth. |
 | `f5b5186e` | Sealed normal factory prefix through its actual initializer handoff. |
+| `5df38776` | Sealed continuous factory and 37-instruction initializer prefix through record-helper entry. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -110,6 +111,23 @@ The 14 fixed word writes, four untouched words, second pointer at userdata
 offset 16, nested FS chain and overwritten argument cell are checked. The
 machine stops at `0x0007c600` before the helper's first instruction.
 
+## Completed native record construction
+
+[Documentation](native_lua_class_factory_record_conformance.md): 1,728 cases,
+195 selected sites, 160 normal executed sites and 576 bytes. All native factory,
+initializer-prefix, record-helper, retry, thunk and heap-wrapper instructions
+execute continuously; only seven Lua responses and one successful HeapAlloc
+response per case are supplied. Execution covered 609,408 native instructions,
+12,096 Lua API calls and 1,728 heap calls. All 30 controls passed, independent
+GO, and 58 focused tests passed with no skips including the exact CLI rebuild.
+A preceding 103-test gate proved both earlier factory receipts remain
+byte-identical after adding the fixture and heap hooks.
+Canonical SHA: `94fb1682f5d89c131e6fe2eab62e926f0f4b71494d0fa12a5e89762dd8253a79`.
+File SHA: `bc514c41fd8c2779e4e8c97aee406d4c05b4cbada41aa5daaf9e474e57372c23`.
+All three self links, the two-byte marker and untouched bytes 14 through 23
+are checked, including a page-crossing DWORD store. The actual returned
+record is stored at userdata offset 52. The endpoint is `0x002ead94`.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -120,10 +138,12 @@ than assuming the pointers or bytes are equal. Error arms and null-userdata
 bypass are separate boundaries. No initializer, ownership or exception-handling
 claim follows from that first handoff alone. Its following 37 initializer
 instructions are now checked by the separate composition above. Next useful
-continuation: execute the self-linked record helper `0x0007c600`, native retry
-wrapper, thunk and heap wrapper continuously, supplying only one successful
-HeapAlloc response. Check all record bytes and its actual store at userdata
-offset 52 before tackling later initializer Lua calls.
+continuation: execute the remaining initializer Lua requests and native
+field writes, then the complete factory closure return. Keep the registry
+context, three supplied references, graph and ID-map pointer results explicit.
+Normal fresh userdata bypasses the prior-reference unref arms; a context guard
+different from -2 bypasses the assertion arm. Real VM effects and arbitrary
+registry results remain outside the conditional proof.
 
 ## Environment and preservation
 
