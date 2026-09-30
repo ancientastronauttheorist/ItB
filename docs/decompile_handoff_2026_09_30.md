@@ -26,6 +26,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `0db08866` | Sealed returned-callback argument-marker rejection with both actual native marker helpers. |
 | `c6cab4dc` | Sealed both callback upvalue assertion prefixes through native helper entry. |
 | `565b7923` | Sealed the factory context assertion prefix with its actual allocated record and nested FS frames. |
+| `4b2c1587` | Joined actual native factory output to returned callback class-helper entry across an explicit host boundary. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -257,6 +258,22 @@ A separate 44-test gate rebuilt the 2,304-case growth callback byte-identically.
 Across those gates and the 38-test dedicated native gate, 203 tests passed
 with zero skips. Real VM invocation and class execution remain excluded.
 
+## Checked producer receiver address adapter
+
+[Documentation](native_lua_class_factory_receiver_alignment.md) and
+`native_lua_class_factory_receiver_alignment.install` supply the actual
+factory U=`0x0fffffcc` and allocated P=`0x10000100`, matching the existing
+class receiver/head identities. The adapter preserves every byte of the
+normal extended fixture and adds only two fresh A5 pages; native factory
+machinery writes all userdata and record fields. TREE=`0x10000000` is the
+embedded U+52 field address containing P. Eighteen finite native factory
+returns check closure U, null vector, empty tree count, actual self links,
+marker, preserved padding, three reference identities and original unused
+storage. Four native controls reject exactly. The focused gate passed 27
+tests with no skips; independent GO. No earlier source/receipt changes or
+accounting promotion occurred. Callback/class execution remains outside this
+address-adapter proof.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -282,8 +299,8 @@ host boundary. A mapping or composition must retain that boundary rather
 than claim live VM execution. The existing fixed tree pair uses
 `RECEIVER=0x0fffffcc`, embedded field address `TREE=0x10000000`, and allocated
 head `HEAD=0x10000100`. TREE contains HEAD; they are distinct identities.
-An aligned producer profile can supply those U/P addresses and an initially
-empty destination. It still needs a checked class entry/source adapter and
+The checked aligned producer profile now supplies those U/P addresses and
+an initially empty destination. It still needs a checked class entry/source adapter and
 must preserve factory fields and record padding. A smaller arbitrary-address
 empty-source class prefix can avoid insertion and balancing relocation, but
 that continuation has not yet been implemented or validated. Prior-reference
