@@ -1,0 +1,1576 @@
+{
+  "analysis_kind": "pe_native_lua_class_callback_assertion_prefix_conformance",
+  "body": {
+    "points": [
+      {
+        "rva": "0x002eb560",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb561",
+        "sha256": "f7f55aeb563f96b4cba54af81ceeed57ee70e798f4823259a7b30067b3ce82e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb563",
+        "sha256": "8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb564",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb565",
+        "sha256": "6c2a4f8ad84eb89918e0b20e0925ca47c86fe546454160478fe5dd6866cf017e",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb56b",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb56e",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb570",
+        "sha256": "17dc64d49bbde7c8a2294fe27e6b08751cd4171d0d72b282e2698ad53402dc46",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb572",
+        "sha256": "0eaa462bd786e07a51ddb88f6d2212282bdb0951715873f37997ff8b06efdadf",
+        "size": 5
+      },
+      {
+        "rva": "0x002eb577",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb578",
+        "sha256": "807671a7b499bbe32930d1ff7ee56bfffc418381e81319724b03861525eb64ff",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb57e",
+        "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb580",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb581",
+        "sha256": "d3e74ebf7363ef5e72ca96ae5aff3a340375586190a1ccaf1e49fc1826790498",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb587",
+        "sha256": "9707f847a90180d57ed06436d8e33dad1a1cff47ec2b946dac55637059551931",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb589",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb58a",
+        "sha256": "3dca66d00ee853da86c2da0da9c20589ed24cee747bb5a2dd8978504c844337c",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb590",
+        "sha256": "cefb80a19a11500415c30f1789f384e90c7c2c33170901a68092a0dcd3de1270",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb593",
+        "sha256": "382f2b3d34762fd221108d303e470a10b642864b51ead0c5b5cb00b5d4041834",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb595",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb596",
+        "sha256": "043b5c16f0c4129abe8ea534766c2117090a2f144dcc6fe6f25719f50ea562e1",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb598",
+        "sha256": "b2a2028749af082a496044f7e1e70ceb4d21b57aedc24eacb85fc7373caa7b04",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb59a",
+        "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb5a0",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb5a3",
+        "sha256": "90ef8690a679d25d77655565ce4ad197255f49a3eaa58f9a96fc2aa903fe72a2",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb5a5",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5a6",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5a7",
+        "sha256": "9b97e33e07cb7ab15b75bbca2019e41cb74c2f0a91f146599d023a6ea0529338",
+        "size": 6
+      },
+      {
+        "rva": "0x002eb5ad",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002eb5b0",
+        "sha256": "35b660100acac77a09eed3bdd6b22a8db7b27c1e8c4c4ed44bd52d51c9084b03",
+        "size": 2
+      },
+      {
+        "rva": "0x002eb5b2",
+        "sha256": "74cd9ef9c7e15f57bdad73c511462ca65cb674c46c49639c60f1b44650fa1dcb",
+        "size": 1
+      },
+      {
+        "rva": "0x002eb5b3",
+        "sha256": "ae3f4619b0413d70d3004b9131c3752153074e45725be13b9a148978895e359e",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec110",
+        "sha256": "a25513c7e0f6eaa80a3337ee18081b9e2ed09e00af8531c8f7bb2542764027e7",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec111",
+        "sha256": "1c9265c24aee50e5510c840d4874f85a6cd850e5315accb031e93fed57f17eb6",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec113",
+        "sha256": "efaa7fd3e692696b0725a3dc95ca225f80f56cce0ecf0efeda79b773115f381c",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec116",
+        "sha256": "fb411162b29d74c22c65bab2722f82b7eb48e520f5e230139a6fdff51960ded6",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec11b",
+        "sha256": "35dc60dbffd5cdb36769afdf5363ea9e2a99611cf0ac9efad038ae97f2a3cf93",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec11d",
+        "sha256": "1e4a601ef6d69967b61e31bf2df6f10f9c4f4b2ee2f156c4908f428235b4182c",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec120",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec121",
+        "sha256": "350035d67bbad9ded6aeca4542efd660ac807e838bc409c091a6749844eb401b",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec124",
+        "sha256": "de5a6f78116eca62d7fc5ce159d23ae6b889b365a1739ad2cf36f925a140d0cc",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec125",
+        "sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec126",
+        "sha256": "57422aa019341786ff85bfec627791225a6fd338c0816bd90a08e6e2b1157115",
+        "size": 6
+      },
+      {
+        "rva": "0x002ec12c",
+        "sha256": "39eea2e1391889d20c5f8240cfb2805ff5292d7c944bbdfe3f66dcc646aa2738",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec131",
+        "sha256": "8de0b3c47f112c59745f717a626932264c422a7563954872e237b223af4ad643",
+        "size": 1
+      },
+      {
+        "rva": "0x002ec132",
+        "sha256": "7592d0fabc9e647414da30e303ba239e1b6047b0a3d102ac1f3a7223f131eac1",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec134",
+        "sha256": "234f8f2031d456cbb66a9a4907f797ba3e97e213bae11b112af85390c778cb8c",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec136",
+        "sha256": "0922bc23817866b17b5ce11bd7b21428d78ba7564e9b0024637ae34d2a05b017",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec139",
+        "sha256": "aee10337a9785d6530d7e651b763d045d4e560bb701b23c3f1ca695bcb5c7b7c",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec13c",
+        "sha256": "8ab1132e0f39300a69111599262ce5db7c26e24b7eb3cc9ae866e97c67ff49bd",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec13e",
+        "sha256": "67a672f96466006a28e387e6f6c94dd1320238a4744dc96d1c6af25eef91dbda",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec140",
+        "sha256": "617fa43682f07c44e61b8ea33ac4759ee1ed391cab965ef0b1913e73192a2727",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec142",
+        "sha256": "102d8dab37f42d2c57194521dc20f26f99897071a75ec5f6920358bae2954e6c",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec147",
+        "sha256": "52c240669247723a8c4be0d63d5d84efdb34d0c0096dff74732ccfbecdcfda7b",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec14c",
+        "sha256": "5221552944700e047a429bd965f477b0ea7d81475ab12933d67abb6c7d9d5b17",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec151",
+        "sha256": "2fd40b052ecdb09c0b4b6c5745e92654c7f03e8bf0bf726ef470fa45fe5b20d0",
+        "size": 3
+      },
+      {
+        "rva": "0x002ec154",
+        "sha256": "3554c8d74be452b2948835949bbe33cc673e938589737205f0edde8b716c3602",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec159",
+        "sha256": "4b114be14a1901cce6f7a0f927756e414400942123cd365bfe5043a4b118045f",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec15b",
+        "sha256": "e2ce473995dddb1ab095ae1d09009555960380c5b6f74892a798d8a75d1a9364",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec160",
+        "sha256": "cefb6ab22ceb39e9ba061187c8ea79abd8c6dd3fb3031ce67c7cb6be1fe8b2e0",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec162",
+        "sha256": "67a672f96466006a28e387e6f6c94dd1320238a4744dc96d1c6af25eef91dbda",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec164",
+        "sha256": "4fb36eca86b3c3adf67ca055ce4808d3b70554e50f3d7a8455f7e23f24122131",
+        "size": 2
+      },
+      {
+        "rva": "0x002ec166",
+        "sha256": "102d8dab37f42d2c57194521dc20f26f99897071a75ec5f6920358bae2954e6c",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec16b",
+        "sha256": "80109c35d7222fede81735a75a05e9d2ea15ba47c69391d72cda7c7df97eec78",
+        "size": 5
+      },
+      {
+        "rva": "0x002ec170",
+        "sha256": "ca270bedf7636e3b538b5a3faf2aa0aa020ea8c06bf1fa40e1b5ca5c92b7f3e7",
+        "size": 5
+      }
+    ],
+    "ranges": [
+      {
+        "end_rva": "0x002eb5b4",
+        "sha256": "6f1c89224988d0fbcb9d3ded8b5c49f5652a871da1b7acb850dac37d75604bec",
+        "start_rva": "0x002eb560"
+      },
+      {
+        "end_rva": "0x002ec175",
+        "sha256": "b46e6d571a75e61bd3d693175fc86ba18ea6155260afb9415ac848532d645bdf",
+        "start_rva": "0x002ec110"
+      }
+    ]
+  },
+  "build_identity": {
+    "appmanifest_sha256": "8790e23b238963d2d8568a7c214c96e88c9c355bd6dee3d395b0870cc057925a",
+    "architecture": "x86",
+    "build_id": "13725832",
+    "depot_manifests": [
+      {
+        "depot_id": "590381",
+        "manifest": "8335438558621014449"
+      }
+    ],
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112,
+    "format": "pe",
+    "maps_revision_sha256": "a16ed060190402ab83d5968c000917c9979944dd11beb154329ba002cfcb28d4",
+    "native_libraries": [
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "SDL2.dll",
+        "sha256": "cb7161fff576ab9a0288c14029bc98d138c3f660e764860dbd37640f06cb7f10",
+        "size": 891904
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmod.dll",
+        "sha256": "64065fde171bd11aa4d82079042e60f7c092436a771e260bb03aeb6e76f66b00",
+        "size": 1518080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "fmodstudio.dll",
+        "sha256": "9c06a8928ea1e8e48db1f3dbde64a4d1a7e2b669eeafe04b68e21b480320045d",
+        "size": 1085440
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "lua5.1.dll",
+        "sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+        "size": 419840
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "steam_api.dll",
+        "sha256": "1ac139ebad2a653adff5700347274cf9816256eb5d69ae6dc43c4cf9c8532aa7",
+        "size": 263080
+      },
+      {
+        "architecture": "x86",
+        "format": "pe",
+        "path": "vcruntime140.dll",
+        "sha256": "6823b98c3e922490a2f97f54862d32193900077e49f0360522b19e06e6da24b4",
+        "size": 83784
+      }
+    ],
+    "platform": "windows",
+    "scripts_revision_sha256": "540102bdc7f1f02f48016e971333137f76ddc49e188ef7abbb847ba853d241d3"
+  },
+  "engine": {
+    "architecture": "x86_32",
+    "name": "Unicorn",
+    "version": "2.1.4"
+  },
+  "executed_rvas": [
+    "0x002eb560",
+    "0x002eb561",
+    "0x002eb563",
+    "0x002eb564",
+    "0x002eb565",
+    "0x002eb56b",
+    "0x002eb56e",
+    "0x002eb570",
+    "0x002eb572",
+    "0x002eb577",
+    "0x002eb578",
+    "0x002eb57e",
+    "0x002eb580",
+    "0x002eb581",
+    "0x002eb587",
+    "0x002eb589",
+    "0x002eb58a",
+    "0x002eb590",
+    "0x002eb593",
+    "0x002eb595",
+    "0x002eb596",
+    "0x002eb598",
+    "0x002eb5a7",
+    "0x002eb5ad",
+    "0x002eb5b0",
+    "0x002eb5b2",
+    "0x002eb5b3",
+    "0x002ec110",
+    "0x002ec111",
+    "0x002ec113",
+    "0x002ec116",
+    "0x002ec11b",
+    "0x002ec11d",
+    "0x002ec120",
+    "0x002ec121",
+    "0x002ec124",
+    "0x002ec125",
+    "0x002ec126",
+    "0x002ec12c",
+    "0x002ec131",
+    "0x002ec132",
+    "0x002ec134",
+    "0x002ec136",
+    "0x002ec139",
+    "0x002ec13c",
+    "0x002ec13e",
+    "0x002ec140",
+    "0x002ec142",
+    "0x002ec147",
+    "0x002ec14c",
+    "0x002ec154",
+    "0x002ec159",
+    "0x002ec15b",
+    "0x002ec160",
+    "0x002ec162",
+    "0x002ec164",
+    "0x002ec166",
+    "0x002ec16b",
+    "0x002ec170"
+  ],
+  "negative_controls": [
+    {
+      "kind": "ancestor",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "userdata",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "expression_page",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "cookie",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "saved_register",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "local_userdata",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "boundary_return",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "boundary_word",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "iat_padding",
+      "reason": "callback assertion prefix protected memory differs",
+      "rejected": true
+    },
+    {
+      "kind": "result",
+      "reason": "callback assertion prefix registers or flags differ",
+      "rejected": true
+    },
+    {
+      "kind": "flags",
+      "reason": "callback assertion prefix registers or flags differ",
+      "rejected": true
+    },
+    {
+      "kind": "api_argument",
+      "reason": "callback assertion prefix API request or ABI differs",
+      "rejected": true
+    },
+    {
+      "kind": "boundary_argument",
+      "reason": "callback assertion prefix boundary request or ABI differs",
+      "rejected": true
+    },
+    {
+      "kind": "api_response",
+      "reason": "callback assertion prefix boundary request or ABI differs",
+      "rejected": true
+    },
+    {
+      "kind": "lua_identity",
+      "reason": "callback assertion prefix Lua identity differs",
+      "rejected": true
+    },
+    {
+      "kind": "upvalue_guard",
+      "reason": "callback assertion prefix native path differs",
+      "rejected": true
+    }
+  ],
+  "observations_sha256": "49e83a1601e72244d5cfab28d2e059ee2bdeb135dbce5687acb01183fd6fccc8",
+  "schema_version": 1,
+  "scope": {
+    "checked": [
+      "Native null-upvalue and false-upvalue-marker validation prefixes",
+      "Actual marker body executes continuously and preserves high words before parent AL guard",
+      "Independent Lua prefix restoration and exact physical API frames",
+      "Three native boundary argument words, actual continuations and incoming GPRs",
+      "Ordered native data events, all mapped pages, caller ancestors and cookie setup"
+    ],
+    "excluded": [
+      "Assertion-helper execution, imported DLL behavior, unwind, recovery and callback return",
+      "Interpretation or validation of expression and filename pointer contents",
+      "Argument marker, class operation, table transfer, cookie verification and accounting promotion"
+    ],
+    "premises": [
+      "Supplied normal cdecl Lua response words preserve nonvolatile GPRs and mapped pages",
+      "Compatible false marker lookup contracts for nonzero supplied userdata"
+    ]
+  },
+  "source_receipts": {
+    "callback_error": {
+      "analysis_kind": "pe_native_lua_class_callback_error_conformance",
+      "canonical_sha256": "1c720f1a11c848aa2e5c9ef31dbb4aea6eb9e24bcb1867b30f463cb2d35ff988"
+    },
+    "factory_chain": {
+      "analysis_kind": "pe_native_lua_class_factory_chain",
+      "canonical_sha256": "824883dddbf0573c26c556d19501027c01b3031d1723ac8a493374bbf63204fc"
+    },
+    "marker_conformance": {
+      "analysis_kind": "pe_native_lua_class_marker_conformance",
+      "canonical_sha256": "d8f146cc7b6666a53348465065e7f6f7768f3d803fb6e4ea38bc9d72662515b9"
+    },
+    "marker_semantics": {
+      "analysis_kind": "pe_native_lua_class_marker_semantics",
+      "canonical_sha256": "fb30c2feb6bcbc4583ee415585405a130b1219952d23c9aecdf56103158a7c7d"
+    },
+    "program_facts": {
+      "analysis_kind": "pe_ghidra_program_facts",
+      "canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803"
+    }
+  },
+  "summary": {
+    "accounting_promotions": 0,
+    "assertion_boundaries": 192,
+    "cases": 192,
+    "controls": 16,
+    "executed_sites": 59,
+    "families": {
+      "absent": 48,
+      "false": 48,
+      "nil": 48,
+      "null": 48
+    },
+    "instruction_bytes": 185,
+    "marker_calls": 144,
+    "native_instructions": 8256,
+    "opaque_native_instructions": 0,
+    "static_sites": 65,
+    "supplied_api_calls": 720
+  },
+  "vectors": [
+    {
+      "alignment": 0,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 0,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 0,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 0,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 0,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 0,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 0,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 0,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 0,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 0,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 0,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 0,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 1,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 1,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 1,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 1,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 1,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 1,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 1,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 1,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 1,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 1,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 1,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 1,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 2,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 2,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 2,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 2,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 2,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 2,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 2,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 2,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 2,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 2,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 2,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 2,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 3,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 3,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 3,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 3,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 3,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 3,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 3,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 3,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 3,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 3,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 3,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 3,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 4,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 4,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 4,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 4,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 4,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 4,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 4,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 4,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 4,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 4,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 4,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 4,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 5,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 5,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 5,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 5,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 5,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 5,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 5,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 5,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 5,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 5,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 5,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 5,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 6,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 6,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 6,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 6,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 6,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 6,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 6,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 6,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 6,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 6,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 6,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 6,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 7,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 7,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 7,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 7,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 7,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 7,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 7,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 7,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 7,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 7,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 7,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 7,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 8,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 8,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 8,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 8,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 8,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 8,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 8,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 8,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 8,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 8,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 8,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 8,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 9,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 9,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 9,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 9,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 9,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 9,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 9,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 9,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 9,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 9,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 9,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 9,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 10,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 10,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 10,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 10,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 10,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 10,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 10,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 10,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 10,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 10,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 10,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 10,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 11,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 11,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 11,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 11,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 11,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 11,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 11,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 11,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 11,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 11,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 11,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 11,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 12,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 12,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 12,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 12,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 12,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 12,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 12,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 12,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 12,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 12,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 12,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 12,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 13,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 13,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 13,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 13,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 13,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 13,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 13,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 13,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 13,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 13,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 13,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 13,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 14,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 14,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 14,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 14,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 14,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 14,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 14,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 14,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 14,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 14,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 14,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 14,
+      "family": "false",
+      "profile": 2
+    },
+    {
+      "alignment": 15,
+      "family": "null",
+      "profile": 0
+    },
+    {
+      "alignment": 15,
+      "family": "absent",
+      "profile": 0
+    },
+    {
+      "alignment": 15,
+      "family": "nil",
+      "profile": 0
+    },
+    {
+      "alignment": 15,
+      "family": "false",
+      "profile": 0
+    },
+    {
+      "alignment": 15,
+      "family": "null",
+      "profile": 1
+    },
+    {
+      "alignment": 15,
+      "family": "absent",
+      "profile": 1
+    },
+    {
+      "alignment": 15,
+      "family": "nil",
+      "profile": 1
+    },
+    {
+      "alignment": 15,
+      "family": "false",
+      "profile": 1
+    },
+    {
+      "alignment": 15,
+      "family": "null",
+      "profile": 2
+    },
+    {
+      "alignment": 15,
+      "family": "absent",
+      "profile": 2
+    },
+    {
+      "alignment": 15,
+      "family": "nil",
+      "profile": 2
+    },
+    {
+      "alignment": 15,
+      "family": "false",
+      "profile": 2
+    }
+  ]
+}

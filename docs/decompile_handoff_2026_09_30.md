@@ -23,6 +23,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `89941b57` | Sealed native self-linked record allocation and construction through actual userdata offset 52 store. |
 | `3c08d3c0` | Sealed continuous complete normal factory and initializer returns with actual record, registry identities and closure upvalue. |
 | `15bc0fae` | Sealed all four factory rejection prefixes through lua_error import entry. |
+| `0db08866` | Sealed returned-callback argument-marker rejection with both actual native marker helpers. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -187,6 +188,25 @@ The token model and runtime observer verify Lua truth and prefix restoration.
 The retained pushstring frame is checked at the unexecuted error boundary.
 No live VM invocation, unwind, callback return or cookie verification follows.
 
+## Completed callback upvalue assertion prefixes
+
+[Documentation](native_lua_class_callback_assertion_prefix_conformance.md):
+192 cases check null upvalue userdata and absent, nil or false upvalue markers.
+The 185-byte callback/marker union has 65 static and 59 executed sites. Actual
+execution covers 8,256 instructions, 720 supplied Lua responses and 144 native
+marker calls, ending at 192 native assertion-helper entries. No helper
+instruction or response executes. All 16 controls passed, independent GO and
+88 dedicated native/model tests passed without skips. A combined 146-test
+gate also rebuilt the complete normal factory receipt byte-identically after
+adding the next proof's optional boundary oracle.
+
+Canonical SHA: `b6486105640001ae644f9ea2023c98ca62626df5f1ab2c2041ba2dea2879484e`.
+File SHA: `566da6057527a877f2441b7b29075a4742cc32c1bb65e6952f3e50c1ae0eb861`.
+The two exact three-word requests and CALL continuations, high-EAX/AL guard
+distinction, cookie-only frame, restored argument prefix, physical API GPRs,
+ordered events and all mapped pages are checked. Expression and filename
+contents, assertion-helper behavior, unwind and callback return remain open.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -199,10 +219,11 @@ claim follows from that first handoff alone. Its following 37 initializer
 instructions are now checked by the separate composition above, and the normal
 return is closed by the complete proof. Factory rejection prefixes are also
 closed through lua_error entry. The callback argument rejection is also closed.
-Next useful continuation: check its two earlier assertion-call prefixes for
-null upvalue userdata and a false upvalue marker, stopping before native
-assertion-helper execution. Preserve exact marker prefix restoration, high
-EAX words, AL-only guards and the three boundary argument words. Keep
+Both callback upvalue assertion prefixes are now checked. Next useful
+continuation: execute the factory and initializer through the context guard
+minus-two branch and its native assertion-helper entry. Preserve the actual
+record allocation, two registry identities, 18 reached Lua contracts, active
+nested FS chain and exact three-word native boundary frame. Keep
 the supplied normal registry context, three references, graph and ID-map
 pointers explicit. Prior-reference unref arms, assertion, real VM effects and
 arbitrary registry results remain outside the conditional proof.
