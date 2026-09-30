@@ -20,6 +20,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `c4c934b4` | Sealed continuous callback through first-null and small old-full vector growth. |
 | `f5b5186e` | Sealed normal factory prefix through its actual initializer handoff. |
 | `5df38776` | Sealed continuous factory and 37-instruction initializer prefix through record-helper entry. |
+| `89941b57` | Sealed native self-linked record allocation and construction through actual userdata offset 52 store. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -128,6 +129,26 @@ All three self links, the two-byte marker and untouched bytes 14 through 23
 are checked, including a page-crossing DWORD store. The actual returned
 record is stored at userdata offset 52. The endpoint is `0x002ead94`.
 
+## Completed normal factory return
+
+[Documentation](native_lua_class_factory_conformance.md): 5,184 continuous
+cases, 365 selected sites, 302 executed normal sites and 1,089 selected bytes.
+The complete factory, initializer, record helper and allocation bodies execute
+in one machine. Supplied contracts total 176,256 Lua calls and 5,184 heap calls;
+native execution totals 2,564,352 instructions. All 38 controls passed. The
+dedicated 58-test gate passed without skips, including a byte-identical exact
+CLI rebuild. A preceding 236-test model and integration gate passed, rebuilding
+all three earlier factory receipts byte-identically.
+
+Canonical SHA: `d8b36d30d732467edb54396ba22a3cd2a167dca15780f3020df18256c617dbcf`.
+File SHA: `29dc4376f28a537d0052c2dbd39c90328e8213fc029932fe3c16ee9ec1df291a`.
+All 18 userdata words, actual record stores, every mapped page, 34 physical API
+frames and an independent Lua token trace are checked. Both native functions
+return; original nonvolatile registers and FS head are restored. The factory
+returns one closure with the actual userdata as its one upvalue. Metatable,
+registry and global assignments remain conditional supplied requests. The
+closure target is not invoked, and the epilogues do not verify security cookies.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -137,13 +158,13 @@ is passed to the initializer. Preserve independent pointer routing rather
 than assuming the pointers or bytes are equal. Error arms and null-userdata
 bypass are separate boundaries. No initializer, ownership or exception-handling
 claim follows from that first handoff alone. Its following 37 initializer
-instructions are now checked by the separate composition above. Next useful
-continuation: execute the remaining initializer Lua requests and native
-field writes, then the complete factory closure return. Keep the registry
-context, three supplied references, graph and ID-map pointer results explicit.
-Normal fresh userdata bypasses the prior-reference unref arms; a context guard
-different from -2 bypasses the assertion arm. Real VM effects and arbitrary
-registry results remain outside the conditional proof.
+instructions are now checked by the separate composition above, and the normal
+return is closed by the complete proof. Next useful continuation: execute the
+factory argument-count, type, numeric and name-length rejection prefixes,
+stopping at the lua_error import entry before DLL behavior or unwinding. Keep
+the supplied normal registry context, three references, graph and ID-map
+pointers explicit. Prior-reference unref arms, assertion, real VM effects and
+arbitrary registry results remain outside the conditional proof.
 
 ## Environment and preservation
 

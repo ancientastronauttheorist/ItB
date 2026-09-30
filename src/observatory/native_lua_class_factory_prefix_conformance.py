@@ -347,6 +347,13 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     if additional:
         expected = additional["extend_expected"](vector, fixture, expected)
     endpoint = additional.get("endpoint", BASE + INITIALIZER)
+    api_targets = {**TARGETS, **additional.get("api_targets", {})}
+    flag_mask = additional.get("flag_mask", FLAG_MASK)
+    lua = (
+        additional["lua_observer"](vector, fixture)
+        if "lua_observer" in additional
+        else None
+    )
     additional_instructions = additional.get("instruction_count", 0)
     instruction_count = 71 + 4 * vector["length"] + additional_instructions
     codes = {BASE + START: payload, **additional.get("codes", {})}
@@ -372,7 +379,10 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     allowed = {
         int(p["rva"], 16)
         for p in points
-        if not any(a <= int(p["rva"], 16) < b for a, b in ERROR_RANGES)
+        if not any(
+            a <= int(p["rva"], 16) < b
+            for a, b in (*ERROR_RANGES, *additional.get("excluded_ranges", ()))
+        )
     }
     visited, events, calls, heap_calls = [], [], [], []
     resume = None
@@ -420,7 +430,7 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
             resume = request["continuation"]
             m.emu_stop()
             return
-        if address in TARGETS.values():
+        if address in api_targets.values():
             _require(len(calls) < len(expected["calls"]), "extra factory API call")
             call = expected["calls"][len(calls)]
             sp = m.reg_read(ids["esp"])
@@ -439,6 +449,18 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
                 response["eax"] = fixture["first_pointer"]
             if negative == "length_response" and len(calls) == 4:
                 response["eax"] ^= 1
+            if lua is not None:
+                _require(
+                    lua.apply(
+                        call["api"],
+                        [
+                            word(sp + 4 * i)
+                            for i in range(1, 1 + len(call["arguments"]))
+                        ],
+                    )
+                    == response["eax"],
+                    "factory Lua response contract differs",
+                )
             for r in ("eax", "ecx", "edx"):
                 m.reg_write(ids[r], response[r])
             m.reg_write(x.UC_X86_REG_EFLAGS, response["eflags"])
@@ -471,10 +493,16 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
                 m.reg_write(ids["ecx"], fixture["userdata"] ^ 1)
             if negative == "flags":
                 m.reg_write(x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1)
+            if "endpoint_mutation" in additional:
+                additional["endpoint_mutation"](
+                    m, negative, fixture, expected, lua, ids
+                )
             finished = True
             m.emu_stop()
             return
         rva = address - BASE
+        if "before_instruction" in additional:
+            additional["before_instruction"](m, address, negative, fixture, expected)
         _require(rva in allowed, "factory left normal prefix")
         visited.append(f"0x{rva:08x}")
         _require(
@@ -499,21 +527,24 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     machine.hook_add(uc.UC_HOOK_CODE, on_code)
     machine.hook_add(uc.UC_HOOK_MEM_READ | uc.UC_HOOK_MEM_WRITE, on_memory)
     pc = BASE + START
-    for _ in range(9 + len(expected.get("heap_calls", []))):
+    for _ in range(len(expected["calls"]) + 2 + len(expected.get("heap_calls", []))):
         resume = None
         machine.emu_start(pc, 0, count=2000)
         if finished:
             break
         _require(resume is not None, "factory missing continuation")
         pc = resume
-    _require(finished and len(calls) == 7, "factory initializer handoff absent")
+    _require(
+        finished and len(calls) == len(expected["calls"]),
+        "factory initializer handoff absent",
+    )
     _require(
         len(heap_calls) == len(expected.get("heap_calls", [])),
         "factory heap request count differs",
     )
     _require(
         registers() == expected["registers"]
-        and machine.reg_read(x.UC_X86_REG_EFLAGS) & FLAG_MASK == expected["flags"],
+        and machine.reg_read(x.UC_X86_REG_EFLAGS) & flag_mask == expected["flags"],
         "factory registers or defined flags differ",
     )
     _require(
@@ -540,6 +571,11 @@ def _run_case(payload, points, vector, negative=None, *, continuation=None):
     )
     if "heap_calls" in expected:
         result["heap_calls"] = heap_calls
+    if lua is not None:
+        _require(
+            lua.result() == expected["lua_result"], "factory Lua identity trace differs"
+        )
+        result["lua_result"] = lua.result()
     return result
 
 
