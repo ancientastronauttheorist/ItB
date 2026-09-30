@@ -161,7 +161,7 @@ def _direct_response(index, eax):
     )
 
 
-def _expected(vector, fixture, *, class_module=spare):
+def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
     """Closed-form parent frame plus existing independently checked child oracles."""
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
@@ -282,7 +282,7 @@ def _expected(vector, fixture, *, class_module=spare):
         0x2EC134,
         "lua_touserdata",
         [fixture["state"], 0xFFFFD8ED],
-        RECEIVER,
+        fixture.get("receiver", RECEIVER),
         "edi",
     )
     regs["esi"] = regs["eax"]
@@ -301,7 +301,7 @@ def _expected(vector, fixture, *, class_module=spare):
         0x2EC1A3,
         "lua_touserdata",
         [fixture["state"], 1],
-        SOURCE_OBJECT,
+        fixture.get("source_pointer", SOURCE_OBJECT),
         "edi",
     )
     regs["esp"] += 8
@@ -309,6 +309,19 @@ def _expected(vector, fixture, *, class_module=spare):
     regs.update(edi=regs["eax"], ecx=regs["esi"], eax=frame - 16)
     write(frame - 12, regs["edi"])
     push(regs["eax"])
+    if class_entry_only:
+        push(BASE + 0x2EC1BD)
+        from src.observatory.native_lua_class_factory_conformance import _add_flags
+
+        return dict(
+            pages=frozen(),
+            registers=dict(regs),
+            events=events,
+            calls=calls,
+            children=children,
+            flags=_add_flags(frame - 44, 8),
+            endpoint=BASE + 0x2EB140,
+        )
     child("class", 0, 0x2EC1BD)
     push(read(regs["esi"] + 32))
     regs["esi"] = read(BASE + layout.SLOTS["lua_rawgeti"])

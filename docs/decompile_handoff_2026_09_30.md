@@ -25,6 +25,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `15bc0fae` | Sealed all four factory rejection prefixes through lua_error import entry. |
 | `0db08866` | Sealed returned-callback argument-marker rejection with both actual native marker helpers. |
 | `c6cab4dc` | Sealed both callback upvalue assertion prefixes through native helper entry. |
+| `565b7923` | Sealed the factory context assertion prefix with its actual allocated record and nested FS frames. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -230,6 +231,32 @@ records are checked. Context offset 12 is the only reached context read.
 No assertion-helper instruction or response, epilogue, closure creation or
 later registry request executes.
 
+## Completed actual factory output through callback class entry
+
+[Documentation](native_lua_class_factory_callback_entry_conformance.md):
+48 complete native factory cases produce actual data pages, which are retained
+across an explicit supplied host invocation boundary. The callback and both
+marker helpers then execute continuously through class-helper entry
+`0x002eb140`; no class-helper instruction executes. The 257-byte prefix has
+88 static and 67 executed sites. Totals: 27,552 factory instructions, 4,512
+callback/marker instructions, 1,632 factory Lua responses, 576 callback Lua
+responses, 48 heap responses and 96 native marker calls. All eleven controls
+passed. Independent GO; 126 dedicated model/native tests passed without skips,
+including the byte-identical exact native capture/rebuild.
+
+Canonical SHA: `cca405ff5c16dfebb85f23c07e5333c14b300c209ad24dfab42033d17c89b94e`.
+File SHA: `b7485db988408f110547fe5475ebbf55dabbea908c9b86699393549fbcbf1a0b`.
+Eleven sources are pinned. Only named shared import/literal bytes and a fresh
+eight-byte host frame are patched; no existing page is replaced. Produced
+userdata U, its actual record P, references, names, context, old frames and FS
+head remain retained. At callback entry T, class entry ESP=T-48 has return
+`0x006ec1bd` and argument pointer T-20 to original `[0,A]`; ECX=U. Final flags
+come from ADD ESP,8, not the marker TEST. The same 121-test gate included 88
+model tests and rebuilt the earlier 1,152-case spare callback byte-identically.
+A separate 44-test gate rebuilt the 2,304-case growth callback byte-identically.
+Across those gates and the 38-test dedicated native gate, 203 tests passed
+with zero skips. Real VM invocation and class execution remain excluded.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -243,14 +270,24 @@ instructions are now checked by the separate composition above, and the normal
 return is closed by the complete proof. Factory rejection prefixes are also
 closed through lua_error entry. The callback argument rejection is also closed.
 Both callback upvalue assertion prefixes and the factory context assertion
-prefix are now checked. Next useful continuation: map actual normal factory
-output into a subsequent returned-closure callback's receiver contract.
+prefix are now checked. Actual normal factory output now reaches the
+returned callback's native class-helper entry. Next useful continuation:
+consume that produced receiver in the class operation and first-null vector
+allocation, keeping the supplied host invocation boundary explicit.
 Preserve the produced null vector, actual allocated self-linked record,
 userdata identity and registry references. Existing callback tree fixtures
 have fixed receiver and head addresses; their pages cannot simply overwrite
 the factory output. The intervening Lua VM closure invocation is an explicit
 host boundary. A mapping or composition must retain that boundary rather
-than claim live VM execution. Prior-reference unref arms, assertion behavior,
+than claim live VM execution. The existing fixed tree pair uses
+`RECEIVER=0x0fffffcc`, embedded field address `TREE=0x10000000`, and allocated
+head `HEAD=0x10000100`. TREE contains HEAD; they are distinct identities.
+An aligned producer profile can supply those U/P addresses and an initially
+empty destination. It still needs a checked class entry/source adapter and
+must preserve factory fields and record padding. A smaller arbitrary-address
+empty-source class prefix can avoid insertion and balancing relocation, but
+that continuation has not yet been implemented or validated. Prior-reference
+unref arms, assertion behavior,
 real VM effects and arbitrary registry results remain outside these proofs.
 
 ## Environment and preservation
