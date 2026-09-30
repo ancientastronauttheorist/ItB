@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import capstone
 from src.observatory import native_lua_class_marker_semantics as semantics
+from src.observatory import native_lua_shared_api_layout as shared_layout
 from src.observatory.native_lua_vector_allocation_return_conformance import _add_flags
 from src.observatory.native_assertion_helper_fill_conformance import (
     BASE,
@@ -65,7 +66,7 @@ def vectors():
     ]
 
 
-def _fixture(vector, *, caller=None):
+def _fixture(vector, *, caller=None, api_layout=None):
     a, length = vector["alignment"], vector["prefix_length"]
     _require(
         type(a) is int and 0 <= a < 16 and type(length) is int and length in (1, 3),
@@ -113,6 +114,11 @@ def _fixture(vector, *, caller=None):
         iat_page=iat_page,
     )
 
+    if api_layout is not None:
+        try:
+            fixture = shared_layout.install_layout(fixture, api_layout)
+        except shared_layout.LayoutError as exc:
+            raise ConformanceError(str(exc)) from exc
     if caller is not None:
         _require(
             type(caller) is dict
@@ -125,6 +131,8 @@ def _fixture(vector, *, caller=None):
             "invalid caller stack pages",
         )
         reserved = {LITERAL & ~0xFFF, iat_page, (BASE + START) & ~0xFFF, IMPORT}
+        if "api_targets" in fixture:
+            reserved.update(shared_layout.SHARED_PAGES)
         _require(
             type(endpoint) is int and 0 <= endpoint < 2**32,
             "invalid marker return address",
@@ -161,7 +169,19 @@ def _fixture(vector, *, caller=None):
     return fixture
 
 
+def _api_targets(fixture):
+    if "api_targets" not in fixture:
+        return TARGETS
+    try:
+        return shared_layout.validate_targets_and_pages(
+            fixture["api_targets"], fixture["pages"]
+        )
+    except shared_layout.LayoutError as exc:
+        raise ConformanceError(str(exc)) from exc
+
+
 def _check_fixture(vector, fixture):
+    targets = _api_targets(fixture)
     entry, endpoint = fixture["entry"], fixture["endpoint"]
     _require(
         type(entry) is int and 32 <= entry <= 2**32 - 5, "invalid marker entry address"
@@ -207,6 +227,12 @@ def _check_fixture(vector, fixture):
         LITERAL & ~0xFFF,
         *{(BASE + slot) & ~0xFFF for slot, _ in CALLS.values()},
     }
+    if "api_targets" in fixture:
+        reserved_data.update(shared_layout.SHARED_PAGES)
+    _require(
+        fixture["iat_page"] == (BASE + next(iter(CALLS.values()))[0]) & ~0xFFF,
+        "marker IAT page differs",
+    )
     _require(
         all(
             (address & ~0xFFF) not in reserved_data
@@ -234,7 +260,7 @@ def _check_fixture(vector, fixture):
     )
     _require(
         all(
-            int.from_bytes(raw(BASE + slot), "little") == TARGETS[name]
+            int.from_bytes(raw(BASE + slot), "little") == targets[name]
             for slot, name in CALLS.values()
         ),
         "marker mapped IAT differs",
@@ -267,6 +293,7 @@ def _response(vector, name, index):
 
 
 def _expected(vector, fixture):
+    targets = _api_targets(fixture)
     _check_fixture(vector, fixture)
     entry = fixture["entry"]
     regs = dict(fixture["registers"])
@@ -289,7 +316,7 @@ def _expected(vector, fixture):
 
     def call(site, index):
         slot, name = CALLS[site]
-        read(BASE + slot, TARGETS[name])
+        read(BASE + slot, targets[name])
         push(BASE + site + 6)
         before = len(lua)
         if name == "lua_getmetatable":
@@ -315,7 +342,7 @@ def _expected(vector, fixture):
             dict(
                 site_rva=f"0x{site:08x}",
                 api=name,
-                target=TARGETS[name],
+                target=targets[name],
                 entry_esp=regs["esp"],
                 arguments=[fixture["registers"]["ecx"], index],
                 continuation=BASE + site + 6,
@@ -421,6 +448,7 @@ def _run_case(code, points, vector, negative=None, *, fixture=None):
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
     fixture = _fixture(vector) if fixture is None else fixture
+    targets = _api_targets(fixture)
     expected = _expected(vector, fixture)
     m = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -440,7 +468,7 @@ def _run_case(code, points, vector, negative=None, *, fixture=None):
 
     def on_code(machine, address, size, user):
         nonlocal resume
-        if address in TARGETS.values():
+        if address in targets.values():
             _require(
                 len(summaries) < len(expected["calls"]), "unexpected marker API call"
             )

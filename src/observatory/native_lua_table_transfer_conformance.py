@@ -6,6 +6,7 @@ import itertools
 import json
 from pathlib import Path
 from src.observatory import native_lua_table_transfer_semantics as model
+from src.observatory import native_lua_shared_api_layout as shared_layout
 from src.observatory.native_assertion_helper_fill_conformance import (
     BASE,
     EXE_SHA256,
@@ -105,7 +106,7 @@ def _model_contract():
     return json.loads(json.dumps(contract))
 
 
-def _fixture(vector, *, caller=None):
+def _fixture(vector, *, caller=None, api_layout=None):
     a, length = vector["alignment"], vector["prefix_length"]
     _require(
         type(a) is int
@@ -155,6 +156,11 @@ def _fixture(vector, *, caller=None):
         relation=relation,
         iat_page=iat_page,
     )
+    if api_layout is not None:
+        try:
+            fixture = shared_layout.install_layout(fixture, api_layout)
+        except shared_layout.LayoutError as exc:
+            raise ConformanceError(str(exc)) from exc
     if caller is not None:
         _require(
             type(caller) is dict
@@ -167,6 +173,8 @@ def _fixture(vector, *, caller=None):
             iat_page,
             *{literal & ~0xFFF for literal in LITERALS},
         }
+        if "api_targets" in fixture:
+            reserved.update(shared_layout.SHARED_PAGES)
         supplied = caller["stack_pages"]
         _require(
             type(supplied) is dict and bool(supplied), "invalid transfer caller pages"
@@ -196,7 +204,19 @@ def _fixture(vector, *, caller=None):
     return fixture
 
 
+def _api_targets(fixture):
+    if "api_targets" not in fixture:
+        return TARGETS
+    try:
+        return shared_layout.validate_targets_and_pages(
+            fixture["api_targets"], fixture["pages"]
+        )
+    except shared_layout.LayoutError as exc:
+        raise ConformanceError(str(exc)) from exc
+
+
 def _check_fixture(vector, fixture):
+    targets = _api_targets(fixture)
     entry, endpoint = fixture["entry"], fixture["endpoint"]
     _require(type(entry) is int and 48 <= entry < 2**32 - 4, "invalid transfer entry")
     _require(
@@ -240,6 +260,8 @@ def _check_fixture(vector, fixture):
         *{(BASE + slot) & ~0xFFF for slot in SLOTS.values()},
         *{literal & ~0xFFF for literal in LITERALS},
     }
+    if "api_targets" in fixture:
+        reserved.update(shared_layout.SHARED_PAGES)
     _require(
         all(
             a & ~0xFFF in pages and a & ~0xFFF not in reserved
@@ -267,7 +289,7 @@ def _check_fixture(vector, fixture):
     )
     _require(
         all(
-            int.from_bytes(raw(BASE + slot, 4), "little") == TARGETS[name]
+            int.from_bytes(raw(BASE + slot, 4), "little") == targets[name]
             for name, slot in SLOTS.items()
         ),
         "transfer mapped IAT differs",
@@ -294,6 +316,7 @@ def _response(vector, record, index):
 
 def _expected(vector, fixture):
     _check_fixture(vector, fixture)
+    targets = _api_targets(fixture)
     entry = fixture["entry"]
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
@@ -338,9 +361,9 @@ def _expected(vector, fixture):
         for value in reversed(arguments):
             push(value)
         if staged:
-            _require(regs[staged] == TARGETS[name], "transfer staged target differs")
+            _require(regs[staged] == targets[name], "transfer staged target differs")
         else:
-            read(BASE + SLOTS[name], TARGETS[name])
+            read(BASE + SLOTS[name], targets[name])
         continuation = BASE + site + (2 if staged else 6)
         push(continuation)
         response = _response(vector, record, index + 1)
@@ -348,7 +371,7 @@ def _expected(vector, fixture):
             dict(
                 site_rva=f"0x{site:08x}",
                 api=name,
-                target=TARGETS[name],
+                target=targets[name],
                 entry_esp=regs["esp"],
                 arguments=arguments,
                 continuation=continuation,
@@ -369,11 +392,11 @@ def _expected(vector, fixture):
     frames = [-12, -20]
     if vector["kinds"]:
         push(regs["ebx"])
-        read(BASE + SLOTS["lua_pushstring"], TARGETS["lua_pushstring"])
-        regs["ebx"] = TARGETS["lua_pushstring"]
+        read(BASE + SLOTS["lua_pushstring"], targets["lua_pushstring"])
+        regs["ebx"] = targets["lua_pushstring"]
         push(regs["edi"])
-        read(BASE + SLOTS["lua_settop"], TARGETS["lua_settop"])
-        regs["edi"] = TARGETS["lua_settop"]
+        read(BASE + SLOTS["lua_settop"], targets["lua_settop"])
+        regs["edi"] = targets["lua_settop"]
         for kind in vector["kinds"]:
             call(0x2EC086, BASE + 0x420F68)
             call(0x2EC08D, -1, -3)
@@ -436,6 +459,7 @@ def _run_case(code, points, vector, negative=None, *, fixture=None):
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
     fixture = _fixture(vector) if fixture is None else fixture
+    targets = _api_targets(fixture)
     expected = _expected(vector, fixture)
     m = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -455,7 +479,7 @@ def _run_case(code, points, vector, negative=None, *, fixture=None):
 
     def on_code(machine, address, size, user):
         nonlocal resume
-        if address in TARGETS.values():
+        if address in targets.values():
             _require(
                 len(summaries) < len(expected["calls"]), "unexpected transfer API call"
             )
@@ -524,9 +548,9 @@ def _run_case(code, points, vector, negative=None, *, fixture=None):
         if pc == 0x2EC06F and negative == "saved_ebx":
             at = fixture["entry"] - 8
         if pc == 0x2EC080 and negative == "staged_ebx":
-            machine.reg_write(x.UC_X86_REG_EBX, TARGETS["lua_settop"])
+            machine.reg_write(x.UC_X86_REG_EBX, targets["lua_settop"])
         if pc == 0x2EC080 and negative == "staged_edi":
-            machine.reg_write(x.UC_X86_REG_EDI, TARGETS["lua_pushstring"])
+            machine.reg_write(x.UC_X86_REG_EDI, targets["lua_pushstring"])
         if at is not None:
             machine.mem_write(at, bytes([machine.mem_read(at, 1)[0] ^ 1]))
 

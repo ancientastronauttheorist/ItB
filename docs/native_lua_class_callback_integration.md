@@ -97,8 +97,10 @@ remain separate work. This reconstruction makes no accounting promotion.
 
 The [September 30 helper mapping](native_lua_class_record_caller_mapping.md)
 now proves the prefix and external spare-vector cases below, including the
-actual incoming registers and independent caller preservation. Complete callback
-execution still needs a common Lua/heap import layout and continuous Lua state.
+actual incoming registers and independent caller preservation. The
+[shared API layout](native_lua_shared_api_layout.md) now provides a common
+Lua/heap import and literal contract. Complete callback execution still needs
+one continuous native run and Lua state.
 
 The smallest next change can keep the existing class stack base: if its entry
 is S, choose callback F=S+44 and map the caller record at S+28. Set its words
