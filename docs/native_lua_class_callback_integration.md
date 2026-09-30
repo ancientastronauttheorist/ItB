@@ -86,7 +86,10 @@ The [continuous callback receipt](native_lua_class_callback_conformance.md) now
 executes the callback and all selected normal helper instructions in one
 machine across 1,152 finite cases, with one Lua token stack and independent
 class/vector/caller output checks. This closes the successful external-spare
-composition described below. Other class vector return families and callback
+composition described below. The subsequent
+[continuous growth receipt](native_lua_class_callback_growth_conformance.md)
+also executes first-null allocation and full small old-vector copy/free paths
+across 2,304 cases. Internal record aliases, larger growth domains and callback
 error paths remain open.
 
 ## Historical integration requirements
@@ -98,8 +101,10 @@ error paths remain open.
 2. Use the completed prefix/external spare-vector
    [class record caller mapping](native_lua_class_record_caller_mapping.md):
    this caller supplies F-16 with first word zero. Those helper fixtures now
-   accept the actual record and register layout; other class return families
-   retain their fixed record fixtures. The joined object pages must also retain
+   accept the actual record and register layout. The
+   [first-null and old-full mapping](native_lua_class_growth_record_caller_mapping.md)
+   now does so too; internal-record families retain fixed fixtures.
+   The joined object pages must also retain
    the registry-reference fields and final word-zero data.
 3. Carry one abstract Lua stack across all calls. With one entry argument,
    the first table helper has prefix length one and the second length three.

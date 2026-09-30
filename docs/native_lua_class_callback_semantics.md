@@ -11,15 +11,21 @@ conditional logical model, not VM, heap or native callback execution evidence.
 
 ```python
 apply(source, destination, vector, *, source_pointer, source_word,
-      destination_word, destination_refs, source_refs, transfers)
+      destination_word, destination_refs, source_refs, transfers,
+      allow_growth=False)
 ```
 
 Source and destination use the existing `{"tree": ..., "payloads": ...}`
 class representation and its finite tree validation. Their mutable containers
 and the vector's mutable containers must be disjoint. The vector has
 `records` and `capacity`: zero through three live two-uint32 records, with
-strictly spare capacity no greater than five. Only the external argument path
-is modeled; no vector growth is included.
+strictly spare capacity no greater than five by default. `allow_growth` must be
+a strict boolean. With `allow_growth=True`, capacity may also equal the live
+record count for sizes zero through three. The existing class-operation law
+then grows capacity to `max(size + 1, capacity + capacity // 2)`, giving one,
+two, three, or four records of capacity for those full states. Only the
+external argument path is modeled. This logical capacity change does not
+establish allocation, deallocation, or heap ownership effects.
 
 `source_pointer` is a nonzero uint32. Source/destination word zero and both
 two-element registry-reference lists contain strict uint32 values; booleans
@@ -31,6 +37,9 @@ fixed to one value for this tranche.
 The returned `class_operation` transfers the source tree in key order,
 overwrites existing destination payloads and appends the original record
 `[0, source_pointer]`. `destination_word` is the supplied source word zero.
+`class_operation.grew` reports whether the input was full; its returned vector
+reports the resulting capacity and preserves all original live records.
+Opting in with an already spare vector returns exactly the default output.
 All output state and request snapshots are detached from inputs and from
 separate calls.
 
@@ -73,6 +82,16 @@ existing/mixed tree profiles, payload overwrites, original-record append,
 registry ordering, continuous stack prefixes, zero results, detachment and
 invalid-domain guards. These tests do not run a native callback oracle and
 make no whole-program accounting promotion.
+
+The [opt-in growth tests](../tests/test_itb_native_lua_class_callback_growth_semantics.py)
+add **259 tests** covering all four full sizes, empty/new/existing/mixed tree
+profiles, asymmetric table sequences, original-record append, unchanged Lua
+requests and zero-result stack contracts, detached results, disjoint mutable
+containers, strict boolean opt-in, and malformed inputs. All 14 normal spare
+size/capacity states produce exactly the default output when growth is enabled.
+The original 125 tests and these 259 tests passed together: **384 passed in
+5.10 seconds**. This validation is entirely logical and uses no native callback
+oracle, allocator, or real Lua VM.
 
 See the [integration dossier](native_lua_class_callback_integration.md) for
 the native frames and the remaining composition boundary.

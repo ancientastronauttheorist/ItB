@@ -50,8 +50,10 @@ state and one Lua token stack. The subsequent
 [first-allocation and small-growth mapping](native_lua_class_growth_record_caller_mapping.md)
 also accepts the callback's original local record. It passed 147 tests,
 including 48 native cases, four controls and byte-identical original 576-case
-first-null and 1,536-case old-growth rebuilds. Those growth families still need
-their enclosing callback composition. Internal-record return families retain
+first-null and 1,536-case old-growth rebuilds. The subsequent
+[continuous growth receipt](native_lua_class_callback_growth_conformance.md)
+joins both families into the callback across 2,304 cases.
+Internal-record return families retain
 their existing fixed fixtures. Allocation failure, assertion/error paths,
 actual Lua VM/heap instructions and broader object domains remain open. No
 whole-program accounting promotion occurs.

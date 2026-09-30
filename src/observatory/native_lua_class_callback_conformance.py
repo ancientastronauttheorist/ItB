@@ -98,10 +98,14 @@ def _put(pages, address, value, width=4):
         pages[(address + i) & ~0xFFF][(address + i) & 0xFFF] = b
 
 
-def _fixture(vector):
-    prototype = spare._fixture(vector)
+def _fixture(vector, *, class_module=spare):
+    prototype = class_module._fixture(vector)
     installed = layout.install_layout(prototype, layout.make_layout())
     pages = {p: bytearray(v) for p, v in installed["pages"].items()}
+    if "old_begin" in prototype:
+        # HeapFree shares the heap dispatch; its native return site distinguishes
+        # the exact stdcall request from HeapAlloc without a Lua target collision.
+        _put(pages, class_module.growth.FREE_IAT, layout.HEAP_TARGET)
     entry = prototype["stack"] + 48
     _require(
         entry - 20 > prototype["vector_capacity"],
@@ -119,20 +123,23 @@ def _fixture(vector):
         for offset, reference in zip((32, 40), refs):
             _put(pages, object_address + offset, reference)
     frozen = {p: bytes(v) for p, v in pages.items()}
+    begin, end, capacity = (_raw(frozen, RECEIVER + offset) for offset in (4, 8, 12))
+    live = (end - begin) // 8 if begin else 0
+    capacity_count = (capacity - begin) // 8 if begin else 0
     records = [
-        [_raw(frozen, prototype["vector_begin"] + 8 * i + 4 * j) for j in range(2)]
-        for i in range(vector["old_size"])
+        [_raw(frozen, begin + 8 * i + 4 * j) for j in range(2)] for i in range(live)
     ]
     logical = model.apply(
         prototype["source_state"],
         prototype["destination_state"],
-        dict(records=records, capacity=vector["old_size"] + vector["spare_records"]),
+        dict(records=records, capacity=capacity_count),
         source_pointer=SOURCE_OBJECT,
         source_word=vector["source_word"],
         destination_word=vector["destination_word"],
         destination_refs=vector["destination_refs"],
         source_refs=vector["source_refs"],
         transfers=vector["transfers"],
+        allow_growth=class_module is not spare,
     )
     return dict(
         entry=entry,
@@ -154,7 +161,7 @@ def _direct_response(index, eax):
     )
 
 
-def _expected(vector, fixture):
+def _expected(vector, fixture, *, class_module=spare):
     """Closed-form parent frame plus existing independently checked child oracles."""
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
@@ -219,7 +226,7 @@ def _expected(vector, fixture):
                 registers=dict(regs),
                 return_address=BASE + continuation,
             )
-            result = spare._expected(vector, child_fixture)
+            result = class_module._expected(vector, child_fixture)
         else:
             child_vector = (
                 dict(
@@ -382,13 +389,14 @@ def _expected(vector, fixture):
         endpoint=fixture["endpoint"],
     )
     _require(
-        result["pages"] == _model_pages(vector, fixture, result),
+        result["pages"]
+        == _model_pages(vector, fixture, result, class_module=class_module),
         "independent callback memory differs",
     )
     return result
 
 
-def _model_pages(vector, fixture, expected):
+def _model_pages(vector, fixture, expected, *, class_module=spare):
     child = next(c for c in expected["children"] if c["kind"] == "class")
     logical = fixture["logical"]["class_operation"]
     _require(
@@ -400,7 +408,7 @@ def _model_pages(vector, fixture, expected):
     )
     pages = {
         p: bytearray(v)
-        for p, v in spare._model_pages(child["fixture"], child["result"]).items()
+        for p, v in class_module._model_pages(child["fixture"], child["result"]).items()
     }
     # Scratch below the parent's save area is established by the joined child
     # event laws. Independently restore original ancestors and parent-owned cells.
@@ -421,9 +429,17 @@ def _model_pages(vector, fixture, expected):
         44: fixture["registers"]["ebp"],
     }.items():
         _put(pages, s + offset, value)
-    record = fixture["logical"]["class_operation"]["vector"]["records"][-1]
-    for i, value in enumerate(record):
-        _put(pages, fixture["prototype"]["vector_end"] + 4 * i, value)
+    logical_vector = fixture["logical"]["class_operation"]["vector"]
+    begin = fixture["prototype"]["vector_begin"]
+    for i, record in enumerate(logical_vector["records"]):
+        for j, value in enumerate(record):
+            _put(pages, begin + 8 * i + 4 * j, value)
+    for offset, value in (
+        (4, begin),
+        (8, begin + 8 * len(logical_vector["records"])),
+        (12, begin + 8 * logical_vector["capacity"]),
+    ):
+        _put(pages, RECEIVER + offset, value)
     _put(pages, RECEIVER, fixture["logical"]["destination_word"])
     return {p: bytes(v) for p, v in pages.items()}
 
@@ -566,13 +582,13 @@ class _Lua:
         )
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, *, class_module=spare):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
-    expected = _expected(vector, fixture)
+    fixture = _fixture(vector, class_module=class_module)
+    expected = _expected(vector, fixture, class_module=class_module)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
         machine.mem_map(page, 4096)
@@ -602,6 +618,8 @@ def _run_case(codes, points, vector, negative=None):
     lua = _Lua(vector)
     class_child = next(c for c in expected["children"] if c["kind"] == "class")
     heap_nodes = class_child["result"]["heap_nodes"]
+    tree_heap_count = class_child["result"].get("tree_heap_count", len(heap_nodes))
+    frees = []
     resume = None
 
     def registers():
@@ -621,10 +639,57 @@ def _run_case(codes, points, vector, negative=None):
         if address == layout.HEAP_TARGET:
             sp = m.reg_read(ids["esp"])
             actual = words(sp, 4)
+            if actual[0] == BASE + 0x389172:
+                if negative == "free_request":
+                    m.mem_write(
+                        sp + 12,
+                        (fixture["prototype"]["old_begin"] ^ 1).to_bytes(4, "little"),
+                    )
+                    actual = words(sp, 4)
+                _require(
+                    "old_begin" in fixture["prototype"]
+                    and not frees
+                    and len(allocations) == len(heap_nodes)
+                    and sp == fixture["prototype"]["stack"] - 132
+                    and actual
+                    == [
+                        BASE + 0x389172,
+                        spare.construction.HEAP,
+                        0,
+                        fixture["prototype"]["old_begin"],
+                    ],
+                    "callback free handoff differs",
+                )
+                for r, v in dict(
+                    eax=1, ecx=0xA0000001, edx=0xB0000001, esp=sp + 16
+                ).items():
+                    m.reg_write(ids[r], v)
+                m.reg_write(x.UC_X86_REG_EFLAGS, 0x2D7)
+                frees.append(
+                    dict(
+                        pointer=actual[3],
+                        entry_esp=sp,
+                        result=1,
+                        continuation=actual[0],
+                    )
+                )
+                resume = actual[0]
+                m.emu_stop()
+                return
+            tree_allocation = len(allocations) < tree_heap_count
+            request = (
+                24
+                if tree_allocation
+                else 8 * fixture["logical"]["class_operation"]["vector"]["capacity"]
+            )
+            if negative == "heap_request" and not tree_allocation:
+                m.mem_write(sp + 12, (request ^ 1).to_bytes(4, "little"))
+                actual = words(sp, 4)
             _require(
                 len(allocations) < len(heap_nodes)
-                and sp == fixture["prototype"]["stack"] - 144
-                and actual == [BASE + 0x389463, spare.construction.HEAP, 0, 24],
+                and sp
+                == fixture["prototype"]["stack"] - (144 if tree_allocation else 140)
+                and actual == [BASE + 0x389463, spare.construction.HEAP, 0, request],
                 "callback heap handoff differs",
             )
             node = heap_nodes[len(allocations)]
@@ -634,7 +699,7 @@ def _run_case(codes, points, vector, negative=None):
                 m.reg_write(ids[r], v)
             m.reg_write(x.UC_X86_REG_EFLAGS, 0x246)
             allocations.append(
-                dict(node=node, entry_esp=sp, request=24, continuation=actual[0])
+                dict(node=node, entry_esp=sp, request=request, continuation=actual[0])
             )
             resume = actual[0]
             m.emu_stop()
@@ -677,7 +742,10 @@ def _run_case(codes, points, vector, negative=None):
                 "literal": marker.LITERAL + len(marker.LITERAL_BYTES) + 3,
                 "iat": layout.IAT_PAGE + 0x20,
                 "vector": fixture["prototype"]["vector_end"],
+                "capacity": RECEIVER + 12,
             }
+            if "old_begin" in fixture["prototype"]:
+                corrupt["old"] = fixture["prototype"]["old_begin"]
             if negative in corrupt:
                 at = corrupt[negative]
                 m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
@@ -712,7 +780,8 @@ def _run_case(codes, points, vector, negative=None):
     machine.hook_add(uc.UC_HOOK_CODE, on_code)
     machine.hook_add(uc.UC_HOOK_MEM_READ | uc.UC_HOOK_MEM_WRITE, on_memory)
     next_pc = BASE + START
-    for _ in range(len(expected["calls"]) + len(heap_nodes) + 1):
+    expected_frees = int("old_begin" in fixture["prototype"])
+    for _ in range(len(expected["calls"]) + len(heap_nodes) + expected_frees + 1):
         resume = None
         machine.emu_start(next_pc, 0, count=100000)
         if resume is None:
@@ -757,6 +826,7 @@ def _run_case(codes, points, vector, negative=None):
         _require(
             actual_calls == expected["calls"]
             and len(allocations) == len(heap_nodes)
+            and len(frees) == expected_frees
             and lua.trace == fixture["logical"]["calls"]
             and lua.stack == fixture["logical"]["final_lua_stack"],
             "callback cookie failure calls differ",
@@ -767,7 +837,9 @@ def _run_case(codes, points, vector, negative=None):
         "callback endpoint differs",
     )
     _require(
-        len(allocations) == len(heap_nodes) and actual_calls == expected["calls"],
+        len(allocations) == len(heap_nodes)
+        and actual_calls == expected["calls"]
+        and len(frees) == expected_frees,
         "callback call count differs",
     )
     flags = machine.reg_read(x.UC_X86_REG_EFLAGS)
@@ -799,7 +871,7 @@ def _run_case(codes, points, vector, negative=None):
         ),
         "callback protected memory differs",
     )
-    return json.loads(
+    observation = json.loads(
         json.dumps(
             dict(
                 vector=vector,
@@ -821,6 +893,9 @@ def _run_case(codes, points, vector, negative=None):
             )
         )
     )
+    if class_module is not spare:
+        observation["frees"] = frees
+    return observation
 
 
 def _preflight(sources):

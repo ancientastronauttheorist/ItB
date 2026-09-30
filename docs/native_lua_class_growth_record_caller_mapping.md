@@ -46,10 +46,11 @@ hashes. Their original pure suites also passed **43 tests with two gated
 skips in 74.94 seconds**; those two native tests ran in the separate complete
 validation above. Independent semantic review: **GO**.
 
-This extends helper mappings; the enclosing callback's
-[continuous external-spare receipt](native_lua_class_callback_conformance.md)
-still covers spare capacity only. Joining first allocation and small growth
-into that enclosing callback needs an extended logical vector contract,
-shared HeapFree binding, current child state and a new continuous receipt.
-Other internal-record families, allocation failure, Lua errors and broader
+This extends helper mappings. The subsequent
+[continuous growth receipt](native_lua_class_callback_growth_conformance.md)
+now joins both families into the enclosing callback with an opt-in logical
+growth contract, shared HeapFree binding, current native child state and
+2,304 continuous cases. The original
+[external-spare receipt](native_lua_class_callback_conformance.md) remains
+unchanged. Other internal-record families, allocation failure, Lua errors and broader
 object/tree domains remain open. No accounting promotion occurs.
