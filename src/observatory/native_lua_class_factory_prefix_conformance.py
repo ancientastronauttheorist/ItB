@@ -334,22 +334,35 @@ CONTROLS = {
 }
 
 
-def _run_case(payload, points, vector, negative=None):
+def _run_case(payload, points, vector, negative=None, *, continuation=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
     fixture = _fixture(vector)
     expected = _expected(vector, fixture)
+    additional = continuation or {}
+    if additional:
+        expected = additional["extend_expected"](vector, fixture, expected)
+    endpoint = additional.get("endpoint", BASE + INITIALIZER)
+    additional_instructions = additional.get("instruction_count", 0)
+    instruction_count = 71 + 4 * vector["length"] + additional_instructions
+    codes = {BASE + START: payload, **additional.get("codes", {})}
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, contents in fixture["pages"].items():
         machine.mem_map(page, 4096)
         machine.mem_write(page, contents)
-    for page in ((BASE + START) & ~4095, (BASE + INITIALIZER) & ~4095, IMPORT):
+    code_pages = {
+        (address + i) & ~4095
+        for address, code in codes.items()
+        for i in range(len(code))
+    }
+    for page in sorted(code_pages | {endpoint & ~4095, IMPORT}):
         _require(page not in fixture["pages"], "factory mapping overlaps")
         machine.mem_map(page, 4096)
         machine.mem_write(page, b"\xcc" * 4096)
-    machine.mem_write(BASE + START, payload)
+    for address, code in codes.items():
+        machine.mem_write(address, code)
     ids = {r: getattr(x, "UC_X86_REG_" + r.upper()) for r in REGISTERS}
     for r, value in fixture["registers"].items():
         machine.reg_write(ids[r], value)
@@ -400,7 +413,7 @@ def _run_case(payload, points, vector, negative=None):
             resume = call["continuation"]
             m.emu_stop()
             return
-        if address == BASE + INITIALIZER:
+        if address == endpoint:
             corruption = dict(
                 ancestor=fixture["entry"] + 8,
                 name=fixture["first_pointer"] + vector["length"] + 2,
@@ -413,6 +426,8 @@ def _run_case(payload, points, vector, negative=None):
                 local_userdata=fixture["entry"] - 20,
                 handoff_pointer=m.reg_read(ids["esp"]) + 8,
             )
+            if additional:
+                corruption.update(additional["corruption"](fixture, expected))
             if negative in corruption:
                 at = corruption[negative]
                 m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
@@ -427,7 +442,7 @@ def _run_case(payload, points, vector, negative=None):
         _require(rva in allowed, "factory left normal prefix")
         visited.append(f"0x{rva:08x}")
         _require(
-            len(visited) <= 71 + 4 * vector["length"],
+            len(visited) <= instruction_count,
             "factory instruction limit exceeded",
         )
 
@@ -468,9 +483,7 @@ def _run_case(payload, points, vector, negative=None):
         "factory protected memory differs",
     )
     _require(events == expected["events"], "factory memory events differ")
-    _require(
-        len(visited) == 71 + 4 * vector["length"], "factory instruction count differs"
-    )
+    _require(len(visited) == instruction_count, "factory instruction count differs")
     return dict(
         vector=vector,
         trace_rvas=visited,
@@ -483,7 +496,7 @@ def _run_case(payload, points, vector, negative=None):
             for p, v in expected["pages"].items()
         },
         logical=json.loads(json.dumps(expected["logical"])),
-        initializer_instructions=0,
+        initializer_instructions=additional_instructions,
     )
 
 

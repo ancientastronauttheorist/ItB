@@ -56,6 +56,10 @@ File SHA:
 The CLI supports build, exact verify and PE-free verify-structure, with all
 three source arguments required. Native tests execute only in subprocesses.
 
+The following [initializer prefix composition](native_lua_class_factory_initializer_prefix_conformance.md)
+executes 37 initializer instructions before its next native helper. The private
+runtime continuation option retains this receipt's default behavior and bytes.
+
 This boundary establishes conditional native handoff behavior for the declared
 fixtures. It does not execute the initializer, return the factory closure,
 run a real Lua VM, establish allocator ownership, handle errors or null

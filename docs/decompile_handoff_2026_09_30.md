@@ -18,6 +18,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `30ec0e1e` | Sealed one-machine external-spare callback, markers, class operation and both table transfers. |
 | `5344217e` | Actual callback record mapped through first-null vector allocation and small old-vector growth/copy/free. |
 | `c4c934b4` | Sealed continuous callback through first-null and small old-full vector growth. |
+| `f5b5186e` | Sealed normal factory prefix through its actual initializer handoff. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -94,6 +95,21 @@ passed 102 tests with no skips, including the byte-identical exact CLI rebuild.
 Canonical SHA: `cebf742aac9945f22829e2d3b1b387ff618840217b3c9a2330a8335ca3a0d0ed`.
 File SHA: `dc56cc73bf36a0f1e642638f5d5f1b7ad80f7121f45dde197f0256f642bd9955`.
 
+## Completed initializer prefix composition
+
+[Documentation](native_lua_class_factory_initializer_prefix_conformance.md):
+216 continuous factory/initializer cases, 120 selected sites, 108 executed
+sites and 391 selected bytes. Native execution covered 64,944 instructions,
+including 7,992 initializer instructions, and 1,512 supplied Lua API calls.
+All 22 controls passed; independent GO; 67 new focused tests passed with no
+skips, including the byte-identical exact CLI rebuild. A preceding 124-test
+gate also proved the original factory receipt remains byte-identical.
+Canonical SHA: `abd888a364076edd037f460a0515b9586610218f9e5437aa4f67ab0cd972c47e`.
+File SHA: `9f64ec4a0124e1ad7f52cda34c7faaa949e924484df55e9a8f40c24ab23e827f`.
+The 14 fixed word writes, four untouched words, second pointer at userdata
+offset 16, nested FS chain and overwritten argument cell are checked. The
+machine stops at `0x0007c600` before the helper's first instruction.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -102,11 +118,12 @@ Its seven Lua API calls remain supplied contracts. The first
 is passed to the initializer. Preserve independent pointer routing rather
 than assuming the pointers or bytes are equal. Error arms and null-userdata
 bypass are separate boundaries. No initializer, ownership or exception-handling
-claim follows from reaching this handoff. Next useful continuation: the
-initializer's first 37 instructions through call `0x002ead8b`, stopping at
-helper entry `0x0007c600`. This adds concrete offset writes and nested FS
-registration before the self-linked record allocation frontier. The helper
-and successful allocation machinery are separate domains to compose next.
+claim follows from that first handoff alone. Its following 37 initializer
+instructions are now checked by the separate composition above. Next useful
+continuation: execute the self-linked record helper `0x0007c600`, native retry
+wrapper, thunk and heap wrapper continuously, supplying only one successful
+HeapAlloc response. Check all record bytes and its actual store at userdata
+offset 52 before tackling later initializer Lua calls.
 
 ## Environment and preservation
 
