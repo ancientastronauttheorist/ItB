@@ -95,6 +95,11 @@ remain separate work. This reconstruction makes no accounting promotion.
 
 ## First class-record relocation tranche
 
+The [September 30 helper mapping](native_lua_class_record_caller_mapping.md)
+now proves the prefix and external spare-vector cases below, including the
+actual incoming registers and independent caller preservation. Complete callback
+execution still needs a common Lua/heap import layout and continuous Lua state.
+
 The smallest next change can keep the existing class stack base: if its entry
 is S, choose callback F=S+44 and map the caller record at S+28. Set its words
 to zero and SOURCE_OBJECT, set the native argument slot S+4 to S+28, and use

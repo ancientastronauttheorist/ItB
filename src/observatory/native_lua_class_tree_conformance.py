@@ -46,6 +46,9 @@ SOURCE_OBJECT, SOURCE_HEAD, SOURCE_NODES, SOURCE_KEYS, ARGUMENT = (
     0x15000000,
     0x14000200,
 )
+# The legacy fixture uses lower-bound seed seven; the other continuation is
+# the exact enclosing callback's native CALL return.
+CALLER_RETURNS = (0x4455667E, BASE + 0x2EC1BD)
 ConformanceError = insertion.ConformanceError
 _require = insertion._require
 
@@ -103,7 +106,7 @@ def vectors():
     ]
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     for name in ("source_keys", "destination_keys"):
         _require(
             type(vector[name]) is list
@@ -198,7 +201,121 @@ def _fixture(vector):
     fixture["transfer"] = model.transfer(
         fixture["source_state"], fixture["destination_state"]
     )
+    if caller is not None:
+        _require(
+            type(caller) is dict
+            and set(caller)
+            == {"argument_address", "argument_record", "return_address", "registers"},
+            "invalid class caller fields",
+        )
+        argument = caller["argument_address"]
+        record = caller["argument_record"]
+        endpoint = caller["return_address"]
+        registers = caller["registers"]
+        _require(
+            type(argument) is int and argument in (ARGUMENT, entry + 28),
+            "unreviewed class argument address",
+        )
+        _require(
+            type(record) is list
+            and len(record) == 2
+            and all(type(word) is int and 0 <= word < 2**32 for word in record)
+            and record[1] == SOURCE_OBJECT,
+            "invalid class argument record",
+        )
+        _require(
+            type(endpoint) is int
+            and endpoint in (fixture["return_address"], BASE + 0x2EC1BD),
+            "unreviewed class caller return",
+        )
+        _require(
+            type(registers) is dict
+            and set(registers) == set(fixture["registers"])
+            and all(
+                type(value) is int and 0 <= value < 2**32
+                for value in registers.values()
+            )
+            and registers["esp"] == entry
+            and registers["ecx"] == RECEIVER,
+            "invalid class caller registers",
+        )
+        pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
+        for address, value in (
+            (entry, endpoint),
+            (entry + 4, argument),
+            (argument, record[0]),
+            (argument + 4, record[1]),
+        ):
+            for i, byte in enumerate(value.to_bytes(4, "little")):
+                _require(
+                    (address + i) & ~0xFFF in pages, "class caller record is unmapped"
+                )
+                pages[(address + i) & ~0xFFF][(address + i) & 0xFFF] = byte
+        fixture.update(
+            pages={p: bytes(v) for p, v in pages.items()},
+            return_address=endpoint,
+            registers=dict(registers),
+        )
+    _checked_argument(fixture)
     return fixture
+
+
+def _checked_argument(fixture):
+    """Return the finite record pointer from the original caller's argument slot."""
+    entry = fixture["stack"]
+    _require(
+        type(entry) is int
+        and construction.STACK + 0x1000 <= entry < construction.STACK + 0x1010,
+        "unreviewed class entry stack",
+    )
+    registers = fixture["registers"]
+    _require(
+        type(registers) is dict
+        and set(registers) == {"eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"}
+        and all(type(v) is int and 0 <= v < 2**32 for v in registers.values())
+        and registers["esp"] == entry
+        and registers["ecx"] == RECEIVER,
+        "invalid class caller registers",
+    )
+    _require(
+        type(fixture["return_address"]) is int
+        and fixture["return_address"] in CALLER_RETURNS,
+        "unreviewed class caller return",
+    )
+    pages = fixture["pages"]
+    _require(
+        type(pages) is dict
+        and all(
+            type(p) is int
+            and p % 4096 == 0
+            and 0 <= p <= 2**32 - 4096
+            and type(v) is bytes
+            and len(v) == 4096
+            for p, v in pages.items()
+        ),
+        "invalid class caller pages",
+    )
+
+    def original(address, width=4):
+        _require(
+            all((address + i) & ~0xFFF in pages for i in range(width)),
+            "class argument outside mapped storage",
+        )
+        return int.from_bytes(
+            bytes(
+                pages[(address + i) & ~0xFFF][(address + i) & 0xFFF]
+                for i in range(width)
+            ),
+            "little",
+        )
+
+    argument = original(entry + 4)
+    _require(argument in (ARGUMENT, entry + 28), "unreviewed class argument address")
+    _require(original(argument + 4) == SOURCE_OBJECT, "invalid class argument source")
+    _require(
+        original(entry) == fixture["return_address"], "class caller return word differs"
+    )
+    return argument
 
 
 def _checked_key_bytes(fixture):
@@ -234,6 +351,7 @@ def _checked_key_bytes(fixture):
 
 
 def _expected(vector, fixture):
+    checked_argument = _checked_argument(fixture)
     key_bytes = _checked_key_bytes(fixture)
     entry = fixture["stack"]
     frame = entry - 4
@@ -264,7 +382,7 @@ def _expected(vector, fixture):
     for offset, name in ((-24, "ebx"), (-28, "esi"), (-32, "edi")):
         write(frame + offset, initial[name])
     argument = read(frame + 8)
-    _require(argument == ARGUMENT, "class argument differs")
+    _require(argument == checked_argument, "class argument differs")
     write(frame - 12, RECEIVER)
     _require(read(argument + 4) != 0, "nonzero source object required")
     source_object = read(argument + 4)
@@ -497,6 +615,16 @@ def _model_pages(fixture, expected):
     put(leaf.TREE + 4, len(addresses))
     for page in (construction.STACK, construction.STACK + 0x1000):
         pages[page] = bytearray(expected["pages"][page])
+        # Callee events may explain scratch storage, but caller storage is
+        # independently preserved from the entry fixture, including saved EDI.
+        start = max(0, fixture["stack"] + 8 - page)
+        pages[page][start:] = fixture["pages"][page][start:]
+    argument = _checked_argument(fixture)
+    for i in range(8):
+        address = argument + i
+        pages[address & ~0xFFF][address & 0xFFF] = fixture["pages"][address & ~0xFFF][
+            address & 0xFFF
+        ]
     frame = fixture["stack"] - 4
     put(frame - 8, SOURCE_HEAD)
     if result["copies"]:
@@ -506,12 +634,12 @@ def _model_pages(fixture, expected):
     return {p: bytes(v) for p, v in pages.items()}
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -568,6 +696,9 @@ def _run_case(codes, points, vector, negative=None):
             m.emu_stop()
             return
         if address == BASE + STOP:
+            if negative == "argument":
+                at = _checked_argument(fixture)
+                m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
             if negative == "iterator":
                 m.mem_write(frame - 8, (SOURCE_HEAD ^ 1).to_bytes(4, "little"))
             if negative == "payload":

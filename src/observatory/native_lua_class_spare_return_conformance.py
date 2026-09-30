@@ -45,7 +45,7 @@ def vectors():
     ]
 
 
-def _fixture(vector):
+def _fixture(vector, *, caller=None):
     address, size, spare = (
         vector[k] for k in ("buffer_address", "old_size", "spare_records")
     )
@@ -57,7 +57,7 @@ def _fixture(vector):
         type(size) is int and 0 <= size <= 7 and type(spare) is int and 1 <= spare <= 8,
         "invalid spare vector bounds",
     )
-    fixture = prefix._fixture(vector)
+    fixture = prefix._fixture(vector, caller=caller)
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
     _require(address & ~0xFFF not in pages, "vector overlaps class storage")
     pages[address & ~0xFFF] = bytearray((i * 37 + 91) % 256 for i in range(4096))
@@ -79,6 +79,7 @@ def _fixture(vector):
 
 
 def _expected(vector, fixture):
+    argument = prefix._checked_argument(fixture)
     result = prefix._expected(vector, fixture)
     pages = {p: bytearray(v) for p, v in result["pages"].items()}
     events = list(result["events"])
@@ -99,19 +100,19 @@ def _expected(vector, fixture):
     frame = fixture["stack"] - 4
     receiver = read(frame - 12)
     _require(
-        receiver == RECEIVER and regs["edi"] == ARGUMENT,
+        receiver == RECEIVER and regs["edi"] == argument,
         "external append receiver differs",
     )
     end = read(receiver + 8)
-    if ARGUMENT < end:
-        _require(read(receiver + 4) > ARGUMENT, "argument is not external")
+    if argument < end:
+        _require(read(receiver + 4) > argument, "argument is not external")
     _require(
         end < read(receiver + 12) and end != 0, "spare nonzero vector end required"
     )
     _require(read(receiver + 8) == end, "vector end changed")
-    first = read(ARGUMENT)
+    first = read(argument)
     write(end, first)
-    second = read(ARGUMENT + 4)
+    second = read(argument + 4)
     write(end + 4, second)
     write(receiver + 8, read(receiver + 8) + 8)
     regs.update(eax=second, ecx=end, esi=receiver)
@@ -150,8 +151,9 @@ def _expected(vector, fixture):
 def _model_pages(fixture, expected):
     pages = {p: bytearray(v) for p, v in prefix._model_pages(fixture, expected).items()}
     # The vector model appends the unchanged two-word argument as a record.
+    argument = prefix._checked_argument(fixture)
     record = bytes(
-        fixture["pages"][(ARGUMENT + i) & ~0xFFF][(ARGUMENT + i) & 0xFFF]
+        fixture["pages"][(argument + i) & ~0xFFF][(argument + i) & 0xFFF]
         for i in range(8)
     )
     for i, b in enumerate(record):
@@ -163,12 +165,12 @@ def _model_pages(fixture, expected):
     return {p: bytes(v) for p, v in pages.items()}
 
 
-def _run_case(codes, points, vector, negative=None):
+def _run_case(codes, points, vector, negative=None, *, fixture=None):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector)
+    fixture = _fixture(vector) if fixture is None else fixture
     expected = _expected(vector, fixture)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -237,6 +239,9 @@ def _run_case(codes, points, vector, negative=None):
         if address == BASE + 0x2EB222 and negative == "cookie":
             m.mem_write(returned.COOKIE, (vector["cookie"] ^ 1).to_bytes(4, "little"))
         if address == expected["endpoint"]:
+            if negative == "argument":
+                at = prefix._checked_argument(fixture)
+                m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
             if negative == "iterator":
                 m.mem_write(frame - 8, (SOURCE_HEAD ^ 1).to_bytes(4, "little"))
             if negative == "payload":
