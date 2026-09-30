@@ -1,14 +1,15 @@
 # Returned class callback: next integration boundary
 
-The next enclosing owner is the 269-byte returned callback at `0x002ec110`.
+This dossier records the enclosing 269-byte returned callback at `0x002ec110`.
 Its existing [factory-chain evidence](native_lua_class_factory_survey.md) seals
 body SHA-256
 `a138a00ca47281aa3b4fb0db11a3aa5e875616a57b3684f7598e4b0517b900e3`
 and CFG SHA-256
 `c1212e08e59965211c3691fc52551f88f3441ba801bcfa7fe599afcb775dd55b`.
 Independent read-only reconstruction rechecked the exact installed PE body on
-September 12. The facts below are integration requirements, not a joined native
-callback execution receipt or a source-level inheritance claim.
+September 12. The frame facts below formed the integration requirements. The completed
+external-spare native receipt is linked below; broader callback domains and
+source-level inheritance claims remain open.
 
 ## Normal sequence
 
@@ -79,12 +80,21 @@ category sequences up to length three. Markers, compatible registry values and
 normal responses remain explicit premises; this model is not a native callback
 execution receipt or a VM/heap behavior claim.
 
-## Work required before claiming composition
+## Continuous external-spare composition
+
+The [continuous callback receipt](native_lua_class_callback_conformance.md) now
+executes the callback and all selected normal helper instructions in one
+machine across 1,152 finite cases, with one Lua token stack and independent
+class/vector/caller output checks. This closes the successful external-spare
+composition described below. Other class vector return families and callback
+error paths remain open.
+
+## Historical integration requirements
 
 1. Compose helper entries, return addresses, caller registers and preserved ancestor
    stack storage at these actual frames. The marker and table helpers now accept
    checked caller mappings and have focused native cases at these continuations;
-   a single continuous callback execution is still required.
+   the joined receipt now executes those entries continuously.
 2. Use the completed prefix/external spare-vector
    [class record caller mapping](native_lua_class_record_caller_mapping.md):
    this caller supplies F-16 with first word zero. Those helper fixtures now
@@ -114,8 +124,7 @@ The [September 30 helper mapping](native_lua_class_record_caller_mapping.md)
 now proves the prefix and external spare-vector cases below, including the
 actual incoming registers and independent caller preservation. The
 [shared API layout](native_lua_shared_api_layout.md) now provides a common
-Lua/heap import and literal contract. Complete callback execution still needs
-one continuous native run and Lua state.
+Lua/heap import and literal contract. The joined receipt now supplies one continuous native run and Lua token state.
 
 The completed helper mapping keeps the existing class stack base: for entry S,
 callback F=S+44 and the caller record is at S+28. Its words are zero and
