@@ -301,19 +301,31 @@ def _add_flags(left, right):
     )
 
 
-def _extend_expected(vector, fixture, original):
+def _extend_expected(vector, fixture, original, *, assertion_boundary=False):
     from src.observatory import native_lua_class_factory_semantics as model
 
     expected = record._extend_expected(vector, fixture, original)
     spec = fixture["spec"]
-    logical = model.apply(
+    arguments_for_model = dict(
         state=fixture["state"],
         first_pointer=fixture["first_pointer"],
         second_pointer=fixture["second_pointer"],
         userdata=fixture["userdata"],
         name_bytes=factory._name(vector),
-        **spec,
     )
+    if assertion_boundary:
+        from src.observatory import (
+            native_lua_class_factory_assertion_prefix_semantics as boundary_model,
+        )
+
+        logical = boundary_model.apply(
+            **arguments_for_model,
+            context_pointer=spec["context_pointer"],
+            context_guard=spec["context_guard"],
+            references=spec["references"][:2],
+        )
+    else:
+        logical = model.apply(**arguments_for_model, **spec)
     pages = {p: bytearray(v) for p, v in expected["pages"].items()}
     regs = dict(expected["registers"])
     events, calls = list(expected["events"]), list(expected["calls"])
@@ -411,10 +423,44 @@ def _extend_expected(vector, fixture, original):
     api(0x2EAE5C, 0x2EAE5E, "lua_settop", [state, -2], staged="ebx")
     regs["eax"] = read(frame + 12)
     regs["esp"] += 40
-    _require(
-        read(regs["eax"] + 12) != 0xFFFFFFFE,
-        "factory full context guard premise differs",
-    )
+    guard = read(regs["eax"] + 12)
+    if assertion_boundary:
+        _require(guard == 0xFFFFFFFE, "factory assertion guard premise differs")
+        for value in (96, 0x0083C680, 0x0083C6B0):
+            push(value)
+        push(BASE + 0x002EAE7B)
+        _require(
+            [
+                (c["api"], [_signed(a) for a in c["arguments"]], c["response"]["eax"])
+                for c in calls
+            ]
+            == [(c["api"], c["arguments"], c["result"]) for c in logical["calls"]],
+            "factory assertion request model differs",
+        )
+        lua_result = dict(
+            calls=[
+                {k: c[k] for k in ("api", "arguments", "result", "before", "after")}
+                for c in logical["calls"]
+            ],
+            final_lua_stack=logical["boundary_lua_stack"],
+            registry_bindings=logical["registry_bindings"],
+            metatable_setting_requests=[],
+            global_assignment_requests=[],
+        )
+        expected.update(
+            pages={p: bytes(v) for p, v in pages.items()},
+            registers=regs,
+            events=events,
+            calls=calls,
+            flags=0x44,
+            lua_result=json.loads(json.dumps(lua_result)),
+            logical=dict(
+                factory=json.loads(json.dumps(logical)),
+                record=expected["logical"]["record"],
+            ),
+        )
+        return expected
+    _require(guard != 0xFFFFFFFE, "factory full context guard premise differs")
     push(read(regs["eax"] + 16))
     push((-10000) & 0xFFFFFFFF)
     push(state)

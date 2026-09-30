@@ -24,6 +24,7 @@ safely, push the final checkpoint, verify protected files and pause the
 | `3c08d3c0` | Sealed continuous complete normal factory and initializer returns with actual record, registry identities and closure upvalue. |
 | `15bc0fae` | Sealed all four factory rejection prefixes through lua_error import entry. |
 | `0db08866` | Sealed returned-callback argument-marker rejection with both actual native marker helpers. |
+| `c6cab4dc` | Sealed both callback upvalue assertion prefixes through native helper entry. |
 
 The earlier [September 11 handoff](decompile_handoff_2026_09_11.md) records the
 existing standalone tree, balancing, insertion, vector, marker and table proofs.
@@ -207,6 +208,28 @@ distinction, cookie-only frame, restored argument prefix, physical API GPRs,
 ordered events and all mapped pages are checked. Expression and filename
 contents, assertion-helper behavior, unwind and callback return remain open.
 
+## Completed factory context assertion prefix
+
+[Documentation](native_lua_class_factory_assertion_prefix_conformance.md):
+5,184 cases execute the factory, initializer, actual record helper and native
+allocator chain through the context guard's minus-two branch. The 807-byte
+selected union has 270 static and 221 executed sites. Execution covers
+2,144,448 instructions, 93,312 supplied Lua responses and 5,184 heap responses,
+ending at 5,184 native assertion-helper entries. All 41 controls passed,
+independent GO and 110 focused model/native tests passed without skips,
+including the byte-identical exact CLI rebuild.
+
+Canonical SHA: `c164d95f08507d66c26fae898a1f00dff84ce1db64a14b380122f66ed00ae59f`.
+File SHA: `a0dcaf08f40f8aa82baa07524765c88eaebefc69103682ed8ed01b44af2e06db`.
+Nine sealed sources are pinned. The independent cdecl frame derivation gives
+assertion entry ESP G-48, with words
+`[0x006eae7b,0x0083c6b0,0x0083c680,96]`. Fourteen modeled userdata fields,
+the actual allocated record at offset 52, two registry bindings, eighteen
+reached Lua requests, ordered data events, all pages and both active FS
+records are checked. Context offset 12 is the only reached context read.
+No assertion-helper instruction or response, epilogue, closure creation or
+later registry request executes.
+
 ## Active continuation
 
 The normal factory prefix now reaches initializer entry `0x002eacf0`.
@@ -219,14 +242,16 @@ claim follows from that first handoff alone. Its following 37 initializer
 instructions are now checked by the separate composition above, and the normal
 return is closed by the complete proof. Factory rejection prefixes are also
 closed through lua_error entry. The callback argument rejection is also closed.
-Both callback upvalue assertion prefixes are now checked. Next useful
-continuation: execute the factory and initializer through the context guard
-minus-two branch and its native assertion-helper entry. Preserve the actual
-record allocation, two registry identities, 18 reached Lua contracts, active
-nested FS chain and exact three-word native boundary frame. Keep
-the supplied normal registry context, three references, graph and ID-map
-pointers explicit. Prior-reference unref arms, assertion, real VM effects and
-arbitrary registry results remain outside the conditional proof.
+Both callback upvalue assertion prefixes and the factory context assertion
+prefix are now checked. Next useful continuation: map actual normal factory
+output into a subsequent returned-closure callback's receiver contract.
+Preserve the produced null vector, actual allocated self-linked record,
+userdata identity and registry references. Existing callback tree fixtures
+have fixed receiver and head addresses; their pages cannot simply overwrite
+the factory output. The intervening Lua VM closure invocation is an explicit
+host boundary. A mapping or composition must retain that boundary rather
+than claim live VM execution. Prior-reference unref arms, assertion behavior,
+real VM effects and arbitrary registry results remain outside these proofs.
 
 ## Environment and preservation
 
