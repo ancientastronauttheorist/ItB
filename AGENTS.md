@@ -42,10 +42,9 @@ change is complete.
   Keep small edits, tightly coupled implementation, integration, final
   validation, Git operations, and live-session decisions with the primary
   agent.
-- Use `gpt-6-astra` for subagents. Pass the model override explicitly when
-  spawning, using a bounded context fork
-  plus a self-contained task packet because full-history forks cannot take a
-  model override.
+- Have subagents inherit the primary agent's model; omit an explicit model
+  override when spawning. Use a bounded context fork plus a self-contained
+  task packet.
 - Run at most two subagents concurrently unless a clearly independent larger
   fan-out has a concrete expected benefit. Subagents must not recursively spawn
   more agents unless the primary agent explicitly requests that delegation.
