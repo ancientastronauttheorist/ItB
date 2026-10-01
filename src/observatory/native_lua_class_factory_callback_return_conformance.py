@@ -202,10 +202,10 @@ class _IdentityPrefix:
         )
 
 
-def _run_case(codes, points, fixture, produced, vector, negative=None):
+def _run_case(codes, points, fixture, produced, vector, negative=None, *, logical=None):
     from unicorn import x86_const as x
 
-    logical = _logical(fixture, produced)
+    logical = _logical(fixture, produced) if logical is None else logical
     observer = _IdentityPrefix(fixture)
     call_cursor = 0
     class_entries = []
@@ -282,12 +282,33 @@ def _run_case(codes, points, fixture, produced, vector, negative=None):
             class_entries.append(address)
         if address == layout.HEAP_TARGET:
             sp = m.reg_read(ids["esp"])
+            tree_count = child["result"].get("tree_heap_count", 0)
+            if len(heap_entries) < tree_count:
+                if negative == "tree_request":
+                    m.mem_write(sp + 12, (25).to_bytes(4, "little"))
+                if negative == "tree_register":
+                    m.reg_write(ids["esi"], 25)
+                if negative == "tree_flags":
+                    m.reg_write(
+                        x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1
+                    )
+                _require(
+                    words(sp, 4) == [0x789463, 0x12345678, 0, 24]
+                    and sp == fixture["entry"] - 192
+                    and m.reg_read(ids["eax"]) == fixture["entry"] - 104
+                    and m.reg_read(ids["esi"]) == 24
+                    and m.reg_read(ids["ebp"]) == fixture["entry"] - 172
+                    and m.reg_read(x.UC_X86_REG_EFLAGS) & 0xCC5 == 4,
+                    "factory return tree heap ABI differs",
+                )
+                heap_entries.append(address)
+                return
             if negative == "heap_register":
                 m.reg_write(ids["edx"], 0)
             if negative == "heap_flags":
                 m.reg_write(x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1)
             _require(
-                not heap_entries
+                len(heap_entries) == tree_count
                 and words(sp, 4) == [0x789463, 0x12345678, 0, 8]
                 and regs()
                 == dict(
@@ -308,7 +329,8 @@ def _run_case(codes, points, fixture, produced, vector, negative=None):
             if negative == "heap_identity":
                 m.reg_write(ids["eax"], fixture["vector_begin"] + 1)
             _require(
-                m.reg_read(ids["eax"]) == fixture["vector_begin"]
+                m.reg_read(ids["eax"])
+                == child["result"]["heap_nodes"][len(heap_entries) - 1]
                 and m.reg_read(ids["ecx"]) == 0xA0000001
                 and m.reg_read(ids["edx"]) == 0xB0000001,
                 "factory return heap response identity differs",
@@ -342,7 +364,13 @@ def _run_case(codes, points, fixture, produced, vector, negative=None):
 
     def verify_return(m, ids, expected, lua):
         _require(
-            len(class_entries) == len(class_returns) == len(heap_entries) == 1,
+            len(class_entries) == len(class_returns) == 1
+            and len(heap_entries)
+            == len(
+                next(c for c in expected["children"] if c["kind"] == "class")["result"][
+                    "heap_nodes"
+                ]
+            ),
             "factory return native boundary count differs",
         )
         _require(

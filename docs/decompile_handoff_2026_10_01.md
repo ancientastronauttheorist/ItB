@@ -58,16 +58,54 @@ conformance, 77 old spare/growth callbacks), including new build/exact verify
 and byte-identical old receipt rebuilds. Independent semantic review: **GO**.
 All thirteen protected user hashes remain unchanged.
 
-The next useful frontier is a nonempty source under the actual initially empty
-produced receiver. First design disjoint key storage: legacy source keys at
-`0x15000000` overlap the factory's second-name page. Keep named source-node/key
-patches explicit and preserve all other captured bytes. Consume the actual
-allocated sentinel, retain native insertion/balancing/successor machinery and
-first-null vector growth, and update preservation claims for count/sentinel
-links actually changed by insertion. Source object, class word and two registry
-references remain supplied host premises unless separately joined to a producer.
-Existing tree/spare/growth/table proofs are independent sources; their generated
-fixture pages cannot replace actual producer state.
+## Actual produced receiver with bounded nonempty source
+
+[Documentation](native_lua_class_factory_callback_tree_conformance.md):
+1,296 exact native cases retain actual initially empty receiver/sentinel pages,
+supply zero/one/three/seven reversed source keys in disjoint storage, then run
+insertion, balancing, successor traversal, first-null vector growth and full
+callback return continuously. No generated fixture replaces current pages.
+
+Canonical SHA `a924cb10e338afa823ced7bf0fb3de20e8b8bb4b1e962fdcc299fec2f2b77614`;
+file SHA `0d73e76a3be7e1a3b51d4be8662936a1e310d65f5c7924e0fb7eaac0cc5f0555`;
+692,724 bytes, 26 pins. The 1,062 selected sites contain 713 executed sites:
+76 callback, 539 class-operation, 27 marker and 71 table sites; 349 are excluded.
+Empty/one/three/seven-node families reach 368/572/701/713 sites. Totals:
+859,680 factory and 1,866,564 callback/helper instructions, 44,064 factory and
+53,136 callback Lua requests, 1,296 factory allocations, 3,564 tree allocations
+(85,536 bytes) and 1,296 eight-byte vector allocations. All 29 controls pass.
+
+The gate passes **366 tests, no skips** (262 model, 63 new conformance,
+41 predecessor full return). New build/exact verify and predecessor rebuild
+are byte-identical. Independent review: **GO**; thirteen protected hashes match.
+Key storage at `0x1c000fff + 32*i + (node_alignment % 4)` avoids actual names;
+previous SEH and cookie come from retained producer pages. Copies preserve
+source insertion IDs while routing to sorted destination IDs. Native destination
+insertion is monotonically ascending, so other balancing orders remain open.
+Final mutable U offsets are 0/4/8/12/56; thirteen other DWORDs and P12..23
+remain preserved. Source construction, registry/VM effects and ownership are
+still explicit premises; no accounting promotion.
+
+## Next useful frontier
+
+Invoke the callback a second time on captured verified actual return pages/GPRs.
+The destination already contains the first source keys and the vector holds
+one `[0,A]` record at `0x06002000+a`, capacity one. Keep the same source topology
+and explicitly update its payloads; this second pass should update existing
+entries without allocating tree nodes, grow to 16 bytes, copy the actual old
+record, request native free of the old vector, append `[0,A]` again and return.
+Preserve all sentinel bytes and links. Reuse source word/references/transfers
+as declared finite premises; actual Lua invocation remains host supplied.
+
+Use the old-vector oracle's existing `old_base`/`old_pointer` support. A smaller
+new span of the first two DATA pages (`0x2000` bytes), with new allocation at
+`0x06001000+a`, is disjoint from the retained old page at `0x06002000` and
+avoids globally changing resize mappings. Add default-preserving optional
+verified-return capture, class-module selection, separate HeapFree dispatch,
+and revised class-return EDX `0xb0000001`. A private unexecuted repeat probe
+is `.local_decompile/oct1/probe_repeat.py`; independent repeat model/tests
+are staged working files, not a sealed native claim yet. New tree allocations
+must wait for an address schedule disjoint from retained nodes.
 
 ## Environment and protected work
 
