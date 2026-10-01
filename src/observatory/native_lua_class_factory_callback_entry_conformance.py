@@ -91,7 +91,7 @@ def _produce(payload, points, continuation, vector):
     return captured, observation
 
 
-def _resume(produced, vector):
+def _resume(produced, vector, *, callback_entry=None):
     original = produced["pages"]
     pages = {p: bytearray(v) for p, v in original.items()}
     patches = []
@@ -110,7 +110,11 @@ def _resume(produced, vector):
         put_bytes(BASE + slot, layout.TARGETS[api].to_bytes(4, "little"))
     for address, value in layout.LITERALS.items():
         put_bytes(address, value)
-    entry = factory.STACK + 0x800 + 15 * vector["profile"]
+    entry = (
+        factory.STACK + 0x800 + 15 * vector["profile"]
+        if callback_entry is None
+        else callback_entry
+    )
     state = produced["fixture"]["state"]
     put_bytes(entry, full.RETURN.to_bytes(4, "little"))
     put_bytes(entry + 4, state.to_bytes(4, "little"))
@@ -167,7 +171,9 @@ def _logical(fixture, produced, vector):
     )
 
 
-def _run_prefix(codes, points, fixture, produced, vector, negative=None):
+def _run_prefix(
+    codes, points, fixture, produced, vector, negative=None, *, continuation=None
+):
     import unicorn as uc
     from unicorn import x86_const as x
 
@@ -178,6 +184,10 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
         marker_words=[(0, 0x12345678)[vector["profile"]], 0xFFFFFFFF],
     )
     expected = callback._expected(v, fixture, class_entry_only=True)
+    extension = continuation or {}
+    endpoint = extension.get("endpoint", ENDPOINT)
+    if "extend_expected" in extension:
+        expected = extension["extend_expected"](expected)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for p, b in fixture["pages"].items():
         machine.mem_map(p, 4096)
@@ -185,7 +195,7 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
     code_pages = {
         (BASE + a + i) & ~4095 for a, b in codes.items() for i in range(len(b))
     }
-    for p in code_pages | {ENDPOINT & ~4095, layout.IMPORT}:
+    for p in code_pages | {endpoint & ~4095, layout.IMPORT}:
         _require(p not in fixture["pages"], "callback entry mapping overlaps")
         machine.mem_map(p, 4096)
         machine.mem_write(p, b"\xcc" * 4096)
@@ -278,6 +288,14 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
 
     def on_code(m, address, size, user):
         nonlocal resume
+        if "before_instruction" in extension:
+            handled, target = extension["before_instruction"](
+                m, address, ids, expected, logical, negative
+            )
+            if handled:
+                resume = target
+                m.emu_stop()
+                return
         if negative == "marker_response" and address == BASE + 0x2EC160:
             m.reg_write(ids["eax"], m.reg_read(ids["eax"]) & 0xFFFFFF00)
         if negative == "argument_marker" and address == BASE + 0x2EC184:
@@ -313,7 +331,7 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
             resume = call["continuation"]
             m.emu_stop()
             return
-        if address == ENDPOINT:
+        if address == endpoint:
             corrupt = {
                 "userdata": fixture["receiver"],
                 "record": produced["fixture"]["record"] + 13,
@@ -363,14 +381,14 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
     machine.hook_add(uc.UC_HOOK_CODE, on_code)
     machine.hook_add(uc.UC_HOOK_MEM_READ | uc.UC_HOOK_MEM_WRITE, on_memory)
     pc = BASE + callback.START
-    for _ in range(len(expected["calls"]) + 1):
+    for _ in range(len(expected["calls"]) + 1 + extension.get("extra_responses", 0)):
         resume = None
         machine.emu_start(pc, 0, count=500)
         if resume is None:
             break
         pc = resume
     _require(
-        machine.reg_read(x.UC_X86_REG_EIP) == ENDPOINT,
+        machine.reg_read(x.UC_X86_REG_EIP) == endpoint,
         "callback entry endpoint differs",
     )
     _require(
@@ -396,12 +414,16 @@ def _run_prefix(codes, points, fixture, produced, vector, negative=None):
         "callback entry Lua prefix differs",
     )
     caller = logical["class_caller"]
-    _require(
-        regs() == caller["registers"]
-        and words(regs()["esp"], 2) == [caller["return_address"], caller["argaddress"]]
-        and words(caller["argaddress"], 2) == caller["argument_record"],
-        "callback entry independent caller model differs",
-    )
+    if "verify_return" in extension:
+        extension["verify_return"](machine, ids, logical, expected)
+    else:
+        _require(
+            regs() == caller["registers"]
+            and words(regs()["esp"], 2)
+            == [caller["return_address"], caller["argaddress"]]
+            and words(caller["argaddress"], 2) == caller["argument_record"],
+            "callback entry independent caller model differs",
+        )
     return dict(
         vector=vector,
         trace_rvas=visited,

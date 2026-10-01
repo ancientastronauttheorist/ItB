@@ -95,3 +95,8 @@ Lua VM/metatable/registry behavior, heap ownership, arbitrary receiver/source
 domains, assertion delivery and whole-program accounting promotion remain
 excluded. A later class continuation must consume these actual U/P pages;
 existing fixed-address tree fixtures cannot overwrite the produced state.
+
+The subsequent [aligned empty-class composition](native_lua_class_factory_callback_empty_class_conformance.md)
+now consumes actual producer pages through native first-null vector allocation
+and class normal return. Its explicit host/source premises and frontier are
+separate from this unchanged sealed callback-entry receipt.
