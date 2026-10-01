@@ -202,15 +202,28 @@ class _IdentityPrefix:
         )
 
 
-def _run_case(codes, points, fixture, produced, vector, negative=None, *, logical=None):
+def _run_case(
+    codes,
+    points,
+    fixture,
+    produced,
+    vector,
+    negative=None,
+    *,
+    logical=None,
+    class_module=None,
+    capture=None,
+):
     from unicorn import x86_const as x
 
     logical = _logical(fixture, produced) if logical is None else logical
+    class_module = empty if class_module is None else class_module
     observer = _IdentityPrefix(fixture)
     call_cursor = 0
     class_entries = []
     class_returns = []
     heap_entries = []
+    free_entries = []
     normalized = lambda value: json.loads(json.dumps(value))
 
     def before(m, address, ids, expected, negative):
@@ -282,6 +295,36 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
             class_entries.append(address)
         if address == layout.HEAP_TARGET:
             sp = m.reg_read(ids["esp"])
+            if words(sp, 1) == [0x789172]:
+                if negative == "free_register":
+                    m.reg_write(ids["edx"], 0)
+                if negative == "free_flags":
+                    m.reg_write(
+                        x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 0x10
+                    )
+                request = logical.get("vector_free_request")
+                _require(
+                    request is not None
+                    and not free_entries
+                    and words(sp, 4)
+                    == [0x789172, request["handle"], 0, request["pointer"]]
+                    and regs()
+                    == dict(
+                        eax=0x1FFFFFFF,
+                        ebx=1,
+                        ecx=request["pointer"],
+                        edx=7,
+                        esi=fixture["receiver"] + 4,
+                        edi=fixture["vector_begin"],
+                        ebp=fixture["entry"] - 164,
+                        esp=fixture["entry"] - 180,
+                    )
+                    and m.reg_read(x.UC_X86_REG_EFLAGS) & 0xCD5
+                    == int((request["pointer"] & 255).bit_count() % 2 == 0) << 2,
+                    "factory return free ABI differs",
+                )
+                free_entries.append(address)
+                return
             tree_count = child["result"].get("tree_heap_count", 0)
             if len(heap_entries) < tree_count:
                 if negative == "tree_request":
@@ -309,15 +352,17 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
                 m.reg_write(x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1)
             _require(
                 len(heap_entries) == tree_count
-                and words(sp, 4) == [0x789463, 0x12345678, 0, 8]
+                and logical["vector"]["capacity"] in (1, 2)
+                and words(sp, 4)
+                == [0x789463, 0x12345678, 0, 8 * logical["vector"]["capacity"]]
                 and regs()
                 == dict(
-                    eax=8,
+                    eax=8 * logical["vector"]["capacity"],
                     ebx=0x1FFFFFFF,
                     ecx=fixture["receiver"] + 4,
-                    edx=1,
-                    esi=8,
-                    edi=0,
+                    edx=logical["vector"]["capacity"],
+                    esi=8 * logical["vector"]["capacity"],
+                    edi=int("old_begin" in fixture["prototype"]),
                     ebp=fixture["entry"] - 168,
                     esp=fixture["entry"] - 188,
                 )
@@ -325,6 +370,25 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
                 "factory return heap ABI differs",
             )
             heap_entries.append(address)
+        if address == 0x789172:
+            if negative == "free_identity":
+                m.reg_write(ids["eax"], 0)
+            _require(
+                len(free_entries) == 1
+                and regs()
+                == dict(
+                    eax=1,
+                    ebx=1,
+                    ecx=0xA0000001,
+                    edx=0xB0000001,
+                    esi=fixture["receiver"] + 4,
+                    edi=fixture["vector_begin"],
+                    ebp=fixture["entry"] - 164,
+                    esp=fixture["entry"] - 164,
+                )
+                and m.reg_read(x.UC_X86_REG_EFLAGS) & 0xCD5 == 0xD5,
+                "factory return free response identity differs",
+            )
         if address == 0x789463:
             if negative == "heap_identity":
                 m.reg_write(ids["eax"], fixture["vector_begin"] + 1)
@@ -365,6 +429,7 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
     def verify_return(m, ids, expected, lua):
         _require(
             len(class_entries) == len(class_returns) == 1
+            and len(free_entries) == int("vector_free_request" in logical)
             and len(heap_entries)
             == len(
                 next(c for c in expected["children"] if c["kind"] == "class")["result"][
@@ -414,6 +479,8 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
             ),
             "factory return independent field updates differ",
         )
+        if capture is not None:
+            capture(m, ids, expected, lua)
 
     try:
         result = callback._run_case(
@@ -421,7 +488,7 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, logica
             points,
             fixture["callback_vector"],
             negative,
-            class_module=empty,
+            class_module=class_module,
             fixture=fixture,
             continuation=dict(before_instruction=before, verify_return=verify_return),
         )

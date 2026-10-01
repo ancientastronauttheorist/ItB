@@ -86,26 +86,52 @@ Final mutable U offsets are 0/4/8/12/56; thirteen other DWORDs and P12..23
 remain preserved. Source construction, registry/VM effects and ownership are
 still explicit premises; no accounting promotion.
 
+## Two callbacks on verified actual return state
+
+[Documentation](native_lua_class_factory_callback_repeat_conformance.md):
+432 native cases retain verified first-return pages and all eight GPRs before
+explicit second host invocation. The same source topology receives updated
+payloads; existing destination IDs and sentinel bytes survive. Native vector
+growth copies the actual old eight-byte record, requests free of its allocation,
+appends the second record and completes the callback return.
+
+Canonical SHA `b4b28a9a2f8675705257af3a100f50b72082d1c543a12aff2a5d76e17950966e`;
+file SHA `b2999b07fe273580a4c49a93ec87a008db9decf2e1e67449ab4ed86665094355`;
+389,842 bytes and 31 pins. The 1,115 selected sites contain 797 executed sites:
+76 callback, 623 class-operation, 27 marker and 71 table sites; 318 excluded.
+First calls retain the predecessor's 713-site union; second calls execute 546.
+Totals: 286,560 factory, 622,188 first-callback and 520,560 second-callback
+instructions, 432 frees, 1,188 existing payload updates and zero second tree
+allocations. All 33 controls reject, including identity checks before host
+patching, free handoff/response boundaries and native cookie failure.
+
+The focused gate passes **260 tests, no skips** (205 model, 55 conformance),
+including new native build and exact verification. The shared regression passes
+**107 tests, no skips**, rebuilding the preceding tree and growth receipts
+unchanged. Independent review: **GO**; thirteen protected hashes match.
+
+New vector span uses two DATA pages, allocation `0x06001000+a`; retained old
+vector page is `0x06002000`. Free entry checks all eight GPRs and defined flags,
+including parity determined by the aligned pointer's low byte. Host source-word,
+references, transfers, successful free response and retained freed bytes remain
+explicit premises. No VM ownership or accounting promotion.
+
 ## Next useful frontier
 
-Invoke the callback a second time on captured verified actual return pages/GPRs.
-The destination already contains the first source keys and the vector holds
-one `[0,A]` record at `0x06002000+a`, capacity one. Keep the same source topology
-and explicitly update its payloads; this second pass should update existing
-entries without allocating tree nodes, grow to 16 bytes, copy the actual old
-record, request native free of the old vector, append `[0,A]` again and return.
-Preserve all sentinel bytes and links. Reuse source word/references/transfers
-as declared finite premises; actual Lua invocation remains host supplied.
+Mix existing and new second-source keys on the captured actual receiver. Keep
+original key strings at `0x1c000fff` intact for retained destination pointers;
+relocate second query strings to `0x1d000fff`. Start with three first-source
+nodes using canonical or positive keys; exercise interior, minimum, end and
+existing searches with second sources of at most seven nodes. The planned native
+union bound is eight; the independent pure extension model supports fourteen.
 
-Use the old-vector oracle's existing `old_base`/`old_pointer` support. A smaller
-new span of the first two DATA pages (`0x2000` bytes), with new allocation at
-`0x06001000+a`, is disjoint from the retained old page at `0x06002000` and
-avoids globally changing resize mappings. Add default-preserving optional
-verified-return capture, class-module selection, separate HeapFree dispatch,
-and revised class-return EDX `0xb0000001`. A private unexecuted repeat probe
-is `.local_decompile/oct1/probe_repeat.py`; independent repeat model/tests
-are staged working files, not a sealed native claim yet. New tree allocations
-must wait for an address schedule disjoint from retained nodes.
+Use the fixture's existing node-allocation base rather than a global address
+constant. First nodes occupy DATA+0x100; proposed new nodes start DATA+0x400,
+with 32-byte spacing, disjoint from retained nodes and vector DATA+0x1000.
+Validate stable existing IDs, omitted payloads and original key pointers,
+updated sentinel links/count, separate tree/vector heap boundaries and free.
+The extension model and 317 tests are working files awaiting runtime validation
+and independent review; no mixed-source native claim is sealed yet.
 
 ## Environment and protected work
 

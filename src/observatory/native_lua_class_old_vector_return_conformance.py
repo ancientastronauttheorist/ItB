@@ -95,6 +95,21 @@ def _fixture(vector, *, caller=None):
 
 
 def _expected(vector, fixture):
+    new_page_count = fixture.get("new_page_count", 4)
+    old_base = fixture.get("old_base", growth.OLD)
+    _require(
+        type(new_page_count) is int
+        and new_page_count in (2, 4)
+        and type(old_base) is int
+        and old_base & 0xFFF == 0
+        and old_base in fixture["pages"]
+        and construction.DATA
+        <= fixture["vector_begin"]
+        <= fixture["vector_end"]
+        <= fixture["vector_capacity"]
+        <= construction.DATA + 4096 * new_page_count,
+        "invalid class old vector mapping",
+    )
     argument = prefix._checked_argument(fixture)
     result = prefix._expected(vector, fixture)
     pages = {p: bytearray(v) for p, v in result["pages"].items()}
@@ -138,16 +153,20 @@ def _expected(vector, fixture):
         old_alignment=vector["old_alignment"],
         stack_alignment=vector["frame_alignment"],
         new_pointer=fixture["vector_begin"],
+        old_pointer=fixture["old_begin"],
     )
     child = growth._expected(
         child_vector,
         regs,
         b"".join(bytes(pages[construction.STACK + i * 4096]) for i in range(2)),
-        b"".join(bytes(pages[construction.DATA + i * 4096]) for i in range(4)),
-        bytes(pages[growth.OLD]),
+        b"".join(
+            bytes(pages[construction.DATA + i * 4096]) for i in range(new_page_count)
+        ),
+        bytes(pages[old_base]),
         bytes(pages[RECEIVER & ~0xFFF]),
         stack_base=construction.STACK,
         object_base=RECEIVER & ~0xFFF,
+        old_base=old_base,
     )
     _require(
         child["events"][-1]
@@ -162,7 +181,7 @@ def _expected(vector, fixture):
         pages[construction.STACK + i * 4096] = bytearray(
             child["stack"][4096 * i : 4096 * (i + 1)]
         )
-    for i in range(4):
+    for i in range(new_page_count):
         pages[construction.DATA + i * 4096] = bytearray(
             child["new"][4096 * i : 4096 * (i + 1)]
         )

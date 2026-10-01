@@ -173,14 +173,21 @@ def _logical(fixture, produced):
     )
 
 
-def _run_case(codes, points, fixture, produced, vector, negative=None):
+def _run_case(codes, points, fixture, produced, vector, negative=None, *, capture=None):
     logical = _logical(fixture, produced)
     _require(
         logical["tree_count"] == vector["source_size"],
         "factory source logical count differs",
     )
     observation = normal._run_case(
-        codes, points, fixture, produced, vector, negative, logical=logical
+        codes,
+        points,
+        fixture,
+        produced,
+        vector,
+        negative,
+        logical=logical,
+        capture=capture,
     )
     if negative == "cookie":
         return observation
