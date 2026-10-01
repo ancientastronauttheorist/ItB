@@ -224,6 +224,11 @@ def _run_case(
     class_returns = []
     heap_entries = []
     free_entries = []
+    old_count = fixture["prototype"].get("old_size", 0)
+    _require(
+        type(old_count) is int and old_count in range(4),
+        "unreviewed factory return vector size",
+    )
     normalized = lambda value: json.loads(json.dumps(value))
 
     def before(m, address, ids, expected, negative):
@@ -311,7 +316,7 @@ def _run_case(
                     and regs()
                     == dict(
                         eax=0x1FFFFFFF,
-                        ebx=1,
+                        ebx=old_count,
                         ecx=request["pointer"],
                         edx=7,
                         esi=fixture["receiver"] + 4,
@@ -352,21 +357,24 @@ def _run_case(
                 m.reg_write(x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1)
             _require(
                 len(heap_entries) == tree_count
-                and logical["vector"]["capacity"] in (1, 2)
+                and logical["vector"]["capacity"]
+                == max(old_count + 1, old_count + old_count // 2)
                 and words(sp, 4)
                 == [0x789463, 0x12345678, 0, 8 * logical["vector"]["capacity"]]
                 and regs()
                 == dict(
                     eax=8 * logical["vector"]["capacity"],
-                    ebx=0x1FFFFFFF,
+                    ebx=0x1FFFFFFF - old_count // 2,
                     ecx=fixture["receiver"] + 4,
                     edx=logical["vector"]["capacity"],
                     esi=8 * logical["vector"]["capacity"],
-                    edi=int("old_begin" in fixture["prototype"]),
+                    edi=old_count,
                     ebp=fixture["entry"] - 168,
                     esp=fixture["entry"] - 188,
                 )
-                and m.reg_read(x.UC_X86_REG_EFLAGS) & 0xCC5 == 0,
+                and m.reg_read(x.UC_X86_REG_EFLAGS) & 0xCC5
+                == int((8 * logical["vector"]["capacity"] & 255).bit_count() % 2 == 0)
+                << 2,
                 "factory return heap ABI differs",
             )
             heap_entries.append(address)
@@ -378,7 +386,7 @@ def _run_case(
                 and regs()
                 == dict(
                     eax=1,
-                    ebx=1,
+                    ebx=old_count,
                     ecx=0xA0000001,
                     edx=0xB0000001,
                     esi=fixture["receiver"] + 4,

@@ -99,7 +99,7 @@ def _expected(vector, fixture):
     old_base = fixture.get("old_base", growth.OLD)
     _require(
         type(new_page_count) is int
-        and new_page_count in (2, 4)
+        and new_page_count in (1, 2, 4)
         and type(old_base) is int
         and old_base & 0xFFF == 0
         and old_base in fixture["pages"]

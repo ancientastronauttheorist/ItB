@@ -146,30 +146,44 @@ build/exact verify and predecessor repeat rebuild/verify. Independent review:
 of fourteen, separately from the native eight-node bound. Source/VM/allocator
 premises remain explicit; no ownership or accounting promotion.
 
+## Third callback on retained actual receiver
+
+[Documentation](native_lua_class_factory_callback_third_conformance.md):
+216 native cases retain actual first and mixed second return pages and GPRs,
+then invoke a third callback with unchanged second-source topology and changed
+payloads. All existing tree IDs, links and key pointers survive; omitted key16
+is untouched. The full two-record vector grows to capacity three: allocate24,
+copy16, free the old16 allocation, append the third record and return normally.
+
+Canonical SHA `2e12f3b7af5475178f0660fbdab0aae7a7478fc684d1ad8f68e8bec7a96a7832`;
+file SHA `f3da47c838db5835c969359dda92143c02bf79179117d98f26330911070e3cbf`;
+348,679 bytes, 33 pins. Site unions first/second/third: 701/864/546;
+combined 881 of 1,115 selected sites and 2,905 unique bytes. There are
+648 callback invocations, 1,512 third payload updates, zero third tree
+allocations, 432 frees, and 37 rejecting controls. Refreshed capture hashes
+cannot bypass independent retained GPR, U/P/vector/tree/key checks.
+
+The third allocation is DATA+0x800+a with new_page_count=1 and old_base
+DATA+0x1000. Original freed first8 and second16 remain explicit retained-byte
+premises. Heap ABI checks now derive capacity k=max(n+1,n+n//2), request8k,
+EDI=n, EBX=0x1fffffff-n//2 and TEST(request,request) parity flags; free
+entry/response EBX=n. Other free GPR/frame/flag laws retain their sealed form.
+The complete gate passes **380 tests, no skips**: model208, new conformance91
+and predecessor mixed-key81. New native build/exact verification and unchanged
+predecessor rebuild/verification pass. Independent reviews: **GO**; all thirteen
+protected hashes match. No ownership or accounting promotion.
+
 ## Next useful frontier
 
-Capture the verified second callback return and invoke a third callback with
-the same second-source topology and changed payloads. Existing tree IDs,
-links and key pointers must survive; omitted key16 stays untouched. The full
-two-record vector grows by the native 1.5x law to capacity three: allocate
-24 bytes, copy sixteen actual bytes, free the old sixteen-byte allocation,
-and append the third record. It does not grow to capacity four.
-
-The smallest safe mapping uses new_page_count=1, third allocation at
-DATA+0x800+a and old_base=DATA+0x1000, preserving original freed DATA+0x2000.
-Existing growth/resize oracles require the full new mapping and old page to be
-disjoint, so DATA+0x1800 or a four-page DATA+0x3000 mapping is unsuitable.
-Use DATA+0x61f for the unused fresh-node candidate. Generalize heap ABI checks
-from old_size n: capacity k=max(n+1,n+n//2), request8k, EDI=n,
-EBX=0x1fffffff-n//2, TEST(request,request) parity flags; free entry/response
-EBX=n. All other previously checked free GPR/frame/flag laws retain their form.
-
-The independent third model's 208 tests pass and its review is GO; its native
-adapter is a private draft pending execution. A fourth full-three-record
-invocation can later grow to capacity four
-and allocate32/copy24/free24 within the existing bounded growth law. Natural
-spare capacity occurs only after the fifth growth, beyond the current domain.
-No third native receipt is sealed yet.
+A fourth full-three-record invocation grows to capacity four and
+allocate32/copy24/free24 within the existing bounded law. Its pure model's
+214 tests pass and independent review is GO. Native adapter/tests are private
+drafts. Use fourth allocation DATA+0x3800+a, new_base DATA+0x3000,
+new_page_count=1 and old_base DATA, retaining all captured page3 bytes.
+Thread an optional new mapping base through class/growth/resize/allocation
+oracles without changing defaults. The fixed free error-page snapshot comes
+from old DATA page0 in this relocation. Natural spare capacity occurs only
+after the fifth growth, beyond the current small-resize domain.
 
 ## Environment and protected work
 
