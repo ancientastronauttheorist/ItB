@@ -279,3 +279,14 @@ Protected work remains the thirteen hashes in
 default log, resist/failure recordings, active session, loop commands,
 lightning-war test, four board/solve/threat JSON files and smoke-run notes.
 Never stage/reset/revert them. No live game actions were taken.
+
+## Closing state
+
+Implementation checkpoints pushed after the fourth callback: `ac99ab39`
+installed SIMD copy fixtures, `c3ff17c8` sealed SIMD resize, `b2e089fb`
+installed growth continuation, and `83c54a66` sealed SIMD growth. The roadmap
+index is updated in `adbb8632`. Final implementation gate:258 passed, no skips;
+independent final review GO. All17 handoff/index links resolve, all13 protected
+hashes match, and no native tests or subagents remain active. The next task is
+the bounded fifth class append, then actual fifth callback composition. The
+full game and whole-program accounting remain unfinished.
