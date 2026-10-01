@@ -17,6 +17,26 @@ pseudocode. Local analysis may use the owner's installed game and a private
 Ghidra project. Git stores tools, build identities, normalized facts, analyst
 claims, clean-room specifications, tests, and independently written code.
 
+## October 1 checkpoint
+
+The [October 1 handoff](decompile_handoff_2026_10_01.md) records the actual
+factory-produced receiver through four retained-state native callbacks. The
+[fourth callback](native_lua_class_factory_callback_fourth_conformance.md)
+retains eight tree nodes, grows the three-record vector to capacity four,
+copies24, frees the old buffer and reaches all normal returns. Its focused
+and predecessor gate passes523 tests without skips.
+
+The retained feature word selects SIMD for the next32-byte copy. The
+[caller-installed copy utility](native_short_simd_copy.md),
+[fixed SIMD resize](native_simd_vector_resize_conformance.md) and
+[fixed SIMD growth](native_simd_vector_growth_conformance.md) now provide
+independently reviewed, exact-build ingredients for full4/cap4 to capacity6.
+The final growth/resize gate passes258 tests without skips and rebuilds both
+sealed receipts unchanged. The [fifth-frontier plan](native_lua_class_factory_callback_fifth_frontier.md)
+specifies the remaining class append, XMM/DF capture and complete callback
+joins. The actual fifth/sixth callbacks, exceptional behavior, ownership and
+whole-program accounting promotion remain open. The full game is unfinished.
+
 ## September 11 checkpoint
 
 The [September 7 handoff](decompile_handoff_2026_09_07.md) records the preceding
