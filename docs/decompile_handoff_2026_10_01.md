@@ -116,22 +116,60 @@ including parity determined by the aligned pointer's low byte. Host source-word,
 references, transfers, successful free response and retained freed bytes remain
 explicit premises. No VM ownership or accounting promotion.
 
+## Mixed existing and new second-source keys
+
+[Documentation](native_lua_class_factory_callback_extend_conformance.md):
+864 native cases start with three actual inserted destination nodes, then
+supply a second source with minimum/interior/end insertions and existing
+updates. First keys are 0/1/16 or 1/16/255; native final unions contain at most
+eight nodes. Existing pointers and omitted key16 payloads survive; second
+query strings use disjoint 1d storage while retained nodes keep 1c pointers.
+New node requests use DATA+0x41f with 32-byte spacing; the shared prefix's
+existing fixture base now controls its allocation schedule, default unchanged.
+Unused candidates may overlap existing nodes when no allocation occurs.
+
+Canonical SHA `c0cc89b3af1cecb03d752cf7e17fde6c621631bcbb43046475124609bd589797`;
+file SHA `c1997e061f2f161538ec5dc953a185a251585b6affff078115e3c1a701c447e8`;
+590,914 bytes, 32 pins. Selected/executed sites: 1,115/881, 2,905 unique bytes.
+First calls retain the predecessor's three-node 701-site family; second calls
+execute 864 sites. Partition: 76 callback, 707 class, 27 marker, 71 table,
+234 excluded. Totals include 2,052 new second nodes, 756 existing updates,
+2,808 second source copies, 4,644 final nodes, and 864 old-vector frees.
+All 40 controls reject, including coordinated capture digest/node mutations.
+The guard independently rechecks actual first GPRs, U/P/vector/tree/key bytes
+before host binding, in addition to native full-return capture identity.
+
+The complete gate passes **453 tests, no skips** (317 model, 81 new
+conformance, 55 predecessor repeat conformance), including byte-identical new
+build/exact verify and predecessor repeat rebuild/verify. Independent review:
+**GO**; all thirteen protected hashes match. Logical model supports a union
+of fourteen, separately from the native eight-node bound. Source/VM/allocator
+premises remain explicit; no ownership or accounting promotion.
+
 ## Next useful frontier
 
-Mix existing and new second-source keys on the captured actual receiver. Keep
-original key strings at `0x1c000fff` intact for retained destination pointers;
-relocate second query strings to `0x1d000fff`. Start with three first-source
-nodes using canonical or positive keys; exercise interior, minimum, end and
-existing searches with second sources of at most seven nodes. The planned native
-union bound is eight; the independent pure extension model supports fourteen.
+Capture the verified second callback return and invoke a third callback with
+the same second-source topology and changed payloads. Existing tree IDs,
+links and key pointers must survive; omitted key16 stays untouched. The full
+two-record vector grows by the native 1.5x law to capacity three: allocate
+24 bytes, copy sixteen actual bytes, free the old sixteen-byte allocation,
+and append the third record. It does not grow to capacity four.
 
-Use the fixture's existing node-allocation base rather than a global address
-constant. First nodes occupy DATA+0x100; proposed new nodes start DATA+0x400,
-with 32-byte spacing, disjoint from retained nodes and vector DATA+0x1000.
-Validate stable existing IDs, omitted payloads and original key pointers,
-updated sentinel links/count, separate tree/vector heap boundaries and free.
-The extension model and 317 tests are working files awaiting runtime validation
-and independent review; no mixed-source native claim is sealed yet.
+The smallest safe mapping uses new_page_count=1, third allocation at
+DATA+0x800+a and old_base=DATA+0x1000, preserving original freed DATA+0x2000.
+Existing growth/resize oracles require the full new mapping and old page to be
+disjoint, so DATA+0x1800 or a four-page DATA+0x3000 mapping is unsuitable.
+Use DATA+0x61f for the unused fresh-node candidate. Generalize heap ABI checks
+from old_size n: capacity k=max(n+1,n+n//2), request8k, EDI=n,
+EBX=0x1fffffff-n//2, TEST(request,request) parity flags; free entry/response
+EBX=n. All other previously checked free GPR/frame/flag laws retain their form.
+
+The independent third model's 208 tests pass and its review is GO; its native
+adapter is a private draft pending execution. A fourth full-three-record
+invocation can later grow to capacity four
+and allocate32/copy24/free24 within the existing bounded growth law. Natural
+spare capacity occurs only after the fifth growth, beyond the current domain.
+No third native receipt is sealed yet.
 
 ## Environment and protected work
 

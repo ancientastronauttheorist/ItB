@@ -424,8 +424,16 @@ def _expected(vector, fixture):
         write(call_entry, BASE + 0x2EB19F)
         keys = [node["key"] for node in destination["nodes"]]
         mode = _mode(keys, key)
-        fresh = (
-            construction.DATA + 0x100 + 32 * len(heap_nodes) + vector["node_alignment"]
+        fresh = fixture["node"] + 32 * len(heap_nodes)
+        _require(
+            type(fixture["node"]) is int
+            and construction.DATA <= fresh
+            and fresh + 24 <= construction.DATA + 0x2000
+            and (
+                mode == "existing"
+                or all(not (fresh < a + 24 and a < fresh + 24) for a in addresses)
+            ),
+            "class fresh node overlaps retained destination",
         )
         cv = dict(
             nodes=[
