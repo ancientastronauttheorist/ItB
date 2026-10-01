@@ -595,12 +595,24 @@ class _Lua:
         )
 
 
-def _run_case(codes, points, vector, negative=None, *, class_module=spare):
+def _run_case(
+    codes,
+    points,
+    vector,
+    negative=None,
+    *,
+    class_module=spare,
+    fixture=None,
+    continuation=None,
+):
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    fixture = _fixture(vector, class_module=class_module)
+    fixture = (
+        _fixture(vector, class_module=class_module) if fixture is None else fixture
+    )
+    extension = continuation or {}
     expected = _expected(vector, fixture, class_module=class_module)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     for page, payload in fixture["pages"].items():
@@ -646,6 +658,8 @@ def _run_case(codes, points, vector, negative=None, *, class_module=spare):
 
     def on_code(m, address, size, user):
         nonlocal resume
+        if "before_instruction" in extension:
+            extension["before_instruction"](m, address, ids, expected, negative)
         if negative == "cookie" and address == BASE + 0x3574D5:
             m.emu_stop()
             return
@@ -884,6 +898,8 @@ def _run_case(codes, points, vector, negative=None, *, class_module=spare):
         ),
         "callback protected memory differs",
     )
+    if "verify_return" in extension:
+        extension["verify_return"](machine, ids, expected, lua)
     observation = json.loads(
         json.dumps(
             dict(

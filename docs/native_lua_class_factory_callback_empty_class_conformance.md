@@ -125,3 +125,7 @@ hashes remained unchanged before publication.
 Real VM/metatable/registry effects, callback suffix and return, nonempty sources,
 arbitrary receiver addresses, heap ownership, assertion delivery and global
 decompilation accounting remain open. No accounting promotion is made.
+
+The subsequent [complete callback return composition](native_lua_class_factory_callback_return_conformance.md)
+now closes both registry transfers, copied source word and zero-result return
+under separate explicit source-field and supplied API premises.

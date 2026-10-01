@@ -11,6 +11,9 @@ The [September 30 handoff](decompile_handoff_2026_09_30.md) is the baseline.
 Its final pushed HEAD was `a2e3595d`. The branch was pulled with `--ff-only`
 before October 1 work; all thirteen protected baseline hashes matched.
 
+Pushed checkpoint `0ce43627` closes actual produced receiver through class
+first-null return. The subsequent full callback return is documented below.
+
 ## Actual produced receiver through empty-class return
 
 [Documentation](native_lua_class_factory_callback_empty_class_conformance.md):
@@ -41,16 +44,30 @@ normal return remain next boundaries.
 
 ## Next useful continuation
 
-Extend actual produced-receiver composition through the callback's two registry
-table transfers, copied source word and zero-result normal return. Retain actual
-factory registry reference identities and source fields rather than replacing
-produced pages with legacy callback fixtures. Supply registry/table contracts
-explicitly. Empty source tree still avoids key storage colliding with factory
-P2 at `0x15000000`. Native marker/class/table helpers must receive running parent
-pages and registers, with independent logical token, field, memory and ABI
-checks. Follow with nonempty source only after designing disjoint key storage.
-Existing full callback spare/growth proofs remain useful independent sources;
-their fixture pages are not replacement producer state.
+The actual produced receiver's full normal callback return is now sealed in
+[the next composition](native_lua_class_factory_callback_return_conformance.md).
+Its 324 cases cover both table transfers and the source-word copy, preserve
+actual factory references/sentinel bytes, and retain five modeled Lua values
+before zero-result return. Canonical SHA
+`6b0f0ced057240a366ccd5c9545d482feb2d7fbcd3af70aaa5186779c3ad885e`;
+file SHA `80c3c514d6ebe07d5dec4a25a900ffa30f6dc064a4822d6910c59a2ddd8035c7`;
+293,817 bytes; 1,062 selected/368 executed sites in 2,746 unique bytes.
+All 26 controls pass, including the actual callback-cookie failure boundary.
+The complete gate passes **274 tests, no skips** (156 model, 41 new
+conformance, 77 old spare/growth callbacks), including new build/exact verify
+and byte-identical old receipt rebuilds. Independent semantic review: **GO**.
+All thirteen protected user hashes remain unchanged.
+
+The next useful frontier is a nonempty source under the actual initially empty
+produced receiver. First design disjoint key storage: legacy source keys at
+`0x15000000` overlap the factory's second-name page. Keep named source-node/key
+patches explicit and preserve all other captured bytes. Consume the actual
+allocated sentinel, retain native insertion/balancing/successor machinery and
+first-null vector growth, and update preservation claims for count/sentinel
+links actually changed by insertion. Source object, class word and two registry
+references remain supplied host premises unless separately joined to a producer.
+Existing tree/spare/growth/table proofs are independent sources; their generated
+fixture pages cannot replace actual producer state.
 
 ## Environment and protected work
 
