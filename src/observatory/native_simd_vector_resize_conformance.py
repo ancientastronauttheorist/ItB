@@ -181,8 +181,14 @@ def _expected(
     original_object,
     original_error,
     feature_page,
+    *,
+    return_address=RETURN,
 ):
     g = geometry(vector)
+    _require(
+        type(return_address) is int and 0 < return_address <= 0xFFFFFFFF,
+        "invalid resize return address",
+    )
     _require(
         type(initial) is dict and set(initial) == set(REGISTERS),
         "invalid resize GPR schema",
@@ -220,7 +226,8 @@ def _expected(
     frame_join(s)
     _require(obj == OBJECT_ADDRESS, "resize object identity differs")
     _require(
-        int.from_bytes(original_stack[s - STACK : s - STACK + 4], "little") == RETURN
+        int.from_bytes(original_stack[s - STACK : s - STACK + 4], "little")
+        == return_address
         and int.from_bytes(original_stack[s - STACK + 4 : s - STACK + 8], "little")
         == 6,
         "installed resize arguments differ",
@@ -417,7 +424,7 @@ def _expected(
         (s - 16, initial["esi"]),
         (s - 12, initial["ebx"]),
         (s - 4, initial["ebp"]),
-        (s, RETURN),
+        (s, return_address),
     ):
         r(address, value)
     regs.update(
@@ -449,7 +456,7 @@ def _expected(
         object=bytes(objects),
         error=original_error,
         feature_page=feature_page,
-        endpoint=RETURN,
+        endpoint=return_address,
         copy_entry=copy_entry,
         allocation_request=dict(
             continuation=BASE + 0x389463, handle=HEAP, flags=0, bytes=48
@@ -460,7 +467,7 @@ def _expected(
     )
 
 
-def _packet(vector, fixture):
+def _packet(vector, fixture, *, return_address=RETURN):
     _require(
         type(fixture) is dict and set(fixture) == FIXTURE_KEYS,
         "invalid resize fixture schema",
@@ -476,6 +483,7 @@ def _packet(vector, fixture):
             fixture["object"],
             fixture["error"],
             fixture["feature_page"],
+            return_address=return_address,
         )
     except (
         allocator.ConformanceError,

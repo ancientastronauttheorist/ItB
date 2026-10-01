@@ -215,12 +215,16 @@ the unchanged sealed4992-case forward receipt build/exact verification; the
 original SIMD suite passes70 including four exact CLI rebuilds. Native tests
 use isolated subprocesses. The standalone full4/request6 SIMD resize ingredient
 is now sealed: see [documentation](native_simd_vector_resize_conformance.md).
-It passes105 focused tests and102 default predecessor regressions, no skips,
+It passes137 focused tests and102 default predecessor regressions, no skips,
 including native24-case rebuild/exact verification, all five intended controls
 and all three CLI commands. Independent draft/final reviews are GO.
 Canonical SHA553ca197fff9214a2dba573c44174d3407acc804dcda6b9cf73352a0964f05c7;
 file SHA15a234c49c848d613e398f73b7c401e9706f8d1b7c871f8338169a77811f93ce;
 53,994 bytes,9pins,274 loaded/165 executed sites,730 loaded bytes.
+The32 added continuation tests cover the pure composition oracle's actual
+installed growth return0x006eb66e and malformed/mismatched returns. The default
+sealed native resize receipt stays byte-identical. A separate native growth
+wrapper is being drafted privately; its proof is still pending.
 Neither is an actual fifth factory callback or an accounting
 promotion. Candidate fifth vector placement is DATA+0x2800+a in captured
 page2, preserving the original first8 at DATA+0x2000+a and old fourth32

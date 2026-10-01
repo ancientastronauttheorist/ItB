@@ -30,6 +30,46 @@ def _word(buffer, offset):
     return int.from_bytes(buffer[offset : offset + 4], "little")
 
 
+@pytest.mark.parametrize("vector", c.vectors())
+def test_installed_growth_continuation_preserves_complete_resize_packet(vector):
+    fixture = c._fixture(vector)
+    baseline = c._packet(vector, fixture)
+    continuation = 0x006EB66E
+    stack = bytearray(fixture["stack"])
+    at = fixture["registers"]["esp"] - c.STACK
+    stack[at : at + 4] = continuation.to_bytes(4, "little")
+    fixture["stack"] = bytes(stack)
+    before = copy.deepcopy(fixture)
+    result = c._packet(vector, fixture, return_address=continuation)
+    expected_stack = bytearray(baseline["stack"])
+    expected_stack[at : at + 4] = continuation.to_bytes(4, "little")
+    expected_events = copy.deepcopy(baseline["events"])
+    assert expected_events[-1] == dict(
+        access="read", address=fixture["registers"]["esp"], width=4, value=c.RETURN
+    )
+    expected_events[-1]["value"] = continuation
+    assert result == dict(
+        baseline,
+        stack=bytes(expected_stack),
+        events=expected_events,
+        endpoint=continuation,
+    )
+    assert fixture == before
+
+
+@pytest.mark.parametrize("address", [0, -1, 2**32, True, False, None, "0x006eb66e"])
+def test_invalid_resize_continuation_rejected(address):
+    vector = c.vectors()[0]
+    with pytest.raises(c.ConformanceError, match="invalid resize return address"):
+        c._packet(vector, c._fixture(vector), return_address=address)
+
+
+def test_coordinated_resize_continuation_requires_installed_return_slot():
+    vector = c.vectors()[0]
+    with pytest.raises(c.ConformanceError, match="installed resize arguments"):
+        c._packet(vector, c._fixture(vector), return_address=0x006EB66E)
+
+
 @pytest.mark.parametrize("profile", [0, 1])
 @pytest.mark.parametrize("alignment", [0, 7, 31])
 @pytest.mark.parametrize("stack_alignment", [0, 1, 7, 15])

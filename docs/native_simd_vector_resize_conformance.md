@@ -42,10 +42,17 @@ Five mutation controls must fail for their intended ancestor-stack, payload,
 XMM, allocation-request and free-pointer reasons. Tests also independently
 check the buffer snapshot, header order, ABI/flags, spare storage, malformed
 fixtures, source identities, component-packet corruption, receipt tampering
-and exact CLI output. The105 focused tests pass without skips. Independent
+and exact CLI output. The137 focused tests pass without skips. Independent
 draft and final receipt reviews are GO.
 The existing allocation, scalar resize and growth regression gate also passes
-102 tests, including unchanged native rebuilds:207 passing tests combined.
+102 tests, including unchanged native rebuilds:239 passing tests combined.
+
+The pure composition oracle accepts a positive32-bit installed return address.
+It checks that exact caller slot and uses the address in its final read and
+endpoint. Twenty-four tests compare every returned field at the growth
+continuation `0x006eb66e`; malformed addresses and mismatched slots reject.
+This leaves the standalone native endpoint and sealed receipt unchanged.
+Actual native growth is a separate replay gate.
 
 Receipt prefix: `windows_build_13725832_31fe35265598_`.
 `native_simd_vector_resize_conformance.json` is53,994 bytes, UTF-8 LF:
