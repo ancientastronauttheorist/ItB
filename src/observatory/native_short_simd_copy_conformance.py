@@ -112,12 +112,257 @@ def oracle(vector, payload=PAYLOAD_TEMPLATE):
     )
 
 
-def _run_case(codes, points, vector, *, negative=None):
+FEATURE_PAGE, FEATURE = 0x893000, 0x893F30
+REGISTERS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
+XMM = tuple(f"xmm{i}" for i in range(8))
+FIXTURE_KEYS = {
+    "stack_base",
+    "payload_base",
+    "stack",
+    "payload",
+    "registers",
+    "xmm",
+    "feature_page",
+    "return_address",
+}
+VECTOR_KEYS = {
+    "length",
+    "source_offset",
+    "destination_offset",
+    "alignment",
+    "df",
+    "feature_word",
+}
+
+
+def _word(value, label):
+    _require(type(value) is int and 0 <= value <= MASK, "invalid " + label)
+
+
+def _expected(
+    vector,
+    initial,
+    initial_xmm,
+    original_stack,
+    original_payload,
+    *,
+    stack_base=STACK,
+    payload_base=PAYLOAD,
+    return_address=RETURN,
+    feature_page=None,
+):
+    """Detached copy packet for caller-installed storage, without native execution.
+
+    Offsets in vector name payload storage. Alignment describes the default
+    fixture only; an installed caller may choose any admitted actual ESP.
+    """
+    _require(
+        type(vector) is dict and set(vector) == VECTOR_KEYS,
+        "invalid SIMD vector schema",
+    )
+    _require(
+        type(initial) is dict and set(initial) == set(REGISTERS),
+        "invalid SIMD register schema",
+    )
+    for name, value in initial.items():
+        _word(value, "SIMD " + name)
+    _require(
+        type(initial_xmm) is dict and set(initial_xmm) == set(XMM),
+        "invalid XMM register schema",
+    )
+    _require(
+        all(
+            type(value) is int and 0 <= value < 2**128 for value in initial_xmm.values()
+        ),
+        "invalid XMM word",
+    )
+    for name, base, buffer in (
+        ("stack", stack_base, original_stack),
+        ("payload", payload_base, original_payload),
+    ):
+        _word(base, name + " base")
+        _require(
+            base % 4096 == 0
+            and type(buffer) is bytes
+            and len(buffer) > 0
+            and len(buffer) % 4096 == 0
+            and base + len(buffer) <= 2**32,
+            "invalid " + name + " mapping",
+        )
+    _word(return_address, "return address")
+    _require(return_address > 0, "invalid zero return address")
+    copied = oracle(vector, original_payload)
+    source = payload_base + vector["source_offset"]
+    destination = payload_base + vector["destination_offset"]
+    _require(
+        source + vector["length"] <= MASK and destination + vector["length"] <= MASK,
+        "copy extent wraps uint32",
+    )
+    entry = initial["esp"]
+    _require(
+        stack_base <= entry - 8
+        and entry + 16 <= stack_base + len(original_stack)
+        and entry + 16 <= MASK,
+        "copy frame outside stack mapping",
+    )
+    code_pages = {BASE + (start & ~0xFFF) for start, end in RANGES}
+    spans = [
+        (stack_base, stack_base + len(original_stack)),
+        (payload_base, payload_base + len(original_payload)),
+        (FEATURE_PAGE, FEATURE_PAGE + 4096),
+        (return_address & ~0xFFF, (return_address & ~0xFFF) + 4096),
+    ]
+    _require(
+        all(
+            b <= c or d <= a
+            for i, (a, b) in enumerate(spans)
+            for c, d in spans[i + 1 :]
+        ),
+        "SIMD mappings overlap",
+    )
+    _require(
+        all(b <= page or page + 4096 <= a for a, b in spans for page in code_pages),
+        "SIMD mapping overlaps copy code",
+    )
+    if feature_page is None:
+        feature = bytearray(4096)
+        feature[FEATURE & 0xFFF : (FEATURE & 0xFFF) + 4] = vector[
+            "feature_word"
+        ].to_bytes(4, "little")
+        feature_page = bytes(feature)
+    _require(
+        type(feature_page) is bytes and len(feature_page) == 4096,
+        "invalid feature page",
+    )
+    _require(
+        int.from_bytes(feature_page[FEATURE & 0xFFF : (FEATURE & 0xFFF) + 4], "little")
+        == vector["feature_word"],
+        "installed feature word differs",
+    )
+    for offset, word in (
+        (0, return_address),
+        (4, destination),
+        (8, source),
+        (12, vector["length"]),
+    ):
+        at = entry - stack_base + offset
+        _require(
+            int.from_bytes(original_stack[at : at + 4], "little") == word,
+            "installed copy arguments differ",
+        )
+    stack = bytearray(original_stack)
+    events = []
+
+    def emit(access, address, width, value):
+        events.append(dict(access=access, address=address, width=width, value=value))
+        if access == "write" and stack_base <= address < stack_base + len(stack):
+            at = address - stack_base
+            stack[at : at + width] = value.to_bytes(width, "little")
+
+    emit("write", entry - 4, 4, initial["edi"])
+    emit("write", entry - 8, 4, initial["esi"])
+    emit("read", entry + 8, 4, source)
+    emit("read", entry + 12, 4, vector["length"])
+    emit("read", entry + 4, 4, destination)
+    emit("read", FEATURE, 4, vector["feature_word"])
+    for access, offset, width in copied["accesses"]:
+        # Unicorn 2.1.4 splits each MOVDQU into ordered eight-byte hooks.
+        for part, size in ((0, 8), (8, 8)) if width == 16 else ((0, width),):
+            address = (source if access == "read" else destination) + offset + part
+            word = int.from_bytes(
+                copied["source_snapshot"][offset + part : offset + part + size],
+                "little",
+            )
+            emit(access, address, size, word)
+    emit("read", entry + 4, 4, destination)
+    emit("read", entry - 8, 4, initial["esi"])
+    emit("read", entry - 4, 4, initial["edi"])
+    emit("read", entry, 4, return_address)
+    return dict(
+        direction=copied["direction"],
+        payload=copied["payload"],
+        source_snapshot=copied["source_snapshot"],
+        stack=bytes(stack),
+        feature_page=bytes(feature_page),
+        events=events,
+        registers=dict(
+            initial, eax=destination, ecx=0, edx=copied["edx"], esp=entry + 4
+        ),
+        xmm=dict(initial_xmm, xmm0=copied["xmm0"], xmm1=copied["xmm1"]),
+        flags=copied["flags"],
+        flag_mask=copied["flag_mask"],
+        df=0,
+        endpoint=return_address,
+    )
+
+
+def _fixture(vector):
+    _require(
+        type(vector) is dict and set(vector) == VECTOR_KEYS,
+        "invalid SIMD vector schema",
+    )
+    oracle(vector)
+    entry = STACK + 0x2000 + vector["alignment"]
+    original_stack = bytearray(STACK_TEMPLATE)
+    for address, value in (
+        (entry, RETURN),
+        (entry + 4, PAYLOAD + vector["destination_offset"]),
+        (entry + 8, PAYLOAD + vector["source_offset"]),
+        (entry + 12, vector["length"]),
+    ):
+        original_stack[address - STACK : address - STACK + 4] = value.to_bytes(
+            4, "little"
+        )
+    initial = {name: 0x10293847 + i * 0x1010101 for i, name in enumerate(REGISTERS)}
+    initial["esp"] = entry
+    initial_xmm = {
+        name: int.from_bytes(
+            bytes((i * 29 + j * 31 + 7) & 255 for j in range(16)), "little"
+        )
+        for i, name in enumerate(XMM)
+    }
+    feature = bytearray(4096)
+    feature[FEATURE & 0xFFF : (FEATURE & 0xFFF) + 4] = vector["feature_word"].to_bytes(
+        4, "little"
+    )
+    return dict(
+        stack_base=STACK,
+        payload_base=PAYLOAD,
+        stack=bytes(original_stack),
+        payload=PAYLOAD_TEMPLATE,
+        registers=initial,
+        xmm=initial_xmm,
+        feature_page=bytes(feature),
+        return_address=RETURN,
+    )
+
+
+def _run_case(codes, points, vector, *, negative=None, fixture=None):
+    installed = _fixture(vector) if fixture is None else fixture
+    _require(
+        type(installed) is dict and set(installed) == FIXTURE_KEYS,
+        "invalid SIMD fixture schema",
+    )
+    _require(
+        type(installed["feature_page"]) is bytes
+        and len(installed["feature_page"]) == 4096,
+        "invalid installed feature page",
+    )
+    expected = _expected(
+        vector,
+        installed["registers"],
+        installed["xmm"],
+        installed["stack"],
+        installed["payload"],
+        stack_base=installed["stack_base"],
+        payload_base=installed["payload_base"],
+        return_address=installed["return_address"],
+        feature_page=installed["feature_page"],
+    )
     import unicorn as uc
     from unicorn import x86_const as x
 
     _require(uc.__version__ == "2.1.4", "reviewed Unicorn required")
-    expected = oracle(vector)
     machine = uc.Uc(uc.UC_ARCH_X86, uc.UC_MODE_32)
     code_pages = {BASE + (start & ~0xFFF) for start, end in RANGES}
     for page in code_pages:
@@ -125,29 +370,22 @@ def _run_case(codes, points, vector, *, negative=None):
         machine.mem_write(page, b"\xcc" * 0x1000)
     for start, end in RANGES:
         machine.mem_write(BASE + start, codes[start])
-    machine.mem_map(0x893000, 0x1000)
-    machine.mem_write(0x893F30, vector["feature_word"].to_bytes(4, "little"))
-    machine.mem_map(PAYLOAD, 0x2000)
-    machine.mem_write(PAYLOAD, PAYLOAD_TEMPLATE)
-    machine.mem_map(STACK, 0x4000)
-    machine.mem_map(RETURN, 0x1000)
-    machine.mem_write(RETURN, b"\xcc")
-    entry = STACK + 0x2000 + vector["alignment"]
-    source, destination = (
-        PAYLOAD + vector["source_offset"],
-        PAYLOAD + vector["destination_offset"],
+    payload_base, stack_base, endpoint = (
+        installed[k] for k in ("payload_base", "stack_base", "return_address")
     )
-    original_stack = bytearray(STACK_TEMPLATE)
-    for address, value in (
-        (entry, RETURN),
-        (entry + 4, destination),
-        (entry + 8, source),
-        (entry + 12, vector["length"]),
-    ):
-        original_stack[address - STACK : address - STACK + 4] = value.to_bytes(
-            4, "little"
-        )
-    machine.mem_write(STACK, bytes(original_stack))
+    machine.mem_map(FEATURE_PAGE, 0x1000)
+    machine.mem_write(FEATURE_PAGE, installed["feature_page"])
+    machine.mem_map(payload_base, len(installed["payload"]))
+    machine.mem_write(payload_base, installed["payload"])
+    machine.mem_map(stack_base, len(installed["stack"]))
+    machine.mem_write(stack_base, installed["stack"])
+    machine.mem_map(endpoint & ~0xFFF, 0x1000)
+    machine.mem_write(endpoint, b"\xcc")
+    entry = installed["registers"]["esp"]
+    source, destination = (
+        payload_base + vector["source_offset"],
+        payload_base + vector["destination_offset"],
+    )
     ids = {
         "eax": x.UC_X86_REG_EAX,
         "ebx": x.UC_X86_REG_EBX,
@@ -158,17 +396,11 @@ def _run_case(codes, points, vector, *, negative=None):
         "ebp": x.UC_X86_REG_EBP,
         "esp": x.UC_X86_REG_ESP,
     }
-    initial = {name: 0x10293847 + i * 0x1010101 for i, name in enumerate(ids)}
-    initial["esp"] = entry
+    initial = dict(installed["registers"])
     for name, value in initial.items():
         machine.reg_write(ids[name], value)
     xmm_ids = {f"xmm{i}": getattr(x, f"UC_X86_REG_XMM{i}") for i in range(8)}
-    initial_xmm = {
-        name: int.from_bytes(
-            bytes((i * 29 + j * 31 + 7) & 255 for j in range(16)), "little"
-        )
-        for i, name in enumerate(xmm_ids)
-    }
+    initial_xmm = dict(installed["xmm"])
     for name, value in initial_xmm.items():
         machine.reg_write(xmm_ids[name], value)
     machine.reg_write(x.UC_X86_REG_EFLAGS, 2 | (vector["df"] << 10))
@@ -225,14 +457,14 @@ def _run_case(codes, points, vector, *, negative=None):
 
     machine.hook_add(uc.UC_HOOK_CODE, on_code)
     machine.hook_add(uc.UC_HOOK_MEM_READ | uc.UC_HOOK_MEM_WRITE, on_memory)
-    machine.emu_start(BASE + START, RETURN, count=2200)
-    _require(machine.reg_read(x.UC_X86_REG_EIP) == RETURN, "scalar copy did not return")
+    machine.emu_start(BASE + START, endpoint, count=2200)
+    _require(
+        machine.reg_read(x.UC_X86_REG_EIP) == endpoint, "scalar copy did not return"
+    )
     actual = {name: machine.reg_read(reg) for name, reg in ids.items()}
-    wanted = dict(initial, eax=destination, ecx=0, edx=expected["edx"], esp=entry + 4)
-    _require(actual == wanted, "scalar register oracle differs")
+    _require(actual == expected["registers"], "scalar register oracle differs")
     actual_xmm = {name: machine.reg_read(reg) for name, reg in xmm_ids.items()}
-    wanted_xmm = dict(initial_xmm, xmm0=expected["xmm0"], xmm1=expected["xmm1"])
-    _require(actual_xmm == wanted_xmm, "XMM register oracle differs")
+    _require(actual_xmm == expected["xmm"], "XMM register oracle differs")
     eflags = machine.reg_read(x.UC_X86_REG_EFLAGS)
     _require(
         eflags & expected["flag_mask"] == expected["flags"]
@@ -240,58 +472,22 @@ def _run_case(codes, points, vector, *, negative=None):
         "scalar defined flags or DF differ",
     )
     _require(
-        bytes(machine.mem_read(PAYLOAD, 0x2000)) == expected["payload"],
+        bytes(machine.mem_read(payload_base, len(installed["payload"])))
+        == expected["payload"],
         "independent snapshot payload differs",
     )
-    wanted_stack = bytearray(original_stack)
-    wanted_events = []
-
-    def write(address, width, value):
-        if STACK <= address < STACK + 0x4000:
-            wanted_stack[address - STACK : address - STACK + width] = value.to_bytes(
-                width, "little"
-            )
-        wanted_events.append(
-            dict(access="write", address=address, width=width, value=value)
-        )
-
-    def read(address, width, value):
-        wanted_events.append(
-            dict(access="read", address=address, width=width, value=value)
-        )
-
-    write(entry - 4, 4, initial["edi"])
-    write(entry - 8, 4, initial["esi"])
-    read(entry + 8, 4, source)
-    read(entry + 12, 4, vector["length"])
-    read(entry + 4, 4, destination)
-    read(0x893F30, 4, vector["feature_word"])
-    for kind, offset, width in expected["accesses"]:
-        # This pinned emulator reports each architectural 16-byte transfer as
-        # two ordered 8-byte hooks. Preserve the architectural operation order.
-        for part, size in ((0, 8), (8, 8)) if width == 16 else ((0, width),):
-            at = (source if kind == "read" else destination) + offset + part
-            value = int.from_bytes(
-                expected["source_snapshot"][offset + part : offset + part + size],
-                "little",
-            )
-            (read if kind == "read" else write)(at, size, value)
-    read(entry + 4, 4, destination)
-    read(entry - 8, 4, initial["esi"])
-    read(entry - 4, 4, initial["edi"])
-    read(entry, 4, RETURN)
-    _require(events == wanted_events, "ordered scalar accessor oracle differs")
+    _require(events == expected["events"], "ordered scalar accessor oracle differs")
     _require(
-        bytes(machine.mem_read(STACK, 0x4000)) == bytes(wanted_stack),
+        bytes(machine.mem_read(stack_base, len(installed["stack"])))
+        == expected["stack"],
         "full scalar stack differs",
     )
     _require(
-        bytes(machine.mem_read(0x893F30, 4))
-        == vector["feature_word"].to_bytes(4, "little"),
+        bytes(machine.mem_read(FEATURE_PAGE, 4096)) == expected["feature_page"],
         "feature word changed",
     )
     return dict(
-        vector=vector,
+        vector=dict(vector),
         direction=expected["direction"],
         visited=visited,
         registers=actual,
@@ -300,7 +496,7 @@ def _run_case(codes, points, vector, *, negative=None):
         df=(eflags >> 10) & 1,
         events_sha256=_canonical_sha256(events),
         payload_sha256=hashlib.sha256(expected["payload"]).hexdigest(),
-        stack_sha256=hashlib.sha256(wanted_stack).hexdigest(),
+        stack_sha256=hashlib.sha256(expected["stack"]).hexdigest(),
     )
 
 

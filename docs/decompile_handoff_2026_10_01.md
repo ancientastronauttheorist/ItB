@@ -210,9 +210,12 @@ and clear DF, and check the pinned emulator's ordered two8-byte halves per
 16-byte architectural access. Widening a size bound alone is insufficient.
 
 A reusable installed-storage SIMD copy oracle/runner and focused tests are
-private drafts with independent GO, pending integration and runtime gates.
-A standalone full4/request6 SIMD resize ingredient is also being drafted
-privately. Neither is an actual fifth factory callback or an accounting
+integrated with independent GO. The relocation suite passes208 tests, including
+the unchanged sealed4992-case forward receipt build/exact verification; the
+original SIMD suite passes70 including four exact CLI rebuilds. Native tests
+use isolated subprocesses. A standalone full4/request6 SIMD resize ingredient
+has independent draft GO and is awaiting native validation/sealing.
+Neither is an actual fifth factory callback or an accounting
 promotion. Candidate fifth vector placement is DATA+0x2800+a in captured
 page2, preserving the original first8 at DATA+0x2000+a and old fourth32
 at DATA+0x3800+a. Subsequent source/VM/heap/ownership premises stay explicit.

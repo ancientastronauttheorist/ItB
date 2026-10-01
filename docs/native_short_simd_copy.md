@@ -58,6 +58,30 @@ rebuild checks. No executable or runtime is published.
 
 Published prefix: `windows_build_13725832_31fe35265598_`.
 
+## Caller-installed relocation fixtures
+
+The forward replay also accepts a strict caller-installed fixture: complete
+GPR/XMM states, immutable stack/payload/feature buffers, mapped bases and a
+nonzero return endpoint. Installed cdecl arguments, mapped extents, feature
+selection and protected-page separation are checked before native execution.
+The independent oracle returns detached full-buffer, register, flag and ordered
+access expectations. The original generated fixture and sealed receipt remain
+unchanged.
+
+The relocated matrix copies 32 bytes from `DATA+0x3800+a` to
+`DATA+0x2800+a`, retains feature word `0x93939393` and the entire cookie page,
+and checks all eight XMM registers with nontrivial entry states. Pure tests also
+cover scalar tails, safe left overlap, malformed inputs, argument mismatches,
+mapping collisions and output detachment. Native corruption controls alter
+payload, XMM state and a coordinated expected packet. Native checks run in
+isolated subprocesses. This utility does not prove vector ownership, allocator
+reuse or a fifth factory callback.
+
+Validation: 208 relocation tests and the original 70 SIMD tests pass, including
+the unchanged 4,992-case forward receipt build/exact verification and four
+original exact CLI rebuilds. Independent utility and isolated-worker reviews
+are GO.
+
 - `native_short_simd_copy_semantics.json`: canonical
   `ad1a4109a23a67bca5ae03b48dc3fe16cd2419000158a1d00f041c4fe488c17d`;
   raw `ec5b10bc557e3464c34393976b8215379f4c004ebd0b31d26a97999c052805a5`.
