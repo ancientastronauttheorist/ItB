@@ -127,8 +127,13 @@ def _expected(
     stack_base=STACK,
     object_base=OBJECT,
     old_base=OLD,
+    new_base=NEW,
 ):
     g = geometry(vector)
+    _require(
+        type(new_base) is int and 0 <= new_base <= 2**32 - len(original_new),
+        "invalid new buffer mapping",
+    )
     s = initial["esp"]
     obj = initial["ecx"]
     _require(
@@ -159,6 +164,7 @@ def _expected(
         stack_base != STACK
         or object_base != OBJECT
         or old_base != OLD
+        or new_base != NEW
         or "new_pointer" in vector
         or "old_pointer" in vector
     )
@@ -171,7 +177,7 @@ def _expected(
         (
             (stack_base, stack_base + len(original_stack)),
             (object_base, object_base + len(original_object)),
-            (NEW, NEW + len(original_new)),
+            (new_base, new_base + len(original_new)),
         )
     )
     _require(
@@ -264,6 +270,7 @@ def _expected(
         stack_base=stack_base,
         object_base=object_base,
         old_base=old_base,
+        new_base=new_base,
     )
     _require(
         child["events"][-1]

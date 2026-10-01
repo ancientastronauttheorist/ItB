@@ -173,17 +173,49 @@ and predecessor mixed-key81. New native build/exact verification and unchanged
 predecessor rebuild/verification pass. Independent reviews: **GO**; all thirteen
 protected hashes match. No ownership or accounting promotion.
 
-## Next useful frontier
+## Fourth callback on retained actual receiver
 
-A fourth full-three-record invocation grows to capacity four and
-allocate32/copy24/free24 within the existing bounded law. Its pure model's
-214 tests pass and independent review is GO. Native adapter/tests are private
-drafts. Use fourth allocation DATA+0x3800+a, new_base DATA+0x3000,
-new_page_count=1 and old_base DATA, retaining all captured page3 bytes.
-Thread an optional new mapping base through class/growth/resize/allocation
-oracles without changing defaults. The fixed free error-page snapshot comes
-from old DATA page0 in this relocation. Natural spare capacity occurs only
-after the fifth growth, beyond the current small-resize domain.
+[Documentation](native_lua_class_factory_callback_fourth_conformance.md):
+216 native cases retain all three preceding verified returns, preserve the
+eight destination nodes and original key pointers, then allocate32/copy24/
+freeold24 and append the fourth [0,A] record. All P24 and thirteen preserved
+U words survive. The capture guard independently checks GPRs, U/P/tree
+including padding14/15, key bytes, all three prior vectors, FS/cookie,
+untouched captured page3 and the exact prior free packet before host binding.
+Fourth V=DATA+0x3800+a, new_base DATA+0x3000/new_page_count1, old_base DATA.
+The fixed free error-page snapshot comes from retained old page0, after the
+named existing-key payload updates. Optional mapping bases preserve defaults.
+
+Canonical SHA `3b0727908ddef36b171733a0c686e0ad2dbe1a08ac3e7937834cd9158feced5a`;
+file SHA `0261f2a79114245ef8b96cc7d8597d0ebacd6c5cf6eee9adc5c4212ff4b6432e`;
+359,299 bytes, 34 pins. Site sets first/second/third/fourth: 701/864/546/548;
+combined 881/1,115 sites and 2,905 bytes, partition76/707/27/71/234.
+There are 864 callbacks, 537,840 fourth instructions, 35,424 callback Lua
+requests, 1,512 fourth payload updates, zero fourth tree allocations,
+648 frees and 37 rejecting controls. Independent final receipt review: GO.
+The complete gate passes **523 tests, no skips**: model214, new conformance116,
+third-call predecessor91 and default allocation/resize/growth102. New native
+build/exact verification and unchanged predecessor/default rebuilds pass.
+Independent reviews are GO; all thirteen protected hashes match.
+
+## SIMD frontier after the fourth call
+
+Fifth growth is full4/cap4 to cap6: allocate48/copy32/freeold32, append to
+size5/cap6. Sixth append would use the spare slot without allocation/free.
+Those factory compositions remain unproved. Retained feature DWORD
+0x00893f30=0x93939393 selects the already sealed short MOVDQU copy path;
+feature-zero scalar resize/growth receipts do not establish that case.
+Use existing short SIMD semantics/replay pins, carry all eight XMM registers
+and clear DF, and check the pinned emulator's ordered two8-byte halves per
+16-byte architectural access. Widening a size bound alone is insufficient.
+
+A reusable installed-storage SIMD copy oracle/runner and focused tests are
+private drafts with independent GO, pending integration and runtime gates.
+A standalone full4/request6 SIMD resize ingredient is also being drafted
+privately. Neither is an actual fifth factory callback or an accounting
+promotion. Candidate fifth vector placement is DATA+0x2800+a in captured
+page2, preserving the original first8 at DATA+0x2000+a and old fourth32
+at DATA+0x3800+a. Subsequent source/VM/heap/ownership premises stay explicit.
 
 ## Environment and protected work
 

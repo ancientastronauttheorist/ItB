@@ -184,8 +184,13 @@ def _expected(
     stack_base=STACK,
     object_base=OBJECT,
     old_base=OLD,
+    new_base=NEW,
 ):
     g = geometry(vector)
+    _require(
+        type(new_base) is int and 0 <= new_base <= 2**32 - len(original_new),
+        "invalid new buffer mapping",
+    )
     s = initial["esp"]
     obj = initial["ecx"]
     _require(
@@ -212,7 +217,7 @@ def _expected(
         (
             (stack_base, stack_base + len(original_stack)),
             (object_base, object_base + len(original_object)),
-            (NEW, NEW + len(original_new)),
+            (new_base, new_base + len(original_new)),
         )
     )
     _require(
@@ -226,6 +231,7 @@ def _expected(
         stack_base != STACK
         or object_base != OBJECT
         or old_base != OLD
+        or new_base != NEW
         or "new_pointer" in vector
         or "old_pointer" in vector
     )
@@ -272,8 +278,8 @@ def _expected(
                 (stack, stack_base)
                 if stack_base <= address < stack_base + len(stack)
                 else (
-                    (new, NEW)
-                    if NEW <= address < NEW + len(new)
+                    (new, new_base)
+                    if new_base <= address < new_base + len(new)
                     else (objects, object_base)
                 )
             )
@@ -299,6 +305,7 @@ def _expected(
         stack,
         new,
         stack_base=stack_base,
+        data_base=new_base,
     )
     _require(
         allocated["events"][-1]
@@ -359,8 +366,17 @@ def _expected(
             responses=[dict(kind="heap_free", eax=1)],
             heap=HEAP,
         )
+        error_base = deallocator.ERROR_PAGE
+        error_buffer = (
+            new if new_base == error_base else old if old_base == error_base else None
+        )
+        _require(
+            error_buffer is not None and len(error_buffer) >= 0x1000,
+            "fixed free error page outside retained mappings",
+        )
+        error_snapshot = bytes(error_buffer[:0x1000])
         freed = deallocator._expected(
-            free_vector, regs, stack, new[:0x1000], stack_base=stack_base
+            free_vector, regs, stack, error_snapshot, stack_base=stack_base
         )
         _require(
             freed["events"][-1]
@@ -374,7 +390,7 @@ def _expected(
         stack = bytearray(freed["stack"])
         regs = freed["registers"]
         _require(
-            freed["error"] == bytes(new[:0x1000]),
+            freed["error"] == error_snapshot,
             "success oracle unexpectedly changed error storage",
         )
     r(s - 8, vector["requested"])
@@ -399,7 +415,7 @@ def _expected(
     )
     _require(
         (
-            new[g["new_begin"] - NEW : g["new_end"] - NEW]
+            new[g["new_begin"] - new_base : g["new_end"] - new_base]
             == old[g["old_begin"] - old_base : g["old_end"] - old_base]
             if g["copy_bytes"]
             else True

@@ -97,17 +97,22 @@ def _fixture(vector, *, caller=None):
 def _expected(vector, fixture):
     new_page_count = fixture.get("new_page_count", 4)
     old_base = fixture.get("old_base", growth.OLD)
+    new_base = fixture.get("new_base", construction.DATA)
     _require(
         type(new_page_count) is int
         and new_page_count in (1, 2, 4)
         and type(old_base) is int
         and old_base & 0xFFF == 0
         and old_base in fixture["pages"]
-        and construction.DATA
+        and type(new_base) is int
+        and 0 <= new_base <= 2**32 - 4096 * new_page_count
+        and new_base & 0xFFF == 0
+        and all(new_base + i * 4096 in fixture["pages"] for i in range(new_page_count))
+        and new_base
         <= fixture["vector_begin"]
         <= fixture["vector_end"]
         <= fixture["vector_capacity"]
-        <= construction.DATA + 4096 * new_page_count,
+        <= new_base + 4096 * new_page_count,
         "invalid class old vector mapping",
     )
     argument = prefix._checked_argument(fixture)
@@ -159,14 +164,13 @@ def _expected(vector, fixture):
         child_vector,
         regs,
         b"".join(bytes(pages[construction.STACK + i * 4096]) for i in range(2)),
-        b"".join(
-            bytes(pages[construction.DATA + i * 4096]) for i in range(new_page_count)
-        ),
+        b"".join(bytes(pages[new_base + i * 4096]) for i in range(new_page_count)),
         bytes(pages[old_base]),
         bytes(pages[RECEIVER & ~0xFFF]),
         stack_base=construction.STACK,
         object_base=RECEIVER & ~0xFFF,
         old_base=old_base,
+        new_base=new_base,
     )
     _require(
         child["events"][-1]
@@ -182,9 +186,7 @@ def _expected(vector, fixture):
             child["stack"][4096 * i : 4096 * (i + 1)]
         )
     for i in range(new_page_count):
-        pages[construction.DATA + i * 4096] = bytearray(
-            child["new"][4096 * i : 4096 * (i + 1)]
-        )
+        pages[new_base + i * 4096] = bytearray(child["new"][4096 * i : 4096 * (i + 1)])
     pages[RECEIVER & ~0xFFF] = bytearray(child["object"])
     regs = dict(child["registers"])
     _require(

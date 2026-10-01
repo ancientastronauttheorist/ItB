@@ -110,3 +110,23 @@ Independent review: **GO**. The new old-buffer mapping tests plus existing
 caller tests passed **130 tests**. Both original resize and growth exact CLI
 receipts rebuilt byte-for-byte unchanged. Internal class reallocation is
 verified separately by its native composition.
+
+## Separate new-buffer mapping for repeated callbacks
+
+The ordered growth and resize oracles accept optional `new_base`, defaulting
+to their original DATA mapping. Allocation accepts the corresponding
+`data_base`. Bounds, disjoint whole-buffer spans, absolute events, payload
+writes and snapshot indices all use the installed base; the allocator's
+original finite four-page pointer domain remains unchanged. Class fixtures
+can supply the same base with one, two or four mapped pages.
+
+The free oracle's error page remains fixed at DATA. Resize selects its exact
+current snapshot from the new DATA buffer by default, or from the retained
+old DATA page for the fourth callback's separate new page. Unsupported
+coverage rejects. A successful free response must preserve that snapshot.
+This does not assert actual allocation ownership or free effects.
+
+The fourth-callback composition validates new page DATA+0x3000 with V at
+DATA+0x3800+a and old DATA page0 with V at DATA+0x800+a. The complete gate
+passes 523 tests with independent GO, including the default allocation,
+resize and growth native receipts rebuilt byte-for-byte unchanged.
