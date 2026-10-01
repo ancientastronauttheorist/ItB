@@ -223,8 +223,37 @@ file SHA15a234c49c848d613e398f73b7c401e9706f8d1b7c871f8338169a77811f93ce;
 53,994 bytes,9pins,274 loaded/165 executed sites,730 loaded bytes.
 The32 added continuation tests cover the pure composition oracle's actual
 installed growth return0x006eb66e and malformed/mismatched returns. The default
-sealed native resize receipt stays byte-identical. A separate native growth
-wrapper is being drafted privately; its proof is still pending.
+sealed native resize receipt stays byte-identical.
+
+## Native four-record SIMD growth wrapper
+
+[Documentation](native_simd_vector_growth_conformance.md): the normal wrapper
+computes capacity six, invokes resize at its actual0x006eb66e continuation,
+allocates48/copies32/freesold32, and returns with four live records/capacity6.
+Incoming argument1 is discarded storage; arbitrary supplied DWORDs preserve.
+The join independently binds all17 child fields, complete stack/events/flags,
+metadata, full buffers and all8XMM; native resize-entry GPRs also match.
+
+Canonical SHA605dbce02a72434228128b45fbf008f05448c12f618af876b1cc27c920527bfb;
+file SHA44844eb0cb4bda761cf51064967b8a2f2b13f1fa2e44993e338458861613fd6a;
+61,206 bytes,11pins,314 loaded/203 executed sites,824 loaded bytes.
+The24 native cases reject all five intended controls. Final combined gate:
+**258 passed, no skips** (growth121, standalone resize137), including both
+native exact CLI builds/verifications and structure gates. Independent final
+code/receipt/frontier-plan review: GO. The SIMD resize receipt stays unchanged.
+
+## Next actual factory composition
+
+The [fifth-frontier plan](native_lua_class_factory_callback_fifth_frontier.md)
+is source-backed and review-approved. Next prove the fifth class append over
+the new growth child, then optional callback XMM/DF and narrow wide-access
+recording, pure fifth/capture guards and the complete216 producer cases.
+Do not infer an actual fifth callback from standalone growth/resize.
+
+Two private actual fourth boundary probes captured all8XMM zero, flags0x246,
+DFclear and feature0x93939393 after accepted first-through-fourth returns.
+They are boundary evidence only. Every new producer must capture/check/pass
+its actual SIMD state; preserve old32/24/16/8, tree/key/page data and spare8.
 Neither is an actual fifth factory callback or an accounting
 promotion. Candidate fifth vector placement is DATA+0x2800+a in captured
 page2, preserving the original first8 at DATA+0x2000+a and old fourth32
