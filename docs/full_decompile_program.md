@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [inline record small-path destructor](native_movement_effect_record_small_destroy_semantics.md)
+has 605 passing independent checks and source review GO. Owned capacities
+one through 511 derive release count from capacity, preserve all buffer bytes
+and close the complete generic free packet before continuation transport.
+Null and nine broader executable cases agree. Aligned metadata, non-inline
+strings, failure, ownership and gameplay remain separate gates.
+
 The [standalone actual-page early AddMove law](native_movement_addmove_early_semantics.md)
 has 571 passing independent checks and source review GO. Zero/one used entries
 with ordinary owned capacity through 511 skip record construction and MOVSS,

@@ -9,6 +9,21 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Small ordinary record destructor validated
+
+The [general inline small-path destructor](native_movement_effect_record_small_destroy_semantics.md)
+passes605independent checks without skips in9.54seconds, sourceGO.
+Source9c610cd73df36ce5dd82803e56592f3c94803f5608eae3b24c3a814479de862b;
+test11b2f5d59861b8581cb7dcca4ac2a940a16335f2d0c6eecc4e225d0d6d20977c.
+Exactfull15 remains compatible atNULL/K2N2. OwnedK1..511 usescapacityforfree,
+endneverarchitecturalread, fullcapbytespreserve. Nineactualfull-stateprobes
+match123/74owned80/46NULL. Full8free join beforecheckedRETtransport,
+typed/domain/forgery/detachment/prechildledger expectations independent.
+Latestpushed0eda11dc; earlyMove571 andsmallclone594 arecommitted/pushed.
+Noactiveexecutiongate. SIMD independentlyreviews/tests earlyCharge5d326a9c
+thenpositiveassignment01381a9d; rootnative4and5casesrespectivelypassed.
+Fifth authoring smallrecordcopy0..511, nextappend/generalnormalmovement.
+
 ### Actual-page early AddMove validated
 
 The [standalone early AddMove law](native_movement_addmove_early_semantics.md)
