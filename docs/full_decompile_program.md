@@ -1499,6 +1499,14 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [empty-path movement record-copy native proof](native_movement_effect_record_empty_copy_conformance.md)
+is sealed across48 cases and58controls, with81 independent checks validated.
+Eight strings, zero-count clone and reserve execute continuously with all21
+actual boundary states and full pages. One no-op negative test was corrected;
+production and evidence were unchanged. Nonempty paths and normal movement
+builders remain separate composition gates.
+
+
 The [general actual-page two-entry path clone](native_movement_path_clone2_semantics.md)
 has359 independent pure checks and source review GO. Actual caller headers,
 unread capacity and broader stack geometry compose through complete allocator

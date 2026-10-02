@@ -406,6 +406,22 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [empty-path record-copy native proof](native_movement_effect_record_empty_copy_conformance.md)
+is sealed with source/CLI/receipt review GO and81 independent checks validated.
+Initial fullsuite80PASS/1FAIL234.12s: fixture source negative overwrote an already
+zero byte. Test changed to XOR its actualbyte; all8 affected checksPASS0.83s,
+production/receipt unchanged. All12 independent actual machine workers, full48
+observation digest, all58controls and exact3CLI commands passed. Seal e7a534fde897fc1e7520c1de8e8d7f9bb2a7fad6a33520c3fc70f396fe8c024d,
+raw f4ac5009002ffcbf107b50fc4b92958b92d6b4918852bff2ebb068dd504706dc,
+79638B4pins386loaded1226B261exec23616instructions15120events1008boundaries,
+noalloc/free/API/wide/opaque/accounting. Generalclone checkpoint pushedaca442fb.
+Assignment4actualnative probes match162/90/7; independentpuretests private.
+Recordcopy2V2 fixes returninsideO16/D16 and typedchildmetadata, sourceGO/tests
+pending. Root private append2 model matches2native probes629/401/25/oneallocation
+with vectorend increment and callerword mutation; independent closure pending.
+Next: recordcopy2 pure, assignmentpure, append2, destructor then normalAddMove.
+
+
 The [general actual-page clone2 law](native_movement_path_clone2_semantics.md)
 is independently reviewed GO and passes359 pure tests without skips in13.89s.
 It preserves the finite native receipt while admitting actual record-local
