@@ -9,6 +9,24 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Standalone early AddCharge validated
+
+The [actual-page AL-zero AddCharge wrapper](native_movement_addcharge_early_semantics.md)
+passes821independent checks without skips in52.13seconds, sourceGO.
+Source5d326a9c8089f300fc309f576bb1356955679cb46725d02d2c3824c7c30dc1ea;
+testaf37af42fc52653b4c635a625610a0d3d837999cd62545b5eedeb9eb451d78bf.
+Rootfouractualfull-statecasesNULL115/74,ownedempty155/99,one284/177 PASS.
+Full14packet, clone15/earlyMove15/trustedclosednestedsemantics, fullmanualouterfree8
+beforecheckedRETtransport, callerfourthargumentrewrite and XMM0parambits are
+independent. No new record; NULLfinalEAX0 andownedfinalEAX1 accurately differ.
+Latestpushedbfdd512d; smallclone594/earlyMove571/smallDestroy605 allpushed.
+Private smallrecordcopyc7005c46 native7cases0/1/2/3/17/511/full15N2compatibility
+PASS; SIMD independentlyreview/tests. Private assignment01381a9d native5cases
+PASS; Fifth independentlyreview/tests. Rootgeneralappend V2 42ffd31bae115454ae652ff61e09ad1aa1ad8580ea0082a3f7bf250f9a4d8e0d
+matchessevenactualfull-statecases530/344zero,609+10N/393+4Npositive; N2oldfull
+packetcompatible. V1privatepreserved; V2 replayadmits byte/WORD/DWORD writes.
+Appendindependentreview/tests remainqueued. Noactiveexecutiongate.
+
 ### Small ordinary record destructor validated
 
 The [general inline small-path destructor](native_movement_effect_record_small_destroy_semantics.md)

@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [standalone AL-zero AddCharge wrapper](native_movement_addcharge_early_semantics.md)
+has 821 passing independent checks and source review GO. Null, owned-empty
+and one-entry inputs skip record adjustment while preserving actual MOVSS,
+clone, inner release and capacity-derived outer release behavior. Four complete
+executable probes agree. Broader normal counts, failure, ownership and gameplay
+remain separate gates; whole-program accounting is unchanged.
+
 The [inline record small-path destructor](native_movement_effect_record_small_destroy_semantics.md)
 has 605 passing independent checks and source review GO. Owned capacities
 one through 511 derive release count from capacity, preserve all buffer bytes
