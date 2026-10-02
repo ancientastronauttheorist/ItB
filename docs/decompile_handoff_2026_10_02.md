@@ -9,6 +9,24 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### External inline string assignment validated
+
+The [external inline-string assignment](native_movement_inline_string_assign_semantics.md)
+passes2306independent checks without skips in28.72seconds, sourceGO.
+Source2612969b9ed907fbb65d057d1b05b30cc6766611085eb79a28113acccbc3712f;
+test5c77eda5e60c540497f9dd697f55baaab6437a3bfeacd2444eb295c427498ac8.
+Root192standard+18NULL/unmapped/inlinepaddingzero full-statecasesPASS.
+Complete13/positivefull11manualmemcpy/snapshot/directpages/types/forgeries,
+actualzeroECX/EDXprefixdistinctions andexternalpredicate independentlyclosed.
+Memcpycheckpoint79fc5a49 pushed; normalCharge5c521307/Move48e3e92e pushed.
+Root80D0 inlinecopy4e679263 sourceGO/native128PASS; Fifth independentlytests.
+Rootrecordinlinecopyb7a8ecdd835483f17cefdb26424e43c68adfb547fb9b131db16df4a61881aada
+private/unfrozen extends smallcopyto8inline0..15strings/path0..511; nativegate
+86868 active. EDXcarry corrections remove oldempty assumptions atpathentry
+andlaststring; no public oldlaw changed. Needsindependentreview/tests.
+Broader native receipts/accounting remain unchanged.
+
+
 ### Small scalar memcpy validated
 
 The [zero-through31-byte disjoint scalar copy](native_movement_small_memcpy_semantics.md)

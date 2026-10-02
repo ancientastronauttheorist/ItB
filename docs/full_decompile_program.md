@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [external inline-string assignment law](native_movement_inline_string_assign_semantics.md)
+has2,306passing independent checks and source review GO. Counts zero through15
+close the full scalar child and preserve caller/string padding, with actual
+zero-pointer register distinctions. All210complete executable cases agree.
+Aliases, heap strings, growth, failure, ownership and gameplay remain separate
+gates; whole-program accounting is unchanged.
+
+
 The [small disjoint scalar copy law](native_movement_small_memcpy_semantics.md)
 has2,117passing independent checks and source review GO. Counts zero through31
 predict complete bytes, accesses, pointer-dependent traces, ABI and defined
