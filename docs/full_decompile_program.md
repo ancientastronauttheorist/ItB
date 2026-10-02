@@ -78,8 +78,14 @@ the missing native48 length with one MOVDQU block and four scalar pairs.
 All48 cases and31 controls pass, with EDX equal to the original last DWORD,
 complete GPR/XMM/page checks and51 executed sites. All48 preliminary pure
 checks and final80-test/CLI gate pass without skips, independent reviews GO.
-Separate resize6-to9/growth6-to9/class6-to7 joins remain open, and existing
-fixed32 receipts stay unchanged. Exact CLI rebuild/verify/structure pass;
+The separate [resize6-to9](native_simd_vector_resize6_to9_conformance.md)
+now passes its full48-case/30-control native build: allocation72, copy48,
+ordinary pointer free, six live records/capacity nine and spare24 preserved.
+Complete actual allocation/copy/free-entry captures and all4992 memory events
+are checked. All115 focused tests pass without skips, including exact CLI
+rebuild/verify/structure; independent production-source/CLI and published-receipt
+reviews are GO. Growth6-to9/class6-to7 joins remain open, and existing fixed32
+receipts stay unchanged. Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
 ## October 1 checkpoint

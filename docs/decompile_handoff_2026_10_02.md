@@ -255,9 +255,25 @@ instructions/2304copybytes/1248events,192 each wide/scalar reads and writes.
 All80 tests pass without skips, including48 pure checks,16 isolated actual
 captures, all31 controls and exact CLI rebuild/verify/structure. Independent
 final reviews are GO; all13 protected hashes remain unchanged.
-Source-only ordinary resize6-to9 draft is in progress under
-`.local_decompile/oct2/simd_resize6_to9_draft/`; alloc72/copy48/freeO and
-header[D,D+48,D+72] leave spare24. No growth/class/seventh callback proof yet.
+The separate [ordinary resize6-to9](native_simd_vector_resize6_to9_conformance.md)
+now passes its full48-case/30-control native build. One machine executes
+allocation72/copy48/freeO and writes header[D,D+48,D+72], retaining old48 and
+spare24. Canonical `009f36e1b254058ec21f7af157f6e86ebfa18039abe24fce1690f9df97bc2949`,
+file `4c879a5946aae052b6644fd310be248aaa3caeb8e8eca39a656c423f7a533982`,
+54,344 bytes/9pins/249loaded/660bytes/179executed/9456instructions/4992events.
+The actual copy-return capture verifies the final scalar EDX before the free
+guard overwrites it. SAR3 defines only maskC5 at free entry; AF/OF are unclaimed.
+The unchanged allocation oracle is narrowly transported from canonical pointer
+06000800+a to actualD only in relation.result/EAX/ECX, with all seven packet
+fields checked first. The native allocation-return boundary proves actualD.
+All115 focused tests pass without skips, including the handwritten full48-vector
+page/event/ABI law,16 isolated actual captures, all controls, source/receipt
+mutations, direct code tampering and exact CLI rebuild/verify/structure.
+Independent production-source/CLI and published-receipt reviews are GO.
+Private actual-page resize adapter source work has started under
+`.local_decompile/oct2/resize6_to9_actual_adapter/`; it must consume the growth
+caller's actual pages/frame and installed006eb66e return without fixture
+transplant or native reseeding. No growth/class/seventh callback proof yet.
 
 ## Environment and protected work
 
