@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [continuous selected normal AddMove proof](native_movement_addmove_normal_conformance.md)
+is sealed across 48 recipes and 120 controls with 162 validated independent
+checks. One machine executes all selected helper bodies around six supplied
+allocation/free responses, observing full pages, GPRs, XMMs and ordered accesses
+at all 24 states. Other counts, capacity growth, nonempty strings, ownership and
+gameplay remain separate gates; whole-program accounting is unchanged.
+
 The [disjoint zero-or-positive-count scalar path copy](native_movement_path_scalar_semantics.md)
 has339passing independent checks and source review GO. A dynamic eight-byte
 loop replaces the count-two restriction under strict mapped, disjoint and

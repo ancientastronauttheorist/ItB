@@ -9,6 +9,30 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Continuous normal AddMove validation completed
+
+The [native normal AddMove proof](native_movement_addmove_normal_conformance.md)
+has independent source, CLI and receipt GO and 162 validated checks without
+skips. Initial fourteen expensive native/corpus/control/rebuild/CLI checks
+passed in the 565.64-second run; remaining 148 passed in 129.77 seconds after
+replacing a fixture-specific predecessor check with full typed handwritten
+oracle equality. Production and receipt did not change. Test V2 SHA
+ca17da02299a97a2a3520f0b9d9ebbbff34a1965433bf6e55b00a74dd1e9864d.
+Seal and native totals below remain exact. AddCharge's 172 independent checks
+now run serially; its source, CLI and published receipt review are GO, test V2
+87027f0d0059850a7ea4bc0493c55e532c88949f17fcdb57f8c79fa82a2cf965.
+
+Private small path clone 3099b41e7d0c22875ab48214ea045b72969b3c98a985c1ba2822b8add78afcc3
+matches all 48 old count-two packets and seven actual full-state probes at
+counts zero, one, two, three, seventeen and 511. SIMD independently reviews/tests
+it. Private actual-page early AddMove 537b542525868bf0c7da99de5b7e6cb1c94414e976953c865477f0ec1cbd63d4
+has independent source GO and frozen test a468d9bf13150907590c0bd347d982b02ec6eaa09fac585dd27d6d2d986e591f,
+runtime pending. It matches 144 finite packets with corrected TEST mask and four
+actual probes covering capacities zero, one, three and 511, broad frames, zero
+and high-bit cookies, signed begin and actual Charge continuation. Fifth now
+authors the standalone AL-zero AddCharge wrapper privately.
+Latest pushed fcd34c9c5ce0fa0cb60d93d5439d9f3a4aa6f44a; all 13 protected files remain untouched.
+
 The [zero-or-positive-count scalar path law](native_movement_path_scalar_semantics.md)
 passes339independent tests without skips in9.06seconds, source GO. Source
 954bce940708156ac399a28e351c580aeb77d44c47d993dbae9f8d66f66870d5;
