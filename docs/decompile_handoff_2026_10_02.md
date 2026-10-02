@@ -9,6 +9,22 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Small scalar memcpy validated
+
+The [zero-through31-byte disjoint scalar copy](native_movement_small_memcpy_semantics.md)
+passes2117independent checks without skips in17.93seconds, sourceGO.
+SourceV2 7e05962f91c75bbdcbc95cc1a6283e396ce6576343ba5746898956c4fe0d1fe0;
+test09d9d039cb051d97f0769088565eeb5f026bfb733316e3efdbe6eba38a66a353.
+V2onlyaddsprogram-facts provenance; all executabledefinitionssameasV1/native256
+full-statecasesPASS. ActualsparseCRTbody12ranges1330B/404points hashedmatch;
+40selectedpoints/pointerorder/DWORDandbyte loops/complete11/flagsDF closed.
+NormalChargecheckpoint5c521307 pushed, normalMove48e3e92e pushed, all13protected
+unchanged. Fifth7FD0 inlineassignment2612969b9ed907fbb65d057d1b05b30cc6766611085eb79a28113acccbc3712f
+sourceGO/native192standard+18zero/unmapped/padding casesPASS; SIMDauthors tests.
+Root80D0 inlinecopy4e679263 sourceGO/native128PASS; Fifth authors tests.
+Noactiveexecutiongate; larger/overlap/SIMD/nativecorpus/accounting remainopen.
+
+
 ### General ordinary normal AddCharge validated
 
 The [normal AddCharge small-path composition](native_movement_addcharge_small_normal_semantics.md)

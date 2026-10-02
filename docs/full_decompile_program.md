@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [small disjoint scalar copy law](native_movement_small_memcpy_semantics.md)
+has2,117passing independent checks and source review GO. Counts zero through31
+predict complete bytes, accesses, pointer-dependent traces, ABI and defined
+flags without helpers or imports. All256complete executable cases agree.
+Larger, overlapping and SIMD copies remain separate gates; sparse body identity
+is pinned and whole-program accounting is unchanged.
+
+
 The [normal AddCharge general small-path law](native_movement_addcharge_small_normal_semantics.md)
 has411validated independent checks and source review GO. Counts two through384
 fit its four-buffer artifact geometry, with caller capacity through511; this
