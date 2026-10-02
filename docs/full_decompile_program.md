@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [normal AddMove general small-path law](native_movement_addmove_small_normal_semantics.md)
+has393passing independent checks and source review GO. Counts two through511
+compose complete reviewed children, preserve full original capacity, release
+with capacity-derived count and predict all sixteen boundary/six import states.
+Five complete executable cases agree. Trusted extra/nested metadata, growth,
+nonempty strings, failures, ownership and gameplay remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [external-source small-path record append](native_movement_effect_record_small_append_semantics.md)
 has670passing independent checks and source review GO. Actual counts zero
 through511 compose full record/path laws with complete byte replay and

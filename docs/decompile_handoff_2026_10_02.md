@@ -9,6 +9,23 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### General ordinary normal AddMove validated
+
+The [normal AddMove small-path composition](native_movement_addmove_small_normal_semantics.md)
+passes393independent checks without skips in233.96seconds, sourceGO.
+Source07dea40594c544ec02cce8f55db1591b29ef72b971edec8f90fe4106e46093c6;
+test2fff2997fd1d3b44735ce547ea4eb10ae6df5895df0f0b6923a8578d396185c9.
+Five complete nativecasesN2K2/N2K511/N3K17/N17K511/N511K511PASS.
+Full14/path4/count2compatibility;16primary6imports; completecallerfree8 checked
+beforeRETtransport; COMMON/topchildkeys typed, extra/nestedmetadata trusted.
+Smallappendcheckpointf1060a05 pushed, copy69a16765/assignment28ba6c69 pushed.
+NormalCharge44bbf67d sourceGO/native5PASS, independenttest3d12ba752609c91106c8a2a852dda0b2f0f969f24566eeb8ff57b9f04cc5435a
+is running serially. Rootsmallmemcpy4ad246a4cfdd498d1c7c5e604efebc9aecf4c5e88c069681216595d6f7dfd090
+N0..31 has256complete nativecasesPASS; SIMD source/tests review.
+Fifth authors external inline-string assignment, no projectexecution in lanes.
+No broader native receipt or whole-program accounting promotion.
+
+
 ### General small record append validated
 
 The [external-source small record append](native_movement_effect_record_small_append_semantics.md)
