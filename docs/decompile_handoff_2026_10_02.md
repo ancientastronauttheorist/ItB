@@ -2,12 +2,60 @@
 
 Continue on the explicitly authorized `codex/full-decompile` branch. The user
 requested sustained useful work until October2 noon America/Chicago,
-`2026-10-02 17:00 UTC`. The timed goal and thread heartbeat are active.
-At the deadline, finish active validation safely, preserve a reviewable
-handoff, push/check the branch and protected work, then pause the heartbeat.
+`2026-10-02 17:00 UTC`. The pass ends at that cutoff. All newly started validation gates are closed;
+finish the final branch/protected-file audit and pause the continuation heartbeat.
+Resume only when the user requests further work.
 The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
+
+### Final noon-pass handoff
+
+Latest semantic checkpoint `83721e37` is pushed. The latest seven sealed tranches
+validate **31,812 independent checks without skips**, with source review GO:
+
+| Tranche | Checks | Runtime | Commit |
+| --- | ---: | ---: | --- |
+| Eight inline-string record copy | 780 | 106.78s | 176e734b |
+| Forward copy including overlap | 4,966 | 45.44s | 294f0fb3 |
+| Backward overlapping copy | 8,216 | 56.13s | c8109b9a |
+| Actual forward memmove36E580 | 4,966 | 84.90s | 1161df89 |
+| Inline erase8410 | 2,326 | 16.57s | 395706ac |
+| Actual backward memmove36E580 | 8,216 | 48.05s | 4ffaba12 |
+| Inline self-substring80D0 | 2,342 | 25.32s | 83721e37 |
+
+Every associated primary native gate passed; full results and exact source/test
+hashes are recorded below and in the linked specifications. All execution gates
+are closed. Both inherited-model source-only reviewers finished. No Astra,
+worktree, live-game, bridge, Rust, or unrelated user-file changes were made.
+The complete game and M2-M5/whole-program accounting remain unfinished.
+
+**Next bounded tranche:** implement in-buffer alias assignment7FD0 through the
+sealed self80D0/erase8410/memmove36E580 chain. Private source-only recon is frozen
+at `.local_decompile/oct2/movement_inline_alias_assign_plan/HANDOFF.txt`, SHA
+be6507bf09462fa07dac89af0bf5fbd58ecfae70ce33401873dd62e149bcef03.
+Read `PRIMARY_FOLLOWUP.txt` too: owner7FD0 straddles code pages407000/408000,
+so the new frontend must reject both plus76E000 before writes/child attempts.
+The protected frame isG-96..G+12; actual self caller isG-28/return40802F.
+Owner prefix has11 accesses, not13: the latter capacity checks compare ECX.
+Actual child entry flags come from SUB(sourcePointer,object), including AF/OF
+on signed crossings; do not replace them with TEST(offset).
+
+Primary preliminary caller-join probes passed1200 complete native cases plus
+24 signed-crossing cases, with handwritten owner prefix/suffix and the reviewed
+self model. Their initial code mapping omitted407000 and was corrected before
+case execution. No alias model, independent alias suite or native receipt is
+sealed yet. Scripts are private `probe_inline_alias_assign_join.py` and
+`probe_inline_alias_assign_signed_join.py`; do not promote preliminary evidence
+into whole-program/native-corpus accounting. After alias closure, continue
+nonempty record append, heap/growth/failure paths and native receipt sealing.
+
+Preserve the13 pre-existing files by hashes in
+`.local_decompile/sep30/protected_work.json`. Stage only explicit tranche files.
+Continue on authorized `codex/full-decompile`; no branch-policy question needed.
+Use isolated serial gates, private runtime PYTHONPATH, and disable faulthandler
+as documented below. No unchanged suite needs another run absent a new concern.
+
 
 ### Inline self-substring copy validated
 
