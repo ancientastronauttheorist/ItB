@@ -110,7 +110,13 @@ selected parent relations and220-node/226-edge syntactic graphs. All130 focused
 tests pass without skips, including exact source rebuild and CLI commands;
 independent source/CLI/receipt reviews are GO. Runtime publication, child
 semantics and native pawn movement remain open. Whole-game semantics and
-accounting remain unfinished.
+accounting remain unfinished. The
+[default record actual-page law](native_movement_effect_record_default_semantics.md)
+now passes302 independent logical checks, covering exact308-byte defaults,
+183 written/125 preserved bytes, seven zero-length helper calls,217 accesses,
+356 selected instructions and14 full state boundaries. Source review is GO.
+This does not establish general strings, actual parent calls, record copy,
+append/destruction, ownership or broader native behavior.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 

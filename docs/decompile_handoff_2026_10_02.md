@@ -1,4 +1,4 @@
-# Decompile handoff — October 2, 2026
+# Decompile handoff â€” October 2, 2026
 
 Continue on the explicitly authorized `codex/full-decompile` branch. The user
 requested sustained useful work until October2 noon America/Chicago,
@@ -354,6 +354,33 @@ The private `movement_early_return_draft/` is being authored for144 finite
 AddMove null/empty-owned/one-point early paths. Root has only two private null
 smokes so far; no public movement native conformance yet. Parameter/SSE,
 record construction/path-copy/append and gameplay effects remain open.
+
+The selected movement binding was pushed as
+`cf18e2ea7349d456d1758dabd75c9a3fc5ae2660`; local/remote HEAD matched and all13
+protected hashes remained unchanged. The private AddMove early-return build
+now passes144 native cases/40controls, canonical
+`c2448f75dc5c50f3e4de7f6bc0f412016cdb07bbe7becc491d5bd1b31f840079`,
+file `45374aa188fd76730c0a2c46e16a8762baf9d1046755472684b73ef9cd6ac2fc`,
+43401B/5pins/128loaded/401B/82executed/9888instructions/6000events/96frees.
+Primary144pure/9native/all40controls gates pass; independent source/CLI review
+is GO. Public module/CLI/receipt are integrated but final independent tests
+remain pending in `.local_decompile/oct2/movement_early_return_tests/`.
+
+The [default record actual-page law](native_movement_effect_record_default_semantics.md)
+now passes302 independent pure tests without skips in6.89seconds, source review
+GO. It checks308-byte defaults/183written/125preserved, seven empty-string
+helpers,217events/356trace,14complete boundaries, all128 ordinary flags and
+arbitrary argument/pages/GPR/XMM/return. It has no normal cookie-check call.
+The next private native constructor harness is under
+`.local_decompile/oct2/movement_constructor_native_draft/`, with independent
+tests being authored in `movement_constructor_native_tests/`. Primary96pure,
+10native/all29controls and full96-case builds pass. Private canonical
+`942fc246105c941a46ac73e7be432acdacad1428322888b76c0164aca49e673f`,
+file `ef954c1f8bdd1672d4b1fd72cf2717f02b93bd9608f9306b987d3ab94bb23c1a`,
+57864B/2pins/259loaded/914B/164executed/34176instructions/20832events.
+No public constructor native conformance claim until independent review/tests
+and exact CLI gates pass. Copy/path/append/destruction/AddCharge/gameplay and
+whole-game accounting remain open.
 
 ## Environment and protected work
 
