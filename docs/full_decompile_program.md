@@ -17,6 +17,21 @@ pseudocode. Local analysis may use the owner's installed game and a private
 Ghidra project. Git stores tools, build identities, normalized facts, analyst
 claims, clean-room specifications, tests, and independently written code.
 
+## October 2 checkpoint
+
+The [October 2 handoff](decompile_handoff_2026_10_02.md) continues from the
+fourth actual factory callback. The [standalone class SIMD append](native_lua_class_simd_vector_return_conformance.md)
+now executes full4/cap4 growth to capacity6, copies32, frees old32 and appends
+the fifth external record on288 canonical existing-key cases. Its focused
+gate passes130 tests without skips, including exact native receipt rebuild
+and verification. Complete child metadata, ordered memory accesses, all eight
+XMM registers and spare8 are independently checked.
+
+The actual retained fourth-to-fifth factory callback, exceptional behavior,
+heap ownership and whole-program accounting remain open. The full game is
+unfinished. The [frontier plan](native_lua_class_factory_callback_fifth_frontier.md)
+still governs the remaining actual-state capture and callback joins.
+
 ## October 1 checkpoint
 
 The [October 1 handoff](decompile_handoff_2026_10_01.md) records the actual
