@@ -381,9 +381,28 @@ tests being authored in `movement_constructor_native_tests/`. Primary96pure,
 `942fc246105c941a46ac73e7be432acdacad1428322888b76c0164aca49e673f`,
 file `ef954c1f8bdd1672d4b1fd72cf2717f02b93bd9608f9306b987d3ab94bb23c1a`,
 57864B/2pins/259loaded/914B/164executed/34176instructions/20832events.
-No public constructor native conformance claim until independent review/tests
-and exact CLI gates pass. Copy/path/append/destruction/AddCharge/gameplay and
-whole-game accounting remain open.
+The [public constructor native gate](native_movement_effect_record_default_conformance.md)
+now passes all173 focused tests without skips in79.27seconds, including12
+independently hooked actual captures/all14 physical boundaries, full96
+observation-hash derivation, all29 controls, code/model/source/receipt guards
+and exact rebuild/all3 CLI commands. Independent final source/CLI and receipt
+reviews are GO. Scope wording was corrected source-above to source-below
+before publication; observation hashes and counts stayed unchanged.
+Copy/path/append/destruction/AddCharge/gameplay and whole-game accounting open.
+The actual-page default model was pushed as
+`d19e6c736550f685cfe6ac958feb938435876fa3`; AddMove short paths were pushed as
+`f8c0058749539649505034a34029526ddad7709f`. Both remote/protected audits passed.
+
+Next private source work: root authors empty80D0 string-copy model/harness
+under `movement_empty_string_copy_draft/`; independent reviewer
+simd_class_review_oct2 waits for the frozen interface. Fifth_model_oct2 authors
+continuous09A8E0 two-record path clone under `movement_path_clone2_draft/`.
+Source-derived clone prediction136instructions/83events/440loadedbytes;
+reserve returns only AL1 with preserved high EAX bits, final parent flags are
+ADD-stack flags. Existing ordinary allocation pure packet admits count2 but
+old native allocation corpus lacks it; the new same-machine composition must
+prove actual16-byte allocation, scalar copy16 and all actual boundaries.
+No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 

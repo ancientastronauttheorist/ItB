@@ -122,7 +122,13 @@ now seals144 native null/owned-empty/one-point cases and40 intended controls.
 All89 focused tests pass without skips, including12 independently instrumented
 single-machine captures and exact rebuild/CLI; independent final reviews GO.
 Capacity-based count1/stride8 cleanup, cookie return and full pages/GPR/XMM/
-defined flags close this short path. Record-work and pawn movement stay open.
+defined flags close this short path. The
+[default constructor native proof](native_movement_effect_record_default_conformance.md)
+now seals96 heap/stack-local recipes and29 intended controls, with seven
+empty-string helper calls per case,14 physical boundaries and full125-byte
+record-padding preservation. All173 focused tests pass without skips;
+independent final reviews GO. Copy/path/append/destruction, actual parent
+record-work and pawn movement stay open.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
