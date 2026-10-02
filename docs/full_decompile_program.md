@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [standalone actual-page early AddMove law](native_movement_addmove_early_semantics.md)
+has 571 passing independent checks and source review GO. Zero/one used entries
+with ordinary owned capacity through 511 skip record construction and MOVSS,
+predict the complete free/cookie machinery and preserve receiver/source/XMMs.
+All144oldfinite packets and four broader executable probes agree. Other arms,
+ownership, unwind and gameplay remain separate gates; accounting is unchanged.
+
 The [small ordinary actual-page path clone](native_movement_path_small_clone_semantics.md)
 has 594 independent checks passing and source review GO. Counts zero through
 511 compose complete manually checked allocator and scalar laws; zero executes

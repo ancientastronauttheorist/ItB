@@ -9,6 +9,21 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Actual-page early AddMove validated
+
+The [standalone early AddMove law](native_movement_addmove_early_semantics.md)
+passes571independent checks without skips in15.44seconds, sourceGO.
+SourceV2 278e542377c21b9c162e66b43a92226c1f45b0afb9de4565678d6bca3411d2eb,
+testa468d9bf13150907590c0bd347d982b02ec6eaa09fac585dd27d6d2d986e591f.
+V2 only makes explicit the inherited owned full-stack-window/error-page
+disjointness premise; V1 remains private. Full15packet covers null or owned
+usedcount0/1 with capacity1..511, manualfree8 beforecheckedRETtransport,
+dynamicTEST(begin)/TEST(cookie)8C5 and actualcookiecomparison. RootV2 repeats
+all144oldpackets/fourbroad actual full-state cases successfully. Smallclone
+checkpointf61c43bc is pushed. Small record destruction605checks PASS9.54seconds,
+nine actual probesPASS; its separate checkpoint follows. EarlyCharge tests
+are being independently authored, positive assignment review remains queued.
+
 ### Small ordinary path clone validated
 
 The [general small clone law](native_movement_path_small_clone_semantics.md)
