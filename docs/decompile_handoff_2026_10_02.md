@@ -56,16 +56,18 @@ is DATA+0x2800+a on retained page2; old fourth V is DATA+0x3800+a. First8 at
 DATA+0x2000+a, second16 at DATA+0x1000+a and third24 at DATA+0x800+a remain
 disjoint. Do not replace retained page2 with generated filler.
 
-A private independent fifth logical model/test draft is in
-`.local_decompile/oct2/fifth_model_draft/`. Its exact17 inputs preserve prior
+The [fifth logical model](native_lua_class_factory_callback_fifth_semantics.md)
+is integrated. Its exact17 inputs preserve prior
 packets, source7/destination8 and omitted key16, old8/16/24/32, full48/spare8,
 U13/P24 and both normal returns. Shared operation/callback extensions require
 an explicit exact full4/cap4 opt-in; old defaults must stay unchanged.
-Independent review requires stack exclusion `[T-188,T+8)` and explicit entry
-bounds188 through0xfffffff8 before public integration. Logical tests and
-native fifth/XMM proof are still separate unfinished gates.
+Stack exclusion is `[T-188,T+8)` with explicit entry bounds188 through
+0xfffffff8. Its203 new tests and383 predecessor/shared regressions pass,
+586 combined without skips; independent final source review is GO.
+The fourth native receipt rebuild, exact verification and structure gate are
+unchanged. Native fifth/XMM proof remains a separate unfinished gate.
 
-Next integrate/review/test that bounded logical model, add optional callback
+Next add optional callback
 XMM/DF and narrow SIMD access plumbing while preserving every old receipt,
 then prove the complete retained fourth-to-fifth factory composition.
 Sixth append and all wider semantics remain outside current claims.

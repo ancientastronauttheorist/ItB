@@ -59,6 +59,7 @@ def apply(
     source_refs,
     transfers,
     allow_growth=False,
+    allow_fifth_growth=False,
 ):
     """Return detached class outputs and ordered conditional Lua requests.
 
@@ -68,7 +69,13 @@ def apply(
     model; assignments are requests rather than asserted VM table mutations.
     Growth is accepted only with explicit boolean opt-in and uses the existing
     class-operation capacity law for zero through three live external records.
+    The separate fifth opt-in accepts only full4/cap4 and produces capacity6;
+    it does not admit the subsequent spare-capacity callback.
     """
+    if type(allow_fifth_growth) is not bool:
+        raise CallbackError("allow_fifth_growth must be bool")
+    if allow_fifth_growth and not allow_growth:
+        raise CallbackError("fifth growth requires allow_growth")
     if type(allow_growth) is not bool:
         raise CallbackError("allow_growth must be bool")
     _word(source_pointer, "source pointer", nonzero=True)
@@ -89,31 +96,48 @@ def apply(
         raise CallbackError(
             "two finite transfer category lists of at most three required"
         )
-    if (
-        type(vector) is not dict
-        or set(vector) != {"records", "capacity"}
-        or type(vector["records"]) is not list
-        or not 0 <= len(vector["records"]) <= 3
-        or type(vector["capacity"]) is not int
-        or not (
-            len(vector["records"]) <= vector["capacity"] <= 5
-            if allow_growth
-            else len(vector["records"]) < vector["capacity"] <= 5
-        )
-    ):
-        if allow_growth:
+    if allow_fifth_growth:
+        if (
+            type(vector) is not dict
+            or set(vector) != {"records", "capacity"}
+            or type(vector["records"]) is not list
+            or len(vector["records"]) != 4
+            or type(vector["capacity"]) is not int
+            or vector["capacity"] != 4
+        ):
             raise CallbackError(
-                "external vector must have at most three live records and full or spare capacity <=5"
+                "fifth growth requires exactly four full external records"
             )
-        raise CallbackError(
-            "external vector must have at most three live records and spare capacity <=5"
-        )
+    else:
+        if (
+            type(vector) is not dict
+            or set(vector) != {"records", "capacity"}
+            or type(vector["records"]) is not list
+            or not 0 <= len(vector["records"]) <= 3
+            or type(vector["capacity"]) is not int
+            or not (
+                len(vector["records"]) <= vector["capacity"] <= 5
+                if allow_growth
+                else len(vector["records"]) < vector["capacity"] <= 5
+            )
+        ):
+            if allow_growth:
+                raise CallbackError(
+                    "external vector must have at most three live records and full or spare capacity <=5"
+                )
+            raise CallbackError(
+                "external vector must have at most three live records and spare capacity <=5"
+            )
     domains = [_containers(state) for state in (source, destination, vector)]
     if any(domains[i] & domains[j] for i in range(3) for j in range(i + 1, 3)):
         raise CallbackError("class and vector representations must be disjoint")
     try:
         class_operation = operation.apply(
-            source, destination, vector, argument=[0, source_pointer]
+            source,
+            destination,
+            vector,
+            argument=[0, source_pointer],
+            allow_fifth_growth=allow_fifth_growth,
         )
     except (
         operation.OperationError,

@@ -25,14 +25,23 @@ def _record(value):
     return list(value)
 
 
-def next_capacity(size, capacity):
-    """Spare capacity or the proven zero-to-three-record growth domain."""
+def next_capacity(size, capacity, *, allow_fifth_growth=False):
+    """Old finite domain, plus explicitly selected exact full4-to-capacity6.
+
+    The new flag cannot select spare capacity or another full-vector size.
+    """
+    if type(allow_fifth_growth) is not bool:
+        raise OperationError("allow_fifth_growth must be bool")
     if (
         type(size) is not int
         or type(capacity) is not int
         or not 0 <= size <= capacity <= MAX_CAPACITY
     ):
         raise OperationError("invalid vector size or capacity")
+    if allow_fifth_growth:
+        if size != 4 or capacity != 4:
+            raise OperationError("fifth growth requires exactly four full records")
+        return 6
     if size < capacity:
         return capacity
     if size > 3:
@@ -40,7 +49,15 @@ def next_capacity(size, capacity):
     return max(size + 1, capacity + capacity // 2)
 
 
-def apply(source, destination, vector, *, argument=None, argument_index=None):
+def apply(
+    source,
+    destination,
+    vector,
+    *,
+    argument=None,
+    argument_index=None,
+    allow_fifth_growth=False,
+):
     """Return detached destination/vector states; all input objects remain unchanged.
 
     Supply exactly one external argument record or internal record index. Both
@@ -53,7 +70,9 @@ def apply(source, destination, vector, *, argument=None, argument_index=None):
     if type(vector["records"]) is not list:
         raise OperationError("vector records must be a list")
     records = [_record(record) for record in vector["records"]]
-    capacity = next_capacity(len(records), vector["capacity"])
+    capacity = next_capacity(
+        len(records), vector["capacity"], allow_fifth_growth=allow_fifth_growth
+    )
     internal = argument_index is not None
     if internal:
         if (
