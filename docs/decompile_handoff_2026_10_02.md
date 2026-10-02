@@ -9,6 +9,23 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Positive small path assignment validated
+
+The [general positive empty-destination assignment](native_movement_path_small_assign_semantics.md)
+validates659distinct independent checks, sourceGO. Initial658PASS44.76seconds;
+one positive geometry fixture overlapped its stack/source and was corrected
+without changing the implementation; seven affected checksPASS1.29seconds.
+Source01381a9db05be60f6f3415f7181cc0732c75b77f78154054409784c87ee8456e;
+testV2 57924bec7cea24906de02794cdce6d34592bb27f49f24f31420cfff61109b7fc.
+Five full-state native probesN1/2/3/17/511 and count-two full15 compatibilityPASS.
+General small record copyc7005c46 has sourceGO and frozen independent test
+facc1e6889bb36fe8bb2d5a92c623968228d85dbb27df4646800a4580ec4bea3,
+881 checks ready for serial execution. General append42ffd31b native7PASS,
+Fifth independently authors tests. Root general normal AddMove counts2..511
+is private/unfrozen; SIMD reviews source before test authoring. Latestpushed
+af320d53. No broader native receipt or whole-program accounting promotion.
+
+
 ### Standalone early AddCharge validated
 
 The [actual-page AL-zero AddCharge wrapper](native_movement_addcharge_early_semantics.md)

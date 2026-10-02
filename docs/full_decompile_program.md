@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [positive small path assignment law](native_movement_path_small_assign_semantics.md)
+has659validated independent checks and source review GO. Actual counts one
+through511 allocate and copy complete disjoint buffers, close full allocator
+and scalar packets, and preserve unread capacity and unrelated state. Five
+complete executable probes and prior count-two compatibility agree. Empty or
+nonempty destination alternatives, aligned allocation, failure, ownership and
+gameplay remain separate gates; whole-program accounting is unchanged.
+
+
 The [standalone AL-zero AddCharge wrapper](native_movement_addcharge_early_semantics.md)
 has 821 passing independent checks and source review GO. Null, owned-empty
 and one-entry inputs skip record adjustment while preserving actual MOVSS,
