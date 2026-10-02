@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [selected normal count-two AddMove law](native_movement_addmove_normal_semantics.md)
+has446distinct independent checks validated and source review GO. It composes
+record construction/assignment/copy/append, two destructors, caller-path free
+and the actual cookie checker with complete state, raw parameter/XMM bits and
+three supplied allocation/free successes. The selected external-source ordering
+is explicit. Native finite sealing, other counts, ownership and gameplay remain
+separate gates; whole-program accounting is unchanged.
+
+
 The [continuous nonempty two-entry-path record copy](native_movement_effect_record_copy2_conformance.md)
 is sealed across48recipes and90controls, with155independent checks passing.
 All actual helpers, allocation, scalar copies and cookie/SEH restore share one

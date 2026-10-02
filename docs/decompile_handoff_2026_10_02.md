@@ -7,6 +7,29 @@ At the deadline, finish active validation safely, preserve a reviewable
 handoff, push/check the branch and protected work, then pause the heartbeat.
 The full game and whole-program accounting remain unfinished.
 
+## Latest normal AddMove pure checkpoint
+
+The [selected normal AddMove law](native_movement_addmove_normal_semantics.md)
+now has446distinct independent checks validated without skips, source GO.
+Initial suite443PASS/2invalidgeometryfixtures429.01s; corrected36affected
+geometry/domain checks6.39s. Legitimate constructor WORD writes are admitted;
+unsupported widths3/8 are rejected. Explicit temporary-source >= receiver-end
+guard preserves the selected append domain. Public clean-room source V5 SHA
+59d1e054344121948e0e88eba7c097a9fb465ffd9350421c2dc1685aa4807201,
+independenttest ff04e602392dee112824711ff1712cee3306dc64af6e46470934a6959293622a.
+Its full14packet has2089instructions1293accesses16primary6import states,3supplied
+allocation successes and3free successes, actual MOVSS bits/cookie checker.
+Valid nested child semantics are trusted; full8caller-free checks before RET
+transport. Native private harness passes48pure recipes,2exactexecutable cases,
+and5selected of120controls; full native corpus and independent tests pending.
+
+Record-copy native checkpoint e92928c306065eb3f52bf6e39792370ca30e02b9 is pushed,
+remote synchronized; all13protected hashes unchanged. AddCharge public pure V2
+and private independent testpacket are under serial validation; rootcontinuous
+2nativeprobes match2303/1426/all6primary8import states. Fifth authors its private
+continuous native harness; SIMD independently tests rootnormal native harness.
+No full-game, ownership, general-count or gameplay completion claim.
+
 ## Latest record-copy native checkpoint
 
 The [continuous two-entry-path record-copy proof](native_movement_effect_record_copy2_conformance.md)
@@ -21,7 +44,7 @@ promotion or ownership/gameplay closure.
 
 Normal AddMove pure V5 now has446distinct checks validated:443 initial passes,
 two invalid low-stack append fixtures corrected, then36affected geometry/domain
-checks pass6.39seconds. Its public files remain an uncommitted separate tranche.
+checks pass6.39seconds. Its pure files are promoted in the next checkpoint above.
 Normal native private V3 under movement_addmove_normal_native_draft awaits root
 runtime and SIMD review/tests:2089instructions1293events16primary+6import states,
 3suppliedallocations/3frees,20bodies/1206sites/3727bytes. AddCharge pure V2 under
