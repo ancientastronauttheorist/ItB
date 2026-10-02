@@ -406,6 +406,19 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [general actual-page clone2 law](native_movement_path_clone2_semantics.md)
+is independently reviewed GO and passes359 pure tests without skips in13.89s.
+It preserves the finite native receipt while admitting actual record-local
+headers, arbitrary unread source capacity and broader stack geometry. All15
+fields, seven boundaries, imported state and complete7/10 child packets are
+checked independently. Empty-record native V3 passes full48cases/58controls;
+canonical `e7a534fde897fc1e7520c1de8e8d7f9bb2a7fad6a33520c3fc70f396fe8c024d`,
+23616instructions/15120events/1008boundaries, independent native tests pending.
+Outer defined flags corrected46 to44 under8D5; scope prose corrected for the
+publication guard. Assignment0C5BB0 pure freeze8068ca547b33e765ff9af138c1e5d41842492ff08e5e45d02340650ef7796027
+awaits root probes; recordcopy2 independent review/tests now private in progress.
+
+
 The public [empty-path record-copy model](native_movement_effect_record_empty_copy_semantics.md)
 passes345 independent tests without skips in14.92seconds, source review GO.
 Root source/native probes match492/315/all20helperstates, with183 destination

@@ -1499,6 +1499,13 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [general actual-page two-entry path clone](native_movement_path_clone2_semantics.md)
+has359 independent pure checks and source review GO. Actual caller headers,
+unread capacity and broader stack geometry compose through complete allocator
+and scalar packets. Its broader pure domain does not enlarge the sealed
+finite native corpus or establish ownership or gameplay.
+
+
 The [actual-page empty-path record copy](native_movement_effect_record_empty_copy_semantics.md)
 has 345 independent pure checks and source review GO. It composes eight empty
 string assignments and zero-count path reserve, preserving 125 padding bytes
