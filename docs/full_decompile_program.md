@@ -44,8 +44,17 @@ now specifies size5/cap6 spare append into the same vector without copy,
 allocation or free. Its176 new tests and586 predecessor/shared regressions
 pass,762 combined without skips; strict retained-fifth view guards, U17/U16/P24,
 the complete selected stack envelope and both return ABIs are source-reviewed.
-Actual sixth machine composition, exceptional behavior, heap ownership and
-whole-program accounting remain open. The full game is unfinished.
+The [actual sixth composition](native_lua_class_factory_callback_sixth_conformance.md)
+now seals216 cases and211 rejecting controls. Actual fifth boundary captures
+bind nonzero XMM0/1, complete pages and exact36-byte host patches; the sixth
+preserves all eight XMM registers and existing40 bytes while filling capacity48
+without allocation/copy/free or wide accesses. All first-five hashes/site sets
+and the factory/fourth-boundary hashes remain unchanged.
+The136 native conformance tests and65 focused fifth transport regressions
+pass,201 combined without skips, including exact CLI rebuild/verification.
+Independent source/test and published-receipt reviews are GO. Exceptional behavior,
+heap ownership and whole-program accounting remain open. The full game is
+unfinished.
 
 ## October 1 checkpoint
 

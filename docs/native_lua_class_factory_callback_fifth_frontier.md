@@ -72,4 +72,6 @@ first-through-fourth observation hashes/site sets unchanged. The fifth receipt
 is sealed; its final isolated gate passes327 tests without skips and the old
 fourth exact/default gates remain unchanged. Details are in the
 [receipt documentation](native_lua_class_factory_callback_fifth_conformance.md).
-The sixth spare callback remains a separate unproved frontier.
+The separate [sixth spare callback](native_lua_class_factory_callback_sixth_conformance.md)
+now closes retained size5/cap6 to size6/cap6 with actual fifth XMM captures,
+no allocation/copy/free and unchanged first-five observation hashes.

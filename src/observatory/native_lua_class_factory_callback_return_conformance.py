@@ -231,6 +231,10 @@ def _run_case(
         and (
             old_count in range(4)
             or (old_count == 4 and getattr(class_module, "SIMD_FACTORY", False) is True)
+            or (
+                old_count == 5
+                and getattr(class_module, "XMM_SPARE_FACTORY", False) is True
+            )
         ),
         "unreviewed factory return vector size",
     )

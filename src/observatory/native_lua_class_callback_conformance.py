@@ -164,6 +164,9 @@ def _direct_response(index, eax):
 
 def _simd_state(fixture, class_module):
     mode = getattr(class_module, "SIMD_FACTORY", False) is True
+    spare_mode = getattr(class_module, "XMM_SPARE_FACTORY", False) is True
+    _require(not (mode and spare_mode), "callback SIMD mode differs")
+    mode = mode or spare_mode
     _require(("simd_state" in fixture) == mode, "callback SIMD mode differs")
     if not mode:
         return None
@@ -179,6 +182,29 @@ def _simd_state(fixture, class_module):
         "invalid callback SIMD state",
     )
     prototype = fixture["prototype"]
+    if spare_mode:
+        _require(
+            all(
+                type(prototype.get(k)) is int
+                for k in ("old_size", "vector_begin", "vector_end", "vector_capacity")
+            )
+            and not any(
+                k in prototype
+                for k in ("old_begin", "old_base", "new_base", "new_page_count")
+            )
+            and prototype["old_size"] == 5
+            and prototype["vector_begin"] - 0x06002800 in (0, 7, 31)
+            and prototype["vector_end"] == prototype["vector_begin"] + 40
+            and prototype["vector_capacity"] == prototype["vector_begin"] + 48
+            and type(prototype.get("xmm")) is dict
+            and set(prototype["xmm"]) == set(XMM)
+            and all(
+                type(v) is int and 0 <= v < 2**128 for v in prototype["xmm"].values()
+            )
+            and prototype["xmm"] == state["xmm"],
+            "callback SIMD geometry differs",
+        )
+        return copy.deepcopy(state)
     _require(
         all(
             type(prototype.get(k)) is int
@@ -283,13 +309,19 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
             )
             result = class_module._expected(vector, child_fixture)
             if simd_state is not None:
-                old_begin = child_fixture["old_begin"]
-                snapshot = bytes(
-                    child_fixture["pages"][(old_begin + i) & ~4095][
-                        (old_begin + i) & 4095
-                    ]
-                    for i in range(32)
-                )
+                expected_xmm = dict(simd_state["xmm"])
+                if getattr(class_module, "SIMD_FACTORY", False) is True:
+                    old_begin = child_fixture["old_begin"]
+                    snapshot = bytes(
+                        child_fixture["pages"][(old_begin + i) & ~4095][
+                            (old_begin + i) & 4095
+                        ]
+                        for i in range(32)
+                    )
+                    expected_xmm.update(
+                        xmm0=int.from_bytes(snapshot[:16], "little"),
+                        xmm1=int.from_bytes(snapshot[16:], "little"),
+                    )
                 _require(
                     type(result.get("xmm")) is dict
                     and set(result["xmm"]) == set(XMM)
@@ -302,12 +334,7 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
                     "callback SIMD child state differs",
                 )
                 _require(
-                    result["xmm"]
-                    == dict(
-                        simd_state["xmm"],
-                        xmm0=int.from_bytes(snapshot[:16], "little"),
-                        xmm1=int.from_bytes(snapshot[16:], "little"),
-                    ),
+                    result["xmm"] == expected_xmm,
                     "callback SIMD child state differs",
                 )
                 simd_state = dict(xmm=dict(result["xmm"]), df=0)
@@ -728,6 +755,7 @@ def _run_case(
         machine.reg_write(ids[r], value)
     simd_state = _simd_state(fixture, class_module)
     xmm_ids = {r: getattr(x, "UC_X86_REG_" + r.upper()) for r in XMM}
+    spare_xmm_mode = getattr(class_module, "XMM_SPARE_FACTORY", False) is True
     if simd_state is not None:
         for r, value in simd_state["xmm"].items():
             machine.reg_write(xmm_ids[r], value)
@@ -767,6 +795,28 @@ def _run_case(
             extension["before_instruction"](m, address, ids, expected, negative)
         if simd_state is not None:
             pc = address - BASE
+            if spare_xmm_mode and pc == 0x2EB140:
+                if negative == "spare_entry_xmm":
+                    m.reg_write(xmm_ids["xmm7"], m.reg_read(xmm_ids["xmm7"]) ^ 1)
+                if negative == "spare_entry_df":
+                    m.reg_write(
+                        x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) | 0x400
+                    )
+            _require(
+                not spare_xmm_mode
+                or not any(
+                    begin <= pc < end
+                    for begin, end in (
+                        (0x2EB620, 0x2EB67E),
+                        (0x2EB680, 0x2EB6E6),
+                        (0x36E580, 0x36E5BF),
+                        (0x36E834, 0x36E843),
+                        (0x36E994, 0x36E9CB),
+                        (0x36EA4D, 0x36EAB7),
+                    )
+                ),
+                "callback spare entered growth machinery",
+            )
             if address == BASE + START or pc == 0x2EB140:
                 check_simd(simd_state["xmm"])
             for site, key, control in (
@@ -922,7 +972,9 @@ def _run_case(
                     m.reg_write(
                         x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) | 0x400
                     )
-                if negative == "simd_spare":
+                if negative == "simd_spare" or (
+                    spare_xmm_mode and negative == "spare_record"
+                ):
                     at = fixture["prototype"]["vector_begin"] + 40
                     m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
                 check_simd(expected["xmm"])
@@ -955,7 +1007,7 @@ def _run_case(
 
     def on_memory(m, access, address, width, value, user):
         writing = access == uc.UC_MEM_WRITE
-        if width == 8 and simd_state is not None:
+        if width == 8 and simd_state is not None and not spare_xmm_mode:
             pc = m.reg_read(x.UC_X86_REG_EIP) - BASE
             old_begin, fresh = (
                 fixture["prototype"]["old_begin"],

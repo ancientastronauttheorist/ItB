@@ -119,19 +119,70 @@ the test helper was corrected to retain the moved userdata's closure identity.
 Independent final source review is GO. This is logical evidence, not an actual
 sixth callback or XMM/DF proof.
 
-Next compose the actual retained fifth return into the sixth spare callback.
-Capture all eight actual XMMs/full flags/GPRs/PC at fifth entry/return; fifth
-return has nonzero XMM0/1. Preserve complete captured pages through exact36-byte
-host binding and use a distinct `XMM_SPARE_FACTORY` mode without SIMD growth
-equations. Source-reviewed private adapter materials are in
-`.local_decompile/oct2/sixth_adapter_draft/`: exact25 fixture/20 vector keys,
-no constructor, no heap/copy/free, exact seven ordered payload writes followed
-by append/end writes and an independent19-event append/cookie tail. Earlier
-tree-prefix reads remain inherited from the sealed oracle. No private draft
-has executed and it is not public native evidence. Keep every first-five
-observation hash/site set unchanged, run isolated serial native/corruption/CLI
-gates and independent review, then seal the sixth receipt. Sixth native and
-all wider semantics remain outside current claims.
+The pure sixth checkpoint was pushed as `eb94cfb4bc7fa43f650b2bac98e81a4e03455088`.
+Local HEAD and GitHub were synchronized and the branch pulled before native
+sixth changes.
+
+## Actual retained sixth callback
+
+The [sixth native receipt](native_lua_class_factory_callback_sixth_conformance.md)
+now executes216 producers through six callbacks and211 rejecting controls.
+Every fifth entry/return captures eight actual XMMs/full flags/GPRs/PC; the
+fifth return's nonzero XMM0/1 are independently derived from old32. Complete
+retained pages and typed allocation/free packets are checked before exact36
+caller/source byte patches. The separate `XMM_SPARE_FACTORY` adapter has exact25
+fixture/20 vector keys, constructs no pages and independently checks seven
+payload writes plus the19-event append/cookie tail. Earlier tree-prefix reads
+remain inherited from the sealed oracle.
+
+Sixth preserves old40, appends8 and fills capacity48 with no heap/copy/free,
+tree allocation or wide access. All eight XMM registers and DF0 survive each
+selected machine join. Class EDX is T-60; stack exclusion [T-140,T+8) and both
+normal ABIs match the independent logical model. Source-backed full growth,
+resize/copy/allocator/free range exclusions bind the sixth trace. First-five
+hashes/site sets, factory hash and fourth-boundary hash remain unchanged.
+
+Canonical SHA `cdd92b83335043ca08b33f04dc4ca9a3643e97f594f8ba8349f40de81f547c18`;
+file SHA `f969840a607bf858ae0dedf52bc7140097567c5edadde42ae373fd5e9aff4aac`;
+405,953 UTF-8 LF bytes and46 pins. Loaded1,134/2,973 bytes; executed900;
+sixth347; partition76/726/27/71/234 unchanged. Sixth487,944 instructions,
+1,512 payload updates,10,368 live/capacity bytes,8,640 preserved bytes and216
+actual entry/return captures/XMM preservations. Across six callbacks53,136 Lua
+requests,2,592 marker/table calls each and1,296 assignment requests; old864
+free and SIMD read/write totals remain unchanged.
+
+All136 conformance checks pass without skips, including103 pure and16 isolated
+actual checks, sealed-receipt/source mutations and exact CLI rebuild,
+verification and structure verification. Independent final source/test and
+published-receipt reviews are GO. Shared fifth transport's65 focused pure
+regressions pass,201 tests combined; all13 protected hashes remain unchanged.
+The complete native sixth tranche is validated and ready for its scoped
+commit/push before the assertion-dispatch work. No whole-program accounting
+or full-game promotion.
+
+## Next semantic frontier
+
+Prefer assertion-parent dispatch at RVA379cc2: it always passes mode3 into
+the first native getter (VA008b7534), calls the second getter (VA008b7318)
+only for first result0, and selects alternate iff first==1 or first0/second1.
+Execute both native getter bodies and stop before opaque third379550/fourth
+379b31 child entry. Independently check stack, arguments, all GPRs/defined
+flags, full pages and no global writes. The normal branch passes the original
+caller return as an extra fourth argument. Private source-only model/tests
+are being drafted under `.local_decompile/oct2/assertion_dispatch_draft/`;
+they are not native evidence.
+
+After standalone dispatch closure, join the actual callback assertion prefix
+in the same Unicorn instance using a new composed runner. Reuse its fixture,
+oracle and Lua controller, validate/capture the complete actual intermediate
+boundary, then continue without reseeding or replacing pages. Preserve the
+old prefix observation projection/hash and stop at opaque callee entry after
+the parent CALL. Failure handling, dialog/abort/INT3 and unwind stay excluded.
+
+The other distinct next tranche is installed48-byte SIMD-plus-scalar-tail copy
+and full6-to-cap9 growth: request72/copy48/freeold48/append8/spare16. Existing
+fixed32/old4 receipts must remain unchanged; do not infer the new copy's EDX
+from current32's zero return. Avoid further count-only callback expansion.
 
 ## Environment and protected work
 

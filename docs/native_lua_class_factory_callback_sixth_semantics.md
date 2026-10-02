@@ -59,10 +59,10 @@ Native XMM/DF transport, actual memory
 accesses, VM table effects, allocation ownership, failure/unwind behavior,
 hardware execution and whole-program accounting are not logical-model claims.
 
-Next capture every actual fifth return, including its nonzero XMM0/1, then
-execute the sixth spare callback with an explicit separate machine adapter.
-Preserve captured pages through exact host binding, independently verify
-ordered payload/append writes and append/return reads, and keep the first five
-native observation hashes unchanged. The
-[sealed fifth native receipt](native_lua_class_factory_callback_fifth_conformance.md)
-is its machine predecessor; a sixth native receipt remains unfinished.
+The [sixth native composition](native_lua_class_factory_callback_sixth_conformance.md)
+now captures every actual fifth return, including nonzero XMM0/1, and executes
+the spare callback with a distinct factory adapter. All216 producers and211
+controls pass; complete captured pages, exact host binding, scalar event laws,
+all eight unchanged XMMs and clear DF are checked. First-through-fifth hashes
+remain equal to the sealed machine predecessor. These are separately declared
+finite native claims; they do not widen the logical model's scope.
