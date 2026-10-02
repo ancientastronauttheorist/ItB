@@ -9,6 +9,23 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### General small record copy validated
+
+The [general empty-string small-path record copy](native_movement_effect_record_small_copy_semantics.md)
+passes881independent checks without skips in246.96seconds, sourceGO.
+Sourcec7005c462527c95786ee53f782325fdbcab87c98297d4ce9e5bffaa77aef773a;
+testfacc1e6889bb36fe8bb2d5a92c623968228d85dbb27df4646800a4580ec4bea3.
+Seven actual full-state cases0/1/2/3/17/511 and old empty14/count2full15
+compatibilityPASS. Zero20/positive23 states, full path15/allocator7/scalar10,
+exact byte replay/prefix page joins, explicit trusted nested metadata scope.
+Assignmentcheckpoint28ba6c69 is pushed, protected13unchanged.
+Private general normal AddMove V2 07dea40594c544ec02cce8f55db1591b29ef72b971edec8f90fe4106e46093c6
+sourceGO and five complete native casesN2K2/N2K511/N3K17/N17K511/N511K511
+PASS, trace2029+30N/events1269+12N. SIMD independently authors tests.
+Small append42ffd31b native7PASS, Fifth independently authors tests.
+No active execution gate and no broader native receipt/accounting promotion.
+
+
 ### Positive small path assignment validated
 
 The [general positive empty-destination assignment](native_movement_path_small_assign_semantics.md)

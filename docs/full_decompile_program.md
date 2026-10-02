@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [general small-path empty-string record copy](native_movement_effect_record_small_copy_semantics.md)
+has881passing independent checks and source review GO. Counts zero through511
+close complete path/helper schemas and full byte/checkpoint joins; zero needs
+no allocator runtime. Seven complete executable probes and prior empty/count-two
+compatibility agree. Nonempty strings, aligned allocation, failure, ownership
+and gameplay remain separate gates; whole-program accounting is unchanged.
+
+
 The [positive small path assignment law](native_movement_path_small_assign_semantics.md)
 has659validated independent checks and source review GO. Actual counts one
 through511 allocate and copy complete disjoint buffers, close full allocator
