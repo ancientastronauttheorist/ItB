@@ -1499,6 +1499,13 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [empty-destination two-entry path assignment](native_movement_path_assign2_semantics.md)
+has381 independent pure checks and source review GO. It skips old frees and
+joins ordinary allocation and scalar copying with complete actual-page
+packets. The actual AddMove return is admitted, while subsequent record
+construction, append, destruction and gameplay require their own gates.
+
+
 The [two-entry movement record-copy law](native_movement_effect_record_copy2_semantics.md)
 has377 independent pure checks and source review GO. It composes eight empty
 strings with an actual-page path allocation/copy, preserving source and padding.

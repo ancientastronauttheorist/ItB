@@ -406,6 +406,21 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [empty-destination path assignment law](native_movement_path_assign2_semantics.md)
+is sourceGO and passes381 independent tests without skips in13.96s.
+All15 fields162instructions90events7boundaries/import and complete7/10 joins
+are predicted. Four private native probes agree includingactual6573A7 stop.
+Recordcopy2 pusheda99518a49a58b2db7b093c99167a4e909c389024, remote/protected
+verified. Fifth authors continuous recordcopy2 native harness under
+movement_record_copy2_native_draft (48cases/591/372/24snapshots/oneHeapAlloc);
+SIMD independently tests appendV2. Root destructor private probes4PASS:
+80instructions46eventsnull and123instructions74eventsnonnullcount2,
+full2freeboundaries/import/fullpages/GPR/XMM and finalraw287. Pointanchor
+3785fc3e1f910c8db00b832cd5d2dbfec09eb18d476ca6b3ab10ff5b278acf3f,
+204sites656loadedbytes; suppliedHeapFree1 is not ownership/unmapping proof.
+Destructor independent closure and normalAddMove/AddCharge remain open.
+
+
 The [two-entry record-copy pure law](native_movement_effect_record_copy2_semantics.md)
 is sourceGO and passes377 independent tests without skips in82.92s.
 V2 SHA573197929c2a8715d36bc8121f7ece29626c23f0d533b3871ac2f9b9a0eec1c2
