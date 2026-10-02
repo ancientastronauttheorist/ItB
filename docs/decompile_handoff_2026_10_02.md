@@ -9,6 +9,19 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Small ordinary path clone validated
+
+The [general small clone law](native_movement_path_small_clone_semantics.md)
+passes 594 independent tests without skips in 26.22 seconds, source GO.
+Source3099b41e7d0c22875ab48214ea045b72969b3c98a985c1ba2822b8add78afcc3,
+testbf329f9f5bc0ef5fb30aab62ee11a2757456bcac0833bbe02fb6f53b8a3075b3.
+It covers actual count0..511, full15 packet, zero helper/runtime exemption,
+complete allocation7/scalar10 joins and exact state/page preservation. Root
+seven native probes and all48 old count-two packets match. Early AddMove V2
+also passes571tests in15.44seconds and all144finite/fouractual native probes;
+its checkpoint follows separately. Small destructor605 suite is active serially.
+Latest pushed074fcb9d; normal native corpus/tests/CLI seals are committed.
+
 ### Continuous normal AddCharge validation completed
 
 The [native normal AddCharge proof](native_movement_addcharge_normal_conformance.md)

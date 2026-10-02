@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [small ordinary actual-page path clone](native_movement_path_small_clone_semantics.md)
+has 594 independent checks passing and source review GO. Counts zero through
+511 compose complete manually checked allocator and scalar laws; zero executes
+neither primitive. Seven actual executable cases and old full-packet
+compatibility agree. Aligned allocation, ownership, failures and gameplay are
+separate gates; whole-program accounting is unchanged.
+
 The [continuous selected normal AddCharge proof](native_movement_addcharge_normal_conformance.md)
 is sealed across 48 recipes and 80 controls, with 172 independent checks
 passing. Full clone, AddMove, mode-two adjustment and original-path release
