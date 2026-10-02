@@ -39,7 +39,12 @@ remain identical. The source/test and published-receipt reviews are GO.
 
 The [integration record](native_lua_class_factory_callback_fifth_frontier.md)
 preserves the source-backed capture, adapter, machine-state and host-patch
-joins. Sixth spare append, exceptional behavior, heap ownership and
+joins. The [sixth logical model](native_lua_class_factory_callback_sixth_semantics.md)
+now specifies size5/cap6 spare append into the same vector without copy,
+allocation or free. Its176 new tests and586 predecessor/shared regressions
+pass,762 combined without skips; strict retained-fifth view guards, U17/U16/P24,
+the complete selected stack envelope and both return ABIs are source-reviewed.
+Actual sixth machine composition, exceptional behavior, heap ownership and
 whole-program accounting remain open. The full game is unfinished.
 
 ## October 1 checkpoint

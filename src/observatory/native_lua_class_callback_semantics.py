@@ -60,6 +60,7 @@ def apply(
     transfers,
     allow_growth=False,
     allow_fifth_growth=False,
+    allow_sixth_spare=False,
 ):
     """Return detached class outputs and ordered conditional Lua requests.
 
@@ -70,8 +71,13 @@ def apply(
     Growth is accepted only with explicit boolean opt-in and uses the existing
     class-operation capacity law for zero through three live external records.
     The separate fifth opt-in accepts only full4/cap4 and produces capacity6;
-    it does not admit the subsequent spare-capacity callback.
+    it does not admit the subsequent spare-capacity callback. The separate
+    sixth spare opt-in accepts only size5/capacity6 without vector growth.
     """
+    if type(allow_sixth_spare) is not bool:
+        raise CallbackError("allow_sixth_spare must be bool")
+    if allow_sixth_spare and allow_fifth_growth:
+        raise CallbackError("sixth spare and fifth growth cannot coexist")
     if type(allow_fifth_growth) is not bool:
         raise CallbackError("allow_fifth_growth must be bool")
     if allow_fifth_growth and not allow_growth:
@@ -96,7 +102,19 @@ def apply(
         raise CallbackError(
             "two finite transfer category lists of at most three required"
         )
-    if allow_fifth_growth:
+    if allow_sixth_spare:
+        if (
+            type(vector) is not dict
+            or set(vector) != {"records", "capacity"}
+            or type(vector["records"]) is not list
+            or len(vector["records"]) != 5
+            or type(vector["capacity"]) is not int
+            or vector["capacity"] != 6
+        ):
+            raise CallbackError(
+                "sixth spare requires exactly five records and capacity six"
+            )
+    elif allow_fifth_growth:
         if (
             type(vector) is not dict
             or set(vector) != {"records", "capacity"}

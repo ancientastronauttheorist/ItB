@@ -95,14 +95,43 @@ structure gates reproduce its unchanged359,299-byte receipt after the shared
 machine plumbing changes. All13 protected user hashes remain unchanged.
 No ownership/accounting or whole-game promotion.
 
-Next is the separate sixth spare callback: size5/cap6 becomes size6/cap6 in
-the same vector, with no copy/allocation/free and all actual incoming XMMs
-preserved. A private logical draft is source-reviewed after strict retained-
-fifth view guards; it is not yet integrated or executed. Stack exclusion is
-source-derived `[T-140,T+8)` and class EDX is successor slot `T-60`, rather
-than the fifth HeapFree response. Private materials are under
-`.local_decompile/oct2/sixth_draft/` and are not public evidence. Sixth and all
-wider semantics remain outside current claims.
+The native fifth checkpoint was pushed as `e96c7579577dd2461d2385afabadaf7eb9df932a`;
+local HEAD and GitHub were synchronized at that commit before the sixth work.
+
+## Logical sixth spare callback
+
+The [sixth logical model](native_lua_class_factory_callback_sixth_semantics.md)
+is integrated. Its exact20 inputs reconstruct first-through-fifth and reuse
+the fifth vector: size5/cap6 becomes size6/cap6 with no copy/allocation/free.
+Existing40 and earlier8/16/24/32 buffers survive; append8 fills capacity48.
+Strict predecessor routing/view guards reject typed aliases, divergent views
+and coordinated omitted-key changes before sixth consumes them. Seven existing
+routes retain destination8 and omitted16, with no new tree allocation.
+
+The shared callback's separate Boolean `allow_sixth_spare` requires exactly
+size5/cap6 and excludes `allow_fifth_growth`; existing operation domain and
+callback defaults remain intact. Class writes only U+8, normal writes U+0/U+8;
+U17/U16 preservation includes established U13, and P24 remains intact.
+Source-derived stack exclusion is `[T-140,T+8)` and class EDX is successor
+slot `T-60`.176 new tests plus586 predecessor/shared regressions pass,
+762 combined without skips. All16 adjacency/overlap boundary cases pass after
+the test helper was corrected to retain the moved userdata's closure identity.
+Independent final source review is GO. This is logical evidence, not an actual
+sixth callback or XMM/DF proof.
+
+Next compose the actual retained fifth return into the sixth spare callback.
+Capture all eight actual XMMs/full flags/GPRs/PC at fifth entry/return; fifth
+return has nonzero XMM0/1. Preserve complete captured pages through exact36-byte
+host binding and use a distinct `XMM_SPARE_FACTORY` mode without SIMD growth
+equations. Source-reviewed private adapter materials are in
+`.local_decompile/oct2/sixth_adapter_draft/`: exact25 fixture/20 vector keys,
+no constructor, no heap/copy/free, exact seven ordered payload writes followed
+by append/end writes and an independent19-event append/cookie tail. Earlier
+tree-prefix reads remain inherited from the sealed oracle. No private draft
+has executed and it is not public native evidence. Keep every first-five
+observation hash/site set unchanged, run isolated serial native/corruption/CLI
+gates and independent review, then seal the sixth receipt. Sixth native and
+all wider semantics remain outside current claims.
 
 ## Environment and protected work
 
