@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [actual erase-child forward memmove entry](native_movement_memmove_forward_semantics.md)
+has4,966 passing independent checks and source review GO. The separate36E580
+body and all selected points are bound independently; zero through31 bytes
+predict full disjoint/self/leftward-overlap state. All1,984 complete executable
+cases agree. Larger/backward/SIMD and ownership/gameplay remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [small backward overlap copy](native_movement_small_backward_copy_semantics.md)
 has8,216 passing independent checks and source review GO. Every scalar
 rightward overlap pair at counts2..31 closes descending accesses, exact bytes,

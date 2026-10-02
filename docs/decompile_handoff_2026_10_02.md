@@ -9,6 +9,20 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Actual erase-child memmove forward entry validated
+
+The [small forward memmove law](native_movement_memmove_forward_semantics.md)
+passes4966 independent checks without skips in84.90seconds, source GO.
+Sourcecfd10fbf8f438db267fd1e4ace794aa9b6c56cfd4d3f49ab03ab6a8dee4f5df1;
+testca51edee10823de1c9ba65b8d4294a13e765e4473ec82c9ae8e158e330151d39.
+All1984native full-state cases agree, binding actual36E580 called by8410.
+Backwardcheckpointc8109b9a andforward294f0fb3 pushed. Root8410inlineerase
+52c24867 sourceGO/native1272PASS; SIMD independent tests. Fifth authors
+self80D0 using erase14 with full nested11/boundaries. Root memmove backward
+bindingfb3d14631725c88ccb0861f527b50fb8e775a8c7a6cb00cc20c44af2039a6c2c
+private/nativegate72797 active; review/tests pending. Larger paths/accounting open.
+
+
 ### Backward overlapping copy validated
 
 The [small backward overlap law](native_movement_small_backward_copy_semantics.md)
