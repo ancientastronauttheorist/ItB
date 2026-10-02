@@ -315,7 +315,17 @@ def _logical(fixture):
     )["fourth"]
 
 
-def _run_case(codes, points, fixture, produced, vector, negative=None, *, capture=None):
+def _run_case(
+    codes,
+    points,
+    fixture,
+    produced,
+    vector,
+    negative=None,
+    *,
+    capture=None,
+    entry_capture=None,
+):
     logical = _logical(fixture)
     result = normal._run_case(
         codes,
@@ -327,6 +337,7 @@ def _run_case(codes, points, fixture, produced, vector, negative=None, *, captur
         logical=logical,
         class_module=old,
         capture=capture,
+        entry_capture=entry_capture,
     )
     if negative == "cookie":
         return result

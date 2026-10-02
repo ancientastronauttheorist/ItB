@@ -47,7 +47,7 @@ reproduced the same receipt after strict-domain/full-child-join fixes.
 Unchanged growth/resize predecessor regressions:258 passed, no skips,
 388 combined. Independent final source review:GO.
 
-## Remaining fifth callback
+## Logical fifth callback
 
 The [source-backed plan](native_lua_class_factory_callback_fifth_frontier.md)
 requires actual fourth-state capture for every producer, including eight XMMs,
@@ -64,13 +64,45 @@ an explicit exact full4/cap4 opt-in; old defaults must stay unchanged.
 Stack exclusion is `[T-188,T+8)` with explicit entry bounds188 through
 0xfffffff8. Its203 new tests and383 predecessor/shared regressions pass,
 586 combined without skips; independent final source review is GO.
-The fourth native receipt rebuild, exact verification and structure gate are
-unchanged. Native fifth/XMM proof remains a separate unfinished gate.
+Durable checkpoints are `e4f2fec5` (class SIMD join) and `86a8207b`
+(exact fifth logical model and full stack guard). Both were pushed and checked
+against the remote before the native fifth tranche.
 
-Next add optional callback
-XMM/DF and narrow SIMD access plumbing while preserving every old receipt,
-then prove the complete retained fourth-to-fifth factory composition.
-Sixth append and all wider semantics remain outside current claims.
+## Actual retained fifth callback
+
+The [fifth native receipt](native_lua_class_factory_callback_fifth_conformance.md)
+now proves all216 selected producers through five explicit host invocations,
+with actual eight-XMM/full-EFLAGS/GPR/PC captures at every fourth entry/return.
+Complete captured pages are checked independently before exactly36 declared
+caller/source bytes are patched. The factory-only adapter binds source7/
+destination8 and full4/cap4 to the standalone SIMD class join without creating
+replacement pages or widening old domains. Fifth grows to capacity6, copies32,
+frees old32, appends8 and preserves spare8. All164 controls reject.
+
+Canonical SHA `92dea33a6ca68214a08f9056ef1d6abb0ed7f6450fec789bcb85a2677db70255`;
+file SHA `11b70e8b0ee7e061ed4642d4ea1b20d5b57137f65f05ec8d41a531383c190226`;
+392,703 bytes,45 pins. Loaded1,134 sites/2,973 bytes; executed900, fifth553.
+Partition76/726/27/71/234. Actual factory and all first-fourth observation
+hashes/site sets equal the sealed predecessor. All eight XMMs and clear DF
+are checked at parent/class/growth/resize/copy/API/cookie/full-return joins;
+only four MOVDQU sites admit their exact ordered eight-byte halves.
+
+The new197-test gate and unchanged standalone class130-test gate pass,
+327 combined without skips. Exact fifth CLI build/verification/structure
+reproduce the deterministic seal. Independent final source/tests and published
+receipt reviews are GO. Fourth native default CLI build, verification and
+structure gates reproduce its unchanged359,299-byte receipt after the shared
+machine plumbing changes. All13 protected user hashes remain unchanged.
+No ownership/accounting or whole-game promotion.
+
+Next is the separate sixth spare callback: size5/cap6 becomes size6/cap6 in
+the same vector, with no copy/allocation/free and all actual incoming XMMs
+preserved. A private logical draft is source-reviewed after strict retained-
+fifth view guards; it is not yet integrated or executed. Stack exclusion is
+source-derived `[T-140,T+8)` and class EDX is successor slot `T-60`, rather
+than the fifth HeapFree response. Private materials are under
+`.local_decompile/oct2/sixth_draft/` and are not public evidence. Sixth and all
+wider semantics remain outside current claims.
 
 ## Environment and protected work
 

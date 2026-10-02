@@ -27,10 +27,20 @@ gate passes130 tests without skips, including exact native receipt rebuild
 and verification. Complete child metadata, ordered memory accesses, all eight
 XMM registers and spare8 are independently checked.
 
-The actual retained fourth-to-fifth factory callback, exceptional behavior,
-heap ownership and whole-program accounting remain open. The full game is
-unfinished. The [frontier plan](native_lua_class_factory_callback_fifth_frontier.md)
-still governs the remaining actual-state capture and callback joins.
+The [actual fifth callback](native_lua_class_factory_callback_fifth_conformance.md)
+now seals216 retained-state cases and164 intended rejecting controls. Every
+fourth producer captures eight actual XMM registers, full EFLAGS, GPRs and PCs
+at entry/return before exact36-byte host binding. Fifth grows full4/cap4 to
+capacity6, copies32 through retained-feature MOVDQU, frees old32, appends8 and
+preserves spare8. Its new197-test and unchanged standalone class130-test gates
+pass,327 combined without skips, including exact fifth receipt rebuild and
+verification. First-fourth observation hashes/site sets and factory hashes
+remain identical. The source/test and published-receipt reviews are GO.
+
+The [integration record](native_lua_class_factory_callback_fifth_frontier.md)
+preserves the source-backed capture, adapter, machine-state and host-patch
+joins. Sixth spare append, exceptional behavior, heap ownership and
+whole-program accounting remain open. The full game is unfinished.
 
 ## October 1 checkpoint
 

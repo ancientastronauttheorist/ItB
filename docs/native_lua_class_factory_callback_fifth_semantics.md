@@ -9,7 +9,10 @@ packets and returns detached first-through-fifth results.
 This is a logical conditional contract. It does not execute the factory,
 callback, SIMD, Lua VM or heap, establish ownership, or promote accounting.
 The [standalone native class proof](native_lua_class_simd_vector_return_conformance.md)
-is an ingredient; an actual retained fifth factory callback remains open.
+is an ingredient. The separate
+[actual retained fifth receipt](native_lua_class_factory_callback_fifth_conformance.md)
+now supplies finite native machine evidence without expanding this logical
+contract or proving real VM/heap ownership behavior.
 
 ## Bounded inputs and results
 
@@ -49,8 +52,11 @@ regressions,586 tests pass without skips. Independent final source review is
 GO. The actual four-callback predecessor's exact CLI build, verification and
 structure gate reproduce its unchanged359,299-byte sealed receipt.
 
-Next carry verified actual fourth pages, GPRs, eight XMM registers and flags
-through an explicit fifth-only adapter. Preserve every old receipt and
-reconstruct host patches byte-for-byte before executing the new callback.
-The [frontier plan](native_lua_class_factory_callback_fifth_frontier.md)
-defines the remaining216 producer cases and native failure controls.
+The separate native composition carries verified actual fourth pages, GPRs,
+eight XMM registers and flags through an explicit fifth-only adapter. Its
+host patches are reconstructed byte-for-byte before the new callback executes.
+All216 cases and164 controls passed the native builder. The
+[integration record](native_lua_class_factory_callback_fifth_frontier.md)
+preserves the source-backed joins. The final native/class gates pass327 tests
+without skips and old fourth exact/default gates remain unchanged. Sixth
+spare append remains open.

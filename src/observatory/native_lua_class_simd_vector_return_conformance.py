@@ -296,6 +296,11 @@ def _growth_packet_law(
 
 def _expected(vector, fixture):
     _checked_vector(vector)
+    return _composed_expected(vector, fixture)
+
+
+def _composed_expected(vector, fixture):
+    """Fixed physical join; callers must separately bind their tree/vector domain."""
     _require(
         type(fixture) is dict and set(fixture) == FIXTURE_KEYS,
         "invalid SIMD class fixture schema",

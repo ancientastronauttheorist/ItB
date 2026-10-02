@@ -213,6 +213,7 @@ def _run_case(
     logical=None,
     class_module=None,
     capture=None,
+    entry_capture=None,
 ):
     from unicorn import x86_const as x
 
@@ -226,13 +227,19 @@ def _run_case(
     free_entries = []
     old_count = fixture["prototype"].get("old_size", 0)
     _require(
-        type(old_count) is int and old_count in range(4),
+        type(old_count) is int
+        and (
+            old_count in range(4)
+            or (old_count == 4 and getattr(class_module, "SIMD_FACTORY", False) is True)
+        ),
         "unreviewed factory return vector size",
     )
     normalized = lambda value: json.loads(json.dumps(value))
 
     def before(m, address, ids, expected, negative):
         nonlocal call_cursor
+        if address == BASE + callback.START and entry_capture is not None:
+            entry_capture(m, ids, expected)
         regs = lambda: {r: m.reg_read(i) for r, i in ids.items()}
         words = lambda a, n: [
             int.from_bytes(m.mem_read(a + 4 * i, 4), "little") for i in range(n)
@@ -280,6 +287,7 @@ def _run_case(
                     marker_words=fixture["callback_vector"]["marker_words"],
                 ),
                 fixture,
+                class_module=class_module,
                 class_entry_only=True,
             )
             if negative == "class_flags":

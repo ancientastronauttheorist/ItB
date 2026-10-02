@@ -1,6 +1,15 @@
-# Actual fifth callback frontier — source-backed integration plan
+# Actual fifth callback frontier — source-backed integration record
 
-This is an implementation plan, not a fifth-callback proof. The fourth factory callback receipt and standalone SIMD resize/growth/class-append ingredients are predecessors; composing them requires the joins below. The pure fifth model is integrated with full stack exclusion and unchanged default domains. Two private fourth-capture boundary probes establish actual XMM zero/DF clear only for those two probes, not the entire producer corpus.
+This records the integration requirements used by the
+[completed fifth native receipt](native_lua_class_factory_callback_fifth_conformance.md).
+The fourth factory callback receipt and standalone SIMD resize/growth/class
+append are predecessors. The pure fifth model is integrated with full stack
+exclusion and unchanged default domains. The native builder now captures and
+checks actual fourth entry/return XMM state and DF on all216 producers, then
+executes fifth growth and both normal returns. Its164 rejecting controls and
+receipt are sealed; final isolated tests pass327 without skips, and old fourth
+exact/default gates remain unchanged. The requirements below retain their original
+implementation-plan wording as a record of the checked joins.
 
 ## Finite scope and physical layout
 
@@ -56,4 +65,11 @@ Merge selected fourth machine ranges with sealed resize/SIMD witnesses, rejectin
 
 Controls need ordinary predecessor caller/cookie/table/record guards plus captured XMM/DF, feature word and other feature-page byte, SIMD copy entry/endpoint/events/XMM2..7, new spare-capacity byte, allocation48/freeold32, stale capture and refreshed-digest retained corruption. Require each to fail for its intended reason. Root's existing quiet isolated native workers avoid Windows handled-access faulthandler noise; use those for finite native tests and CLI exact build/verify/structure.
 
-Standalone growth24+5 and class288+12 are sealed; the pure fifth gate passes586 tests. Remaining order: add optional SIMD machine plumbing with old receipts unchanged; implement the retained capture adapter; run selected actual producer boundaries/controls; then execute and seal all216. No fifth factory or sixth spare proof exists until those new native joins and controls complete.
+Standalone growth24+5 and class288+12 are sealed; the pure fifth gate passes586
+tests. Optional SIMD plumbing and the exact retained capture adapter are now
+implemented. All216 actual fifth cases and164 intended controls passed, with
+first-through-fourth observation hashes/site sets unchanged. The fifth receipt
+is sealed; its final isolated gate passes327 tests without skips and the old
+fourth exact/default gates remain unchanged. Details are in the
+[receipt documentation](native_lua_class_factory_callback_fifth_conformance.md).
+The sixth spare callback remains a separate unproved frontier.

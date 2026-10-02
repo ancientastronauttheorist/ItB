@@ -44,6 +44,7 @@ STACK = spare.construction.STACK
 SOURCE_OBJECT = spare.prefix.SOURCE_OBJECT
 RECEIVER = spare.RECEIVER
 REGISTERS = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
+XMM = tuple(f"xmm{i}" for i in range(8))
 CLASS_ARGUMENT_BELOW_END_SITES = {"0x002eb1c5", "0x002eb1c8", "0x002eb1ca"}
 TRANSFER_PAIRS = (
     ([], []),
@@ -161,12 +162,66 @@ def _direct_response(index, eax):
     )
 
 
+def _simd_state(fixture, class_module):
+    mode = getattr(class_module, "SIMD_FACTORY", False) is True
+    _require(("simd_state" in fixture) == mode, "callback SIMD mode differs")
+    if not mode:
+        return None
+    state = fixture["simd_state"]
+    _require(
+        type(state) is dict
+        and set(state) == {"xmm", "df"}
+        and type(state["df"]) is int
+        and state["df"] == 0
+        and type(state["xmm"]) is dict
+        and set(state["xmm"]) == set(XMM)
+        and all(type(v) is int and 0 <= v < 2**128 for v in state["xmm"].values()),
+        "invalid callback SIMD state",
+    )
+    prototype = fixture["prototype"]
+    _require(
+        all(
+            type(prototype.get(k)) is int
+            for k in (
+                "old_begin",
+                "old_size",
+                "vector_begin",
+                "vector_end",
+                "vector_capacity",
+                "old_base",
+                "new_base",
+                "new_page_count",
+            )
+        )
+        and type(prototype.get("xmm")) is dict
+        and set(prototype["xmm"]) == set(XMM)
+        and all(type(v) is int and 0 <= v < 2**128 for v in prototype["xmm"].values()),
+        "callback SIMD geometry differs",
+    )
+    a = prototype.get("old_begin", 0) - 0x06003800
+    _require(
+        type(prototype.get("old_size")) is int
+        and prototype["old_size"] == 4
+        and a in (0, 7, 31)
+        and prototype.get("vector_begin") == 0x06002800 + a
+        and prototype.get("vector_end") == 0x06002820 + a
+        and prototype.get("vector_capacity") == 0x06002830 + a
+        and prototype.get("old_base") == 0x06003000
+        and prototype.get("new_base") == 0x06002000
+        and prototype.get("new_page_count") == 1
+        and prototype.get("xmm") == state["xmm"],
+        "callback SIMD geometry differs",
+    )
+    return copy.deepcopy(state)
+
+
 def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
     """Closed-form parent frame plus existing independently checked child oracles."""
     regs = dict(fixture["registers"])
     pages = {p: bytearray(v) for p, v in fixture["pages"].items()}
     events, calls, children = [], [], []
     direct_count = 0
+    simd_state = _simd_state(fixture, class_module)
     frame = fixture["entry"] - 4
 
     def frozen():
@@ -217,7 +272,7 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
         regs["esp"] += 4
 
     def child(kind, index, continuation):
-        nonlocal regs, pages
+        nonlocal regs, pages, simd_state
         push(BASE + continuation)
         if kind == "class":
             child_fixture = dict(
@@ -227,6 +282,35 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
                 return_address=BASE + continuation,
             )
             result = class_module._expected(vector, child_fixture)
+            if simd_state is not None:
+                old_begin = child_fixture["old_begin"]
+                snapshot = bytes(
+                    child_fixture["pages"][(old_begin + i) & ~4095][
+                        (old_begin + i) & 4095
+                    ]
+                    for i in range(32)
+                )
+                _require(
+                    type(result.get("xmm")) is dict
+                    and set(result["xmm"]) == set(XMM)
+                    and all(
+                        type(v) is int and 0 <= v < 2**128
+                        for v in result["xmm"].values()
+                    )
+                    and type(result.get("df")) is int
+                    and result["df"] == 0,
+                    "callback SIMD child state differs",
+                )
+                _require(
+                    result["xmm"]
+                    == dict(
+                        simd_state["xmm"],
+                        xmm0=int.from_bytes(snapshot[:16], "little"),
+                        xmm1=int.from_bytes(snapshot[16:], "little"),
+                    ),
+                    "callback SIMD child state differs",
+                )
+                simd_state = dict(xmm=dict(result["xmm"]), df=0)
         else:
             child_vector = (
                 dict(
@@ -313,7 +397,7 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
         push(BASE + 0x2EC1BD)
         from src.observatory.native_lua_class_factory_conformance import _add_flags
 
-        return dict(
+        result = dict(
             pages=frozen(),
             registers=dict(regs),
             events=events,
@@ -322,6 +406,9 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
             flags=_add_flags(frame - 44, 8),
             endpoint=BASE + 0x2EB140,
         )
+        if simd_state is not None:
+            result.update(xmm=dict(simd_state["xmm"]), df=0)
+        return result
     child("class", 0, 0x2EC1BD)
     push(read(regs["esi"] + 32))
     regs["esi"] = read(BASE + layout.SLOTS["lua_rawgeti"])
@@ -401,6 +488,8 @@ def _expected(vector, fixture, *, class_module=spare, class_entry_only=False):
         flags=0x44,
         endpoint=fixture["endpoint"],
     )
+    if simd_state is not None:
+        result.update(xmm=dict(simd_state["xmm"]), df=0)
     _require(
         result["pages"]
         == _model_pages(vector, fixture, result, class_module=class_module),
@@ -637,6 +726,11 @@ def _run_case(
     ids = {r: getattr(x, "UC_X86_REG_" + r.upper()) for r in REGISTERS}
     for r, value in fixture["registers"].items():
         machine.reg_write(ids[r], value)
+    simd_state = _simd_state(fixture, class_module)
+    xmm_ids = {r: getattr(x, "UC_X86_REG_" + r.upper()) for r in XMM}
+    if simd_state is not None:
+        for r, value in simd_state["xmm"].items():
+            machine.reg_write(xmm_ids[r], value)
     machine.reg_write(x.UC_X86_REG_EFLAGS, 0x246)
     allowed = {int(p["rva"], 16) for p in points}
     events, visited, allocations, actual_calls = [], [], [], []
@@ -646,6 +740,17 @@ def _run_case(
     tree_heap_count = class_child["result"].get("tree_heap_count", len(heap_nodes))
     frees = []
     resume = None
+    simd_copy_done = False
+
+    def xmm_values():
+        return {r: machine.reg_read(i) for r, i in xmm_ids.items()}
+
+    def check_simd(expected_xmm):
+        _require(xmm_values() == expected_xmm, "callback SIMD XMM differs")
+        _require(
+            not machine.reg_read(x.UC_X86_REG_EFLAGS) & 0x400,
+            "callback SIMD DF differs",
+        )
 
     def registers():
         return {r: machine.reg_read(i) for r, i in ids.items()}
@@ -657,13 +762,56 @@ def _run_case(
         ]
 
     def on_code(m, address, size, user):
-        nonlocal resume
+        nonlocal resume, simd_copy_done
         if "before_instruction" in extension:
             extension["before_instruction"](m, address, ids, expected, negative)
+        if simd_state is not None:
+            pc = address - BASE
+            if address == BASE + START or pc == 0x2EB140:
+                check_simd(simd_state["xmm"])
+            for site, key, control in (
+                (0x2EB620, "growth_entry", "simd_growth_entry"),
+                (0x2EB680, "resize_entry", "simd_resize_entry"),
+                (0x36E580, "copy_entry", "simd_copy_entry"),
+            ):
+                if pc == site:
+                    if negative == control:
+                        m.reg_write(ids["edx"], m.reg_read(ids["edx"]) ^ 1)
+                    _require(
+                        registers() == class_child["result"][key],
+                        "callback SIMD boundary differs",
+                    )
+                    check_simd(simd_state["xmm"])
+            if pc == 0x2EB6A6:
+                copy_entry = class_child["result"]["copy_entry"]
+                if negative == "simd_copy_return":
+                    m.reg_write(ids["ecx"], m.reg_read(ids["ecx"]) ^ 1)
+                if negative == "simd_copy_flags":
+                    m.reg_write(
+                        x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) ^ 1
+                    )
+                _require(
+                    registers()
+                    == dict(copy_entry, ecx=0, edx=0, esp=copy_entry["esp"] + 4)
+                    and m.reg_read(x.UC_X86_REG_EFLAGS) & 0x8C5 == 0x44,
+                    "callback SIMD copy return differs",
+                )
+                if negative == "simd_copy_xmm":
+                    m.reg_write(xmm_ids["xmm7"], m.reg_read(xmm_ids["xmm7"]) ^ 1)
+                check_simd(class_child["result"]["xmm"])
+                simd_copy_done = True
+            if pc == 0x2EC1BD or (negative == "cookie" and pc == 0x3574D5):
+                check_simd(class_child["result"]["xmm"])
         if negative == "cookie" and address == BASE + 0x3574D5:
             m.emu_stop()
             return
         if address == layout.HEAP_TARGET:
+            if simd_state is not None:
+                check_simd(
+                    class_child["result"]["xmm"]
+                    if simd_copy_done
+                    else simd_state["xmm"]
+                )
             sp = m.reg_read(ids["esp"])
             actual = words(sp, 4)
             if actual[0] == BASE + 0x389172:
@@ -732,6 +880,12 @@ def _run_case(
             m.emu_stop()
             return
         if address in layout.TARGETS.values():
+            if simd_state is not None:
+                check_simd(
+                    class_child["result"]["xmm"]
+                    if simd_copy_done
+                    else simd_state["xmm"]
+                )
             _require(
                 len(actual_calls) < len(expected["calls"]), "extra callback API call"
             )
@@ -761,6 +915,17 @@ def _run_case(
             m.emu_stop()
             return
         if address == fixture["endpoint"]:
+            if simd_state is not None:
+                if negative == "simd_xmm":
+                    m.reg_write(xmm_ids["xmm7"], m.reg_read(xmm_ids["xmm7"]) ^ 1)
+                if negative == "simd_df":
+                    m.reg_write(
+                        x.UC_X86_REG_EFLAGS, m.reg_read(x.UC_X86_REG_EFLAGS) | 0x400
+                    )
+                if negative == "simd_spare":
+                    at = fixture["prototype"]["vector_begin"] + 40
+                    m.mem_write(at, bytes([m.mem_read(at, 1)[0] ^ 1]))
+                check_simd(expected["xmm"])
             corrupt = {
                 "ancestor": fixture["entry"] + 8,
                 "record": fixture["prototype"]["stack"] + 28,
@@ -789,15 +954,38 @@ def _run_case(
             )
 
     def on_memory(m, access, address, width, value, user):
-        _require(width in (1, 2, 4), "unexpected callback memory width")
         writing = access == uc.UC_MEM_WRITE
+        if width == 8 and simd_state is not None:
+            pc = m.reg_read(x.UC_X86_REG_EIP) - BASE
+            old_begin, fresh = (
+                fixture["prototype"]["old_begin"],
+                fixture["prototype"]["vector_begin"],
+            )
+            allowed_wide = {
+                0x36EA60: (False, (old_begin, old_begin + 8)),
+                0x36EA64: (False, (old_begin + 16, old_begin + 24)),
+                0x36EA69: (True, (fresh, fresh + 8)),
+                0x36EA6D: (True, (fresh + 16, fresh + 24)),
+            }
+            _require(
+                pc in allowed_wide
+                and writing == allowed_wide[pc][0]
+                and address in allowed_wide[pc][1],
+                "callback SIMD wide access differs",
+            )
+        else:
+            _require(width in (1, 2, 4), "unexpected callback memory width")
         events.append(
             dict(
                 access="write" if writing else "read",
                 address=address,
                 width=width,
                 value=(
-                    value
+                    (
+                        value & ((1 << (8 * width)) - 1)
+                        if simd_state is not None
+                        else value
+                    )
                     if writing
                     else int.from_bytes(m.mem_read(address, width), "little")
                 ),
@@ -924,6 +1112,8 @@ def _run_case(
     )
     if class_module is not spare:
         observation["frees"] = frees
+    if simd_state is not None:
+        observation.update(xmm=xmm_values(), df=0)
     return observation
 
 
