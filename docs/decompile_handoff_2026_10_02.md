@@ -9,6 +9,21 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Backward overlapping copy validated
+
+The [small backward overlap law](native_movement_small_backward_copy_semantics.md)
+passes8216independent checks without skips in56.13seconds, source GO.
+Source67548a34a8f6e2c6fa42bf6ec46c603aaf7283643b6798f39dc573c131b74322;
+test1e560a03f05fb89e5a14e9f4366ad1ddb7801e44ae8ede47e8172954c5aae752.
+All1860 native full-state cases agree. All465 rightward count/shift pairs and
+sixteen alignments tested; finalEDX=N is bound separately from forward ABI.
+Forwardcheckpoint294f0fb3 pushed; record176e734b pushed. Memmove36E580 source
+cfd10fbf/sourceGO/native1984PASS/testca51edee4966 gate running serially.
+Inlineerase8410 source52c24867/native1272PASS, SIMDreview/tests; Fifth authors
+self-substring80D0 usingactualerase8410child. All13protected unchanged16:33UTC.
+Broader native receipts/accounting remain unchanged.
+
+
 ### Overlapping forward copy validated
 
 The [forward copy including overlap](native_movement_small_forward_copy_semantics.md)

@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [small backward overlap copy](native_movement_small_backward_copy_semantics.md)
+has8,216 passing independent checks and source review GO. Every scalar
+rightward overlap pair at counts2..31 closes descending accesses, exact bytes,
+ABI and defined flags. All1,860 complete executable cases agree. Counts32 and
+above, SIMD branches and broader native receipt sealing remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [small forward copy including overlap](native_movement_small_forward_copy_semantics.md)
 has4,966 passing independent checks and source review GO. Zero through31 bytes
 close disjoint, self and leftward overlap with complete actual reads, original
