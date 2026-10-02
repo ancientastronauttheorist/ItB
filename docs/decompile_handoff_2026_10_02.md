@@ -9,6 +9,23 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### General small record append validated
+
+The [external-source small record append](native_movement_effect_record_small_append_semantics.md)
+passes670independent checks without skips in251.58seconds, sourceGO.
+Source42ffd31bae115454ae652ff61e09ad1aa1ad8580ea0082a3f7bf250f9a4d8e0d;
+test43f263c1031535f324cfa58566a86d8241ee924135358f7e41d651d40a1574dd.
+Seven full-state native cases0/1/2/3/17/511 and oldcount2full16 compatibilityPASS.
+Full record15/path15/7allocator/10scalar closed; width1/2/4 replay,
+complete page/prefix/terminal joins, trusted nested metadata scope explicit.
+Copycheckpoint69a16765 pushed; assignment28ba6c69 pushed.
+Private normalMove07dea405 and normalCharge44bbf67db18cd260365c27c9b9ad825ab93992b281f3cb5ddc78a3e01246d858
+both sourceGO/five actual full-state probesPASS; independent suites authored
+by SIMD and Fifth respectively. Charge count2..384 is four-buffer12KiB
+artifact geometry, not a game limit; original capacity extends through511.
+No active execution gate. Broader native receipts/accounting remain unchanged.
+
+
 ### General small record copy validated
 
 The [general empty-string small-path record copy](native_movement_effect_record_small_copy_semantics.md)

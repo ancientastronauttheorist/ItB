@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [external-source small-path record append](native_movement_effect_record_small_append_semantics.md)
+has670passing independent checks and source review GO. Actual counts zero
+through511 compose full record/path laws with complete byte replay and
+checkpoint joins, preserving source and advancing receiver end. Seven complete
+executable probes and prior count-two compatibility agree. Growth, internal
+source, nonempty strings, failure, ownership and gameplay remain separate gates.
+Whole-program accounting is unchanged.
+
+
 The [general small-path empty-string record copy](native_movement_effect_record_small_copy_semantics.md)
 has881passing independent checks and source review GO. Counts zero through511
 close complete path/helper schemas and full byte/checkpoint joins; zero needs
