@@ -48,7 +48,9 @@ stack adjacency/wrap, actual-Q adaptation and incoming AF variation. The test
 fixture avoids trying to write beyond32-bit memory before the model can reject
 an invalid stack. Independent source review is GO.
 
-This is logical evidence derived from three pinned static boundaries. Native
-execution and the continuous enclosing callback join are next. Runtime global
+This logical evidence derives from three pinned static boundaries. The
+[native dispatcher](native_assertion_helper_parent_dispatch_conformance.md)
+now passes its full2,352-case build; the continuous enclosing callback join
+is next. Runtime global
 values, opaque child behavior, CRT identity, dialog/abort/trap, unwind, hardware,
 ownership and whole-program accounting remain unproved.

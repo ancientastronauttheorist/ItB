@@ -60,9 +60,14 @@ The [logical assertion dispatch](native_assertion_helper_parent_dispatch_semanti
 now specifies the exact mode3 first getter and conditional second getter,
 alternate/normal child call entries, original-caller-return argument, full
 frames/pages/accesses and independent defined-flag laws. Its254 tests pass
-without skips and source review is GO. Native dispatcher replay and continuous
-enclosing assertion-prefix composition remain next; opaque child behavior
-and ownership/accounting are not inferred.
+without skips and source review is GO. The
+[native dispatcher](native_assertion_helper_parent_dispatch_conformance.md)
+now passes2,352 cases and19 controls across all three bodies in one machine,
+including384 alternate calls and336 conditional second getters. Independent
+published-receipt review is GO; all99 native conformance and254 logical tests
+pass without skips,353 combined including exact CLI rebuild and verification.
+Continuous enclosing assertion-prefix composition remains next; opaque child
+behavior and ownership/accounting are not inferred.
 
 ## October 1 checkpoint
 

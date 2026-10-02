@@ -189,7 +189,15 @@ checks all eight GPRs/defined flags, exact mode3/getter frames/counts/arguments,
 full ordered accesses with RVAs and complete pages. Its19 controls include
 15 machine mutations and four event/path-record mutations. Fixture override
 was removed, and source errors normalize to the declared ConformanceError.
-The harness has not imported or executed yet; native test drafts are private.
+The harness is now integrated and its full native build passes. Published
+canonical SHA `88c1e3a7c73d276650c41cd5f356d7bc72c46c410e35ef84f50aac3ad0d3c5ed`,
+file SHA `5f80732d1f6fc73cbf89f19a832a2eb44405335d3dbc76f52b6f46130d7e5a20`,
+288,103 bytes. All2352 cases and19 controls pass; alternate384/normal1968,
+second-getter336,39 executed sites/71,184 instructions. All99 native
+conformance and254 logical tests pass without skips,353 combined, including
+exact CLI rebuild/verify/structure. Independent final source/test and
+published-receipt reviews are GO; all13 protected hashes remain unchanged. See
+[native assertion dispatch](native_assertion_helper_parent_dispatch_conformance.md).
 
 After standalone dispatch closure, join the actual callback assertion prefix
 in the same Unicorn instance using a new composed runner. Reuse its fixture,
