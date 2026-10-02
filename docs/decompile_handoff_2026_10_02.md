@@ -9,6 +9,24 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Inline substring copy validated
+
+The [inline-string substring-copy law](native_movement_inline_string_copy_semantics.md)
+passes1017independent checks without skips in25.05seconds, sourceGO.
+Source4e679263cb3b08bb69a4234c905a467ea490632df59db011ec13027a366033b3;
+test05ab962053183c4022ea68b57664c5d88a755264e99b9422d46c8715843b40fe.
+All128full-state nativecases/sourceLength0..15/offset0endinterior/request0/3/MAX
+PASS. Full14/positivechild11/allbytes/access/terminal/prefix joins; canonical
+childinstruction labels/trace length trusted explicitly. Assignmentdf774ee0
+andmemcpy79fc5a49 pushed; noactiveexecutiongate.
+RootrecordinlinecopyV2 55608aa46564d2be682494ccfb0a93cf2490b974f191e1dc44d9758defa623a7
+sourcefreeze/native7fullcasesPASS; SIMD independentlyreview/tests.
+EightinlineL0..15 +pathN0..511, complete16 (old15 plus8fieldpackets14),
+manualfieldprefix/suffix/checkpointpages/ABI/nested11 actualinput joins.
+SourceEDXcarry corrected onlynewmodel; oldpublicempty laws unchanged.
+Broader native corpus/accounting remain open.
+
+
 ### External inline string assignment validated
 
 The [external inline-string assignment](native_movement_inline_string_assign_semantics.md)

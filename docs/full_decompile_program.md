@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [inline-string substring-copy law](native_movement_inline_string_copy_semantics.md)
+has1,017passing independent checks and source review GO. Lengths zero through15
+and unsigned clamped requests predict complete bytes, scalar joins, ABI and
+padding preservation. All128complete executable cases agree. Self-copy, heap
+strings, growth, invalid offsets, ownership and gameplay remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [external inline-string assignment law](native_movement_inline_string_assign_semantics.md)
 has2,306passing independent checks and source review GO. Counts zero through15
 close the full scalar child and preserve caller/string padding, with actual
