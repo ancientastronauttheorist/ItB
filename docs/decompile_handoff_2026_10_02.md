@@ -406,6 +406,16 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The public actual-page scalar clone law now passes353 independent tests with
+source review GO. Its V2 domain requires conservative stack end and a positive
+installed endpoint outside the scalar body and touched data, while permitting
+the actual parent continuation0049A921. A test assertion was corrected for
+adjacent source/destination spans; full packets already matched. Root clone2
+private gates pass48 pure recipes, nine native smokes/all59 controls and the
+full48 build, canonical `1cddf384c45fb50a60752656acd2560a7e243dd20f0d68b8a963a4a7bb3a739b`.
+Counts:6528instructions/3984events/48 supplied allocations/768 copied bytes.
+Independent native tests are pending; no native ownership/gameplay promotion.
+
 Latest copy checkpoint: the public empty80D0 actual-page law and independent
 tests pass **364 tests**, no skips, source review GO. See
 [the specification](native_movement_empty_string_copy_semantics.md). Private

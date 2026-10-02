@@ -1499,6 +1499,11 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [actual-page two-entry scalar copy](native_movement_path_scalar_clone2_semantics.md)
+now has 353 independent pure checks and source review GO. Its four DWORD
+transfers preserve the source, full XMM state and all unrelated pages. Allocation
+and native parent composition remain a separate gate.
+
 The [disjoint empty-string actual-page law](native_movement_empty_string_copy_semantics.md)
 now has 364 independent pure checks and source review GO. It predicts the
 selected 33-instruction/17-access path, all GPR/XMM/page effects, five cleared
