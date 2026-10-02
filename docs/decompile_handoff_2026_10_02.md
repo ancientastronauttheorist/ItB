@@ -285,7 +285,24 @@ equations are `.local_decompile/oct2/growth6_to9_recon.txt`. Prefix8 events
 install resizeR=G-20 with request9 and CMP9vs7 flags0/8D5; child104 and suffix4
 give116 events, protectedstack[G-96,G+8). The next machine must capture actual
 resizeentry/return and continue without reseeding. No growth/class/seventh
-callback native proof yet.
+callback native proof yet at that source-only checkpoint.
+
+The actual-page resize adapter was pushed as
+`0a438b553f7aef12bb17cd7fbb1e5586d8bdf712`; local/remote HEAD matched and pull
+was current before continuous growth integration. The
+[continuous growth6-to9](native_simd_vector_growth6_to9_conformance.md) now seals
+all48 cases and43 controls,39 machine mutations and4 injected records.
+Canonical `23eeb7708d498a7f0187b6031835c07d62e6ec99e27326734460808edaceaf25`,
+file `777279d377fb0cfe9447076aac11bbe230f85d4e5fcc8e0cb11595e11fe155e3`,
+63203bytes/11pins/289loaded/754bytes/217executed/11280instructions/5568events.
+All107 focused tests pass without skips in302.90seconds, including16 isolated
+actual captures, complete imported ABI packets, intended controls, exact
+rebuild and three CLI commands. Independent source/CLI and published-receipt
+reviews are GO. The next class join needs an actual-page growth law with
+arbitrary unused[G+4] and return006eb205; no class/seventh-callback proof yet.
+Before broadening that law, audit the actual resize model's incoming flags:
+arbitrary DF-clear words may include special execution-control flags. Narrow
+the declared ordinary flags domain rather than claiming their preservation.
 
 ## Environment and protected work
 

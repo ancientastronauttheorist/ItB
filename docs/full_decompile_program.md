@@ -88,8 +88,13 @@ reviews are GO. The [actual-page resize law](native_simd_vector_resize6_to9_sema
 also passes87 independent pure checks with actual caller/header/frame/flags,
 complete pages and strict helper packets, including the signed-address SUB
 overflow edge. Source review is GO; its broader logical domain does not enlarge
-the finite native receipt. Growth6-to9/class6-to7 joins remain open, and existing fixed32
-receipts stay unchanged. Installed48 CLI rebuild/verify/structure pass;
+the finite native receipt. The [continuous growth6-to9](native_simd_vector_growth6_to9_conformance.md)
+now passes48 native cases and43 intended controls. It captures actual resize
+entry/return and imported heap requests in one machine, with no fixture
+transplant or native helper replay. All107 focused tests pass without skips,
+including exact CLI rebuild/verify/structure; independent final reviews are GO.
+Class6-to7 remains open, and existing fixed32 receipts stay unchanged.
+Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
 ## October 1 checkpoint
