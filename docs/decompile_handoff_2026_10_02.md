@@ -7,6 +7,25 @@ At the deadline, finish active validation safely, preserve a reviewable
 handoff, push/check the branch and protected work, then pause the heartbeat.
 The full game and whole-program accounting remain unfinished.
 
+## Latest normal AddCharge pure checkpoint
+
+The [selected normal AddCharge law](native_movement_addcharge_normal_semantics.md)
+passes369independent tests without skips in287.23seconds, source review GO.
+SourceV2 SHA22d90ddaaf4887a5e3977ab9ac1292a8201570a9723353a4786097fc65db2d67,
+independenttest1c2cbb3d1444f26eeff0ebf297f9d27a80e4ebd399045b0d33a9ce239bf72f73.
+The full14packet predicts2303instructions1426accesses6primary8import states,
+4suppliedallocation/free successes, rawparameter/XMM0bits and latestrecordmode2.
+Inner selected append source ordering is explicit; valid nested laws remain
+trusted. Two actualcontinuous nativeprobes match allstate/pages/events/trace.
+Published native corpus, AL-zero wrapper arms, othercounts, ownership and
+pawnmovement are separate gates.
+
+Normal pure checkpoint0b7367f6b42dfaa48f03717d000c96b4a1b9da57 is pushed and
+remote/protected verified. Rootnormal nativeV5 SHA562a65238eeeb9db1b2c56c49b0134f6d85582ed3e94bb1c3e62b283faab818d
+under movement_addmove_normal_native_draft is building its full48recipes and
+120controls serially. SIMD reviews/tests it independently; Fifth authors
+AddCharge native based on that closedschema template. No fullgame claim.
+
 ## Latest normal AddMove pure checkpoint
 
 The [selected normal AddMove law](native_movement_addmove_normal_semantics.md)

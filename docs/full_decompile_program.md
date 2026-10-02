@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [selected normal count-two AddCharge law](native_movement_addcharge_normal_semantics.md)
+has369passing independent tests and source review GO. Its outer path clone,
+normal AddMove join, mode2 write and original-path free predict complete state
+under four supplied allocation/free successes. General counts, AL-zero arms,
+native finite sealing, ownership and gameplay remain separate gates; the
+whole-program denominator and accounting are unchanged.
+
+
 The [selected normal count-two AddMove law](native_movement_addmove_normal_semantics.md)
 has446distinct independent checks validated and source review GO. It composes
 record construction/assignment/copy/append, two destructors, caller-path free
