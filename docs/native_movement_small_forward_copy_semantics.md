@@ -18,7 +18,7 @@ all nonvolatile registers and eight XMM values preserve.
 
 Final EAX is destination, ECX zero, EDX the last DWORD value when any DWORD
 copies occur (otherwise count), and ESP advances four. Defined final flags
-are44, with mask8C5 for no leftover bytes or8D5 after a byte loop; DF is zero.
+are 0x44, with mask 0x8C5 for no leftover bytes or8D5 after a byte loop; DF is zero.
 Accesses number `9 + 2*q + 2*r`. Positive instruction count is
 `24 + 6*q + 6*r + 2*(r!=0) + 2*(destination>source)`; zero uses
 `18 + 2*(destination>source)`. CPU feature globals and larger SIMD branches

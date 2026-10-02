@@ -16,7 +16,7 @@ destination, including legitimate source-region changes under overlap.
 
 Final EAX is destination, ECX zero, EDX last copied DWORD or count when there
 is no DWORD, ESP advances four, and all nonvolatile GPRs/eight XMM values
-preserve. Defined flags are44 under8C5 without a byte tail or8D5 with one;
+preserve. Defined flags are 0x44 under 0x8C5 without a byte tail or8D5 with one;
 DF0 preserves. Complete pages, ordered reads/writes, caller saves and return,
 literal trace, original snapshot and endpoint are bound. No CPU feature
 reads, imports, SIMD, STD or CLD execute on this selected arm.

@@ -15,12 +15,12 @@ Counted bytes can contain NUL; source terminators are not a premise. Every
 untouched object/caller/page byte preserves.
 
 Truncation executes23 instructions/13 accesses and returns ECX=offset,
-EDX=requested, flags85/mask8D5. No-op executes21/10 and returns ECX=offset,
-EDX=0, flags44/mask8C5. Positive shift executes42 owner instructions plus the
+EDX=requested, flags 0x85/mask 0x8D5. No-op executes21/10 and returns ECX=offset,
+EDX=0, flags 0x44/mask 0x8C5. Positive shift executes42 owner instructions plus the
 selected memmove trace; accesses are `29+2*q+2*r`. Its child entry flags come
-from actual subtraction `(old_length-requested)-offset`, with complete mask8D5.
+from actual subtraction `(old_length-requested)-offset`, with complete mask 0x8D5.
 Final ECX is zero, EDX is last copied DWORD or trailing count if no DWORD,
-flags85/mask8D5. All paths return the object in EAX, advance ESP twelve,
+flags 0x85/mask 0x8D5. All paths return the object in EAX, advance ESP twelve,
 preserve nonvolatile GPRs/eight XMM values and preserve DF0.
 
 The full child eleven-field schema, actual-input geometry, complete ordered

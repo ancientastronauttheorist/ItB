@@ -14,7 +14,7 @@ Separate direct final pages bind stack saves and exact original-source blit.
 
 Final EAX is destination, ECX zero, EDX remains the original count, and ESP
 advances four. All nonvolatile registers and eight XMM values preserve. Final
-defined flags are44, mask8C5 for no byte tail or8D5 after a byte tail; DF is
+defined flags are 0x44, mask 0x8C5 for no byte tail or8D5 after a byte tail; DF is
 zero. Instructions number `24+7*q+6*r`, accesses `9+2*q+2*r`. Sparse body
 identity, all selected literal instruction points, ABI and caller bytes are
 pinned.

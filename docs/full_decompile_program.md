@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [actual memmove backward scalar entry](native_movement_memmove_backward_semantics.md)
+has 8,216 passing independent checks and source review GO. Every rightward
+count/shift pair at counts2..31 closes complete state and descending overlap
+reads under the separately pinned36E580 body. All1,860 complete executable
+cases agree. Larger/SIMD paths and broader native receipt sealing remain
+separate gates; whole-program accounting is unchanged.
+
+
 The [inline string erasure law](native_movement_inline_string_erase_semantics.md)
 has2,326 passing independent checks and source review GO. Complete truncation,
 no-op and interior-shift branches bind actual unsigned requests, full child

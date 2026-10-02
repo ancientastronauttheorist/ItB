@@ -9,6 +9,22 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Actual memmove backward entry validated
+
+The [small backward memmove law](native_movement_memmove_backward_semantics.md)
+passes 8,216 independent checks without skips in 48.05 seconds, source GO.
+Source fb3d14631725c88ccb0861f527b50fb8e775a8c7a6cb00cc20c44af2039a6c2c;
+test 30da52526ec72527c3bea50d4e307e074f56033ad0317cbe60e8e78f39df601d.
+All 1,860 complete native cases agree. Both bounded memmove arms now have
+separate source identities, literal traces and complete packet laws.
+Erase checkpoint395706ac and memmove forward1161df89 pushed. Self80D0
+source095e98f2 is sourceGO/native1272PASS; SIMD independent tests in progress.
+Fifth independently reconnoiters missing in-buffer assignment7FD0 branch:
+owner prefix has11 accesses (register comparisons do not read capacity again),
+not initial tentative13; deep frameG-96 and childreturn40802F identified.
+No execution gate active. Broader native receipts/accounting remain open.
+
+
 ### Inline erasure validated
 
 The [inline erase law](native_movement_inline_string_erase_semantics.md) passes
