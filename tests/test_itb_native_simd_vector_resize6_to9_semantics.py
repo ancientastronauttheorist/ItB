@@ -469,7 +469,7 @@ def actual_input(
     source=None,
     destination=None,
     return_address=0x006EB66E,
-    entry_flags=0,
+    entry_flags=0x2,
 ):
     base = c._fixture(dict(alignment=alignment, profile=profile))
     pages = copy.deepcopy(base["pages"])
@@ -612,14 +612,14 @@ def test_all_profiles_actual_growth_continuation_independent_complete_law(alignm
             profile,
             header=0x10000104,
             entry=0x30001000 + alignment - 20,
-            entry_flags=0,
+            entry_flags=0x2,
         )
         before = copy.deepcopy(packet)
         wanted = independent(**packet)
         result = m.apply(**packet)
         check_result(packet, result, wanted)
         assert (
-            result["allocation_entry"]["flags"] == 0
+            result["allocation_entry"]["flags"] == 0x2
             and result["allocation_entry"]["flag_mask"] == 0xFFFFFFFF
         )
         assert result["endpoint"] == 0x006EB66E
@@ -630,7 +630,7 @@ def test_all_profiles_actual_growth_continuation_independent_complete_law(alignm
         assert packet == before
 
 
-@pytest.mark.parametrize("flags", (0, 4, 0x246, 0x256, 0xFFFFFBFF))
+@pytest.mark.parametrize("flags", (0x2, 0x6, 0x202, 0x246, 0x256, 0xAD7))
 def test_actual_entry_flags_are_preserved_as_premises_then_independently_replaced(
     flags,
 ):
@@ -926,3 +926,33 @@ def test_prior_native_evidence_pins_are_preserved_and_actual_adapter_is_distinct
     for key, pin in c.SOURCE_PINS.items():
         assert m.SOURCE_PINS[key] == pin
     assert m.ANALYSIS_KIND == "pe_native_simd_vector_resize6_to9_semantics"
+
+
+@pytest.mark.parametrize(
+    "bit", tuple(bit for bit in range(32) if not (0xAD7 & (1 << bit)))
+)
+def test_actual_flags_reject_every_nonordinary_reserved_or_control_bit(bit):
+    # Status0x8D5, IF0x200 and fixed bit1 are the entire admitted raw domain.
+    # This covers TF, DF, IOPL, NT, RF, VM, AC, VIF, VIP, ID and reserved bits.
+    packet = actual_input(header=0x10000104, entry_flags=0x2 | (1 << bit))
+    before = copy.deepcopy(packet)
+    with pytest.raises(m.Resize6To9Error):
+        m.apply(**packet)
+    assert packet == before
+
+
+@pytest.mark.parametrize("flags", (0, 4, 0x200, 0x8D5))
+def test_actual_full_flags_require_fixed_bit1_and_reject_abstract_status_words(flags):
+    packet = actual_input(header=0x10000104, entry_flags=flags)
+    before = copy.deepcopy(packet)
+    with pytest.raises(m.Resize6To9Error):
+        m.apply(**packet)
+    assert packet == before
+
+
+def test_former_arbitrary_df_clear_uint32_flags_are_outside_ordinary_domain():
+    packet = actual_input(header=0x10000104, entry_flags=0xFFFFFBFF)
+    before = copy.deepcopy(packet)
+    with pytest.raises(m.Resize6To9Error):
+        m.apply(**packet)
+    assert packet == before

@@ -85,7 +85,7 @@ Complete actual allocation/copy/free-entry captures and all4992 memory events
 are checked. All115 focused tests pass without skips, including exact CLI
 rebuild/verify/structure; independent production-source/CLI and published-receipt
 reviews are GO. The [actual-page resize law](native_simd_vector_resize6_to9_semantics.md)
-also passes87 independent pure checks with actual caller/header/frame/flags,
+also passes117 independent pure checks with actual caller/header/frame/flags,
 complete pages and strict helper packets, including the signed-address SUB
 overflow edge. Source review is GO; its broader logical domain does not enlarge
 the finite native receipt. The [continuous growth6-to9](native_simd_vector_growth6_to9_conformance.md)

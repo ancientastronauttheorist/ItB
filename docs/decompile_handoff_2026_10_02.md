@@ -303,6 +303,10 @@ arbitrary unused[G+4] and return006eb205; no class/seventh-callback proof yet.
 Before broadening that law, audit the actual resize model's incoming flags:
 arbitrary DF-clear words may include special execution-control flags. Narrow
 the declared ordinary flags domain rather than claiming their preservation.
+That audit is now complete: onlymaskAD7 with fixedbit1 set is admitted, DF0
+checked separately. All117 independent actual-page tests pass without skips;
+all61 focused growth logical-composition regressions pass. Independent source
+review is GO. Native202/246 stay admitted; old receipts remain unchanged.
 
 ## Environment and protected work
 

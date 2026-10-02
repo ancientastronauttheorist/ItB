@@ -3,7 +3,7 @@
 The pure adapter consumes the caller's complete installed pages, eight GPRs,
 eight XMM registers, actual ESP and header address, source/destination,
 installed return address, and incoming flags. It constructs no fixture and
-repairs no caller words or header. Its independent tests pass 87 checks without
+repairs no caller words or header. Its independent tests pass 117 checks without
 skips; independent production-source review is GO. This is logical evidence.
 The [finite native resize](native_simd_vector_resize6_to9_conformance.md) retains
 its original 48-case domain and receipt unchanged.
@@ -12,7 +12,7 @@ its original 48-case domain and receipt unchanged.
 
 `apply(*, pages, registers, xmm, source, destination, object_address,
 return_address, entry_flags)` requires exact typed register/page schemas,
-immutable complete pages, DF clear, header `[O,O+48,O+48]`, ECX equal to the
+immutable complete pages, ordinary incoming flags, header `[O,O+48,O+48]`, ECX equal to the
 header address, and installed caller words `[return,9]`. Source O is positive,
 destination D is greater than O+48, and the complete destination capacity72,
 source48 and header12 extents are mapped and disjoint. Their exclusive ends
@@ -45,8 +45,16 @@ whole-program accounting are outside this law.
 
 ## Actual flags and growth continuation
 
-The owner prologue preserves incoming flags into allocation entry. The caller
-may supply actual DF-clear flags rather than the standalone fixture's `0x246`.
+Incoming flags must be a typed uint32 containing only mask `0xad7`: six
+arithmetic status bits, IF and fixed bit one, which must be set. DF and every
+other execution-control/system/reserved bit are excluded. Abstract words zero
+and four are not actual incoming EFLAGS; masked arithmetic boundary values may
+still be zero or four. Within this selected ordinary domain, the owner prologue
+preserves incoming flags into allocation entry. The fixed native words `0x246`
+and growth's `0x202` remain admitted; their receipts are unchanged.
+The domain excludes resume/single-step/alignment and other system modes whose
+behavior this adapter does not model. Intel documents resume-flag clearing
+during instruction execution ([Intel instruction/system manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)).
 Copy-entry flags derive from SUB(O+48,O). When O=`0x7ffffff0`, the end crosses
 the signed boundary and the subtraction defines `0x804` under mask `0x8d5`.
 The adapter computes this overflow; it does not hardcode the ordinary low-address
@@ -61,6 +69,7 @@ the uint32 extent boundary, malformed schemas/aliases/premises, source pins,
 coordinated child corruption and attempted fixture creation. They use handwritten
 equations rather than production `apply` or `_expected` as expected results.
 
-The next native proof must validate and capture the growth machine's actual
-resize entry/return, then continue in that same machine. This adapter alone
+The [native growth proof](native_simd_vector_growth6_to9_conformance.md) validates
+and captures the growth machine's actual resize entry/return, then continues in
+that same machine. This adapter alone
 does not execute the growth owner, class append, or another callback.

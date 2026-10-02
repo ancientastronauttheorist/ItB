@@ -19,6 +19,7 @@ SOURCE_PINS = {
     ),
 }
 BASE, U32 = primitive.BASE, 0xFFFFFFFF
+ENTRY_FLAGS_MASK = 0xAD7  # Arithmetic status, IF and the required fixed bit one.
 STACK, ERROR = primitive.STACK, primitive.ERROR
 FEATURE_PAGE, FEATURE = primitive.FEATURE_PAGE, primitive.FEATURE
 HEAP_GLOBAL, ALLOC_IAT, FREE_IAT, HEAP, IMPORT = (
@@ -114,6 +115,10 @@ def _validate(
     )
     _word(entry_flags, "entry flags")
     _require(entry_flags & 0x400 == 0, "actual resize entry DF differs")
+    _require(
+        entry_flags & ~ENTRY_FLAGS_MASK == 0 and entry_flags & 2 == 2,
+        "actual resize entry flags outside ordinary domain",
+    )
     _require(type(pages) is dict and bool(pages), "invalid actual resize pages schema")
     for page, data in pages.items():
         _word(page, "page address")
