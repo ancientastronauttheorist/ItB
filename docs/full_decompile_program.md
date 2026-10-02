@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [inline-string movement record-copy law](native_movement_effect_record_inline_copy_semantics.md)
+has 780 passing independent checks and source review GO. Eight counted inline
+strings through15 bytes compose with path counts through511, closing full
+field packets, scalar joins, EDX carry and complete checkpoint pages. Seven
+mixed complete executable probes and seven all-empty compatibility cases agree.
+Heap strings, growth, failures, ownership and gameplay remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [inline-string substring-copy law](native_movement_inline_string_copy_semantics.md)
 has1,017passing independent checks and source review GO. Lengths zero through15
 and unsigned clamped requests predict complete bytes, scalar joins, ABI and

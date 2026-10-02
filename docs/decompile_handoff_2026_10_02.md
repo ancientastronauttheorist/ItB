@@ -9,6 +9,23 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### General inline-string record copy validated
+
+Checkpoint176e734b pushed. The [inline-string record-copy law](native_movement_effect_record_inline_copy_semantics.md)
+passes 780 independent checks without skips in 106.78 seconds, source GO.
+Source V3 00d84eeaf36010a6eae6a94488d9706f9d4c604d13b560b5cf7a6d2b8e6d1196;
+test a794f74d81f1cae6c528f562cb02e1709f953ed6e87fbb9079fb0e87a24c0ad9.
+Eight independent lengths0..15 and path counts0..511 predict full16,
+eight string14 packets, complete path15 and every full checkpoint.
+Seven mixed native cases agree; V3 only adds an upfront code-page guard to
+native-validated V2. Seven V3 all-empty common15 compatibility cases PASS.
+Backward-copy67548 has1860native full-state PASS/source GO; SIMD tests.
+Root forward-copyV2 8f3ab50576118c3a17be8e1bc0d1b2e4de2790b74480322a47644fdc767bc01c
+has1984native overlap full-state PASS (unchanged V1 semantics), Fifth reviews/tests.
+V2 preserves prior disjoint stack/return-gap geometry after independent feedback.
+No execution gate active. Broader native receipts/accounting remain open.
+
+
 ### Inline substring copy validated
 
 The [inline-string substring-copy law](native_movement_inline_string_copy_semantics.md)
