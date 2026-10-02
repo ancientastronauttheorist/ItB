@@ -406,6 +406,21 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [inline record destruction law](native_movement_effect_record_destroy_semantics.md)
+is sourceGO and has501 independent checks validated (initial500PASS/1fixtureFAIL
+20.93s; padding testmodifieddeclarednulltriple, all2affectedchecksPASS2.81s after
+isolatedtestfix). ModelV2 1dd3b2a74a8dbf48859769f8b0293ca06d301cdce51b3ae39adae89db77fc09c
+narrows SARmaskC5, full15/null80-46/owned123-74/free8/import39/fullpages agree.
+Append pushedcd80a67edca6e268650a3ce9e65cd6db9eb7ce0c; remote/protected verified.
+RootnormalAddMove private modelV3 cfe3829678369598a0df6520c64aae32b38104e697b682622dbfe09987e21478
+matches2nativecontinuousprobes2089instructions1293events16primaryboundaries/
+6imports/fullpages/GPRXMM/parameter. Threealloc16 andthreeHeapFree1 supplied;
+noownership/gameplayclaim. Independentnormalpuretests in progress.
+Recordcopy2native f23728ab sourceprovisionalGO/all48purepreflightsPASS;
+root9smokes/all90controls active while independentnative tests are authored.
+No normalAddMove/AddCharge/gameplay sealing yet.
+
+
 The [no-growth external-source append law](native_movement_effect_record_append2_semantics.md)
 is sourceGO and has370 independent checks validated: initial368PASS/1FAIL53.68s
 had a positive fixtureOFFFFFFEF inside GFFFFFFF7's protectedstack. Production

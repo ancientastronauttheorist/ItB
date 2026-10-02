@@ -1499,6 +1499,13 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [inline movement record destructor](native_movement_effect_record_destroy_semantics.md)
+has501 independent checks validated and source review GO. Null and two-entry
+path forms preserve all unrelated bytes; the full free packet is compared
+before return transport. The successful free response is supplied, and actual
+ownership, normal movement composition and gameplay remain open.
+
+
 The [existing-capacity external-source record append](native_movement_effect_record_append2_semantics.md)
 has370 independent checks validated and source review GO. It copies one record,
 advances only the vector end and preserves its rewritten caller word. A positive
