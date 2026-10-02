@@ -56,6 +56,14 @@ Independent source/test and published-receipt reviews are GO. Exceptional behavi
 heap ownership and whole-program accounting remain open. The full game is
 unfinished.
 
+The [logical assertion dispatch](native_assertion_helper_parent_dispatch_semantics.md)
+now specifies the exact mode3 first getter and conditional second getter,
+alternate/normal child call entries, original-caller-return argument, full
+frames/pages/accesses and independent defined-flag laws. Its254 tests pass
+without skips and source review is GO. Native dispatcher replay and continuous
+enclosing assertion-prefix composition remain next; opaque child behavior
+and ownership/accounting are not inferred.
+
 ## October 1 checkpoint
 
 The [October 1 handoff](decompile_handoff_2026_10_01.md) records the actual

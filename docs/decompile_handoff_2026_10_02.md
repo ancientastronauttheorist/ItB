@@ -156,9 +156,11 @@ actual checks, sealed-receipt/source mutations and exact CLI rebuild,
 verification and structure verification. Independent final source/test and
 published-receipt reviews are GO. Shared fifth transport's65 focused pure
 regressions pass,201 tests combined; all13 protected hashes remain unchanged.
-The complete native sixth tranche is validated and ready for its scoped
-commit/push before the assertion-dispatch work. No whole-program accounting
-or full-game promotion.
+The complete native sixth tranche was pushed as
+`39a774a0c9821ae6fec992f6ca7cb2a2719c183e`; local HEAD and GitHub were checked
+equal, protected hashes remained unchanged and pull reported already current
+before assertion-dispatch integration. No whole-program accounting or
+full-game promotion.
 
 ## Next semantic frontier
 
@@ -169,8 +171,25 @@ Execute both native getter bodies and stop before opaque third379550/fourth
 379b31 child entry. Independently check stack, arguments, all GPRs/defined
 flags, full pages and no global writes. The normal branch passes the original
 caller return as an extra fourth argument. Private source-only model/tests
-are being drafted under `.local_decompile/oct2/assertion_dispatch_draft/`;
-they are not native evidence.
+were source-reviewed under `.local_decompile/oct2/assertion_dispatch_draft/`.
+The [logical model](native_assertion_helper_parent_dispatch_semantics.md) is
+now integrated;254 tests pass without skips. Both explicit typed inputs and
+actual-Q page adaptation retain exact getter frames, branch arguments,
+CMP/CD5 or TEST/CC5 flags, ordered source-RVA accesses and complete pages.
+Incoming flags need only be typed uint32/DF0; AF is not synthesized. Invalid
+32-bit stack geometry is rejected before reading its caller words. Source
+review is GO. This is logical evidence, not native execution.
+
+Root's source-reviewed private standalone native harness/CLI are under
+`.local_decompile/oct2/assertion_dispatch_native_draft/`: exact three bodies
+72+63+6 bytes/54 sites, four pinned receipts and2352 vectors combining seven
+getter values each,16 alignments and three caller/flag profiles. It executes
+all selected bodies in one Unicorn instance and stops at opaque child entry;
+checks all eight GPRs/defined flags, exact mode3/getter frames/counts/arguments,
+full ordered accesses with RVAs and complete pages. Its19 controls include
+15 machine mutations and four event/path-record mutations. Fixture override
+was removed, and source errors normalize to the declared ConformanceError.
+The harness has not imported or executed yet; native test drafts are private.
 
 After standalone dispatch closure, join the actual callback assertion prefix
 in the same Unicorn instance using a new composed runner. Reuse its fixture,
