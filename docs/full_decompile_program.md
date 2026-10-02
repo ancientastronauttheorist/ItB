@@ -84,7 +84,11 @@ ordinary pointer free, six live records/capacity nine and spare24 preserved.
 Complete actual allocation/copy/free-entry captures and all4992 memory events
 are checked. All115 focused tests pass without skips, including exact CLI
 rebuild/verify/structure; independent production-source/CLI and published-receipt
-reviews are GO. Growth6-to9/class6-to7 joins remain open, and existing fixed32
+reviews are GO. The [actual-page resize law](native_simd_vector_resize6_to9_semantics.md)
+also passes87 independent pure checks with actual caller/header/frame/flags,
+complete pages and strict helper packets, including the signed-address SUB
+overflow edge. Source review is GO; its broader logical domain does not enlarge
+the finite native receipt. Growth6-to9/class6-to7 joins remain open, and existing fixed32
 receipts stay unchanged. Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 

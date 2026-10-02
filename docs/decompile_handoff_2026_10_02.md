@@ -270,10 +270,22 @@ All115 focused tests pass without skips, including the handwritten full48-vector
 page/event/ABI law,16 isolated actual captures, all controls, source/receipt
 mutations, direct code tampering and exact CLI rebuild/verify/structure.
 Independent production-source/CLI and published-receipt reviews are GO.
-Private actual-page resize adapter source work has started under
-`.local_decompile/oct2/resize6_to9_actual_adapter/`; it must consume the growth
-caller's actual pages/frame and installed006eb66e return without fixture
-transplant or native reseeding. No growth/class/seventh callback proof yet.
+The finite resize checkpoint was pushed as
+`fbc6b0b26fb431b7f2f9b94096e130acd688de7a`; local/remote HEAD matched and all13
+protected hashes survived. The [actual-page resize adapter](native_simd_vector_resize6_to9_semantics.md)
+is now integrated and its87 independent pure tests pass without skips. It
+consumes actual pages/H/R/GPR/XMM/flags/installed006eb66e return, never a
+transplanted fixture. Complete18-field child packets and all104 events/full
+pages are independently checked. Arbitrary source/destination/header page
+crossings and O7FFFFFF0 signed-boundary SUB flags804/8D5 are covered.
+Independent production-source review is GO; this is logical evidence only.
+Private continuous growth6-to9 source/tests are in progress under
+`.local_decompile/oct2/growth6_to9_draft/` and `growth6_to9_tests/`; root source
+equations are `.local_decompile/oct2/growth6_to9_recon.txt`. Prefix8 events
+install resizeR=G-20 with request9 and CMP9vs7 flags0/8D5; child104 and suffix4
+give116 events, protectedstack[G-96,G+8). The next machine must capture actual
+resizeentry/return and continue without reseeding. No growth/class/seventh
+callback native proof yet.
 
 ## Environment and protected work
 
