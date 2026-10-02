@@ -206,10 +206,40 @@ boundary, then continue without reseeding or replacing pages. Preserve the
 old prefix observation projection/hash and stop at opaque callee entry after
 the parent CALL. Failure handling, dialog/abort/INT3 and unwind stay excluded.
 
+The standalone native dispatch was pushed as
+`8f8bf73e20d17575e280d10af5d02c4cd8a5b660`; local and remote HEAD matched,
+all13 protected hashes survived and pull was already current before the join.
+The [continuous callback dispatcher](native_lua_class_callback_assertion_dispatch_conformance.md)
+is now integrated: all768 cases and40 controls pass with the old192-prefix
+aggregate unchanged at `49e83a1601e72244d5cfab28d2e059ee2bdeb135dbce5687acb01183fd6fccc8`.
+One actual machine validates/captures full prefix state, then falls through
+without replacing pages or registers. Canonical
+`f6693e3b32ec3776e6b1193e582af68f4df77d6178a864e5cffb545eeaff11ce`, file
+`efea61a5c1bf67e737c2e31ecc2a49bba01bb667f90f5cfbff4c5414e34c693f`,
+117,006 bytes/9pins/5ranges/326bytes/119loaded/98executed. Native instructions
+33024prefix+24192dispatch=57216; normal/alternate384each, second384,
+Lua requests2880 andmarkers576. All114 tests pass without skips, including74
+pure checks,16 isolated actual captures, all40 controls and exact CLI
+rebuild/verify/structure. Independent source/CLI/test and published-receipt
+reviews are GO; all13 protected hashes remain unchanged. Neither opaque child
+instruction executes.
+
 The other distinct next tranche is installed48-byte SIMD-plus-scalar-tail copy
 and full6-to-cap9 growth: request72/copy48/freeold48/append8/spare16. Existing
 fixed32/old4 receipts must remain unchanged; do not infer the new copy's EDX
 from current32's zero return. Avoid further count-only callback expansion.
+
+The source-only48 recon is `.local_decompile/oct2/simd48_recon/HANDOFF.txt`:
+the broad native4992-copy matrix actually omits length48. Its exact installed
+path is69 instructions/51sites,26 events: eight MOVDQU half hooks followed by
+four scalar pairs. EDX at copy return is originalDWORD(old+44), XMM0/1 are
+originalfirst32, XMM2..7 survive,flags44/mask8C5 with AF unclaimed and DF0
+checked separately. Fresh standalone48 draft under
+`.local_decompile/oct2/installed_simd48_draft/` is in progress; source material,
+not execution evidence. Its finite48 cases couple16 stack/buffer alignments
+with3 distinct profiles and use freshDATA4800 disjoint from retainedDATA2800.
+HeapFree's actual frame has handle/flags/pointer, no byte-count argument;
+logical old48 capacity must not be mislabeled as a native API size word.
 
 ## Environment and protected work
 

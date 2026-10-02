@@ -66,8 +66,12 @@ now passes2,352 cases and19 controls across all three bodies in one machine,
 including384 alternate calls and336 conditional second getters. Independent
 published-receipt review is GO; all99 native conformance and254 logical tests
 pass without skips,353 combined including exact CLI rebuild and verification.
-Continuous enclosing assertion-prefix composition remains next; opaque child
-behavior and ownership/accounting are not inferred.
+The [continuous callback join](native_lua_class_callback_assertion_dispatch_conformance.md)
+now passes768 native cases and40 controls in the same machine while preserving
+the exact old192-prefix observation hash. All114 checks pass without skips,
+including74 pure join checks and exact CLI rebuild/verification; independent
+final reviews are GO. Opaque child behavior and
+ownership/accounting are not inferred.
 
 ## October 1 checkpoint
 

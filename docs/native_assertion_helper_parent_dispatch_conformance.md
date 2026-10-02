@@ -57,5 +57,6 @@ These are supplied synthetic runtime global values, not observed bootstrap
 defaults. Other getter modes, setter/failure descendants, opaque child bodies,
 parent cleanup/return, alternate trap, dialog/abort/unwind, CRT identity,
 hardware execution and ownership remain excluded. Whole-program accounting
-is unchanged. The next join continues the actual callback assertion prefix
-into this dispatcher without replacing intermediate state.
+is unchanged. The [continuous callback join](native_lua_class_callback_assertion_dispatch_conformance.md)
+now executes the actual assertion prefix into this dispatcher without replacing
+intermediate state, while preserving this standalone receipt.
