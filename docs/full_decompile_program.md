@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [disjoint zero-or-positive-count scalar path copy](native_movement_path_scalar_semantics.md)
+has339passing independent checks and source review GO. A dynamic eight-byte
+loop replaces the count-two restriction under strict mapped, disjoint and
+nonwrapping positive extents; zero count never touches source or destination.
+Broader parent allocation/composition/native sealing, ownership and gameplay
+remain separate gates, and whole-program accounting is unchanged.
+
+
 The [selected normal count-two AddCharge law](native_movement_addcharge_normal_semantics.md)
 has369passing independent tests and source review GO. Its outer path clone,
 normal AddMove join, mode2 write and original-path free predict complete state

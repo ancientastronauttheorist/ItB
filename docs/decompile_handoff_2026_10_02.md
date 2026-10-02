@@ -7,6 +7,29 @@ At the deadline, finish active validation safely, preserve a reviewable
 handoff, push/check the branch and protected work, then pause the heartbeat.
 The full game and whole-program accounting remain unfinished.
 
+## Latest scalar path-copy checkpoint
+
+The [zero-or-positive-count scalar path law](native_movement_path_scalar_semantics.md)
+passes339independent tests without skips in9.06seconds, source GO. Source
+954bce940708156ac399a28e351c580aeb77d44c47d993dbae9f8d66f66870d5;
+independenttestb38e5f6cc71e763e087ab4d8e09fee9469e45cdc197e405151bed22cee62c129.
+Zero copies require no source/destination mapping and execute10/6; positiveN
+copies execute11+10Ninstructions/6+4Naccesses. Full10packet pages/GPR/XMM/event/
+trace/flags/endpoint predictions and strictdomains are independent. Seven
+private nativecasesn0/1/2/3/17/131match allstate; n2wholepacket equalsoldlaw.
+No published broader nativecorpus/accounting/ownership/gameplay promotion.
+
+Normal movement native receipts are integrated publicly but uncommitted pending
+independent tests. AddMove seal1f7f77d9ef362f2b9157cc444b43b1981fd5a1173c35e3788f275c2f73d89f88
+binds48/120/100272instructions62064accesses/1152states; sourceV7privateSHA
+d49d6a4d783a1b38e449d3b7b51fc4e3d72575169757c89e91b8c3929d9a7967
+(only publication wording changed after allruntimechecks). Its162independent
+suite is active serially. AddCharge seal76ede8315ae9f10e431cf5038a140b1bd6fe055526dd8aae4913167794eae1ef
+binds48/80/110544instructions68448accesses/768states; author9bac1757…f3917,
+SIMD independently reviews/tests. Fifth authors ordinary-small path clone
+n0..511 with exactallocation/scalar packets; aligned512+ remains separate.
+Latest pushed7131f3989360adcabaae0e553d502cf4c2d6c0ea; all13protected unchanged.
+
 ## Latest normal AddCharge pure checkpoint
 
 The [selected normal AddCharge law](native_movement_addcharge_normal_semantics.md)
