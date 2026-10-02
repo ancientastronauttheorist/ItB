@@ -406,6 +406,17 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The public [empty-string native proof](native_movement_empty_string_copy_conformance.md)
+passes72 independent tests without skips in56.71seconds, with independent
+source/CLI/receipt GO. Seal `c3d9d8598d7aa922157397a27a58aeabf86732e9bb620625d602481dd90c18b1`
+binds96 cases/26controls/3168instructions/1632events. Source-only wording V2
+replaced slash-separated prose rejected by publication guard; no semantic
+change. Root is running the clone2 independent suite serially and drafting
+actual-page empty-path record copy15B9B0 (eight empty helpers plus zero-count
+09A8E0/9AC40 with no allocation). Fifth_model_oct2 independently reviews it;
+simd_class_review_oct2 authors a general actual-page count2 clone model to
+permit real caller composition. No native ownership or gameplay promotion.
+
 The public actual-page scalar clone law now passes353 independent tests with
 source review GO. Its V2 domain requires conservative stack end and a positive
 installed endpoint outside the scalar body and touched data, while permitting

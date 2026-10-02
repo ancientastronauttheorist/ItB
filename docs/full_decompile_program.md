@@ -1499,6 +1499,12 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [native disjoint empty-string copy](native_movement_empty_string_copy_conformance.md)
+is sealed across 96 cases and 26 controls, with all 72 independent checks
+passing and source/CLI/receipt review GO. The selected body executes 33 sites
+without a child or API call; actual parent record copying remains a separate
+composition.
+
 The [actual-page two-entry scalar copy](native_movement_path_scalar_clone2_semantics.md)
 now has 353 independent pure checks and source review GO. Its four DWORD
 transfers preserve the source, full XMM state and all unrelated pages. Allocation
