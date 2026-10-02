@@ -406,6 +406,20 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [two-entry record-copy pure law](native_movement_effect_record_copy2_semantics.md)
+is sourceGO and passes377 independent tests without skips in82.92s.
+V2 SHA573197929c2a8715d36bc8121f7ece29626c23f0d533b3871ac2f9b9a0eec1c2
+rejects returns inside path buffers and typed child aliases; it explicitly
+trusts complete nested clone internals instead of claiming universal parent
+forgery rejection. Full15/591/372/23 and independent final bytes agree.
+Emptyrecordnative pushedb2a214c62dacec87fc063ed2108b2296acb4caad;
+remote/protected verified. Root appendV2 private015da375709ffad26bf5f8cb76d50b1b65e9c654f18b7c21be9a47f46182e812
+has2nativeprobes629/401/25 and is independently reviewed/tested in progress.
+Assignment8068ca54 private tests in progress after4nativeprobes162/90/7.
+Root destructor private law predicts90/46null or133/74ordinarypath2; probes
+pending. NormalAddMove/AddCharge and gameplay remain open.
+
+
 The [empty-path record-copy native proof](native_movement_effect_record_empty_copy_conformance.md)
 is sealed with source/CLI/receipt review GO and81 independent checks validated.
 Initial fullsuite80PASS/1FAIL234.12s: fixture source negative overwrote an already

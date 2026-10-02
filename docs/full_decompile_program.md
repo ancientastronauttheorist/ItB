@@ -1499,6 +1499,13 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [two-entry movement record-copy law](native_movement_effect_record_copy2_semantics.md)
+has377 independent pure checks and source review GO. It composes eight empty
+strings with an actual-page path allocation/copy, preserving source and padding.
+The parent trusts the reviewed complete path law; normal append, destruction
+and movement builders remain separate gates.
+
+
 The [empty-path movement record-copy native proof](native_movement_effect_record_empty_copy_conformance.md)
 is sealed across48 cases and58controls, with81 independent checks validated.
 Eight strings, zero-count clone and reserve execute continuously with all21
