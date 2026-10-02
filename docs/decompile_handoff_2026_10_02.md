@@ -307,6 +307,22 @@ That audit is now complete: onlymaskAD7 with fixedbit1 set is admitted, DF0
 checked separately. All117 independent actual-page tests pass without skips;
 all61 focused growth logical-composition regressions pass. Independent source
 review is GO. Native202/246 stay admitted; old receipts remain unchanged.
+Continuous native growth was pushed as
+`0ca4b90c3230d1686a14b376e5685358d2b086ef`; the flags correction was pushed
+as `29a0e8b916030b05064ca76745ffe85b37dba1fa`. Local/remote HEAD matched and
+pull was current before actual-growth integration. The
+[actual-page growth law](native_simd_vector_growth6_to9_semantics.md) now passes
+all295 independent tests without skips in18.84seconds. Its full21-field packet
+preserves arbitrary unused caller words, arbitrary admitted H/G and return
+006eb205; all128 ordinary flags project raw2/202 into the actual resize.
+Complete child18/lower7-10-8 laws,116events/235trace, signed/crosspage/endpoints,
+typed aliases and coordinated forgeries are checked. Source review is GO.
+Root also compared all48 finite native packets to this adapter with exact21
+equality. Broader native conformance is not inferred. Private class6-to7
+native harness/tests are in progress under `class6_to7_draft/` and
+`class6_to7_tests/`. Distinct movement-name/builder/parent source research is
+under `.local_decompile/oct2/movement_source_plan.txt`; no movement native
+execution or public semantic promotion yet.
 
 ## Environment and protected work
 

@@ -93,7 +93,11 @@ now passes48 native cases and43 intended controls. It captures actual resize
 entry/return and imported heap requests in one machine, with no fixture
 transplant or native helper replay. All107 focused tests pass without skips,
 including exact CLI rebuild/verify/structure; independent final reviews are GO.
-Class6-to7 remains open, and existing fixed32 receipts stay unchanged.
+The [actual-page growth law](native_simd_vector_growth6_to9_semantics.md) now
+passes295 independent logical checks, including all128 ordinary flag words,
+arbitrary unused caller words and actual class frames/continuations. Source
+review is GO; it does not enlarge the finite native receipt. Class6-to7 remains
+open, and existing fixed32 receipts stay unchanged.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
