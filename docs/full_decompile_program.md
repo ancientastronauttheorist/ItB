@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [inline self-substring copy law](native_movement_inline_self_copy_semantics.md)
+has2,342 passing independent checks and source review GO. Actual in-place
+truncation/erase/memmove composition binds full14/14/11 packets, original
+snapshots and complete chronological checkpoints. All1,272 complete executable
+cases agree. In-buffer assignment, heap strings, growth, ownership and gameplay
+remain separate gates; whole-program accounting is unchanged.
+
+
 The [actual memmove backward scalar entry](native_movement_memmove_backward_semantics.md)
 has 8,216 passing independent checks and source review GO. Every rightward
 count/shift pair at counts2..31 closes complete state and descending overlap

@@ -9,6 +9,22 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Inline self-substring copy validated
+
+The [inline self-copy law](native_movement_inline_self_copy_semantics.md) passes
+2,342 independent checks without skips in25.32seconds, source GO.
+Source095e98f2e9faf6476040b090da9d78b3d1d4509d563ca32ccdf38facfd20d695;
+test4fdaab17b70724bdcce9ffe2af4e159226e91d6cc414ec3cc10edab8b02574d1.
+All1,272complete native cases agree through actual8410/36E580 children and
+full2or4 chronological checkpoints. Complete erase14/nested11 joins bind
+original same-object snapshots and legitimate changed bytes. Canonical trace
+contents remain trusted explicitly at fixed lengths. Backwardmemmove4ffaba12,
+erase395706ac andforwardmemmove1161df89 pushed. All runtime gates closed.
+Next: independently derived in-buffer assignment7FD0 plan under private
+movement_inline_alias_assign_plan/HANDOFF.txt; source/model/tests still open.
+Whole game, M2-M5 and broader native receipt/accounting remain unfinished.
+
+
 ### Actual memmove backward entry validated
 
 The [small backward memmove law](native_movement_memmove_backward_semantics.md)
