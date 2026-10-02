@@ -9,6 +9,36 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Continuous normal AddCharge validation completed
+
+The [native normal AddCharge proof](native_movement_addcharge_normal_conformance.md)
+passes all 172 independent checks without skips in 1,414.06 seconds; source,
+CLI and receipt review are GO. Canonical seal
+76ede8315ae9f10e431cf5038a140b1bd6fe055526dd8aae4913167794eae1ef,
+raw4e0dbcb9baeed611ef33998e30212fd1be253299b525f2af91f1000328b48c1a,
+1,309,782 bytes. Both normal native test packets now have independent V3
+constructor-attempt ledgers; their four changed workers pass a focused
+serial gate in 24.40 seconds, without repeating unchanged corpus checks.
+Normal V3 d0dd6544c43814d59f3eaccbf7a7fae81ec19899783990172e914b7e13578cc7;
+Charge V3 cfee873d59c9a43b6bdbb7cdabe71d46016bafdc720cb138bd5290b27a7eaf1b.
+
+Private early Charge source5d326a9c8089f300fc309f576bb1356955679cb46725d02d2c3824c7c30dc1ea
+is frozen, SIMD independently reviews/tests. Four actual executable probes
+match all state across the selected branches, broad frames, high sources,
+cookies zero/high-bit and capacities one/seventeen/511.
+NULL115/74, owned-empty155/99,
+owned-one284/177; all arms load XMM0, AL-zero skips record mode adjustment,
+owned outer free leaves EAX one. Fifth authors
+general empty-string record copy composing small clone counts0..511.
+Private root small record destruction9c610cd73df36ce5dd82803e56592f3c94803f5608eae3b24c3a814479de862b
+has independent source GO/test11b2f5d59861b8581cb7dcca4ac2a940a16335f2d0c6eecc4e225d0d6d20977c
+605 checks pending runtime and nine actual full-state probes passed.
+Positive empty-destination assignment01381a9db05be60f6f3415f7181cc0732c75b77f78154054409784c87ee8456e
+is drafted, five native probes passed with count-two whole-packet compatibility;
+independent review queued. Small clone passes594independent checks in26.22seconds.
+Latest pushed
+d71cb1a2d7e4410db6c7381077b293444672ace4; all 13 protected files unchanged.
+
 ### Continuous normal AddMove validation completed
 
 The [native normal AddMove proof](native_movement_addmove_normal_conformance.md)

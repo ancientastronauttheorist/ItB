@@ -1,7 +1,7 @@
-"""Independent normal AddMove machine observers and finite handwritten witnesses.
+"""Independent normal AddCharge machine observers and finite handwritten witnesses.
 
 Reviewed handwritten child test laws supply expected data; production outputs
-are actual values under test. One machine crosses six external responses.
+are actual values under test. One machine crosses eight external responses.
 """
 
 from __future__ import annotations
@@ -19,18 +19,18 @@ ROOT = next(
     p for p in Path(__file__).resolve().parents if (p / "src/observatory").is_dir()
 )
 sys.path.insert(0, str(ROOT))
-from src.observatory import native_movement_addmove_normal_conformance as c
-from tests import test_itb_native_movement_addmove_normal_semantics as pure
+from src.observatory import native_movement_addcharge_normal_conformance as c
+from tests import test_itb_native_movement_addcharge_normal_semantics as pure
 
 equal, store, read_bytes = pure.equal, pure.store, pure.read_bytes
 GPR = ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp")
 XMM = tuple("xmm" + str(i) for i in range(8))
 PROGRAMS = ROOT / "data/observatory/programs"
 PREFIX = "windows_build_13725832_31fe35265598_"
-EVIDENCE = PROGRAMS / (PREFIX + "native_movement_addmove_normal_conformance.json")
-CLI = ROOT / "scripts/itb_native_movement_addmove_normal_conformance.py"
-SEAL = "1f7f77d9ef362f2b9157cc444b43b1981fd5a1173c35e3788f275c2f73d89f88"
-POINTS_SHA = "1a4b2521a802a2dd8c42414f5481c92c820d42708b40f217dd3bbb3a124f54b6"
+EVIDENCE = PROGRAMS / (PREFIX + "native_movement_addcharge_normal_conformance.json")
+CLI = ROOT / "scripts/itb_native_movement_addcharge_normal_conformance.py"
+SEAL = "76ede8315ae9f10e431cf5038a140b1bd6fe055526dd8aae4913167794eae1ef"
+POINTS_SHA = "75f7f7a59d22941340fb89c7d9bd5e17dfa4e520ba9c242e93ff87638f92cfb7"
 COMMON = {"registers", "xmm", "pages", "events", "flags", "flag_mask", "df", "endpoint"}
 BOUNDARY_KEYS = COMMON | {"name", "phase"}
 IMPORT_KEYS = COMMON | {"name", "entry_esp", "words"}
@@ -53,20 +53,11 @@ OBS_KEYS = {
     "loaded_sites",
     "executed_sites",
 }
-NAMES = (
-    "default",
-    "assignment",
-    "record_copy",
-    "append",
-    "destroy_temp",
-    "destroy_original",
-    "free_caller",
-    "cookie",
-)
+NAMES = ("clone_argument", "addmove", "free_original")
 ROLES = (
     ("outer_entry",)
-    + tuple("boundary_" + f"{i:02}" for i in range(16))
-    + tuple("import_" + f"{i:02}" for i in range(6))
+    + tuple("boundary_" + f"{i:02}" for i in range(6))
+    + tuple("import_" + f"{i:02}" for i in range(8))
     + ("outer_return",)
 )
 CONTROL_REASONS = {
@@ -129,6 +120,7 @@ BODY_PINS = {
     1423792: (772, "3846fdb1ca2ebc1b4b6e83a64994f82d4907938345ff0d856c9bbea690957fc6"),
     1677728: (669, "2f17cc9bd3616c14305fb7fc1871bf0e37d09262825a99213f5b0568d6c6045d"),
     2454336: (231, "910d5418dbd9db30c75adcd8b74077c5c4e99119b2298c6c252045f8c9803d67"),
+    2455280: (138, "b4c477b2c8b460c7697bdb236c50c264cbacb68e55189048fc4b536847a6e90a"),
     2465536: (183, "39a9908012609c47f77556aea5af0865f3eb36943b5a1860c4c338bb6ea6fbb7"),
     3503306: (17, "5eafe60e37cdb82b85f6df218e4b490940c6fb2545895c2cef644fb38ab97375"),
     3503323: (51, "452b4c981b0a2567c6f4fc35b20076deca45a6b3509707358212028d21db5bfa"),
@@ -222,7 +214,12 @@ def finite_fixture(vector):
         xmm=xmm,
         return_address=0x04000000,
         entry_flags=(0x246, 0x287, 0x202)[p],
-        allocation_results=[0x06001103 + a, 0x06002003 + a, 0x06003033 + a],
+        allocation_results=[
+            0x06001013 + a,
+            0x06001103 + a,
+            0x06002003 + a,
+            0x06003033 + a,
+        ],
     )
 
 
@@ -235,7 +232,7 @@ def all_states(fixture, wanted):
         flags=fixture["entry_flags"] & 0x8D5,
         flag_mask=0x8D5,
         df=0,
-        endpoint=0x00657340,
+        endpoint=0x006576F0,
     )
     rows = [dict(role="outer_entry", state=first)]
     rows += [
@@ -268,18 +265,18 @@ def expected_observation(vector, fixture, wanted):
     for i, state in enumerate(wanted["imports"]):
         api.append(
             dict(
-                kind="allocate" if i < 3 else "free",
+                kind="allocate" if i < 4 else "free",
                 entry_esp=state["entry_esp"],
                 words=state["words"],
-                result=fixture["allocation_results"][i] if i < 3 else 1,
+                result=fixture["allocation_results"][i] if i < 4 else 1,
                 event_prefix=len(state["events"]),
             )
         )
     return dict(
         vector=vector,
-        instructions=2089,
-        memory_events=1293,
-        boundary_states=24,
+        instructions=2303,
+        memory_events=1426,
+        boundary_states=16,
         api_calls=api,
         trace_sha256=canonical(wanted["trace_rvas"]),
         events_sha256=canonical(wanted["events"]),
@@ -288,12 +285,12 @@ def expected_observation(vector, fixture, wanted):
         ),
         final_registers=wanted["registers"],
         final_xmm={k: f"0x{v:032x}" for k, v in wanted["xmm"].items()},
-        flags=0x44,
+        flags=wanted["flags"],
         flag_mask=0x8D5,
         df=0,
         endpoint="0x04000000",
         pages_sha256=page_hashes(wanted["pages"]),
-        loaded_sites=1206,
+        loaded_sites=1252,
         executed_sites=sorted(set(wanted["trace_rvas"])),
     )
 
@@ -323,8 +320,8 @@ def native_inputs():
     assert digest == "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9"
     codes, points = c._load_code(data, image, sources())
     assert (
-        len(points) == 1206
-        and sum(map(len, codes.values())) == 3727
+        len(points) == 1252
+        and sum(map(len, codes.values())) == 3865
         and canonical(points) == POINTS_SHA
     )
     return codes, points
@@ -380,12 +377,12 @@ def worker_packet(index):
     def own_code(machine, address, size, user):
         nonlocal cursor, outer
         if not outer:
-            assert address == 0x00657340
+            assert address == 0x006576F0
             raw = take(machine, "outer_entry", all_states(fixture, wanted)[0]["state"])
             assert raw == fixture["entry_flags"]
             outer = True
         if address == 0x04000000:
-            assert take(machine, "outer_return", wanted) == 0x246
+            assert take(machine, "outer_return", wanted) == (wanted["flags"] | 0x202)
             return
         if address == 0x05000000:
             i = len(imports)
@@ -405,7 +402,7 @@ def worker_packet(index):
             imports.append(row)
             return
         assert f"0x{address-0x400000:08x}" in set(wanted["trace_rvas"])
-        if cursor < 16 and address == wanted["boundaries"][cursor]["endpoint"]:
+        if cursor < 6 and address == wanted["boundaries"][cursor]["endpoint"]:
             take(machine, f"boundary_{cursor:02}", wanted["boundaries"][cursor])
             cursor += 1
         trace.append(f"0x{address-0x400000:08x}")
@@ -446,7 +443,7 @@ def worker_packet(index):
         def start(*args, **kwargs):
             starts.append((args, dict(kwargs)))
             result = original_start(*args, **kwargs)
-            if len(starts) <= 6:
+            if len(starts) <= 8:
                 i = len(starts) - 1
                 expected = imports[i]
                 row = state(machine, 0xFFFFFFFF)
@@ -457,7 +454,7 @@ def worker_packet(index):
                     dict(
                         registers=dict(
                             expected["registers"],
-                            eax=fixture["allocation_results"][i] if i < 3 else 1,
+                            eax=fixture["allocation_results"][i] if i < 4 else 1,
                             ecx=0xA0000001,
                             edx=0xB0000001,
                             esp=expected["entry_esp"] + 16,
@@ -491,16 +488,18 @@ def worker_packet(index):
         observation = c._run_case(codes, points, vector, capture=capture)
     finally:
         uc.Uc = real
-    assert len(machines) == 1 and machines[0].ctl_get_cpu_model() == 19 and cursor == 16
+    assert len(machines) == 1 and machines[0].ctl_get_cpu_model() == 19 and cursor == 6
     equal(
         starts,
         [
             ((at, 0), dict(count=20000))
             for at in (
-                0x00657340,
+                0x006576F0,
                 0x00789463,
                 0x00789463,
                 0x00789463,
+                0x00789463,
+                0x00789172,
                 0x00789172,
                 0x00789172,
                 0x00789172,
@@ -510,15 +509,28 @@ def worker_packet(index):
     equal(trace, wanted["trace_rvas"])
     equal(events, wanted["events"])
     assert (
-        len(trace) == 2089
-        and len(events) == 1293
-        and len(states) == 24
-        and len(imports) == 6
+        len(trace) == 2303
+        and len(events) == 1426
+        and len(states) == 16
+        and len(imports) == 8
     )
     equal(states, all_states(fixture, wanted))
     equal(imports, wanted["imports"])
-    assert captured.pop("eflags") == 0x246
+    assert captured.pop("eflags") == (wanted["flags"] | 0x202)
     equal(captured, {k: wanted[k] for k in COMMON})
+    g, h = fixture["registers"]["esp"], fixture["registers"]["ecx"]
+    d = int.from_bytes(read_bytes(fixture["pages"], h + 4, 4), "little")
+    assert int.from_bytes(read_bytes(captured["pages"], d + 0xD8, 4), "little") == 2
+    assert int.from_bytes(read_bytes(captured["pages"], g + 16, 4), "little") == g - 40
+    assert [row["words"][3] for row in imports[4:]] == [
+        fixture["allocation_results"][2],
+        fixture["allocation_results"][1],
+        fixture["allocation_results"][0],
+        wanted["path"]["begin"],
+    ]
+    assert captured["xmm"]["xmm0"] == int.from_bytes(
+        read_bytes(fixture["pages"], g + 16, 4), "little"
+    )
     assert set(observation) == OBS_KEYS
     equal(observation, expected_observation(vector, fixture, wanted))
     return observation
@@ -532,7 +544,7 @@ def worker_corpus():
 def worker_controls():
     codes, points = native_inputs()
     equal(c.CONTROLS, CONTROL_REASONS)
-    assert len(CONTROL_REASONS) == 120
+    assert len(CONTROL_REASONS) == 80
     for name, control in CONTROL_REASONS.items():
         with pytest.raises(c.ConformanceError) as caught:
             c._run_case(codes, points, dict(alignment=15, profile=2), name)
@@ -676,7 +688,7 @@ def test_full48_independent_observer_corpus():
     isolated("corpus")
 
 
-def test_all120_exact_reason_controls():
+def test_all80_exact_reason_controls():
     isolated("controls")
 
 
@@ -698,8 +710,8 @@ def test_full48_handwritten_fixture_and_normal_packet(vector):
     equal(c._fixture(vector), fixture)
     actual = c._expected(vector, fixture)
     assert type(actual) is dict and set(actual) == pure.KEYS
-    assert len(actual["trace_rvas"]) == 2089 and len(actual["events"]) == 1293
-    assert len(actual["boundaries"]) == 16 and len(actual["imports"]) == 6
+    assert len(actual["trace_rvas"]) == 2303 and len(actual["events"]) == 1426
+    assert len(actual["boundaries"]) == 6 and len(actual["imports"]) == 8
     assert all(set(row) == BOUNDARY_KEYS for row in actual["boundaries"])
     assert all(set(row) == IMPORT_KEYS for row in actual["imports"])
     equal(actual, pure.independent(fixture))
@@ -856,23 +868,59 @@ def forged_model(kind, fixture):
     elif kind == "importendpoint":
         packet["imports"][0]["endpoint"] = float(packet["imports"][0]["endpoint"])
     elif kind == "childnone":
-        packet["child_packets"]["default"] = None
+        packet["child_packets"]["clone_argument"] = None
     elif kind == "childextra":
-        packet["child_packets"]["assignment"]["extra"] = 0
+        packet["child_packets"]["clone_argument"]["extra"] = 0
     elif kind == "childdf":
-        packet["child_packets"]["record_copy"]["df"] = False
+        packet["child_packets"]["addmove"]["df"] = False
     elif kind == "childendpoint":
-        packet["child_packets"]["append"]["endpoint"] += 4
+        packet["child_packets"]["addmove"]["endpoint"] += 4
     elif kind == "freeprotocol":
-        packet["child_packets"]["free_caller"]["protocol"]["result"] = True
+        packet["child_packets"]["free_original"]["protocol"]["result"] = True
     elif kind == "freestack":
-        packet["child_packets"]["free_caller"]["stack"] = bytes(8192)
+        packet["child_packets"]["free_original"]["stack"] = bytes(8192)
     elif kind == "freeerror":
-        packet["child_packets"]["free_caller"]["error"] = bytes(4096)
+        packet["child_packets"]["free_original"]["error"] = bytes(4096)
     elif kind == "freeevents":
-        packet["child_packets"]["free_caller"]["events"][0]["width"] = 4.0
+        packet["child_packets"]["free_original"]["events"][0]["width"] = 4.0
     elif kind == "freegpr":
-        packet["child_packets"]["free_caller"]["registers"]["edx"] ^= 1
+        packet["child_packets"]["free_original"]["registers"]["edx"] ^= 1
+    elif kind == "record_mode":
+        at = packet["geometry"]["new_record"] + 0xD8
+        store(packet["pages"], at, 1)
+    elif kind == "caller_word":
+        at = fixture["registers"]["esp"] + 16
+        store(
+            packet["pages"],
+            at,
+            int.from_bytes(read_bytes(fixture["pages"], at, 4), "little"),
+        )
+    elif kind == "cached_cookie":
+        g = fixture["registers"]["esp"]
+        cookie = int.from_bytes(read_bytes(fixture["pages"], 0x893F28, 4), "little")
+        packet["registers"]["ecx"] = cookie ^ (g - 48)
+    elif kind == "parameter_xmm":
+        packet["xmm"]["xmm0"] |= 1 << 96
+    elif kind == "source_preserved":
+        at = packet["path"]["begin"]
+        store(packet["pages"], at, read_bytes(packet["pages"], at, 1)[0] ^ 1, 1)
+    elif kind == "fourth_copy":
+        at = fixture["allocation_results"][3] + 12
+        store(
+            packet["pages"],
+            at,
+            int.from_bytes(read_bytes(packet["pages"], at, 4), "little") ^ 1,
+        )
+    elif kind == "import_free_order":
+        packet["imports"][4]["words"][3] = fixture["allocation_results"][0]
+    elif kind == "freeflagsbool":
+        packet["child_packets"]["free_original"]["flags"] = False
+    elif kind == "freeeventtuple":
+        packet["child_packets"]["free_original"]["events"] = tuple(
+            packet["child_packets"]["free_original"]["events"]
+        )
+    elif kind == "freeprotocolextra":
+        packet["child_packets"]["free_original"]["protocol"]["extra"] = 0
     else:
         raise AssertionError(kind)
     return packet
@@ -915,6 +963,16 @@ MODEL_FORGERIES = (
     "freeerror",
     "freeevents",
     "freegpr",
+    "record_mode",
+    "caller_word",
+    "cached_cookie",
+    "parameter_xmm",
+    "source_preserved",
+    "fourth_copy",
+    "import_free_order",
+    "freeflagsbool",
+    "freeeventtuple",
+    "freeprotocolextra",
 )
 
 
@@ -933,7 +991,7 @@ def test_valid_nested_extra_semantics_remain_trusted(monkeypatch):
     fixture = finite_fixture(vector)
     bad = pure.independent(fixture)
     # Closed envelope is valid; deeper snapshot semantics are the trusted child.
-    bad["child_packets"]["assignment"]["source_snapshot"] = bytes(16)
+    bad["child_packets"]["clone_argument"]["source_snapshot"] = bytes(16)
     monkeypatch.setattr(c.model, "apply", lambda **kwargs: copy.deepcopy(bad))
     equal(c._expected(vector, fixture), bad)
 
@@ -946,7 +1004,7 @@ def test_packet_and_fixture_detachment():
     equal(actual, pure.independent(fixture))
     actual["pages"].clear()
     actual["boundaries"][0]["pages"].clear()
-    actual["child_packets"]["default"]["events"].clear()
+    actual["child_packets"]["clone_argument"]["events"].clear()
     equal(fixture, before)
     equal(c._expected(vector, fixture), pure.independent(fixture))
 
@@ -1006,12 +1064,12 @@ def test_receipt_complete_source_points_independent_cases_and_scope(receipt):
     )
     raw = EVIDENCE.read_bytes()
     assert (
-        len(raw) == 1235636
+        len(raw) == 1309782
         and hashlib.sha256(raw).hexdigest()
-        == "afaf03d30cd132040f9afedb92338002fc45d16e508e3a42de8432b50faa4c0f"
+        == "4e0dbcb9baeed611ef33998e30212fd1be253299b525f2af91f1000328b48c1a"
     )
     assert raw == c.encode_conformance(receipt).encode("utf-8") and b"\r" not in raw
-    assert receipt["analysis_kind"] == "pe_native_movement_addmove_normal_conformance"
+    assert receipt["analysis_kind"] == "pe_native_movement_addcharge_normal_conformance"
     equal(c.SOURCE_PINS, SOURCE_PINS)
     equal(c.BODY_PINS, BODY_PINS)
     equal(c.vectors(), recipes())
@@ -1032,9 +1090,9 @@ def test_receipt_complete_source_points_independent_cases_and_scope(receipt):
     )
     points = receipt["instruction_points"]
     assert (
-        len(points) == 1206
-        and len({p["rva"] for p in points}) == 1206
-        and sum(p["size"] for p in points) == 3727
+        len(points) == 1252
+        and len({p["rva"] for p in points}) == 1252
+        and sum(p["size"] for p in points) == 3865
     )
     assert canonical(points) == POINTS_SHA and points == sorted(
         points, key=lambda p: int(p["rva"], 16)
@@ -1062,20 +1120,20 @@ def test_receipt_complete_source_points_independent_cases_and_scope(receipt):
         receipt["summary"],
         dict(
             cases=48,
-            negative_controls=120,
-            loaded_bodies=20,
-            loaded_bytes=3727,
-            loaded_instruction_sites=1206,
+            negative_controls=80,
+            loaded_bodies=21,
+            loaded_bytes=3865,
+            loaded_instruction_sites=1252,
             executed_instruction_sites=len(executed),
-            executed_instructions=100272,
-            memory_events=62064,
-            boundary_states=1152,
-            allocation_requests=144,
-            allocation_requested_bytes=2304,
-            allocation_responses=144,
-            free_requests=144,
-            free_responses=144,
-            path_copied_bytes=2304,
+            executed_instructions=110544,
+            memory_events=68448,
+            boundary_states=768,
+            allocation_requests=192,
+            allocation_requested_bytes=3072,
+            allocation_responses=192,
+            free_requests=192,
+            free_responses=192,
+            path_copied_bytes=3072,
             appended_records=48,
             receiver_advanced_bytes=14784,
             cookie_checks=48,
@@ -1091,7 +1149,7 @@ def test_receipt_complete_source_points_independent_cases_and_scope(receipt):
             for name, value in CONTROL_REASONS.items()
         ],
     )
-    assert len(CONTROL_REASONS) == 120
+    assert len(CONTROL_REASONS) == 80
     equal(
         receipt["method"],
         dict(
@@ -1099,9 +1157,9 @@ def test_receipt_complete_source_points_independent_cases_and_scope(receipt):
             cpu_model=19,
             continuous=True,
             machines_per_case=1,
-            starts_per_case=7,
-            external_responses_per_case=6,
-            expected_model="reviewed selected count-two AddMove",
+            starts_per_case=9,
+            external_responses_per_case=8,
+            expected_model="reviewed selected count-two AddCharge",
             typed_replay=True,
             universal_coordinated_forgery_rejection=False,
         ),
@@ -1184,7 +1242,7 @@ def test_preflight_sources_and_refreshed_joins(kind, monkeypatch):
             )
         else:
             row = next(
-                r for r in supplied[key]["functions"] if r["entry_rva"] == "0x00257340"
+                r for r in supplied[key]["functions"] if r["entry_rva"] == "0x002576f0"
             )
             row["body_size"] = True if kind == "boolsize" else row["body_size"] + 1
         changed = dict(c.SOURCE_PINS)

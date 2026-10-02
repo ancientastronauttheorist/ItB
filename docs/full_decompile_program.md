@@ -19,6 +19,13 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [continuous selected normal AddCharge proof](native_movement_addcharge_normal_conformance.md)
+is sealed across 48 recipes and 80 controls, with 172 independent checks
+passing. Full clone, AddMove, mode-two adjustment and original-path release
+execute on one machine around eight supplied responses. All sixteen complete
+states, exact accesses, flags and receipt rebuilds agree. Other counts, AL-zero
+arms, ownership and gameplay remain separate gates; accounting is unchanged.
+
 The [continuous selected normal AddMove proof](native_movement_addmove_normal_conformance.md)
 is sealed across 48 recipes and 120 controls with 162 validated independent
 checks. One machine executes all selected helper bodies around six supplied

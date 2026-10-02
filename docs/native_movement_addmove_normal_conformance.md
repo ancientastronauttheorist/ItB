@@ -10,6 +10,9 @@ pass without skips: fourteen expensive execution and CLI checks in 565.64
 seconds, then 148 fixture, schema and rejection checks in 129.77 seconds after
 correcting a test adapter's unrelated unused-page assumption. The correction
 preserves complete typed equality with the handwritten packet oracle.
+Both direct-code and forged-model workers additionally assert empty machine
+construction ledgers after every rejection; the four changed normal-movement
+workers pass their focused gate in 24.40 seconds.
 
 The canonical receipt seal is
 `1f7f77d9ef362f2b9157cc444b43b1981fd5a1173c35e3788f275c2f73d89f88`.
