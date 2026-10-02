@@ -406,6 +406,23 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The public [empty-path record-copy model](native_movement_effect_record_empty_copy_semantics.md)
+passes345 independent tests without skips in14.92seconds, source review GO.
+Root source/native probes match492/315/all20helperstates, with183 destination
+bytes written/125 preserved and all308source bytes preserved. Native harness
+privatefreeze05c32942f1d5ec95b8884334426f6fcd894f5aa86fa45a45206a0d2c52c840b6
+is under `movement_record_copy_empty_native_draft/`, awaiting root gates and
+independent tests. General count2 actual-page clone model matches all48 old
+whole15field packets and four new actualnative cases across low/signed/top
+stack frames and arbitrary in-domain allocated pointers; its independent
+tests are private in progress. Root two-entry record-copy draft under
+`movement_record_copy2_draft/` also matches two native probes591instructions/
+372events/23boundaries/one supplied allocation; it is not independently closed.
+Simd_class_review_oct2 authors the empty-destination two-entry path assignment
+law0C5BB0, predicted162instructions90events; append/destruction/normalAddMove
+and gameplay remain open. Latest native clone checkpoint pushed5689969e,
+remote synchronized and all13 protected hashes unchanged.
+
 The public [clone2 native proof](native_movement_path_clone2_conformance.md)
 passes123 independent tests without skips in651.26seconds. Canonical seal
 `1cddf384c45fb50a60752656acd2560a7e243dd20f0d68b8a963a4a7bb3a739b`:

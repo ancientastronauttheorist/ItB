@@ -1499,6 +1499,12 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [actual-page empty-path record copy](native_movement_effect_record_empty_copy_semantics.md)
+has 345 independent pure checks and source review GO. It composes eight empty
+string assignments and zero-count path reserve, preserving 125 padding bytes
+and the full source record. Native sealing and the two-entry record path are
+separate gates.
+
 The [continuous two-entry path clone](native_movement_path_clone2_conformance.md)
 is sealed across 48 cases and 59 controls, with all 123 independent checks
 passing. Actual owner/reserve/allocator/scalar state shares one machine; the
