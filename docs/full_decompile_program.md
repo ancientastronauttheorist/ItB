@@ -73,6 +73,15 @@ including74 pure join checks and exact CLI rebuild/verification; independent
 final reviews are GO. Opaque child behavior and
 ownership/accounting are not inferred.
 
+The [installed48 copy](native_installed_simd_copy48_conformance.md) now closes
+the missing native48 length with one MOVDQU block and four scalar pairs.
+All48 cases and31 controls pass, with EDX equal to the original last DWORD,
+complete GPR/XMM/page checks and51 executed sites. All48 preliminary pure
+checks and final80-test/CLI gate pass without skips, independent reviews GO.
+Separate resize6-to9/growth6-to9/class6-to7 joins remain open, and existing
+fixed32 receipts stay unchanged. Exact CLI rebuild/verify/structure pass;
+all13 protected hashes survive.
+
 ## October 1 checkpoint
 
 The [October 1 handoff](decompile_handoff_2026_10_01.md) records the actual

@@ -241,6 +241,24 @@ with3 distinct profiles and use freshDATA4800 disjoint from retainedDATA2800.
 HeapFree's actual frame has handle/flags/pointer, no byte-count argument;
 logical old48 capacity must not be mislabeled as a native API size word.
 
+The continuous callback join was pushed as
+`063079ece865ac752b014cf5e42864804e62843d`; local/remote HEAD matched and
+pull was current before installed48 integration. The
+[installed48 copy](native_installed_simd_copy48_conformance.md) now passes its
+full48-case/31-control native build and48 pure preliminary checks. It proves
+the scalar-tail EDX sentinels, XMM preservation, exact69-site-occurrence path
+and26 normalized access events, without changing the old4992 matrix.
+Canonical `cc7ba0512777a3d8ed06c5c720857d364296935fcaeb703ca9221938c7ca7cf7`,
+file `fcd21af5a4e69983dc9d3c91763e4ccd2c7f3c283705c8f46aa692e41f5db94b`,
+21,299 bytes/3pins/169loadedbytes/59loaded/51executed. Native totals3312
+instructions/2304copybytes/1248events,192 each wide/scalar reads and writes.
+All80 tests pass without skips, including48 pure checks,16 isolated actual
+captures, all31 controls and exact CLI rebuild/verify/structure. Independent
+final reviews are GO; all13 protected hashes remain unchanged.
+Source-only ordinary resize6-to9 draft is in progress under
+`.local_decompile/oct2/simd_resize6_to9_draft/`; alloc72/copy48/freeO and
+header[D,D+48,D+72] leave spare24. No growth/class/seventh callback proof yet.
+
 ## Environment and protected work
 
 Exact PE `B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe` has SHA
