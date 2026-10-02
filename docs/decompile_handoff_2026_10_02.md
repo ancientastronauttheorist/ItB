@@ -406,6 +406,20 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The public [clone2 native proof](native_movement_path_clone2_conformance.md)
+passes123 independent tests without skips in651.26seconds. Canonical seal
+`1cddf384c45fb50a60752656acd2560a7e243dd20f0d68b8a963a4a7bb3a739b`:
+48cases/59controls/6528instructions/3984events/48 supplied allocations/768
+copied bytes, no frees/wide accesses/opaque sites/accounting promotions.
+Root actual record-copy probes at alignment0/15 match492instructions315events,
+all20helperboundaries/GPR/XMM/fullpages/source308preserve against frozen
+model65a1328db50bed2015854a56a169ab83fa43a22dd05a8a5e15e82dec292b191a.
+Record-copy pointanchor45e4d085df78b3abdcc5b54404ebc16a36a8fb8ca41ec1c7c0eab9083c3d76df,
+386loaded sites/1226bytes; actual8strings +zero path/reserve, no allocation.
+Pure independent tests and native harness are private in progress. General
+actual-page count2 clone model a3dfd47a6e60d398ea954fa6f8bfa42075c8cbb5fc25e64cfbc82903d772f8d3
+awaits independent tests; arbitrary source capacity is unread and preserved.
+
 The public [empty-string native proof](native_movement_empty_string_copy_conformance.md)
 passes72 independent tests without skips in56.71seconds, with independent
 source/CLI/receipt GO. Seal `c3d9d8598d7aa922157397a27a58aeabf86732e9bb620625d602481dd90c18b1`

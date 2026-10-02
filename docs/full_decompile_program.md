@@ -1499,6 +1499,11 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [continuous two-entry path clone](native_movement_path_clone2_conformance.md)
+is sealed across 48 cases and 59 controls, with all 123 independent checks
+passing. Actual owner/reserve/allocator/scalar state shares one machine; the
+supplied allocation success is a premise and ownership remains open.
+
 The [native disjoint empty-string copy](native_movement_empty_string_copy_conformance.md)
 is sealed across 96 cases and 26 controls, with all 72 independent checks
 passing and source/CLI/receipt review GO. The selected body executes 33 sites
