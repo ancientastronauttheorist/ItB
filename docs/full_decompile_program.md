@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [normal AddCharge general small-path law](native_movement_addcharge_small_normal_semantics.md)
+has411validated independent checks and source review GO. Counts two through384
+fit its four-buffer artifact geometry, with caller capacity through511; this
+is not a game count limit. Complete clone/AddMove/mode-two/release behavior,
+six boundary/eight import states and five executable cases agree. Broader
+runtime geometry, growth, nonempty strings, failures, ownership and gameplay
+remain separate gates; whole-program accounting is unchanged.
+
+
 The [normal AddMove general small-path law](native_movement_addmove_small_normal_semantics.md)
 has393passing independent checks and source review GO. Counts two through511
 compose complete reviewed children, preserve full original capacity, release

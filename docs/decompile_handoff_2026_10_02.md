@@ -9,6 +9,25 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### General ordinary normal AddCharge validated
+
+The [normal AddCharge small-path composition](native_movement_addcharge_small_normal_semantics.md)
+validates411distinct independent checks, sourceGO. Initial409PASS359.32seconds;
+two stale allocation-layout fixtures corrected, unchanged implementation;
+36affected geometry/domain checksPASS10.90seconds.
+Source44bbf67db18cd260365c27c9b9ad825ab93992b281f3cb5ddc78a3e01246d858;
+testV2 6413df6922a0599a3d8434906d5fad5059aa9695aa45ffe8a6c9bced80a60996.
+Five complete nativecasesN2K2/N2K511/N3K17/N17K511/N384K511 PASS.
+Count384 is conservativefour-buffer artifactDATA geometry, notgamebound;
+capacitythrough511, full14/path4,6primary8imports, completecallerfree8.
+NormalMovecheckpoint48e3e92e pushed; smallappendf1060a05/copy69a16765/
+assignment28ba6c69 pushed. RootmemcpyV2 7e05962f91c75bbdcbc95cc1a6283e396ce6576343ba5746898956c4fe0d1fe0
+has256nativecases/sourceGO; SIMD independentlyauthors tests. Fifth authors
+inline7FD0 assignment; root80D0 substringcopy4e679263cb3b08bb69a4234c905a467ea490632df59db011ec13027a366033b3
+private/unfrozen has128nativecasesPASS, needs independentreview/tests.
+Noactiveexecutiongate; broader native receipts/accounting remain unchanged.
+
+
 ### General ordinary normal AddMove validated
 
 The [normal AddMove small-path composition](native_movement_addmove_small_normal_semantics.md)
