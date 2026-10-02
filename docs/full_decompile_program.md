@@ -1499,6 +1499,13 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [existing-capacity external-source record append](native_movement_effect_record_append2_semantics.md)
+has370 independent checks validated and source review GO. It copies one record,
+advances only the vector end and preserves its rewritten caller word. A positive
+geometry fixture was corrected after proper overlap rejection; production was
+unchanged. Destruction, normal movement builders and gameplay remain open.
+
+
 The [empty-destination two-entry path assignment](native_movement_path_assign2_semantics.md)
 has381 independent pure checks and source review GO. It skips old frees and
 joins ordinary allocation and scalar copying with complete actual-page

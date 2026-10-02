@@ -406,6 +406,20 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+The [no-growth external-source append law](native_movement_effect_record_append2_semantics.md)
+is sourceGO and has370 independent checks validated: initial368PASS/1FAIL53.68s
+had a positive fixtureOFFFFFFEF inside GFFFFFFF7's protectedstack. Production
+rejection was correct; fixture movedO20000FF8 and added separateordinary-stack
+maxOcase, all7affectedgeometrychecksPASS2.16s. Full16/629/401/25/header/caller/
+fullpages and lower packets agree. Assignment pushed997a443c783a31039d67a30c7ab218766e197f9a,
+remote/protected verified. DestructorV2 independent review corrected free-entry
+SARcount3 mask8C5 toC5 (OFundefined); four nativeprobes stillPASS80/46null or
+123/74owned/fullfree/import/pages, model1dd3b2a74a8dbf48859769f8b0293ca06d301cdce51b3ae39adae89db77fc09c.
+Independent destructor tests in progress. Root prepares continuous normal
+AddMove prototype from exact20bodyselectedsource; native recordcopy2 author
+works separately. NormalAddMove/AddCharge/gameplay remain unsealed.
+
+
 The [empty-destination path assignment law](native_movement_path_assign2_semantics.md)
 is sourceGO and passes381 independent tests without skips in13.96s.
 All15 fields162instructions90events7boundaries/import and complete7/10 joins
