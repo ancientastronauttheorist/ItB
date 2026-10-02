@@ -406,6 +406,17 @@ No descendant/native gates have been run for either new copy tranche yet.
 
 ## Environment and protected work
 
+Latest copy checkpoint: the public empty80D0 actual-page law and independent
+tests pass **364 tests**, no skips, source review GO. See
+[the specification](native_movement_empty_string_copy_semantics.md). Private
+native harness is frozen at `954dc415e81e4de9f7caab3d15a5f0f63c85e1873ecf1fca808cea411cf32158`
+under `.local_decompile/oct2/movement_empty_string_copy_draft/`. Root checked
+96 pure recipes, ten native smokes and all26 controls; independent native
+tests are being authored. Those checks are private preliminary evidence,
+not a published full-corpus seal. Continuous path-clone2 draft and scalar
+law are frozen under `movement_path_clone2_draft/` for independent review.
+No active native process remains after these probes.
+
 Exact PE `B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe` has SHA
 `31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9`.
 Python3.13, private Capstone5.0.7/Unicorn2.1.4:

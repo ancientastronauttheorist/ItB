@@ -1499,6 +1499,12 @@ until core engine semantics are reconstructed.
 
 ## Working cadence
 
+The [disjoint empty-string actual-page law](native_movement_empty_string_copy_semantics.md)
+now has 364 independent pure checks and source review GO. It predicts the
+selected 33-instruction/17-access path, all GPR/XMM/page effects, five cleared
+destination bytes and 19 preserved bytes. Native composition, nonempty strings,
+ordinary AddMove, record ownership and gameplay remain open.
+
 Keep commits small and durable. A normal tranche is:
 
 1. sync and verify the exact target;
