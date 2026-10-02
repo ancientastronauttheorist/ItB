@@ -324,6 +324,32 @@ native harness/tests are in progress under `class6_to7_draft/` and
 under `.local_decompile/oct2/movement_source_plan.txt`; no movement native
 execution or public semantic promotion yet.
 
+The continuous [class six-to-seven append](native_lua_class_simd_vector6_to7_return_conformance.md)
+now seals all288 native cases and60 controls, with independent source/CLI and
+published-receipt review GO. Canonical
+`9103e9dd655eaeb9530b0c09f2ea2d050e6e5462c2f796ce3136e63264ff37e6`,
+file `e0e0593001657ac09f32fd342c0ed30b21291db6ddf191a6780ef5993061bc60`,
+298913bytes/20pins/939loaded/2440bytes/398executed/376956instructions/171252events.
+One machine continues the existing-key tree prefix through actual growth
+entry L-44/headerU+4/return006eb205, resize L-64, copy48/free-old48, append8
+and normal return. Final header[D,D+56,D+72] preserves spare16; all10 actual
+boundaries and both imported ABI packets are checked. The97 focused tests
+pass without skips:96 in the full704.08s gate, then the receipt test in16.21s
+after normalizing legacy end_rva against exclusive_end_rva. No production or
+receipt change was required for that test correction. Whole-game accounting
+and the seventh factory callback remain open.
+
+Next distinct tranche: publish the selected static AddMove/AddCharge binding
+under `.local_decompile/oct2/movement_binding_draft/`, with independent
+tests frozen in `movement_binding_tests/`. The selected initializer recipes,
+two20-byte builders and both parents are source-reviewed GO; revised canonical
+receipt needs primary serial rebuilding and validation. Static graphs contain
+220nodes/226edges, without runtime publication or child-semantic claims.
+The private `movement_early_return_draft/` is being authored for144 finite
+AddMove null/empty-owned/one-point early paths. Root has only two private null
+smokes so far; no public movement native conformance yet. Parameter/SSE,
+record construction/path-copy/append and gameplay effects remain open.
+
 ## Environment and protected work
 
 Exact PE `B:\SteamLibrary\steamapps\common\Into the Breach\Breach.exe` has SHA

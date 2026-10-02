@@ -96,8 +96,15 @@ including exact CLI rebuild/verify/structure; independent final reviews are GO.
 The [actual-page growth law](native_simd_vector_growth6_to9_semantics.md) now
 passes295 independent logical checks, including all128 ordinary flag words,
 arbitrary unused caller words and actual class frames/continuations. Source
-review is GO; it does not enlarge the finite native receipt. Class6-to7 remains
-open, and existing fixed32 receipts stay unchanged.
+review is GO; it does not enlarge the finite native receipt. The
+[class six-to-seven append](native_lua_class_simd_vector6_to7_return_conformance.md)
+now seals288 continuous native cases and60 controls, with complete actual
+growth/resize/import boundaries, copy48, append8 and preserved spare16.
+All97 focused tests pass without skips, including exact rebuild and CLI
+commands; independent source/CLI and published-receipt reviews are GO.
+The seventh factory callback remains open, and existing fixed32 receipts stay
+unchanged. The next distinct frontier is AddMove/AddCharge binding and selected
+movement-parent paths; whole-game semantics and accounting remain unfinished.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
