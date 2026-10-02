@@ -104,7 +104,13 @@ All97 focused tests pass without skips, including exact rebuild and CLI
 commands; independent source/CLI and published-receipt reviews are GO.
 The seventh factory callback remains open, and existing fixed32 receipts stay
 unchanged. The next distinct frontier is AddMove/AddCharge binding and selected
-movement-parent paths; whole-game semantics and accounting remain unfinished.
+movement-parent paths. The [selected binding](native_movement_effect_binding.md)
+now seals the complete AddMove/AddCharge name recipes, two20-byte builders,
+selected parent relations and220-node/226-edge syntactic graphs. All130 focused
+tests pass without skips, including exact source rebuild and CLI commands;
+independent source/CLI/receipt reviews are GO. Runtime publication, child
+semantics and native pawn movement remain open. Whole-game semantics and
+accounting remain unfinished.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 

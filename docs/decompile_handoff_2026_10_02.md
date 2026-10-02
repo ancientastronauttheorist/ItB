@@ -339,12 +339,17 @@ after normalizing legacy end_rva against exclusive_end_rva. No production or
 receipt change was required for that test correction. Whole-game accounting
 and the seventh factory callback remain open.
 
-Next distinct tranche: publish the selected static AddMove/AddCharge binding
-under `.local_decompile/oct2/movement_binding_draft/`, with independent
-tests frozen in `movement_binding_tests/`. The selected initializer recipes,
-two20-byte builders and both parents are source-reviewed GO; revised canonical
-receipt needs primary serial rebuilding and validation. Static graphs contain
-220nodes/226edges, without runtime publication or child-semantic claims.
+Class checkpoint was pushed as `213f044fc8983d5b3340dc3e27fe3739210d30fa`;
+local/remote HEAD matched and all13 protected hashes remained unchanged.
+The selected [static AddMove/AddCharge binding](native_movement_effect_binding.md)
+now seals canonical `54c060913d61f6bb5e4c1f2586f0d5186ea73ad6c058dd48b1cc056e64a410b9`,
+file `8dcab678554d5baa3d62ed79ddf51f861cdd13ea3608a08eb5ef670e6bafd86b`,
+92129bytes/one program-facts pin. All130 focused tests pass without skips in
+207.49seconds, including selected-source rebuild/mutations and all3 exact CLI
+commands. Independent source/CLI and final receipt review are GO. The selected
+initializer recipes, two20-byte builders and both parents have220nodes/226edges,
+without runtime publication or child-semantic claims. BL assignment/AL-copy
+facts deliberately avoid a return-value guarantee across opaque child calls.
 The private `movement_early_return_draft/` is being authored for144 finite
 AddMove null/empty-owned/one-point early paths. Root has only two private null
 smokes so far; no public movement native conformance yet. Parameter/SSE,
