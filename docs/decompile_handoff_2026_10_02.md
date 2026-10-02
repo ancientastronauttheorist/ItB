@@ -363,8 +363,11 @@ now passes144 native cases/40controls, canonical
 file `45374aa188fd76730c0a2c46e16a8762baf9d1046755472684b73ef9cd6ac2fc`,
 43401B/5pins/128loaded/401B/82executed/9888instructions/6000events/96frees.
 Primary144pure/9native/all40controls gates pass; independent source/CLI review
-is GO. Public module/CLI/receipt are integrated but final independent tests
-remain pending in `.local_decompile/oct2/movement_early_return_tests/`.
+is GO. The [public AddMove gate](native_movement_addmove_early_return_conformance.md)
+now passes all89 focused tests without skips:77 full-gate checks and12 actual
+captures after observer CPU setup was corrected. Production/receipt unchanged;
+independent final source/CLI/receipt and observer-fix reviews are GO. Attach
+observers after CPU selection and before mapping/execution.
 
 The [default record actual-page law](native_movement_effect_record_default_semantics.md)
 now passes302 independent pure tests without skips in6.89seconds, source review

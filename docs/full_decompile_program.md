@@ -116,7 +116,13 @@ now passes302 independent logical checks, covering exact308-byte defaults,
 183 written/125 preserved bytes, seven zero-length helper calls,217 accesses,
 356 selected instructions and14 full state boundaries. Source review is GO.
 This does not establish general strings, actual parent calls, record copy,
-append/destruction, ownership or broader native behavior.
+append/destruction, ownership or broader native behavior. The
+[AddMove early-return proof](native_movement_addmove_early_return_conformance.md)
+now seals144 native null/owned-empty/one-point cases and40 intended controls.
+All89 focused tests pass without skips, including12 independently instrumented
+single-machine captures and exact rebuild/CLI; independent final reviews GO.
+Capacity-based count1/stride8 cleanup, cookie return and full pages/GPR/XMM/
+defined flags close this short path. Record-work and pawn movement stay open.
 Installed48 CLI rebuild/verify/structure pass;
 all13 protected hashes survive.
 
