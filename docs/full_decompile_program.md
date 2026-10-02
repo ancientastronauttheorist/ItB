@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [inline string erasure law](native_movement_inline_string_erase_semantics.md)
+has2,326 passing independent checks and source review GO. Complete truncation,
+no-op and interior-shift branches bind actual unsigned requests, full child
+joins and subtraction entry flags. All1,272 complete executable cases agree.
+Heap strings, growth, failure, ownership and gameplay remain separate gates;
+whole-program accounting is unchanged.
+
+
 The [actual erase-child forward memmove entry](native_movement_memmove_forward_semantics.md)
 has4,966 passing independent checks and source review GO. The separate36E580
 body and all selected points are bound independently; zero through31 bytes

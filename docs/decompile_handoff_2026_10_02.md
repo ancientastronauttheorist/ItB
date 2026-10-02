@@ -9,6 +9,22 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Inline erasure validated
+
+The [inline erase law](native_movement_inline_string_erase_semantics.md) passes
+2326 independent checks without skips in16.57seconds, source GO.
+Source52c24867d833a9cf3852e4f967039a637236fcb0b3d801f1b038fb74c6f77e55;
+test8f36ce582a0a7421ac650901c00c67ff36717772606b32521d70f93753f318f4.
+All1272native full-state cases agree. Three ownerbranches plus actual36E580
+child bind whole14/11/pages/accesses/entrySUBflags/returnstate; canonicallabels
+trusted at fixed length. Memmoveforward1161df89/backwardcopyc8109b9a pushed.
+Self80D0 Fifthsource095e98f2e9faf6476040b090da9d78b3d1d4509d563ca32ccdf38facfd20d695
+frozen; rootnativegatepending, SIMDreview/tests. Root36E580 backwardbinding
+fb3d1463/native1860PASS, Fifth independentreview/tests. Rootforward gap geometry
+12 additional complete nativecasesPASS (callerstack/return betweenbuffers).
+Broader native receipts/accounting remain unchanged.
+
+
 ### Actual erase-child memmove forward entry validated
 
 The [small forward memmove law](native_movement_memmove_forward_semantics.md)
