@@ -7,6 +7,28 @@ At the deadline, finish active validation safely, preserve a reviewable
 handoff, push/check the branch and protected work, then pause the heartbeat.
 The full game and whole-program accounting remain unfinished.
 
+## Latest record-copy native checkpoint
+
+The [continuous two-entry-path record-copy proof](native_movement_effect_record_copy2_conformance.md)
+passes155 independent checks without skips in428.71seconds, source/CLI/receipt
+review GO. Canonical seal594b01e901b028f23bc8a75857d9ddf775b481b22285bdaca74fe301753f5489
+binds48recipes/90controls/28368instructions/17856accesses/1152states/48supplied
+allocations requesting768bytes. Full independent corpus observation and all
+three CLI commands reproduce the receipt. Raw104314B SHA4c24d3861e840ff247d441adf16d86f5454985f1bbe76212d30008762dd869d3.
+OneUc/two starts; all nine bodies execute continuously with complete boundary,
+imported and final pages/GPR/XMM/defined flags. No free/opaque/wide/accounting
+promotion or ownership/gameplay closure.
+
+Normal AddMove pure V5 now has446distinct checks validated:443 initial passes,
+two invalid low-stack append fixtures corrected, then36affected geometry/domain
+checks pass6.39seconds. Its public files remain an uncommitted separate tranche.
+Normal native private V3 under movement_addmove_normal_native_draft awaits root
+runtime and SIMD review/tests:2089instructions1293events16primary+6import states,
+3suppliedallocations/3frees,20bodies/1206sites/3727bytes. AddCharge pure V2 under
+movement_addcharge_normal_model_draft matches two private continuous native
+cases2303/1426/all6primary8imports; Fifth independently reviews/tests it.
+Full game remains unfinished. Protect all13 original files and run gates serially.
+
 ## Prior durable state
 
 The [October 1 handoff](decompile_handoff_2026_10_01.md) records the actual

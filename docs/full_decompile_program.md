@@ -19,6 +19,15 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [continuous nonempty two-entry-path record copy](native_movement_effect_record_copy2_conformance.md)
+is sealed across48recipes and90controls, with155independent checks passing.
+All actual helpers, allocation, scalar copies and cookie/SEH restore share one
+machine; observers reproduce every recipe and the exact receipt. This finite
+proof preserves source/padding and supplies one ordinary allocation response.
+Normal movement builders, other path counts, nonempty strings, ownership and
+gameplay remain separate gates; whole-program accounting does not change.
+
+
 The [October 2 handoff](decompile_handoff_2026_10_02.md) continues from the
 fourth actual factory callback. The [standalone class SIMD append](native_lua_class_simd_vector_return_conformance.md)
 now executes full4/cap4 growth to capacity6, copies32, frees old32 and appends
