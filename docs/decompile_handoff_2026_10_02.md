@@ -9,6 +9,21 @@ The full game and whole-program accounting remain unfinished.
 
 ## Latest scalar path-copy checkpoint
 
+### Overlapping forward copy validated
+
+The [forward copy including overlap](native_movement_small_forward_copy_semantics.md)
+passes4966 independent checks without skips in45.44seconds, source GO.
+Source8f3ab50576118c3a17be8e1bc0d1b2e4de2790b74480322a47644fdc767bc01c;
+test383d18fb2e1cdf5523cdbc9bd2943fd1fe8607049721d4231320b497644e7ffb.
+All1984 native self/leftward overlap full-state cases PASS on V2. The prior
+disjoint domain is preserved, including buffers straddling stack/return gaps.
+Recordcopy176e734b andcheckpointdocse9353ee8 pushed. Backward67548 sourceGO,
+1860nativePASS/test1e560a03 frozen8216, gatepending. Memmove36E580 forward
+cfd10fbf sourceGO/native1984PASS, Fifth finishing independently relocated tests.
+Root inlineerase8410 draft52c24867 nativegatepending; no publication claim yet.
+Broader native receipts/accounting remain unchanged.
+
+
 ### General inline-string record copy validated
 
 Checkpoint176e734b pushed. The [inline-string record-copy law](native_movement_effect_record_inline_copy_semantics.md)

@@ -19,6 +19,14 @@ claims, clean-room specifications, tests, and independently written code.
 
 ## October 2 checkpoint
 
+The [small forward copy including overlap](native_movement_small_forward_copy_semantics.md)
+has4,966 passing independent checks and source review GO. Zero through31 bytes
+close disjoint, self and leftward overlap with complete actual reads, original
+source snapshots and caller gap geometry. All1,984 complete executable overlap
+cases agree. Larger, backward and SIMD arms remain separate gates; whole-program
+accounting is unchanged.
+
+
 The [inline-string movement record-copy law](native_movement_effect_record_inline_copy_semantics.md)
 has 780 passing independent checks and source review GO. Eight counted inline
 strings through15 bytes compose with path counts through511, closing full
