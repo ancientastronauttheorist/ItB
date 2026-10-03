@@ -1,0 +1,215 @@
+{
+  "action": {
+    "acknowledgement": "not_retained_in_examined_family",
+    "description_normalization": "ASCII arrow transcription of append-only action log; original source hash retained",
+    "evidence": "Original plan is retained in append-only decision log; action_1_move_verify labels move phase and actual_board snapshot gives actor destination. Command dispatch is inferred from the move-verification record, not an independently retained command ACK.",
+    "log_line": 20,
+    "log_time": "00:12:14",
+    "move_to": [
+      3,
+      4
+    ],
+    "move_to_visual": "D5",
+    "original_plan_description": "2. BomblingMech, move E6->D5, repair"
+  },
+  "after": {
+    "actual_board_snapshot_timestamp": "not_retained",
+    "observed_projection_fields": [
+      "uid",
+      "type",
+      "x",
+      "y",
+      "hp",
+      "max_hp",
+      "team",
+      "is_mech"
+    ],
+    "position_visual": "D5",
+    "predicted_fields_are_not_observations": {
+      "active": true,
+      "alive": true,
+      "hp": 3,
+      "is_mech": true,
+      "max_hp": 3,
+      "pos": [
+        3,
+        4
+      ],
+      "status": {
+        "acid": false,
+        "boosted": false,
+        "fire": false,
+        "frozen": false,
+        "infected": true,
+        "shield": false,
+        "web": false
+      },
+      "team": 1,
+      "type": "BomblingMech",
+      "uid": 1
+    },
+    "snapshot_link": "context.failure_db_id = 20260619_234224_725_m00_t01_per_sub_action_desync_move_a1",
+    "unit": {
+      "hp": 3,
+      "is_mech": true,
+      "max_hp": 3,
+      "team": 1,
+      "type": "BomblingMech",
+      "uid": 1,
+      "x": 3,
+      "y": 4
+    },
+    "verification_timestamp": "2026-06-20T00:12:19.104064"
+  },
+  "before": {
+    "capture": "data.bridge_state actual bridge input, not replay projection",
+    "destination_tile_before": {
+      "terrain": "ground",
+      "terrain_id": 0,
+      "x": 3,
+      "y": 4
+    },
+    "record_timestamp": "2026-06-20T00:12:12.721938",
+    "start_bridge": [
+      2,
+      3
+    ],
+    "start_visual": "E6",
+    "unit": {
+      "acid": false,
+      "active": true,
+      "fire": false,
+      "flying": false,
+      "frozen": false,
+      "hp": 3,
+      "infected": true,
+      "massive": true,
+      "max_hp": 3,
+      "shield": false,
+      "team": 1,
+      "type": "BomblingMech",
+      "uid": 1,
+      "web": false,
+      "x": 2,
+      "y": 3
+    }
+  },
+  "confounders": {
+    "scalar_diffs": [],
+    "tile_diffs": [
+      {
+        "actual": "water",
+        "field": "terrain",
+        "predicted": "ground",
+        "x": 4,
+        "y": 5
+      },
+      {
+        "actual": false,
+        "field": "has_pod",
+        "predicted": true,
+        "x": 4,
+        "y": 5
+      }
+    ],
+    "total_count": 3,
+    "unit_diffs": [
+      {
+        "actual": 5,
+        "field": "hp",
+        "predicted": 3,
+        "type": "PierceMech",
+        "uid": 0
+      }
+    ]
+  },
+  "corpus_version": "s1-archived-observation-development-v1",
+  "evidence_class": "archived_original_game_bridge_observation_partial_player_move_projection",
+  "full_turn_comparisons": 0,
+  "identity": {
+    "action_index": 1,
+    "actor_type": "BomblingMech",
+    "actor_uid": 1,
+    "historical_simulator_version": 269,
+    "historical_solver_version": "rust-0.1.0-ce4ee06b",
+    "mission_id": "Mission_Dam",
+    "mission_index": 0,
+    "native_executable_identity": "not_retained_in_sample",
+    "run_id": "20260619_234224_725",
+    "sub_action": "move",
+    "turn": 1
+  },
+  "independent_original_game_observation_families": 1,
+  "ledger_promotions": 0,
+  "limitations": [
+    "Observed Ground-to-Ground position and HP projection only.",
+    "Before actor is Massive but this is not a Massive-through-Water control.",
+    "Intermediate route not observed; no Smoke/Water/Fire transit claim.",
+    "Actual after snapshot omits active/fire/acid/frozen/shield/web/infected fields; predicted equality is not a retained actual status capture.",
+    "Dam flood changed C4 Ground to Water and removed pod; prior PierceMech HP gain is not attributed to Bombling movement.",
+    "This is before action1 after action0; before board is start-of-turn and other actor/environment effects occurred before observed after snapshot.",
+    "Capture has no original executable/build hash; cannot bind observations to pinned Windows PE.",
+    "No full-turn next-state equivalence or solver quality claim."
+  ],
+  "matched_pinned_build_transitions": 0,
+  "overwritten_plan": {
+    "latest_solve_is_not_original_action_list": true,
+    "latest_solve_timestamp": "2026-06-20T00:12:19.284129",
+    "partial_re_solve": {
+      "done_uids": [
+        0
+      ],
+      "mid_action_uid": 1
+    },
+    "reason": "After move, partial re-solve done_uids=[0],mid_action_uid=1 renumbers pending action to0; original action1 retained in log."
+  },
+  "schema_version": 1,
+  "search_scope": {
+    "action_verify_move_attack": 1856,
+    "boards": 4928,
+    "full_turn_family": "run_notes/lightning_war_walkthrough/island_loop_attempt_2_mission_2_manual.log has turn1 bridge summary, action2 RockartMech C5->C3 MOVE ACK+PASS+SKIP, and turn2 actual bridge summary; post-state includes enemy/environment/full-turn effects.",
+    "local_files": 23087,
+    "move_verify": 347,
+    "recordings_inventory": "rg --files --hidden --no-ignore recordings; includes ignored/local files, not a tracked Git inventory",
+    "representative_reads": "Selected older/default and recent movement verification families, seven move-context snapshot candidates, three successful Tides logs, two walkthrough log families, selected manifest/solve_input schemas.",
+    "stronger_transition_not_found": "No retained isolated move triple with command ACK plus full actual post-board status and MassiveWater/intermediate Smoke or WaterFire in these bounded samples.",
+    "telemetry_events_files": 86
+  },
+  "source_pins": [
+    {
+      "bytes": 18142,
+      "path": "recordings/20260619_234224_725/m00_turn_01_solve_input.json",
+      "sha256": "59c380da03f2589e063270addd42722b8a06cd34e5c2d1d305056f21d40a501a"
+    },
+    {
+      "bytes": 9579,
+      "path": "recordings/20260619_234224_725/m00_turn_01_action_1_move_verify.json",
+      "sha256": "85751030673cdd7b7ea78c51336cd3cfed92c0267e8b701953ea067524745bc6"
+    },
+    {
+      "bytes": 52113,
+      "path": "recordings/20260619_234224_725/m00_turn_01_solve.json",
+      "sha256": "b77ebef9e8f06f5f0f644982bb40649e3b7bfcc6202c8056b6b24c699c681f06"
+    },
+    {
+      "bytes": 633,
+      "path": "snapshots/pod_state_20260619_234224_725_t01_a1/context.json",
+      "sha256": "4df8e2d4dab26daba31775f7b31a729f5b1a64b97da4e7edd8968b6cfdf9e71d"
+    },
+    {
+      "bytes": 7739,
+      "path": "snapshots/pod_state_20260619_234224_725_t01_a1/actual_board.json",
+      "sha256": "c1906e2bc630615a76debec8d42aa6d199bf13029b5de0fc5f65c63df9ad01a0"
+    },
+    {
+      "bytes": 1290,
+      "path": "logs/20260619_234224_725_log.md",
+      "sha256": "e8f67c89cf40e3f94cfe2037334822e49cee17eaebe04160a8ac27fad1d09d41"
+    },
+    {
+      "bytes": 354,
+      "path": "recordings/20260619_234224_725/manifest.json",
+      "sha256": "3132c860fcb2e6bbbb1294a63b02b09b0cbf8aef312120290c52c523bf47f2ce"
+    }
+  ]
+}

@@ -158,6 +158,10 @@ the archive represents tracked HEAD, not that dirty working copy.
 
 ## Next movement/turn boundary
 
+The subsequent [coordinate/arrival checkpoint](solver_first_movement_stages.md)
+executes three legal stage compositions and retains the full-route failure at
+the original Lua animation boundary. It does not close the movement/turn gate.
+
 Query agreement does not execute the queued AddMove consumer. Static evidence
 in [the consumer boundary](../data/solver_first/s1_movement_consumer_static_boundary.json)
 connects type-four/mode-zero records to installer `0x235f00`. Its destination

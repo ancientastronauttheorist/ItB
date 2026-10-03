@@ -1,0 +1,2010 @@
+{
+  "busy_object": {
+    "address": "Pawn+0xa74",
+    "busy_slot": "+0x04",
+    "busy_target_abi": "ECX=embedded object, no arguments, RET, AL Boolean",
+    "busy_target_rva": "0x0015c4d0",
+    "busy_target_sha256": "4575ec98d165e12d4a9e52ddb6f4dd8e92472041be11f525e904d20aa5e25c58",
+    "busy_target_size": 51,
+    "common_Pawn_constructor_rva": "0x0022a920",
+    "common_Pawn_constructor_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+    "common_Pawn_constructor_size": 4520,
+    "constructor_abi": "ECX=Pawn+0xa74, no stack arguments, RET, EAX returns receiver; map writable 0x1d4-byte subobject through Pawn+0xc48.",
+    "constructor_call_site": "0x0022b020",
+    "constructor_entry_rva": "0x0015dfb0",
+    "constructor_runtime_boundary": "Full15dfb0 can be called independently of the completePawn constructor. Its selected children construct empty inline strings via original7fd0; retain original mapped source/code, SEH/cookie scaffolding and fail-closed import policy. This packet has not executed it and does not claim fullPawn constructor completion.",
+    "constructor_sha256": "123487064545e5c7fa3aba38c4c1950afd1d58ddc7ec8bbeeaed24ac4074ef55",
+    "constructor_size": 276,
+    "default_fields": [
+      {
+        "absolute_Pawn_offset": "+0xa74",
+        "relative_offset": "+0x00",
+        "store_rva": "0x0015dfea",
+        "value": "VA0x82e11c"
+      },
+      {
+        "absolute_Pawn_offset": "+0xa7c",
+        "relative_offset": "+0x08",
+        "store_rva": "0x0015dff0",
+        "value": "DWORD0"
+      },
+      {
+        "absolute_Pawn_offset": "+0xaa8",
+        "relative_offset": "+0x34",
+        "store_rva": "0x0015e02e",
+        "value": "BYTE0"
+      }
+    ],
+    "full_embedded_constructor_children": [
+      {
+        "ECX": "embedded+48",
+        "arguments": [],
+        "call_site": "0x0015e047",
+        "sha256": "8af623bc4c3aca50ad1cb9939a91e477908f63f1ac48210d2a77217613827ee6",
+        "size": 160,
+        "target_rva": "0x0015e750"
+      },
+      {
+        "ECX": "embedded+94",
+        "arguments": [],
+        "call_site": "0x0015e08f",
+        "sha256": "2033be4151f2e6913299f76083a0dfd290ae1bad764a0b8c70685b812004ddb7",
+        "size": 668,
+        "target_rva": "0x0015b080"
+      }
+    ],
+    "genuine_vtable_va": "0x0082e11c",
+    "idle_path": "Original15c4d0 checks embedded+34 at15c4d0; zero continues. It loads embedded+8 at15c4d6; null branches15c4db to15c4fd, returnsAL0 at15c4ff. No supplied callback result is needed.",
+    "nonnull_child_path_excluded": "If embedded+8 is nonnull, original reads child+80 count and child+0 array pointer, then 0x2c-stride records' byte+1c. Any nonzero byte returnsAL1. This is outside the selected empty/default embedded-object domain.",
+    "vtable_window": {
+      "rva": "0x0042e11c",
+      "sha256": "3fe875c430c03e05291d09a05d04083c949dedd63061566bf3fb57c5024e2e9d",
+      "size": 24
+    }
+  },
+  "duration_animation_sound": {
+    "body_identities": [
+      {
+        "direct_calls": [
+          {
+            "site": "0x3109",
+            "target": "0x6e450"
+          },
+          {
+            "site": "0x3116",
+            "target": "0x8d280"
+          },
+          {
+            "site": "0x3137",
+            "target": "0x6e460"
+          },
+          {
+            "site": "0x317d",
+            "target": "0x357848"
+          }
+        ],
+        "instruction_count": 33,
+        "ranges": [
+          {
+            "size": 137,
+            "start_rva": "0x00003100"
+          }
+        ],
+        "sha256": "22666e33da3e16517edc66f71fca5b97b8f4644491c1359c46edf22eb14e0633",
+        "size": 137,
+        "start": "0x3100"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x4e86a",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0x4e88f",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0x4e89d",
+            "target": "0x6c3e0"
+          },
+          {
+            "site": "0x4e8ac",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x4e8b7",
+            "target": "0x4fcf0"
+          },
+          {
+            "site": "0x4e969",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 131,
+        "ranges": [
+          {
+            "size": 390,
+            "start_rva": "0x0004e800"
+          }
+        ],
+        "sha256": "701d733376fa7687810c969eb708950d34eba50c92dd2f407eb07dd80d742f94",
+        "size": 390,
+        "start": "0x4e800"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x4fbbb",
+            "target": "0x3574db"
+          },
+          {
+            "site": "0x4fbd3",
+            "target": "0x3574db"
+          },
+          {
+            "site": "0x4fbe1",
+            "target": "0x3435bc"
+          },
+          {
+            "site": "0x4fbe6",
+            "target": "0x3435bc"
+          }
+        ],
+        "instruction_count": 34,
+        "ranges": [
+          {
+            "size": 91,
+            "start_rva": "0x0004fb90"
+          }
+        ],
+        "sha256": "ac69caff3bcfeca778d4e2d38722ddfeb1428f1d7bce3a35f4e9b22cf78dae13",
+        "size": 91,
+        "start": "0x4fb90"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x4fcfb",
+            "target": "0x52530"
+          }
+        ],
+        "instruction_count": 30,
+        "ranges": [
+          {
+            "size": 75,
+            "start_rva": "0x0004fcf0"
+          }
+        ],
+        "sha256": "47341dda034f70ecc81ef1369f2183875c9e6affaa3c486064f11d3e2184c3ee",
+        "size": 75,
+        "start": "0x4fcf0"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 29,
+        "ranges": [
+          {
+            "size": 66,
+            "start_rva": "0x00051270"
+          }
+        ],
+        "sha256": "9f512eb8e0d93ef3bd18c2b6be632e0bbf30bb5cdd85b2f190e11d95f10d33df",
+        "size": 66,
+        "start": "0x51270"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 44,
+        "ranges": [
+          {
+            "size": 96,
+            "start_rva": "0x0006c1b0"
+          }
+        ],
+        "sha256": "73a9b4302bd9d88c5773264e1b124d28388f81e091943797d7a61cb818b8b932",
+        "size": 96,
+        "start": "0x6c1b0"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 24,
+        "ranges": [
+          {
+            "size": 68,
+            "start_rva": "0x0006c3e0"
+          }
+        ],
+        "sha256": "ed059e361991083be61a45e0ca5d238c252bc53c06df3ac8df9a9646dcad81ef",
+        "size": 68,
+        "start": "0x6c3e0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x6e06b",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x6e07a",
+            "target": "0x4fb90"
+          }
+        ],
+        "instruction_count": 35,
+        "ranges": [
+          {
+            "size": 93,
+            "start_rva": "0x0006e050"
+          }
+        ],
+        "sha256": "f0daa09baaea874265119d59a0fe9cea02e2f5aee3e638cef6dc80d91a223577",
+        "size": 93,
+        "start": "0x6e050"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x6e0f9",
+            "target": "0x80d0"
+          }
+        ],
+        "instruction_count": 19,
+        "ranges": [
+          {
+            "size": 53,
+            "start_rva": "0x0006e0d0"
+          }
+        ],
+        "sha256": "55d1b08d53224af7a0a6add8bc0145cb096cdfc33604477171b7132e8584696f",
+        "size": 53,
+        "start": "0x6e0d0"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 26,
+        "ranges": [
+          {
+            "size": 54,
+            "start_rva": "0x0006e320"
+          }
+        ],
+        "sha256": "4bdfb4a3e97fe116dbeefdd42bfd1989b8f0a6f83f6c08fecc8ac73846fa59e8",
+        "size": 54,
+        "start": "0x6e320"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 1,
+        "ranges": [
+          {
+            "size": 3,
+            "start_rva": "0x0006e450"
+          }
+        ],
+        "sha256": "dbd1a662565b07272069f88faadf4327acaf51b7d14f236c84c0a9679d07cef3",
+        "size": 3,
+        "start": "0x6e450"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 35,
+        "ranges": [
+          {
+            "size": 66,
+            "start_rva": "0x0006e460"
+          }
+        ],
+        "sha256": "1db90929e2a9bc2995bfd436510f940ff3898a9bfe3e63dee27fd12bfcb841f2",
+        "size": 66,
+        "start": "0x6e460"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x800a7",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x800de",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x80109",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x8013c",
+            "target": "0x379cc2"
+          }
+        ],
+        "instruction_count": 92,
+        "ranges": [
+          {
+            "size": 263,
+            "start_rva": "0x00080080"
+          }
+        ],
+        "sha256": "3cc146f887b16593b55805de6c59289b1131d6ef0a94ce8da0318a17db9c8197",
+        "size": 263,
+        "start": "0x80080"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x801e2",
+            "target": "0x80400"
+          },
+          {
+            "site": "0x80221",
+            "target": "0x6c1b0"
+          }
+        ],
+        "instruction_count": 74,
+        "ranges": [
+          {
+            "size": 169,
+            "start_rva": "0x000801c0"
+          }
+        ],
+        "sha256": "a869c51bb5ca9259db62300844586b855b9a31343f5fcfd7c224533c7c699d50",
+        "size": 169,
+        "start": "0x801c0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x802d1",
+            "target": "0x6e050"
+          },
+          {
+            "site": "0x802fe",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x80310",
+            "target": "0x7800"
+          },
+          {
+            "site": "0x80320",
+            "target": "0x80520"
+          }
+        ],
+        "instruction_count": 64,
+        "ranges": [
+          {
+            "size": 201,
+            "start_rva": "0x00080270"
+          }
+        ],
+        "sha256": "8c8ca9e779f9a4614504e9422385875337c23412a0ac32b03cc4e4b6225e4cc5",
+        "size": 201,
+        "start": "0x80270"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x80366",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x8039f",
+            "target": "0x3a01a0"
+          },
+          {
+            "site": "0x803be",
+            "target": "0x39dc01"
+          },
+          {
+            "site": "0x803d6",
+            "target": "0x6e460"
+          }
+        ],
+        "instruction_count": 55,
+        "ranges": [
+          {
+            "size": 184,
+            "start_rva": "0x00080340"
+          }
+        ],
+        "sha256": "9cfd16447ff2ee4232c03465352221b3c98f41ad10deb26f135bac419c1f455e",
+        "size": 184,
+        "start": "0x80340"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x8042f",
+            "target": "0x379cc2"
+          }
+        ],
+        "instruction_count": 35,
+        "ranges": [
+          {
+            "size": 92,
+            "start_rva": "0x00080400"
+          }
+        ],
+        "sha256": "3868bc2592cbaacb1ccf276a0d9ae5debf44d80713dde403b883b260a11cc2b5",
+        "size": 92,
+        "start": "0x80400"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x80560",
+            "target": "0x39c4e0"
+          },
+          {
+            "site": "0x80585",
+            "target": "0x39dc01"
+          }
+        ],
+        "instruction_count": 42,
+        "ranges": [
+          {
+            "size": 126,
+            "start_rva": "0x00080520"
+          }
+        ],
+        "sha256": "4635da9a019276ae49804c79242cb5cc1ffab68f2bfe5dfe63f1c6e94cbaf470",
+        "size": 126,
+        "start": "0x80520"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x87c1e",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87c36",
+            "target": "0x52530"
+          },
+          {
+            "site": "0x87c68",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87c79",
+            "target": "0x88d00"
+          },
+          {
+            "site": "0x87cbb",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87cc9",
+            "target": "0x89240"
+          },
+          {
+            "site": "0x87cfe",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 143,
+        "ranges": [
+          {
+            "size": 406,
+            "start_rva": "0x00087b90"
+          }
+        ],
+        "sha256": "3275975130c3f4f784731d0bf8048aa594ec5e9c9df5e48a72a3ccc16b1ad713",
+        "size": 406,
+        "start": "0x87b90"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x87f36",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87f4e",
+            "target": "0x52530"
+          },
+          {
+            "site": "0x87f80",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87f91",
+            "target": "0x88d00"
+          },
+          {
+            "site": "0x87fd6",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x87fe4",
+            "target": "0x541f0"
+          },
+          {
+            "site": "0x88011",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 138,
+        "ranges": [
+          {
+            "size": 383,
+            "start_rva": "0x00087eb0"
+          }
+        ],
+        "sha256": "1068d6af64e2a6ecf525841c860a6a9a640cbc193ecf0ed93f471cb6f6445f4c",
+        "size": 383,
+        "start": "0x87eb0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x880b6",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x880ce",
+            "target": "0x52530"
+          },
+          {
+            "site": "0x88100",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x88111",
+            "target": "0x88d00"
+          },
+          {
+            "site": "0x88156",
+            "target": "0x51270"
+          },
+          {
+            "site": "0x88164",
+            "target": "0x892f0"
+          },
+          {
+            "site": "0x88191",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 138,
+        "ranges": [
+          {
+            "size": 383,
+            "start_rva": "0x00088030"
+          }
+        ],
+        "sha256": "ba2c91a6779c8f8855d98dbf416832a0622631ac1c9da73ea77f8bd6c50ddcec",
+        "size": 383,
+        "start": "0x88030"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x8d0f3",
+            "target": "0x80340"
+          },
+          {
+            "site": "0x8d103",
+            "target": "0x80270"
+          },
+          {
+            "site": "0x8d127",
+            "target": "0x80340"
+          },
+          {
+            "site": "0x8d134",
+            "target": "0x80460"
+          }
+        ],
+        "instruction_count": 40,
+        "ranges": [
+          {
+            "size": 96,
+            "start_rva": "0x0008d0e0"
+          }
+        ],
+        "sha256": "22cb0bff602971b2bac1377a3c87be2e6427d091ff32842c3faafe1234104b98",
+        "size": 96,
+        "start": "0x8d0e0"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 2,
+        "ranges": [
+          {
+            "size": 5,
+            "start_rva": "0x0008d280"
+          }
+        ],
+        "sha256": "d870d3a61af925515a84599c33aeae76c8edc26749b1c4908569cb75bb87bb27",
+        "size": 5,
+        "start": "0x8d280"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x9b7f4",
+            "target": "0x9b770"
+          },
+          {
+            "site": "0x9b819",
+            "target": "0x9b770"
+          }
+        ],
+        "instruction_count": 45,
+        "ranges": [
+          {
+            "size": 99,
+            "start_rva": "0x0009b7d0"
+          }
+        ],
+        "sha256": "e23a04fbbc67e86a53e1a00a7d156cf373b9b1a3daa82bf7db2d66cd545fed5d",
+        "size": 99,
+        "start": "0x9b7d0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x9d5e2",
+            "target": "0x7800"
+          },
+          {
+            "site": "0x9d60a",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 32,
+        "ranges": [
+          {
+            "size": 85,
+            "start_rva": "0x0009d5c0"
+          }
+        ],
+        "sha256": "80d408dcaa0bf1daca64224c6a505b195b7d290942e8e384c543f263be9c47b3",
+        "size": 85,
+        "start": "0x9d5c0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x9d635",
+            "target": "0x3574db"
+          },
+          {
+            "site": "0x9d66f",
+            "target": "0x379cc2"
+          },
+          {
+            "site": "0x9d692",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 54,
+        "ranges": [
+          {
+            "size": 157,
+            "start_rva": "0x0009d620"
+          }
+        ],
+        "sha256": "597eed43253d9a1fd47ab232f304ecc0376bd76d39a5120c00c77c53820bd7b1",
+        "size": 157,
+        "start": "0x9d620"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x9da40",
+            "target": "0x6e320"
+          },
+          {
+            "site": "0x9da52",
+            "target": "0x801c0"
+          },
+          {
+            "site": "0x9da8e",
+            "target": "0x6e0d0"
+          },
+          {
+            "site": "0x9da9d",
+            "target": "0x9d620"
+          },
+          {
+            "site": "0x9dada",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0x9db01",
+            "target": "0x7800"
+          },
+          {
+            "site": "0x9db10",
+            "target": "0x8d0e0"
+          },
+          {
+            "site": "0x9db20",
+            "target": "0x80080"
+          },
+          {
+            "site": "0x9db2a",
+            "target": "0x9d5c0"
+          },
+          {
+            "site": "0x9db45",
+            "target": "0x3574ca"
+          }
+        ],
+        "instruction_count": 124,
+        "ranges": [
+          {
+            "size": 352,
+            "start_rva": "0x0009d9f0"
+          }
+        ],
+        "sha256": "9000e84b295d2a9c06436b2903a4e51d069768484f675b490ede69bd57efbf15",
+        "size": 352,
+        "start": "0x9d9f0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbba68",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xbba70",
+            "target": "0x4e800"
+          },
+          {
+            "site": "0xbbab0",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbaba",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbb02",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbb0c",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbb54",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbb5e",
+            "target": "0x88030"
+          },
+          {
+            "site": "0xbbb9d",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbbaa",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbbeb",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbbf8",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbc39",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbc46",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbc87",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbc94",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbcd5",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbce2",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbd23",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbd2d",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbd6b",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbd78",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbdc4",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbdd1",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbe1d",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbe2a",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbe6b",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbe7b",
+            "target": "0x88030"
+          },
+          {
+            "site": "0xbbebd",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbeca",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbbf0b",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbf16",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbf55",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbf60",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbf9f",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbfaa",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbbfe9",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbbff7",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbc039",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc049",
+            "target": "0x88030"
+          },
+          {
+            "site": "0xbc08b",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc09b",
+            "target": "0x87b90"
+          },
+          {
+            "site": "0xbc0df",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc0ec",
+            "target": "0x87d30"
+          },
+          {
+            "site": "0xbc121",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc161",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc16f",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbc1b1",
+            "target": "0x7fd0"
+          },
+          {
+            "site": "0xbc1bc",
+            "target": "0x87eb0"
+          },
+          {
+            "site": "0xbc1ef",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xbc1f6",
+            "target": "0xbcd90"
+          },
+          {
+            "site": "0xbc215",
+            "target": "0x6c2b0"
+          },
+          {
+            "site": "0xbc225",
+            "target": "0x793f0"
+          },
+          {
+            "site": "0xbc23e",
+            "target": "0x4a520"
+          },
+          {
+            "site": "0xbc282",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xbc28c",
+            "target": "0xbe8f0"
+          },
+          {
+            "site": "0xbc2a8",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc2da",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc307",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc3b9",
+            "target": "0x99800"
+          },
+          {
+            "site": "0xbc3e2",
+            "target": "0xbcfa0"
+          },
+          {
+            "site": "0xbc3ea",
+            "target": "0xbcf20"
+          },
+          {
+            "site": "0xbc416",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc42d",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc475",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc48c",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbc4a9",
+            "target": "0x3574ca"
+          }
+        ],
+        "instruction_count": 753,
+        "ranges": [
+          {
+            "size": 2980,
+            "start_rva": "0x000bb910"
+          }
+        ],
+        "sha256": "0da9c7d6e47831a9d6954b5853331672180d3b9050b7c47461bfaba2d1935263",
+        "size": 2980,
+        "start": "0xbb910"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbcddb",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xbcde0",
+            "target": "0xbe6f0"
+          },
+          {
+            "site": "0xbce96",
+            "target": "0x99800"
+          },
+          {
+            "site": "0xbceb0",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 86,
+        "ranges": [
+          {
+            "size": 314,
+            "start_rva": "0x000bcd90"
+          }
+        ],
+        "sha256": "6a18b556d13b2fa5658ed1cfe2b3d045c8b4903fff6768e6bcc3b58ad2f76771",
+        "size": 314,
+        "start": "0xbcd90"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbcf4f",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 43,
+        "ranges": [
+          {
+            "size": 120,
+            "start_rva": "0x000bcf20"
+          }
+        ],
+        "sha256": "9cbe75bbce50fad31cf02cabf59e3f12a335fc373dae58eba27f4dd9c0b6fca0",
+        "size": 120,
+        "start": "0xbcf20"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbcfbf",
+            "target": "0xbcff0"
+          },
+          {
+            "site": "0xbcfd0",
+            "target": "0xbd0b0"
+          }
+        ],
+        "instruction_count": 26,
+        "ranges": [
+          {
+            "size": 70,
+            "start_rva": "0x000bcfa0"
+          }
+        ],
+        "sha256": "b879ba2ec6b12a3aa64985aa2370b90be79a340121fe7fe304014b9cc8a42994",
+        "size": 70,
+        "start": "0xbcfa0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbe739",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xbe743",
+            "target": "0xbe8f0"
+          },
+          {
+            "site": "0xbe759",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 44,
+        "ranges": [
+          {
+            "size": 133,
+            "start_rva": "0x000be6f0"
+          }
+        ],
+        "sha256": "adc4da25837a649e30126d741b8c2028c8a02286e0a5af6156213c268ea076c9",
+        "size": 133,
+        "start": "0xbe6f0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xbe92f",
+            "target": "0x4a810"
+          },
+          {
+            "site": "0xbe959",
+            "target": "0x6e320"
+          },
+          {
+            "site": "0xbe968",
+            "target": "0x801c0"
+          },
+          {
+            "site": "0xbe984",
+            "target": "0x4a810"
+          },
+          {
+            "site": "0xbe9a4",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbe9c2",
+            "target": "0x4a920"
+          },
+          {
+            "site": "0xbe9da",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbea04",
+            "target": "0x6e320"
+          },
+          {
+            "site": "0xbea13",
+            "target": "0x801c0"
+          },
+          {
+            "site": "0xbea29",
+            "target": "0x7e10"
+          },
+          {
+            "site": "0xbea30",
+            "target": "0xbe8f0"
+          },
+          {
+            "site": "0xbea4f",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbea78",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xbea94",
+            "target": "0x3574ca"
+          }
+        ],
+        "instruction_count": 146,
+        "ranges": [
+          {
+            "size": 431,
+            "start_rva": "0x000be8f0"
+          }
+        ],
+        "sha256": "f6043a0123f252509c30c8ace11d48497e97a548782ba2898794ec5691d977ce",
+        "size": 431,
+        "start": "0xbe8f0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xd3e82",
+            "target": "0x6e320"
+          },
+          {
+            "site": "0xd3e94",
+            "target": "0x801c0"
+          },
+          {
+            "site": "0xd3ea8",
+            "target": "0x9d9f0"
+          },
+          {
+            "site": "0xd3eb9",
+            "target": "0x9d9f0"
+          },
+          {
+            "site": "0xd3ed0",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 66,
+        "ranges": [
+          {
+            "size": 187,
+            "start_rva": "0x000d3e30"
+          }
+        ],
+        "sha256": "bed5366fab31848a1013dd236c9548998909ba81056ea4266926c8c2891293d8",
+        "size": 187,
+        "start": "0xd3e30"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xdaec0",
+            "target": "0xdfaa0"
+          },
+          {
+            "site": "0xdaed6",
+            "target": "0x3f030"
+          }
+        ],
+        "instruction_count": 18,
+        "ranges": [
+          {
+            "size": 63,
+            "start_rva": "0x000daea0"
+          }
+        ],
+        "sha256": "5e3ecb1c5c486745bf7dadbaf78add57ed6ec64b0f4963f5ef8bcd5b040d07c9",
+        "size": 63,
+        "start": "0xdaea0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0xdb0de",
+            "target": "0x7fe10"
+          },
+          {
+            "site": "0xdb0f4",
+            "target": "0x7e10"
+          },
+          {
+            "site": "0xdb105",
+            "target": "0x7c7b0"
+          },
+          {
+            "site": "0xdb116",
+            "target": "0x6c2b0"
+          },
+          {
+            "site": "0xdb128",
+            "target": "0x4fd40"
+          },
+          {
+            "site": "0xdb134",
+            "target": "0x4a450"
+          },
+          {
+            "site": "0xdb13c",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb15e",
+            "target": "0x6c2b0"
+          },
+          {
+            "site": "0xdb189",
+            "target": "0x4a810"
+          },
+          {
+            "site": "0xdb1af",
+            "target": "0x4a520"
+          },
+          {
+            "site": "0xdb1d1",
+            "target": "0x4feb0"
+          },
+          {
+            "site": "0xdb1f4",
+            "target": "0x4a520"
+          },
+          {
+            "site": "0xdb20e",
+            "target": "0x7e10"
+          },
+          {
+            "site": "0xdb21c",
+            "target": "0x4a450"
+          },
+          {
+            "site": "0xdb22f",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb23f",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb252",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb265",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb278",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb28c",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb29b",
+            "target": "0x73ac0"
+          },
+          {
+            "site": "0xdb2ad",
+            "target": "0x4f810"
+          },
+          {
+            "site": "0xdb2b5",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb2c1",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb2f0",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xdb2f8",
+            "target": "0xdb960"
+          },
+          {
+            "site": "0xdb30a",
+            "target": "0x4fd40"
+          },
+          {
+            "site": "0xdb319",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb34f",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xdb382",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0xdb391",
+            "target": "0xdf9b0"
+          },
+          {
+            "site": "0xdb3a5",
+            "target": "0xdd5f0"
+          },
+          {
+            "site": "0xdb3bb",
+            "target": "0xdd760"
+          },
+          {
+            "site": "0xdb3c6",
+            "target": "0xdcf70"
+          },
+          {
+            "site": "0xdb3e5",
+            "target": "0xdd430"
+          },
+          {
+            "site": "0xdb3f7",
+            "target": "0xdd760"
+          },
+          {
+            "site": "0xdb402",
+            "target": "0xdd040"
+          },
+          {
+            "site": "0xdb40a",
+            "target": "0xdd340"
+          },
+          {
+            "site": "0xdb415",
+            "target": "0x731d0"
+          },
+          {
+            "site": "0xdb41d",
+            "target": "0x7dd0"
+          },
+          {
+            "site": "0xdb431",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xdb45a",
+            "target": "0x7800"
+          },
+          {
+            "site": "0xdb475",
+            "target": "0x3574ca"
+          }
+        ],
+        "instruction_count": 281,
+        "ranges": [
+          {
+            "size": 1038,
+            "start_rva": "0x000db070"
+          }
+        ],
+        "sha256": "5e958c5f00004e37b1149fa23a9136dbce695b63a981a5afcbae7b42d220b894",
+        "size": 1038,
+        "start": "0xdb070"
+      },
+      {
+        "direct_calls": [],
+        "instruction_count": 27,
+        "ranges": [
+          {
+            "size": 63,
+            "start_rva": "0x00161d70"
+          }
+        ],
+        "sha256": "5c14af5deb49703ddc2339a3a721f1362b4c08196eb3440818bda056b479db03",
+        "size": 63,
+        "start": "0x161d70"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x1743ec",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0x174401",
+            "target": "0x161d70"
+          },
+          {
+            "site": "0x17440f",
+            "target": "0x1ae630"
+          },
+          {
+            "site": "0x174423",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 58,
+        "ranges": [
+          {
+            "size": 173,
+            "start_rva": "0x00174390"
+          }
+        ],
+        "sha256": "a25769ec762a06171b323d4007dedac036b8c7338e2864c5147211e1d6742922",
+        "size": 173,
+        "start": "0x174390"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x1ae6ac",
+            "target": "0x4f9f0"
+          },
+          {
+            "site": "0x1ae6c2",
+            "target": "0x4f9f0"
+          },
+          {
+            "site": "0x1ae6d6",
+            "target": "0x49e80"
+          },
+          {
+            "site": "0x1ae6e2",
+            "target": "0x3574db"
+          },
+          {
+            "site": "0x1ae71a",
+            "target": "0x80d0"
+          },
+          {
+            "site": "0x1ae721",
+            "target": "0xbb910"
+          },
+          {
+            "site": "0x1ae74c",
+            "target": "0xbc910"
+          },
+          {
+            "site": "0x1ae7ca",
+            "target": "0xbcb10"
+          },
+          {
+            "site": "0x1ae80a",
+            "target": "0x9b7d0"
+          },
+          {
+            "site": "0x1ae81e",
+            "target": "0x7800"
+          }
+        ],
+        "instruction_count": 159,
+        "ranges": [
+          {
+            "size": 522,
+            "start_rva": "0x001ae630"
+          }
+        ],
+        "sha256": "18da4d6e0c1335a7c53b6b177a62a443dad8039aa0b6839d2b5e96b113ed5776",
+        "size": 522,
+        "start": "0x1ae630"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x35784e",
+            "target": "0x35780d"
+          }
+        ],
+        "instruction_count": 11,
+        "ranges": [
+          {
+            "size": 21,
+            "start_rva": "0x00357848"
+          }
+        ],
+        "sha256": "2b249f6d45bdf474fdd740ded523dd70bf8f44661580643553f2762afd9a987b",
+        "size": 21,
+        "start": "0x357848"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x39c595",
+            "target": "0x39be00"
+          },
+          {
+            "site": "0x39c8e4",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x39c905",
+            "target": "0x391c53"
+          },
+          {
+            "site": "0x39c914",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x39c93c",
+            "target": "0x39c123"
+          },
+          {
+            "site": "0x39c959",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x39c97b",
+            "target": "0x391ce5"
+          }
+        ],
+        "instruction_count": 147,
+        "ranges": [
+          {
+            "size": 285,
+            "start_rva": "0x0039c4e0"
+          },
+          {
+            "size": 185,
+            "start_rva": "0x0039c8d0"
+          }
+        ],
+        "sha256": "40f6656e858d797cce6adcd401a535839f2b888ccb9a925fa8679c63d09796b4",
+        "size": 470,
+        "start": "0x39c4e0"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x39dc78",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dc82",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dc8e",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dc98",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dcbe",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dcc8",
+            "target": "0x39dbbd"
+          },
+          {
+            "site": "0x39dd08",
+            "target": "0x39dbbd"
+          }
+        ],
+        "instruction_count": 60,
+        "ranges": [
+          {
+            "size": 15,
+            "start_rva": "0x0039dc01"
+          },
+          {
+            "size": 258,
+            "start_rva": "0x0039dc2c"
+          }
+        ],
+        "sha256": "5010276bc4f2c8060ba865ef56aa68792e05e8e1902579236eda6f0256d6eaf3",
+        "size": 273,
+        "start": "0x39dc01"
+      },
+      {
+        "direct_calls": [
+          {
+            "site": "0x3a0626",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x3a0647",
+            "target": "0x391c53"
+          },
+          {
+            "site": "0x3a0656",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x3a067e",
+            "target": "0x39c123"
+          },
+          {
+            "site": "0x3a069b",
+            "target": "0x3924f0"
+          },
+          {
+            "site": "0x3a06bd",
+            "target": "0x391ce5"
+          }
+        ],
+        "instruction_count": 138,
+        "ranges": [
+          {
+            "size": 253,
+            "start_rva": "0x003a01a0"
+          },
+          {
+            "size": 185,
+            "start_rva": "0x003a0612"
+          }
+        ],
+        "sha256": "a775cc0b067dfa98dff31b81d0e66a1452920e490daa46a8983d847db47ac56d",
+        "size": 438,
+        "start": "0x3a01a0"
+      }
+    ],
+    "corrections": [
+      "d3e30 is a string-keyed integer configuration/default accessor, not an RNG source.",
+      "174390 dispatches a tile particle/emitter animation; it is not the grounded-step sound boundary.",
+      "db070 is the separate FMOD-event sound boundary, with an original disabled gate before backend work.",
+      "Initializer3100 requests11 but original prime table starts17, so selected initial bucketcount is17. Earlier provisional11/48-byte description is superseded."
+    ],
+    "duration": {
+      "abi": "ECX supplies defaultinteger (caller233179 sets500). Stack by-value24-byte std::string follows returnaddress. d3e30 returnsEAX integer and uses plainRET; caller cleans24bytes at23318e.",
+      "default_miss_path": {
+        "buckets": "8d0e0->80340 computesneededbucketcount using original finite-number CRTmath; maxwithcurrent17 retains17.80270->6e050->4fb90 requests18DWORDs=72bytes via3574db, initializeszero, storesmap+14 andcalls80520 tosetloadthreshold17.",
+        "import_boundary": "Successful3574db allocation path can reuse reviewed allocator/HeapAlloc responses. Original math helpers80340->3a01a0/39dc01 and80520->39c4e0/39dc01 depend on mappedconstants, CPUfeatureglobalVA8d91c8, MXCSR/x87state; fallback control/error branches are not independently admitted here. Failedalloc/assertion/exception paths excluded.",
+        "link": "80080 insertsnode: tablebucket points to predecessor-link word, table[17] is listheadlink. Forinitiallyemptylist table[0..17]zero; insertednode.next0, matchingbucket=address(table[17]), table[17]=node, map+8increments1.9d5c0 seestransferrednodeownership and doesnotfreeit.",
+        "node": "9d620 requests36bytes through3574db and initializesnext/hash0.6e0d0/80d0 copyshortspeedstring into node+8, cap15 length5. Node+20 valueinitializes0 befored3eadwrites500."
+      },
+      "exact_empty_initializer": {
+        "boundary": "Executing3100requires separately admitted original CRT lifecycle registration. Declaring these source-correct fields is a supplied initialization premise, not original constructor execution.",
+        "children": "6e450 isRET12;8d280 returnsECX inEAX andRET8;6e460 lower-bound search on original prime table forrequested11 selects17.3100 then callsCRTatexit wrapper357848->35780d withdestructorVA7d3d70.",
+        "entry_rva": "0x3100",
+        "fields": {
+          "+10_threshold": 0,
+          "+14_bucket_pointer": 0,
+          "+4_bucketcount": 17,
+          "+8_nodecount": 0,
+          "+c_loadfactor_float32": 1.0
+        },
+        "sha256": "22666e33da3e16517edc66f71fca5b97b8f4644491c1359c46edf22eb14e0633",
+        "size": 137,
+        "table": {
+          "end_exclusive_rva": "0x4215b8",
+          "first_at_least_11": 17,
+          "sha256": "24684fb1456c81a61e17ebd2c944e1ca718ebf6977a61de754595e23f18e7392",
+          "size": 152,
+          "start_rva": "0x421520",
+          "values": [
+            17,
+            29,
+            37,
+            53,
+            67,
+            79,
+            97,
+            131,
+            193,
+            257,
+            389,
+            521,
+            769,
+            1031,
+            1543,
+            2053,
+            3079,
+            6151,
+            12289,
+            24593,
+            49157,
+            98317,
+            196613,
+            393241,
+            786433,
+            1572869,
+            3145739,
+            6291469,
+            12582917,
+            25165843,
+            50331653,
+            100663319,
+            201326611,
+            402653189,
+            805306457,
+            1610612741,
+            3221225473,
+            4294967291
+          ]
+        }
+      },
+      "key": {
+        "sha256": "e51026639479b15fcf43fce5d22a2b3db4529b22564f40f129439d71899ddec1",
+        "size_including_nul": 6,
+        "string_rva": "0x4260e0",
+        "text": "speed"
+      },
+      "lookup": "6e320 hashes bytes.801c0 performs hash modulo map+4 and bucketlookup80400; matching node hash and inline/heap string are compared with6c1b0. Missing entry invokes9d9f0 and storesdefault at its returnedpair+18 (node+20). Subsequent9d9f0 returnssamepair and EAXreturnsstoredinteger.",
+      "map_va": "0x8d57e0",
+      "minimal_continuous_accessor_case": {
+        "observables": "EAX500, mapnodecount1, speednodevalue500, correctbucket/list ownership, no suppliedresultoverride. Repeatedoriginalcall returns500 through existingkey withoutsecondnodeallocation.",
+        "preferred_first_case": "Supply an empty already bucket-initialized dictionary: +4=17,+8=0,+C=float1,+10=17,+14=B with18zeroDWORDs. This is the post80270/80520 source-correct shape; labelpreinitialization as supplied. Then execute originald3e30 miss/default500; original9d620 nodeallocation/copy/80080 linking executes and8d0e0 avoidsbucketcreation/math becausecount1<=threshold17. No key/value answer is preinstalled andd3e30is not stubbed.",
+        "retained_proof_boundary": "This validates configurationaccessor underdeclaredinitializedstate, not original globalstartup/destruction. If an empty pre-bucket initializerstate is selectedinstead, retainmath/lifecycle boundaries and failclosed atunsupported imports."
+      },
+      "route_duration_constants": {
+        "0x83cb10": {
+          "float32": 0.30000001192092896,
+          "sha256": "45a6d738a7607576d3fe0862200bc67b10c12d5ed74167b4d5d5a708974c0f32"
+        },
+        "0x83cb74": {
+          "float32": 1.0,
+          "sha256": "e00e5eb9444182f352323374ef4e08ebcb784725fdd4fd612d7730540b3e0c8c"
+        },
+        "0x83ccf8": {
+          "float32": 80.0,
+          "sha256": "b7ff7bad2106090072a51e7d2e79f98bebf6b97a36c17278aa57efa9513e89e6"
+        },
+        "0x83cd18": {
+          "float32": 100.0,
+          "sha256": "2238f30df488055daf5e8f362cf904e370011a172d20df193c1b7ae8e5db8e01"
+        },
+        "0x83cdd4": {
+          "float32": 1000.0,
+          "sha256": "07883481b5c147464597d44401db095d88c2a6b049fbbcd7b278de98a5ceeb71"
+        }
+      },
+      "route_formula": "233110 converts integer speed tofloat, computes((constant83cb74-speed/83cdd4)+83cb10)*83cd18, choosesatleastfloat80 throughCOMISS83ccf8/CMOVBE, thenCVTTSS2SI. Thisformula is source-derived; no originaltimer runtime result is claimed."
+    },
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "imports_reference": "boundary_data_private.json pins actual Lua IATnames. They are source facts, not admittedimportresponses.",
+    "next_exit_case": "Primarymayrerunoriginal233110 withsource-correct durationdictinitialization andretainEAX500/nativeinserttrace, thenfailclosed atnextoriginalPawn/particledependency. Separate directoriginald3e30 success fromjoinedmovement success. Nextnecessaryparticlecase needsvalidLua/resource acquisition beforeallGround-originchildren canreturn. No movement/effects coveragepromotion followsfromsourcepacket.",
+    "particle": {
+      "Lua_boundary": {
+        "call": "bb910->4e800 reads globalLuaState896048 and calls6c3e0.6c3e0 unconditionallycalls lua_pushvalue twice, luaL_ref, lua_settop.4e800 then51270 calls lua_gettop andlua_pushlstring;4fcf0/refhelpers add furtherLua calls.",
+        "default_reads": "87eb0/87b90/88030 returntheir supplieddefaults whenpropertyobject+18 LuaState isnull, but4e800cannot reachthisshape withoutpriorLua operations. Default image_count1 atEmitter+6c triggersbcd90 ratherthanskippingresources; default max_particles32 atEmitter+80 triggersbcfa0allocation. burst_count atEmitter+84 defaults0. Exactkeys are pinned inemitter_property_names_private.json.",
+        "first_unresolved_external_call": "6c3ec imports lua_pushvalue throughIAT3d64e4. Existingqueryruntime admitsHeapAlloc/HeapFree only; itwillfailclosed here evenafterdurationinit andPawnchildrenclose.",
+        "no_null_fallback": "Setting896048=0 doesnot selecta guarded missing-definition path: importedLua operations alreadyreceive thatpointer. Originalempty/nildefinition defaultproperty branches requireavalid LuaVM/registryobject acquisition or separately justifiedexternalLua boundary; do not supply expectedgameplaycallback answers."
+      },
+      "abi": "ECXBoard; stack x,y,by-value24-byte string,directionDWORD; RET36.235cf0 calls witholdPawncoordinates, stringEmitter_$tile, andb3100-deriveddirection.",
+      "dispatch": "174401->161d70 selectsoldsourceTile through existingBoardvalidity/columnlayout.17440f->1ae630 receivesTileECX andcopiedbyvalueargumentstack.1ae630 RET28 andconsumesdirection+string.",
+      "required_globals": "Wellformed substitutionstringVA8d68bc; globalLuaState pointerVA896048; texture/imagecacheobjectVA8d5660; selectedemitter Lua definition andsource Tile+2acc/+2ad0/+2ad4 pointervector. The queryworld doesnotinitialize these resources.",
+      "resource_boundary": {
+        "call": "DefaultoneEmitter bcd90->be6f0->be8f0 queriesglobal imagecacheVA8d5660 withthe samehashmapfind801c0.",
+        "keys": "Tryimg/<name>, thenimg/advanced/<name>, then recursivelynullResource.png. FallbackliteralRVA42628c size17 SHA5def22bd3c9834c70182cf887b70717d3a2584bda215a852a482d0f65e091cb7.",
+        "required_state": "Nonzerocachebucketcount, validbucket/listnodes and pointervalue toavalidloadedimageobject. IfdefaultnullResource.png isabsent, source recursivelyrepeatsfallback; anemptyinitializedcache isnot sufficient. Returnedimagefields+4/+8dimensions are read bybcd90 and99800 receivesimageECX. Rendererabsent case stillrequires exactimage/spriteworldcontracts; no safezeroobject or resource-null shortcut is proven.",
+        "spare_capacity_append": "WithvalidTile+2acc pointervectorandsparecapacity, original9b7d0 copiesconstructedemitterpointer andincrementsend by4 withoutcallinggrowth9b770. Pointervectorcapacity isasuppliedworldpremise; originalconstructorexecutesandstoredpointermustbeowned. Existingquerylayoutzeroanimationvectorwouldtakereallocation."
+      },
+      "sha256": "a25769ec762a06171b323d4007dedac036b8c7338e2864c5147211e1d6742922",
+      "size": 173,
+      "source_tile_gate": "1ae630 can suppressparticlesonWater withsourceauxiliary23ac/23cc and onterrain5. Main H8Ground source doesnot takeWateravoidance. It replaces$tile occurrences usingglobalstd::stringVA8d68bc, allocates144bytes at1ae6e2, andconstructsEmitter throughbb910.",
+      "stop": "MainGround-origin route step cannot yetexecute continuously usingcurrentqueryworld alone. Durationclosure doesnot closeLua/rendererresources. Do not useWaterorigin, Flyingtrue, manufacturedimage_count0, or a replaced174390return toclaimordinaryGround-origin movement.",
+      "wrapper_rva": "0x174390"
+    },
+    "reused_receipts": "Reviewed movement short/inline std::string80d0 and allocator3574db successfulcases remainusable. Empty-string receipts alone do not prove allnonemptycopies/property/texturecomposition. No unrelatedalias/growthaudit was performed.",
+    "sound": {
+      "abi": "ECXintegerindex(-1atroutecompletion); two by-value24-byte strings onstack; plainRET, calleradds48bytes. Firststring iswater_splash path, secondemptyparameterstring. Stringdestructionisoriginal andmustpreserveheapownership.",
+      "enabled_boundary": "Nonzero8b9cce, nonemptywaterpath, and8b9ccf0 enterdiagnosticstrings/globalVA8d5894, event:/name formatting, db960/df9b0 eventargument construction, dd5f0/dd760 eventcache lookup/insertion anddcf70/dd040/dd340. ECXisindex, notapointertoBoardorPawn. A fullFMODeventreceiver/world/importcase isunresolved andoutside thedisabled minimalcase.",
+      "entry_rva": "0xdb070",
+      "gates": "Atdb0b1, globalBYTEVA8b9cce==0 jumpsdirectlytocleanupdb422. Alsofirststringlength0 orBYTE8b9ccf!=0 skipsbackend. Gatezero selectedbranchperforms onlyargumentstring cleanup,SEH restoration,cookie check,return; noeventlookup orFMOD call.",
+      "literal": "Routecompletionstring /props/water_splash_small atRVA436524,size26,SHA74c16ff31fd780940c2ff2e1480e9e11a759ee40f27b10352b6ac3ac140f8847; event:/prefix atRVA4274c0,size8,SHA515020d91a5ef9696210c84d754010d7fc40797d4ef1107e62d5e7c719fd7f9f.",
+      "minimal_continuous_disabled_case": "Declare8b9cce=0 soundsubsystemdisabled, validownedfirststring/emptysecondstring, originalstrings/heapresponses/SEHcookie state. Executeentireoriginaldb070 withoutany soundstub. This is anexplicitdisabled-presentationpremise anddoesnot validateactiveaudioor event timing.",
+      "sha256": "5e958c5f00004e37b1149fa23a9136dbce695b63a981a5afcbae7b42d220b894",
+      "size": 1038
+    },
+    "windows": {
+      "duration_find_default": {
+        "rva": "0xd3e8a",
+        "sha256": "efce0aefbe34c24c03b9068bea020a159cb6028b627089705d1663c1080694f1",
+        "size": 38
+      },
+      "duration_return": {
+        "rva": "0xd3eb0",
+        "sha256": "6ec4c2169f9fc3627be901c88131ffcf25f917d5a1f4e3f15469109454ede768",
+        "size": 40
+      },
+      "global_initializer_fields": {
+        "rva": "0x3149",
+        "sha256": "03715cde35d9e72d8bd674c208ef822e9dc5735bd27745fd6682cdddcd1ff29c",
+        "size": 52
+      },
+      "map_divisor": {
+        "rva": "0x801ce",
+        "sha256": "350cbfd0e8dbfa637bfd51173df03fe676550e68d0a805582b750514a23a0e8e",
+        "size": 12
+      },
+      "particle_water_gate": {
+        "rva": "0x1ae66b",
+        "sha256": "22beac1348319b3b41a1f78f358fb70aa884112b93f7db8cab2d0e64d51d666f",
+        "size": 37
+      },
+      "sound_entry_gates": {
+        "rva": "0xdb0b1",
+        "sha256": "9060a61f25d3813ce7946386d6990ed5ba00199fedf9e260f2932c5c327ca069",
+        "size": 36
+      }
+    }
+  },
+  "evidence_class": "original_static_body_data_and_manual_dataflow",
+  "ledger_promotions": 0,
+  "native_execution": false,
+  "original_build_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "pilot_and_flying": {
+    "minimal_source_correct_supplied_pilot_ability_world": {
+      "Pawn_pair_fields": {
+        "+0x1314": "BYTE0 groundedPawnFlyingstatepremise; existingconstructorzeroisretained, notsettosuppressmandatoryabilitylookup",
+        "+0x980/+0x984": "DWORD0/0, noalternatepilot",
+        "+0xa6c": "Q=C+12, declaredmappedsource-compatiblepilotobject",
+        "+0xa70": "C, declaredmappedcontrolblockwithpersistentowneralive"
+      },
+      "PowerCost_and_extraability_exclusions": "ForQ+25c>0thegetterconsultsQ+24c/+250andfirstDWORDpoweredslotbeforeinnateabilitylookup. ExtraabilityrecordsfromQ+ccuseinline/heapstringsandstride0x74withQ+5ccount. NonearepresentinselecteddeclaredArtificialpilotabilitystate.",
+      "boundary": "Mappedconstructor-derived object/controlstorage and emptyabilitystate are supplied inputs. This isnotexecutionoffullPilotconstructor, LuaPilot_Artificialdefinitionloading, RNG/profileloading oractualgamepilotacquisition. Genuineoriginalgetter/comparator/sharedpaircopy/release mustexecutecontinuously.",
+      "control_fields": {
+        "C+0x00": "VA82b804",
+        "C+0x04": "DWORD1,strong",
+        "C+0x08": "DWORD1,weak"
+      },
+      "false_dataflow": "220a3e readsQ+25c0andgoes220a62. CapacityQ+74=15 selectsinlineQ+60. Q+70=0 causesnative6c1b0length0at220a85 toreturn0withoutbyteaccess. QueryFlyinglength6isnotstoredlength0, so220a95 reaches220a9b; Q+5c0branches220aa5to220b2b; nativeAL0returned220b48/RET24. Noqueryresultisstubbed.",
+      "pair_lifetime": "6fb40incrementsC+4from1to2for temporarygetterpair.23e53f/23e541release decrements2to1, so23e546skipsdestructor. Weakcountstays1. Keeporiginalownerpairalivefortheboundedprobe; fullownerdestruction/constructorclosedstateareexcluded. Observecountsafterreturnratherthanrepairingthem.",
+      "pilot_fields": [
+        {
+          "constructor_store": "0x0021e298",
+          "offset": "Q+0x00",
+          "value": "VA835dcc"
+        },
+        {
+          "constructor_store": "0x0021e5f5",
+          "meaning": "NoabilityPowerCostgating; thisisnotFlyingBoolean",
+          "offset": "Q+0x25c",
+          "value": "DWORD0"
+        },
+        {
+          "constructor_string_call": "0x0021e343",
+          "meaning": "emptymainability",
+          "offset": "Q+0x60",
+          "value": "inlineMSVCstring, firstBYTE0"
+        },
+        {
+          "constructor_store": "0x0021e326",
+          "offset": "Q+0x70",
+          "value": "DWORD0,stringlength"
+        },
+        {
+          "constructor_store": "0x0021e31f",
+          "offset": "Q+0x74",
+          "value": "DWORD15,stringcapacity"
+        },
+        {
+          "constructor_store": "0x0021e318",
+          "meaning": "zeroextraabilitycount",
+          "offset": "Q+0x5c",
+          "value": "DWORD0"
+        },
+        {
+          "constructor_stores": [
+            "0x0021e3e3",
+            "0x0021e3ed",
+            "0x0021e3f7"
+          ],
+          "meaning": "0x74strideabilityrecords, noextraability",
+          "offset": "Q+0xcc/+0xd0/+0xd4",
+          "value": "emptyvectortripleDWORD0/0/0"
+        }
+      ]
+    },
+    "original_bodies": [
+      {
+        "role": "PawnIsFlying, ECXPawn,noargs,RET,ALBoolean",
+        "rva": "0x0023e490",
+        "sha256": "06fe4311381c6f3a5f31db9b53004c771762327a02ef33ced2c3af2bb021fbdb",
+        "size": 225
+      },
+      {
+        "role": "Selectedpilot sharedpair getter, ECXPawn,[out_pair],RET4,EAXout_pair",
+        "rva": "0x0023e3b0",
+        "sha256": "f0dfe0b0f5c9f6e263bcc4d10563055487bf8496457fd76fdbb447139846aede",
+        "size": 42
+      },
+      {
+        "role": "Sharedpair copy, ECXout_pair,[source_pair],RET4,EAXout_pair",
+        "rva": "0x0006fb40",
+        "sha256": "6fbffb05c8f7ee3c9909b060fdc861f7bd2343b6aaf274a03746d3ab8c6836a1",
+        "size": 141
+      },
+      {
+        "role": "Pilot ability membership, ECXpilotobject,[24byteMSVCstringbyvalue],RET24,ALBoolean",
+        "rva": "0x00220a30",
+        "sha256": "97a35010a3faf482ff3d545d1c194ec59cff999618253445714690ecd9b94a60",
+        "size": 289
+      },
+      {
+        "role": "Native bounded byte comparator, ECXfirstbytes,EDXsecondbytes,[length],RET; calleradds4",
+        "rva": "0x0006c1b0",
+        "sha256": "73a9b4302bd9d88c5773264e1b124d28388f81e091943797d7a61cb818b8b932",
+        "size": 96
+      },
+      {
+        "role": "DefaultPilot_Artificial sharedobject factory, ECXout_pair,noargs,RET,EAXout_pair",
+        "rva": "0x00243d80",
+        "sha256": "6ce8571402e3f505c4ba7d5295a44a3c66ae3898fd517b3d2017c8b76cd1594d",
+        "size": 165
+      },
+      {
+        "role": "Pilotobject constructor with24byteId stringbyvalue,RET24; latercallsLua-driven21f090",
+        "rva": "0x0021e260",
+        "sha256": "572645b8d2814a0112219a04c181fddfbb8c2435c8c379f49a112fe9cea2fff3",
+        "size": 1141
+      },
+      {
+        "role": "Pilotdefinition initialization, ECXpilotobject,noargsRET; fullLua/property dependencies remainopen",
+        "rva": "0x0021f090",
+        "sha256": "f43031a9194a8c3f4e5524535596ad0bdcf2dd9341ecd7378e3ceff3ad5ccd82",
+        "size": 2703
+      },
+      {
+        "role": "Pawn definitionloader storesnativeLuaFlying Boolean atPawn+1314; completeexecutionnotclaimed",
+        "rva": "0x0022c0f0",
+        "sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+        "size": 2759
+      }
+    ],
+    "selector_and_native_composition": {
+      "false_composition": "When nativeabilitymembershipAL0 and Pawn+1314BYTE0,23e513/23e519 branch23e52c setsfalse. ThePawnIsDead virtual call is only reached if either abilitymembership orPawnflag istrue; falseinputs skipthatcall naturally.",
+      "query": "23e490 constructs originalliteralFlying at23e4e2, callsselector23e3b0at23e4f5, loadsselectedobjectat23e501, calls220a30at23e50a.",
+      "runtime_Pawn_flying_field": "CommonPawn constructor initializesWORD+1314=0at22b58c. Pawndefinitionloader constructsFlyingliteralat22c298, callsoriginalBoolean493b0at22c2a7, storesALtoBYTE+1314at22c2af. Thus+1314 carriesPawndefinitionFlying pluspossiblelaterstateupdates; itisnotmerelyanunidentifiedoverride. Fullwritelifecycleisnotclaimed.",
+      "selector": "23e3b0 selects pairPawn+980/+984 when object+980 is nonnull; otherwise pairPawn+a6c/+a70. It calls original6fb40 and returnsa separate pair.",
+      "true_composition": "A Flying pilot ability or nonzeroPawn+1314 reachesnativeIsDead virtual+10; onlyalivePawn returnsFlyingtrue. Do notsupplyexpectedAL atany stage."
+    },
+    "shipped_source_support": {
+      "facts": [
+        "Pilotdefaultsatlines46..62areSkillempty, Skills twoemptystrings, PowerCost0.",
+        "Pilot_Artificialatlines130..136doesnotoverrideSkill/Skills/PowerCost; CreatePilotusesPilot:new(data) atline69.",
+        "Pilot_Recycleratlines239..246explicitlyhasSkillFlyingandPowerCost1; thusFlyingisanabilityname,notjustaPawnpropertyname."
+      ],
+      "native_join": "21f090queriesoriginalGetSkillliteralat21f2ef/21f342 andcopiesreturnedstringintoQ+60at21f349..21f387. Thisanchorsabilitystringmeaning; fullLuaresultacquisitionandabilitypopulationarenotexecutedhere.",
+      "raw_sha256": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5",
+      "size": 6895,
+      "source": "scripts/pilots.lua"
+    }
+  },
+  "schema_version": 1
+}

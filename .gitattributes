@@ -20,4 +20,5 @@ src/native/observatory_rng_seed.c -text whitespace=cr-at-eol
 data/solver_first/*.json -text whitespace=cr-at-eol
 scripts/solver_first_s0.py text eol=lf
 scripts/solver_first_path_oracle.py text eol=lf
+scripts/solver_first_movement_stages.py text eol=lf
 src/observatory/solver_first_path_oracle.py text eol=lf
