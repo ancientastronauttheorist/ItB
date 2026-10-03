@@ -8,6 +8,7 @@ pub mod simulate;
 pub mod enemy;
 pub mod evaluate;
 pub mod solver;
+pub mod search_audit;
 pub mod serde_bridge;
 pub mod turn_projection;
 pub mod beam;
@@ -42,7 +43,7 @@ fn solve(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> 
             &board,
             &spawn_points,
             time_limit,
-            99999, // no pruning — Rust is fast enough to search exhaustively
+            99999, // candidate cap; generator filters and four-actor caps still apply
             &weights,
             disabled_mask,
             weapons_table,
@@ -2622,8 +2623,8 @@ fn solve_beam(
                 Some(s) => serde_bridge::solution_to_json(s, &overlay_entries),
                 None    => "null".to_string(),
             };
-            format!("{{\"chain_score\":{},\"level_0\":{},\"level_1_best\":{}}}",
-                    c.chain_score, lvl0, lvl1)
+            format!("{{\"proof_status\":\"best_found\",\"certificate\":null,\"valid_bounds\":null,\"requested_horizon_player_turns\":{},\"chain_score\":{},\"level_0\":{},\"level_1_best\":{}}}",
+                    depth, c.chain_score, lvl0, lvl1)
         }).collect();
         Ok(format!("[{}]", items.join(",")))
     })

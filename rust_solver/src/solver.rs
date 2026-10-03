@@ -1,7 +1,7 @@
-/// The main solver: find the optimal mech action sequence.
+/// The main solver: find the best candidate mech action sequence within budget.
 ///
 /// Recursive search over all mech orderings (parallelized via rayon).
-/// Each permutation gets its own board copy and full time budget.
+/// Each permutation gets its own board copy and shares the global deadline.
 
 use std::cmp::{Ordering, Reverse};
 use std::collections::BinaryHeap;
@@ -168,6 +168,7 @@ pub struct Solution {
     pub timed_out: bool,
     pub permutations_tried: usize,
     pub total_permutations: usize,
+    pub search_audit: crate::search_audit::SearchAudit,
 }
 
 impl Solution {
@@ -179,6 +180,7 @@ impl Solution {
             timed_out: false,
             permutations_tried: 0,
             total_permutations: 0,
+            search_audit: crate::search_audit::SearchAudit::default(),
         }
     }
 }
@@ -2174,8 +2176,16 @@ fn search_recursive(
     initial_building_count: i32,
     psion_before: &PsionState,
     top_k_out: &mut Option<BoundedTopK>,
+    audit: &mut crate::search_audit::SearchAudit,
 ) {
-    if Instant::now() > deadline { return; }
+    if Instant::now() > deadline {
+        audit.deadline_cutoffs += 1;
+        return;
+    }
+    if depth == 0 {
+        audit.order_passes_started += 1;
+    }
+    audit.nodes_visited += 1;
 
     if depth >= mech_order.len() {
         // All mechs acted — snapshot buildings before enemy phase
@@ -2300,6 +2310,7 @@ fn search_recursive(
         if let Some(top_k) = top_k_out.as_mut() {
             top_k.offer(score, actions_so_far.as_slice());
         }
+        audit.terminal_plans_evaluated += 1;
         return;
     }
 
@@ -2335,15 +2346,22 @@ fn search_recursive(
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
             top_k_out,
+            audit,
         );
         return;
     }
 
     let mut actions = enumerate_actions(board, mech_idx, weapons);
+    audit.actions_generated += actions.len() as u64;
+    let before_pruning = actions.len();
     prune_actions(board, mech_idx, &mut actions, threat_tiles, building_threats, spawn_bits, max_actions, weapons);
+    audit.action_limit_pruned += (before_pruning - actions.len()) as u64;
 
     for &(move_to, weapon_id, target, target2) in &actions {
-        if Instant::now() > deadline { return; }
+        if Instant::now() > deadline {
+            audit.deadline_cutoffs += 1;
+            return;
+        }
 
         // Soft-disable: a weapon in the session's disabled_actions mask has
         // already desynced N times — its damage prediction is untrusted, so
@@ -2370,6 +2388,7 @@ fn search_recursive(
         //
         let is_disabled = disabled_mask_contains(disabled_mask, weapon_id);
         if is_disabled && !allow_disabled_weapons {
+            audit.disabled_actions_filtered += 1;
             continue;
         }
 
@@ -2450,6 +2469,7 @@ fn search_recursive(
             best_clean_score, best_clean_actions, initial_building_count,
             psion_before,
             top_k_out,
+            audit,
         );
 
         actions_so_far.pop();
@@ -2579,7 +2599,10 @@ pub fn solve_turn(
         .collect();
 
     if active.is_empty() {
-        return Solution::empty();
+        let mut empty = Solution::empty();
+        empty.search_audit.budget_seconds = Some(time_limit_secs);
+        empty.search_audit.action_limit_per_actor = Some(max_actions_per_mech);
+        return empty;
     }
 
     let n = active.len();
@@ -2616,15 +2639,18 @@ pub fn solve_turn(
 
     // Parallel search via rayon
     // Inner closure: run the parallel rayon search with a given allow flag.
-    // Returns (best_score, best_actions, best_clean_score, best_clean_actions, any_timed_out).
-    let run_pass = |allow: bool| -> (f64, Vec<MechAction>, f64, Vec<MechAction>, bool) {
-        let results: Vec<(f64, Vec<MechAction>, f64, Vec<MechAction>, bool)> = perm_mapped.par_iter().map(|mech_order| {
+    // Each order owns counters; collect preserves order for deterministic reduction.
+    let run_pass = |allow: bool| {
+        let results: Vec<_> = perm_mapped.par_iter().map(|mech_order| {
             let mut best_score = f64::NEG_INFINITY;
             let mut best_actions = Vec::new();
             let mut best_clean_score = f64::NEG_INFINITY;
             let mut best_clean_actions = Vec::new();
             let mut actions_buf = Vec::new();
             let mut top_k_out: Option<BoundedTopK> = None;
+            let mut audit = crate::search_audit::SearchAudit {
+                order_passes_scheduled: 1, ..Default::default()
+            };
 
             search_recursive(
                 board, mech_order, 0,
@@ -2639,10 +2665,14 @@ pub fn solve_turn(
                 &mut best_clean_score, &mut best_clean_actions, initial_building_count,
                 &psion_before,
                 &mut top_k_out,
+                &mut audit,
             );
 
+            if audit.order_passes_started == 1 && audit.deadline_cutoffs == 0 {
+                audit.order_passes_completed = 1;
+            }
             let timed_out = Instant::now() > deadline;
-            (best_score, best_actions, best_clean_score, best_clean_actions, timed_out)
+            (best_score, best_actions, best_clean_score, best_clean_actions, timed_out, audit)
         }).collect();
 
         let mut bs = f64::NEG_INFINITY;
@@ -2650,7 +2680,14 @@ pub fn solve_turn(
         let mut cs = f64::NEG_INFINITY;
         let mut ca: Vec<MechAction> = Vec::new();
         let mut any_to = false;
-        for (score, actions, clean_score, clean_actions, timed_out) in results {
+        let mut audit = crate::search_audit::SearchAudit {
+            budget_seconds: Some(time_limit_secs), action_limit_per_actor: Some(effective_max),
+            passes_executed: 1, ..Default::default()
+        };
+        let mut started = Vec::with_capacity(total_perms);
+        for (score, actions, clean_score, clean_actions, timed_out, local_audit) in results {
+            started.push(local_audit.order_passes_started > 0);
+            audit.merge(&local_audit);
             if timed_out { any_to = true; }
             if score > bs {
                 bs = score;
@@ -2661,12 +2698,12 @@ pub fn solve_turn(
                 ca = clean_actions;
             }
         }
-        (bs, ba, cs, ca, any_to)
+        (bs, ba, cs, ca, any_to, audit, started)
     };
 
     // Pass 1: hard-skip soft-disabled weapons. This is the default; when
     // alternatives exist, the solver picks a reliable plan.
-    let (mut best_score_v, mut best_actions_v, mut clean_score_v, mut clean_actions_v, mut any_timed_out) =
+    let (mut best_score_v, mut best_actions_v, mut clean_score_v, mut clean_actions_v, mut any_timed_out, mut audit, mut started) =
         run_pass(false);
 
     // Pass 2: only when Pass 1 produced no attacks AND the predicted
@@ -2714,7 +2751,11 @@ pub fn solve_turn(
         let grid_critical = b_check.grid_power == 0 || buildings_lost >= 2;
 
         if grid_critical {
-            let (bs2, ba2, cs2, ca2, to2) = run_pass(true);
+            let (bs2, ba2, cs2, ca2, to2, audit2, started2) = run_pass(true);
+            audit.merge(&audit2);
+            for (first, second) in started.iter_mut().zip(started2) {
+                *first |= second;
+            }
             if to2 { any_timed_out = true; }
             // Take Pass 2 result if it strictly beats Pass 1 — penalty is
             // already baked into bs2, so a higher score here means firing
@@ -2749,8 +2790,9 @@ pub fn solve_turn(
 
     best.elapsed_secs = (Instant::now() - (deadline - Duration::from_secs_f64(time_limit_secs))).as_secs_f64();
     best.timed_out = any_timed_out;
-    best.permutations_tried = total_perms;
+    best.permutations_tried = started.iter().filter(|&&value| value).count();
     best.total_permutations = total_perms;
+    best.search_audit = audit;
 
     best
 }
@@ -2821,7 +2863,7 @@ pub fn solve_turn_top_k(
     // Each rayon thread builds its own BoundedTopK. rayon collect preserves
     // input order so the downstream merge is deterministic regardless of
     // thread scheduling.
-    let results: Vec<(BoundedTopK, bool)> = perm_mapped.par_iter().map(|mech_order| {
+    let results: Vec<_> = perm_mapped.par_iter().map(|mech_order| {
         let mut top_k_local: Option<BoundedTopK> = Some(BoundedTopK::new(k));
         // Dummy best tracking — required by search_recursive's signature but
         // unused in the top-K path. Kept as `f64::NEG_INFINITY` seeds so any
@@ -2831,6 +2873,9 @@ pub fn solve_turn_top_k(
         let mut best_clean_score = f64::NEG_INFINITY;
         let mut best_clean_actions = Vec::new();
         let mut actions_buf = Vec::new();
+        let mut audit = crate::search_audit::SearchAudit {
+            order_passes_scheduled: 1, ..Default::default()
+        };
 
         search_recursive(
             board, mech_order, 0,
@@ -2850,10 +2895,14 @@ pub fn solve_turn_top_k(
             &mut best_clean_score, &mut best_clean_actions, initial_building_count,
             &psion_before,
             &mut top_k_local,
+            &mut audit,
         );
 
+        if audit.order_passes_started == 1 && audit.deadline_cutoffs == 0 {
+            audit.order_passes_completed = 1;
+        }
         let timed_out = Instant::now() > deadline;
-        (top_k_local.expect("local top_k was Some at entry"), timed_out)
+        (top_k_local.expect("local top_k was Some at entry"), timed_out, audit)
     }).collect();
 
     // Merge: walk permutations in input order and offer each plan to a
@@ -2863,7 +2912,12 @@ pub fn solve_turn_top_k(
     // runs even when rayon schedules differently.
     let mut global = BoundedTopK::new(k);
     let mut any_timed_out = false;
-    for (local, timed_out) in results {
+    let mut audit = crate::search_audit::SearchAudit {
+        budget_seconds: Some(time_limit_secs), action_limit_per_actor: Some(effective_max),
+        passes_executed: 1, ..Default::default()
+    };
+    for (local, timed_out, local_audit) in results {
+        audit.merge(&local_audit);
         if timed_out { any_timed_out = true; }
         for plan in local.into_sorted_desc() {
             global.offer(plan.score, plan.actions.as_slice());
@@ -2877,8 +2931,9 @@ pub fn solve_turn_top_k(
         score: plan.score,
         elapsed_secs: elapsed,
         timed_out: any_timed_out,
-        permutations_tried: total_perms,
+        permutations_tried: audit.order_passes_started as usize,
         total_permutations: total_perms,
+        search_audit: audit.clone(),
     }).collect()
 }
 
@@ -2906,6 +2961,96 @@ mod top_k_tests {
     //! 1 already — but catching the regression here gives a sharper failure
     //! message than a byte-diff at the Python layer.
     use super::*;
+
+    fn audit_board(wounded: bool) -> Board {
+        let mut board = Board::default();
+        board.current_turn = 4;
+        board.total_turns = 4;
+        board.grid_power = 7;
+        board.grid_power_max = 7;
+        board.add_unit(Unit {
+            uid: 1, x: 3, y: 3, hp: if wounded { 1 } else { 3 }, max_hp: 3,
+            team: Team::Player, move_speed: 0,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::PUSHABLE,
+            ..Default::default()
+        });
+        board
+    }
+
+    #[test]
+    fn search_audit_counts_completed_generated_tree_and_pruning() {
+        let board = audit_board(true);
+        let full = solve_turn(&board, &[], 5.0, 99999, &EvalWeights::default(), [0; 2], &WEAPONS);
+        assert_eq!(full.search_audit.passes_executed, 1);
+        assert_eq!(full.search_audit.order_passes_scheduled, 1);
+        assert_eq!(full.search_audit.order_passes_started, 1);
+        assert_eq!(full.search_audit.order_passes_completed, 1);
+        assert_eq!(full.search_audit.nodes_visited, 3);
+        assert_eq!(full.search_audit.actions_generated, 2);
+        assert_eq!(full.search_audit.terminal_plans_evaluated, 2);
+        assert_eq!(full.search_audit.deadline_cutoffs, 0);
+        assert!(full.search_audit.retained_candidate_tree_exhausted());
+        let pruned = solve_turn(&board, &[], 5.0, 1, &EvalWeights::default(), [0; 2], &WEAPONS);
+        assert_eq!(pruned.search_audit.actions_generated, 2);
+        assert_eq!(pruned.search_audit.action_limit_pruned, 1);
+        assert_eq!(pruned.search_audit.terminal_plans_evaluated, 1);
+        // Exhaustion of the pruned tree is deliberately not an optimality proof.
+        assert!(pruned.search_audit.retained_candidate_tree_exhausted());
+    }
+
+    #[test]
+    fn search_audit_zero_budget_never_reports_unstarted_order_as_tried() {
+        let solution = solve_turn(&audit_board(false), &[], 0.0, 99999, &EvalWeights::default(), [0; 2], &WEAPONS);
+        assert_eq!(solution.permutations_tried, 0);
+        assert_eq!(solution.total_permutations, 1);
+        assert_eq!(solution.search_audit.order_passes_started, 0);
+        assert_eq!(solution.search_audit.nodes_visited, 0);
+        assert_eq!(solution.search_audit.deadline_cutoffs, 1);
+        assert!(!solution.search_audit.retained_candidate_tree_exhausted());
+    }
+
+    #[test]
+    fn search_audit_top_k_candidates_share_whole_search_counts() {
+        let solutions = solve_turn_top_k(&audit_board(true), &[], 5.0, 99999, &EvalWeights::default(), [0; 2], &WEAPONS, 2);
+        assert_eq!(solutions.len(), 2);
+        for solution in &solutions {
+            assert_eq!(solution.search_audit.terminal_plans_evaluated, 2);
+            assert_eq!(solution.search_audit.nodes_visited, 3);
+            assert!(solution.search_audit.retained_candidate_tree_exhausted());
+        }
+    }
+
+    #[test]
+    fn search_audit_two_pass_counts_do_not_double_unique_orders() {
+        let mut board = audit_board(false);
+        board.grid_power = 0;
+        let solution = solve_turn(&board, &[], 5.0, 99999, &EvalWeights::default(), [2; 2], &WEAPONS);
+        assert_eq!(solution.search_audit.passes_executed, 2);
+        assert_eq!(solution.search_audit.order_passes_scheduled, 2);
+        assert_eq!(solution.search_audit.order_passes_completed, 2);
+        assert_eq!(solution.permutations_tried, 1);
+        assert_eq!(solution.total_permutations, 1);
+        assert_eq!(solution.search_audit.terminal_plans_evaluated, 2);
+    }
+
+    #[test]
+    fn search_audit_counts_encountered_disabled_candidates() {
+        let mut board = audit_board(false);
+        board.units[0].weapon = WeaponId(WId::PrimePunchmech as u16);
+        board.add_unit(Unit {
+            uid: 2, x: 3, y: 4, hp: 2, max_hp: 2, team: Team::Enemy,
+            flags: UnitFlags::PUSHABLE, ..Default::default()
+        });
+        let mut disabled = [0; 2];
+        let bit = WId::PrimePunchmech as usize;
+        disabled[bit / 128] |= 1u128 << (bit % 128);
+        let solution = solve_turn(&board, &[], 5.0, 99999, &EvalWeights::default(), disabled, &WEAPONS);
+        let audit = &solution.search_audit;
+        assert!(audit.disabled_actions_filtered > 0);
+        assert_eq!(audit.actions_generated, audit.terminal_plans_evaluated + audit.disabled_actions_filtered);
+        assert_eq!(audit.passes_executed, 1);
+        assert!(audit.retained_candidate_tree_exhausted());
+    }
 
     #[test]
     fn clean_plan_rejects_nonlethal_player_building_damage() {

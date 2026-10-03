@@ -1714,6 +1714,10 @@ pub fn board_from_json(json_str: &str)
 
 #[derive(Serialize)]
 struct JsonOutput {
+    proof_status: &'static str,
+    certificate: Option<()>,
+    valid_bounds: Option<()>,
+    horizon_player_turns: u8,
     actions: Vec<JsonAction>,
     score: f64,
     stats: JsonStats,
@@ -1747,6 +1751,8 @@ struct JsonStats {
     timed_out: bool,
     permutations_tried: usize,
     total_permutations: usize,
+    search_audit: crate::search_audit::SearchAudit,
+    retained_candidate_tree_exhausted: bool,
 }
 
 pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry]) -> String {
@@ -1772,6 +1778,12 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
     }).collect();
 
     let output = JsonOutput {
+        // Exhausting generated candidates does not certify the legal domain,
+        // transition model, objective or campaign. No sound bounds are available.
+        proof_status: "best_found",
+        certificate: None,
+        valid_bounds: None,
+        horizon_player_turns: 1,
         actions,
         score: solution.score,
         stats: JsonStats {
@@ -1779,6 +1791,8 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
             timed_out: solution.timed_out,
             permutations_tried: solution.permutations_tried,
             total_permutations: solution.total_permutations,
+            search_audit: solution.search_audit.clone(),
+            retained_candidate_tree_exhausted: solution.search_audit.retained_candidate_tree_exhausted(),
         },
         applied_overrides,
     };
@@ -1790,6 +1804,24 @@ pub fn solution_to_json(solution: &Solution, applied_overrides: &[OverlayEntry])
 mod tests {
     use super::*;
     use crate::types::Terrain;
+
+    #[test]
+    fn search_audit_json_does_not_promote_candidate_exhaustion_to_proof() {
+        let mut solution = Solution::empty();
+        solution.score = 0.0;
+        solution.search_audit.order_passes_scheduled = 1;
+        solution.search_audit.order_passes_started = 1;
+        solution.search_audit.order_passes_completed = 1;
+        let value: serde_json::Value = serde_json::from_str(&solution_to_json(&solution, &[])).unwrap();
+        assert_eq!(value["proof_status"], "best_found");
+        assert!(value["certificate"].is_null());
+        assert!(value["valid_bounds"].is_null());
+        assert_eq!(value["horizon_player_turns"], 1);
+        assert_eq!(value["stats"]["retained_candidate_tree_exhausted"], true);
+        solution.search_audit.deadline_cutoffs = 1;
+        let value: serde_json::Value = serde_json::from_str(&solution_to_json(&solution, &[])).unwrap();
+        assert_eq!(value["stats"]["retained_candidate_tree_exhausted"], false);
+    }
 
     #[test]
     fn test_hotshot_pilot_id_maps_to_roadrunner_flag() {

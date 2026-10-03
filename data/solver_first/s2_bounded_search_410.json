@@ -1,0 +1,2666 @@
+{
+  "action_contract": "One complete movement-before-Wait/Repair choice per actor, every actor order; no after-action movement, repeated actors, pilots, hazards or equipped attacks.",
+  "campaign_evaluations": 0,
+  "cases": [
+    {
+      "actor_count": 1,
+      "certificate": null,
+      "comparison_tolerance": 1e-07,
+      "counts": {
+        "actor_orders": 1,
+        "generated_choices": 16,
+        "leaves_scored": 16,
+        "nodes": 17,
+        "raw_leaves_emitted": 16,
+        "reference_oracle_failures": 0,
+        "semantic_deduplication": false,
+        "skipped_duplicate_leaves": 0
+      },
+      "exact_best_score_ties": 2,
+      "exhaustive_best_current_evaluation": {
+        "alive_mech_hp": 1,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 1,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54190.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 1,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "exhaustive_best_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            3
+          ],
+          "target": [
+            3,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "exhaustive_best_score": 54190.0,
+      "expected_actor_orders": 1,
+      "horizon_player_turns": 1,
+      "id": "disarmed_1_wounded",
+      "input": {
+        "attack_order": [
+          0
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "tiles": [
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 2
+          },
+          {
+            "building_hp": 1,
+            "terrain": "building",
+            "x": 5,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 7
+          }
+        ],
+        "total_turns": 1,
+        "turn": 1,
+        "units": [
+          {
+            "active": false,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "has_queued_attack": true,
+            "hp": 3,
+            "massive": false,
+            "max_hp": 3,
+            "mech": false,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "queued_target": [
+              5,
+              3
+            ],
+            "team": 6,
+            "type": "Firefly1",
+            "uid": 0,
+            "weapons": [
+              "FireflyAtk1"
+            ],
+            "x": 2,
+            "y": 3
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "PunchMech",
+            "uid": 1,
+            "weapons": [],
+            "x": 3,
+            "y": 2
+          }
+        ]
+      },
+      "input_sha256": "221e9c7bdd96f711ad3f89dbf0d9a1cfd0b8dec27decdc98cff2a8b807d88812",
+      "leaf_upper_bound": 16,
+      "matches_reference_best": true,
+      "objective_parity_established": true,
+      "reference_complete": true,
+      "reference_seconds": 0.00997409992851317,
+      "regret": 0.0,
+      "root_best_found": true,
+      "root_proof_status": "best_found",
+      "selected_current_evaluation": {
+        "alive_mech_hp": 1,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 1,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54190.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 1,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "selected_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            3
+          ],
+          "target": [
+            3,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "selected_rescore_attempts": 1,
+      "selected_rescore_completed": 1,
+      "selected_rescore_failures": 0,
+      "solver_budget_seconds": 10.0,
+      "solver_reported_minus_rescored": 0.0,
+      "solver_reported_score": 54190.0,
+      "solver_stats": {
+        "elapsed": 0.0004888,
+        "permutations_tried": 1,
+        "retained_candidate_tree_exhausted": true,
+        "search_audit": {
+          "action_limit_per_actor": 99999,
+          "action_limit_pruned": 0,
+          "actions_generated": 16,
+          "budget_seconds": 10.0,
+          "deadline_cutoffs": 0,
+          "disabled_actions_filtered": 0,
+          "nodes_visited": 17,
+          "order_passes_completed": 1,
+          "order_passes_scheduled": 1,
+          "order_passes_started": 1,
+          "passes_executed": 1,
+          "terminal_plans_evaluated": 16
+        },
+        "timed_out": false,
+        "total_permutations": 1
+      },
+      "status": "complete",
+      "total_seconds": 0.01207670010626316,
+      "valid_bounds": null
+    },
+    {
+      "actor_count": 2,
+      "certificate": null,
+      "comparison_tolerance": 1e-07,
+      "counts": {
+        "actor_orders": 2,
+        "generated_choices": 366,
+        "leaves_scored": 340,
+        "nodes": 367,
+        "raw_leaves_emitted": 340,
+        "reference_oracle_failures": 0,
+        "semantic_deduplication": false,
+        "skipped_duplicate_leaves": 0
+      },
+      "exact_best_score_ties": 44,
+      "exhaustive_best_current_evaluation": {
+        "alive_mech_hp": 3,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 2,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54230.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 2,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "exhaustive_best_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            2,
+            2
+          ],
+          "target": [
+            2,
+            2
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            3,
+            3
+          ],
+          "target": [
+            3,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "exhaustive_best_score": 54230.0,
+      "expected_actor_orders": 2,
+      "horizon_player_turns": 1,
+      "id": "disarmed_2_wounded",
+      "input": {
+        "attack_order": [
+          0
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "tiles": [
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 2
+          },
+          {
+            "building_hp": 1,
+            "terrain": "building",
+            "x": 5,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 7
+          }
+        ],
+        "total_turns": 1,
+        "turn": 1,
+        "units": [
+          {
+            "active": false,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "has_queued_attack": true,
+            "hp": 3,
+            "massive": false,
+            "max_hp": 3,
+            "mech": false,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "queued_target": [
+              5,
+              3
+            ],
+            "team": 6,
+            "type": "Firefly1",
+            "uid": 0,
+            "weapons": [
+              "FireflyAtk1"
+            ],
+            "x": 2,
+            "y": 3
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "PunchMech",
+            "uid": 1,
+            "weapons": [],
+            "x": 3,
+            "y": 2
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "TankMech",
+            "uid": 2,
+            "weapons": [],
+            "x": 4,
+            "y": 2
+          }
+        ]
+      },
+      "input_sha256": "2772488e161d49fe51a4ce991aba7e634596560b1cda1800c29c8f202387a967",
+      "leaf_upper_bound": 392,
+      "matches_reference_best": true,
+      "objective_parity_established": true,
+      "reference_complete": true,
+      "reference_seconds": 0.18853020016103983,
+      "regret": 0.0,
+      "root_best_found": true,
+      "root_proof_status": "best_found",
+      "selected_current_evaluation": {
+        "alive_mech_hp": 3,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 2,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54230.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 2,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "selected_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            3,
+            2
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            4,
+            3
+          ],
+          "target": [
+            4,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "selected_rescore_attempts": 1,
+      "selected_rescore_completed": 1,
+      "selected_rescore_failures": 0,
+      "solver_budget_seconds": 10.0,
+      "solver_reported_minus_rescored": 0.0,
+      "solver_reported_score": 54230.0,
+      "solver_stats": {
+        "elapsed": 0.0012662,
+        "permutations_tried": 2,
+        "retained_candidate_tree_exhausted": true,
+        "search_audit": {
+          "action_limit_per_actor": 99999,
+          "action_limit_pruned": 0,
+          "actions_generated": 366,
+          "budget_seconds": 10.0,
+          "deadline_cutoffs": 0,
+          "disabled_actions_filtered": 0,
+          "nodes_visited": 368,
+          "order_passes_completed": 2,
+          "order_passes_scheduled": 2,
+          "order_passes_started": 2,
+          "passes_executed": 1,
+          "terminal_plans_evaluated": 340
+        },
+        "timed_out": false,
+        "total_permutations": 2
+      },
+      "status": "complete",
+      "total_seconds": 0.19139440008439124,
+      "valid_bounds": null
+    },
+    {
+      "actor_count": 3,
+      "certificate": null,
+      "comparison_tolerance": 1e-07,
+      "counts": {
+        "actor_orders": 6,
+        "generated_choices": 9722,
+        "leaves_scored": 8912,
+        "nodes": 9723,
+        "raw_leaves_emitted": 8912,
+        "reference_oracle_failures": 0,
+        "semantic_deduplication": false,
+        "skipped_duplicate_leaves": 0
+      },
+      "exact_best_score_ties": 804,
+      "exhaustive_best_current_evaluation": {
+        "alive_mech_hp": 5,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 3,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54270.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 3,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "exhaustive_best_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            2,
+            2
+          ],
+          "target": [
+            2,
+            2
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            2,
+            4
+          ],
+          "target": [
+            2,
+            4
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 3,
+          "move_to": [
+            3,
+            3
+          ],
+          "target": [
+            3,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "exhaustive_best_score": 54270.0,
+      "expected_actor_orders": 6,
+      "horizon_player_turns": 1,
+      "id": "disarmed_3_wounded",
+      "input": {
+        "attack_order": [
+          0
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "tiles": [
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 2
+          },
+          {
+            "building_hp": 1,
+            "terrain": "building",
+            "x": 5,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 7
+          }
+        ],
+        "total_turns": 1,
+        "turn": 1,
+        "units": [
+          {
+            "active": false,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "has_queued_attack": true,
+            "hp": 3,
+            "massive": false,
+            "max_hp": 3,
+            "mech": false,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "queued_target": [
+              5,
+              3
+            ],
+            "team": 6,
+            "type": "Firefly1",
+            "uid": 0,
+            "weapons": [
+              "FireflyAtk1"
+            ],
+            "x": 2,
+            "y": 3
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "PunchMech",
+            "uid": 1,
+            "weapons": [],
+            "x": 3,
+            "y": 2
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 2,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "ArtiMech",
+            "uid": 2,
+            "weapons": [],
+            "x": 3,
+            "y": 4
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 1,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "TankMech",
+            "uid": 3,
+            "weapons": [],
+            "x": 4,
+            "y": 2
+          }
+        ]
+      },
+      "input_sha256": "bca018369892e0ecc552cf2ebf0637f90b4c91d6d2c214822a2b89e61489eb84",
+      "leaf_upper_bound": 10368,
+      "matches_reference_best": true,
+      "objective_parity_established": true,
+      "reference_complete": true,
+      "reference_seconds": 4.7816487001255155,
+      "regret": 0.0,
+      "root_best_found": true,
+      "root_proof_status": "best_found",
+      "selected_current_evaluation": {
+        "alive_mech_hp": 5,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 3,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54270.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 3,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "selected_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            3,
+            2
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            3,
+            4
+          ],
+          "target": [
+            3,
+            4
+          ],
+          "weapon_id": "_REPAIR"
+        },
+        {
+          "mech_uid": 3,
+          "move_to": [
+            4,
+            3
+          ],
+          "target": [
+            4,
+            3
+          ],
+          "weapon_id": "_REPAIR"
+        }
+      ],
+      "selected_rescore_attempts": 1,
+      "selected_rescore_completed": 1,
+      "selected_rescore_failures": 0,
+      "solver_budget_seconds": 10.0,
+      "solver_reported_minus_rescored": 0.0,
+      "solver_reported_score": 54270.0,
+      "solver_stats": {
+        "elapsed": 0.0190317,
+        "permutations_tried": 6,
+        "retained_candidate_tree_exhausted": true,
+        "search_audit": {
+          "action_limit_per_actor": 99999,
+          "action_limit_pruned": 0,
+          "actions_generated": 9756,
+          "budget_seconds": 10.0,
+          "deadline_cutoffs": 0,
+          "disabled_actions_filtered": 0,
+          "nodes_visited": 9762,
+          "order_passes_completed": 6,
+          "order_passes_scheduled": 6,
+          "order_passes_started": 6,
+          "passes_executed": 1,
+          "terminal_plans_evaluated": 8912
+        },
+        "timed_out": false,
+        "total_permutations": 6
+      },
+      "status": "complete",
+      "total_seconds": 4.802154200151563,
+      "valid_bounds": null
+    },
+    {
+      "actor_count": 3,
+      "certificate": null,
+      "comparison_tolerance": 1e-07,
+      "counts": {
+        "actor_orders": 6,
+        "generated_choices": 9722,
+        "leaves_scored": 8912,
+        "nodes": 9723,
+        "raw_leaves_emitted": 8912,
+        "reference_oracle_failures": 0,
+        "semantic_deduplication": false,
+        "skipped_duplicate_leaves": 0
+      },
+      "exact_best_score_ties": 6432,
+      "exhaustive_best_current_evaluation": {
+        "alive_mech_hp": 7,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 3,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54310.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 0,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "exhaustive_best_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            2,
+            2
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            2,
+            4
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        },
+        {
+          "mech_uid": 3,
+          "move_to": [
+            3,
+            3
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        }
+      ],
+      "exhaustive_best_score": 54310.0,
+      "expected_actor_orders": 6,
+      "horizon_player_turns": 1,
+      "id": "disarmed_3_full_hp",
+      "input": {
+        "attack_order": [
+          0
+        ],
+        "grid_power": 7,
+        "grid_power_max": 7,
+        "remaining_spawns": 0,
+        "spawning_tiles": [],
+        "tiles": [
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 1,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 2,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 2,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 3,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 3,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 1
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 2
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 3
+          },
+          {
+            "terrain": "ground",
+            "x": 4,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 4,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 2
+          },
+          {
+            "building_hp": 1,
+            "terrain": "building",
+            "x": 5,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 5,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 6,
+            "y": 7
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 0
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 1
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 2
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 3
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 4
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 5
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 6
+          },
+          {
+            "building_hp": 2,
+            "terrain": "mountain",
+            "x": 7,
+            "y": 7
+          }
+        ],
+        "total_turns": 1,
+        "turn": 1,
+        "units": [
+          {
+            "active": false,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "has_queued_attack": true,
+            "hp": 3,
+            "massive": false,
+            "max_hp": 3,
+            "mech": false,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "queued_target": [
+              5,
+              3
+            ],
+            "team": 6,
+            "type": "Firefly1",
+            "uid": 0,
+            "weapons": [
+              "FireflyAtk1"
+            ],
+            "x": 2,
+            "y": 3
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 3,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "PunchMech",
+            "uid": 1,
+            "weapons": [],
+            "x": 3,
+            "y": 2
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 2,
+            "massive": true,
+            "max_hp": 2,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "ArtiMech",
+            "uid": 2,
+            "weapons": [],
+            "x": 3,
+            "y": 4
+          },
+          {
+            "active": true,
+            "armor": false,
+            "can_move": true,
+            "flying": false,
+            "hp": 3,
+            "massive": true,
+            "max_hp": 3,
+            "mech": true,
+            "move": 3,
+            "powered": true,
+            "pushable": true,
+            "team": 1,
+            "type": "TankMech",
+            "uid": 3,
+            "weapons": [],
+            "x": 4,
+            "y": 2
+          }
+        ]
+      },
+      "input_sha256": "31ee22fab69ab90db7c6d384dc387a58bdf42d63a0396a160d3db9b27b05caf5",
+      "leaf_upper_bound": 10368,
+      "matches_reference_best": true,
+      "objective_parity_established": true,
+      "reference_complete": true,
+      "reference_seconds": 4.810840900056064,
+      "regret": 0.0,
+      "root_best_found": true,
+      "root_proof_status": "best_found",
+      "selected_current_evaluation": {
+        "alive_mech_hp": 7,
+        "arachnoid_spawns": 0,
+        "bldg_hp_total": 1,
+        "bldgs_alive": 1,
+        "boosted": 0,
+        "building_bumps": 0,
+        "building_threats_bits": "10000000000000000000000000000000000000000000",
+        "buildings_after_enemy": 1,
+        "buildings_after_player": 1,
+        "buildings_before": 1,
+        "buildings_destroyed_by_enemies": 0,
+        "core_of_the_earth_chasm_falls": 0,
+        "current_turn": 1,
+        "dead_mechs": 0,
+        "efficient_explosives": 0,
+        "enemy_grid_save_expected": 0.0,
+        "grid_power": 7,
+        "illegal_events": [],
+        "judo_hp": -1,
+        "kills": 0,
+        "maximum_firepower": 0,
+        "mechs_alive": 3,
+        "miner_inconvenience_mountain_damage": 0,
+        "mission_kills": 0,
+        "player_grid_save_expected": 0.0,
+        "remaining_spawns": 0,
+        "score": 54310.0,
+        "spawns_blocked": 0,
+        "stay_with_me_heal": 0,
+        "total_turns": 1,
+        "unit_deaths": 0,
+        "viscera_nanobots_heal": 0,
+        "working_together": 0
+      },
+      "selected_plan": [
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            3,
+            4
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        },
+        {
+          "mech_uid": 3,
+          "move_to": [
+            4,
+            3
+          ],
+          "target": [
+            255,
+            255
+          ],
+          "weapon_id": ""
+        }
+      ],
+      "selected_rescore_attempts": 1,
+      "selected_rescore_completed": 1,
+      "selected_rescore_failures": 0,
+      "solver_budget_seconds": 10.0,
+      "solver_reported_minus_rescored": 0.0,
+      "solver_reported_score": 54310.0,
+      "solver_stats": {
+        "elapsed": 0.0026279,
+        "permutations_tried": 6,
+        "retained_candidate_tree_exhausted": true,
+        "search_audit": {
+          "action_limit_per_actor": 99999,
+          "action_limit_pruned": 0,
+          "actions_generated": 1342,
+          "budget_seconds": 10.0,
+          "deadline_cutoffs": 0,
+          "disabled_actions_filtered": 0,
+          "nodes_visited": 1348,
+          "order_passes_completed": 6,
+          "order_passes_scheduled": 6,
+          "order_passes_started": 6,
+          "passes_executed": 1,
+          "terminal_plans_evaluated": 1114
+        },
+        "timed_out": false,
+        "total_permutations": 6
+      },
+      "status": "complete",
+      "total_seconds": 4.816262299893424,
+      "valid_bounds": null
+    }
+  ],
+  "certificate": null,
+  "checkout_sources_unchanged": true,
+  "claim": "Conditional search-only regret over this bounded composite turn domain and current Rust transition/evaluation oracle.",
+  "evidence_class": "synthetic_independent_enumeration_shared_Rust_model",
+  "extension_file_unchanged": true,
+  "extension_sha256": "35ce67e3f8048f406bdb3ef4339baeb9010aca3dc8ef98b94647ac0bb65b3c9a",
+  "fair_archive_admissions": 0,
+  "held_out_evaluations": 0,
+  "horizon_player_turns": 1,
+  "interleaving_reduction": "Self Repair/Wait cannot alter another actor's position/path eligibility in this domain; each self action commutes next to its own movement. All movement orders remain enumerated.",
+  "ledger_promotions": 0,
+  "objective_configuration": "Frozen current Rust default EvalWeights, identified by extension bytes and inspected source hashes; no state-supplied weights or overlays.",
+  "original_runtime_comparisons": 0,
+  "python_runtime": [
+    3,
+    13,
+    11
+  ],
+  "reference_complete_cases": 4,
+  "reference_leaf_scores": 18180,
+  "reference_regret_status": "matched_reference_best",
+  "root_proof_status": "best_found",
+  "schema_version": 1,
+  "simulator_version": 410,
+  "source_binding_scope": "Checkout snapshots identify inspected source; they do not independently attest extension build linkage.",
+  "source_hashes": {
+    "rust_solver/src/board.rs": {
+      "lf_sha256": "33bdaa75eee577494a9e8f204462d0879318a9b6e4597c53ebffb865f9409eeb",
+      "raw_sha256": "5cf9a3dd3f8abccd07625260cb9f7c19113dd24818b58cf88970932ee86d6511"
+    },
+    "rust_solver/src/enemy.rs": {
+      "lf_sha256": "8a54b8cdbef590452e8a78e4a8dad74c1bb2876e5f4a4ada82bb9a45a9cb829a",
+      "raw_sha256": "3e861befa1aa2a03259b9dbc140eea1f7be71e0df4b49b331258d05290f01a19"
+    },
+    "rust_solver/src/evaluate.rs": {
+      "lf_sha256": "1ca60b57a8efe41487ba38351001d18bc86d4df19f2fa8c918f130ab8f22b9c3",
+      "raw_sha256": "ecfb296cf25189966e447555bea3c98f6acb3e43daceb2a9ecf676c2ae809cc0"
+    },
+    "rust_solver/src/lib.rs": {
+      "lf_sha256": "9479cc45758bb95dd9efc110aaafe8a3fa8449bb4db8db19aadccd3cd220fc48",
+      "raw_sha256": "3181b7eb27a5bd8062c422c67cb120a524069d8da261c8cc9440f8f50ab3fd73"
+    },
+    "rust_solver/src/movement.rs": {
+      "lf_sha256": "711fa28eca7c84943d80c92040cfee4dcb30c15af79a9ec390b3a7db6b2ee2bf",
+      "raw_sha256": "8c3577b598c69682e0608aa0228ac6cad4b0feaea507312c0eccb51867e72199"
+    },
+    "rust_solver/src/search_audit.rs": {
+      "lf_sha256": "aaad67cc5e45ee28a3e1af6fa6e9492ac321d621a9b8da7c7de64468ac08c28d",
+      "raw_sha256": "aaad67cc5e45ee28a3e1af6fa6e9492ac321d621a9b8da7c7de64468ac08c28d"
+    },
+    "rust_solver/src/serde_bridge.rs": {
+      "lf_sha256": "8d2a70aed234d46b84c01ad7c4af6b9e8fb09935fc5babd7585a20681d5e14aa",
+      "raw_sha256": "f21f1dc5d1b9dbe9a4992ba9d467914321b85d6aa0576518739149820dc0bc42"
+    },
+    "rust_solver/src/simulate.rs": {
+      "lf_sha256": "ee621054c051187b67fcb9c8356d52eac4a8d04038f463463da6d8ffcd808621",
+      "raw_sha256": "80aa9df4cfe020409e9f91697175f38deac4b32b6be3dea95541735eaee9dee8"
+    },
+    "rust_solver/src/solver.rs": {
+      "lf_sha256": "3cf87fb1af2a5602fb8718e2a081df5ffbf699eec0e03ef45321995f740e322f",
+      "raw_sha256": "874384d1f38787a7d376604cab9b8b3707b909f8f84c8386b54b7496145f5e11"
+    },
+    "rust_solver/src/types.rs": {
+      "lf_sha256": "ec5a1f865e502bd25d3faa50a41b947af6ec74cf4ee09ff4e59f949fe811633e",
+      "raw_sha256": "9ae9b0a262976c35056d7572df6735e55ff2fa4f0d7bbb1622d36a1dfbd8bfc0"
+    },
+    "rust_solver/src/weapons.rs": {
+      "lf_sha256": "40c98382df5fbf9bd8141ea7352ebd3fd6b35a9c9baeb1d7e549032ab246ab1b",
+      "raw_sha256": "8b3fb0c1ebd5079a75c75b4bcf981d641c2ae2afcd7ba79bf50314f81fb140a5"
+    },
+    "scripts/solver_first_bounded_search.py": {
+      "lf_sha256": "2197250acdc2a115e033e299c15dbfcc73155a49adcc2b6b662a8063fe9f08b5",
+      "raw_sha256": "2197250acdc2a115e033e299c15dbfcc73155a49adcc2b6b662a8063fe9f08b5"
+    }
+  },
+  "valid_bounds": null,
+  "wait_model_boundary": "score_plan leaves ACTIVE true for Wait; independent actor completion prevents duplicates. Replay's explicit skip endpoint differs. No Wait/Repair semantic deduplication."
+}
