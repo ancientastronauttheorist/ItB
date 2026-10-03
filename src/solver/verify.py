@@ -1918,7 +1918,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v410: Centipede projectile sides follow the original direction-relative queue
 # order. The tracked pre-change failure DB is archived as
 # failure_db_snapshot_sim_v409.jsonl; local user records are preserved separately.
-SIMULATOR_VERSION = 410
+# v411: Split Shot's saved endpoint/ordered pushes and effective variants;
+# Artemis base/A source-legal building centers. The tracked v410 corpus is
+# archived as failure_db_snapshot_sim_v410.jsonl; original full fidelity is open.
+SIMULATOR_VERSION = 411
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

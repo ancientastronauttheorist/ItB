@@ -469,6 +469,18 @@ WEAPON_DEFS: dict[str, WeaponDef] = {
         upgrade_a="+1 use (total 2)",
         upgrade_b="+1 damage (total 3)",
     ),
+    "Brute_Splitshot_A": WeaponDef(
+        name="Split Shot", weapon_type="projectile",
+        damage=2, push="outward", range_max=0, limited=2, aoe_perpendicular=True,
+    ),
+    "Brute_Splitshot_B": WeaponDef(
+        name="Split Shot", weapon_type="projectile",
+        damage=3, push="outward", range_max=0, limited=1, aoe_perpendicular=True,
+    ),
+    "Brute_Splitshot_AB": WeaponDef(
+        name="Split Shot", weapon_type="projectile",
+        damage=3, push="outward", range_max=0, limited=2, aoe_perpendicular=True,
+    ),
     "Brute_Bombrun": WeaponDef(
         name="Bombing Run", weapon_type="leap",
         damage=1, range_min=2, range_max=8, limited=1,
@@ -1418,5 +1430,8 @@ def weapon_name_to_id(display_name: str) -> str:
             _NAME_TO_ID[wdef.name] = wid
         for wid, wdef in ENEMY_WEAPON_DEFS.items():
             _NAME_TO_ID[wdef.name] = wid
+        # A display-only legacy plan cannot identify powered upgrades. Preserve
+        # Split Shot's pre-variant base fallback; current plans use exact IDs.
+        _NAME_TO_ID["Split Shot"] = "Brute_Splitshot"
         _NAME_TO_ID["Repair"] = "_REPAIR"
     return _NAME_TO_ID.get(display_name, display_name)

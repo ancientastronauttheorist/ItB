@@ -49,6 +49,13 @@ affected profile, and rerun the same command. This is build-cache cleanup, not a
 source revert. On macOS pyo3 test binaries may also need:
 `DYLD_FRAMEWORK_PATH="/Applications/Xcode.app/Contents/Developer/Library/Frameworks:/Library/Developer/CommandLineTools/Library/Frameworks"`.
 
+**Offline fixture configuration:** Check the effective parsed Rust board before
+claiming a configured comparison. Serde ignores unknown JSON fields: as of v411,
+`grid_defense`/`grid_defense_pct` are not accepted inputs and the Rust board keeps
+its default 15% expected grid-save credit. Omit ignored fixture fields and record
+that default explicitly; shared score parity does not establish original
+resistance/RNG fidelity. See the [player AOE tranche](../solver_first_player_aoe.md).
+
 ## Core Game Rules (Solver-Critical)
 
 The solver enforces these; use them when reviewing solver output or writing tests.
@@ -90,6 +97,15 @@ reversed negative-x/positive-y attacks and could change later damage after a
 first-side Psion death. The [pinned original returned-effect evidence](../solver_first_centipede_order.md)
 and synthetic sensitivity test support this narrow correction; original aura
 execution timing and the Boss's path-ACID order remain separate open branches.
+
+**Split Shot player side order (v411):** Save the projectile endpoint before
+damage/push, hit it with a forward push, then hit/push `(dy,-dx)` and `(-dy,dx)`
+relative to that endpoint. This is the opposite side order to Centipede. The
+four effective variants share this body; B/AB deal 3 damage and A/AB have two
+uses. Heavy Rocket has a distinct body and remains excluded. Artemis base/A
+also retain source-legal building centers; its B/AB representation and complete
+armed action retention remain open. The [source receipt and synthetic checks](../solver_first_player_aoe.md)
+do not establish original selected execution or full tactical-loop fidelity.
 
 **Terrain HP:**
 - **Mountain:** 2 HP (2=full, 1=damaged, 0=rubble/walkable). Any weapon damage reduces by 1.

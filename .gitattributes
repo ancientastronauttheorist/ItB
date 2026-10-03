@@ -30,3 +30,6 @@ scripts/solver_first_bounded_search.py text eol=lf
 tests/test_solver_first_bounded_search.py text eol=lf
 tests/test_solver_search_audit.py text eol=lf
 rust_solver/src/search_audit.rs text eol=lf
+recordings/failure_db_snapshot_sim_v410.jsonl -text
+scripts/solver_first_player_aoe.py text eol=lf
+tests/test_solver_first_player_aoe.py text eol=lf

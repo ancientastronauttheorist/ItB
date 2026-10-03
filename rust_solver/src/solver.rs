@@ -600,7 +600,9 @@ pub(crate) fn get_weapon_targets(
                     }
                     if x != mx && y != my { continue; } // axis-aligned only
                     let tile = board.tile(x, y);
-                    let building_center_target_ok = is_crab_scarab_line_artillery(weapon_id)
+                    let building_center_target_ok = matches!(weapon_id,
+                        WId::RangedArtillerymech | WId::RangedArtillerymechA)
+                        || is_crab_scarab_line_artillery(weapon_id)
                         || is_cluster_artillery(weapon_id)
                         || matches!(
                             weapon_id,
@@ -1148,6 +1150,39 @@ fn weapon_action_has_effect(
         let tile = board.tile(x, y);
         tile.is_building() && !tile.shield()
     };
+
+    if is_splitshot(weapon_id) {
+        let Some(dir) = cardinal_direction(mx, my, target.0, target.1) else { return false; };
+        let (dx, dy) = DIRS[dir];
+        let mut endpoint = None;
+        for i in 1..8i8 {
+            let x = mx as i8 + dx * i;
+            let y = my as i8 + dy * i;
+            if !in_bounds(x, y) { break; }
+            let pos = (x as u8, y as u8);
+            endpoint = Some(pos);
+            let tile = board.tile(pos.0, pos.1);
+            let occupied = pos != caster_before_move && unit_at(pos.0, pos.1);
+            if occupied || matches!(tile.terrain, Terrain::Mountain | Terrain::Building) { break; }
+        }
+        if let Some((x, y)) = endpoint {
+            for (ox, oy) in [(0, 0), (dy, -dx), (-dy, dx)] {
+                let sx = x as i8 + ox;
+                let sy = y as i8 + oy;
+                if !in_bounds(sx, sy) { continue; }
+                let pos = (sx as u8, sy as u8);
+                let tile = board.tile(pos.0, pos.1);
+                if (pos != caster_before_move && unit_at(pos.0, pos.1))
+                    || (pos == move_to)
+                    || tile_weapon_terrain_effect(tile, weapon_id, wdef)
+                    || (tile.is_building() && tile.building_hp > 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     if is_support_force(weapon_id) {
         // Its all-board target area is legal even at self/non-axis/building
@@ -2975,6 +3010,64 @@ mod top_k_tests {
             ..Default::default()
         });
         board
+    }
+
+    #[test]
+    fn splitshot_empty_ray_side_target_is_not_filtered_as_no_effect() {
+        let mut board = audit_board(false);
+        board.units[0].x = 0;
+        board.units[0].y = 3;
+        board.units[0].weapon = WeaponId(WId::BruteSplitshot as u16);
+        board.add_unit(Unit { uid: 2, x: 7, y: 2, hp: 3, max_hp: 3,
+            team: Team::Enemy, flags: UnitFlags::PUSHABLE, ..Default::default() });
+        assert!(enumerate_actions(&board, 0, &WEAPONS).iter().any(|a| a.1 == WId::BruteSplitshot && a.2 == (1, 3)));
+        let solution = solve_turn(&board, &[], 5.0, 99999, &EvalWeights::default(), [0; 2], &WEAPONS);
+        assert!(solution.actions.iter().any(|a| a.weapon == WId::BruteSplitshot));
+    }
+
+    #[test]
+    fn splitshot_destroyed_building_endpoint_keeps_side_action() {
+        let mut board = audit_board(false);
+        board.units[0].x = 0; board.units[0].y = 3;
+        board.units[0].weapon = WeaponId(WId::BruteSplitshot as u16);
+        board.tile_mut(3, 3).terrain = Terrain::Building;
+        board.tile_mut(3, 3).building_hp = 0;
+        board.add_unit(Unit { uid: 2, x: 3, y: 2, hp: 3, max_hp: 3,
+            team: Team::Enemy, flags: UnitFlags::PUSHABLE, ..Default::default() });
+        assert!(enumerate_actions(&board, 0, &WEAPONS).iter().any(|a| a.1 == WId::BruteSplitshot && a.2 == (1, 3)));
+    }
+
+    #[test]
+    fn artemis_sacrificial_building_target_prevents_two_grid_losses() {
+        let mut board = Board::default();
+        for tile in &mut board.tiles { tile.terrain = Terrain::Chasm; }
+        for (x, y) in [(3, 6), (3, 2), (2, 3)] { board.tile_mut(x, y).terrain = Terrain::Ground; }
+        for (x, y, hp) in [(3, 3, 1), (3, 0, 2), (0, 3, 2)] {
+            board.tile_mut(x, y).terrain = Terrain::Building;
+            board.tile_mut(x, y).building_hp = hp;
+        }
+        board.grid_power = 2; board.grid_power_max = 7;
+        board.current_turn = 1; board.total_turns = 1;
+        board.add_unit(Unit { uid: 0, x: 3, y: 6, hp: 2, max_hp: 2, team: Team::Player,
+            weapon: WeaponId(WId::RangedArtillerymech as u16), move_speed: 3,
+            flags: UnitFlags::ACTIVE | UnitFlags::IS_MECH | UnitFlags::MASSIVE | UnitFlags::PUSHABLE, ..Default::default() });
+        for (uid, x, y, tx, ty) in [(1, 3, 2, 3, 0), (2, 2, 3, 0, 3)] {
+            let mut unit = Unit { uid, x, y, hp: 5, max_hp: 5, team: Team::Enemy,
+                weapon: WeaponId(WId::FireflyAtk2 as u16), queued_target_x: tx, queued_target_y: ty,
+                flags: UnitFlags::PUSHABLE | UnitFlags::HAS_QUEUED_ATTACK, ..Default::default() };
+            unit.set_type_name("Firefly2"); board.add_unit(unit);
+        }
+        assert!(get_weapon_targets(&board, 3, 6, WId::RangedArtillerymech, (3, 6), &WEAPONS).contains(&(3, 3)));
+        let solution = solve_turn(&board, &[], 5.0, 99999, &EvalWeights::default(), [0; 2], &WEAPONS);
+        assert_eq!(solution.actions.len(), 1);
+        assert_eq!(solution.actions[0].weapon, WId::RangedArtillerymech);
+        assert_eq!(solution.actions[0].target, (3, 3));
+        let result = simulate_action(&mut board, 0, (3, 6), WId::RangedArtillerymech, (3, 3), &WEAPONS);
+        assert_eq!(result.enemies_killed, 2);
+        assert_eq!(board.grid_power, 1);
+        assert_eq!(board.tile(3, 0).building_hp, 2);
+        assert_eq!(board.tile(0, 3).building_hp, 2);
+        assert_eq!(board.tile(3, 3).building_hp, 0);
     }
 
     #[test]

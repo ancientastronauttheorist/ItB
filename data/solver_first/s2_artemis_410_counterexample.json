@@ -1,0 +1,499 @@
+{
+  "extension_sha256": "35ce67e3f8048f406bdb3ef4339baeb9010aca3dc8ef98b94647ac0bb65b3c9a",
+  "input": {
+    "attack_order": [
+      1,
+      2
+    ],
+    "grid_defense": 0,
+    "grid_power": 2,
+    "grid_power_max": 7,
+    "remaining_spawns": 0,
+    "spawning_tiles": [],
+    "tiles": [
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 2
+      },
+      {
+        "building_hp": 2,
+        "terrain": "building",
+        "x": 0,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 0,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 2
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 1,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 2
+      },
+      {
+        "terrain": "ground",
+        "x": 2,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 2,
+        "y": 7
+      },
+      {
+        "building_hp": 2,
+        "terrain": "building",
+        "x": 3,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 3,
+        "y": 1
+      },
+      {
+        "terrain": "ground",
+        "x": 3,
+        "y": 2
+      },
+      {
+        "building_hp": 1,
+        "terrain": "building",
+        "x": 3,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 3,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 3,
+        "y": 5
+      },
+      {
+        "terrain": "ground",
+        "x": 3,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 3,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 2
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 4,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 2
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 5,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 2
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 6,
+        "y": 7
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 0
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 1
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 2
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 3
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 4
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 5
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 6
+      },
+      {
+        "terrain": "chasm",
+        "x": 7,
+        "y": 7
+      }
+    ],
+    "total_turns": 1,
+    "turn": 1,
+    "units": [
+      {
+        "active": true,
+        "can_move": false,
+        "hp": 2,
+        "massive": true,
+        "max_hp": 2,
+        "mech": true,
+        "move": 3,
+        "team": 1,
+        "type": "ArtiMech",
+        "uid": 0,
+        "weapons": [
+          "Ranged_Artillerymech"
+        ],
+        "x": 3,
+        "y": 6
+      },
+      {
+        "active": false,
+        "can_move": true,
+        "has_queued_attack": true,
+        "hp": 5,
+        "max_hp": 5,
+        "mech": false,
+        "move": 3,
+        "queued_target": [
+          3,
+          0
+        ],
+        "team": 6,
+        "type": "Firefly2",
+        "uid": 1,
+        "weapons": [
+          "FireflyAtk2"
+        ],
+        "x": 3,
+        "y": 2
+      },
+      {
+        "active": false,
+        "can_move": true,
+        "has_queued_attack": true,
+        "hp": 5,
+        "max_hp": 5,
+        "mech": false,
+        "move": 3,
+        "queued_target": [
+          0,
+          3
+        ],
+        "team": 6,
+        "type": "Firefly2",
+        "uid": 2,
+        "weapons": [
+          "FireflyAtk2"
+        ],
+        "x": 2,
+        "y": 3
+      }
+    ]
+  },
+  "plan": [
+    {
+      "mech_uid": 0,
+      "move_to": [
+        3,
+        6
+      ],
+      "target": [
+        3,
+        3
+      ],
+      "weapon_id": "Ranged_Artillerymech"
+    }
+  ],
+  "scored": {
+    "alive_mech_hp": 2,
+    "arachnoid_spawns": 0,
+    "bldg_hp_total": 1,
+    "bldgs_alive": 1,
+    "boosted": 0,
+    "building_bumps": 0,
+    "building_threats_bits": "1000000000000000000001000",
+    "buildings_after_enemy": 1,
+    "buildings_after_player": 3,
+    "buildings_before": 3,
+    "buildings_destroyed_by_enemies": 2,
+    "core_of_the_earth_chasm_falls": 0,
+    "current_turn": 1,
+    "dead_mechs": 0,
+    "efficient_explosives": 0,
+    "enemy_grid_save_expected": 0.6000000238418579,
+    "grid_power": 0,
+    "illegal_events": [
+      "illegal_weapon_target:3:3:Artemis Artillery"
+    ],
+    "judo_hp": -1,
+    "kills": 0,
+    "maximum_firepower": 0,
+    "mechs_alive": 1,
+    "miner_inconvenience_mountain_damage": 0,
+    "mission_kills": 0,
+    "player_grid_save_expected": 0.0,
+    "remaining_spawns": 0,
+    "score": -90591.57057203565,
+    "spawns_blocked": 0,
+    "stay_with_me_heal": 0,
+    "total_turns": 1,
+    "unit_deaths": 0,
+    "viscera_nanobots_heal": 0,
+    "working_together": 0
+  },
+  "solution": {
+    "actions": [
+      {
+        "description": "ArtiMech, fire Artemis Artillery at F5",
+        "mech_type": "ArtiMech",
+        "mech_uid": 0,
+        "move_to": [
+          3,
+          6
+        ],
+        "target": [
+          3,
+          2
+        ],
+        "weapon": "Artemis Artillery",
+        "weapon_id": "Ranged_Artillerymech"
+      }
+    ],
+    "certificate": null,
+    "horizon_player_turns": 1,
+    "proof_status": "best_found",
+    "score": -90541.57057203565,
+    "stats": {
+      "elapsed": 0.0003905,
+      "permutations_tried": 1,
+      "retained_candidate_tree_exhausted": true,
+      "search_audit": {
+        "action_limit_per_actor": 99999,
+        "action_limit_pruned": 0,
+        "actions_generated": 3,
+        "budget_seconds": 10.0,
+        "deadline_cutoffs": 0,
+        "disabled_actions_filtered": 0,
+        "nodes_visited": 4,
+        "order_passes_completed": 1,
+        "order_passes_scheduled": 1,
+        "order_passes_started": 1,
+        "passes_executed": 1,
+        "terminal_plans_evaluated": 3
+      },
+      "timed_out": false,
+      "total_permutations": 1
+    },
+    "valid_bounds": null
+  },
+  "version": 410
+}

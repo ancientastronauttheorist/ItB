@@ -5032,6 +5032,26 @@ fn sim_deploy_bomb_two_click(
     spawn_walking_bomb(board, second.0, second.1, result);
 }
 
+fn apply_splitshot_hit(
+    board: &mut Board, x: u8, y: u8, wdef: &WeaponDef,
+    push_dir: usize, result: &mut ActionResult,
+) {
+    let occupied_at_impact = board.unit_at(x, y).is_some();
+    // Preserve the existing projectile damage/push/death-explosion policy.
+    let deferred = if wdef.damage > 0 {
+        apply_damage_defer_death_explosion(board, x, y, wdef.damage, result, DamageSource::Weapon)
+    } else {
+        apply_damage(board, x, y, 0, result, DamageSource::Weapon);
+        None
+    };
+    apply_weapon_status_with_impact_occupancy(board, x, y, wdef, occupied_at_impact);
+    apply_push(board, x, y, push_dir, result);
+    if let Some(idx) = deferred {
+        let (ex, ey) = (board.units[idx].x, board.units[idx].y);
+        apply_death_explosion(board, ex, ey, result, 0);
+    }
+}
+
 fn sim_projectile(
     board: &mut Board,
     ax: u8,
@@ -5047,6 +5067,33 @@ fn sim_projectile(
     };
 
     let (dx, dy) = DIRS[dir];
+
+    if is_splitshot(weapon_id) {
+        // Shipped Split Shot saves GetProjectileEnd before any damage/push.
+        // An unobstructed shot still affects the final valid board-edge tile.
+        let mut endpoint = None;
+        for i in 1..8i8 {
+            let nx = ax as i8 + dx * i;
+            let ny = ay as i8 + dy * i;
+            if !in_bounds(nx, ny) { break; }
+            let tile = (nx as u8, ny as u8);
+            endpoint = Some(tile);
+            if projectile_blocker_at(board, tile.0, tile.1, false) { break; }
+        }
+        if let Some((hx, hy)) = endpoint {
+            apply_splitshot_hit(board, hx, hy, wdef, dir, result);
+            // Lua dir-1, then dir+1. Rust's vector winding is reversed.
+            for (sdx, sdy) in [(dy, -dx), (-dy, dx)] {
+                let nx = hx as i8 + sdx;
+                let ny = hy as i8 + sdy;
+                if !in_bounds(nx, ny) { continue; }
+                let (sx, sy) = (nx as u8, ny as u8);
+                let side_dir = DIRS.iter().position(|&vector| vector == (sdx, sdy)).unwrap();
+                apply_splitshot_hit(board, sx, sy, wdef, side_dir, result);
+            }
+        }
+        return;
+    }
 
     if weapon_id == WId::BrutePierceShot {
         sim_pierce_projectile(board, ax, ay, wdef, dir, result);
@@ -7446,6 +7493,125 @@ mod tests {
 
     fn make_test_board() -> Board {
         Board::default()
+    }
+
+    #[test]
+    fn test_splitshot_primary_and_outward_side_hits_follow_saved_impact() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 0, 3, 3, WId::BruteSplitshot);
+        let main = add_enemy(&mut board, 1, 3, 3, 5);
+        let first_side = add_enemy(&mut board, 2, 3, 2, 5);
+        let second_side = add_enemy(&mut board, 3, 3, 4, 5);
+        let result = simulate_weapon(&mut board, mech, WId::BruteSplitshot, 3, 3);
+        assert_eq!(board.units[main].hp, 3);
+        assert_eq!((board.units[main].x, board.units[main].y), (4, 3), "primary hit pushes forward");
+        assert_eq!(board.units[first_side].hp, 3, "first side takes base damage");
+        assert_eq!((board.units[first_side].x, board.units[first_side].y), (3, 1));
+        assert_eq!(board.units[second_side].hp, 3);
+        assert_eq!((board.units[second_side].x, board.units[second_side].y), (3, 5));
+        assert_eq!(result.enemy_damage_dealt, 6);
+    }
+
+    #[test]
+    fn test_splitshot_variants_cardinal_order_anchor_and_damage() {
+        for weapon in [WId::BruteSplitshot, WId::BruteSplitshotA, WId::BruteSplitshotB, WId::BruteSplitshotAB] {
+            for (dx, dy) in [(1i8, 0i8), (-1, 0), (0, 1), (0, -1)] {
+                let mut board = make_test_board();
+                let damage = WEAPONS[weapon as usize].damage as i8;
+                let mech = add_mech(&mut board, 0, (3 - 2 * dx) as u8, (3 - 2 * dy) as u8, 3, weapon);
+                let main = add_enemy(&mut board, 1, 3, 3, 6);
+                let first = add_enemy(&mut board, 2, (3 + dy) as u8, (3 - dx) as u8, 6);
+                let second = add_enemy(&mut board, 3, (3 - dy) as u8, (3 + dx) as u8, 6);
+                let untouched = add_enemy(&mut board, 4, (3 + dx + dy) as u8, (3 + dy - dx) as u8, 6);
+                simulate_weapon(&mut board, mech, weapon, 3, 3);
+                assert_eq!(board.units[main].hp, 6 - damage);
+                assert_eq!((board.units[main].x, board.units[main].y), ((3 + dx) as u8, (3 + dy) as u8));
+                assert_eq!(board.units[first].hp, 6 - damage);
+                assert_eq!((board.units[first].x, board.units[first].y), ((3 + 2 * dy) as u8, (3 - 2 * dx) as u8));
+                assert_eq!(board.units[second].hp, 6 - damage);
+                assert_eq!((board.units[second].x, board.units[second].y), ((3 - 2 * dy) as u8, (3 + 2 * dx) as u8));
+                assert_eq!(board.units[untouched].hp, 6, "side anchor must not follow pushed primary");
+            }
+        }
+    }
+
+    #[test]
+    fn test_splitshot_first_side_psion_death_precedes_second_damage() {
+        for (dx, dy) in [(1i8, 0i8), (-1, 0), (0, 1), (0, -1)] {
+            let mut board = make_test_board();
+            board.armor_psion = true;
+            let mech = add_mech(&mut board, 0, (3 - 2 * dx) as u8, (3 - 2 * dy) as u8, 3, WId::BruteSplitshot);
+            add_enemy(&mut board, 1, 3, 3, 6);
+            let psion = add_enemy_type(&mut board, 2, (3 + dy) as u8, (3 - dx) as u8, 1, "Jelly_Armor1");
+            let victim = add_enemy_type(&mut board, 3, (3 - dy) as u8, (3 + dx) as u8, 5, "Scarab1");
+            board.units[victim].flags.insert(UnitFlags::ARMOR);
+            simulate_weapon(&mut board, mech, WId::BruteSplitshot, 3, 3);
+            assert!(board.units[psion].hp <= 0);
+            assert_eq!(board.units[victim].hp, 3, "synthetic armor-aura order sensitivity");
+            assert!(!board.armor_psion);
+        }
+    }
+
+    #[test]
+    fn test_splitshot_mountain_and_empty_edge_keep_side_footprint() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 0, 3, 3, WId::BruteSplitshot);
+        board.tile_mut(3, 3).terrain = Terrain::Mountain;
+        board.tile_mut(3, 3).building_hp = 1;
+        let side = add_enemy(&mut board, 1, 3, 2, 5);
+        simulate_weapon(&mut board, mech, WId::BruteSplitshot, 7, 3);
+        assert_eq!(board.tile(3, 3).terrain, Terrain::Rubble);
+        assert_eq!(board.units[side].hp, 3);
+        assert_eq!((board.units[side].x, board.units[side].y), (3, 1));
+
+        let mut edge = make_test_board();
+        let mech = add_mech(&mut edge, 0, 0, 3, 3, WId::BruteSplitshot);
+        let side = add_enemy(&mut edge, 1, 7, 2, 5);
+        simulate_weapon(&mut edge, mech, WId::BruteSplitshot, 1, 3);
+        assert_eq!(edge.units[side].hp, 3);
+        assert_eq!((edge.units[side].x, edge.units[side].y), (7, 1));
+    }
+
+    #[test]
+    fn test_splitshot_sides_delegate_shield_freeze_armor_and_acid() {
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 0, 3, 3, WId::BruteSplitshot);
+        add_enemy(&mut board, 1, 3, 3, 6);
+        let shielded = add_enemy(&mut board, 2, 3, 2, 5);
+        let frozen = add_enemy(&mut board, 3, 3, 4, 5);
+        board.units[shielded].set_shield(true);
+        board.units[frozen].set_frozen(true);
+        simulate_weapon(&mut board, mech, WId::BruteSplitshot, 3, 3);
+        assert_eq!(board.units[shielded].hp, 5);
+        assert!(!board.units[shielded].shield());
+        assert_eq!((board.units[shielded].x, board.units[shielded].y), (3, 1));
+        assert_eq!(board.units[frozen].hp, 5);
+        assert!(!board.units[frozen].frozen());
+        assert_eq!((board.units[frozen].x, board.units[frozen].y), (3, 5));
+
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 0, 3, 3, WId::BruteSplitshot);
+        add_enemy(&mut board, 1, 3, 3, 6);
+        let armored = add_enemy(&mut board, 2, 3, 2, 5);
+        let acid = add_enemy(&mut board, 3, 3, 4, 5);
+        board.units[armored].flags.insert(UnitFlags::ARMOR);
+        board.units[acid].set_acid(true);
+        simulate_weapon(&mut board, mech, WId::BruteSplitshot, 3, 3);
+        assert_eq!(board.units[armored].hp, 4);
+        assert_eq!(board.units[acid].hp, 1);
+    }
+
+    #[test]
+    fn test_splitshot_patch_does_not_add_splash_to_heavy_rocket() {
+        // Heavy Rocket has a distinct source body. Its missing pushes stay open.
+        let mut board = make_test_board();
+        let mech = add_mech(&mut board, 0, 0, 3, 3, WId::BruteHeavyrocket);
+        let main = add_enemy(&mut board, 1, 3, 3, 6);
+        let side = add_enemy(&mut board, 2, 3, 2, 6);
+        simulate_weapon(&mut board, mech, WId::BruteHeavyrocket, 3, 3);
+        assert_eq!((board.units[main].x, board.units[main].y), (3, 3));
+        assert_eq!(board.units[side].hp, 6);
+        assert_eq!((board.units[side].x, board.units[side].y), (3, 2));
     }
 
     fn add_enemy(board: &mut Board, uid: u16, x: u8, y: u8, hp: i8) -> usize {

@@ -678,9 +678,20 @@ pub enum WId {
     /// Any-class Targeted Strike. Inherits Grenade_Base's all-board target
     /// area and deals 1 center damage plus four outward zero-damage pushes.
     SupportForce = 251,
+    /// Split Shot with +1 Use powered.
+    BruteSplitshotA = 252,
+    /// Split Shot with +1 Damage powered.
+    BruteSplitshotB = 253,
+    /// Split Shot with both upgrades powered.
+    BruteSplitshotAB = 254,
 }
 
-pub const WEAPON_COUNT: usize = 252;
+pub const WEAPON_COUNT: usize = 255;
+
+pub fn is_splitshot(weapon_id: WId) -> bool {
+    matches!(weapon_id, WId::BruteSplitshot | WId::BruteSplitshotA
+        | WId::BruteSplitshotB | WId::BruteSplitshotAB)
+}
 
 // ── Weapon definitions table ─────────────────────────────────────────────────
 // Indexed by WId as u8
@@ -867,6 +878,10 @@ pub static WEAPONS: [WeaponDef; WEAPON_COUNT] = {
     // 28: Brute_Splitshot — Split Shot
     w[28] = WeaponDef { weapon_type: WeaponType::Projectile, damage: 2, push: PushDir::Outward, range_max: 0, limited: 1,
         flags: f(WeaponFlags::AOE_PERP.bits()), ..DEF };
+    // Shipped weapons_brute.lua:803-814; the same three-hit body is inherited.
+    w[252] = WeaponDef { limited: 2, ..w[28] };
+    w[253] = WeaponDef { damage: 3, ..w[28] };
+    w[254] = WeaponDef { limited: 2, damage: 3, ..w[28] };
     // 29: Brute_Bombrun — Bombing Run
     // Tooltip: "Leap over any distance dropping a bomb on each tile you pass."
     // Damage lands on every transit tile along the flight path, NOT on the
@@ -1908,6 +1923,9 @@ pub fn wid_from_str(s: &str) -> WId {
         "Brute_Shockblast" => WId::BruteShockblast,
         "Brute_Sniper" => WId::BruteSniper,
         "Brute_Splitshot" => WId::BruteSplitshot,
+        "Brute_Splitshot_A" => WId::BruteSplitshotA,
+        "Brute_Splitshot_B" => WId::BruteSplitshotB,
+        "Brute_Splitshot_AB" => WId::BruteSplitshotAB,
         "Brute_Bombrun" => WId::BruteBombrun,
         "Brute_PierceShot" => WId::BrutePierceShot,
         "Brute_TC_Ricochet" => WId::BruteTcRicochet,
@@ -2194,6 +2212,9 @@ pub fn wid_to_str(id: WId) -> &'static str {
         WId::BruteShockblast => "Brute_Shockblast",
         WId::BruteSniper => "Brute_Sniper",
         WId::BruteSplitshot => "Brute_Splitshot",
+        WId::BruteSplitshotA => "Brute_Splitshot_A",
+        WId::BruteSplitshotB => "Brute_Splitshot_B",
+        WId::BruteSplitshotAB => "Brute_Splitshot_AB",
         WId::BruteBombrun => "Brute_Bombrun",
         WId::BrutePierceShot => "Brute_PierceShot",
         WId::BruteTcRicochet => "Brute_TC_Ricochet",
@@ -2535,7 +2556,8 @@ pub fn weapon_name(id: WId) -> &'static str {
         WId::BruteSonic => "Sonic Dash",
         WId::BruteShockblast => "Shock Cannon",
         WId::BruteSniper => "Sniper Rifle",
-        WId::BruteSplitshot => "Split Shot",
+        WId::BruteSplitshot | WId::BruteSplitshotA
+            | WId::BruteSplitshotB | WId::BruteSplitshotAB => "Split Shot",
         WId::BruteBombrun => "Bombing Run",
         WId::BrutePierceShot => "AP Cannon",
         WId::BruteTcRicochet | WId::BruteTcRicochetA
@@ -3613,6 +3635,10 @@ mod tests {
     fn test_wid_to_str_roundtrip() {
         // Every wid_from_str input should roundtrip through wid_to_str
         let pairs = [
+            ("Brute_Splitshot", WId::BruteSplitshot),
+            ("Brute_Splitshot_A", WId::BruteSplitshotA),
+            ("Brute_Splitshot_B", WId::BruteSplitshotB),
+            ("Brute_Splitshot_AB", WId::BruteSplitshotAB),
             ("Prime_Punchmech", WId::PrimePunchmech),
             ("Prime_Punchmech_A", WId::PrimePunchmechA),
             ("Prime_Punchmech_B", WId::PrimePunchmechB),

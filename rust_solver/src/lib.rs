@@ -2538,7 +2538,11 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v410: Original Centipede returned queues and pinned Lua order side hits
 // relative to the shot. Killing a first-side Armor Psion can affect the second
 // hit; fixed world-axis order was reversed for negative-x/positive-y shots.
-pub const SIMULATOR_VERSION: u32 = 410;
+// v411: Split Shot resolves its saved primary endpoint and ordered outward
+// side hits, including all powered variants. Artemis retains source-legal
+// building-center targets, allowing a sacrifice that prevents two grid losses.
+// Original full execution fidelity remains unproved; synthetic proofs are separate.
+pub const SIMULATOR_VERSION: u32 = 411;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
