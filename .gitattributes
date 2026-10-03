@@ -15,3 +15,7 @@ src/bridge/observatory_callback_manifest.lua -text whitespace=cr-at-eol
 src/native/observatory_continue.c -text whitespace=cr-at-eol
 src/native/observatory_rng_core_observer.c -text whitespace=cr-at-eol
 src/native/observatory_rng_seed.c -text whitespace=cr-at-eol
+
+# Solver-first evidence reports pin raw JSON and the evaluation entry point.
+data/solver_first/*.json -text whitespace=cr-at-eol
+scripts/solver_first_s0.py text eol=lf

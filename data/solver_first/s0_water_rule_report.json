@@ -1,0 +1,148 @@
+{
+  "attempted": 192,
+  "cases": [
+    {
+      "attempted": 64,
+      "expected_legal": [
+        [
+          0,
+          0
+        ]
+      ],
+      "massive": false,
+      "move": 2,
+      "replay_accepted": [
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "attempted": 64,
+      "expected_legal": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "massive": true,
+      "move": 1,
+      "replay_accepted": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "attempted": 64,
+      "expected_legal": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "massive": true,
+      "move": 2,
+      "replay_accepted": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ]
+    }
+  ],
+  "contract_sha256": "4436fa932f58a2820b0f6edd54ac485bb65aef1c7b5d454c15b00c96401fa068",
+  "corpus_version": "s0-water-development-v1",
+  "evidence_class": "synthetic_scenario_against_original_static_rule_inference",
+  "extension_sha256": "33dc9aedb7a2a3a5bfdb9b412d7eed8d84a7d7b72d4592237ceb84a65c98b9c4",
+  "frontend_source_identity": {
+    "files": {
+      "scripts/solver_first_s0.py": "839b0a0b81c06399db13b577658bb81b2122b8bbb8d12a0b9ad0af7b433ddebc",
+      "src/solver/evidence_reconciliation.py": "7abb58028bf1791b24f46412a6ccd3ea54a15c64332813e511fbcf0099c1e9ba",
+      "src/solver/observation_contract.py": "56324aecc749ec51f1383957fe1fd2db72a9ef12966f20b3210fd50c0e2148f7"
+    },
+    "hash_convention": "UTF-8 files with CRLF normalized to LF"
+  },
+  "held_out_status": "not_evaluated",
+  "information_mode": "provisional_player_observation_v1",
+  "ledger_promotions": 0,
+  "ledger_reverification": {
+    "evidence_sha256": "da45da1dc7c53a1898a5707c968f394a1903ed3aca472e69f1c6a522e6337148",
+    "inventory_canonical_sha256": "26c6f8897938232177d46b675b570f3e866d1a3923b6bb36fd63a02b85fa00ff",
+    "inventory_path": "data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json",
+    "status": "verified"
+  },
+  "matched_original_trace_admitted": 0,
+  "milestone": "S0",
+  "mismatches": [],
+  "movement_index_canonical_sha256": "bf7ef2a7962163e396f9a21ae1932f3ad53d2d4093089cc213f0720f5f2c0253",
+  "oracle_observation_pairs": 3,
+  "original_build_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "parser_field_counts": {
+    "JsonInput": 43,
+    "JsonTile": 24,
+    "JsonUnit": 49
+  },
+  "path_evidence_sha256": "f21127154c770ca5db14fec30ec8f9460c7694927bda2c152db1d9d0e3961fb5",
+  "path_source_reverification": "verified",
+  "remaining_blockers": [
+    "matched original GetReachable output vectors",
+    "AddMove consumer, per-step effects, interruption and scheduler ordering",
+    "original full-turn ordered trace and next decision state",
+    "observation acquisition provenance for broader mission fields"
+  ],
+  "runtime_original_comparisons": 0,
+  "rust_source_identity": {
+    "files": {
+      "rust_solver/src/beam.rs": "d4f466370f156ccc11dbb257c5f472defd00dbbbe518ce84edf6e31c4dc1e4b8",
+      "rust_solver/src/board.rs": "33bdaa75eee577494a9e8f204462d0879318a9b6e4597c53ebffb865f9409eeb",
+      "rust_solver/src/enemy.rs": "fee87a804608832802f3fac27a2fbb30bd0e60a07a04eeef57d48954b5f53187",
+      "rust_solver/src/evaluate.rs": "1ca60b57a8efe41487ba38351001d18bc86d4df19f2fa8c918f130ab8f22b9c3",
+      "rust_solver/src/lib.rs": "b38a2cdc05578c1827a867c5cb6b827b0acc74c92f49b747fdb24c8ddb451e9a",
+      "rust_solver/src/movement.rs": "51c4dd3180d01aabde233e8b9f63c6833a45ea4761270fbd3adb6e34b30bb516",
+      "rust_solver/src/native_rng.rs": "b070f2182ff3e47e02c13ff39b1aac808066b08dd412018c67b539a38bf33ebd",
+      "rust_solver/src/replay.rs": "b0a656d4392923538a297bd0a78f37bd4087d7a55cf18e6ffea00a340058eafc",
+      "rust_solver/src/serde_bridge.rs": "24ebb7214fa0993f30fea98f63dc4b13aa1e1d3fb54a3baf2e244fbc25395ba3",
+      "rust_solver/src/simulate.rs": "ee621054c051187b67fcb9c8356d52eac4a8d04038f463463da6d8ffcd808621",
+      "rust_solver/src/solver.rs": "42a7c892164c12a6ffbd1781f69b1062c0b946d955e07f4990e8f1e5f39c3f6b",
+      "rust_solver/src/turn_projection.rs": "07f21beb6a0c9f92c894d0fc8ef0560ef6013e3d38d036142efe2408e87ca967",
+      "rust_solver/src/types.rs": "ec5a1f865e502bd25d3faa50a41b947af6ec74cf4ee09ff4e59f949fe811633e",
+      "rust_solver/src/weapons.rs": "40c98382df5fbf9bd8141ea7352ebd3fd6b35a9c9baeb1d7e549032ab246ab1b"
+    },
+    "hash_convention": "UTF-8 files with CRLF normalized to LF",
+    "tree_sha256": "cb5dfb0aba3fd2d7dfa700545b44b6d700c5d033aa7a6bc1b75eaec8b29483d7"
+  },
+  "scenario": "ordinary_massive_water_corridor",
+  "schema_version": 1,
+  "script_map_overlay_inventory_status": "not_consumed_by_executable_only_static_check; full-loop corpus pin still required",
+  "search_status": "not_evaluated",
+  "simulator_version": 408,
+  "solver_commit": "fda5572aa242833e3875fb56d5bd19c551a43b70",
+  "tool_sha256": "839b0a0b81c06399db13b577658bb81b2122b8bbb8d12a0b9ad0af7b433ddebc"
+}
