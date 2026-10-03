@@ -1,0 +1,4479 @@
+{
+  "acquisition_source_sha256": {
+    "scripts/solver_first_archived_turn.py": "dbea6953b9f320726444712a9fbc581683f651f38f8dba59c3359ceb6efa07b0",
+    "scripts/solver_first_s0.py": "dcc56cefa5efea7fd880856f35eb669efe45fcda44f04b3532f7190f2216740e",
+    "src/observatory/solver_first_archived_turn.py": "aefd0c148ee2b52f384808f80b1f0978a7b184342176100e105f2a03a5875454",
+    "src/solver/observation_contract.py": "56324aecc749ec51f1383957fe1fd2db72a9ef12966f20b3210fd50c0e2148f7"
+  },
+  "aligned_projection_admissions": 1,
+  "aligned_projection_checks": 85,
+  "aligned_projection_mismatches": 0,
+  "alignment_rejections": 2,
+  "capture_track": "owner_local_modified",
+  "cases": [
+    {
+      "acknowledgements": {
+        "delivery_confirmation": "delivered_confirmed",
+        "end_turn_ack": "OK END_TURN phase=combat_player method=observatory_native",
+        "finish_ack": "OK OBS_SPAWN_CAPSULE_FINISH condition=control capture=spawn-capsule-pair001-control draws=0 scheduler=0 fallback=0 standard=0 selectors=0 capsules=0 complete=true",
+        "prepare_ack": "OK OBS_SPAWN_CAPSULE_PREPARE condition=control capture=spawn-capsule-pair001-control seed=324508639 armed=false"
+      },
+      "canonical_input_sha256": "b2d0fd651546651ff521ffa9f0632f108df3618a9a919aaa07eff0d95ad52162",
+      "comparison": {
+        "alignment_rejection": null,
+        "checks": [
+          {
+            "actor_label": 0,
+            "actual": "HornetMech",
+            "field": "type",
+            "predicted": "HornetMech"
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "x",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "y",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "hp",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": true,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 0,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 0,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": "PunchMech",
+            "field": "type",
+            "predicted": "PunchMech"
+          },
+          {
+            "actor_label": 1,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 1,
+            "actual": 2,
+            "field": "y",
+            "predicted": 2
+          },
+          {
+            "actor_label": 1,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 1,
+            "actual": true,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 1,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": "IgniteMech",
+            "field": "type",
+            "predicted": "IgniteMech"
+          },
+          {
+            "actor_label": 2,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 2,
+            "actual": 6,
+            "field": "y",
+            "predicted": 6
+          },
+          {
+            "actor_label": 2,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 2,
+            "actual": true,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 2,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              0
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              1,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              5
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              2,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              2
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              2
+            ]
+          },
+          {
+            "actual": "rubble",
+            "field": "terrain",
+            "predicted": "rubble",
+            "tile": [
+              3,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              3,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              6
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              3,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              2
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              1
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              2
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              3
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              4
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              7
+            ]
+          }
+        ],
+        "checks_attempted": 85,
+        "full_state_equivalence": false,
+        "mismatches": [],
+        "next_decision_ready": true,
+        "ungraded_endpoint_differences": [
+          {
+            "actual": 4,
+            "field": "grid_power",
+            "predicted": 2,
+            "scope": "scalar"
+          },
+          {
+            "actual": [
+              [
+                5,
+                4
+              ]
+            ],
+            "field": "spawning_tiles",
+            "predicted": [],
+            "scope": "scalar"
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": [
+              "Prime_Punchmech"
+            ],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": [
+              "Prime_Punchmech_B",
+              "Prime_Lasermech_A"
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 2,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": [
+              0,
+              5
+            ],
+            "actual_exported": true,
+            "field": "queued_target",
+            "predicted": [
+              3,
+              4
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": [],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual_type": "WebbEgg1",
+            "field": "roster",
+            "predicted_type": null,
+            "scope": "unit",
+            "uid": 1352
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "smoke",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "tile",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              3
+            ]
+          }
+        ]
+      },
+      "fair_input": {
+        "reason": "state.native_enemy_spawn_inputs: unclassified",
+        "status": "rejected"
+      },
+      "id": "spawn-capsule-pair001-control",
+      "input_timestamp": "2026-08-29T23:01:44.342713",
+      "original_simulator_version": 408,
+      "plan_timestamp": "2026-08-29T23:01:50.183793",
+      "raw_outcome_timestamp": 1788062535,
+      "raw_replay_sha256": "eee2c6bc6d23370450a37ed43bf06e6d7debb52d2f7fb301fca5388b71f895a6",
+      "recorded_plan": [
+        {
+          "mech_uid": 0,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            2,
+            2
+          ],
+          "weapon_id": "Prime_Punchmech_B"
+        },
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            6
+          ],
+          "target": [
+            3,
+            4
+          ],
+          "weapon_id": "Ranged_Ignite"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            5,
+            5
+          ],
+          "target": [
+            5,
+            4
+          ],
+          "weapon_id": "Vek_Hornet"
+        }
+      ],
+      "trial_timestamp": "2026-08-30T04:02:15.398369+00:00"
+    },
+    {
+      "acknowledgements": {
+        "delivery_confirmation": "delivered_confirmed",
+        "end_turn_ack": "OK END_TURN phase=combat_player method=observatory_native",
+        "finish_ack": "OK OBS_SPAWN_CAPSULE_FINISH condition=control capture=spawn-capsule-pair002-control draws=0 scheduler=0 fallback=0 standard=0 selectors=0 capsules=0 complete=true",
+        "prepare_ack": "OK OBS_SPAWN_CAPSULE_PREPARE condition=control capture=spawn-capsule-pair002-control seed=324508639 armed=false"
+      },
+      "canonical_input_sha256": "902cdd87aa9e6301ecdb57598f17b72bc428951d46438b6e5f0e6a81324f32c1",
+      "comparison": {
+        "alignment_rejection": "combat_player alone is insufficient: no living mech is active in the recorded outcome",
+        "checks": [
+          {
+            "actor_label": 0,
+            "actual": "HornetMech",
+            "field": "type",
+            "predicted": "HornetMech"
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "x",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "y",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "hp",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 0,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 0,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": "PunchMech",
+            "field": "type",
+            "predicted": "PunchMech"
+          },
+          {
+            "actor_label": 1,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 1,
+            "actual": 2,
+            "field": "y",
+            "predicted": 2
+          },
+          {
+            "actor_label": 1,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 1,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 1,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": "IgniteMech",
+            "field": "type",
+            "predicted": "IgniteMech"
+          },
+          {
+            "actor_label": 2,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 2,
+            "actual": 6,
+            "field": "y",
+            "predicted": 6
+          },
+          {
+            "actor_label": 2,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 2,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 2,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              0
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              1,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              5
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              2,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              2
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              2
+            ]
+          },
+          {
+            "actual": "rubble",
+            "field": "terrain",
+            "predicted": "rubble",
+            "tile": [
+              3,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              3,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              6
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              3,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              2
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              1
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              2
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              3
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              4
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              7
+            ]
+          }
+        ],
+        "checks_attempted": 85,
+        "full_state_equivalence": false,
+        "mismatches": [
+          {
+            "actor_label": 0,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          }
+        ],
+        "next_decision_ready": false,
+        "ungraded_endpoint_differences": [
+          {
+            "actual": 4,
+            "field": "grid_power",
+            "predicted": 2,
+            "scope": "scalar"
+          },
+          {
+            "actual": [
+              [
+                5,
+                3
+              ]
+            ],
+            "field": "spawning_tiles",
+            "predicted": [],
+            "scope": "scalar"
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": [
+              "Prime_Punchmech"
+            ],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": [
+              "Prime_Punchmech_B",
+              "Prime_Lasermech_A"
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 2,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": [
+              0,
+              5
+            ],
+            "actual_exported": true,
+            "field": "queued_target",
+            "predicted": [
+              3,
+              4
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": [],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual_type": "WebbEgg1",
+            "field": "roster",
+            "predicted_type": null,
+            "scope": "unit",
+            "uid": 1352
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "smoke",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "tile",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              3
+            ]
+          }
+        ]
+      },
+      "fair_input": {
+        "reason": "state.native_enemy_spawn_inputs: unclassified",
+        "status": "rejected"
+      },
+      "id": "spawn-capsule-pair002-control",
+      "input_timestamp": "2026-08-29T23:04:46.602677",
+      "original_simulator_version": 408,
+      "plan_timestamp": "2026-08-29T23:04:52.330170",
+      "raw_outcome_timestamp": 1788062716,
+      "raw_replay_sha256": "eee2c6bc6d23370450a37ed43bf06e6d7debb52d2f7fb301fca5388b71f895a6",
+      "recorded_plan": [
+        {
+          "mech_uid": 0,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            2,
+            2
+          ],
+          "weapon_id": "Prime_Punchmech_B"
+        },
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            6
+          ],
+          "target": [
+            3,
+            4
+          ],
+          "weapon_id": "Ranged_Ignite"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            5,
+            5
+          ],
+          "target": [
+            5,
+            4
+          ],
+          "weapon_id": "Vek_Hornet"
+        }
+      ],
+      "trial_timestamp": "2026-08-30T04:05:16.930445+00:00"
+    },
+    {
+      "acknowledgements": {
+        "delivery_confirmation": "delivered_confirmed",
+        "end_turn_ack": "OK END_TURN phase=combat_player method=observatory_native",
+        "finish_ack": "OK OBS_SPAWN_CAPSULE_FINISH condition=control capture=spawn-capsule-pair003-control draws=0 scheduler=0 fallback=0 standard=0 selectors=0 capsules=0 complete=true",
+        "prepare_ack": "OK OBS_SPAWN_CAPSULE_PREPARE condition=control capture=spawn-capsule-pair003-control seed=324508639 armed=false"
+      },
+      "canonical_input_sha256": "6eff2c35d230a5250054ee3b0daea2e33b804db54f9413d3dd7f832e4f468d5e",
+      "comparison": {
+        "alignment_rejection": "combat_player alone is insufficient: no living mech is active in the recorded outcome",
+        "checks": [
+          {
+            "actor_label": 0,
+            "actual": "HornetMech",
+            "field": "type",
+            "predicted": "HornetMech"
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "x",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "y",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": 5,
+            "field": "hp",
+            "predicted": 5
+          },
+          {
+            "actor_label": 0,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 0,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 0,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": "PunchMech",
+            "field": "type",
+            "predicted": "PunchMech"
+          },
+          {
+            "actor_label": 1,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 1,
+            "actual": 2,
+            "field": "y",
+            "predicted": 2
+          },
+          {
+            "actor_label": 1,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 1,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 1,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": "IgniteMech",
+            "field": "type",
+            "predicted": "IgniteMech"
+          },
+          {
+            "actor_label": 2,
+            "actual": 3,
+            "field": "x",
+            "predicted": 3
+          },
+          {
+            "actor_label": 2,
+            "actual": 6,
+            "field": "y",
+            "predicted": 6
+          },
+          {
+            "actor_label": 2,
+            "actual": 4,
+            "field": "hp",
+            "predicted": 4
+          },
+          {
+            "actor_label": 2,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": 1,
+            "field": "team",
+            "predicted": 1
+          },
+          {
+            "actor_label": 2,
+            "actual": true,
+            "field": "mech",
+            "predicted": true
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              0
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              0,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              0,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              1,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              5
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              1,
+              7
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              2,
+              0
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              2
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              2,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              2,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              2
+            ]
+          },
+          {
+            "actual": "rubble",
+            "field": "terrain",
+            "predicted": "rubble",
+            "tile": [
+              3,
+              3
+            ]
+          },
+          {
+            "actual": "building",
+            "field": "terrain",
+            "predicted": "building",
+            "tile": [
+              3,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              3,
+              6
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              3,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              4,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              2
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              3
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              5,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              1
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              2
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              3
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              6,
+              4
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              6,
+              7
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              0
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              1
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              2
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              3
+            ]
+          },
+          {
+            "actual": "water",
+            "field": "terrain",
+            "predicted": "water",
+            "tile": [
+              7,
+              4
+            ]
+          },
+          {
+            "actual": "mountain",
+            "field": "terrain",
+            "predicted": "mountain",
+            "tile": [
+              7,
+              5
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              6
+            ]
+          },
+          {
+            "actual": "ground",
+            "field": "terrain",
+            "predicted": "ground",
+            "tile": [
+              7,
+              7
+            ]
+          }
+        ],
+        "checks_attempted": 85,
+        "full_state_equivalence": false,
+        "mismatches": [
+          {
+            "actor_label": 0,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 1,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          },
+          {
+            "actor_label": 2,
+            "actual": false,
+            "field": "active",
+            "predicted": true
+          }
+        ],
+        "next_decision_ready": false,
+        "ungraded_endpoint_differences": [
+          {
+            "actual": 4,
+            "field": "grid_power",
+            "predicted": 2,
+            "scope": "scalar"
+          },
+          {
+            "actual": [
+              [
+                5,
+                3
+              ]
+            ],
+            "field": "spawning_tiles",
+            "predicted": [],
+            "scope": "scalar"
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": [
+              "Prime_Punchmech"
+            ],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": [
+              "Prime_Punchmech_B",
+              "Prime_Lasermech_A"
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 0
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1
+          },
+          {
+            "actual": 2,
+            "actual_exported": true,
+            "field": "max_hp",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "move",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "active",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 2
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": [
+              0,
+              5
+            ],
+            "actual_exported": true,
+            "field": "queued_target",
+            "predicted": [
+              3,
+              4
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1248
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1249
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 5,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1250
+          },
+          {
+            "actual": 3,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 4,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 1,
+            "actual_exported": true,
+            "field": "y",
+            "predicted": 2,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1251
+          },
+          {
+            "actual": 4,
+            "actual_exported": true,
+            "field": "x",
+            "predicted": 6,
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "acid",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "fire",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "frozen",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "shield",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": false,
+            "actual_exported": true,
+            "field": "grappled",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "queued_target",
+            "predicted": [
+              -1,
+              -1
+            ],
+            "predicted_exported": true,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual": [],
+            "actual_exported": true,
+            "field": "weapons",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "unit",
+            "uid": 1252
+          },
+          {
+            "actual_type": "WebbEgg1",
+            "field": "roster",
+            "predicted_type": null,
+            "scope": "unit",
+            "uid": 1352
+          },
+          {
+            "actual": true,
+            "actual_exported": true,
+            "field": "smoke",
+            "predicted": null,
+            "predicted_exported": false,
+            "scope": "tile",
+            "tile": [
+              1,
+              6
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              1
+            ]
+          },
+          {
+            "actual": null,
+            "actual_exported": false,
+            "field": "acid",
+            "predicted": true,
+            "predicted_exported": true,
+            "scope": "tile",
+            "tile": [
+              3,
+              3
+            ]
+          }
+        ]
+      },
+      "fair_input": {
+        "reason": "state.native_enemy_spawn_inputs: unclassified",
+        "status": "rejected"
+      },
+      "id": "spawn-capsule-pair003-control",
+      "input_timestamp": "2026-08-29T23:07:39.796308",
+      "original_simulator_version": 408,
+      "plan_timestamp": "2026-08-29T23:07:45.421814",
+      "raw_outcome_timestamp": 1788062889,
+      "raw_replay_sha256": "eee2c6bc6d23370450a37ed43bf06e6d7debb52d2f7fb301fca5388b71f895a6",
+      "recorded_plan": [
+        {
+          "mech_uid": 0,
+          "move_to": [
+            3,
+            2
+          ],
+          "target": [
+            2,
+            2
+          ],
+          "weapon_id": "Prime_Punchmech_B"
+        },
+        {
+          "mech_uid": 1,
+          "move_to": [
+            3,
+            6
+          ],
+          "target": [
+            3,
+            4
+          ],
+          "weapon_id": "Ranged_Ignite"
+        },
+        {
+          "mech_uid": 2,
+          "move_to": [
+            5,
+            5
+          ],
+          "target": [
+            5,
+            4
+          ],
+          "weapon_id": "Vek_Hornet"
+        }
+      ],
+      "trial_timestamp": "2026-08-30T04:08:09.605849+00:00"
+    }
+  ],
+  "corpus_version": "s1-archived-capsule-development-v1",
+  "diagnostic_replays_attempted": 3,
+  "diagnostic_replays_completed": 3,
+  "evidence_class": "archived_original_game_turn_with_partial_oracle_diagnostic_replay",
+  "exclusions": [
+    "individual action delivery ACKs",
+    "complete actual post-player Board",
+    "ordered original damage/status events",
+    "enemy movement/target policy and new spawn forecast",
+    "nonempty environmental effect",
+    "live grid scalar/resistance outcome (bridge reads save/fallback)",
+    "absent tile-status getter success",
+    "actual effective weapon/max-HP/move reconciliation at next decision",
+    "fair-input provenance",
+    "held-out practical strength or exhaustive search"
+  ],
+  "extension_sha256": "259d4ae2afeddc05e1da31020935c8b4f8dcb0ccfb46de1f18f6bff9209b4cf5",
+  "failures": [],
+  "fair_input_admissions": 0,
+  "full_state_equivalence_admissions": 0,
+  "held_out_evaluations": 0,
+  "independent_scenario_families": 1,
+  "information_contract_sha256": "4436fa932f58a2820b0f6edd54ac485bb65aef1c7b5d454c15b00c96401fa068",
+  "information_mode": "historical_oracle_diagnostic_only_no_planner_invocation",
+  "input_boundary": "Historical full bridge/save/overlay/configuration payload is replayed as an oracle diagnostic; pending and hidden fields have not been admitted to fair planning",
+  "intervention": "Control observer unarmed; native RNG explicitly reseeded after player actions, before End Turn. This is not an unseeded or pristine-depot gameplay claim.",
+  "ledger_promotions": 0,
+  "legal_action_set_comparisons": 0,
+  "model_boundary": "Rust simulates player actions/queued attacks and stationary heuristic requeue; actual next decision additionally contains original enemy movement, egg creation/webbing and spawn scheduling",
+  "ordered_event_comparisons": 0,
+  "original_build_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "original_cycle_outcome_snapshots": 3,
+  "partition": "entire related capsule campaign is development; no sibling control/dormant/armed trial is held out",
+  "projection_checks": 255,
+  "projection_mismatches": 6,
+  "python_runtime": [
+    3,
+    13,
+    11
+  ],
+  "schema_version": 1,
+  "search_evaluations": 0,
+  "simulator_version": 409,
+  "solver_baseline_commit": "77356e13d344bd639899cb5c6653784732c5d60d",
+  "source_pins": [
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_receipt.json",
+      "sha256": "c529484cd2bb1061ef2e3f3ccce80a61e5b9df94815b38ffcb8aa682ab7ef2a1"
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule_cleanup_receipt.json",
+      "sha256": "ef3873d612b8b1a52b562600b17f92b04523f8ccb88a6245f40f3cc3b7928204"
+    },
+    {
+      "path": "src/bridge/modloader.lua",
+      "sha256": "93f99e8854e8f01bc0c64b0c07eff5aa1fe078f7e821a60de133db7ec375986c"
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/trial.json",
+      "sha256": "e8bff32515c2a3f33a9c6b90e2bfa788fdf70595eade8c7c33cdedbb38ce69da",
+      "size": 4123
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/lifecycle.json",
+      "sha256": "9fea0cff54a04353639c9a864d79c56c947e3a70c1f478379387f9b530e8a5ed",
+      "size": 5407
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/outcome.json",
+      "sha256": "a42b5cada43af0e2d0f87b1e7a6793006f9bf5888d24fafb450330476ad78b1d",
+      "size": 22031
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/session.json",
+      "sha256": "ea71b698a10f7250a476f5d3be712dda5eb407408d2a441f4db9c1edccf76b1b",
+      "size": 106771
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair001/control/start_state_proof.json",
+      "sha256": "322e2c1e7d7193d2537658d58561e8b8b910257436e4308e12480b9c0d405a6b",
+      "size": 7433
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_board.json",
+      "sha256": "c67d3b226072c72bde434f97b7fa3e468cd68425b558fb9af012225acc9b369e",
+      "size": 38423
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_solve_input.json",
+      "sha256": "d8e4efd7467f7911fb8030d8b00edd974c2ebdd74b9d05e921a885de72762e1c",
+      "size": 36666
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_solve.json",
+      "sha256": "83c71aa6f219480837d1be66344c517b4bc735c247fe8eb1f735647f217f56cd",
+      "size": 169216
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/m25_turn_01_threat_audit.json",
+      "sha256": "1334519b6e4ebedcbbd2f93a7d85fd7675a4da88ba1c1aee035894fd5f0094c6",
+      "size": 2762
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair001_control/resist_probe.jsonl",
+      "sha256": "94ae5dd265ea8c6bf8a5a00afed38546462bb790924a590694a0d03e3269d756",
+      "size": 2440
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/trial.json",
+      "sha256": "3c310f07b11fd83ebc33107ae554312a4fdfee14b757a79b786d25929dd42287",
+      "size": 4123
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/lifecycle.json",
+      "sha256": "e785aaac427c7e87086a9a1bf7ed940a9608a90802d18bb4886daa7185641614",
+      "size": 5407
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/outcome.json",
+      "sha256": "a1dcd4e61cb203aa8bd95d224812a50cf01a8aa763b59648bcfb192a5868dd12",
+      "size": 22034
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/session.json",
+      "sha256": "b08d7bfddcf8beb0c6b8a9a4debe95291c5bb55de1c8c768c781682449a982f5",
+      "size": 106771
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair002/control/start_state_proof.json",
+      "sha256": "83bb20ff5b41c5f35887b85cfb5506f8c5a5f8d04d596fed9780e922c6beecdd",
+      "size": 7433
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_board.json",
+      "sha256": "34d3c423c62ca758ef08e723370d9b32844e3d7008a539bd9c2b3723cdc96450",
+      "size": 38423
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_solve_input.json",
+      "sha256": "ba319dd363e529aa458328161b9f6e60f95a3b08a80ecb9a0fd44e44cf2fdd6b",
+      "size": 36666
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_solve.json",
+      "sha256": "314f3900606b1c4144f0b080a3c6c382bce4a8002d66908870db172b199982a9",
+      "size": 169222
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/m25_turn_01_threat_audit.json",
+      "sha256": "97c6b30b2413456e17c4bf787f91ea54c07ec04fb582396cd1fd5e4f92ff3c5f",
+      "size": 2762
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair002_control/resist_probe.jsonl",
+      "sha256": "4c0bcafa84890f4c14959de1ad730a4372f18b70123a8820332751ff95702871",
+      "size": 2440
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/trial.json",
+      "sha256": "96e0ae6f5c41aa525c9724fa59c5fdda163bdeb99067f9b5119f1b50f5e56675",
+      "size": 4124
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/lifecycle.json",
+      "sha256": "207a9431aa6bb2b7187032fe617ecdf7de142cdaa6bd61daabb11835bc59ace3",
+      "size": 5410
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/outcome.json",
+      "sha256": "ee81ddb4ec10c56136feab5c7839329fdc4a84dffff91e53f6440c978f476af9",
+      "size": 22034
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/session.json",
+      "sha256": "b112162fac8ca450e18316635eae8c2b4f930747bf58ad8dbee428b437a9e8bd",
+      "size": 106771
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/pair003/control/start_state_proof.json",
+      "sha256": "cc327aa8c93899f1854c0d6571feed70ef174686d229531a17ab69bd99285f03",
+      "size": 7433
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_board.json",
+      "sha256": "a77517d252ac15d49ebc7d5e65a73c07bcf6c8757cbef5246c89ada24d48c2d1",
+      "size": 38423
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_solve_input.json",
+      "sha256": "3ba8a9eb079daf702baafdf4bcc04dfd7797cf4d4b2778b24f72b09eb2b3fd91",
+      "size": 36666
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_solve.json",
+      "sha256": "2c79ec613c1056444d04521b1077a656db35b8369ed73988dfa8624003e9543a",
+      "size": 169220
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/m25_turn_01_threat_audit.json",
+      "sha256": "834d40d842353f0f64417dd64b9f3d4dd4fcd7ef20594a44471ccc5d95a9fc06",
+      "size": 2762
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260829_spawn_coordinate_capsule/recordings/20260630_084844_192-observatory-pair003_control/resist_probe.jsonl",
+      "sha256": "9d2cf65ebdcc5c7756c6a38f80be4f598ffaf6ace71057824bd73386464ef7c6",
+      "size": 2440
+    }
+  ]
+}

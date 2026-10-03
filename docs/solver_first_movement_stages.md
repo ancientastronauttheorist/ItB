@@ -110,6 +110,10 @@ and settled effects before claiming a completed original movement.
 
 ## Archived game evidence and next exit test
 
+The subsequent [tactical-cycle archive checkpoint](solver_first_archived_turn_conformance.md)
+finds pinned full-cycle outcome snapshots and repairs future capture readiness.
+It retains two unready outcomes and does not establish full-state equivalence.
+
 The [archive audit](../data/solver_first/s1_archived_movement_projection.json)
 pins seven retained sources for BomblingMech E6→D5. Actual bridge input and a
 linked post-move board snapshot confirm its position change and 3 HP, joined

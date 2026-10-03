@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -186,7 +188,7 @@ def _auto_summary(result: object) -> dict:
 
 
 def _fresh_state(timeout: float = 5.0) -> dict:
-    if not refresh_bridge_state_fresh(timeout=timeout):
+    if not refresh_bridge_state_fresh(timeout=timeout, total_budget=True):
         raise BridgeError("capsule trial bridge state did not refresh")
     value = read_state()
     if not isinstance(value, dict):
@@ -241,8 +243,52 @@ def _outcome_valid(outcome: object, pre_turn: object) -> bool:
         and outcome.get("in_active_mission") is True
         and type(pre_turn) is int
         and type(outcome.get("turn")) is int
-        and outcome.get("turn") > pre_turn
+        and outcome.get("turn") == pre_turn + 1
+        and isinstance(outcome.get("units"), list)
+        and any(
+            isinstance(unit, dict)
+            and type(unit.get("team")) is int
+            and unit["team"] == 1
+            and unit.get("active") is True
+            and type(unit.get("hp")) in (int, float)
+            and unit["hp"] > 0
+            and not unit.get("is_extra_tile", False)
+            and (
+                unit.get("mech") is True
+                or (
+                    isinstance(unit.get("weapons"), list)
+                    and any(isinstance(weapon, str) and weapon not in ("", "None") for weapon in unit["weapons"])
+                )
+                or (
+                    unit.get("type") == "VIP_Truck"
+                    and type(unit.get("move")) in (int, float)
+                    and unit["move"] > 0
+                )
+            )
+            for unit in outcome["units"]
+        )
     )
+
+
+def _ready_outcome(pre_turn: object, *, timeout: float, poll_interval: float) -> dict:
+    """Read fresh generations until the next decision has an available actor.
+
+    End Turn has already been delivered. Polling never retries that command.
+    A new phase/turn alone can precede actor readiness in a real capture.
+    """
+    if not math.isfinite(timeout) or timeout <= 0 or not math.isfinite(poll_interval) or poll_interval < 0:
+        raise ValueError("outcome readiness requires a positive finite timeout and nonnegative finite polling interval")
+    deadline = time.monotonic() + timeout
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise BridgeError("next Mission_Power player decision did not become ready within the capture budget")
+        outcome = _fresh_state(timeout=remaining)
+        if time.monotonic() <= deadline and _outcome_valid(outcome, pre_turn):
+            return outcome
+        remaining = deadline - time.monotonic()
+        if remaining > 0 and poll_interval:
+            time.sleep(min(poll_interval, remaining))
 
 
 def run(args: argparse.Namespace) -> tuple[int, dict]:
@@ -321,11 +367,11 @@ def run(args: argparse.Namespace) -> tuple[int, dict]:
             )
         else:
             try:
-                outcome = _fresh_state()
-                if not _outcome_valid(outcome, pre_turn):
-                    raise BridgeError(
-                        "post-trial state is not the next Mission_Power player turn"
-                    )
+                outcome = _ready_outcome(
+                    pre_turn,
+                    timeout=args.max_wait,
+                    poll_interval=args.wait_poll_interval,
+                )
             except Exception as exc:
                 errors["outcome"] = str(exc)
                 outcome = None

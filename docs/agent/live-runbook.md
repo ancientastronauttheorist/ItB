@@ -6,6 +6,16 @@ This is the operational runbook for running Into the Breach through the bridge a
 
 **Default combat mode: `auto_turn`.** A single `game_loop.py auto_turn` call reads board, solves, executes every mech action via bridge (move → verify → attack → verify, re-solving on desync), and emits an End Turn click plan. It *polls the bridge internally* for the enemy→player transition (up to 45s by default) at entry, waiting for both `phase == combat_player` **and** `active_mechs > 0` — the animation window after End Turn flips phase early but leaves mechs inactive, so checking phase alone falsely proceeds into "No active mechs" errors.
 
+**Original-evidence captures need the same readiness gate.** A fresh bridge
+generation, newer turn, and player phase alone do not establish the next
+decision state. After confirmed End Turn delivery, poll fresh generations within
+one bounded budget for a living active player actor; include controllable mission
+allies. Never retry End Turn to obtain readiness or admit the last inactive
+snapshot on timeout. Preserve rejected snapshots in the acquisition denominator.
+Regression anchor: August 29 capsule controls pair002/pair003 report turn2/player
+phase with all three mechs inactive; see
+[the archive conformance checkpoint](../solver_first_archived_turn_conformance.md).
+
 **Typical turn = 2 agent rounds:** `auto_turn` → click End Turn → `auto_turn` (blocks in Python until next player turn) → click End Turn → ...
 
 **Fallback manual play** (`click_action <i>` / `verify_action <i>` / `click_end_turn`) exists for when the bridge is unavailable — don't use it otherwise.

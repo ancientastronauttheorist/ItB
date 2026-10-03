@@ -9,6 +9,7 @@ The Lua bridge communicates via files in /tmp/:
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import time
@@ -205,27 +206,33 @@ def is_bridge_alive(max_stale_sec: float = 5.0) -> bool:
         return False
 
 
-def refresh_bridge_state() -> bool:
+def refresh_bridge_state(*, timeout: float = 5.0, deadline: float | None = None) -> bool:
     """Request a fresh state dump from the bridge.
 
     Sends a no-op LUA command which triggers dump_state() as a side effect.
     Returns True if state was refreshed.
     """
     write_command("LUA return 'refresh'")
+    if deadline is not None:
+        timeout = deadline - time.monotonic()
+        if timeout <= 0:
+            return False
     try:
-        wait_for_ack(timeout=5.0)
+        wait_for_ack(timeout=timeout)
         return True
     except (TimeoutError, BridgeError):
         return False
 
 
-def refresh_bridge_state_fresh(timeout: float = 2.0) -> bool:
+def refresh_bridge_state_fresh(timeout: float = 2.0, *, total_budget: bool = False) -> bool:
     """Request a dump and wait until a new readable state generation lands.
 
     The Lua command handler writes its ACK immediately before ``dump_state``.
     Waiting only for the ACK can therefore race and reread the previous JSON.
     Capture every state candidate's file generation before the command, then
     require a changed, parseable candidate after the ACK.
+    With ``total_budget=True``, the timeout covers both the ACK and generation
+    wait; an expired budget never admits even an already-readable new state.
     """
 
     def generations() -> dict[str, tuple[int, int]]:
@@ -238,18 +245,27 @@ def refresh_bridge_state_fresh(timeout: float = 2.0) -> bool:
             observed[str(path)] = (stat.st_mtime_ns, stat.st_size)
         return observed
 
-    before = generations()
-    if refresh_bridge_state() is not True:
+    budget = float(timeout)
+    if total_budget and (not math.isfinite(budget) or budget <= 0):
         return False
-    deadline = time.monotonic() + max(0.1, float(timeout))
+    deadline = time.monotonic() + budget if total_budget else None
+    before = generations()
+    remaining = deadline - time.monotonic() if deadline is not None else 5.0
+    refresh_args = {"timeout": remaining}
+    if total_budget:
+        refresh_args["deadline"] = deadline
+    if remaining <= 0 or refresh_bridge_state(**refresh_args) is not True:
+        return False
+    if deadline is None:
+        deadline = time.monotonic() + max(0.1, budget)
     while time.monotonic() < deadline:
         after = generations()
         for path_text, generation in after.items():
             if before.get(path_text) == generation:
                 continue
-            if _read_json_file(Path(path_text)) is not None:
+            if _read_json_file(Path(path_text)) is not None and time.monotonic() <= deadline:
                 return True
-        time.sleep(0.02)
+        time.sleep(min(0.02, max(0.0, deadline - time.monotonic())))
     return False
 
 

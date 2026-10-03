@@ -90,7 +90,71 @@ def _state(turn_number: int) -> dict:
         "turn": turn_number,
         "in_active_mission": True,
         "spawning_tiles": [[5, 2]],
+        "units": [{"uid": 0, "team": 1, "mech": True, "active": True, "hp": 3}],
     }
+
+
+def test_outcome_phase_and_turn_do_not_establish_actor_readiness():
+    outcome = _state(2)
+    outcome["units"][0]["active"] = False
+    assert not trial._outcome_valid(outcome, 1)
+    outcome["units"][0]["active"] = 1
+    assert not trial._outcome_valid(outcome, 1)
+    outcome["units"][0]["active"] = True
+    outcome["units"][0]["hp"] = 0
+    assert not trial._outcome_valid(outcome, 1)
+
+
+def test_outcome_rejects_skipped_turn():
+    assert not trial._outcome_valid(_state(3), 1)
+
+
+def test_fresh_state_propagates_total_budget(monkeypatch):
+    calls = []
+    monkeypatch.setattr(trial, "refresh_bridge_state_fresh", lambda **kwargs: calls.append(kwargs) or True)
+    state = _state(2)
+    monkeypatch.setattr(trial, "read_state", lambda: state)
+    assert trial._fresh_state(timeout=0.02) is state
+    assert calls == [{"timeout": 0.02, "total_budget": True}]
+
+
+def test_outcome_accepts_ready_controllable_mission_ally():
+    outcome = _state(2)
+    outcome["units"] = [{"team": 1, "mech": False, "active": True, "hp": 2, "weapons": ["TankWeapon"]}]
+    assert trial._outcome_valid(outcome, 1)
+    outcome["units"][0]["team"] = 6
+    assert not trial._outcome_valid(outcome, 1)
+
+
+def test_ready_outcome_waits_across_fresh_unready_states(monkeypatch):
+    clock = [0.0]
+    old, spent, ready = _state(1), _state(2), _state(2)
+    spent["units"][0]["active"] = False
+    states = iter([old, spent, ready])
+    budgets = []
+    def fresh(*, timeout):
+        budgets.append(timeout)
+        clock[0] += 0.1
+        return next(states)
+    monkeypatch.setattr(trial, "_fresh_state", fresh)
+    monkeypatch.setattr(trial.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(trial.time, "sleep", lambda delay: clock.__setitem__(0, clock[0] + delay))
+    assert trial._ready_outcome(1, timeout=1.0, poll_interval=0.05) is ready
+    assert len(budgets) == 3 and budgets[0] > budgets[1] > budgets[2] > 0
+
+
+def test_ready_outcome_timeout_does_not_admit_spent_state(monkeypatch):
+    clock = [0.0]
+    spent = _state(2)
+    spent["units"][0]["active"] = False
+    def fresh(*, timeout):
+        clock[0] += min(0.3, timeout)
+        return spent
+    monkeypatch.setattr(trial, "_fresh_state", fresh)
+    monkeypatch.setattr(trial.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(trial.time, "sleep", lambda delay: clock.__setitem__(0, clock[0] + delay))
+    with pytest.raises(trial.BridgeError, match="did not become ready"):
+        trial._ready_outcome(1, timeout=1.0, poll_interval=0.05)
 
 
 def _inputs(tmp_path: Path, monkeypatch):
