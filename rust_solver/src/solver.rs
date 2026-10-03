@@ -30,7 +30,7 @@ fn disabled_mask_contains(mask: DisabledMask, weapon_id: WId) -> bool {
     bit < mask.len() * 128 && ((mask[bit / 128] >> (bit % 128)) & 1) != 0
 }
 
-fn mission_missiles_action_bonus(board: &Board, actions: &[MechAction]) -> f64 {
+pub(crate) fn mission_missiles_action_bonus(board: &Board, actions: &[MechAction]) -> f64 {
     if board.mission_id != "Mission_Missiles" {
         return 0.0;
     }
@@ -374,6 +374,25 @@ pub(crate) fn get_weapon_targets(
 ) -> Vec<(u8, u8)> {
     let wdef = &weapons[weapon_id as usize];
     let mut targets = Vec::new();
+
+    if matches!(weapon_id, WId::BruteTankmech | WId::PrimePunchmech) {
+        // Base Punch inherits Skill:GetTargetArea(PathSize=1); base Tank
+        // inherits the non-phase TankDefault getter. The pinned original
+        // GetSimpleReachable body includes a valid first blocker, including
+        // Building terrain (s2_primitive_target_membership_412.json).
+        // Keep every in-bounds direction, even when it only damages a
+        // building. Tank uses adjacent direction representatives here, not
+        // the native getter's complete set of points along each ray.
+        // Other weapons/upgrades and overridden getters need separate proof.
+        for &(dx, dy) in &DIRS {
+            let nx = mx as i8 + dx;
+            let ny = my as i8 + dy;
+            if in_bounds(nx, ny) {
+                targets.push((nx as u8, ny as u8));
+            }
+        }
+        return targets;
+    }
 
     if weapon_id == WId::SnowmineAtk1 {
         let Some(unit_idx) = board.unit_at(mx, my) else {
@@ -1490,7 +1509,7 @@ fn weapon_action_has_effect(
     }
 }
 
-fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> Vec<Action> {
+pub(crate) fn enumerate_actions(board: &Board, mech_idx: usize, weapons: &WeaponTable) -> Vec<Action> {
     let unit = &board.units[mech_idx];
     let mut actions = Vec::with_capacity(100);
 
@@ -2223,109 +2242,34 @@ fn search_recursive(
     audit.nodes_visited += 1;
 
     if depth >= mech_order.len() {
-        // All mechs acted — snapshot buildings before enemy phase
-        let mut b_eval = board.clone();
-        let buildings_before_enemy = count_buildings(&b_eval);
-        let before_enemy_phase = b_eval.clone();
-        let enemy_phase_result = simulate_enemy_attacks(&mut b_eval, original_positions, weapons);
-        let enemy_phase_unit_deaths = count_unit_deaths_between(&before_enemy_phase, &b_eval);
-        let before_spawn_block = b_eval.clone();
-        let spawn_block_result = apply_spawn_blocking(&mut b_eval, spawn_points);
-        let spawn_block_unit_deaths = count_unit_deaths_between(&before_spawn_block, &b_eval);
-        let projected_kills = kills_so_far
-            + enemy_phase_result.enemies_killed
-            + spawn_block_result.enemies_killed;
-        let projected_mission_kills = mission_kills_so_far
-            + enemy_phase_result.mission_kills
-            + spawn_block_result.mission_kills;
-        let projected_unit_deaths = unit_deaths_so_far
-            + enemy_phase_unit_deaths
-            + spawn_block_unit_deaths;
-        let raw = evaluate(
-            &b_eval, spawn_points, weights,
-            projected_kills, projected_mission_kills,
-            bumps_so_far, psion_before, building_threats,
-        ) + consumed_spawn_block_bonus(&b_eval, spawn_points, weights, spawn_block_result.spawns_blocked);
-        // Tier 2 soft-disable bias: penalize any candidate plan that
-        // relies on a weapon in the session's disabled_actions list.
-        // Subtracted at terminal evaluation so the search retains its
-        // normal comparisons between branches — we're biasing the
-        // objective, not pruning branches.
-        //
-        // Scale by `bld_mult` (same factor used for building scoring in
-        // `evaluate`) when in forced-use mode (Pass 2). At low grid the
-        // value of saving a building drops to bld_mult * building_alive
-        // (~6,000 at grid=0, bld_mult=0.6), and a flat 10,000 penalty
-        // would exceed it — flipping the choice back to pure-move and
-        // throwing the mission. Scaling preserves the documented
-        // invariant: "won't throw the mission for a single forced use."
-        // Pass 1 (`allow_disabled_weapons=false`) never reaches this
-        // path with non-zero penalty (disabled branches are pruned at
-        // enumeration), so the scaling is a no-op there.
-        let penalty_scale = if allow_disabled_weapons {
-            let eff_grid_eval = b_eval.grid_power as f64
-                + b_eval.enemy_grid_save_expected as f64
-                + b_eval.player_grid_save_expected as f64;
-            let grid_health_eval = eff_grid_eval / (b_eval.grid_power_max as f64).max(1.0);
-            (weights.bld_grid_floor + weights.bld_grid_scale * grid_health_eval).max(0.1)
-        } else {
-            1.0
+        let totals = crate::plan_evaluation::PlanTotals {
+            kills_so_far,
+            mission_kills_so_far,
+            unit_deaths_so_far,
+            bumps_so_far,
+            buildings_damaged_so_far,
+            nanobots_heal_so_far,
+            powered_blast_so_far,
+            reverse_thrusters_four_damage_so_far,
+            feed_the_flame_so_far,
+            boosted_so_far,
+            maximum_firepower_so_far,
+            arachnoid_spawns_so_far,
+            efficient_explosives_so_far,
+            working_together_so_far,
+            lets_walk_control_distance_so_far,
+            core_of_the_earth_so_far,
+            miner_inconvenience_mountain_damage_so_far,
+            stay_with_me_heal_so_far,
+            pods_collected_so_far,
+            soft_disable_penalty_so_far,
         };
-        let mission_action_bonus = mission_missiles_action_bonus(&b_eval, actions_so_far);
-        let nanobots_heal_bonus =
-            nanobots_heal_so_far as f64 * weights.viscera_nanobots_heal_bonus;
-        let powered_blast_bonus =
-            powered_blast_so_far as f64 * weights.powered_blast_bonus;
-        let reverse_thrusters_four_damage_bonus =
-            reverse_thrusters_four_damage_so_far as f64
-                * weights.reverse_thrusters_four_damage_bonus;
-        let feed_the_flame_bonus =
-            feed_the_flame_so_far as f64 * weights.feed_the_flame_bonus;
-        let boosted_bonus =
-            boosted_so_far as f64 * weights.boosted_bonus;
-        let maximum_firepower_bonus =
-            maximum_firepower_so_far as f64 * weights.maximum_firepower_bonus;
-        let arachnoid_spawn_bonus =
-            arachnoid_spawns_so_far as f64 * weights.arachnoid_spawn_bonus;
-        let efficient_explosives_bonus =
-            efficient_explosives_so_far as f64 * weights.efficient_explosives_bonus;
-        let working_together_bonus =
-            working_together_so_far as f64 * weights.working_together_bonus;
-        let lets_walk_control_distance_bonus =
-            lets_walk_control_distance_so_far as f64 * weights.lets_walk_control_distance_bonus;
-        let core_of_the_earth_bonus =
-            core_of_the_earth_so_far as f64 * weights.core_of_the_earth_bonus;
-        let miner_inconvenience_bonus =
-            miner_inconvenience_mountain_damage_so_far as f64
-                * weights.miner_inconvenience_mountain_damage_bonus;
-        let stay_with_me_heal_bonus =
-            stay_with_me_heal_so_far as f64 * weights.stay_with_me_heal_bonus;
-        let no_survivors_bonus = if projected_unit_deaths >= 7 {
-            projected_unit_deaths as f64 * weights.no_survivors_death_bonus
-        } else {
-            0.0
-        };
-        let pod_collected_penalty =
-            pods_collected_so_far as f64 * weights.pod_collected;
-        let score = raw
-            + mission_action_bonus
-            + nanobots_heal_bonus
-            + powered_blast_bonus
-            + reverse_thrusters_four_damage_bonus
-            + feed_the_flame_bonus
-            + boosted_bonus
-            + maximum_firepower_bonus
-            + arachnoid_spawn_bonus
-            + efficient_explosives_bonus
-            + working_together_bonus
-            + lets_walk_control_distance_bonus
-            + core_of_the_earth_bonus
-            + miner_inconvenience_bonus
-            + stay_with_me_heal_bonus
-            + no_survivors_bonus
-            + pod_collected_penalty
-            - soft_disable_penalty_so_far * penalty_scale;
-
+        let terminal = crate::plan_evaluation::evaluate_terminal(
+            board, actions_so_far, &totals, original_positions, spawn_points,
+            weights, weapons, psion_before, building_threats, allow_disabled_weapons,
+        );
+        let score = terminal.score;
+        let buildings_before_enemy = terminal.buildings_before_enemy;
 
         if score > *best_score {
             *best_score = score;
@@ -2511,7 +2455,7 @@ fn search_recursive(
     }
 }
 
-fn make_action(
+pub(crate) fn make_action(
     unit: &Unit,
     move_to: (u8, u8),
     weapon_id: WId,
@@ -2574,7 +2518,7 @@ fn permute(items: &mut Vec<usize>, start: usize, result: &mut Vec<Vec<usize>>) {
 
 // ── Pre-compute threats as bitsets ───────────────────────────────────────────
 
-fn precompute_threats(board: &Board) -> (u64, u64) {
+pub(crate) fn precompute_threats(board: &Board) -> (u64, u64) {
     let mut threat_tiles = 0u64;
     let mut building_threats = 0u64;
 
@@ -2597,7 +2541,7 @@ fn precompute_threats(board: &Board) -> (u64, u64) {
     (threat_tiles, building_threats)
 }
 
-fn count_buildings(board: &Board) -> i32 {
+pub(crate) fn count_buildings(board: &Board) -> i32 {
     let mut count = 0;
     for tile in &board.tiles {
         if tile.terrain == Terrain::Building && tile.building_hp > 0 {
@@ -2607,12 +2551,17 @@ fn count_buildings(board: &Board) -> i32 {
     count
 }
 
-fn player_plan_is_clean(
+pub(crate) fn player_plan_is_clean(
     initial_building_count: i32,
     buildings_before_enemy: i32,
     buildings_damaged: i32,
 ) -> bool {
     initial_building_count == buildings_before_enemy && buildings_damaged == 0
+}
+
+pub(crate) fn prefer_clean_score(raw: f64, clean: f64, weights: &EvalWeights) -> bool {
+    clean > f64::NEG_INFINITY
+        && raw - clean <= (raw.abs() * weights.building_preservation_threshold).max(500.0)
 }
 
 // ── Main solve entry point ───────────────────────────────────────────────────
@@ -2815,9 +2764,7 @@ pub fn solve_turn(
     // Two-stage filter: prefer a plan with no player-caused building loss or
     // HP damage when it is within the configured threshold of the raw best.
     if global_clean_score > f64::NEG_INFINITY && !best.actions.is_empty() {
-        let gap = best.score - global_clean_score;
-        let threshold = (best.score.abs() * weights.building_preservation_threshold).max(500.0);
-        if gap <= threshold {
+        if prefer_clean_score(best.score, global_clean_score, weights) {
             best.score = global_clean_score;
             best.actions = global_clean_actions;
         }

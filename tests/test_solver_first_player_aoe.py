@@ -43,7 +43,7 @@ def test_source_receipts_and_variant_model_definitions():
 @pytest.mark.parametrize("weapon", VARIANTS)
 @pytest.mark.parametrize("direction", DIRECTIONS)
 def test_splitshot_all_variants_rotations_saved_endpoint(weapon, direction):
-    assert itb_solver.simulator_version() == SIMULATOR_VERSION == 411
+    assert itb_solver.simulator_version() == SIMULATOR_VERSION >= 411
     board, plan, expected = splitshot_case(weapon, direction)
     _, replay = checked_result(itb_solver, board, plan)
     assert_splitshot_projection(replay, expected)

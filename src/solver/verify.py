@@ -1921,7 +1921,9 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v411: Split Shot's saved endpoint/ordered pushes and effective variants;
 # Artemis base/A source-legal building centers. The tracked v410 corpus is
 # archived as failure_db_snapshot_sim_v410.jsonl; original full fidelity is open.
-SIMULATOR_VERSION = 411
+# v412: Offline atomic Move/Use/Wait has explicit spent entitlements and Wait
+# finalization without landing. The tracked v411 corpus is archived separately.
+SIMULATOR_VERSION = 412
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

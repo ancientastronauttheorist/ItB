@@ -33,3 +33,8 @@ rust_solver/src/search_audit.rs text eol=lf
 recordings/failure_db_snapshot_sim_v410.jsonl -text
 scripts/solver_first_player_aoe.py text eol=lf
 tests/test_solver_first_player_aoe.py text eol=lf
+recordings/failure_db_snapshot_sim_v411.jsonl -text
+rust_solver/src/primitive.rs text eol=lf
+rust_solver/src/plan_evaluation.rs text eol=lf
+scripts/solver_first_primitive_search.py text eol=lf
+tests/test_solver_first_primitive_search.py text eol=lf

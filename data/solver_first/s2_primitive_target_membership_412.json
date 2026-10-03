@@ -1,0 +1,917 @@
+{
+  "schema_version": 1,
+  "tranche_simulator_version": 412,
+  "evidence_class": "original_native_query_in_supplied_world",
+  "analysis_kind": "normalized_primitive_target_membership_receipt",
+  "source_build": {
+    "platform": "Windows x86",
+    "build_id": "13725832",
+    "game_file": "Breach.exe",
+    "executable_size": 5530112,
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "image_base": "0x00400000"
+  },
+  "private_provenance": [
+    {
+      "file": "primitive_target_membership_01.json",
+      "raw_sha256": "f8365739569d85342cebb38eb1acdf19653d476eae247489018de6a9952ed457"
+    },
+    {
+      "file": "simple_reachable_probe_01.py",
+      "raw_sha256": "c05106c92b980470491318e2682b10dd415a8c41f5e05f396bddeececd7f38ef"
+    },
+    {
+      "file": "simple_reachable_run_01.json",
+      "raw_sha256": "e189b4890beaa52d26a3de799554eba7401d0557bfdd5439663ab8204351a91b"
+    },
+    {
+      "file": "simple_reachable_run_02.json",
+      "raw_sha256": "1f4fac759f7e4f976b3c316c41bad6db991c1c1491bbc3f35c53d1090d59577c"
+    }
+  ],
+  "source_pins": [
+    {
+      "domain": "repository",
+      "file": "src/observatory/solver_first_path_oracle.py",
+      "size": 25089,
+      "raw_sha256": "8e6e7ac3cf25cae8ab7552c9d7434f2ac7bd8e16b86eb512fb235fd80108716b",
+      "lf_sha256": "8e6e7ac3cf25cae8ab7552c9d7434f2ac7bd8e16b86eb512fb235fd80108716b"
+    },
+    {
+      "domain": "repository",
+      "file": "src/observatory/pe_anchor_map.py",
+      "size": 33731,
+      "raw_sha256": "61350bad1431f3a476fabd9be577fbf1a5e502b3708442f5b59a91fc48a9c71e",
+      "lf_sha256": "61350bad1431f3a476fabd9be577fbf1a5e502b3708442f5b59a91fc48a9c71e"
+    },
+    {
+      "domain": "repository",
+      "file": "src/observatory/path_boundaries.py",
+      "size": 27961,
+      "raw_sha256": "3720597c7a7c95ed82d7dbaf2f190a11f4065a8126c54a093b25be7c9e07dfbb",
+      "lf_sha256": "3720597c7a7c95ed82d7dbaf2f190a11f4065a8126c54a093b25be7c9e07dfbb"
+    },
+    {
+      "domain": "repository",
+      "file": "src/observatory/piston_setup_boundary.py",
+      "size": 71949,
+      "raw_sha256": "f747c82cc31311b00f4c5e9445623500026758d626b4f587a5720e16d3d32447",
+      "lf_sha256": "f747c82cc31311b00f4c5e9445623500026758d626b4f587a5720e16d3d32447"
+    },
+    {
+      "domain": "repository",
+      "file": "data/solver_first/s1_path_query_fixture.json",
+      "size": 9701,
+      "raw_sha256": "0bfe4ff93a26575ccf007cccb03805b5075d56f7341234bdb35775e89b388f7c",
+      "lf_sha256": "0bfe4ff93a26575ccf007cccb03805b5075d56f7341234bdb35775e89b388f7c"
+    },
+    {
+      "domain": "repository",
+      "file": "data/observatory/programs/windows_build_13725832_31fe35265598_program_facts.json",
+      "size": 27256853,
+      "raw_sha256": "6072263105aa587124a463b8d120462092939e777b091d0cd185ef814536bde2",
+      "lf_sha256": "6072263105aa587124a463b8d120462092939e777b091d0cd185ef814536bde2"
+    },
+    {
+      "domain": "repository",
+      "file": "data/observatory/inventories/windows_build_13725832_31fe35265598_full_decompile_baseline_20260830.json",
+      "size": 125641,
+      "raw_sha256": "b8ea7179f62607e4e51bfbcedf1f323dcf3ab3f65e8afa724cb173c9e4e80d9e",
+      "lf_sha256": "b8ea7179f62607e4e51bfbcedf1f323dcf3ab3f65e8afa724cb173c9e4e80d9e"
+    },
+    {
+      "domain": "game_installation",
+      "file": "scripts/global.lua",
+      "size": 17363,
+      "raw_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "lf_sha256": "64fd97f97c66644da03c123115f773582dfc918267cbe368ccf2c555903df459"
+    },
+    {
+      "domain": "game_installation",
+      "file": "scripts/weapons_base.lua",
+      "size": 21524,
+      "raw_sha256": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38",
+      "lf_sha256": "005cbdeaeef4b8edaf1583df49ecab3b62109d26a9fe3f247c6a503aca2231ed"
+    },
+    {
+      "domain": "game_installation",
+      "file": "scripts/weapons_prime.lua",
+      "size": 29808,
+      "raw_sha256": "ad82af253572fe7e86293592d0b670e5851e90842666062b919421e134173ac6",
+      "lf_sha256": "ef46a581f6203954abd8e6e61cad72f402313b23c02e966a883c31bde0660b97"
+    },
+    {
+      "domain": "game_installation",
+      "file": "scripts/weapons_brute.lua",
+      "size": 27212,
+      "raw_sha256": "e5989a06676ee04827401007a825c7719048268fb8ff2303bce921a32441b265",
+      "lf_sha256": "449a944ddeae34410338d9311d6879701d5012345118f6f7114e947f4feae2c4"
+    }
+  ],
+  "source_pins_checked_before_and_after": true,
+  "source_pins_unchanged": true,
+  "runtime_identity_before": {
+    "unicorn_version": "2.1.4",
+    "loaded_library_sha256": "010d85dce84b8f6ffaec3d5420f1b5f7768f859eb831be574c7da23e656ee8f1",
+    "binding_sha256": "b4de7d560790a587157b17edd71c83b4f2d2bade2447d1a5433c497468ac8aeb",
+    "unicorn_package_sha256": "0e8ac7115c755994a968fa865bd1b2f2075edea715c17e91d62af2cc52c13392",
+    "decoder_version": "5.0.7",
+    "decoder_binding_sha256": "94571d1314355e261aff0ddfc94985fe8761232ddff6874181fd21efa9fab47f",
+    "decoder_library_sha256": "76958e18380023a68fd1714fa2e01c594cc6db1955a07ad6937b66e66dc5d6c3",
+    "cpu_model": 19,
+    "instruction_limit": 2000000,
+    "wall_time_limit_us": 10000000
+  },
+  "runtime_identity_after": {
+    "unicorn_version": "2.1.4",
+    "loaded_library_sha256": "010d85dce84b8f6ffaec3d5420f1b5f7768f859eb831be574c7da23e656ee8f1",
+    "binding_sha256": "b4de7d560790a587157b17edd71c83b4f2d2bade2447d1a5433c497468ac8aeb",
+    "unicorn_package_sha256": "0e8ac7115c755994a968fa865bd1b2f2075edea715c17e91d62af2cc52c13392",
+    "decoder_version": "5.0.7",
+    "decoder_binding_sha256": "94571d1314355e261aff0ddfc94985fe8761232ddff6874181fd21efa9fab47f",
+    "decoder_library_sha256": "76958e18380023a68fd1714fa2e01c594cc6db1955a07ad6937b66e66dc5d6c3",
+    "cpu_model": 19,
+    "instruction_limit": 2000000,
+    "wall_time_limit_us": 10000000
+  },
+  "counts": {
+    "attempted": 4,
+    "attempted_denominator": "One environment acquisition rejection plus three original-query case attempts; the rejection executed zero original queries.",
+    "environment_acquisition_attempts": 2,
+    "environment_acquisition_rejections": 1,
+    "original_query_attempts": 3,
+    "original_queries_completed": 3,
+    "original_queries_admitted": 3,
+    "target_membership_matches": 3,
+    "target_membership_mismatches": 0,
+    "original_query_acquisition_failures": 0,
+    "provenance_failures": 0
+  },
+  "rejected_acquisition": {
+    "file": "simple_reachable_run_01.json",
+    "reason": "Existing emulator package absent from first interpreter import path",
+    "original_queries_executed": 0,
+    "admitted_queries": 0,
+    "retained": true
+  },
+  "abi": {
+    "wrapper_rva": "0x00174060",
+    "receiver": "ECX concrete Board address",
+    "arguments_after_return": [
+      "output_vector_address",
+      "point_x_DWORD",
+      "point_y_DWORD",
+      "PathSize_DWORD",
+      "CornersAllowed_low_byte"
+    ],
+    "wrapper_ret_cleanup": 20,
+    "core_rva": "0x000cfa40",
+    "core_arguments_after_return": [
+      "local_output_vector",
+      "range",
+      "corners",
+      "Board_pointer",
+      "point_x",
+      "point_y"
+    ],
+    "core_ret_cleanup": 24,
+    "argument_proof": "Wrapper loads EBP+0x10/0xc coordinates, zero-extends BYTE EBP+0x18, pushes receiver, flag, range EBP+0x14 and local output, calls core; copies local vector to EBP+8 output; EAX=output; RET0x14."
+  },
+  "binding": {
+    "name": "GetSimpleReachable",
+    "string_rva": "0x00438628",
+    "name_reference_rva": "0x0028783f",
+    "member_store_rva": "0x00279ddf",
+    "PATH_PROJECTILE_value": 3,
+    "PATH_PROJECTILE_value_registration_rva": "0x0027e1e2"
+  },
+  "native_windows": [
+    {
+      "entry_rva": "0x00174060",
+      "span_size": 137,
+      "span_sha256": "59259634c2a99a3bb9b3219c3d824488130abbf2d5a4ff7126ad8c7c26e8282a"
+    },
+    {
+      "entry_rva": "0x000cfa40",
+      "span_size": 1096,
+      "span_sha256": "fd5ad50aba168c7cd33a28aad5972dd61f5b422345675c818b4cfd5ec2e9e9fd"
+    },
+    {
+      "entry_rva": "0x001a0150",
+      "span_size": 312,
+      "span_sha256": "548085ece564eb40e21535d5cbd8eb55b6f3fe2c60c35400ecd9028537f081ee"
+    }
+  ],
+  "original_body_admission": [
+    {
+      "entry_rva": "0x00003030",
+      "body_size": 81,
+      "body_sha256": "4d2d793080eed2c8234ef3e4eaf3d64219e33a475b44fa51ca9faa182ca0479d",
+      "ranges": [
+        {
+          "start_rva": "0x00003030",
+          "size": 81
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00174180",
+      "body_size": 321,
+      "body_sha256": "e283c5dd59fcf995221823cc3b5af3de9db2889b026e10c1623be492374a416b",
+      "ranges": [
+        {
+          "size": 321,
+          "start_rva": "0x00174180"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x001742d0",
+      "body_size": 190,
+      "body_sha256": "a018d8395fcc60e14794c778029607fff585a4d4fb40524b26abafe53972fb31",
+      "ranges": [
+        {
+          "size": 190,
+          "start_rva": "0x001742d0"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00232f90",
+      "body_size": 314,
+      "body_sha256": "3cc91e8ef2be9950114b088f141a4087057bf7eee702aade83be716e1bccfa40",
+      "ranges": [
+        {
+          "size": 314,
+          "start_rva": "0x00232f90"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00174060",
+      "body_size": 137,
+      "body_sha256": "59259634c2a99a3bb9b3219c3d824488130abbf2d5a4ff7126ad8c7c26e8282a",
+      "ranges": [
+        {
+          "size": 137,
+          "start_rva": "0x00174060"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x000cfa40",
+      "body_size": 1091,
+      "body_sha256": "6e05f5d87e1f9cf5ac16eee5a9b249bf7e1e979d7e30ac35d9612c2fc4705689",
+      "ranges": [
+        {
+          "size": 331,
+          "start_rva": "0x000cfa40"
+        },
+        {
+          "size": 760,
+          "start_rva": "0x000cfb90"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00162210",
+      "body_size": 105,
+      "body_sha256": "79c9d45de63751a6f0ef12dbce1b3260a7da6b09e51ca7e716928ac83a58af2a",
+      "ranges": [
+        {
+          "size": 105,
+          "start_rva": "0x00162210"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00162280",
+      "body_size": 39,
+      "body_sha256": "ccc44e753f417cb103727661382ad7b18cd729f23a1bed12057027a3ef1506b1",
+      "ranges": [
+        {
+          "size": 39,
+          "start_rva": "0x00162280"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x001a0150",
+      "body_size": 312,
+      "body_sha256": "548085ece564eb40e21535d5cbd8eb55b6f3fe2c60c35400ecd9028537f081ee",
+      "ranges": [
+        {
+          "size": 312,
+          "start_rva": "0x001a0150"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0019ff40",
+      "body_size": 147,
+      "body_sha256": "1e3282851e31b74bfaba10d692ac4c31517d7416d47201c7e2eb5fdf36e4b1f1",
+      "ranges": [
+        {
+          "size": 147,
+          "start_rva": "0x0019ff40"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x000b5080",
+      "body_size": 114,
+      "body_sha256": "5fa5ce9bd76705a63de61684acbfb6b6147c4be3da1e4f86cb9bc991d3f748eb",
+      "ranges": [
+        {
+          "size": 114,
+          "start_rva": "0x000b5080"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x000b5950",
+      "body_size": 98,
+      "body_sha256": "bddf0229f4649c7259cc437bf05e85cb61dc65a30c76a0067ce8cdfbde0559a0",
+      "ranges": [
+        {
+          "size": 98,
+          "start_rva": "0x000b5950"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0008a800",
+      "body_size": 98,
+      "body_sha256": "5bfde8944bd4e3244ab1d1e44a5aa4428a2e9ecc05426b6ee1095dc3646f78d5",
+      "ranges": [
+        {
+          "size": 98,
+          "start_rva": "0x0008a800"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0008a920",
+      "body_size": 91,
+      "body_sha256": "e13e3be9b5e53d78d61aaaacc91b9c7c3183b77ef1f005bd2010bc1aa9b9830e",
+      "ranges": [
+        {
+          "size": 91,
+          "start_rva": "0x0008a920"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x003574db",
+      "body_size": 51,
+      "body_sha256": "452b4c981b0a2567c6f4fc35b20076deca45a6b3509707358212028d21db5bfa",
+      "ranges": [
+        {
+          "size": 51,
+          "start_rva": "0x003574db"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00379f52",
+      "body_size": 11,
+      "body_sha256": "831e215b24984219b6d6d7ce812127a420a48782704f0fef1630b1b8050cabbd",
+      "ranges": [
+        {
+          "size": 11,
+          "start_rva": "0x00379f52"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0038942b",
+      "body_size": 78,
+      "body_sha256": "d97ee587f29bfdaf154ca653059e883b67b56713a5d96643356a4edf6e3edde8",
+      "ranges": [
+        {
+          "size": 78,
+          "start_rva": "0x0038942b"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0008aba0",
+      "body_size": 43,
+      "body_sha256": "92494ea2dfd86d06ce373c9837f55d42e6c62746bd9c2c3c26d2a8af6abe938b",
+      "ranges": [
+        {
+          "size": 43,
+          "start_rva": "0x0008aba0"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00007800",
+      "body_size": 91,
+      "body_sha256": "2d09033991193eea352dab418355232650d3aeb45906f909b384e0b662cd1ef6",
+      "ranges": [
+        {
+          "size": 91,
+          "start_rva": "0x00007800"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0035785d",
+      "body_size": 5,
+      "body_sha256": "f45c1f23615da61aa6c903e18306f5628c975cfaf6027b37e45d2264c7ed477d",
+      "ranges": [
+        {
+          "size": 5,
+          "start_rva": "0x0035785d"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0036fb17",
+      "body_size": 5,
+      "body_sha256": "fafd106d4b0ce80368b3e080fb3be3b06582d8145fce2063305541cab5f65ea3",
+      "ranges": [
+        {
+          "size": 5,
+          "start_rva": "0x0036fb17"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x00389156",
+      "body_size": 58,
+      "body_sha256": "223079ea989dad987b5fdf47fc9c63d348f353dc2ab70257ae6dc53c62a9003c",
+      "ranges": [
+        {
+          "size": 58,
+          "start_rva": "0x00389156"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0009a8e0",
+      "body_size": 79,
+      "body_sha256": "4359ecaf051506bce97afe182b66c453ca8d13ac4091d72a810f9df43d14d2e0",
+      "ranges": [
+        {
+          "size": 79,
+          "start_rva": "0x0009a8e0"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0009ac40",
+      "body_size": 87,
+      "body_sha256": "29a0428ed018a85e4e0a76f283f10040cf9e084f49bee5706b58766b570cb9d1",
+      "ranges": [
+        {
+          "size": 87,
+          "start_rva": "0x0009ac40"
+        }
+      ]
+    },
+    {
+      "entry_rva": "0x0022cdd0",
+      "body_size": 11,
+      "body_sha256": "bd1262285282b7b6fc1f1c66cbbf850e219c0cb9a517da8f6e92e60471a0a6e1",
+      "ranges": [
+        {
+          "size": 11,
+          "start_rva": "0x0022cdd0"
+        }
+      ]
+    }
+  ],
+  "normalized_native_branch_claim": {
+    "profile": 3,
+    "profile_name": "PATH_PROJECTILE",
+    "corners": false,
+    "scan": "Four cardinal rays",
+    "traversal_callback": "Original Board vtable+0x14 ->0x00162210 ->original Tile0x001a0150",
+    "validity_callback": "Original Board vtable+0x08 ->0x00162280",
+    "blocker_rule": "In this mode, Building terrain1, Mountain terrain4, or a live pawn stop transit. Pawn team and building HP are not consulted by the examined branch.",
+    "publication_rule": "The first valid nontraversable endpoint is appended if it remains inside the range. No separate ordinary movement-stop filter rejects that endpoint.",
+    "observed_discriminant": "The original query returned all four adjacent representatives, including the Building-terrain coordinate, in both range1 and range8 blocker fixtures."
+  },
+  "world_assumptions": {
+    "extent": [
+      8,
+      8
+    ],
+    "origin": [
+      3,
+      3
+    ],
+    "range_cases": [
+      1,
+      8
+    ],
+    "corners_allowed": false,
+    "base": "All tiles Ground0; declared zero flags/cache; source-sized native Tile stride0x2bbc and terrain+0x2ae0 from pinned existing fixture.",
+    "blockers": [
+      {
+        "point": [
+          4,
+          3
+        ],
+        "terrain": "Building",
+        "terrain_id": 1
+      },
+      {
+        "point": [
+          3,
+          4
+        ],
+        "terrain": "Mountain",
+        "terrain_id": 4
+      },
+      {
+        "point": [
+          2,
+          3
+        ],
+        "pawn_team": 1,
+        "hp": 3
+      },
+      {
+        "point": [
+          3,
+          2
+        ],
+        "pawn_team": 6,
+        "hp": 3
+      }
+    ],
+    "origin_pawn": {
+      "point": [
+        3,
+        3
+      ],
+      "team": 1,
+      "hp": 3
+    },
+    "building_constant_source": "Pinned src/observatory/piston_setup_boundary.py candidate_predicate terrain_rejections assigns TERRAIN_BUILDING1; native traversal separately compares terrain1.",
+    "intact_building_scope": "HP offset/value not established here and not guessed. Building-terrain query fixture suffices because this native profile3 branch never reads HP. Do not call it an original intact-building state or full constructor proof.",
+    "callbacks": "Original Board+0x14 traverse0x162210 and+8 validity0x162280 via pinned original vtable; original Tile predicate and pawn IsDead; no callback replacement.",
+    "heap": "Only existing pinned HeapAlloc/HeapFree successful-boundary responses; original allocate/copy/free helpers otherwise execute. Unknown imports/callers fail closed.",
+    "directions": "Original initializer0x3030 runs for each fresh Machine; no handcrafted query output."
+  },
+  "cases": [
+    {
+      "id": "ground_adjacent_control",
+      "range": 1,
+      "corners_allowed": false,
+      "blocked_fixture": false,
+      "supplied_world_sha256": "e7b786f2944c0b037febeefeb045278d159c2a62a8e546722e36e4c4361e79cc",
+      "expected_targets_from_static_dataflow": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "actual_original_returned_targets": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "membership_match": true,
+      "output_vector_validated": true,
+      "stages": [
+        {
+          "label": "original_direction_initializer",
+          "entry_rva": "0x00003030",
+          "argument_words": [],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 17,
+          "trace_sha256": "97acfd5b169be50e31975ae6418416945e8847e70fa44bd8e2372e104ba1c219",
+          "import_counts": {},
+          "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        {
+          "label": "original_simple_reachable",
+          "entry_rva": "0x00174060",
+          "argument_words": [
+            268464128,
+            3,
+            3,
+            1,
+            0
+          ],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 2762,
+          "trace_sha256": "2635894da99510864ec0d9fe208c262c78196a2452dc2586285633ddffc38b5c",
+          "import_counts": {
+            "HeapAlloc": 5,
+            "HeapFree": 4
+          },
+          "imports_sha256": "c124981a24c31426fe69c30f8170e83aa134cc136999df4b228049a3ea0e24ee"
+        }
+      ]
+    },
+    {
+      "id": "four_blocker_adjacent",
+      "range": 1,
+      "corners_allowed": false,
+      "blocked_fixture": true,
+      "supplied_world_sha256": "6481ef748bf43e02ed6278a129bea68f6908209d160ed626009773fe6c4911a8",
+      "expected_targets_from_static_dataflow": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "actual_original_returned_targets": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "membership_match": true,
+      "output_vector_validated": true,
+      "stages": [
+        {
+          "label": "original_direction_initializer",
+          "entry_rva": "0x00003030",
+          "argument_words": [],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 17,
+          "trace_sha256": "97acfd5b169be50e31975ae6418416945e8847e70fa44bd8e2372e104ba1c219",
+          "import_counts": {},
+          "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        {
+          "label": "original_simple_reachable",
+          "entry_rva": "0x00174060",
+          "argument_words": [
+            268464128,
+            3,
+            3,
+            1,
+            0
+          ],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 1789,
+          "trace_sha256": "9d586599482cd86b3a70454b8becc87b71c8fd7e302ede12af79049c55f3e73a",
+          "import_counts": {
+            "HeapAlloc": 5,
+            "HeapFree": 4
+          },
+          "imports_sha256": "c124981a24c31426fe69c30f8170e83aa134cc136999df4b228049a3ea0e24ee"
+        }
+      ]
+    },
+    {
+      "id": "four_blocker_tank_board_bound",
+      "range": 8,
+      "corners_allowed": false,
+      "blocked_fixture": true,
+      "supplied_world_sha256": "6481ef748bf43e02ed6278a129bea68f6908209d160ed626009773fe6c4911a8",
+      "expected_targets_from_static_dataflow": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "actual_original_returned_targets": [
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "membership_match": true,
+      "output_vector_validated": true,
+      "stages": [
+        {
+          "label": "original_direction_initializer",
+          "entry_rva": "0x00003030",
+          "argument_words": [],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 17,
+          "trace_sha256": "97acfd5b169be50e31975ae6418416945e8847e70fa44bd8e2372e104ba1c219",
+          "import_counts": {},
+          "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+        },
+        {
+          "label": "original_simple_reachable",
+          "entry_rva": "0x00174060",
+          "argument_words": [
+            268464128,
+            3,
+            3,
+            8,
+            0
+          ],
+          "receiver_address_in_supplied_world": 268435456,
+          "original_return_observed": true,
+          "return_stack_cleanup_verified_by_harness": true,
+          "instruction_count": 1789,
+          "trace_sha256": "9d586599482cd86b3a70454b8becc87b71c8fd7e302ede12af79049c55f3e73a",
+          "import_counts": {
+            "HeapAlloc": 5,
+            "HeapFree": 4
+          },
+          "imports_sha256": "c124981a24c31426fe69c30f8170e83aa134cc136999df4b228049a3ea0e24ee"
+        }
+      ]
+    }
+  ],
+  "guard_summary": {
+    "unchanged_original_executable_instructions": true,
+    "text_readonly": true,
+    "instruction_boundaries_atlas_admitted": true,
+    "actual_original_return_and_stack_cleanup_required": true,
+    "finite_instruction_and_wall_time_budget": true,
+    "unknown_import_or_import_caller_rejected": true,
+    "heap_responses": "Only declared successful HeapAlloc/HeapFree boundary responses at pinned CRT call seams; no predicate/query result stubs.",
+    "output_validation": "Returned EAX output-object identity; live heap ownership; ordered begin/end/capacity; bounded vector size; distinct in-bounds points.",
+    "trace_detail": "Raw per-instruction address/size traces and import argument/result records remain in the hashed private receipt; public artifact retains hashes, counts, callback identities and original body pins."
+  },
+  "source_contract_scope": {
+    "original_lua_contract": [
+      {
+        "file": "global.lua",
+        "lines": [
+          251,
+          301,
+          331,
+          332
+        ],
+        "claim": "Skill defaults CornersAllowed=false and PathSize=INT_MAX; Skill:GetTargetArea forwards point, PathSize, CornersAllowed to Board:GetSimpleReachable."
+      },
+      {
+        "file": "weapons_prime.lua",
+        "lines": [
+          35,
+          64
+        ],
+        "claim": "Prime_Punchmech inherits Skill target getter, PathSize1. Effect can damage/push targets but does not independently prove target membership."
+      },
+      {
+        "file": "weapons_brute.lua",
+        "lines": [
+          45,
+          59
+        ],
+        "claim": "Brute_Tankmech inherits TankDefault target getter, default Phasefalse."
+      },
+      {
+        "file": "weapons_base.lua",
+        "lines": [
+          426,
+          453
+        ],
+        "claim": "TankDefault Phasefalse forwards same simple reachable getter; PathSize=INT_MAX. Range8 probe is equivalent for a center8x8 board cardinal scan only, not literal Lua PathSize argument."
+      },
+      {
+        "file": "global.lua",
+        "lines": [
+          219,
+          242
+        ],
+        "claim": "StandardTips.Ranged/Melee target Enemy; no explicit Building-target TipImage for these base weapons in inspected source."
+      }
+    ],
+    "tank_range_argument": "Shipped TankDefault PathSize is INT_MAX. The range8 probe is a bounded 8x8 cardinal-ray control; its equivalence for this immediate-blocker fixture is inferred from the static scan/range check, not a literal Lua argument or complete Tank input-space measurement.",
+    "building_hp": "No building HP offset or value was supplied or inferred. This is a Building-terrain fixture, not proof of an intact-building constructor/state. The examined query branch never reads building HP.",
+    "no_constructor_or_lua_dispatch_claim": true,
+    "no_complete_game_legality_or_effect_claim": true
+  },
+  "planner_filter_implication": {
+    "inspected_source": "rust_solver/src/solver.rs",
+    "inspected_raw_sha256": "e389a00e4affd6928f42ef570389b9e17797297a2e6f7665a57ba94215998cb9",
+    "inspected_lf_sha256": "e389a00e4affd6928f42ef570389b9e17797297a2e6f7665a57ba94215998cb9",
+    "pre_change_melee_filter": "The generic Melee branch excludes empty intact Building targets from its push-enabled fallback. Prime_Punchmech inherits the original Skill:GetTargetArea with PathSize1 and CornersAllowedfalse; its adjacent Building representative is included by the source-bound query.",
+    "pre_change_projectile_filter": "The generic nonphase Projectile branch rejects a direction when its first obstacle is a Building. Brute_Tankmech inherits nonphase TankDefault:GetTargetArea, which forwards to the original simple-reachable query; the immediate Building blocker is included.",
+    "supported_correction": "For the inspected base Punch and Tank contracts, building-saving sacrifice is a legal candidate to enumerate. Building damage preferences belong to explicit selection policy rather than a shared legality rejection.",
+    "generic_widening_limit": "WeaponType::Melee or Projectile is not itself proof of an original GetTargetArea contract. Overridden getters, Phase branches, ranged spear/other multi-square melee, special destination restrictions and mission weapons require their own inherited/getter membership evidence. This artifact does not establish their complete legal sets.",
+    "projectile_representative_limit": "Four neighboring direction representatives describe the current model encoding. The original Tank getter can publish additional coordinates along clear rays; direction representatives require separately justified effect equivalence and are not a complete original target-list count."
+  },
+  "ledger_promotions": 0,
+  "acceptance_gates": [
+    {
+      "gate": 1,
+      "name": "Transition and legal-action fidelity",
+      "status": "open"
+    },
+    {
+      "gate": 2,
+      "name": "State continuity",
+      "status": "open"
+    },
+    {
+      "gate": 3,
+      "name": "Independent differential corpus",
+      "status": "open"
+    },
+    {
+      "gate": 4,
+      "name": "Determinism and uncertainty",
+      "status": "open"
+    },
+    {
+      "gate": 5,
+      "name": "Search correctness",
+      "status": "open"
+    },
+    {
+      "gate": 6,
+      "name": "Regression sensitivity",
+      "status": "open"
+    },
+    {
+      "gate": 7,
+      "name": "Practical evaluation",
+      "status": "open"
+    }
+  ],
+  "claim_limits": [
+    "Three query cases in a declared reconstructed world, not a frozen held-out original-game tactical corpus.",
+    "Does not measure complete original-game legal actions, action readiness, ordered effects, full-turn continuity or RNG.",
+    "Does not certify search optimality, mission/campaign outcomes, latency or complete native recreation.",
+    "No function ledger level or membership is promoted."
+  ]
+}

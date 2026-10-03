@@ -14,6 +14,38 @@ pub mod turn_projection;
 pub mod beam;
 pub mod replay;
 pub mod native_rng;
+mod plan_evaluation;
+pub mod primitive;
+
+/// Offline atomic planner. Emits `steps`, never legacy live action batches.
+#[pyfunction]
+fn solve_primitives(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
+    py.allow_threads(|| {
+        let (board, spawns, _, weights, disabled, overlays) = serde_bridge::board_from_json(json_input)
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let pairs: Vec<_> = overlays.iter().map(|e| (e.wid,e.patch.clone())).collect();
+        let table = weapons::build_overlay_table(&pairs);
+        primitive::solve(&board,&spawns,&weights,disabled,
+            table.as_deref().unwrap_or(&weapons::WEAPONS),time_limit)
+            .map_err(pyo3::exceptions::PyValueError::new_err)
+    })
+}
+
+/// Readiness-checked prefix replay, with terminal score only after completion.
+#[pyfunction]
+fn replay_primitives(py: Python<'_>, json_input: &str, steps_json: &str) -> PyResult<String> {
+    py.allow_threads(|| {
+        let steps: Vec<primitive::Step> = serde_json::from_str(steps_json)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("steps parse: {e}")))?;
+        let (board, spawns, _, weights, disabled, overlays) = serde_bridge::board_from_json(json_input)
+            .map_err(pyo3::exceptions::PyValueError::new_err)?;
+        let pairs: Vec<_> = overlays.iter().map(|e| (e.wid,e.patch.clone())).collect();
+        let table = weapons::build_overlay_table(&pairs);
+        primitive::replay(&board,&steps,&spawns,&weights,disabled,
+            table.as_deref().unwrap_or(&weapons::WEAPONS))
+            .map_err(pyo3::exceptions::PyValueError::new_err)
+    })
+}
 
 /// Solve a turn given bridge JSON data.
 ///
@@ -2542,7 +2574,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // side hits, including all powered variants. Artemis retains source-legal
 // building-center targets, allowing a sacrifice that prevents two grid losses.
 // Original full execution fidelity remains unproved; synthetic proofs are separate.
-pub const SIMULATOR_VERSION: u32 = 411;
+// v412: Atomic Move/Use/Wait admission spends explicit per-UID entitlements;
+// Wait finalizes without a same-position landing. Legacy compound transitions
+// retain their existing behavior; original execution fidelity remains open.
+pub const SIMULATOR_VERSION: u32 = 412;
 
 #[pyfunction]
 fn simulator_version() -> u32 {
@@ -2636,6 +2671,8 @@ fn solve_beam(
 
 #[pymodule]
 fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(solve_primitives, m)?)?;
+    m.add_function(wrap_pyfunction!(replay_primitives, m)?)?;
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;

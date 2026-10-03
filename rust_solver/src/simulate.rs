@@ -7471,6 +7471,11 @@ pub fn simulate_action_with_target2(
     let mut result = simulate_move(board, mech_idx, move_to);
     let attack_result = simulate_attack_with_target2(board, mech_idx, weapon_id, target, target2, weapons);
     result.merge(&attack_result);
+    finalize_player_transition(board, &result);
+    result
+}
+
+pub(crate) fn finalize_player_transition(board: &mut Board, result: &ActionResult) {
     // Grid Defense: every grid point lost to PLAYER-phase building damage
     // (friendly fire, push-bump into building) had a `grid_defense_pct`/100
     // chance to resist. Mirrors enemy.rs::simulate_enemy_attacks line 1071,
@@ -7484,7 +7489,6 @@ pub fn simulate_action_with_target2(
     }
     clear_destroyed_digger_walls(board);
     apply_active_acid_storm(board);
-    result
 }
 
 #[cfg(test)]
