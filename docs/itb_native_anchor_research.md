@@ -619,9 +619,12 @@ min-heap ordered by `g + 1.01 * Manhattan`, then `x,y`; it accepts a blocked
 requested endpoint, retains only strict-g predecessor improvements, and
 returns both endpoints for distinct points.
 
-The ordinary low-profile branch compares pawn identifier rather than team, so
-any differently identified counted pawn blocks profiles 0/2 while the mover's
-own identifier is exempt. `PATH_MASSIVE=2` passes both Water traversal and stop
+The ordinary low-profile branch compares **team**, as corrected by the
+[S1 original-query comparison](solver_first_path_query_conformance.md).
+Same-team live occupants permit transit; different-team counted occupants block
+profiles 0/2. Every counted occupied stop is rejected separately. Historical
+sealed cost/order receipts retain their superseded identifier interpretation.
+`PATH_MASSIVE=2` passes both Water traversal and stop
 checks. Simulator v402 fixes the v401 ordinary-movement omission of Massive
 and Road Runner Water routes while preserving solver-side Chasm/Lava and ACID
 safety policy.
@@ -1127,7 +1130,8 @@ unless the desired claim is pristine-depot neutrality. Dynamic work now remains:
    API/profile/vtable map proves profile-4 traversal through live occupants plus
    separate occupied-stop rejection. The follow-up map resolves unit
    reachability costs, `(x,y)` result order, weighted GetPath priority and
-   endpoint reconstruction, identity-not-team occupancy, and Massive Water. A
+   endpoint reconstruction and Massive Water. Its identity-not-team occupancy
+   interpretation is superseded by the S1 team-field correction above. A
    third map proves mode-1 live-or-persistent-corpse occupancy and Road Runner's
    corpse transit/no-stop split.
    Simulator v401 implements Road Runner occupancy; v402 implements the proven

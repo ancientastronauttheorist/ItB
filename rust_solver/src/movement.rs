@@ -6,7 +6,8 @@ use crate::board::*;
 /// Get all tiles a unit can reach via BFS with move_speed steps.
 ///
 /// Returns Vec of (x, y) positions. Includes current position.
-/// Live units hard-block ordinary ground movement. Henry Kwan's native
+/// Same-team live units permit ordinary transit but never an occupied stop.
+/// Different-team units block ordinary ground movement. Henry Kwan's native
 /// PATH_ROADRUNNER profile may route through live units and persistent corpses
 /// but still cannot stop there. Retained dead non-corpse pawns do not occupy a
 /// tile for native path queries.
@@ -131,7 +132,9 @@ pub fn reachable_tiles_with_speed(board: &Board, unit_idx: usize, speed: u8) -> 
             // bodies do not block themselves.
             let occupied_by_other = board.unit_at(nx, ny)
                 .is_some_and(|blocker_idx| board.units[blocker_idx].uid != uid);
-            if occupied_by_other && !can_transit_live_units {
+            let occupied_by_different_team = board.unit_at(nx, ny)
+                .is_some_and(|blocker_idx| board.units[blocker_idx].team != unit.team);
+            if occupied_by_other && occupied_by_different_team && !can_transit_live_units {
                 continue;
             }
 
@@ -280,7 +283,9 @@ pub fn controlled_reachable_tiles_with_cost(
 
             let occupied_by_other = board.unit_at(nx, ny)
                 .is_some_and(|blocker_idx| board.units[blocker_idx].uid != uid);
-            if occupied_by_other && !can_transit_live_units {
+            let occupied_by_different_team = board.unit_at(nx, ny)
+                .is_some_and(|blocker_idx| board.units[blocker_idx].team != unit.team);
+            if occupied_by_other && occupied_by_different_team && !can_transit_live_units {
                 continue;
             }
 
@@ -718,7 +723,7 @@ mod tests {
     }
 
     #[test]
-    fn test_friendly_hard_blocks_ground_movement() {
+    fn test_friendly_permits_ground_transit_but_not_stop() {
         let (mut board, idx) = make_board_with_unit(0, 0, 3, false);
         // Place a friendly unit at (1, 0)
         let mut friendly = Unit::default();
@@ -730,13 +735,16 @@ mod tests {
         board.add_unit(friendly);
 
         let tiles = reachable_tiles(&board, idx);
-        // Friendly units block ground movement just like enemies.
+        // Native full profiles compare team, not pawn UID.
         assert!(!tiles.contains(&(1, 0)));
-        assert!(!tiles.contains(&(2, 0)));
+        assert!(tiles.contains(&(2, 0)));
+        let controlled = controlled_reachable_tiles_with_cost(&board, idx, 3);
+        assert!(!controlled.iter().any(|(pos, _)| *pos == (1, 0)));
+        assert!(controlled.contains(&((2, 0), 2)));
     }
 
     #[test]
-    fn test_friendly_objective_blocks_only_path_to_spawn() {
+    fn test_friendly_objective_permits_transit_to_spawn() {
         let (mut board, idx) = make_board_with_unit(4, 3, 3, false);
         let mut terraformer = Unit::default();
         terraformer.uid = 2;
@@ -749,7 +757,39 @@ mod tests {
 
         let tiles = reachable_tiles(&board, idx);
 
-        assert!(!tiles.contains(&(5, 4)));
+        assert!(!tiles.contains(&(5, 3)));
+        assert!(tiles.contains(&(5, 4)));
+    }
+
+    #[test]
+    fn test_original_massive_water_friendly_corridor() {
+        // Original Board:GetReachable, full player Massive profile 18,
+        // budget 2, returns F8 only through occupied same-team G8 Water.
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        for x in 0..8 { for y in 0..8 { board.tile_mut(x, y).terrain = Terrain::Mountain; } }
+        for y in 0..4 { board.tile_mut(0, y).terrain = Terrain::Ground; }
+        board.tile_mut(0, 1).terrain = Terrain::Water;
+        board.units[idx].flags |= UnitFlags::MASSIVE;
+        let ally = Unit { uid: 2, x: 0, y: 1, hp: 3, team: Team::Player, ..Default::default() };
+        board.add_unit(ally);
+        assert_eq!(reachable_tiles(&board, idx), vec![(0, 0), (0, 2)]);
+        assert_eq!(controlled_reachable_tiles_with_cost(&board, idx, 2), vec![((0, 0), 0), ((0, 2), 2)]);
+        assert_eq!(reachable_tiles_with_speed(&board, idx, 1), vec![(0, 0)]);
+        board.units[1].team = Team::Enemy;
+        assert_eq!(reachable_tiles(&board, idx), vec![(0, 0)]);
+        assert_eq!(controlled_reachable_tiles_with_cost(&board, idx, 2), vec![((0, 0), 0)]);
+    }
+
+    #[test]
+    fn test_controlled_enemy_uses_moving_team_for_transit() {
+        let (mut board, idx) = make_board_with_unit(0, 0, 2, false);
+        board.units[idx].team = Team::Enemy;
+        board.add_unit(Unit { uid: 2, x: 1, y: 0, hp: 3, team: Team::Enemy, ..Default::default() });
+        let reachable = controlled_reachable_tiles_with_cost(&board, idx, 2);
+        assert!(!reachable.iter().any(|(pos, _)| *pos == (1, 0)));
+        assert!(reachable.contains(&((2, 0), 2)));
+        board.units[1].team = Team::Player;
+        assert!(!controlled_reachable_tiles_with_cost(&board, idx, 2).iter().any(|(pos, _)| *pos == (2, 0)));
     }
 
     #[test]

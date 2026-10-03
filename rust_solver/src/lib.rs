@@ -2531,7 +2531,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 //   and no same-phase queued action. Source-defined movement, ranged identity,
 //   and Void Shocker immunity receive legacy-payload fallbacks. Pre-v385 corpus
 //   archived as failure_db_snapshot_sim_v384.jsonl.
-pub const SIMULATOR_VERSION: u32 = 408;
+// v409: Pinned original GetTeam/GetPathProf and occupied-corridor query execution
+// prove that ordinary ground/Massive transit compares team rather than UID.
+// Same-team live pawns permit transit; every occupied destination stays excluded.
+pub const SIMULATOR_VERSION: u32 = 409;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

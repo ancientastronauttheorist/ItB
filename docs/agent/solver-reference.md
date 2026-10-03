@@ -30,6 +30,13 @@ Focused Rust unit tests in this PyO3 crate must use `cargo test --no-default-fea
 so they link against Python instead of the extension-module defaults; otherwise
 macOS reports unresolved `_Py*` symbols before any simulator assertion runs.
 
+On Windows, run native Rust/Python/Unicorn validation in separate processes,
+one at a time. A tool result containing `session_id` means the process is still
+running: await its completion before starting the next native check, even when
+the shell calls were issued sequentially. For native Python checks, remove
+`PYTHONFAULTHANDLER` and use pytest `-p no:faulthandler`; the oracle CLI disables
+faulthandler inside its isolated process.
+
 If `cargo test` or `maturin build --release` appears idle while Rust is reading
 generated Cargo fingerprint files under `rust_solver/target/{debug,release}/.fingerprint`,
 stop the stuck build, remove only that generated `.fingerprint` directory for the
@@ -42,6 +49,16 @@ source revert. On macOS pyo3 test binaries may also need:
 The solver enforces these; use them when reviewing solver output or writing tests.
 
 **Terrain kills:** Water and Chasm kill non-flying ground units. Lava kills like water but sets flying units on Fire. Pushing enemies into these is a primary kill method.
+
+**Movement occupancy (v409):** Ordinary Ground/Massive movers can transit a live
+same-team pawn but cannot stop on it; different-team pawns block ordinary transit.
+Compare the moving pawn's team, including controlled enemies. Native packed path
+profiles use `(team << 4) | mode`, not pawn UID. The
+[bounded original-query evidence](../solver_first_path_query_conformance.md)
+checks player profiles16/18 and team1/6 blockers. Corpse/NonGrid/burrowed and
+multiple-occupant cases remain outside that new evidence domain. GetPath can
+construct a route to a blocked endpoint; use GetReachable for ordinary legal
+destinations and keep Wait/no-op separate from occupied-origin publication.
 
 **Push:** 1 tile in a direction. If blocked by unit/mountain/edge, the pushed unit takes 1 bump damage instead. If blocked by a building, *both* pushed unit and building take 1 bump. Chain pushing (A pushed into B) doesn't move B — both take bump. Push/bump damage ignores Armor and ACID.
 

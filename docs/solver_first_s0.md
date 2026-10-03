@@ -6,6 +6,11 @@ evidence, freezes a provisional offline information contract, and connects a
 native path-rule inference to the current Rust replay interface. S1 through
 S4 and the seven acceptance gates remain open.
 
+The later [S1 query comparison](solver_first_path_query_conformance.md) supplies
+bounded original vectors, corrects historical team-prefix labels, and advances
+the simulator to v409. The v408 S0 report below remains a historical synthetic
+checkpoint with its own pinned implementation.
+
 ## Build, solver and information mode
 
 - Original executable: Windows build `13725832`, depot

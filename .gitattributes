@@ -19,3 +19,5 @@ src/native/observatory_rng_seed.c -text whitespace=cr-at-eol
 # Solver-first evidence reports pin raw JSON and the evaluation entry point.
 data/solver_first/*.json -text whitespace=cr-at-eol
 scripts/solver_first_s0.py text eol=lf
+scripts/solver_first_path_oracle.py text eol=lf
+src/observatory/solver_first_path_oracle.py text eol=lf

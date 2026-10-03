@@ -1,0 +1,395 @@
+{
+  "events": [
+    "illegal_move:0:2:out_of_range"
+  ],
+  "evidence_class": "rust_baseline_replay_of_bounded_original_query_mismatch",
+  "extension_sha256": "33dc9aedb7a2a3a5bfdb9b412d7eed8d84a7d7b72d4592237ceb84a65c98b9c4",
+  "observation": {
+    "grid_power": 7,
+    "grid_power_max": 7,
+    "spawning_tiles": [],
+    "tiles": [
+      {
+        "terrain": "ground",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "terrain": "water",
+        "x": 0,
+        "y": 1
+      },
+      {
+        "terrain": "ground",
+        "x": 0,
+        "y": 2
+      },
+      {
+        "terrain": "ground",
+        "x": 0,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 0,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 0,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 0,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 0,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 1,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 2,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 3,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 4,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 5,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 6,
+        "y": 7
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 0
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 1
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 2
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 3
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 4
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 5
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 6
+      },
+      {
+        "terrain": "mountain",
+        "x": 7,
+        "y": 7
+      }
+    ],
+    "total_turns": 4,
+    "turn": 1,
+    "units": [
+      {
+        "active": true,
+        "can_move": true,
+        "flying": false,
+        "hp": 3,
+        "massive": true,
+        "max_hp": 3,
+        "mech": true,
+        "move": 2,
+        "team": 1,
+        "type": "CombatMech",
+        "uid": 0,
+        "weapons": [],
+        "x": 0,
+        "y": 0
+      },
+      {
+        "active": false,
+        "flying": false,
+        "hp": 3,
+        "massive": true,
+        "max_hp": 3,
+        "mech": true,
+        "team": 1,
+        "type": "CombatMech",
+        "uid": 1,
+        "weapons": [],
+        "x": 0,
+        "y": 1
+      }
+    ]
+  },
+  "original_query_distinct_destinations": [
+    [
+      0,
+      2
+    ]
+  ],
+  "original_query_evidence": "s1_path_query_report.json case massive_friendly_water",
+  "plan": [
+    {
+      "mech_uid": 0,
+      "move_to": [
+        0,
+        2
+      ],
+      "target": [
+        0,
+        2
+      ],
+      "weapon_id": "None"
+    }
+  ],
+  "post_move_position": [
+    0,
+    0
+  ],
+  "simulator_version": 408,
+  "solver_commit": "9e5f849ac9e6f5aad04cc721c33be06e89688a6f"
+}

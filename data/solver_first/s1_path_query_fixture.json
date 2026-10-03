@@ -1,0 +1,220 @@
+{
+  "evidence_class": "original_static_body_extraction_and_manual_dataflow",
+  "native_execution": false,
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "image_base": "0x00400000",
+  "abi": {
+    "common": "ECX is the concrete Board/GridSearchable address. Stack arrays below start immediately after the return address. Point is two signed DWORD coordinates. Output is a separate three-DWORD begin/end/capacity header.",
+    "board_get_reachable": {
+      "entry_rva": "0x00174180",
+      "arguments": [
+        "output",
+        "start_x",
+        "start_y",
+        "budget",
+        "full_profile"
+      ],
+      "ret_cleanup": 20
+    },
+    "reachable_core": {
+      "entry_rva": "0x000ce7e0",
+      "arguments": [
+        "output",
+        "budget",
+        "full_profile",
+        "start_x",
+        "start_y"
+      ],
+      "ret_cleanup": 20
+    },
+    "reachable_search": {
+      "entry_rva": "0x000cec40",
+      "arguments": [
+        "full_profile",
+        "budget",
+        "GridSearchable_address",
+        "start_x",
+        "start_y"
+      ],
+      "ret_cleanup": 20
+    },
+    "board_get_path": {
+      "entry_rva": "0x001742d0",
+      "arguments": [
+        "output",
+        "start_x",
+        "start_y",
+        "end_x",
+        "end_y",
+        "full_profile"
+      ],
+      "ret_cleanup": 24
+    },
+    "path_core": {
+      "entry_rva": "0x000cf410",
+      "arguments": [
+        "output",
+        "full_profile",
+        "start_x",
+        "start_y",
+        "end_x",
+        "end_y"
+      ],
+      "ret_cleanup": 24
+    }
+  },
+  "fresh_board": {
+    "constructor_source_rva": "0x0015f150",
+    "board_vtable_va": "0x0082e2fc",
+    "embedded_path_manager_offset": "+0x0c",
+    "embedded_path_manager_vtable_va": "0x0082e258",
+    "embedded_slot_0x4c_target_rva": "0x0016fd70",
+    "embedded_slot_0x50_target_rva": "0x0016fd50",
+    "cache_head_pointer_offset": "+0x04",
+    "cache_count_offset": "+0x08",
+    "fresh_cache_count": 0,
+    "fresh_cache_head_size": 56,
+    "fresh_cache_head_constructor_rva": "0x000d1570",
+    "fresh_cache_head_fields": {
+      "+0x00": "head self pointer",
+      "+0x04": "head self pointer",
+      "+0x08": "head self pointer",
+      "+0x0c": "WORD 0x0101, color and nil bytes"
+    },
+    "extent_x_offset": "+0x48",
+    "extent_y_offset": "+0x4c",
+    "extent": [
+      8,
+      8
+    ],
+    "columns_begin_offset": "+0x50",
+    "columns_end_offset": "+0x54",
+    "columns_capacity_offset": "+0x58",
+    "column_header_stride": 12,
+    "tile_stride": "0x2bbc",
+    "tile_address_formula": "DWORD(DWORD(Board+0x50)+12*x)+0x2bbc*y",
+    "invalid_tile_fallback_offset": "+0x5c",
+    "minimum_board_mapped_span": "At least through Board+0x2c18 to cover the fallback tile; broader state is not asserted initialized by this packet."
+  },
+  "tile_world_premises": {
+    "terrain_offset": "+0x2ae0",
+    "terrain_ids": {
+      "Ground": 0,
+      "Water": 3,
+      "Mountain": 4
+    },
+    "terrain_layout": "H8=(0,0), F8=(0,2), E8=(0,3) are Ground; G8=(0,1) is Water; every other tile is Mountain.",
+    "directional_walls": {
+      "offset": "+0x2ac4",
+      "width": 4,
+      "value": "four zero bytes"
+    },
+    "water_auxiliary_gate": {
+      "+0x23ac": "BYTE zero",
+      "+0x23cc": "DWORD zero"
+    },
+    "occupancy_vector_offsets": {
+      "begin": "+0xa0",
+      "end": "+0xa4",
+      "capacity": "+0xa8"
+    },
+    "occupancy_vector_entry_stride": 4,
+    "H8_occupancy": "A separate mapped one-entry pointer vector naming the mover. begin/end/capacity are P/P+4/P+4.",
+    "other_occupancy": "All-zero empty vector triples.",
+    "unmentioned_tile_storage": "Mapped zeroed fixture storage, explicitly supplied world premise rather than a full original tile-constructor claim."
+  },
+  "mover_world_premises": {
+    "common_pawn_vtable_va": "0x0082e320",
+    "common_pawn_identity_source": "data/observatory/native/windows_build_13725832_31fe35265598_specialized_enemy_death_boundary.json",
+    "IsDead_vtable_slot": "+0x10",
+    "IsDead_target_rva": "0x0022cdd0",
+    "IsDead_body_size": 11,
+    "IsDead_body_sha256": "bd1262285282b7b6fc1f1c66cbbf850e219c0cb9a517da8f6e92e60471a0a6e1",
+    "IsDead_behavior": "Signed DWORD Pawn+0x8a8 <= zero.",
+    "fields": {
+      "+0x00": "common Pawn vtable pointer",
+      "+0x8a8": "DWORD 3, live",
+      "+0xb0": "DWORD 1, the team returned by registered GetTeam",
+      "+0xa4": "DWORD zero, empty property container count/size gate at Pawn+0x94+0x10",
+      "+0x8ec/+0x8f0": "DWORD coordinates 0/0 for mover; blocker uses 0/1"
+    },
+    "full_profile": 18,
+    "profile_interpretation": "(team 1 << 4) | PATH_MASSIVE 2 = 18; Ground uses 16. Low-profile and blocker-team changes are declared controls; no definition loading or GetPathProf execution is claimed.",
+    "non_grid_property_path": "Native helper0x23e140 builds the literal property query and calls0x493b0 on Pawn+0x94. Empty container gate at+0x10 follows its false return path without property lookup callbacks.",
+    "GetTeam_target_rva": "0x0023d850",
+    "GetTeam_body_sha256": "a33ed4c54f724b1cdd526b3c3e8bfc670f9881db0df0a549f9dd82f82745c8cf"
+  },
+  "directions": {
+    "initializer_entry_rva": "0x00003030",
+    "initializer_size": 81,
+    "initializer_sha256": "4d2d793080eed2c8234ef3e4eaf3d64219e33a475b44fa51ca9faa182ca0479d",
+    "runtime_first_pair_va": "0x008d57b4",
+    "pairs": [
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        0
+      ]
+    ],
+    "method": "Execute the original call-free initializer against pinned original .rdata inputs; do not leave direction BSS zero or supply model-generated query results."
+  },
+  "callbacks": {
+    "GridSearchable_vtable_rva": "0x0042e2fc",
+    "slots": {
+      "+0x04": "0x0015eb20 extent(out), RET4",
+      "+0x08": "0x00162280 valid(x,y), RET8",
+      "+0x0c": "0x0015ff40 blocked(x,y,profile), RET12",
+      "+0x10": "0x00174440 wall(x,y,direction,profile), RET16",
+      "+0x14": "0x00162210 traverse(x,y,profile), RET12",
+      "+0x18": "0x001621b0 destination_cost(x,y,profile), RET12",
+      "+0x1c": "0x00162190 source_cost(x,y,profile), RET12"
+    },
+    "method": "Execute original callbacks and original tile predicates continuously. World records are supplied premises, not expected outputs."
+  },
+  "path_route_builder_scope": {
+    "directional_wall_call_rva": "0x000cf63c",
+    "directional_wall_rejection_branch_rva": "0x000cf640",
+    "can_traverse_call_rva": "0x000cf652",
+    "can_traverse_success_branch_rva": "0x000cf656",
+    "rejected_neighbor_endpoint_x_comparison_rva": "0x000cf658",
+    "rejected_neighbor_endpoint_y_comparison_rva": "0x000cf661",
+    "admission_join_rva": "0x000cf66a",
+    "meaning": "Directional-wall rejection still rejects the edge. After the native traversal predicate returns false, a neighbor is nevertheless admitted when both coordinates equal the requested endpoint. GetPath is a route constructor, not an ordinary movement-destination legality query: the wrapper does not call IsBlocked, the core does not perform the GetReachable stop filter, and no movement budget is supplied.",
+    "ground_Water_endpoint": "Low mode0/full profile16 rejects Water in can_traverse, but GetPath to Water G8 admits it as the endpoint and can return H8/G8. That does not establish a legal ground-pawn move or legal stop on Water. Ground-path-to-F8-through-intermediate-Water is a distinct negative control."
+  },
+  "external_runtime_boundary": {
+    "required": "Original PE data/code at preferred base; original direction initializer; FS:[0] registration scaffolding; zero-filled mapped world; finite separate successful HeapAlloc/HeapFree responses at pinned CRT caller seams. No original-game DLL or process is executed.",
+    "failure_policy": "Unknown imports or unsupported original helper conditions fail closed. Allocation failure, exception delivery, arbitrary stale caches and malformed ownership are excluded.",
+    "GetPath_additional_static_initialization": "Core0xcf410 creates four local hash-style maps through0xd1620, which reads original global table at VA0x821520..0x8215b8. These file-backed source bytes must remain mapped; this packet does not stub those constructors."
+  },
+  "known_scope": "Reconstructed query fixture only; original Board/Pawn constructors and GetPathProf are not executed. Runtime vectors and Rust comparisons are reported separately.",
+  "next_runtime_steps_for_primary": [],
+  "schema_version": 1,
+  "historical_label_correction": {
+    "superseded_sources": [
+      "src/observatory/path_boundaries.py",
+      "src/observatory/path_cost_ordering.py",
+      "data/observatory/native/windows_build_13725832_31fe35265598_path_boundaries.json",
+      "data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json"
+    ],
+    "meaning": "The shifted prefix and counted-occupant comparison use team, not UID. Historical sealed byte receipts are retained; their pawn-ID/no-team prose is superseded.",
+    "GetTeam_registration_rva": "0x0027c1c1",
+    "GetTeam_registration_size": 34,
+    "GetTeam_registration_sha256": "ef6daf844d8d0df8bd6c920735f77996c14931c67e272b4e742ce32ea34a4de5",
+    "GetPathProf_rva": "0x00232f90",
+    "GetPathProf_size": 314,
+    "GetPathProf_sha256": "3cc91e8ef2be9950114b088f141a4087057bf7eee702aade83be716e1bccfa40"
+  },
+  "declared_variants": "G8 Ground instead of Water; G8 one live player-team or enemy-team blocker; budget 1/2; unoccupied origin control; Ground/Massive profiles16/18. Every variant is independently fresh, single occupant per tile; no corpses/NonGrid/directional walls/status/items."
+}

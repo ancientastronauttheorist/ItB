@@ -2,6 +2,11 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+Follow-up: the [bounded original query comparison](solver_first_path_query_conformance.md)
+now supplies corridor vectors and corrects the historical profile-prefix label
+to **team**, not pawn identifier. The source-only checkpoint below is retained
+as acquisition history; its unresolved-query statements describe that checkpoint.
+
 This source-only checkpoint identifies the smallest original-evidence acquisition
 needed after [S0](solver_first_s0.md). It adds no original runtime vectors,
 transition-fidelity admission, simulator change, search certificate, or ledger
@@ -26,7 +31,7 @@ respectively; E8 stays Ground so acquisition does not silently change the fixtur
 The mover occupies H8; no other pawn, corpse, directional wall,
 item, or status is introduced. Freeze the mover's public definition, identifier,
 effective profile, movement budget, and current occupancy when acquiring evidence.
-The original effective profile includes the pawn identifier as well as low
+The original effective profile includes the pawn team as well as low
 profile `PATH_MASSIVE=2`; do not substitute a bare low nibble without declaring
 that supplied boundary.
 
