@@ -2,6 +2,14 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+Later October 3 work separately records the
+[bounded original stored-readiness setter](solver_first_readiness_leaf.md),
+[archive acquisition audit](solver_first_archive_acquisition_audit.md), and
+[Python required-empty regression repair](solver_first_regression_admission.md).
+The setter removes one byte-mutation uncertainty; it supplies no complete Wait,
+original action/next-state continuity, or S1 admission. The route gate `+0x91e`
+is now identified as Pushable, while `+0x99e` stores `bMoved`.
+
 Follow-up: the [bounded original query comparison](solver_first_path_query_conformance.md)
 now supplies corridor vectors and corrects the historical profile-prefix label
 to **team**, not pawn identifier. The source-only checkpoint below is retained

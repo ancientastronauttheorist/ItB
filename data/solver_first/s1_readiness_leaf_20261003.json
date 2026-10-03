@@ -1,0 +1,379 @@
+{
+  "admitted": 6,
+  "atlas_canonical_sha256": "631968cedac0e8ca8e2521a540fbedd23f2c0c267ef2b3e86a931fdda484a803",
+  "attempted": 6,
+  "baseline_commit": "96e497206def812904e6a4370a672c1c43c695e9",
+  "cases": [
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x10c0",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x9e4",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "write",
+          "offset": "0x91c",
+          "value": 0,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "0019357910530ae6b379d7fa990e127d4d252c083cfeb6add089f4f602fe789a",
+      "after_world_storage_sha256": "feb52bafe60fb811adb3b1de9355e2708ac97822338bb1527de3693951046a3d",
+      "before_receiver_sha256": "9f485febadbb72b045f4fbd063fa8689a7895c4ea8ce4a9a06dee08292d9cf6b",
+      "before_world_storage_sha256": "364a163a7380260d5ed1a4a36bd0d9f8ebbb74ff6ec3356d50300187a3b7fde2",
+      "changed_receiver_offsets": [
+        "0x91c"
+      ],
+      "original_return": {
+        "argument_words": [
+          0
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 17,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "02df5e4d6ab4eb2d95a838c2d9241291e643d54749a398efaf70c3b7d20de1b6"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 0,
+        "gate": 1,
+        "id": "disable_mech_storage",
+        "initial": 1,
+        "requested": 0
+      },
+      "stored_active_after": 0
+    },
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 0,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x10c0",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x9e4",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "write",
+          "offset": "0x91c",
+          "value": 1,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "9f485febadbb72b045f4fbd063fa8689a7895c4ea8ce4a9a06dee08292d9cf6b",
+      "after_world_storage_sha256": "364a163a7380260d5ed1a4a36bd0d9f8ebbb74ff6ec3356d50300187a3b7fde2",
+      "before_receiver_sha256": "0019357910530ae6b379d7fa990e127d4d252c083cfeb6add089f4f602fe789a",
+      "before_world_storage_sha256": "feb52bafe60fb811adb3b1de9355e2708ac97822338bb1527de3693951046a3d",
+      "changed_receiver_offsets": [
+        "0x91c"
+      ],
+      "original_return": {
+        "argument_words": [
+          1
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 17,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "02df5e4d6ab4eb2d95a838c2d9241291e643d54749a398efaf70c3b7d20de1b6"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 1,
+        "gate": 1,
+        "id": "enable_mech_storage",
+        "initial": 0,
+        "requested": 1
+      },
+      "stored_active_after": 1
+    },
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 0,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "0019357910530ae6b379d7fa990e127d4d252c083cfeb6add089f4f602fe789a",
+      "after_world_storage_sha256": "feb52bafe60fb811adb3b1de9355e2708ac97822338bb1527de3693951046a3d",
+      "before_receiver_sha256": "0019357910530ae6b379d7fa990e127d4d252c083cfeb6add089f4f602fe789a",
+      "before_world_storage_sha256": "feb52bafe60fb811adb3b1de9355e2708ac97822338bb1527de3693951046a3d",
+      "changed_receiver_offsets": [],
+      "original_return": {
+        "argument_words": [
+          0
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 12,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "2bdb254dc364ceb7dde8aea0516f78c494d823e6e9d88b242478bf01ea594b02"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 0,
+        "gate": 1,
+        "id": "already_disabled",
+        "initial": 0,
+        "requested": 0
+      },
+      "stored_active_after": 0
+    },
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 1,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "9f485febadbb72b045f4fbd063fa8689a7895c4ea8ce4a9a06dee08292d9cf6b",
+      "after_world_storage_sha256": "364a163a7380260d5ed1a4a36bd0d9f8ebbb74ff6ec3356d50300187a3b7fde2",
+      "before_receiver_sha256": "9f485febadbb72b045f4fbd063fa8689a7895c4ea8ce4a9a06dee08292d9cf6b",
+      "before_world_storage_sha256": "364a163a7380260d5ed1a4a36bd0d9f8ebbb74ff6ec3356d50300187a3b7fde2",
+      "changed_receiver_offsets": [],
+      "original_return": {
+        "argument_words": [
+          1
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 12,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "2bdb254dc364ceb7dde8aea0516f78c494d823e6e9d88b242478bf01ea594b02"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 1,
+        "gate": 1,
+        "id": "already_enabled",
+        "initial": 1,
+        "requested": 1
+      },
+      "stored_active_after": 1
+    },
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 1,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x10c0",
+          "value": 0,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "f7ad2a683c79816f7cb2b70abd9cc90ea9efc7d26d534d3bf9243ac8963c4cbb",
+      "after_world_storage_sha256": "9b3f43f146c2205e31a55b44f0e393d45a7457f2d9fa14a82af2b6a56fdaac0b",
+      "before_receiver_sha256": "f7ad2a683c79816f7cb2b70abd9cc90ea9efc7d26d534d3bf9243ac8963c4cbb",
+      "before_world_storage_sha256": "9b3f43f146c2205e31a55b44f0e393d45a7457f2d9fa14a82af2b6a56fdaac0b",
+      "changed_receiver_offsets": [],
+      "original_return": {
+        "argument_words": [
+          0
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 14,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "8da056536730292919ae8a158386ecf1b58d2143cd34a664b305791a8061c770"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 1,
+        "gate": 0,
+        "id": "gate_zero_disable",
+        "initial": 1,
+        "requested": 0
+      },
+      "stored_active_after": 1
+    },
+    {
+      "accesses": [
+        {
+          "kind": "read",
+          "offset": "0x91c",
+          "value": 0,
+          "width": 1
+        },
+        {
+          "kind": "read",
+          "offset": "0x10c0",
+          "value": 0,
+          "width": 1
+        }
+      ],
+      "admitted": true,
+      "after_receiver_sha256": "c23253bd3240a9418b5bec1937078c2456a2884e274a755bf45bd7438dad48b9",
+      "after_world_storage_sha256": "267c47e4b51147ace2600e3a1105e1a715565ebff55760e9144a76872ba5d7ff",
+      "before_receiver_sha256": "c23253bd3240a9418b5bec1937078c2456a2884e274a755bf45bd7438dad48b9",
+      "before_world_storage_sha256": "267c47e4b51147ace2600e3a1105e1a715565ebff55760e9144a76872ba5d7ff",
+      "changed_receiver_offsets": [],
+      "original_return": {
+        "argument_words": [
+          1
+        ],
+        "callee_saved_registers_preserved": true,
+        "entry_rva": "0x002375f0",
+        "helper_calls": 0,
+        "import_counts": {},
+        "imports_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "instruction_count": 14,
+        "receiver": "supplied receiver storage",
+        "return_value": "void; EAX/AL not interpreted as success",
+        "returned": true,
+        "stack_cleanup_bytes": 4,
+        "trace_sha256": "8da056536730292919ae8a158386ecf1b58d2143cd34a664b305791a8061c770"
+      },
+      "passed": true,
+      "recipe": {
+        "expected": 0,
+        "gate": 0,
+        "id": "gate_zero_enable",
+        "initial": 0,
+        "requested": 1
+      },
+      "stored_active_after": 0
+    }
+  ],
+  "corpus_version": "s1-readiness-setter-storage-development-v1",
+  "evidence_class": "bounded_original_body_execution_with_supplied_receiver_storage",
+  "excluded": 0,
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "failed": 0,
+  "failures": [],
+  "full_turn_original_comparisons": 0,
+  "held_out_evaluation": "not_evaluated",
+  "information_mode": "offline_validation_oracle_only_no_planner_input",
+  "ledger_promotions": 0,
+  "legal_action_admissions": 0,
+  "mismatches": [],
+  "objective": "stored_active_byte_and_unchanged_receiver_projection",
+  "original_body": {
+    "body_sha256": "247eccc6d4587cf6101b169dfd98bc1ea9d20582a8fb27330ae9c6be3f336554",
+    "body_size": 83,
+    "entry_rva": "0x002375f0",
+    "ranges": [
+      {
+        "size": 83,
+        "start_rva": "0x002375f0"
+      }
+    ]
+  },
+  "original_completed_action_transitions": 0,
+  "original_game_observations": 0,
+  "passed": 6,
+  "runtime": {
+    "binding_sha256": "b4de7d560790a587157b17edd71c83b4f2d2bade2447d1a5433c497468ac8aeb",
+    "cpu_model": 19,
+    "decoder_binding_sha256": "94571d1314355e261aff0ddfc94985fe8761232ddff6874181fd21efa9fab47f",
+    "decoder_library_sha256": "76958e18380023a68fd1714fa2e01c594cc6db1955a07ad6937b66e66dc5d6c3",
+    "decoder_version": "5.0.7",
+    "instruction_limit": 100,
+    "loaded_library_sha256": "010d85dce84b8f6ffaec3d5420f1b5f7768f859eb831be574c7da23e656ee8f1",
+    "unicorn_package_sha256": "0e8ac7115c755994a968fa865bd1b2f2075edea715c17e91d62af2cc52c13392",
+    "unicorn_version": "2.1.4",
+    "wall_time_limit_us": 10000000
+  },
+  "schema_version": 1,
+  "scope_exclusions": [
+    "complete Pawn/Board construction",
+    "original IsActive getter",
+    "nonmech helper branch",
+    "original Wait UI and callbacks",
+    "movement/weapon consumption",
+    "turn reset",
+    "enemy/environment resolution",
+    "full tactical continuity",
+    "gameplay content/overlay provenance",
+    "held-out original transitions"
+  ],
+  "search_quality": "not_evaluated",
+  "solver_facing_question": "Does the original SetActive(false) mech-storage branch change only the stored active byte?",
+  "source_review_packet_sha256": "5356d082377c89271a046f3b56b38fa69bea3b7474922e2942ee5029b12e51ac",
+  "source_sha256": {
+    "scripts/solver_first_readiness_leaf.py": "ab3789a33fb161c9e18b00c5f15e1468e7ed4f51716cca8a7d3a8d0d1f29b21a",
+    "src/observatory/pe_anchor_map.py": "61350bad1431f3a476fabd9be577fbf1a5e502b3708442f5b59a91fc48a9c71e",
+    "src/observatory/solver_first_path_oracle.py": "8e6e7ac3cf25cae8ab7552c9d7434f2ac7bd8e16b86eb512fb235fd80108716b",
+    "src/observatory/solver_first_readiness_leaf.py": "2440e837407bb6ef0da10096ad798e6cb46ebcf52fcb7a16edd26670c64e7d8d"
+  },
+  "supplied_boundaries": {
+    "active_offset": "0x91c",
+    "argument": "one zero-extended 32-bit word, interpreted as a byte",
+    "external_responses": "none reached; no helper return substitution",
+    "gate_offset": "0x10c0",
+    "mech_byte": 1,
+    "mech_offset": "0x9e4",
+    "other_receiver_bytes": "deterministic sentinel pattern; no complete constructor claim",
+    "receiver_size": 4608,
+    "source_runtime": "original executable body; emulator memory/register initialization supplied"
+  },
+  "transition_gate_admissions": 0
+}

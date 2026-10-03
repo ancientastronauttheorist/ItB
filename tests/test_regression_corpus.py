@@ -20,7 +20,9 @@ vs recorded actual, but the actual was produced by a DIFFERENT plan than
 what the new solver proposes — so mismatches are expected and not bugs.
 """
 import json
+import math
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -81,6 +83,46 @@ def _dedup_failure_corpus() -> list:
     return corpus
 
 
+def _solve_with_admission(bridge_data, weights):
+    """Inspect the exact augmented input passed by the production replay wrapper.
+
+    The wrapper drops native timeout/score metadata on empty results. Retain it
+    here, and use Rust's own parsed actor predicate rather than legacy wire teams.
+    """
+    import itb_solver
+    original_solve = itb_solver.solve
+    calls = []
+
+    def capture(prepared_json, budget):
+        admission = json.loads(itb_solver.inspect_admission(prepared_json))
+        raw = original_solve(prepared_json, budget)
+        calls.append((admission, json.loads(raw)))
+        return raw
+
+    with patch.object(itb_solver, "solve", capture):
+        solution = _solve_with_rust(bridge_data, time_limit=2.0, weights=weights)
+    if len(calls) != 1:
+        raise ValueError(f"Expected one native solve, observed {len(calls)}")
+    admission, raw_result = calls[0]
+    if (admission.get("schema_version") != 1
+            or type(admission.get("requires_actions")) is not bool
+            or not isinstance(raw_result, dict)):
+        raise ValueError("Invalid native admission/result receipt")
+    return solution, admission, raw_result
+
+
+def _empty_result_error(admission, raw_result):
+    if not admission["requires_actions"]:
+        return None
+    score = raw_result.get("score")
+    if type(score) not in (int, float) or not math.isfinite(score):
+        return "empty solution on active board (native score absent/nonfinite)"
+    stats = raw_result.get("stats")
+    if not isinstance(stats, dict) or stats.get("timed_out") is not True:
+        return "empty solution on active board (not timed out)"
+    return None
+
+
 @pytest.mark.regression
 def test_failure_corpus_not_regressed():
     assert ACTIVE_WEIGHTS_PATH.exists(), f"Missing weights: {ACTIVE_WEIGHTS_PATH}"
@@ -94,10 +136,15 @@ def test_failure_corpus_not_regressed():
     fixed = 0
     skipped_missing_file = 0
     empty_sol_count = 0
+    action_required_count = 0
+    empty_required_count = 0
+    accepted_empty_timeout_count = 0
+    skipped_no_replay = 0
 
     for rec in corpus:
         replay_rel = rec.get("replay_file", "")
         if not replay_rel:
+            skipped_no_replay += 1
             continue
         bf = REPO / replay_rel
         if not bf.exists():
@@ -110,22 +157,22 @@ def test_failure_corpus_not_regressed():
             unexpected.append(f"{bf.name}: load failed: {e}")
             continue
 
-        sol = _solve_with_rust(bridge_data, time_limit=2.0, weights=weights)
+        try:
+            sol, admission, raw_result = _solve_with_admission(bridge_data, weights)
+        except Exception as e:
+            unexpected.append(f"{bf.name}: native solve/admission failed: {e}")
+            continue
+        action_required_count += int(admission["requires_actions"])
 
         # Empty solution on active board = regression
         if not sol.actions:
             empty_sol_count += 1
-            active_mechs = any(
-                u.get("team") == 0 and u.get("active")
-                for u in bridge_data.get("units", [])
-            )
-            has_enemies = bool(bridge_data.get("enemies")) or any(
-                u.get("team") == 1 for u in bridge_data.get("units", [])
-            )
+            empty_required_count += int(admission["requires_actions"])
+            reason = _empty_result_error(admission, raw_result)
+            accepted_empty_timeout_count += int(admission["requires_actions"] and reason is None)
             key = (rec["run_id"], rec["mission"], rec["turn"], "empty_solution")
-            if active_mechs and has_enemies and key not in known:
-                unexpected.append(
-                    f"{bf.name}: empty solution on active board")
+            if reason and key not in known:
+                unexpected.append(f"{bf.name}: {reason}")
             # Even if empty, check if the original trigger was an "empty" trigger;
             # usually these cases are not testable via detect_triggers anyway.
             continue
@@ -192,7 +239,10 @@ def test_failure_corpus_not_regressed():
     print(
         f"\nCorpus: {len(corpus)}  fixed: {fixed}  known: {still_fires_known}  "
         f"unexpected: {len(unexpected)}  skipped_missing: {skipped_missing_file}  "
-        f"empty_solutions: {empty_sol_count}"
+        f"empty_solutions: {empty_sol_count} action_required: {action_required_count} "
+        f"empty_required: {empty_required_count} "
+        f"accepted_empty_timeout: {accepted_empty_timeout_count} "
+        f"skipped_no_replay: {skipped_no_replay}"
     )
 
     assert not unexpected, (

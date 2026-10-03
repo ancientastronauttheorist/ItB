@@ -56,6 +56,15 @@ its default 15% expected grid-save credit. Omit ignored fixture fields and recor
 that default explicitly; shared score parity does not establish original
 resistance/RNG fidelity. See the [player AOE tranche](../solver_first_player_aoe.md).
 
+**Recorded-board regression admission:** Required-empty checks must use the
+parsed `active_mechs()`/living-enemy predicates on the exact prepared solver
+input, not legacy raw team IDs or a lossy serialized projection. The Python
+production replay helper discards native score/timeout fields on empty results;
+the harness must retain them before that loss. Finite-score/explicit-timeout
+exceptions are reported as accepted timeouts. Admission is a harness policy,
+not proof of available legal actions; no-enemy boards remain excluded. See
+the [sensitivity proof and corpus limits](../solver_first_regression_admission.md).
+
 ## Core Game Rules (Solver-Critical)
 
 The solver enforces these; use them when reviewing solver output or writing tests.

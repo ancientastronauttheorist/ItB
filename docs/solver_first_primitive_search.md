@@ -131,6 +131,12 @@ fake score or fabricated terminal plan.
 
 ## Configuration, validation, and continuation
 
+October 3 follow-up: the [Python corpus admission repair](solver_first_regression_admission.md)
+adds a read-only inspection API in a distinct v412 extension build and repairs
+the required-empty guard. The extension identity and Python corpus counts below
+describe this primitive tranche's historical build. Its frozen reports remain
+unchanged; the follow-up supplies its own source/build/corpus pins.
+
 The normalized fixture uses default Rust weapons/evaluation, grid7, one player
 turn, no additional spawns, no environment, and no hidden RNG input. Rust retains
 its default 15% expected grid-save credit; unknown JSON `grid_defense` fields are

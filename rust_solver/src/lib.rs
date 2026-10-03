@@ -17,6 +17,22 @@ pub mod native_rng;
 mod plan_evaluation;
 pub mod primitive;
 
+/// Read-only regression admission using the same parsed board as search.
+/// Actor admission is not a proof that an available legal action exists.
+#[pyfunction]
+fn inspect_admission(json_input: &str) -> PyResult<String> {
+    let (board, _, _, _, _, _) = serde_bridge::board_from_json(json_input)
+        .map_err(pyo3::exceptions::PyValueError::new_err)?;
+    let actors: Vec<u16> = board.active_mechs().iter().map(|&i| board.units[i].uid).collect();
+    let enemies: Vec<u16> = board.enemies().iter().map(|&i| board.units[i].uid).collect();
+    Ok(serde_json::json!({
+        "schema_version":1,"simulator_version":SIMULATOR_VERSION,
+        "scope":"Rust parsed actor/enemy admission; not legal-action existence",
+        "actor_uids":actors,"enemy_uids":enemies,
+        "requires_actions":!actors.is_empty() && !enemies.is_empty()
+    }).to_string())
+}
+
 /// Offline atomic planner. Emits `steps`, never legacy live action batches.
 #[pyfunction]
 fn solve_primitives(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
@@ -2671,6 +2687,7 @@ fn solve_beam(
 
 #[pymodule]
 fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(inspect_admission, m)?)?;
     m.add_function(wrap_pyfunction!(solve_primitives, m)?)?;
     m.add_function(wrap_pyfunction!(replay_primitives, m)?)?;
     m.add_function(wrap_pyfunction!(solve, m)?)?;

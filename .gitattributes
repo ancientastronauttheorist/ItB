@@ -38,3 +38,6 @@ rust_solver/src/primitive.rs text eol=lf
 rust_solver/src/plan_evaluation.rs text eol=lf
 scripts/solver_first_primitive_search.py text eol=lf
 tests/test_solver_first_primitive_search.py text eol=lf
+tests/test_regression_admission.py text eol=lf
+scripts/solver_first_readiness_leaf.py text eol=lf
+src/observatory/solver_first_readiness_leaf.py text eol=lf
