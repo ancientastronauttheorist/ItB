@@ -3,28 +3,25 @@
   "cases": [
     {
       "attempted": 64,
-      "expected_legal": [
-        [
-          0,
-          0
-        ]
-      ],
+      "distinct_destination_checks": 63,
+      "expected_distinct_destinations": [],
       "massive": false,
       "move": 2,
-      "replay_accepted": [
-        [
-          0,
-          0
-        ]
-      ]
-    },
-    {
-      "attempted": 64,
-      "expected_legal": [
-        [
+      "noop_contract": {
+        "destination": [
           0,
           0
         ],
+        "evidence_class": "synthetic_rust_replay_contract",
+        "expected_accepted": true,
+        "replay_accepted": true
+      },
+      "replay_accepted_distinct_destinations": []
+    },
+    {
+      "attempted": 64,
+      "distinct_destination_checks": 63,
+      "expected_distinct_destinations": [
         [
           0,
           1
@@ -32,11 +29,16 @@
       ],
       "massive": true,
       "move": 1,
-      "replay_accepted": [
-        [
+      "noop_contract": {
+        "destination": [
           0,
           0
         ],
+        "evidence_class": "synthetic_rust_replay_contract",
+        "expected_accepted": true,
+        "replay_accepted": true
+      },
+      "replay_accepted_distinct_destinations": [
         [
           0,
           1
@@ -45,11 +47,8 @@
     },
     {
       "attempted": 64,
-      "expected_legal": [
-        [
-          0,
-          0
-        ],
+      "distinct_destination_checks": 63,
+      "expected_distinct_destinations": [
         [
           0,
           1
@@ -61,11 +60,16 @@
       ],
       "massive": true,
       "move": 2,
-      "replay_accepted": [
-        [
+      "noop_contract": {
+        "destination": [
           0,
           0
         ],
+        "evidence_class": "synthetic_rust_replay_contract",
+        "expected_accepted": true,
+        "replay_accepted": true
+      },
+      "replay_accepted_distinct_destinations": [
         [
           0,
           1
@@ -78,12 +82,13 @@
     }
   ],
   "contract_sha256": "4436fa932f58a2820b0f6edd54ac485bb65aef1c7b5d454c15b00c96401fa068",
-  "corpus_version": "s0-water-development-v1",
-  "evidence_class": "synthetic_scenario_against_original_static_rule_inference",
+  "corpus_version": "s0-water-development-v2",
+  "distinct_destination_checks": 189,
+  "evidence_class": "synthetic_distinct_destinations_against_original_static_rule_inference_plus_rust_noop_contract",
   "extension_sha256": "33dc9aedb7a2a3a5bfdb9b412d7eed8d84a7d7b72d4592237ceb84a65c98b9c4",
   "frontend_source_identity": {
     "files": {
-      "scripts/solver_first_s0.py": "839b0a0b81c06399db13b577658bb81b2122b8bbb8d12a0b9ad0af7b433ddebc",
+      "scripts/solver_first_s0.py": "dcc56cefa5efea7fd880856f35eb669efe45fcda44f04b3532f7190f2216740e",
       "src/solver/evidence_reconciliation.py": "7abb58028bf1791b24f46412a6ccd3ea54a15c64332813e511fbcf0099c1e9ba",
       "src/solver/observation_contract.py": "56324aecc749ec51f1383957fe1fd2db72a9ef12966f20b3210fd50c0e2148f7"
     },
@@ -104,6 +109,7 @@
   "movement_index_canonical_sha256": "bf7ef2a7962163e396f9a21ae1932f3ad53d2d4093089cc213f0720f5f2c0253",
   "oracle_observation_pairs": 3,
   "original_build_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "original_origin_publication_status": "unresolved; no-op requests are not original GetReachable comparisons",
   "parser_field_counts": {
     "JsonInput": 43,
     "JsonTile": 24,
@@ -118,6 +124,7 @@
     "observation acquisition provenance for broader mission fields"
   ],
   "runtime_original_comparisons": 0,
+  "rust_noop_contract_checks": 3,
   "rust_source_identity": {
     "files": {
       "rust_solver/src/beam.rs": "d4f466370f156ccc11dbb257c5f472defd00dbbbe518ce84edf6e31c4dc1e4b8",
@@ -139,10 +146,10 @@
     "tree_sha256": "cb5dfb0aba3fd2d7dfa700545b44b6d700c5d033aa7a6bc1b75eaec8b29483d7"
   },
   "scenario": "ordinary_massive_water_corridor",
-  "schema_version": 1,
+  "schema_version": 2,
   "script_map_overlay_inventory_status": "not_consumed_by_executable_only_static_check; full-loop corpus pin still required",
   "search_status": "not_evaluated",
   "simulator_version": 408,
-  "solver_commit": "fda5572aa242833e3875fb56d5bd19c551a43b70",
-  "tool_sha256": "839b0a0b81c06399db13b577658bb81b2122b8bbb8d12a0b9ad0af7b433ddebc"
+  "solver_commit": "4c5cfc606407ddad9cdfa9bcb0991e51549be9f3",
+  "tool_sha256": "dcc56cefa5efea7fd880856f35eb669efe45fcda44f04b3532f7190f2216740e"
 }

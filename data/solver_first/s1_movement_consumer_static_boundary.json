@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "analysis_kind": "solver_first_movement_consumer_static_boundary",
+  "evidence_class": "original_static_body_extraction_and_manual_dataflow",
+  "build_identity": {
+    "platform": "windows",
+    "architecture": "x86",
+    "image_base": "0x00400000",
+    "build_id": "13725832",
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "executable_size": 5530112
+  },
+  "verification": {
+    "executable_sha256_checked_before_extraction": true,
+    "executable_sha256_checked_after_extraction": true,
+    "exact_atlas_bodies_decoded_with_existing_helper": true,
+    "decoder": "Capstone x86-32",
+    "matched_original_runtime_comparisons": 0,
+    "new_native_execution_cases": 0,
+    "ledger_promotions": 0,
+    "new_tests_run": 0,
+    "source_review_status": "primary identity/seam verification and independent source review complete; assignment composition and runtime remain open"
+  },
+  "private_extraction": {
+    "publication_policy": "Only normalized facts and hashes are published; private disassembly and identifying local paths are omitted.",
+    "script_sha256": "eef2edb28bd62f59377d39870fcbce5733a29fbec33d7824e18585cc9c64ae16",
+    "summary_sha256": "0667efe77de6a0513de67315d2dd950ad34ef36ff060fb5468549a6c1dfc1ef3",
+    "encoding": "UTF-8 LF",
+    "body_extractions": [
+      {
+        "entry_rva": "0x001610d0",
+        "end_rva_exclusive": "0x00161c6f",
+        "body_size": 2975,
+        "body_sha256": "ccbecc70505f546c2d068ad7c95121f0c631aa27dd197127904de3faaff307c2",
+        "decoded_instruction_count": 810,
+        "private_extraction_sha256": "585e75f36d187292ebe0ab785cfc7e20f4513d36698ed4b750bd60713363830d"
+      },
+      {
+        "entry_rva": "0x00235f00",
+        "end_rva_exclusive": "0x00235fda",
+        "body_size": 218,
+        "body_sha256": "8fc6310382c62a1c5b2d19876cd579c49bec151b487200bebfe3599fa7243e8f",
+        "decoded_instruction_count": 73,
+        "private_extraction_sha256": "b19e27c5d3c8910f5c24fabe644446e15b869d18ebbc27fc9f87f298cb0c4b2d"
+      },
+      {
+        "entry_rva": "0x00235fe0",
+        "end_rva_exclusive": "0x0023619d",
+        "body_size": 445,
+        "body_sha256": "441ff3e392f71d6ec1bd55517f0636ee635b261142131c9c4e8fe9d01fc9b17c",
+        "decoded_instruction_count": 141,
+        "private_extraction_sha256": "de2dbd863cf6abff9ff85cf87ff612faedd5e32a8f31bec51a50381a185a120b"
+      },
+      {
+        "entry_rva": "0x00236280",
+        "end_rva_exclusive": "0x0023639f",
+        "body_size": 287,
+        "body_sha256": "bced805437513ecfbfc57ad853050935616685005bce2b5204ead987964ceabd",
+        "decoded_instruction_count": 88,
+        "private_extraction_sha256": "5e34fb0dd9e5bb9db474b1f88773c2d4e3d204a3dc5fbcf57898cd1c42a12bf1"
+      }
+    ]
+  },
+  "admitted_source_scenario": {
+    "name": "ordinary Massive Water stop consumer candidate",
+    "visual_route": [
+      "H8",
+      "G8"
+    ],
+    "bridge_route": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "terrain": {
+      "G8": "Water"
+    },
+    "path_count": 2,
+    "record_kind_offset": "+0x0c",
+    "record_kind_value": 4,
+    "record_mode_offset": "+0xd8",
+    "record_mode_value": 0,
+    "premises": [
+      "Reuse reviewed AddMove construction with eight empty inline strings, ordinary disjoint successful allocations, and reserved destination record capacity.",
+      "The complete record copy preserves the supplied path and mode.",
+      "Record+0x98 is zero, as in reviewed default construction.",
+      "The receiver helper returns a valid object for the first point on both calls.",
+      "The first path point equals the outer effect origin, making the forwarded activity override flag true.",
+      "The receiver helper and receiver mutation helper contracts are not established by these four bodies."
+    ],
+    "measured_original_movement_outcomes": 0,
+    "growth_or_alias_string_blocker_demonstrated": false
+  },
+  "record_to_receiver_dataflow": {
+    "copied_record_local_base": "EBP-0x284",
+    "record_stride": "0x134",
+    "field_seams": [
+      {
+        "record_offset": "+0xcc",
+        "local": "EBP-0x1b8",
+        "meaning": "path begin"
+      },
+      {
+        "record_offset": "+0xd0",
+        "local": "EBP-0x1b4",
+        "meaning": "path end"
+      },
+      {
+        "record_offset": "+0xd8",
+        "local": "EBP-0x1ac",
+        "meaning": "mode discriminant"
+      },
+      {
+        "record_offset": "+0x98",
+        "local": "EBP-0x1ec",
+        "meaning": "additional zero gate"
+      }
+    ],
+    "instruction_seams": [
+      {
+        "site_rva": "0x00161409",
+        "target_rva": "0x0015b9b0",
+        "fact": "Copy the selected 0x134-byte record into the local record at EBP-0x284."
+      },
+      {
+        "site_rva": "0x00161675",
+        "fact": "Compare copied path begin with end; equality skips movement consumption."
+      },
+      {
+        "site_rva": "0x00161681",
+        "fact": "Mode three skips this movement-consumer path."
+      },
+      {
+        "site_rva": "0x0016168e",
+        "fact": "Nonzero record+0x98 skips this movement-consumer path."
+      },
+      {
+        "site_rva": "0x001616a7",
+        "target_rva": "0x00168650",
+        "fact": "Call receiver lookup with first-point x, first-point y and zero; reject a zero returned pointer."
+      },
+      {
+        "site_rva": "0x001616d1",
+        "fact": "Compare the first point with the outer effect origin at frame+0x50/+0x54 and form the forwarded Boolean flag."
+      },
+      {
+        "site_rva": "0x001616ef",
+        "fact": "Mode five uses a separate branch."
+      },
+      {
+        "site_rva": "0x00161724",
+        "fact": "Mode one selects the call to 0x235fe0 at 0x1617c3."
+      },
+      {
+        "site_rva": "0x001617cd",
+        "fact": "Mode two selects the call to 0x236280 at 0x16186c."
+      },
+      {
+        "site_rva": "0x00161876",
+        "fact": "Mode four selects a separate receiver-field update; this tests record+0xd8, not kind+0x0c."
+      },
+      {
+        "site_rva": "0x001618c1",
+        "fact": "For admitted mode zero, push the origin-equality flag and allocate the by-value path argument block."
+      },
+      {
+        "site_rva": "0x001618d9",
+        "target_rva": "0x0009a8e0",
+        "fact": "Clone the local path into the by-value caller path triple."
+      },
+      {
+        "site_rva": "0x00161905",
+        "target_rva": "0x00168650",
+        "fact": "Repeat first-point receiver lookup with the same coordinate arguments and zero."
+      },
+      {
+        "site_rva": "0x0016190a",
+        "fact": "Set ECX to the returned receiver pointer."
+      },
+      {
+        "site_rva": "0x00161910",
+        "target_rva": "0x00235f00",
+        "fact": "Invoke the ordinary mode-zero route installer with the cloned path triple and flag."
+      },
+      {
+        "site_rva": "0x0016194f",
+        "target_rva": "0x0010e2a0",
+        "fact": "On the admitted zero-parameter continuation, destroy the dispatcher local record after the receiver call."
+      }
+    ],
+    "receiver_identity_boundary": "The returned object is used as the route installer receiver. Its identity as the intended live Pawn and the helper's world lookup behavior remain unresolved.",
+    "kind_and_mode_distinction": "The constructor's kind-four field at+0x0c is not the movement mode-four branch. This consumer connection is established by copied path and mode dataflow, not equal numeric tags."
+  },
+  "route_installer": {
+    "entry_rva": "0x00235f00",
+    "abi": {
+      "receiver": "ECX",
+      "arguments": [
+        "by-value begin/end/capacity path triple",
+        "Boolean flag"
+      ],
+      "caller_bytes_consumed": 16,
+      "result": "AL"
+    },
+    "instruction_seams": [
+      {
+        "site_rva": "0x00235f2d",
+        "fact": "Read receiver+0x91e; nonzero permits installation."
+      },
+      {
+        "site_rva": "0x00235f36",
+        "fact": "If receiver+0x91e is zero, a nonzero caller flag still permits installation."
+      },
+      {
+        "site_rva": "0x00235f49",
+        "fact": "Rejected installation clears receiver+0x8d2 and returns AL zero after input-path cleanup."
+      },
+      {
+        "site_rva": "0x00235f5e",
+        "target_rva": "0x0023faa0",
+        "fact": "For a nonempty input path, invoke a receiver mutation helper before comparing the leading point."
+      },
+      {
+        "site_rva": "0x00235f68",
+        "fact": "Compare first-point x with receiver+0x8ec."
+      },
+      {
+        "site_rva": "0x00235f73",
+        "fact": "Compare first-point y with receiver+0x8f0."
+      },
+      {
+        "site_rva": "0x00235f86",
+        "target_rva": "0x0036e580",
+        "fact": "When both coordinates match, shift remaining Point bytes down by eight and decrease caller end by eight."
+      },
+      {
+        "site_rva": "0x00235f96",
+        "fact": "Select receiver+0x8fc as destination path storage."
+      },
+      {
+        "site_rva": "0x00235f9c",
+        "target_rva": "0x000c5bb0",
+        "fact": "Assign the remaining caller path to destination path storage."
+      },
+      {
+        "site_rva": "0x00235fa3",
+        "target_rva": "0x00233110",
+        "fact": "Invoke the post-assignment helper on the receiver."
+      },
+      {
+        "site_rva": "0x00235fa8",
+        "fact": "Set the accepted result to one."
+      },
+      {
+        "site_rva": "0x00235fbd",
+        "target_rva": "0x00007800",
+        "fact": "Free nonnull incoming cloned path using its capacity-derived Point count and stride eight."
+      },
+      {
+        "site_rva": "0x00235fd7",
+        "fact": "Return while consuming sixteen caller bytes."
+      }
+    ],
+    "ownership_scope": "The input clone is released after the assignment call. For the N2 route with matching receiver position, removal of the leading point leaves N1. The reviewed small-assignment law covers N1 through 511 only with an all-zero destination header and supplied normal allocation/copy/free boundaries. Receiver+0x8fc after helper0x23faa0 has not been shown to satisfy that premise, so assignment composition, route lifetime and later release remain open.",
+    "activity_gate_scope": "The concrete byte gate+0x91e and caller override are proven. Naming+0x91e as a complete Pawn activity predicate would require additional evidence."
+  },
+  "existing_evidence_reused": [
+    "docs/native_movement_addmove_normal_conformance.md",
+    "docs/native_movement_addmove_small_normal_semantics.md",
+    "docs/native_movement_effect_record_default_semantics.md",
+    "docs/native_movement_path_small_assign_semantics.md",
+    "data/observatory/native/windows_build_13725832_31fe35265598_piston_scheduler_boundary.json"
+  ],
+  "open_dependencies_and_exclusions": [
+    "Receiver helper0x168650 ABI, world identity and valid-return domain.",
+    "Receiver helper0x23faa0 mutation contract, including any coordinate/path changes.",
+    "Receiver+0x8fc destination header after helper0x23faa0; stripped N2 input has N1, so count-two assignment evidence is insufficient and the small-assignment premise must be established.",
+    "Receiver+0x91e meaning and acquisition from an ordinary admitted game state.",
+    "Receiver route+0x8fc progression, per-step item/terrain/status effects, interruption and completion.",
+    "Post-assignment helper0x233110 precise body boundary and status/terrain effects; its atlas body and older contiguous status-region extent differ.",
+    "Route ownership and destructor behavior after installation.",
+    "Board activity tracks installed route until settlement; tick completion and busy clearing are unproven.",
+    "Matched player-action-to-enemy/environment-to-next-decision trace.",
+    "Nonzero delay/parameter requeue arm, other movement modes, allocation failure, growth, nonempty strings, exceptions and unwind.",
+    "No original runtime outcome, exact supported gameplay domain, S1 completion or whole-function ledger promotion follows from this source-only boundary."
+  ],
+  "next_exit_test": "Close receiver helper and route tick/activity dependencies, then compare original-body ordered H8-to-G8 Water movement outcomes with Rust replay under explicitly supplied world premises. Extend to H8-to-G8-to-F8 and an intermediate item/status control before claiming endpoint-only movement is faithful. Continue through admitted enemy/environment resolution into the next decision state."
+}

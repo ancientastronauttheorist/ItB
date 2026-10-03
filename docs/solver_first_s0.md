@@ -17,7 +17,7 @@ S4 and the seven acceptance gates remain open.
   source hashes. No Rust semantics or version pins changed in this tranche.
   New JSON artifacts and the entry point have explicit Git line-ending rules;
   frontend dependency hashes use named LF normalization.
-- Corpus: `s0-water-development-v1`; every new scenario is synthetic development
+- Corpus: `s0-water-development-v2`; every new scenario is synthetic development
   evidence. There is no held-out partition or original runtime trace in it.
 - Information: `provisional_player_observation_v1`. The
   [contract](../data/solver_first/s0_information_contract.json) accounts for
@@ -77,7 +77,7 @@ as exact supported domains by this checkpoint.
 | Subsystem | Existing implementation and original evidence | New measured domain/search support | Held-out result and blocker |
 | --- | --- | --- | --- |
 | Observation/legal actions | Python bridge/model; Rust JSON parser; native path registration/profile maps | All current parser wire fields classified provisionally; equal-oracle-input tests; corridor replay acceptance across all destinations | No held-out result. Broader value acquisition and full legal attack sets need original comparisons; live integration remains pending. |
-| Movement/effects | Rust movement/simulation; exact-build path cost/occupancy maps; bounded AddMove/AddCharge construction receipts | Ground/profile-2 Water corridor, budgets 1/2; 192 replay destination checks agree with static-rule expectations | No original output vector or held-out result. Movement record consumption, per-step effects, interruption and scheduler ordering remain open. |
+| Movement/effects | Rust movement/simulation; exact-build path cost/occupancy maps; bounded AddMove/AddCharge construction receipts | Ground/profile-2 Water corridor, budgets 1/2; 189 distinct destinations agree with static-rule expectations; three separate Rust no-op checks | No original output vector or held-out result. Origin publication, movement record consumption, per-step effects, interruption and scheduler ordering remain open. |
 | Combat/status/terrain | Rust weapon/simulation modules, recorded failures, shipped-script and native mechanic evidence | Existing planner capability retained; no new admission or measurement | Independent interaction corpus and ordered original outcomes remain required. Synthetic regressions alone do not establish fidelity. |
 | Enemy/environment/spawn sequence | Rust enemy/turn projection, Observatory callback/materialization/spawn receipts | Existing tactical replay retained; original receipts remain bounded to their declared subjects | Full ordered player-to-next-decision trace missing for this scenario; future spawn and intent uncertainty must remain explicit. |
 | Mission objectives/termination | Rust objective accounting and mission metadata; existing terminal-flow evidence | Existing capability retained; no new measurement | Need mission-family admission and independent objective/terminal outcome comparisons. |
@@ -91,8 +91,11 @@ and route to a tile beyond Water, without consuming hidden future information?
 
 The controlled corridor is visual **H8 -> G8 -> F8 -> E8** (bridge `(0,0)`
 through `(0,3)`); G8 is Water and all off-corridor tiles are Mountains. The
-handwritten expected accepted sets are H8 alone for a nonmassive ground profile,
-H8/G8 for Massive budget one, and H8/G8/F8 for Massive budget two. The nonmassive
+handwritten expected distinct destination sets are empty for a nonmassive ground
+profile, G8 for Massive budget one, and G8/F8 for Massive budget two. Each
+variant also checks a separate Rust no-op request at H8. Original GetReachable
+publication of the occupied origin remains unresolved; accepting a Rust no-op
+does not establish that the original query returns H8. The nonmassive
 `CombatMech` variant is a synthetic profile override, not an original-game pawn
 configuration claimed reachable. Each variant tests all 64 destination requests.
 
@@ -100,15 +103,16 @@ Before this tranche, the Water rule, Rust movement regression, and native
 record-construction proofs were separate artifacts. After it, the offline
 tool re-verifies exact original executable path evidence, passes the declared
 information boundary, and observes actual Rust replay legality/position for
-192 destination requests, with zero mismatches. This is a source-rule-to-solver
+189 distinct destination requests and three Rust no-op requests, with zero
+mismatches. This is a source-rule-to-solver
 connection; it is not a newly corrected simulator rule or original gameplay
 transition proof. Water/profile interpretation remains the reviewed source
 inference documented in the native map and
 [native anchor research](itb_native_anchor_research.md#native-path-cost-and-ordering-boundary).
 
 The [report](../data/solver_first/s0_water_rule_report.json) labels the evidence
-`synthetic_scenario_against_original_static_rule_inference`, with zero matched
-original runtime comparisons and no search/held-out result. Original before,
+distinct-destination static-rule inference and Rust no-op contract separately,
+with zero matched original runtime comparisons and no search/held-out result. Original before,
 action, ordered events and after-state comparison remains the S1 exit test.
 The exact current script/map/overlay inventory must be pinned for that loop;
 this executable-only check consumes no runtime resource overlay.
@@ -118,6 +122,8 @@ AddMove consumer/effect scheduler for the declared route. Alias-string
 assignment, growth or allocation work is justified only if that concrete route
 requires it. Existing empty-inline, short-path, successful-allocation proofs
 should be reused. Another isolated string helper closure would not close S1.
+The [S1 acquisition frontier](solver_first_s1_frontier.md) records the exact
+query/consumer boundaries and the required original output comparisons.
 
 ## Reproduction and acceptance status
 
