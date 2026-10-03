@@ -2534,7 +2534,10 @@ fn solve_top_k(py: Python<'_>, json_input: &str, time_limit: f64, k: usize) -> P
 // v409: Pinned original GetTeam/GetPathProf and occupied-corridor query execution
 // prove that ordinary ground/Massive transit compares team rather than UID.
 // Same-team live pawns permit transit; every occupied destination stays excluded.
-pub const SIMULATOR_VERSION: u32 = 409;
+// v410: Original Centipede returned queues and pinned Lua order side hits
+// relative to the shot. Killing a first-side Armor Psion can affect the second
+// hit; fixed world-axis order was reversed for negative-x/positive-y shots.
+pub const SIMULATOR_VERSION: u32 = 410;
 
 #[pyfunction]
 fn simulator_version() -> u32 {

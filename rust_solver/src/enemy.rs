@@ -2297,7 +2297,18 @@ pub fn simulate_enemy_attacks(
                     if wdef.aoe_perpendicular() {
                         let pdx = (tx as i8 - ex as i8).signum();
                         let pdy = (ty as i8 - ey as i8).signum();
-                        let perp: &[(i8, i8)] = if pdx != 0 && pdy == 0 {
+                        // Centipede Lua queues the first side relative to the
+                        // shot, not to a fixed world axis. Original callback
+                        // (4,2)->(3,2): impact, (3,1), (3,3). A first-side
+                        // Psion death can change damage on the second side.
+                        // Rust DIRS has the opposite winding to Lua vectors.
+                        let ordered_sides = [(-pdy, pdx), (pdy, -pdx)];
+                        let centipede = matches!(
+                            enemy_wid, WId::CentipedeAtk1 | WId::CentipedeAtk2 | WId::CentipedeAtkB,
+                        );
+                        let perp: &[(i8, i8)] = if centipede && ((pdx != 0) != (pdy != 0)) {
+                            &ordered_sides
+                        } else if pdx != 0 && pdy == 0 {
                             &[(0, 1), (0, -1)]
                         } else if pdy != 0 && pdx == 0 {
                             &[(1, 0), (-1, 0)]
@@ -7278,6 +7289,46 @@ mod tests {
         // (any_unit_at), dead units can still be pushed. We just verify
         // the damage applied correctly.
         assert!(board.units[target].hp <= 0, "target killed by 3 dmg (hp={})", board.units[target].hp);
+    }
+
+    #[test]
+    fn test_centipede_side_order_removes_armor_before_second_side_hit() {
+        // Original returned q_effect: impact, (-dy, dx), (dy, -dx).
+        // This is a synthetic sensitivity case, not an original Psion outcome.
+        // Killing the first-side Shell Psion must remove armor before the
+        // second-side victim is damaged. Fixed world-axis ordering reverses
+        // those hits for negative-x and positive-y shots.
+        for (type_name, damage) in [("Centipede1", 1), ("Centipede2", 2), ("CentipedeBoss", 3)] {
+            for (dx, dy) in [(1i8, 0i8), (-1, 0), (0, 1), (0, -1)] {
+                let mut board = Board::default();
+                board.armor_psion = true;
+                add_mech_unit(&mut board, 10, 3, 3, 6);
+                let first = ((3 - dy) as u8, (3 + dx) as u8);
+                let second = ((3 + dy) as u8, (3 - dx) as u8);
+                let psion = add_enemy_with_type(
+                    &mut board, 20, first.0, first.1, damage, "Jelly_Armor1", -1, -1,
+                );
+                let victim = add_enemy_with_type(
+                    &mut board, 21, second.0, second.1, 5, "Scarab1", -1, -1,
+                );
+                board.units[victim].flags.insert(UnitFlags::ARMOR);
+                add_enemy_with_type(
+                    &mut board, 1, (3 - 2 * dx) as u8, (3 - 2 * dy) as u8,
+                    7, type_name, 3, 3,
+                );
+
+                let orig = default_orig_pos(&board);
+                simulate_enemy_attacks(&mut board, &orig, &WEAPONS);
+
+                assert!(board.units[psion].hp <= 0);
+                assert_eq!(
+                    board.units[victim].hp, 5 - damage,
+                    "{type_name} direction ({dx},{dy}) must hit after armor removal",
+                );
+                assert!(board.units[victim].acid());
+                assert!(!board.armor_psion);
+            }
+        }
     }
 
     #[test]

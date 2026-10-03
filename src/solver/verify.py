@@ -1915,7 +1915,10 @@ _KNOWN_SOLVE_SCHEMA_VERSIONS = {1}
 # v385: Normal and Alpha Shaman queued artillery materializes Totem1/Totem2
 # with exact source identity and no same-phase queued action. Pre-v385 corpus
 # is archived as failure_db_snapshot_sim_v384.jsonl.
-SIMULATOR_VERSION = 409
+# v410: Centipede projectile sides follow the original direction-relative queue
+# order. The tracked pre-change failure DB is archived as
+# failure_db_snapshot_sim_v409.jsonl; local user records are preserved separately.
+SIMULATOR_VERSION = 410
 
 
 def predicted_states_from_solve_record(record: dict) -> list:

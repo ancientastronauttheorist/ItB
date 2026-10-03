@@ -92,6 +92,46 @@ Effective next-turn max HP, moves, and weapons also need reconciliation between
 raw bridge fallbacks and the input's save overlays. Status absence, extraction
 freshness, and different update stages must not masquerade as rule failures.
 
+## Follow-up input provenance audit
+
+The pair001 control audit inventories all 115 fields in the current Rust input,
+tile, and unit structs: 76 are present in this recording. It also identifies
+32 non-Rust keys and the nested `web_probes.IsGrappled` field. This is a source
+and artifact audit, with zero new fair-input admissions. The S0 schema's
+`visible` label specifies a permitted kind of information; it does not prove
+how a particular historical value was acquired.
+
+| Recorded input | Acquisition route and unresolved proof |
+| --- | --- |
+| HP `6/4/5`, movement `5/6/6` | Follow live pawn getters and remain unchanged between the board record and solve input; a contemporaneous visible-board join is still needed |
+| Max HP `6/4/5` | The board record is already enriched: it retains bridge fallback values `3/3/2` alongside save-derived corrections; it is not a raw Lua snapshot |
+| Upgraded and secondary weapons | The solve input expands base slot-zero weapons using save/loadout overlays. The start proof pins save hashes, but the referenced save snapshot is unavailable, so those hashes alone cannot supply or verify its loadout values |
+| Boosted actors | Already true in the enriched board and overlaid again; retained artifacts do not identify successful live `IsBoosted` versus save-derived `bBoosted` for these values |
+| Attack flags and queued targets | Saved `iQueuedSkill`, `piQueuedShot`, and `piOrigin` take priority; a differing valid live target may override them. All five captured targets require no coordinate shift, but there is no per-unit successful-live-getter or displayed-intent receipt |
+| Attack order | Filtered native pawn-vector order, reinforced by Python; no retained join to displayed attack numbers |
+| Grid `4/7` | Save/GameData fallback, without a contemporaneous visible-grid receipt |
+| Tile statuses and population | Missing statuses conflate false with getter failure; tile shields use a save baseline and mountain population includes a placeholder. These must not be silently normalized into observations |
+| Web source | Egg adjacency derives the reference after board recording; admission requires the public web rule and canonical reference remapping |
+| Public definitions and configuration | Runtime `_G` definitions require content/runtime provenance; weights, pilot valuation and effective weapon configuration require a separately frozen configuration contract |
+
+The retained start proof pins saveData SHA256
+`5a7d59c58a181ca160aac718299332490699e89f62a2074d8a7447ba4cb7ac08`
+and undo SHA256
+`951d62ee9183030e3ff360e96debc98f850a82f6bf384580fa57b9a9c1ec6862`.
+Their values are not recoverable from a hash. Historical session squad/goal
+labels also do not match the present mixed actors and cannot certify their
+loadout. Removing privileged spawn/RNG fields therefore would not suffice to
+make this input fair. Omitted `remaining_spawns` has Rust's explicit unknown
+sentinel (`u32::MAX`), rather than proving zero future spawns.
+
+The read-only field mapping and 15 source/artifact pins are retained privately
+with audit SHA256
+`b9358c560a5d12b14af416e7f19ca158a464e1c9403c9dadca29ac25ccf1202f`.
+Current preparation-source inspection is not an attestation of its historical
+installation. The next admissible corpus needs visible intent/order, successful
+status acquisition, effective public loadout values and independent objective
+configuration retained alongside the raw input.
+
 ## Tranche progress report
 
 | Required dimension | Checkpoint |

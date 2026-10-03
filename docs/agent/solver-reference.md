@@ -33,7 +33,12 @@ macOS reports unresolved `_Py*` symbols before any simulator assertion runs.
 On Windows, run native Rust/Python/Unicorn validation in separate processes,
 one at a time. A tool result containing `session_id` means the process is still
 running: await its completion before starting the next native check, even when
-the shell calls were issued sequentially. For native Python checks, remove
+the shell calls were issued sequentially. In a JavaScript tool wrapper, return
+immediately when a command yields a session ID; writing `await` before the tool
+call waits for the tool response, not for the child process to finish. Keep
+installation and subsequent native checks in separate completed calls. If a
+wrapper advances prematurely, stop its overlapping checks and rerun them
+serially before accepting their results. For native Python checks, remove
 `PYTHONFAULTHANDLER` and use pytest `-p no:faulthandler`; the oracle CLI disables
 faulthandler inside its isolated process.
 
@@ -78,6 +83,13 @@ destinations and keep Wait/no-op separate from occupied-origin publication.
 - **Shield:** blocks one instance of damage + negative effects. Removed by direct damage.
 - **Armor:** −1 weapon damage (floor 0). No effect on push/fire/bump.
 - **Webbed:** can't move, can still attack. Breaks only when the unit actually changes tiles, or when the webber moves/dies. A blocked push/bump leaves the unit webbed. If multiple live queued web sources target the same unit, killing/pushing one source transfers ownership to another source rather than freeing the unit.
+
+**Centipede queued side order (v410):** Process impact, then the side at
+`(-dy,dx)`, then `(dy,-dx)` relative to the shot. Fixed world-axis ordering
+reversed negative-x/positive-y attacks and could change later damage after a
+first-side Psion death. The [pinned original returned-effect evidence](../solver_first_centipede_order.md)
+and synthetic sensitivity test support this narrow correction; original aura
+execution timing and the Boss's path-ACID order remain separate open branches.
 
 **Terrain HP:**
 - **Mountain:** 2 HP (2=full, 1=damaged, 0=rubble/walkable). Any weapon damage reduces by 1.

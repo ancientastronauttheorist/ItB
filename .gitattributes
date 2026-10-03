@@ -24,3 +24,5 @@ scripts/solver_first_movement_stages.py text eol=lf
 scripts/solver_first_archived_turn.py text eol=lf
 src/observatory/solver_first_archived_turn.py text eol=lf
 src/observatory/solver_first_path_oracle.py text eol=lf
+tests/test_solver_first_centipede_evidence.py text eol=lf
+recordings/failure_db_snapshot_sim_v409.jsonl -text

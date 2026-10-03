@@ -1,0 +1,483 @@
+{
+  "accounting": {
+    "distinct_return_scenarios": 1,
+    "execution_transition_admissions": 0,
+    "fair_input_admissions": 0,
+    "held_out_scenarios": 0,
+    "ledger_promotions": 0,
+    "legal_action_set_admissions": 0,
+    "original_centipede_return_calls": 96,
+    "pinned_pair_artifacts": 18
+  },
+  "build": {
+    "capture_track": "owner_local_modified",
+    "executable_bytes": 5530112,
+    "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "installed_modloader_sha256": "0babc54e68539102b0c6b35e09307705736a2cdbb9dd4e0f36628a48fc497eb4",
+    "steam_build": 13725832
+  },
+  "corpus": "s1-centipede-ordered-return-development-v1",
+  "evidence_class": "original-game returned SkillEffect primitives; execution and aura timing are not certified",
+  "exclusions": [
+    "selected native queue attribution and full original execution order",
+    "original death/aura scheduling",
+    "complete original before state",
+    "effect delay/render semantics",
+    "CentipedeBoss trail-before-flanks discrepancy",
+    "player projectile side-splash coverage",
+    "other perpendicular weapon families",
+    "fair loadout/intents and full turn continuity",
+    "practical strength and search certificates"
+  ],
+  "implementation": {
+    "baseline_commit": "0cfa940548dab649b7a2742c26a160cf1a2bbe0a",
+    "baseline_simulator_version": 409,
+    "candidate_simulator_version": 410,
+    "old_code_result": "fails negative-x Centipede1 victim HP5 instead of4",
+    "regression": "test_centipede_side_order_removes_armor_before_second_side_hit",
+    "regression_class": "synthetic sensitivity; three families times four directions; not an original Psion outcome",
+    "scope": [
+      "CentipedeAtk1",
+      "CentipedeAtk2",
+      "CentipedeAtkB"
+    ],
+    "version_archive": {
+      "bytes": 5759697,
+      "path": "recordings/failure_db_snapshot_sim_v409.jsonl",
+      "sha256": "a5bf0a9b459e754a3bf9c49b5564c745687273aa04fafddd60e82d9de43f0b66"
+    }
+  },
+  "original_return": {
+    "call_site": "runtime.callback.slot-0021.GetSkillEffect.fn-0021",
+    "effect": [],
+    "function_id": "fn-0021",
+    "mission_id": "Mission_Power",
+    "origin": [
+      4,
+      2
+    ],
+    "phase": "combat_enemy",
+    "primitive_summary_sha256": "d2b26d7673540c001bd5b77882964aacc69134b1f59d5fd39bc933dacadd8139",
+    "q_effect": [
+      {
+        "bEvacuate": false,
+        "bHide": false,
+        "bHideIcon": false,
+        "bHidePath": false,
+        "bKO_Effect": false,
+        "bSimpleMark": false,
+        "fDelay": -2,
+        "iAcid": 1,
+        "iCrack": 0,
+        "iDamage": 2,
+        "iFire": 0,
+        "iFrozen": 0,
+        "iInjure": 0,
+        "iPawnTeam": 2,
+        "iPush": 4,
+        "iShield": 0,
+        "iSmoke": 0,
+        "iTerrain": 10,
+        "loc": [
+          3,
+          2
+        ],
+        "sAnimation": "",
+        "sImageMark": "",
+        "sItem": "",
+        "sPawn": "",
+        "sScript": "",
+        "sSound": ""
+      },
+      {
+        "bEvacuate": false,
+        "bHide": false,
+        "bHideIcon": false,
+        "bHidePath": false,
+        "bKO_Effect": false,
+        "bSimpleMark": false,
+        "fDelay": 0,
+        "iAcid": 1,
+        "iCrack": 0,
+        "iDamage": 2,
+        "iFire": 0,
+        "iFrozen": 0,
+        "iInjure": 0,
+        "iPawnTeam": 2,
+        "iPush": 4,
+        "iShield": 0,
+        "iSmoke": 0,
+        "iTerrain": 10,
+        "loc": [
+          3,
+          1
+        ],
+        "sAnimation": "",
+        "sImageMark": "",
+        "sItem": "",
+        "sPawn": "",
+        "sScript": "",
+        "sSound": ""
+      },
+      {
+        "bEvacuate": false,
+        "bHide": false,
+        "bHideIcon": false,
+        "bHidePath": false,
+        "bKO_Effect": false,
+        "bSimpleMark": false,
+        "fDelay": 0,
+        "iAcid": 1,
+        "iCrack": 0,
+        "iDamage": 2,
+        "iFire": 0,
+        "iFrozen": 0,
+        "iInjure": 0,
+        "iPawnTeam": 2,
+        "iPush": 4,
+        "iShield": 0,
+        "iSmoke": 0,
+        "iTerrain": 10,
+        "loc": [
+          3,
+          3
+        ],
+        "sAnimation": "",
+        "sImageMark": "",
+        "sItem": "",
+        "sPawn": "",
+        "sScript": "",
+        "sSound": ""
+      }
+    ],
+    "seq": 2,
+    "skill_id": "CentipedeAtk2",
+    "target": [
+      3,
+      2
+    ],
+    "turn": 1
+  },
+  "pairs": [
+    {
+      "accepted_events": 146,
+      "attempted_calls": 147,
+      "centipede_calls": 48,
+      "control_exact_outcome_differences": 2,
+      "distinct_centipede_argument_pairs": 1,
+      "distinct_centipede_primitive_summaries": 1,
+      "dropped_events": 1,
+      "events_sha256": "256a92540532e7f14e4968ed0ac8d5c34d481215bbde63ada399aacd8b01d7e5",
+      "full_before_board_retained": false,
+      "outcome_difference_scope": [
+        "spawning_tiles[0][0]",
+        "spawning_tiles[0][1]"
+      ],
+      "pair": "get_skill_effect_pair002"
+    },
+    {
+      "accepted_events": 146,
+      "attempted_calls": 147,
+      "centipede_calls": 48,
+      "control_exact_outcome_differences": 2,
+      "distinct_centipede_argument_pairs": 1,
+      "distinct_centipede_primitive_summaries": 1,
+      "dropped_events": 1,
+      "events_sha256": "256a92540532e7f14e4968ed0ac8d5c34d481215bbde63ada399aacd8b01d7e5",
+      "full_before_board_retained": false,
+      "outcome_difference_scope": [
+        "spawning_tiles[0][0]",
+        "spawning_tiles[0][1]"
+      ],
+      "pair": "get_skill_effect_pair003"
+    }
+  ],
+  "partition": "development; entire related acquisition family excluded from held-out evaluation",
+  "private_source_review_sha256": "13f6203b6c4438b3776ae6b916fbd4db07f01a90bc244af832d61369eea1f826",
+  "schema_version": 1,
+  "shipped_script_pins": [
+    {
+      "path": "scripts/global.lua",
+      "sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "size": 17363
+    },
+    {
+      "path": "scripts/weapons_enemy.lua",
+      "sha256": "5231dd7a2de730f04fa4116c0d99f07ecbb3b25059db3593d54d689c37bd4b7b",
+      "size": 22496
+    },
+    {
+      "path": "scripts/advanced/bosses/centipede.lua",
+      "sha256": "eaa9a21947be4b7aa8e016558aadc79cb528f1bfa3cf20c2fd747ff947711ef0",
+      "size": 2329
+    }
+  ],
+  "source_functions": [
+    {
+      "first_line": 325,
+      "inheritance": "CentipedeAtk2 inherits this function",
+      "last_line": 345,
+      "path": "scripts/weapons_enemy.lua",
+      "symbol": "CentipedeAtk1:GetSkillEffect"
+    },
+    {
+      "first_line": 59,
+      "last_line": 91,
+      "path": "scripts/advanced/bosses/centipede.lua",
+      "symbol": "CentipedeAtkB:GetSkillEffect"
+    }
+  ],
+  "source_pins": [
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callback_campaign_receipt.json",
+      "sha256": "d2040d41d2db15ad86a7856859be2a66c3f86a7d82d16881ae0a92ebb4d08a31",
+      "size": 20755
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260821T201929Z_callback_join.json",
+      "sha256": "4b52b7ec48702ffafe90ac2db22c644fe270941fae0b211f0548411cc02077fb",
+      "size": 179219
+    },
+    {
+      "path": "data/observatory/inventories/windows_build_13725832_31fe35265598_local_modified.json",
+      "sha256": "319e24045af4ef52814e43b564bd0bfb31cc94c43949b4e4cd9d10d873e6e90f",
+      "size": 125477
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822T025049Z_callback_bindings_live_slot_update.json",
+      "sha256": "39f1dda91de64a9b4b976a3ed3c12c93ae588ee5bcf6be66731c33b4b91abb24",
+      "size": 131137
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/capture_identity.json",
+      "sha256": "38d2b591ddffdcc0c45a99b9d5853ab50e877650adb5af68f0c401583508e9d8",
+      "size": 978
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/control_outcome.json",
+      "sha256": "453963fa89073912bc01754e5d9445610e33ec7127bd68e7a39a7e30e0385dfe",
+      "size": 9628
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/control_result.json",
+      "sha256": "fbc7760c9a1b2b90c3d0524a742f73ec5b5f1f2b1e45865d355702ebc1b11a3d",
+      "size": 1539
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/exact_hook_outcome.json",
+      "sha256": "0ec6a93eb48f951457676a6329cbe564e48dee989977467ace86727c5b4292b6",
+      "size": 9628
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/exact_hook_result.json",
+      "sha256": "0d0ad1161aa5547ba389b6cba1c527bc12e8775663d63a61a72f0e47f81812f1",
+      "size": 1544
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/exact_hook_trace.json",
+      "sha256": "b3614c16d47694afb875cd7f124452e256371358ff148d48b5fbac60eaa8b892",
+      "size": 387791
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/outcome_comparison.json",
+      "sha256": "399292b3080f1ddf4344b2d80048d8ecc35ca92e0bfcb1b3a4f3d8fd2ddb3548",
+      "size": 919
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/pair_plan.json",
+      "sha256": "536a10a940297ab69b3fb3130af70cdf71099c2ca9d1e56cc1df8bce09d997fe",
+      "size": 3880
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair002/result_comparison.json",
+      "sha256": "8960bfe443eada5c4192815ac094305f553ed731f0d9e2faf1f637be577d22d8",
+      "size": 745
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/capture_identity.json",
+      "sha256": "eb3eb68d4855d5ad21893f122ef750284f745a21d074f5d4cb932183f9eddc49",
+      "size": 978
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/control_outcome.json",
+      "sha256": "617aea3d5fd91679ebf2ecead05af73c0471ef95007072bb99db6c2af08e4d22",
+      "size": 9628
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/control_result.json",
+      "sha256": "5fdb7857d7639e04476e97e2127a1a637647438de2ae4a744d8c9ac9c696ae51",
+      "size": 1539
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/exact_hook_outcome.json",
+      "sha256": "45b8f0533f844c91ad0c647f520583a54640a02facf42d9ad4984d8cf761717b",
+      "size": 9628
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/exact_hook_result.json",
+      "sha256": "ff1e0ab06f060baf1bbf7e030f974cf7a7f016a047b1632781523aa6416c432f",
+      "size": 1544
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/exact_hook_trace.json",
+      "sha256": "35490f5950c5d2cbe3bddd23a9468c2c76cb6a851511d32d9fbc03ce9254df10",
+      "size": 387791
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/outcome_comparison.json",
+      "sha256": "b59195aa516e6aedc4aa54221e5c9a8307715987b925891857c25b54f4ee884b",
+      "size": 919
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/pair_plan.json",
+      "sha256": "74d47f229732085f1b3fca4179cc71c19c1d6e77f40639725d0dbf8d36f8f65e",
+      "size": 3880
+    },
+    {
+      "path": "data/observatory/captures/windows_build_13725832_owner_local_modified_20260822_natural_callbacks/get_skill_effect_pair003/result_comparison.json",
+      "sha256": "bfc31b1778ff2b80c5a3299dd0ac636a702e05492f6b65118e3b404592c54627",
+      "size": 745
+    },
+    {
+      "path": "data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json",
+      "sha256": "dfd1ab705beee79f06a609865930f918b937745c22393f516c5f84720a69b230",
+      "size": 113312
+    }
+  ],
+  "static_cardinal_law": {
+    "evidence_class": "pinned source-derived law; one original returned direction",
+    "first_side_offset": [
+      "-dy",
+      "dx"
+    ],
+    "original_lua_vectors": [
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        0
+      ]
+    ],
+    "rust_dirs": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        -1
+      ],
+      [
+        -1,
+        0
+      ]
+    ],
+    "second_side_offset": [
+      "dy",
+      "-dx"
+    ],
+    "v409_reversed_directions": [
+      [
+        -1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "vector_anchor_source": "data/observatory/native/windows_build_13725832_31fe35265598_piston_setup_boundary.json",
+    "vector_anchors": [
+      {
+        "data_rva": "0x00494da4",
+        "id": "VEC_UP",
+        "point": [
+          0,
+          -1
+        ]
+      },
+      {
+        "data_rva": "0x00494dac",
+        "id": "VEC_DOWN",
+        "point": [
+          0,
+          1
+        ]
+      },
+      {
+        "data_rva": "0x00494db4",
+        "id": "VEC_RIGHT",
+        "point": [
+          1,
+          0
+        ]
+      },
+      {
+        "data_rva": "0x00494dbc",
+        "id": "VEC_LEFT",
+        "point": [
+          -1,
+          0
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "active_weights_sha256": "1b96a18bdb6710b2ad48bd64b953232c8d5921ae48ce7ce1702aa8581e2b8c81",
+    "dispatch_association_review_sha256": "1149bda2df3ea37299792fdbab50a810be7ab646cde064954491edd5ed2c83ea",
+    "focused_rust_centipede_tests": {
+      "failed": 0,
+      "passed": 9,
+      "synthetic_directional_subcases": 12
+    },
+    "native_extension_bytes": 1480704,
+    "native_extension_name": "itb_solver.cp313-win_amd64.pyd",
+    "native_extension_sha256": "3e2229d0f36aae85f12fc97ca74232782ac971fdc0976484e1101020d06e6782",
+    "overlapping_validation_attempt": "installation wrapper advanced before session completion; overlapping checks stopped/rejected; accepted Python/Rust results rerun serially",
+    "protected_local_files_unchanged": 13,
+    "python_failure_corpus": {
+      "claim": "existing self-consistency harness; legacy empty-response team guard not canonical admission",
+      "elapsed_seconds": 82.25,
+      "empty_solver_responses": 146,
+      "filtered_records": 339,
+      "known_issue_plans": 1,
+      "missing_board_skips": 132,
+      "no_flagged_trigger_plans": 60,
+      "tests_passed": 1,
+      "unexpected": 0
+    },
+    "python_focused_tests": {
+      "failed": 0,
+      "passed": 40
+    },
+    "rust_recorded_board_regression": {
+      "action_required": 303,
+      "boards_checked": 1052,
+      "claim": "crash/required-action/bounds regression; no original-transition or held-out-win admission",
+      "elapsed_seconds": 359.73,
+      "integration_tests_passed": 6,
+      "unexpected_failures": 0
+    },
+    "rust_release_unit_tests": {
+      "failed": 0,
+      "passed": 1017
+    },
+    "serial_validation": true,
+    "simulator_version": 410,
+    "wheel_sha256": "4280c7d203cbe9002e06048d82d390570464a024060e45133b22d588f15543eb"
+  }
+}
