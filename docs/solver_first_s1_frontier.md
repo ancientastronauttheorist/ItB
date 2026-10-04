@@ -2,6 +2,15 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [conditional selected Move producer acquisition](solver_first_selected_move.md)
+closes original context propagation, cached target membership and selected-effect
+metadata construction for the declared no-passive corridor. The native setter
+rejects blocked D8 and occupied H8 and restores H8/G8 through the same producer.
+Owner -1 and unchanged query actor bytes retain their declared boundary.
+Submitted-action stats/context handling, Board dispatch, native continuation
+queue and route settlement, next decision and full turn remain open. This adds
+no completed-action, fair-input, held-out, search or whole-gate admission.
+
 October 4 [conditional stock Move callback acquisition](solver_first_move_callbacks.md)
 closes typed Board/Pawn/PointList/SkillEffect callback composition under declared
 raw actor/Pilot query inputs. Original targets are G8/F8/E8; the native normal

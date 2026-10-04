@@ -1,0 +1,552 @@
+{
+  "data_windows": [
+    {
+      "raw_sha256": "ab59126eeb027eecb049e5a9df8f648bdea07f08609016d5c98895d9e5f49fde",
+      "rva": "0x42e258",
+      "size": 32
+    },
+    {
+      "raw_sha256": "2d28be2b95bd2e7b2ff26e61eb18fd0bec40f3f8d5720b4df94774bd133f61ab",
+      "rva": "0x42e2fc",
+      "size": 32
+    },
+    {
+      "raw_sha256": "e83dfa5738088104f250bfdb4ccd8e635082bb40b7d43beba1e6e8badeefd64d",
+      "rva": "0x4380fc",
+      "size": 9
+    },
+    {
+      "raw_sha256": "99b5bdffa4915b96989bc78b1e0aea4646498872e46b39b0df388bbd93bac74a",
+      "rva": "0x4380a4",
+      "size": 14
+    },
+    {
+      "raw_sha256": "e83dfa5738088104f250bfdb4ccd8e635082bb40b7d43beba1e6e8badeefd64d",
+      "rva": "0x004380fc",
+      "size": 9
+    },
+    {
+      "raw_sha256": "d06d5b7da19851251a333231686eb5ae5270ab8b6fb584588aca5c8a33670017",
+      "rva": "0x00437f40",
+      "size": 15
+    },
+    {
+      "raw_sha256": "0558729b664768e711d7235db092ce06d9531debd50cfa0aeb173e0284739d81",
+      "rva": "0x00437f50",
+      "size": 22
+    },
+    {
+      "raw_sha256": "1697e9af30d64ae9a560b864d506d8bb7df302681ae5a77aa07be73078a232b5",
+      "rva": "0x00437f80",
+      "size": 10
+    },
+    {
+      "raw_sha256": "e1006909ec49d9c004e1fec86641621d00651681ddd14f2a74ea54f598a1b374",
+      "rva": "0x00437f68",
+      "size": 21
+    },
+    {
+      "raw_sha256": "d043e1bcbf133b4820da7af3203c58cbbe275ea952663afc7874ce535f9cc11b",
+      "rva": "0x0042a7a0",
+      "size": 5
+    },
+    {
+      "raw_sha256": "8cdacec907ab198bd2537e69b661fab3fe0238d461a842a2d0fb280b2be6b447",
+      "rva": "0x00438088",
+      "size": 11
+    },
+    {
+      "raw_sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "rva": "0x0040dfdc",
+      "size": 1
+    },
+    {
+      "raw_sha256": "b07e7e53dd6f8d2250fd9b3ece105be08ac7e9f09b61a7a4e8b44e3fa08ffb1d",
+      "rva": "0x003d68e8",
+      "size": 8
+    }
+  ],
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "image_base": "0x00400000",
+  "original_body_pins": [
+    {
+      "body_sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+      "body_size": 478,
+      "entry_rva": "0x00245070",
+      "ranges": [
+        {
+          "size": 478,
+          "start_rva": "0x00245070"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+      "body_size": 4520,
+      "entry_rva": "0x0022a920",
+      "ranges": [
+        {
+          "size": 4520,
+          "start_rva": "0x0022a920"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3524ac242335de198252f75161f4499f06d5b8f1be7e845d6eddfe61f9ed8dac",
+      "body_size": 388,
+      "entry_rva": "0x00226f00",
+      "ranges": [
+        {
+          "size": 388,
+          "start_rva": "0x00226f00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c125ba433c372f125cee931ab236521b8fd2c7c320e265bbcc3a8363f4239189",
+      "body_size": 124,
+      "entry_rva": "0x001c9bf0",
+      "ranges": [
+        {
+          "size": 124,
+          "start_rva": "0x001c9bf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "58fa20e4a276a96fa197b9bec5b34772c94715dbbdd9867c134f50f3633f89fb",
+      "body_size": 157,
+      "entry_rva": "0x001c9ca0",
+      "ranges": [
+        {
+          "size": 157,
+          "start_rva": "0x001c9ca0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4a0466f114c734bd512c85f5bc0834433380daead50236bf634161f0ea7d965c",
+      "body_size": 1417,
+      "entry_rva": "0x002670b0",
+      "ranges": [
+        {
+          "size": 1417,
+          "start_rva": "0x002670b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f93e7c0a7a635a68c36de4ca0c7c4071beddeee08690ece4d565c3782c0f045b",
+      "body_size": 77,
+      "entry_rva": "0x002287b0",
+      "ranges": [
+        {
+          "size": 77,
+          "start_rva": "0x002287b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c9031f10d38ba7cb28959b3460aec686a4366b4697accc7479638436aaa7280a",
+      "body_size": 973,
+      "entry_rva": "0x0016e8c0",
+      "ranges": [
+        {
+          "size": 973,
+          "start_rva": "0x0016e8c0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7da4a72363beba9c6f9352ef4581c9aea060ce4b9bcc2109aa59a4a8e050492a",
+      "body_size": 8,
+      "entry_rva": "0x0017a9c0",
+      "ranges": [
+        {
+          "size": 8,
+          "start_rva": "0x0017a9c0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ccc44e753f417cb103727661382ad7b18cd729f23a1bed12057027a3ef1506b1",
+      "body_size": 39,
+      "entry_rva": "0x00162280",
+      "ranges": [
+        {
+          "size": 39,
+          "start_rva": "0x00162280"
+        }
+      ]
+    },
+    {
+      "body_sha256": "49c903372860741f8dcdc25a9db1aca6363fa4db7b328d2c9dcac8d625abe4cd",
+      "body_size": 594,
+      "entry_rva": "0x00269cc0",
+      "ranges": [
+        {
+          "size": 594,
+          "start_rva": "0x00269cc0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "b6f1017ad4887c1c32a5f2c3d628b89f33e8f07a9657a008f0ce5e5acb46fe47",
+      "body_size": 195,
+      "entry_rva": "0x00268920",
+      "ranges": [
+        {
+          "size": 195,
+          "start_rva": "0x00268920"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6bb49352f06f6b4c19cc0e469e8d6e2a95afc87c8214eb68e85fdd5d5085155a",
+      "body_size": 751,
+      "entry_rva": "0x00268050",
+      "ranges": [
+        {
+          "size": 751,
+          "start_rva": "0x00268050"
+        }
+      ]
+    },
+    {
+      "body_sha256": "12e479207ea0bccd75c37bee074ab57a68c81d1b92153d51660804a0de5352e0",
+      "body_size": 207,
+      "entry_rva": "0x00227b20",
+      "ranges": [
+        {
+          "size": 207,
+          "start_rva": "0x00227b20"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fb439c5dc8bad387316998d5c47b8d1bf8bf181c68df25a80d5ef98db885750b",
+      "body_size": 49,
+      "entry_rva": "0x00227ae0",
+      "ranges": [
+        {
+          "size": 49,
+          "start_rva": "0x00227ae0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "771a522903bf79af9e8e0aad8d137275aedbde53ab1eb8e9cec0d365a3fae647",
+      "body_size": 525,
+      "entry_rva": "0x00267710",
+      "ranges": [
+        {
+          "size": 525,
+          "start_rva": "0x00267710"
+        }
+      ]
+    },
+    {
+      "body_sha256": "595e58ad603664da5ba5270a18c14b93690c929d9e5ee2c36fa0c5ab5a2f673c",
+      "body_size": 559,
+      "entry_rva": "0x00268340",
+      "ranges": [
+        {
+          "size": 559,
+          "start_rva": "0x00268340"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d37e4f7e5ebe24eb61219fe0c8b87b2ab9534ca39c36192912ae2f8db4bb3de1",
+      "body_size": 330,
+      "entry_rva": "0x0025e700",
+      "ranges": [
+        {
+          "size": 330,
+          "start_rva": "0x0025e700"
+        }
+      ]
+    },
+    {
+      "body_sha256": "177f9c9156cd751143614538f5006f47c5c7037cd20db750325501bfd7e98ca4",
+      "body_size": 198,
+      "entry_rva": "0x0025a2e0",
+      "ranges": [
+        {
+          "size": 198,
+          "start_rva": "0x0025a2e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "58367ffa2a0179375018fa0f5c26da24391e42ebe0ed8fdda35a21fc7bdc396f",
+      "body_size": 3,
+      "entry_rva": "0x00008500",
+      "ranges": [
+        {
+          "size": 3,
+          "start_rva": "0x00008500"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c49f0e24bd27ed5495ceddc13536ca6fbe85d8c97f207db817ce0642b8b01906",
+      "body_size": 245,
+      "entry_rva": "0x00007fd0",
+      "ranges": [
+        {
+          "size": 245,
+          "start_rva": "0x00007fd0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2b249f6d45bdf474fdd740ded523dd70bf8f44661580643553f2762afd9a987b",
+      "body_size": 21,
+      "entry_rva": "0x00357848",
+      "ranges": [
+        {
+          "size": 21,
+          "start_rva": "0x00357848"
+        }
+      ]
+    },
+    {
+      "body_sha256": "30663a613366ba1ac13c2661e65e939a74dfbedb95a0d71875bc549a4408084a",
+      "body_size": 59,
+      "entry_rva": "0x0035780d",
+      "ranges": [
+        {
+          "size": 59,
+          "start_rva": "0x0035780d"
+        }
+      ]
+    },
+    {
+      "body_sha256": "faa02f86a7c2b2cc98c687088af16bd8514606a56df2923ddec10322c5a9ce4e",
+      "body_size": 10,
+      "entry_rva": "0x003d5790",
+      "ranges": [
+        {
+          "size": 10,
+          "start_rva": "0x003d5790"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d228c5a3896224ee078d58bca82aa4972db4019c39712cfa8963f4fd1ed34c82",
+      "body_size": 87,
+      "entry_rva": "0x003d57a0",
+      "ranges": [
+        {
+          "size": 87,
+          "start_rva": "0x003d57a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e651bf5444be1a430abdd983d1d730b5ba44a552fdcfcd8d29c2a4bb1278f6ce",
+      "body_size": 660,
+      "entry_rva": "0x00277470",
+      "ranges": [
+        {
+          "size": 660,
+          "start_rva": "0x00277470"
+        }
+      ]
+    },
+    {
+      "body_sha256": "612697e5d8ec51a2bd9fad39587e64aaaa5c99ebcb67ea0a819a578ff1b13078",
+      "body_size": 551,
+      "entry_rva": "0x00227bf0",
+      "ranges": [
+        {
+          "size": 551,
+          "start_rva": "0x00227bf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "99f2cda5ff269645f72f6b3e5a2ca14da457b6c6cf8c70f7566759ef74386b52",
+      "body_size": 260,
+      "entry_rva": "0x00228800",
+      "ranges": [
+        {
+          "size": 260,
+          "start_rva": "0x00228800"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7d4be04775d512a508dbcb4d6e327a918007f23824b938d7d81e8bf39b19cf44",
+      "body_size": 232,
+      "entry_rva": "0x00229f00",
+      "ranges": [
+        {
+          "size": 232,
+          "start_rva": "0x00229f00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a2fbe5d348d34a7d859a03e7da7732918f5856d255f59a5cd58171f9b3566f67",
+      "body_size": 96,
+      "entry_rva": "0x00228b70",
+      "ranges": [
+        {
+          "size": 96,
+          "start_rva": "0x00228b70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c33eedb8c26c6635b01b3e0fc4c98a0f95bcd887035d849e5ec6bd645b9cdc3e",
+      "body_size": 3596,
+      "entry_rva": "0x002689f0",
+      "ranges": [
+        {
+          "size": 3596,
+          "start_rva": "0x002689f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ef2b5bfdba77a599c1ebbc26d445513c88f102b3a532a50e8f118d6a8857f5da",
+      "body_size": 522,
+      "entry_rva": "0x00237730",
+      "ranges": [
+        {
+          "size": 522,
+          "start_rva": "0x00237730"
+        }
+      ]
+    },
+    {
+      "body_sha256": "08d7d6163c2500dcf86eef8919f5049f5327ccfd5e2ab70c9ac40f51fd4152e4",
+      "body_size": 237,
+      "entry_rva": "0x0026a6e0",
+      "ranges": [
+        {
+          "size": 237,
+          "start_rva": "0x0026a6e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ab8871fdc84043ad2f7bfd83e50e14acfa7ea7a4cf7c03709ad7b6e1c597f3b2",
+      "body_size": 270,
+      "entry_rva": "0x000493b0",
+      "ranges": [
+        {
+          "size": 270,
+          "start_rva": "0x000493b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "249bc6ec409997d22ee812309ddb49da09205c1e33460166e947478a0c7f49bc",
+      "body_size": 214,
+      "entry_rva": "0x000491b0",
+      "ranges": [
+        {
+          "size": 214,
+          "start_rva": "0x000491b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ccbecc70505f546c2d068ad7c95121f0c631aa27dd197127904de3faaff307c2",
+      "body_size": 2975,
+      "entry_rva": "0x001610d0",
+      "ranges": [
+        {
+          "size": 2975,
+          "start_rva": "0x001610d0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "84f3a18c513046aa2508222fdc989027c2fb8d37ca6eb23c7ed071e573311f57",
+      "body_size": 129,
+      "entry_rva": "0x0014f570",
+      "ranges": [
+        {
+          "size": 129,
+          "start_rva": "0x0014f570"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0d11bb3006e634dc8789f0c682aad452b8117e4abe23cafcc397a279322ffde7",
+      "body_size": 382,
+      "entry_rva": "0x0014ef60",
+      "ranges": [
+        {
+          "size": 382,
+          "start_rva": "0x0014ef60"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f8b7fa2edf8d3f636e61341d22bcac72117397225bb350f1899933a038f407b1",
+      "body_size": 533,
+      "entry_rva": "0x00150250",
+      "ranges": [
+        {
+          "size": 533,
+          "start_rva": "0x00150250"
+        }
+      ]
+    },
+    {
+      "body_sha256": "60c8f3c28dbc12ca3a7d49e788e2ed6e0578b64139ed8f03779dec70f36e9d72",
+      "body_size": 335,
+      "entry_rva": "0x0014ecf0",
+      "ranges": [
+        {
+          "size": 335,
+          "start_rva": "0x0014ecf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "9000e84b295d2a9c06436b2903a4e51d069768484f675b490ede69bd57efbf15",
+      "body_size": 352,
+      "entry_rva": "0x0009d9f0",
+      "ranges": [
+        {
+          "size": 352,
+          "start_rva": "0x0009d9f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "1adf2827bfbc4b0ad1cb899d8ff22f63027509da39db38f1360fc4f78c599e61",
+      "body_size": 81,
+      "entry_rva": "0x00007e10",
+      "ranges": [
+        {
+          "size": 81,
+          "start_rva": "0x00007e10"
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "source_review_packet_sha256": [
+    "726638e4a1111b193203506b539fed71ea84e03da7db816bbb3358752adb0256",
+    "2b45d00bbdfc4c09690c822745b8b6677abdda86cceff38661c98de7cb5de1a4",
+    "b64e3eb1a8ff12562e863949f7ebb31683ce1650e9865d6d3038630e62bf1f3d"
+  ],
+  "supplied_boundaries": [
+    "Reuses the conditional Move callback world, genuine native Move/Repair/base manager, stock Lua/type bindings and declared Board/Tile/raw actor/Pilot premises. Inherited P5 acquisition boundaries still apply.",
+    "Actual2287b0 propagates Board+0xc into genuine Move/Repair. Actual269cc0 bounds-checks origin, calls unchanged stock target query and clones independently owned cached/output vectors. Targets G8/F8/E8 are constructed, not supplied.",
+    "Actual25a2e0 and7e10 produce a declared empty passive aggregate and string. Direct actual25e700 returns AL0 and consumes its genuinely constructed byvalue owned argument; both native268340 calls also execute. Full6cd0/6cf0 global initializers, atexit/CRT startup/destruction and gameplay aggregate population are excluded. No cached false result or skipped constructor instruction.",
+    "Actual268920 writes selected origin/target and enforces cached membership through complete268050. Actual Lua TwoClick/Explosion getters, stock GetSkillEffect, original267710 metadata and Move postprocessing run. Actual effect value0 and owner-1 are constructor outputs; actor UID attribution and manager selection/submission are excluded.",
+    "One development corridor/world family: H8 to G8 positive, blockedD8(bridge0,4) and occupiedH8 nonmember negatives, followed by native effect restoration. Four selected setter checks are dependent components, not four independent corpus cases. No wait/noop or full availability admission.",
+    "Selected type4/mode0/FULL_DELAY effect is constructed and owned. ActorHP/position/storedactive/bMoved are unchanged. Native227bf0/237730 submitted action,2689f0 stats/context dispatch,1610d0 Board dispatch, route settlement, next decision and full turn remain open.",
+    "Original guest registry/cache/actor inputs/Skill/path/events remain retained. Temporary shared counts and byvalue query argument release are graded; full guest lifecycle/temporal ownership is excluded. Host GL cleanup is separate, saved handles cannot resume.",
+    "Source/whole-input/runtime/map identities checked before and after acquisition. Frozen observed DLL instructions and complete byte-pinned native owners/windows admitted. Native/DLL30second/2million-instruction percall limits are acquisition budgets, not planner timing.",
+    "No Rust simulator semantics or candidate solver changed, no new Rust comparison, fair-input/held-out/search certificate/ledger/S1/whole-gate promotion."
+  ]
+}
