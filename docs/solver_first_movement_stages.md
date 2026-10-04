@@ -1,6 +1,12 @@
 # S1 coordinate and arrival stages
 
-October3 follow-up: [genuine original Lua VM/registry execution](solver_first_lua_vm_registry.md)
+October3 stock follow-up: [exact grass emitter Lua execution](solver_first_stock_lua_emitters.md)
+now acquires inherited fields and generated getters. A separate partial native
+Dust control reaches the actual image-cache receiver before an explicit stop.
+Real resource objects, loaded Move dispatch and completed grounded movement
+remain unacquired; this does not promote the historical stage projections below.
+
+Earlier October3 follow-up: [genuine original Lua VM/registry execution](solver_first_lua_vm_registry.md)
 closes the previously unresolved imported `lua_pushvalue` for bounded registry
 and value-wrapper inputs. Stock emitter resources and original full movement
 settlement remain open. The stage results and failed route receipt below remain

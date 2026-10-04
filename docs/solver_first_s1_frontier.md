@@ -215,6 +215,14 @@ infer their order merely from the construction record or direct-call graph.
 
 ## Bounded acquisition sequence and exit test
 
+The subsequent [stock grass Lua acquisition](solver_first_stock_lua_emitters.md)
+matches one frozen source-slice world, including actual inherited fields and
+generated getters. A partial native Dust control reaches image-cache `0xbe8f0`
+with ECX=`0x8d5660`; it stops before lookup, with no fabricated resource result.
+Image objects, loaded Move/dispatcher context, original biome substitution and
+completed Ground N2 settlement remain open. Original action/turn admissions and
+ledger/gate promotions remain zero.
+
 October3 [original Lua VM/registry follow-up](solver_first_lua_vm_registry.md)
 closes the reached `lua_pushvalue` import for genuine custom-allocator VM plus
 generic registry/value wrappers. Three frozen positive/negative/nil cases match

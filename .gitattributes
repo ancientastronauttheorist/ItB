@@ -48,3 +48,5 @@ scripts/solver_first_target_area_oracle.py text eol=lf
 src/observatory/solver_first_target_area.py text eol=lf
 scripts/solver_first_lua_vm.py text eol=lf
 src/observatory/solver_first_lua_vm.py text eol=lf
+scripts/solver_first_lua_emitters.py text eol=lf
+src/observatory/solver_first_lua_emitters.py text eol=lf

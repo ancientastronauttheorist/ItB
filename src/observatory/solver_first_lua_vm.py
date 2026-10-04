@@ -22,8 +22,9 @@ BODY_PINS = ((0x19ca0, 395, "921fed5c459eb271fdd37cf65be9872d7e7de3f929830133893
              (0x47c60, 123, "c24e8aaed4de58907df11c265260404d68e8b92e1a6373d11e2db8e73238e755"))
 
 class LuaMachine(api.Machine):
-    def __init__(self, executable, instruction_map=None):
+    def __init__(self, executable, instruction_map=None, *, allocator_returns=ALLOCATOR_RETURNS):
         self.executable = Path(executable)
+        self.allocator_returns = frozenset(allocator_returns)
         super().__init__(api.OriginalSource(self.executable))
         data = (self.executable.parent / "lua5.1.dll").read_bytes()
         api.require(api.sha(data) == DLL_SHA, "DLL identity differs")
@@ -138,7 +139,7 @@ class LuaMachine(api.Machine):
         esp = self.uc.reg_read(self.x.UC_X86_REG_ESP)
         api.require(api.STACK <= esp < api.STACK + 0x10000 - 20, "allocator stack invalid")
         ret = self.get(esp)
-        api.require(ret - DLL_BASE in ALLOCATOR_RETURNS, "allocator caller outside frozen seams")
+        api.require(ret - DLL_BASE in self.allocator_returns, "allocator caller outside frozen seams")
         api.require(self.trace and self.trace[-1][0] == "lua5.1.dll", "allocator call trace missing")
         _, call_rva, call_size = self.trace[-1]
         api.require(call_rva + call_size == ret - DLL_BASE, "allocator return does not follow original instruction")

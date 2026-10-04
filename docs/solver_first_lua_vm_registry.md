@@ -1,5 +1,11 @@
 # Original Lua VM and game registry dependency closure
 
+Follow-up: [stock grass Lua acquisition](solver_first_stock_lua_emitters.md) now
+executes exact source slices and generated getters in this genuine VM. A separate
+partial native Dust control reaches the image-cache entry; real resources,
+loaded Move dispatch and completed Ground movement remain open. The report below
+retains its earlier registry-only domain and historical source pins.
+
 The movement acquisition previously stopped at original EXE `0x6c3ec`, an
 unresolved `lua_pushvalue` import before the grounded pawn coordinate write.
 A genuine guest VM now executes that import and the selected game registry/value
