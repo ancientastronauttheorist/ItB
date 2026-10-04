@@ -46,3 +46,5 @@ recordings/failure_db_snapshot_sim_v412.jsonl -text
 scripts/solver_first_target_completeness.py text eol=lf
 scripts/solver_first_target_area_oracle.py text eol=lf
 src/observatory/solver_first_target_area.py text eol=lf
+scripts/solver_first_lua_vm.py text eol=lf
+src/observatory/solver_first_lua_vm.py text eol=lf

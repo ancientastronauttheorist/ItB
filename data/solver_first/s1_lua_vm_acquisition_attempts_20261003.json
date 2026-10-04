@@ -1,0 +1,78 @@
+{
+  "accounting": "Four prototypes plus three exploratory plus three frozen cases; mixed domains are not aggregated as fidelity passes.",
+  "baseline_solver_commit": "84c186ae440163056c5c39b9aea9c20e6f49983e",
+  "corpus_version": "original-lua-VM-acquisition-attempt-accounting-v1",
+  "exploratory": {
+    "admitted": 3,
+    "attempted": 3,
+    "failed": 0,
+    "matched": 3,
+    "private_report_sha256": "67402b230a0ec9320a608c2e516f49cd339928d61312f26bb72d3c68e5b887f6",
+    "purpose": "Source-checked observed instruction-map acquisition before hash freeze"
+  },
+  "fair_input_admissions": 0,
+  "frozen": {
+    "admitted": 3,
+    "attempted": 3,
+    "excluded": 0,
+    "failed": 0,
+    "matched": 3,
+    "report": "data/solver_first/s1_lua_vm_registry_20261003.json",
+    "report_raw_sha256": "35b77c45741b4bc24272b5689141b330060fec8868647db006af8ac2bd3d1b08"
+  },
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "independent_review": "Source/retained-receipt review reconciles traces, allocator slices/whole histories, typed observations, pins and frozen map; reviewer ran no native code.",
+  "ledger_promotions": 0,
+  "original_completed_action_transitions": 0,
+  "prototype_failures": 2,
+  "prototypes": [
+    {
+      "evidence_class": "failed_external_callback_translation",
+      "failure": "VM constructor failed",
+      "id": "prototype_01",
+      "original_action_admissions": 0,
+      "private_receipt_sha256": "932947c77826b016514a7f364d227f453e15fcd5313b2371b43bd0cc72a59377",
+      "raw_status": "failed",
+      "whole_joined_trace_admissions": 0
+    },
+    {
+      "evidence_class": "failed_supplied_SEH_head",
+      "failure": "VM constructor failed",
+      "id": "prototype_02",
+      "original_action_admissions": 0,
+      "private_receipt_sha256": "39c4f872688d267e04582bbcf13759735a6019ab60cd797f745cd69a03537907",
+      "raw_status": "failed",
+      "whole_joined_trace_admissions": 0
+    },
+    {
+      "evidence_class": "bounded_VM_API_close_complete",
+      "failure": null,
+      "id": "prototype_03",
+      "original_action_admissions": 0,
+      "private_receipt_sha256": "00be741fac5227905a482ffea063739fcd921140a5636b6a8e3f712cb15731fa",
+      "raw_status": "complete",
+      "whole_joined_trace_admissions": 0
+    },
+    {
+      "evidence_class": "observed_joined_wrappers_with_incomplete_saved_call_audit",
+      "failure": null,
+      "id": "prototype_04",
+      "original_action_admissions": 0,
+      "private_receipt_sha256": "c4450f8e3120203c18bb0ac424851313340f9429d7f4a4b272778b789a0d2ded",
+      "raw_status": "complete",
+      "whole_joined_trace_admissions": 0
+    }
+  ],
+  "remaining": [
+    "Actual default allocator/DLL/game bootstrap and registration",
+    "Stock Ground emitter definitions and actual image/resource construction",
+    "Loaded Move SkillManager and dispatcher payload association",
+    "Original N2 action admission/readiness, movement and ordered immediate settlement",
+    "Original enemy/environment/spawn continuation, independent gameplay corpus and fair held-out evaluation"
+  ],
+  "schema_version": 1,
+  "scope": "Separate exploratory/prototype and frozen VM/wrapper evidence, never complete gameplay actions",
+  "total_native_scenario_attempts": 10
+}

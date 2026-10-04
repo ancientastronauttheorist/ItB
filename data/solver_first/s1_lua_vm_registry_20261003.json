@@ -1,0 +1,445 @@
+{
+  "admitted": 3,
+  "allocator_return_rvas": [
+    73839,
+    104594,
+    104653,
+    105189,
+    105216,
+    105290,
+    105656
+  ],
+  "attempted": 3,
+  "baseline_solver_commit": "84c186ae440163056c5c39b9aea9c20e6f49983e",
+  "bound_exe_lua_imports": [
+    {
+      "dll_export_rva": 5248,
+      "exe_iat_rva": "0x003d6480",
+      "name": "lua_isnumber"
+    },
+    {
+      "dll_export_rva": 7456,
+      "exe_iat_rva": "0x003d6484",
+      "name": "lua_rawget"
+    },
+    {
+      "dll_export_rva": 6528,
+      "exe_iat_rva": "0x003d6488",
+      "name": "lua_pushnumber"
+    },
+    {
+      "dll_export_rva": 6560,
+      "exe_iat_rva": "0x003d648c",
+      "name": "lua_pushinteger"
+    },
+    {
+      "dll_export_rva": 10000,
+      "exe_iat_rva": "0x003d6490",
+      "name": "lua_concat"
+    },
+    {
+      "dll_export_rva": 6672,
+      "exe_iat_rva": "0x003d6494",
+      "name": "lua_pushstring"
+    },
+    {
+      "dll_export_rva": 9904,
+      "exe_iat_rva": "0x003d6498",
+      "name": "lua_error"
+    },
+    {
+      "dll_export_rva": 6304,
+      "exe_iat_rva": "0x003d649c",
+      "name": "lua_touserdata"
+    },
+    {
+      "dll_export_rva": 6896,
+      "exe_iat_rva": "0x003d64a0",
+      "name": "lua_pushcclosure"
+    },
+    {
+      "dll_export_rva": 7168,
+      "exe_iat_rva": "0x003d64a4",
+      "name": "lua_pushboolean"
+    },
+    {
+      "dll_export_rva": 6144,
+      "exe_iat_rva": "0x003d64a8",
+      "name": "lua_objlen"
+    },
+    {
+      "dll_export_rva": 4688,
+      "exe_iat_rva": "0x003d64ac",
+      "name": "lua_remove"
+    },
+    {
+      "dll_export_rva": 8224,
+      "exe_iat_rva": "0x003d64b0",
+      "name": "lua_rawseti"
+    },
+    {
+      "dll_export_rva": 9936,
+      "exe_iat_rva": "0x003d64b4",
+      "name": "lua_next"
+    },
+    {
+      "dll_export_rva": 6496,
+      "exe_iat_rva": "0x003d64b8",
+      "name": "lua_pushnil"
+    },
+    {
+      "dll_export_rva": 7280,
+      "exe_iat_rva": "0x003d64bc",
+      "name": "lua_gettable"
+    },
+    {
+      "dll_export_rva": 7520,
+      "exe_iat_rva": "0x003d64c0",
+      "name": "lua_rawgeti"
+    },
+    {
+      "dll_export_rva": 5552,
+      "exe_iat_rva": "0x003d64c4",
+      "name": "lua_equal"
+    },
+    {
+      "dll_export_rva": 18016,
+      "exe_iat_rva": "0x003d64c8",
+      "name": "luaL_loadstring"
+    },
+    {
+      "dll_export_rva": 17024,
+      "exe_iat_rva": "0x003d64cc",
+      "name": "luaL_loadfile"
+    },
+    {
+      "dll_export_rva": 8848,
+      "exe_iat_rva": "0x003d64d0",
+      "name": "lua_pcall"
+    },
+    {
+      "dll_export_rva": 17808,
+      "exe_iat_rva": "0x003d64d4",
+      "name": "luaL_loadbuffer"
+    },
+    {
+      "dll_export_rva": 56480,
+      "exe_iat_rva": "0x003d64d8",
+      "name": "luaL_openlibs"
+    },
+    {
+      "dll_export_rva": 18224,
+      "exe_iat_rva": "0x003d64dc",
+      "name": "luaL_newstate"
+    },
+    {
+      "dll_export_rva": 106080,
+      "exe_iat_rva": "0x003d64e0",
+      "name": "lua_close"
+    },
+    {
+      "dll_export_rva": 5088,
+      "exe_iat_rva": "0x003d64e4",
+      "name": "lua_pushvalue"
+    },
+    {
+      "dll_export_rva": 16256,
+      "exe_iat_rva": "0x003d64e8",
+      "name": "luaL_ref"
+    },
+    {
+      "dll_export_rva": 16592,
+      "exe_iat_rva": "0x003d64ec",
+      "name": "luaL_unref"
+    },
+    {
+      "dll_export_rva": 5840,
+      "exe_iat_rva": "0x003d64f0",
+      "name": "lua_tointeger"
+    },
+    {
+      "dll_export_rva": 5728,
+      "exe_iat_rva": "0x003d64f4",
+      "name": "lua_tonumber"
+    },
+    {
+      "dll_export_rva": 5968,
+      "exe_iat_rva": "0x003d64f8",
+      "name": "lua_toboolean"
+    },
+    {
+      "dll_export_rva": 5136,
+      "exe_iat_rva": "0x003d64fc",
+      "name": "lua_type"
+    },
+    {
+      "dll_export_rva": 6016,
+      "exe_iat_rva": "0x003d6500",
+      "name": "lua_tolstring"
+    },
+    {
+      "dll_export_rva": 7328,
+      "exe_iat_rva": "0x003d6504",
+      "name": "lua_getfield"
+    },
+    {
+      "dll_export_rva": 6608,
+      "exe_iat_rva": "0x003d6508",
+      "name": "lua_pushlstring"
+    },
+    {
+      "dll_export_rva": 4576,
+      "exe_iat_rva": "0x003d650c",
+      "name": "lua_gettop"
+    },
+    {
+      "dll_export_rva": 4608,
+      "exe_iat_rva": "0x003d6510",
+      "name": "lua_settop"
+    },
+    {
+      "dll_export_rva": 4768,
+      "exe_iat_rva": "0x003d6514",
+      "name": "lua_insert"
+    },
+    {
+      "dll_export_rva": 7584,
+      "exe_iat_rva": "0x003d6518",
+      "name": "lua_createtable"
+    },
+    {
+      "dll_export_rva": 7200,
+      "exe_iat_rva": "0x003d651c",
+      "name": "lua_pushlightuserdata"
+    },
+    {
+      "dll_export_rva": 7904,
+      "exe_iat_rva": "0x003d6520",
+      "name": "lua_setfield"
+    },
+    {
+      "dll_export_rva": 7232,
+      "exe_iat_rva": "0x003d6524",
+      "name": "lua_pushthread"
+    },
+    {
+      "dll_export_rva": 10208,
+      "exe_iat_rva": "0x003d6528",
+      "name": "lua_newuserdata"
+    },
+    {
+      "dll_export_rva": 8032,
+      "exe_iat_rva": "0x003d652c",
+      "name": "lua_rawset"
+    },
+    {
+      "dll_export_rva": 8416,
+      "exe_iat_rva": "0x003d6530",
+      "name": "lua_setmetatable"
+    },
+    {
+      "dll_export_rva": 7648,
+      "exe_iat_rva": "0x003d6534",
+      "name": "lua_getmetatable"
+    },
+    {
+      "dll_export_rva": 7744,
+      "exe_iat_rva": "0x003d6538",
+      "name": "lua_getfenv"
+    },
+    {
+      "dll_export_rva": 6256,
+      "exe_iat_rva": "0x003d653c",
+      "name": "lua_tocfunction"
+    },
+    {
+      "dll_export_rva": 8752,
+      "exe_iat_rva": "0x003d6540",
+      "name": "lua_call"
+    },
+    {
+      "dll_export_rva": 6848,
+      "exe_iat_rva": "0x003d6544",
+      "name": "lua_pushfstring"
+    },
+    {
+      "dll_export_rva": 10304,
+      "exe_iat_rva": "0x003d6548",
+      "name": "lua_getupvalue"
+    },
+    {
+      "dll_export_rva": 8592,
+      "exe_iat_rva": "0x003d654c",
+      "name": "lua_setfenv"
+    },
+    {
+      "dll_export_rva": 7856,
+      "exe_iat_rva": "0x003d6550",
+      "name": "lua_settable"
+    },
+    {
+      "dll_export_rva": 4848,
+      "exe_iat_rva": "0x003d6554",
+      "name": "lua_replace"
+    }
+  ],
+  "cases": [
+    {
+      "allocator_call_count": 107,
+      "call_count": 23,
+      "case": {
+        "define_marker": true,
+        "id": "positive",
+        "value": 37
+      },
+      "failure": null,
+      "import_counts": {},
+      "observations": {
+        "final_stack_depth": 0,
+        "global_ref": 1,
+        "global_type": 5,
+        "value_integer": 37,
+        "value_ref": 4,
+        "value_type": 3
+      },
+      "private_receipt_sha256": "0dbcbc58db21943a33506955c4d728782c24d2f0c245750681e0a9dd1aa1901a",
+      "remaining_allocations": 0,
+      "status": "complete"
+    },
+    {
+      "allocator_call_count": 107,
+      "call_count": 23,
+      "case": {
+        "define_marker": true,
+        "id": "negative",
+        "value": -7
+      },
+      "failure": null,
+      "import_counts": {},
+      "observations": {
+        "final_stack_depth": 0,
+        "global_ref": 1,
+        "global_type": 5,
+        "value_integer": -7,
+        "value_ref": 4,
+        "value_type": 3
+      },
+      "private_receipt_sha256": "430a895789e39a1b1ce0e00b23130a3ff83a351dd524b026a5be364a36fc4b90",
+      "remaining_allocations": 0,
+      "status": "complete"
+    },
+    {
+      "allocator_call_count": 107,
+      "call_count": 21,
+      "case": {
+        "define_marker": false,
+        "id": "missing_nil",
+        "value": 0
+      },
+      "failure": null,
+      "import_counts": {},
+      "observations": {
+        "final_stack_depth": 0,
+        "global_ref": 1,
+        "global_type": 5,
+        "value_integer": 0,
+        "value_ref": 4294967295,
+        "value_type": 0
+      },
+      "private_receipt_sha256": "ddccb0fef7ea021746880061ebecd3aba19e4c4c896b0252a272c6a989c1f7e4",
+      "remaining_allocations": 0,
+      "status": "complete"
+    }
+  ],
+  "corpus_version": "s1-original-lua-registry-development-v1",
+  "dll_sha256": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+  "evidence_class": "bounded original DLL and EXE bodies with genuine guest VM and supplied allocator",
+  "excluded": 0,
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "executed_DLL_instruction_points": 2392,
+  "failed": 0,
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "game_build": 13725832,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "information_mode": "synthetic offline oracle storage; no fair player admission",
+  "instruction_admission_mode": "frozen observed instruction map",
+  "instruction_admission_sha256": "195c5c3858a5cbd63c7e4e6d0ca3acf567e8a8f6c69de57bd9a2c04889cf2b22",
+  "ledger_promotions": 0,
+  "matched": 3,
+  "next_blocker": "Stock Ground emitter Lua definitions and actual image/resource objects, then loaded Move/dispatch context and joined N2 action settlement.",
+  "objective": "original VM/registry typed observations and normal allocator ownership closure",
+  "original_DLL_body_pins": [
+    {
+      "raw_sha256": "921fed5c459eb271fdd37cf65be9872d7e7de3f929830133893c22a2ddd28ca8",
+      "rva": 105632,
+      "size": 395
+    },
+    {
+      "raw_sha256": "ba9f487114a7f0870bc8ec0fbcbe0a5d82d6d833150c7d783a79874674417f63",
+      "rva": 5088,
+      "size": 43
+    },
+    {
+      "raw_sha256": "c24e8aaed4de58907df11c265260404d68e8b92e1a6373d11e2db8e73238e755",
+      "rva": 293984,
+      "size": 123
+    }
+  ],
+  "original_EXE_body_identities": [
+    {
+      "body_sha256": "ed059e361991083be61a45e0ca5d238c252bc53c06df3ac8df9a9646dcad81ef",
+      "body_size": 68,
+      "entry_rva": "0x0006c3e0",
+      "ranges": [
+        {
+          "size": 68,
+          "start_rva": "0x0006c3e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "701d733376fa7687810c969eb708950d34eba50c92dd2f407eb07dd80d742f94",
+      "body_size": 390,
+      "entry_rva": "0x0004e800",
+      "ranges": [
+        {
+          "size": 390,
+          "start_rva": "0x0004e800"
+        }
+      ]
+    }
+  ],
+  "original_completed_action_transitions": 0,
+  "relocated_base": 553648128,
+  "relocation_count": 5595,
+  "relocation_map_sha256": "390ef02c9abc5de67ea94d6e4353d84cb06c4b37328b9ad295dbab359e0bc752",
+  "runtime": {
+    "binding_sha256": "b4de7d560790a587157b17edd71c83b4f2d2bade2447d1a5433c497468ac8aeb",
+    "cpu_model": 19,
+    "decoder_binding_sha256": "94571d1314355e261aff0ddfc94985fe8761232ddff6874181fd21efa9fab47f",
+    "decoder_library_sha256": "76958e18380023a68fd1714fa2e01c594cc6db1955a07ad6937b66e66dc5d6c3",
+    "decoder_version": "5.0.7",
+    "instruction_limit": 2000000,
+    "loaded_library_sha256": "010d85dce84b8f6ffaec3d5420f1b5f7768f859eb831be574c7da23e656ee8f1",
+    "unicorn_package_sha256": "0e8ac7115c755994a968fa865bd1b2f2075edea715c17e91d62af2cc52c13392",
+    "unicorn_version": "2.1.4",
+    "wall_time_limit_us": 10000000
+  },
+  "schema_version": 1,
+  "source_lf_sha256": {
+    "scripts/solver_first_lua_vm.py": "6f80e6ccda54c8101bd91a825c5bb3e857a3038680545e14c1f72145901bd99c",
+    "src/observatory/pe_anchor_map.py": "61350bad1431f3a476fabd9be577fbf1a5e502b3708442f5b59a91fc48a9c71e",
+    "src/observatory/solver_first_lua_vm.py": "e80983b8ac85b801f5cc484abfb335f3703227d32f4c08fba38ac8d39499a685",
+    "src/observatory/solver_first_path_oracle.py": "8e6e7ac3cf25cae8ab7552c9d7434f2ac7bd8e16b86eb512fb235fd80108716b"
+  },
+  "supplied_boundaries": [
+    "Normal successful custom lua_Alloc callback; allocator is supplied, original Lua initialization and APIs execute unchanged.",
+    "FS:[0]=ffffffff follows original empty-SEH-list branch; default luaL_newstate/CRT loader startup is unacquired.",
+    "Actual Lua global ProbeValue is synthetic positive/negative/nil development input; source-correct emitter tables are not loaded.",
+    "Mapped Board scratch objects and inline MSVC string records are supplied; game registry/value wrapper bodies execute unchanged.",
+    "DLL instruction map freezes observed decoded paths, not a function atlas or universal Lua correctness proof.",
+    "Private ordered instruction/import/allocator traces are retained; no full ordered read/write or whole-native-state comparison is claimed."
+  ]
+}

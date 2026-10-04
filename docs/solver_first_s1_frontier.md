@@ -215,6 +215,14 @@ infer their order merely from the construction record or direct-call graph.
 
 ## Bounded acquisition sequence and exit test
 
+October3 [original Lua VM/registry follow-up](solver_first_lua_vm_registry.md)
+closes the reached `lua_pushvalue` import for genuine custom-allocator VM plus
+generic registry/value wrappers. Three frozen positive/negative/nil cases match
+with original code/IAT/relocation pins and balanced retained allocator histories.
+Stock emitter/image resources, loaded Move skills, dispatcher context and N2
+settlement remain open. This dependency closure admits no original movement
+or complete turn.
+
 1. Resolve the wrapper/core ABI, Board tile addressing, cache initialization,
    direction-table initialization, and reachable imports from complete original
    owners. Pin every supplied memory field and external response. Execute the

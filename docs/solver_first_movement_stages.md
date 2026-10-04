@@ -1,5 +1,11 @@
 # S1 coordinate and arrival stages
 
+October3 follow-up: [genuine original Lua VM/registry execution](solver_first_lua_vm_registry.md)
+closes the previously unresolved imported `lua_pushvalue` for bounded registry
+and value-wrapper inputs. Stock emitter resources and original full movement
+settlement remain open. The stage results and failed route receipt below remain
+historical and unchanged.
+
 This checkpoint extends the [path-query evidence](solver_first_path_query_conformance.md)
 to original coordinate writes and tile membership relocation. Three legal
 constructed movement compositions agree with Rust v409 on the moving pawn's
