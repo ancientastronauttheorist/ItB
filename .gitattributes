@@ -58,3 +58,5 @@ src/observatory/solver_first_cache_emitter.py text eol=lf
 scripts/solver_first_ground_step.py text eol=lf
 src/observatory/solver_first_ground_step.py text eol=lf
 scripts/solver_first_ground_step_compare.py text eol=lf
+scripts/solver_first_loaded_skill.py text eol=lf
+src/observatory/solver_first_loaded_skill.py text eol=lf

@@ -2,6 +2,14 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [genuine Skill constructor acquisition](solver_first_loaded_skills.md)
+closes unchanged native TipData/Skill defaults, Move/Repair construction and
+base-manager ownership. It supplies no loaded Pawn, legal-action or full-turn
+admission. Source-only follow-up identifies genuine typed Board/Pawn/PointList
+bindings and the loaded Pawn/Pilot/animation prerequisites; those remain separate
+from deployed actor readiness and equipment. The historical checkpoint below
+retains its original boundary.
+
 Later work closes the [joined original Ground N2 route continuation](solver_first_joined_ground_step.md):
 the normal grass burst and native CRT RNG execute, route/membership/arrival settle,
 and conditional Rust endpoint/HP agree. Loaded Move/action admission and full
