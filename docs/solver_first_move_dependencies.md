@@ -86,8 +86,18 @@ The earlier distinct-destination comparison retains its own conditional scope.
 ## Next solver-facing boundary
 
 Execute original selected submission `2689f0` through Board dispatch `1610d0`,
-then grade the nine actual Stats nodes, actor coordinates, tile membership,
+then grade the source-conditional Stats nodes (eight for stock Move), actor coordinates, tile membership,
 arrival state and separately owned continuation queues. A drained route is
 insufficient: the normal FULL_DELAY record retains a queued metadata effect and
 delay. Full queue consumption, next decision, actor action availability and turn
 continuity remain separate, open work.
+
+## October 4 submission follow-up
+
+The later [submission acquisition](solver_first_move_submission.md) records
+native caller return and relocation, but keeps its incomplete output grade.
+The historical nine-key inventory above includes a conditional key:
+`Pinnacle_A_2` resets only when the selected effect name contains `Laser`.
+Stock `Move` therefore produces eight reset keys. Keep the earlier receipt's
+source inventory and hash unchanged; use the corrected branch law for a future
+submission grade rather than requiring all nine keys unconditionally.

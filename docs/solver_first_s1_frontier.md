@@ -2,6 +2,16 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [conditional selected Move submission acquisition](solver_first_move_submission.md)
+records original caller return, H8-to-G8 relocation, native continuation queues
+and eight source-correct Stats resets. All three acquired worlds remain failed:
+two stopped in readers before submission; the third stopped at an incorrect
+nine-key expectation after native return. Source also corrects reversed history
+string labels. Missing final Lua-stack and particle-cell grades stay unacquired;
+no Rust replay, completed action, fair/held-out/search or gate admission follows.
+Full actor availability, complete output grading and queue/turn continuity remain
+open. This is captured partial evidence, not a successful complete acquisition.
+
 October 4 [conditional selected Move prerequisite acquisition](solver_first_move_dependencies.md)
 closes bounded original Stats/map construction and the genuine nine-record
 Animation family. Six original palette-expanded texture readbacks match an

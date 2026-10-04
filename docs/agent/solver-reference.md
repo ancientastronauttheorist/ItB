@@ -48,6 +48,17 @@ before later edits. Even a whitespace-only edit changes a pinned source identity
 retain the historical source/report and repeat the current-source acquisition
 instead of silently rewriting its source hash.
 
+Original-body evidence readers must distinguish declared mapped fixture storage
+from native heap allocations. Admit a supplied span only at its exact declared
+header/base/extent; keep native paths, queues, strings, Animations and map nodes
+subject to live allocation checks. A hash-map bucket can hold a predecessor
+link or an interior global-head cell rather than an owned node. Pin and verify
+the actual container layout before enumerating it. Preserve reader failures
+and source versions, and use a fresh acquisition after a reviewed correction;
+a failed projection does not itself establish a native movement mismatch.
+Check ownership carriers against original constructor/transfer output rather
+than assuming that another object's fixed slots carry the same shared pair.
+
 If `cargo test` or `maturin build --release` appears idle while Rust is reading
 generated Cargo fingerprint files under `rust_solver/target/{debug,release}/.fingerprint`,
 stop the stuck build, remove only that generated `.fingerprint` directory for the
