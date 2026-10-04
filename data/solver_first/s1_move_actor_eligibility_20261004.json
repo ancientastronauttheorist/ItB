@@ -1,0 +1,355 @@
+{
+  "P9_queue_acquisition": {
+    "interpretation": "Conditional Board activity0 or erased metadata/delay queues cannot establish genuine actor-owned Move availability, ordinary action admission or the next player decision.",
+    "native_calls_owned_by_this_source_task": 0,
+    "receipt_path": "data/solver_first/s1_move_queue_continuity_20261004.json",
+    "results_incorporated": false,
+    "status": "results kept in separate acquisition receipt"
+  },
+  "all_seven_gates": "open",
+  "atlas_raw_sha256": "6072263105aa587124a463b8d120462092939e777b091d0cd185ef814536bde2",
+  "baseline_queue_source_packet_raw_sha256": "12164ad6e2d2202aeaf036e0e28a8302c18fff3f2c4c329a553c0f99b50334c8",
+  "conditional_idle_admissions": 0,
+  "data_pins": [
+    {
+      "file_offset": 4379472,
+      "meaning": "Pawn vtable+30 action entry VA637730",
+      "rva": "0x0042e350",
+      "sha256": "da2845b77f121274cd56b9a11be1a63c3a79f4d870bf5de96a87f096243f3fc4",
+      "size": 4,
+      "va": "0x0082e350",
+      "value": "0x637730"
+    },
+    {
+      "file_offset": 4379452,
+      "meaning": "Pawn vtable+1c selection setter VA637940",
+      "rva": "0x0042e33c",
+      "sha256": "8d2419f4f018fd8a9e746bf882b2306ce438b0ffa337f3b44f8cb9454fa97b5c",
+      "size": 4,
+      "va": "0x0082e33c",
+      "value": "0x637940"
+    },
+    {
+      "file_offset": 4379440,
+      "meaning": "Pawn vtable+10 dead predicate VA62cdd0",
+      "rva": "0x0042e330",
+      "sha256": "53f9c904bb2ffc7fc3e9b08dfdb179269a77a1f36cf13b958a5352d98e8c1c14",
+      "size": 4,
+      "va": "0x0082e330",
+      "value": "0x62cdd0"
+    },
+    {
+      "file_offset": 4364192,
+      "meaning": "Move name literal",
+      "rva": "0x0042a7a0",
+      "sha256": "d043e1bcbf133b4820da7af3203c58cbbe275ea952663afc7874ce535f9cc11b",
+      "size": 5,
+      "va": "0x0082a7a0",
+      "value": "Move"
+    }
+  ],
+  "date": "2026-10-04",
+  "deployed_actor_admissions": 0,
+  "evidence_class": "source-only original actor-owned Move eligibility frontier; predicted query exits, no new original execution",
+  "exclusions": [
+    "Original positive getter/Move query execution",
+    "Actual full Pawn factory/constructor loading and deployment",
+    "Original Game/panel/confirmation lifecycle",
+    "Ordinary once-per-turn action legality and completed actions",
+    "Original queue consumer or conditional idle execution in this source-only packet",
+    "Full player/enemy/environment/spawn turn and next decision",
+    "Fair-information corpus, independent/held-out evaluation and search certification"
+  ],
+  "exe_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "genuine_actor_owned_producer": {
+    "ABI": "ECX Pawn pointer vector; stack team DWORD and owned24-byte definition string; RET28; EAX Pawn",
+    "factory_rva": "0x00245070",
+    "field_producer_boundaries": [
+      "Full constructor installs Pawn vtable0x0082e320 and produces definition/Pilot/Animation/status fields",
+      "Constructor readiness gate0x10c0 is1, but coordinates remain off-grid, stored activity0 and IsMech0 until later producers",
+      "Normal stock-equipping root0x00244df0 additionally constructs definition-owned Prime_Punchmech; Move-only factory is not complete ordinary equipment"
+    ],
+    "minimum_checks": [
+      "same actor owns the native Move pair vector and Repair pair; no base-manager Move pointer transplant",
+      "Move context and owner identifier originate in original propagation and agree with the actor",
+      "positive IsActive and Move availability are acquired only after genuine required producers, with every remaining supplied state field declared",
+      "preserve full stock definition/equipment and genuine Pilot/status Animation dependencies for a loaded/deployed claim"
+    ],
+    "original_sequence": [
+      "original allocation0x1328 and complete Pawn constructor0x0022a920",
+      "inherited manager constructor0x00226f00 creates the separate Repair owner",
+      "Move constructor0x001c9bf0 receives the Pawn context field address+0x3c and tag address+0x44",
+      "original0x00227110 appends Move into that Pawn inherited shared-pair vector+4/+8/+c"
+    ],
+    "smallest_conditional_component_exit": "Separate actual inherited-manager/Move/append producer calls on the declared actor storage may establish component ownership, provided original context/identifier propagation and owned pairs are graded. This remains a conditional raw actor component domain, not full Pawn construction or deployed action eligibility."
+  },
+  "held_out_cases": 0,
+  "ledger_promotions": 0,
+  "named_blockers": [
+    "Complete actor inherited ownership/context/identifier producers; current base-manager-owned Move is not actor ownership",
+    "For complete loading: remaining status Animation/Pilot/portrait/native property constructor dependencies; existing nine mech Animations do not imply all Pawn constructor dependencies",
+    "Actual placement, Board registry, IsMech/equipment and activation producers for a deployed ordinary actor",
+    "Genuine selected actor/panel ownership and confirmation-event producer; source call topology is insufficient for actual session lifecycle",
+    "Action consumption joined to queue settlement and next decision, then enemy/environment/spawn resolution"
+  ],
+  "native_executions": 0,
+  "negative_Move_query": {
+    "ABI": "ECX Pawn; no stack arguments; RET0; AL Boolean only. Upper EAX bits are not interpreted.",
+    "declared_inputs": {
+      "blocked_flag_0x8d1": 0,
+      "stored_active_0x91c": 0
+    },
+    "entry_rva": "0x00234cd0",
+    "expected_after_queue_AL": 0,
+    "expected_before_queue_AL": 0,
+    "nested_active_query_rva": "0x0023e8b0",
+    "predicted_not_acquired_here": true,
+    "scope": "An unchanged negative availability observation on the declared inactive actor; no positive legal-action, loading, deployment or action-consumption admission.",
+    "source_seams": [
+      "0x00234cd3 checks the blocked flag; zero permits the call at0x00234cdc",
+      "0x0023e8bf reads stored activity; zero branches at0x0023e8c5 to false return",
+      "0x00234ce3 branches on the false nested result to0x00234d1a, which clears AL and returns"
+    ],
+    "unreached_positive_dependencies": [
+      "Pawn dead virtual predicate",
+      "owned usable Skill pair enumeration",
+      "positive0x10c0 gate",
+      "bMoved/bonus movement checks",
+      "positive raw MoveSpeed check"
+    ]
+  },
+  "next_exit": "First acquire original negative Move availability before/after queue on the unchanged raw actor. Then acquire actor-owned components and the genuine positive readiness/guarded selection/action consumption path, grading repeated-Move rejection and retained Use separately. Only join the next decision after original queue/activity settlement under its declared state domain.",
+  "original_action_admissions": 0,
+  "original_body_pins": [
+    {
+      "body_sha256": "66329829d5c5b475feb95e72465cf8a031b5f8a9c4c9ab54100ca94ad0719c23",
+      "body_size": 78,
+      "entry_rva": "0x00234cd0",
+      "ranges": [
+        {
+          "size": 78,
+          "start_rva": "0x00234cd0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "449310a80188de96a31ca52afdd3c1db0784bfd136322352f467c2d770ff41b9",
+      "body_size": 137,
+      "entry_rva": "0x0023e8b0",
+      "ranges": [
+        {
+          "size": 137,
+          "start_rva": "0x0023e8b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "20d1c353610728f2faf99bf87b34c14ce4c6c7ccb20d5cb1eaeeaa64a1cab20e",
+      "body_size": 229,
+      "entry_rva": "0x0022a0a0",
+      "ranges": [
+        {
+          "size": 229,
+          "start_rva": "0x0022a0a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4622a20b1203c295ca8531e79832a2cd388a0814ab816cbb2962857732f21e9e",
+      "body_size": 144,
+      "entry_rva": "0x0026b0b0",
+      "ranges": [
+        {
+          "size": 144,
+          "start_rva": "0x0026b0b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cad7d086784a24a326cb61434baa29a00c02eb0ea82f708e4dc492211fde50e2",
+      "body_size": 288,
+      "entry_rva": "0x0026ae00",
+      "ranges": [
+        {
+          "size": 288,
+          "start_rva": "0x0026ae00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ed577e2066ab2f919e49b8f9dfaf50b3cd770ffd1f06dfd2911ea596ff0a1936",
+      "body_size": 587,
+      "entry_rva": "0x001bd2b0",
+      "ranges": [
+        {
+          "size": 587,
+          "start_rva": "0x001bd2b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "34f11e436e077aecb23809c0d0662b41e67dcee98d30b92f2eb923708c5d1489",
+      "body_size": 419,
+      "entry_rva": "0x001bd100",
+      "ranges": [
+        {
+          "size": 419,
+          "start_rva": "0x001bd100"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a277c848619bd5099c0e7c756699a611c6701e245ce27669e0e60e16b60f0416",
+      "body_size": 152,
+      "entry_rva": "0x0018cb70",
+      "ranges": [
+        {
+          "size": 152,
+          "start_rva": "0x0018cb70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8a5e7744c920a70f30f8056271d452335be6d601625f8b8d935d5457b77ebf82",
+      "body_size": 1247,
+      "entry_rva": "0x0018ae90",
+      "ranges": [
+        {
+          "size": 1247,
+          "start_rva": "0x0018ae90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c236158309753244fc8658e0ff75db5e6cdd5a40703114b7808f6764abca88ba",
+      "body_size": 1054,
+      "entry_rva": "0x00186c20",
+      "ranges": [
+        {
+          "size": 1054,
+          "start_rva": "0x00186c20"
+        }
+      ]
+    },
+    {
+      "body_sha256": "92b9bdba98202cf95be7f81bef1abd81bd900012c0bfc807f0f8e0ea27dc71d5",
+      "body_size": 190,
+      "entry_rva": "0x002296a0",
+      "ranges": [
+        {
+          "size": 190,
+          "start_rva": "0x002296a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "99f2cda5ff269645f72f6b3e5a2ca14da457b6c6cf8c70f7566759ef74386b52",
+      "body_size": 260,
+      "entry_rva": "0x00228800",
+      "ranges": [
+        {
+          "size": 260,
+          "start_rva": "0x00228800"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ef2b5bfdba77a599c1ebbc26d445513c88f102b3a532a50e8f118d6a8857f5da",
+      "body_size": 522,
+      "entry_rva": "0x00237730",
+      "ranges": [
+        {
+          "size": 522,
+          "start_rva": "0x00237730"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+      "body_size": 478,
+      "entry_rva": "0x00245070",
+      "ranges": [
+        {
+          "size": 478,
+          "start_rva": "0x00245070"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+      "body_size": 4520,
+      "entry_rva": "0x0022a920",
+      "ranges": [
+        {
+          "size": 4520,
+          "start_rva": "0x0022a920"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3524ac242335de198252f75161f4499f06d5b8f1be7e845d6eddfe61f9ed8dac",
+      "body_size": 388,
+      "entry_rva": "0x00226f00",
+      "ranges": [
+        {
+          "size": 388,
+          "start_rva": "0x00226f00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cb07c328fe445f8e12898094cb37b7fc15f689a1a7a70f4056e74db93a5c9c6d",
+      "body_size": 357,
+      "entry_rva": "0x00227110",
+      "ranges": [
+        {
+          "size": 357,
+          "start_rva": "0x00227110"
+        }
+      ]
+    },
+    {
+      "body_sha256": "247eccc6d4587cf6101b169dfd98bc1ea9d20582a8fb27330ae9c6be3f336554",
+      "body_size": 83,
+      "entry_rva": "0x002375f0",
+      "ranges": [
+        {
+          "size": 83,
+          "start_rva": "0x002375f0"
+        }
+      ]
+    }
+  ],
+  "original_selection_caller_chain": {
+    "binding": "0x0018cb70 binds the selected/hovered Pawn into the panel through0x001bd100. In0x0018ae90 the actual binding call is at0x0018b22a.",
+    "confirmation": "0x0018ae90 invokes panel update at0x0018b29a, reads and clears panel confirmation flag+0x389 at0x0018b29f/0x0018b2a5, and calls0x00186c20 at0x0018b2b2 only if that flag was true. Original production of that event is still unacquired.",
+    "consumption": "On ordinary successful manager result1, selected index0, no bonus and team1,0x00237730 writes bMoved1 and clears selected index-1; activity can remain for Use. A later original Move predicate should reject bMoved1 without a positive bonus. This before/action/after sequence is source-predicted, not admitted.",
+    "guarded_Move_selection": "0x001bd2b0 checks the actual selected actor and panel conditions; at0x001bd437 it calls Move availability0x00234cd0. Only true takes0x001bd448 to original0x00228800(slot0).",
+    "session_owner": "Distinct Game/session receiver G with selected Pawn G+0x148 and embedded action panel G+0x89c; BoardROOT activity alone does not supply these owners.",
+    "submission": "0x00186c20 checks the selected effect via0x002296a0, then at0x00186e6d invokes actual Pawn vtable+0x30=0x00237730 with three-1 arguments. The direct submission does not itself recheck Move availability."
+  },
+  "positive_predicate": {
+    "IsActive_positive_requirements": [
+      "stored activity0x91c is nonzero",
+      "Pawn dead virtual predicate is false",
+      "original0x0022a0a0 with flag1 produces a nonempty owned shared-pair vector",
+      "byte0x10c0 is nonzero"
+    ],
+    "entry_rva": "0x00234cd0",
+    "positive_execution_admitted": false,
+    "requirements": [
+      "blocked flag0x8d1 is zero",
+      "original IsActive returns true",
+      "ordinary live domain keeps conditional flag0xf81 zero; its nonzero branch requires the dead virtual predicate true",
+      "bMoved0x99e is zero or bonus0xa64 is positive",
+      "raw MoveSpeed0x990 is positive"
+    ]
+  },
+  "positive_readiness_admissions": 0,
+  "schema": "solver_first_actor_move_eligibility_source_v1",
+  "search_certificates": 0,
+  "source_packet_raw_sha256": "89fde954cf683402b2e813aad991f0475d11dc3b520d75e579ab709f650015fd"
+}

@@ -2,6 +2,17 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [fresh conditional Move queue settlement](solver_first_move_queue_continuity.md)
+records all 317 original calls returning, activity 6-to-0, native metadata/delay
+erasure and unchanged actor/particle state. Original Move availability remains
+false before and after settlement on the same inactive actor. The captured
+full particle storage and final emitter/resource fields belong to this fresh
+world; earlier retained-data limits remain unchanged. The
+[actor eligibility frontier](solver_first_move_actor_eligibility.md) identifies
+genuine Pawn-owned components and guarded selection/action consumption as the
+next integration blocker. Conditional Board idle establishes no ready actor,
+next decision or full turn; S1 and all seven gates remain open.
+
 October 4 [fresh selected Move submission grade completion](solver_first_move_submission_completion.md)
 records all 311 original calls returning, the corrected eight-key Stats/history
 checks, the acquired particle/emitter grade and final original Lua getter.

@@ -29,3 +29,9 @@ No search or valid bound is evaluated here. No held-out objective outcomes, win 
 The current raw fixture leaves Board `+0x2d68` at zero. Original Board construction writes -1; raw zero yields activity category 4 after the metadata queue empties. A future conditional idle test must produce or explicitly declare the source-valid no-selection sentinel before fresh acquisition. It must capture all activity inputs and preserve actual blockers, without patching an observed result. Particle evolution is not required solely by the original Tile activity query's read footprint.
 
 Genuine actor action admission requires the Pawn's inherited manager, its Move/Repair owners, context and identifier producers, readiness and the higher eligibility/selection path. Direct `0x00237730` execution does not check `IsActive` before executing its manager, so direct success alone cannot prove once-per-turn legality. Continue through actual action consumption and queue settlement into the next decision, then enemy/environment/spawn resolution. This tranche stops acquisition after its one planned fresh world; the next work targets those reachable continuity requirements.
+
+The October 4 [fresh queue continuation](solver_first_move_queue_continuity.md)
+now executes that conditional empty-primary branch and records activity 6-to-0
+with unchanged actor/particle state. Its original Move guard stays false on the
+same inactive fixture. Its new particle/emitter capture is separate evidence;
+this completion receipt and its retained-data limits remain unchanged.
