@@ -8,6 +8,11 @@ closes bounded original decode/copy/resource ownership with real external textur
 Cache registration, image metadata, original biome substitution, loaded Move
 dispatch and completed Ground N2 movement remain open.
 
+The later [joined Point/cache/Dust acquisition](solver_first_cache_point_emitter.md)
+closes those bounded resource/metadata and Dust-constructor dependencies in one
+guest, with stock empty-Location source inputs. Full startup, original biome
+selection, loaded Move/dispatch and completed N2 settlement remain open.
+
 The [frozen report](../data/solver_first/s1_lua_emitters_20261003.json), raw SHA256
 `2c6c8c2b6be3723d71910c3d83fb40a596c9a5a360926db803ba2d38abb9f3b4`, records
 **one attempted, one admitted, one matched, zero failed and zero excluded**

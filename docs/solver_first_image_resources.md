@@ -6,6 +6,10 @@ and constructs and destroys its resource object. This removes an image-object
 dependency of Ground N2 H8-to-G8 movement. Cache population, Lua image-location
 metadata, emitter completion and the original movement action remain unacquired.
 
+The later [Point/cache/Dust join](solver_first_cache_point_emitter.md) completes
+bounded cache registration and genuine Lua metadata, then grades the returned
+Dust constructor. Full startup, original biome selection and N2 movement stay open.
+
 The [frozen report](../data/solver_first/s1_image_resource_20261003.json) records
 **two attempted, two admitted, two matched, zero failed and zero excluded**
 development cases. Seven original calls return per case; all guest allocations

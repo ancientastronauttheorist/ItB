@@ -225,6 +225,13 @@ for grass and fallback assets. Normal cache/Lua metadata, loaded Move/dispatcher
 context, original biome substitution and completed Ground N2 settlement remain open.
 Original action/turn admissions and ledger/gate promotions remain zero.
 
+The later [joined Point/cache/Dust acquisition](solver_first_cache_point_emitter.md)
+completes the bounded resource/metadata/constructor chain with a genuine native
+Point class and graded single-image Dust state. Initialized CRT/TLS and exact
+empty-Location stock-source inputs remain explicit; normal file loading, full
+bootstrap, original biome selection, loaded Move/dispatch and N2 settlement are
+still outside that domain. Action/turn and gate/ledger promotions remain zero.
+
 October3 [original Lua VM/registry follow-up](solver_first_lua_vm_registry.md)
 closes the reached `lua_pushvalue` import for genuine custom-allocator VM plus
 generic registry/value wrappers. Three frozen positive/negative/nil cases match
