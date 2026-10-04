@@ -18,7 +18,7 @@ use crate::solver::{
 use crate::types::Terrain;
 use crate::weapons::WeaponTable;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, serde::Serialize)]
 pub(crate) struct PlanTotals {
     pub(crate) kills_so_far: i32,
     pub(crate) mission_kills_so_far: i32,

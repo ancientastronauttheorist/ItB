@@ -1,0 +1,129 @@
+{
+  "archived_failure_database_raw_sha256": "a5bf0a9b459e754a3bf9c49b5564c745687273aa04fafddd60e82d9de43f0b66",
+  "baseline_commit": "f645e6be7fd68200c7d8d0709cd861924e8c83c7",
+  "certificate": null,
+  "configuration_raw_sha256": {
+    "data/mission_bonus_objectives.json": "325becab7593326ffaa4e78149fe97caefa435a9f5c9c97fd27cd61d63fec612",
+    "data/mission_unit_objectives.json": "0bb649395959304d0c68e87b056ba9189e2140e915bfb20ebca73b0ea61f26af",
+    "data/weapon_overrides.json": null,
+    "tests/known_issues.json": "17c025c0a01655991dd81ac78eac82142d07a2d7f75285defd962eb496853472",
+    "weights/active.json": "1b96a18bdb6710b2ad48bd64b953232c8d5921ae48ce7ce1702aa8581e2b8c81"
+  },
+  "corpus": {
+    "filtered_python_records": 339,
+    "python_board_inventory_canonical_sha256": "f29f1aecb19eded7de6b66f6013fd9bf1677f6ff14c08b557dde2b38ef8a98c6",
+    "python_existing_replay_records": 207,
+    "python_filtered_records_canonical_sha256": "10a14d96f570d66e1f22c2e4d794a45c4471ab7f5c2d4a7c713ecdf081d1e473",
+    "tracked_rust_boards": 1052,
+    "tracked_rust_inventory_canonical_sha256": "48696f982352eab44c094b75579e68cf084923525499d3db52f3a1fb2c559bbc"
+  },
+  "corpus_version": "s2-target-validation-413-v1",
+  "exclusions": [
+    "Missing and empty-exempt replay records do not reproduce an original failure.",
+    "Same-model regression success does not prove original transition fidelity or search optimality.",
+    "No held-out practical outcome, latency distribution or memory comparison was acquired."
+  ],
+  "extension_sha256": "f3dfe1c3cb1aacea28abe654419c76ca7c1353afc998e4087c3b6ec86483c674",
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "information_mode": "synthetic development and historical augmented replay; no fair-input admission",
+  "ledger_promotions": 0,
+  "objective": "existing terminal/clean policy and historical crash/empty/self-consistency regression checks",
+  "original_completed_action_transitions": 0,
+  "protected_failure_database_raw_sha256": "c3ec8cb98534ddb8a394dd860851bf123d6cd502d676651a11692c3d9576dfc8",
+  "regression_budget_seconds_per_board": 2.0,
+  "report_raw_sha256": {
+    "data/solver_first/s2_full_target_413.json": "abac30883cb101f82265fd88ed0f33eec2f533bf3c68e2a65174d316da098e64",
+    "data/solver_first/s2_full_target_original_413.json": "6d9fca563b75e1d6aa6f33cd8dc7037799b21df554c0045567b96b3f1a7ce9b5",
+    "data/solver_first/s2_target_regressions_413.json": "b92348dd702b98fa3381e196897ae440398f8ff2235ef3844e31ca68f4ded214"
+  },
+  "schema_version": 1,
+  "simulator_version": 413,
+  "source_lf_sha256": {
+    "rust_solver/src/board.rs": "33bdaa75eee577494a9e8f204462d0879318a9b6e4597c53ebffb865f9409eeb",
+    "rust_solver/src/enemy.rs": "8a54b8cdbef590452e8a78e4a8dad74c1bb2876e5f4a4ada82bb9a45a9cb829a",
+    "rust_solver/src/evaluate.rs": "1ca60b57a8efe41487ba38351001d18bc86d4df19f2fa8c918f130ab8f22b9c3",
+    "rust_solver/src/lib.rs": "c76e58cd342c5188280b38f472a0345c4e5c77d50b9b8d28e2868b55142d8af8",
+    "rust_solver/src/movement.rs": "711fa28eca7c84943d80c92040cfee4dcb30c15af79a9ec390b3a7db6b2ee2bf",
+    "rust_solver/src/plan_evaluation.rs": "93fd5d0b364d80a790e7c84925d1601144714364f307da71fd12bf14da09740c",
+    "rust_solver/src/primitive.rs": "f17c6a10842253d304080847707b1f129279ad3578c65d95fe1d573aa5fefb69",
+    "rust_solver/src/replay.rs": "b0a656d4392923538a297bd0a78f37bd4087d7a55cf18e6ffea00a340058eafc",
+    "rust_solver/src/serde_bridge.rs": "8d2a70aed234d46b84c01ad7c4af6b9e8fb09935fc5babd7585a20681d5e14aa",
+    "rust_solver/src/simulate.rs": "c4783e19cfe287c9e797e13ea8902abaf62b3c90b8cc071d1299973488e0ce5e",
+    "rust_solver/src/solver.rs": "02bb2c12748e4850fc440222acdaf8fefeccd9edafd020df7daca05b55d23dce",
+    "rust_solver/src/turn_projection.rs": "07f21beb6a0c9f92c894d0fc8ef0560ef6013e3d38d036142efe2408e87ca967",
+    "rust_solver/src/types.rs": "ec5a1f865e502bd25d3faa50a41b947af6ec74cf4ee09ff4e59f949fe811633e",
+    "rust_solver/src/weapons.rs": "b66cd29a84019278bc330e269c6a5cd4d6af210bb87b4b2b2a644fb133b88f4d",
+    "rust_solver/tests/regression.rs": "98a5ea173dcc00bfb61b011e7d636a9691091e199b1d285ca45b0547a7fdbd73",
+    "scripts/solver_first_primitive_search.py": "6e62cd7ecc242bd691f0b90ae019cbf9978fba550b97d0f7b9eccddcf0304156",
+    "scripts/solver_first_target_area_oracle.py": "6541ede63e951afeb82baa0d79ee609f90e875447f51f59fda599e5e1c7e3d57",
+    "scripts/solver_first_target_completeness.py": "c55335738634886f2ca10b470987afa0e7d27316a7b30f7198a0581f991936b0",
+    "src/loop/commands.py": "738c3b214cef04d8b5f89bf6a22bea20a65e921b2ab4cd19205f4afc7374f55a",
+    "src/model/board.py": "3ea91ea18c4ee29513b9b851466aa09fbd188bafa092386d9cdc12ecbad5d2c9",
+    "src/model/pawn_stats.py": "3bd2857e929e46e810061114cb638e0fa46a7e00ff130e8513b272003e113674",
+    "src/observatory/solver_first_target_area.py": "2dd5090e518a887708e765f1a11abb539a9b653f12f8756bc206cdf769dbb4c1",
+    "src/solver/analysis.py": "803df304b2c61df0dfef37628e7de2cb466604864c8797db5ed7127c2e825a73",
+    "src/solver/mission_bonus_objectives.py": "fa8895d83b35704dc84dec35fd753e7bab52e6e691f23e547369696d9f987279",
+    "src/solver/mission_unit_objectives.py": "af8de9af5f9b1a940d3881be133d7828a5ff8215cd7d5d8f5ce96d39fef07f26",
+    "src/solver/solver.py": "fcf262d11b0309b132f3d8f0e94b5fcc4fe817ffecde96c415dd627dbe195a33",
+    "src/solver/verify.py": "11af317970dd7670c3ecc98d5b59555398d5eea0693744a31c5d560cb60e0a2b",
+    "src/solver/weapon_overrides.py": "d28013725f36c8305803e772c0be2221e2a71e068abd64064a0be6961d4fb3c8",
+    "tests/test_regression_admission.py": "c03e8a7215be44587d566ce46ced6b367122fbbc357d5105391ea9a7923ab853",
+    "tests/test_regression_corpus.py": "4890f5686aba68dc63566adb2b61c18494cbe4afc2f217f8c4b89f97123fea94",
+    "tests/test_solver_first_primitive_search.py": "8c2744073aa522585a71df4f50e552e683289fc89a8a9852246d08521cf21168",
+    "tests/test_solver_first_target_area.py": "9e34c1ad2efa902d4d5417270b346ae652ddb96f12f1ec070bd2f624fe454dad"
+  },
+  "valid_bounds": null,
+  "validation": {
+    "far_click_diagnostic": {
+      "action_results_equal": true,
+      "admitted": 3,
+      "attempted": 3,
+      "explanation": "Diagnostic replay explicitly samples clicked target plus a 3x3 neighborhood. Only that sparse unchanged tile sample differs; complete primitive reduction proof is separate.",
+      "final_board_equal": true,
+      "private_receipt_sha256": "fa2facebcfa477a4870042cae22655202aa70787d3b93fb2a4cb68e61543ea26",
+      "rejected_validation_assumption": "Two prepublication checks rejected whole diagnostic-report equality; no completed validation report was written by either attempt.",
+      "unequal_paths": [
+        "/predicted_states/0/post_attack/tiles_changed"
+      ],
+      "whole_report_equal": false
+    },
+    "focused_python": {
+      "elapsed_seconds": 16.35,
+      "failed": 0,
+      "passed": 60,
+      "skipped": 1
+    },
+    "python_corpus": {
+      "accepted_empty_timeout": 0,
+      "action_required": 61,
+      "command": "python -m pytest -p no:faulthandler tests/test_regression_corpus.py -q -m regression -s",
+      "elapsed_seconds": 81.52,
+      "empty_required": 0,
+      "empty_solutions": 146,
+      "failed": 0,
+      "fixed_classification": 60,
+      "known_self_consistency_issues": 1,
+      "passed": 1,
+      "skipped_missing": 132,
+      "skipped_no_replay": 0,
+      "unexpected_regressions": 0
+    },
+    "release_extension": "rebuilt release wheel and force-reinstalled in separately completed processes",
+    "rust_integration": {
+      "accounting": "aggregate corpus counters were captured by the test runner; no new per-case success count is inferred",
+      "command": "cargo test --no-default-features --test regression",
+      "elapsed_seconds": 507.66,
+      "failed": 0,
+      "passed": 6,
+      "unexpected_regressions": 0
+    },
+    "rust_units": {
+      "command": "cargo test --no-default-features --lib",
+      "elapsed_seconds": 0.46,
+      "failed": 0,
+      "passed": 1043
+    }
+  }
+}

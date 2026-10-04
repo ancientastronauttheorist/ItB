@@ -289,7 +289,8 @@ def check_budget(counts, deadline, max_nodes):
 
 
 def enumerate_leaves(board, replay, *, compound=False, counts=None,
-                     reference_budget=120.0, max_nodes=1000000):
+                     reference_budget=120.0, max_nodes=1000000,
+                     closing_generator=closing_choices, prefix_observer=None):
     """Yield every complete schedule, never production action generation."""
     validate_domain(board)
     require(type(reference_budget) in (int, float) and math.isfinite(reference_budget)
@@ -301,6 +302,8 @@ def enumerate_leaves(board, replay, *, compound=False, counts=None,
     def visit(steps, locked=None):
         check_budget(counts, deadline, max_nodes)
         result = project(replay, board_json, steps, counts)
+        if prefix_observer is not None:
+            prefix_observer(steps, result)
         if result["complete"]:
             counts.leaves_scored += 1
             yield steps, result
@@ -319,7 +322,7 @@ def enumerate_leaves(board, replay, *, compound=False, counts=None,
                     counts.steps_generated += 1
                     yield from visit(steps + [dict(kind="move", mech_uid=uid, to=list(pos))],
                                      uid if compound else None)
-            for step in closing_choices(state, uid):
+            for step in closing_generator(state, uid):
                 counts.steps_generated += 1
                 yield from visit(steps + [step], None)
 

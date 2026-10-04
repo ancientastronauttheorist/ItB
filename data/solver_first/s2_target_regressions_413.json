@@ -1,0 +1,120 @@
+{
+  "after_extension_sha256": "f3dfe1c3cb1aacea28abe654419c76ca7c1353afc998e4087c3b6ec86483c674",
+  "before_extension_sha256": "d6e9190bb194e5a9de7179a25f83d35b9d63c5727be1c2ce399701b78febbe40",
+  "cases": [
+    {
+      "actor": [
+        3,
+        3
+      ],
+      "after": "both legal far points admitted; same-ray model outcomes agree; beyond-blocker [5,3] remains rejected",
+      "before": "primitive and diagnostic admission reject legal targets [1,3] and [0,3]",
+      "id": "base_tank_far_click_admission",
+      "input_sha256": "32b85717a6c946667b887509405ac123eef917e3e94098affacb744c6195f0e0",
+      "original_targets": [
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "private_receipt_sha256": "0a44aa9db3c4cc7d3c28f64895aff1e26ea7403a2f158284193c987c05f4b9fb",
+      "regression": "tests/test_solver_first_target_area.py::test_distant_tank_clicks_accept_same_ray_outcome"
+    },
+    {
+      "actor": [
+        3,
+        3
+      ],
+      "after": "base nonphase Tank model stops at wreck and preserves enemy HP3",
+      "before": "model passes persistent wreck and changes enemy HP3 to HP2",
+      "enemy_behind": [
+        0,
+        3
+      ],
+      "id": "base_tank_persistent_corpse_endpoint",
+      "input_sha256": "ff03e101e68f9d4906d05fc4404944239870afb837169aa423fd566751876e35",
+      "original_projectile_blocked": true,
+      "original_target_ray_endpoint": [
+        1,
+        3
+      ],
+      "private_receipt_sha256": "00a8d349348a1c7984cd907ace7a224892bc244914c3d41325f0ccdc8bfa7860",
+      "regression": "tests/test_solver_first_target_area.py::test_base_tank_stops_at_existing_persistent_corpse",
+      "supplied_corpse": [
+        1,
+        3
+      ],
+      "supplied_storage": {
+        "available_mutations": [],
+        "hp": 0,
+        "is_mech": 1,
+        "lifecycle": 0,
+        "mutation": 0
+      }
+    }
+  ],
+  "evidence_class": "original_target_and_blocking_queries_plus_shipped_endpoint_source_and_synthetic_regressions",
+  "exclusions": [
+    "Original action effects and actual death/removal lifecycle were not executed.",
+    "Other projectile families, upgraded IDs, phase overrides and broader target contracts remain outside this proof.",
+    "Regression inputs are synthetic development cases, not independent original gameplay traces."
+  ],
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "ledger_promotions": 0,
+  "new_green_execution": {
+    "attempted": 2,
+    "passed": 2
+  },
+  "old_red_execution": {
+    "attempted": 2,
+    "failed_as_expected": 2
+  },
+  "original_build": 13725832,
+  "original_completed_action_transitions": 0,
+  "schema_version": 1,
+  "simulator_after": 413,
+  "simulator_before": 412
+}

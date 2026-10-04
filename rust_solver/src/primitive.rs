@@ -8,7 +8,7 @@ use crate::simulate::{
     finalize_player_transition, simulate_action_with_target2, simulate_attack_with_target2,
 };
 use crate::solver::{
-    count_buildings, enumerate_actions, get_weapon_targets, make_action, player_plan_is_clean,
+    count_buildings, enumerate_actions, get_weapon_target_area, get_weapon_targets, make_action, player_plan_is_clean,
     precompute_threats, prefer_clean_score, MechAction,
 };
 use crate::types::DisabledMask;
@@ -620,7 +620,7 @@ fn apply(
                     return Err("invalid_paired_target".into());
                 }
             } else if second.is_some()
-                || !get_weapon_targets(&state.board, pos.0, pos.1, weapon, pos, context.weapons)
+                || !get_weapon_target_area(&state.board, pos.0, pos.1, weapon, pos, context.weapons)
                     .contains(&target)
             {
                 return Err("invalid_weapon_target".into());
@@ -764,6 +764,20 @@ pub fn replay(
     disabled: DisabledMask,
     weapons: &WeaponTable,
 ) -> Result<String, String> {
+    replay_with_inspection(board, steps, spawn_points, weights, disabled, weapons, false)
+}
+
+/// Opt-in whole typed Board representation for offline reduction checks.
+/// This build-local Debug representation is not a portable state protocol.
+pub fn replay_with_inspection(
+    board: &Board,
+    steps: &[Step],
+    spawn_points: &[(u8, u8)],
+    weights: &EvalWeights,
+    disabled: DisabledMask,
+    weapons: &WeaponTable,
+    include_internal_state: bool,
+) -> Result<String, String> {
     let context = Context::new(board, spawn_points, weights, weapons, disabled);
     let mut state = State::new(board);
     let mut results = Vec::new();
@@ -773,7 +787,13 @@ pub fn replay(
             json!({"events":result.events,"buildings_damaged":result.buildings_damaged,
             "buildings_lost":result.buildings_lost,"grid_damage":result.grid_damage,
             "enemies_killed":result.enemies_killed,"mech_damage_taken":result.mech_damage_taken,
-            "mech_hp_repaired":result.mech_hp_repaired}),
+            "mech_hp_repaired":result.mech_hp_repaired,
+            "buildings_bump_damaged":result.buildings_bump_damaged,
+            "mission_kills":result.mission_kills,"unit_deaths":result.unit_deaths,
+            "leech_credit_kills":result.leech_credit_kills,"leech_uncapped_kills":result.leech_uncapped_kills,
+            "enemy_damage_dealt":result.enemy_damage_dealt,"mechs_killed":result.mechs_killed,
+            "pods_collected":result.pods_collected,"repair_platforms_used":result.repair_platforms_used,
+            "spawns_blocked":result.spawns_blocked}),
         );
         state = next;
     }
@@ -784,6 +804,8 @@ pub fn replay(
             "post_player_board":board_value(&state.board,spawn_points),
             "actor_entitlements":state.entitlements.values().collect::<Vec<_>>(),
             "admissions":state.admissions,"action_results":results,
+            "objective_totals":state.totals,
+            "model_internal_board":include_internal_state.then(|| format!("{:?}",state.board)),
             "score":terminal.as_ref().map(|t| t.score),
             "clean":terminal.as_ref().map(|t| context.clean(&state,t)),
             "final_board":terminal.as_ref().map(|t| board_value(&t.final_board,spawn_points)),

@@ -131,6 +131,13 @@ fake score or fabricated terminal plan.
 
 ## Configuration, validation, and continuation
 
+Simulator v413 follow-up: [complete base target areas](solver_first_target_completeness.md)
+repairs far-click admission and persistent-corpse Tank endpoints, then compares
+the four direction representatives with a complete 7,200-schedule full-click
+reference. All 65 supplied-world original target queries match. The v412
+reports and build identities below remain historical. Full original action
+effects, state continuity and general search certificates remain open.
+
 October 3 follow-up: the [Python corpus admission repair](solver_first_regression_admission.md)
 adds a read-only inspection API in a distinct v412 extension build and repairs
 the required-empty guard. The extension identity and Python corpus counts below

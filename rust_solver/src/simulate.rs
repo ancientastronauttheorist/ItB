@@ -5123,7 +5123,10 @@ fn sim_projectile(
         if tile.terrain == Terrain::Building && !wdef.phase() {
             hit_x = nx; hit_y = ny; break;
         }
-        if board.unit_at(nxu, nyu).is_some() {
+        if board.unit_at(nxu, nyu).is_some()
+            || (weapon_id == WId::BruteTankmech && !wdef.phase()
+                && board.path_corpse_at(nxu, nyu))
+        {
             hit_x = nx; hit_y = ny; break;
         }
     }
@@ -7239,7 +7242,7 @@ pub fn simulate_attack_with_target2(
         && !is_control_shot(weapon_id)
     {
         let (sx, sy) = (board.units[mech_idx].x, board.units[mech_idx].y);
-        let legal_targets = crate::solver::get_weapon_targets(
+        let legal_targets = crate::solver::get_weapon_target_area(
             board,
             sx,
             sy,

@@ -364,6 +364,42 @@ fn enumerate_quick_fire_targets(
     pairs
 }
 
+/// Native mode-1 occupancy for the admitted base Tank ray domain.
+/// Existing corpse lifecycle flags/fallback remain the Board's responsibility.
+pub(crate) fn base_tank_projectile_blocker_at(board: &Board, x: u8, y: u8) -> bool {
+    matches!(board.tile(x, y).terrain, Terrain::Building | Terrain::Mountain)
+        || board.unit_at(x, y).is_some()
+        || board.path_corpse_at(x, y)
+}
+
+/// Separate selectable points from search's direction representatives.
+/// Complete native-derived cardinal area is implemented for the two base IDs
+/// only; other families retain the existing filtered target contract.
+pub(crate) fn get_weapon_target_area(
+    board: &Board,
+    mx: u8,
+    my: u8,
+    weapon_id: WId,
+    mech_from: (u8, u8),
+    weapons: &WeaponTable,
+) -> Vec<(u8, u8)> {
+    if weapon_id != WId::BruteTankmech || weapons[weapon_id as usize].phase() {
+        return get_weapon_targets(board, mx, my, weapon_id, mech_from, weapons);
+    }
+    let mut targets = Vec::new();
+    for &(dx, dy) in &DIRS {
+        for distance in 1..8i8 {
+            let nx = mx as i8 + dx * distance;
+            let ny = my as i8 + dy * distance;
+            if !in_bounds(nx, ny) { break; }
+            let point = (nx as u8, ny as u8);
+            targets.push(point);
+            if base_tank_projectile_blocker_at(board, point.0, point.1) { break; }
+        }
+    }
+    targets
+}
+
 pub(crate) fn get_weapon_targets(
     board: &Board,
     mx: u8,

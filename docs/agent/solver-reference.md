@@ -65,6 +65,15 @@ exceptions are reported as accepted timeouts. Admission is a harness policy,
 not proof of available legal actions; no-enemy boards remain excluded. See
 the [sensitivity proof and corpus limits](../solver_first_regression_admission.md).
 
+**Target admission versus search representatives (v413):** A search generator
+may retain one click per direction only after scoped equivalence checks; its
+filtered candidates are not the complete selectable target area. Base nonphase
+Tank primitive/diagnostic admission accepts every cardinal point through the
+first projectile blocker, inclusive. Persistent path corpses block this base
+Tank endpoint. [The full-click proof](../solver_first_target_completeness.md)
+checks one development fixture; actual corpse lifecycle, other weapons and
+broader mission-dependent equivalence remain unproved.
+
 ## Core Game Rules (Solver-Critical)
 
 The solver enforces these; use them when reviewing solver output or writing tests.
