@@ -2,6 +2,15 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [conditional selected Move prerequisite acquisition](solver_first_move_dependencies.md)
+closes bounded original Stats/map construction and the genuine nine-record
+Animation family. Six original palette-expanded texture readbacks match an
+independent reference; all 305 calls and the final Lua stack grade pass in one
+declared development fixture. Full actor loading/readiness, submission reset
+nodes, Board dispatch and continuation queues remain open. This exploratory
+receipt adds no completed action, fair-input corpus, held-out, search or gate
+admission. Earlier Ground Animation-storage evidence retains its original scope.
+
 October 4 [conditional selected Move producer acquisition](solver_first_selected_move.md)
 closes original context propagation, cached target membership and selected-effect
 metadata construction for the declared no-passive corridor. The native setter
