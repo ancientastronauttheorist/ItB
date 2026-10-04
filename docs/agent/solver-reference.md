@@ -42,6 +42,12 @@ serially before accepting their results. For native Python checks, remove
 `PYTHONFAULTHANDLER` and use pytest `-p no:faulthandler`; the oracle CLI disables
 faulthandler inside its isolated process.
 
+Before freezing a native acquisition, check syntax and whitespace for its owned
+generated sources, including untracked files. Preserve the exact acquired source
+before later edits. Even a whitespace-only edit changes a pinned source identity:
+retain the historical source/report and repeat the current-source acquisition
+instead of silently rewriting its source hash.
+
 If `cargo test` or `maturin build --release` appears idle while Rust is reading
 generated Cargo fingerprint files under `rust_solver/target/{debug,release}/.fingerprint`,
 stop the stuck build, remove only that generated `.fingerprint` directory for the

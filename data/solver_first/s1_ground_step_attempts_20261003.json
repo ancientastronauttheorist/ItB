@@ -1,0 +1,193 @@
+{
+  "accounting": "Six fresh separate original acquisition worlds: two failed and four completed bounded projections with different grading/source. Frozen03 is final after whitespace-only EOF correction and AST equality. All earlier reports/worlds are retained. Three conditional Rust comparisons use corresponding original reports in separate fresh processes and are not extra native worlds. Prior cache14-world accounting remains distinct.",
+  "attempts": [
+    {
+      "attempted": 1,
+      "calls": 85,
+      "failure": "call 0x235f00: returned=False, stack_ok=False, failure=unresolved import",
+      "grading": "Actual Ground route prefix reached native biome substitution/owned pending copy; first native particle stops at unresolved CRT GetLastError. No relocation or completed route.",
+      "id": "ground_step_probe_01",
+      "instructions": 857742,
+      "outcome": "failed",
+      "private_receipt_sha256": "0e656d8cc8ff19586d2df7174c1f338b32aa22a588f168874e76f0d60d63f46c",
+      "prototype_source_sha256": "258967e68b46b696888f833c57e96b4af07a317ecc38f2f64c5b2422723202c4",
+      "remaining_guest_allocations": 465,
+      "remaining_guest_requested_bytes": 33186,
+      "status": "failed"
+    },
+    {
+      "attempted": 1,
+      "calls": 80,
+      "failure": "call 0x388b84: returned=False, stack_ok=False, failure=module acquisition arguments differ",
+      "grading": "Native encoded-cache initializer returns; strict module provider rejects unlisted source synch alias in lock initialization. No route root reached.",
+      "id": "ground_step_probe_02",
+      "instructions": 799755,
+      "outcome": "failed",
+      "private_receipt_sha256": "fa75fdec33f6ab10c58058c8912dc4189be22bb1b80a9e18989524f408423f59",
+      "prototype_source_sha256": "68eab04c3e29acfe27a940b16b672e52912a358ef3597003cb205c968a79f449",
+      "remaining_guest_allocations": 455,
+      "remaining_guest_requested_bytes": 31290,
+      "status": "failed"
+    },
+    {
+      "attempted": 1,
+      "calls": 89,
+      "failure": null,
+      "grading": "Return/ownership/RNG/route/membership projection; privateprototype strongerquery-owneridentity verified retrospectively from savedqueryallocation; active particle fields not graded. Archived cacheprefix source pin retained at b429301f and private exactsnapshot.",
+      "id": "ground_step_probe_03",
+      "instructions": 877159,
+      "outcome": "completed_bounded_projection",
+      "private_receipt_sha256": "3b9b9b9bb3fa60977879e991c0a2c44054c4a6b6897691c24a4c981c76a2448f",
+      "prototype_source_sha256": "3ad478d8a96b88a1e7e1bf78547f3b2e6b9c6ea89f0fea9481fdf524b3d549da",
+      "remaining_guest_allocations": 466,
+      "remaining_guest_requested_bytes": 34014,
+      "status": "complete_joined_dependency_and_declared_continuation"
+    },
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "calls": 89,
+      "excluded": 0,
+      "failed": 0,
+      "failure": null,
+      "grading": "Final current-source frozen-map acquisition: savedqueryheader/vector/clone/pending identities, exact membership transfer, coords/HP, 15particles120source-ordered native RNG draws, nontrigcells and17untouchedrows, finalemitter/Tile/resource ownership; hostcleanup separate. Full Move/action excluded. Finalsourcechangespersistqueryheader/targetPawn and preservefloatnegativezero; source01/report/privateworldstayretained.",
+      "id": "ground_step_frozen_01",
+      "instructions": 877159,
+      "matched": 1,
+      "outcome": "completed_bounded_projection",
+      "private_receipt_sha256": "006fe3a70ed88b0e5b81edfc243c163b1a639566918432c345780333280a65f2",
+      "remaining_guest_allocations": 466,
+      "remaining_guest_requested_bytes": 34014,
+      "report_sha256": "385748fe1332e4348f4070d4164fd94d36381a2638f7e2ad919b088f83fb2e9a",
+      "status": "complete_joined_dependency_and_declared_continuation"
+    },
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "calls": 89,
+      "excluded": 0,
+      "failed": 0,
+      "failure": null,
+      "grading": "Final strengthened current-source projection, including persistedoriginalqueryheader/targetPawn/storedactive and nativeTileappendafterall120RNGdraws; signed-zero referencefix.",
+      "id": "ground_step_frozen_02",
+      "instructions": 877159,
+      "matched": 1,
+      "outcome": "completed_bounded_projection",
+      "private_receipt_sha256": "9679dd0c3075dac1d16bbc02877e3dd3d6de21ca96560fac18151f9c49cc44bd",
+      "remaining_guest_allocations": 466,
+      "remaining_guest_requested_bytes": 34014,
+      "report_sha256": "0e6ac5f6f532cd2b2091ecaf105e0a23e755ce5a81b7c1a75efec7217dc51d00",
+      "status": "complete_joined_dependency_and_declared_continuation"
+    },
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "calls": 89,
+      "excluded": 0,
+      "failed": 0,
+      "failure": null,
+      "grading": "Finalsource frozenmap repeat after removingoneblankEOF; ASTsameas02, exact02source snapshot retained; allstrong02projectionsrepeat.",
+      "id": "ground_step_frozen_03",
+      "instructions": 877159,
+      "matched": 1,
+      "outcome": "completed_bounded_projection",
+      "private_receipt_sha256": "7950fce188cca15febd23f20a84afe0345734b7a14d54e04d3527d70bd2f4d28",
+      "remaining_guest_allocations": 466,
+      "remaining_guest_requested_bytes": 34014,
+      "report_sha256": "f51e27ecdbea8f131897a065b029e3ca348e0d5ec0f285c7868f06f77abcd4de",
+      "status": "complete_joined_dependency_and_declared_continuation"
+    }
+  ],
+  "baseline_solver_commit": "84c186ae440163056c5c39b9aea9c20e6f49983e",
+  "conditional_Rust_comparisons": [
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "excluded": 0,
+      "failed": 0,
+      "id": "ground_step_Rust_frozen_01",
+      "matched": 1,
+      "report_sha256": "50d10749755b425d9124e37ab2a702bea2b3de06e3b2e1cb8fda5dfa882c0fe9"
+    },
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "excluded": 0,
+      "failed": 0,
+      "id": "ground_step_Rust_frozen_02",
+      "matched": 1,
+      "report_sha256": "4a24258292dae7c81eb520b76aace5458fca227faab5850302f5bdf7f2a661c9"
+    },
+    {
+      "admitted": 1,
+      "attempted": 1,
+      "excluded": 0,
+      "failed": 0,
+      "id": "ground_step_Rust_frozen_03",
+      "matched": 1,
+      "report_sha256": "2e72b0946272a282c702376890b21393635c57ef9067e2d1e7ebcedd41a47e2d"
+    }
+  ],
+  "corpus_version": "s1-original-joined-ground-N2-acquisition-accounting-v1",
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "game_build": 13725832,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "historical_cache_source": {
+    "commit": "b429301f20d7a87f8ea54547e023ab3f1e9d7230",
+    "lf_sha256": "c52d077fcf0a29b44556364170110cb1c20496fd47c0a81ec0ce2016bca80e7b",
+    "private_exact_snapshot_sha256": "c52d077fcf0a29b44556364170110cb1c20496fd47c0a81ec0ce2016bca80e7b",
+    "repository_path": "src/observatory/solver_first_cache_emitter.py"
+  },
+  "information_mode": "offline supplied original-byte validation oracle; no fair inputs",
+  "ledger_promotions": 0,
+  "native_attempt_outcome_counts": {
+    "completed_bounded_projection": 4,
+    "failed": 2
+  },
+  "native_world_attempts": 6,
+  "next_blocker": "Genuine loaded Move skill/dispatcher and action admission, then extended route/control cases and enemy/environment/spawn continuity.",
+  "original_completed_action_transitions": 0,
+  "retained_frozen_source_identities": [
+    {
+      "id": "ground_step_frozen_01",
+      "lf_sha256": "cb51deb82e27930e9005fe800902959e51b3ddae301137011ece495feca7be2a",
+      "method": "Exactsource reconstructed by reversingknownedits and verifiedagainst acquired LF hash; source-onlyfirstoverbroadreversalrejected beforecorrected reconstruction."
+    },
+    {
+      "id": "ground_step_frozen_02",
+      "lf_sha256": "7c9cb76f969ccdd5e6a4b089240639db7408083a3e77dbe26c87aaf0eb25e54b",
+      "method": "Exactsource snapshot retained beforeEOFedit; originalreport/worldretained."
+    }
+  ],
+  "schema_version": 1,
+  "search_certificates": 0,
+  "simulator_version": 413,
+  "source_corrections": [
+    "Board relocated to preserve joined Lua/cache scratch world.",
+    "Source-owned biome global is actual24-byte MSVCstring; native constructor selects grass fixture then original substitution creates Emitter_tiles_grass.",
+    "Original movement DIR2fb0 initializes8cc608; query3030 initializesdifferenttable.",
+    "Installer copies stripped route into freshpendingstorage and freescallerclone only after continuouspumpreturns.",
+    "Encoded export cache initialized before CRTlock/locale/FLS/PTD; originalcookie retained.",
+    "CSresolver moduleindices8/18 differ from FLS2/18; add exactsynchalias.",
+    "FLS normal-success last-error preservation is a supplied profile, not Microsoftsuccess-clearing guarantee.",
+    "Deepcopies retain init platformprefix; final vector reader excludes query-only EAX contract; saveinitialqueryheader beforeinstaller.",
+    "Native defaultseed1 and all120samples/stateupdates stay in originalcode; image_index draw consumed even whenmodulus1.",
+    "Full Move dispatcher stackeffect is owned124-byteSkillEffect plus4-byteflag, notopaque128bytecontext; fullentry remainsunacquired."
+  ],
+  "source_only_packet_sha256": {
+    "biome/biome_source_packet_01.json": "b53aeddb03bee911918297d1b1ec133c6fc25c757f5261c40f3ca9a37af4150a",
+    "dispatch/crt_services_ground_step_02_03_source_review.json": "7c24c5acf96e4c2f48be5a2831c0b1f65fc6e60b03bfa0a552a86c1250dddada",
+    "dispatch/crt_services_ground_step_03_receipt_review.json": "709db568459339e6483c3a988cf1d42215d5caa6958b64d3aec07b8ac115a4b5",
+    "dispatch/ground_step_frozen_02_review.json": "ca82bba3ec3d134976f4c8da6f220aab7e2f40817dcf9eb94f8494da43737f9f",
+    "dispatch/ground_step_frozen_03_review.json": "a39811cffe8acb0ba3b1924b33156232ce43e2c82d11df63768d58f368bb4589",
+    "dispatch/ground_step_probe_01_review.json": "c4b426c385e1aeb745c8d8c553fd19420ab36b2018ab0dac6df1d3b74fefce9e",
+    "dispatch/installer_clone_source_01.json": "210192a5206e0d75a7feb3c505f81f8e32ab7b6aef1c2fcec241e6cc29930f8c",
+    "dispatch/loaded_move_dispatch_source_01.json": "c234f18f1a76a3eef9ce00483909c6bf4be82b6703cb1e46dd2eca6015ce354b",
+    "rng/crt_rng_source_packet_01.json": "49330afc3e32a1d9db654ee0ef1a0accd2a2eb4b62a316875bc8c0a09a1791a4",
+    "rng/crt_rng_source_packet_02.json": "f50d291595d376d8c4f101d70d3661e9f55766aba9653b1c449c772ff2de2fac",
+    "rng/crt_rng_source_packet_03.json": "a7380f02765e8bddf08ad6c1f438ef834e1c23e9f68e513a2e9e9cdd08fe59d6",
+    "rng/grass_burst_expected_projection_01.json": "dbbd12bb65e4c11f98fcb2fb4a3c2997c22458d62b248c4c427baa33276a560b"
+  }
+}

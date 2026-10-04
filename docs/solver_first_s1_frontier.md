@@ -2,6 +2,12 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+Later work closes the [joined original Ground N2 route continuation](solver_first_joined_ground_step.md):
+the normal grass burst and native CRT RNG execute, route/membership/arrival settle,
+and conditional Rust endpoint/HP agree. Loaded Move/action admission and full
+player-to-enemy/environment/spawn continuity remain open. The source-only checkpoint
+below retains its original acquisition boundary.
+
 Later October 3 work separately records the
 [bounded original stored-readiness setter](solver_first_readiness_leaf.md),
 [archive acquisition audit](solver_first_archive_acquisition_audit.md), and

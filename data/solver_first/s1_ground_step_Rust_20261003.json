@@ -1,0 +1,62 @@
+{
+  "admitted": 1,
+  "attempted": 1,
+  "baseline_solver_commit": "84c186ae440163056c5c39b9aea9c20e6f49983e",
+  "corpus_version": "s1-original-ground-N2-endpoint-Rust-development-v1",
+  "evidence_class": "retained bounded original continuation versus conditional installed Rust replay",
+  "excluded": 0,
+  "exclusions": [
+    "Original route installer is entered under a supplied frame; native loaded Move/action admission is unacquired.",
+    "Rust replay starts with available-action observation; original supplied pawn stored active remains zero and bMoved remains zero. No readiness/action eligibility equivalence claim.",
+    "Native membership, route/vector ownership and particle/RNG fields are independently graded by acquisition, not by Rust replay.",
+    "Full legal action sets, extended route/status/item controls, ordered full action events, enemy/environment/spawn, undo/save and mission continuity remain open.",
+    "A shared development family with no held-out evidence, search certificate or practical baseline/candidate evaluation."
+  ],
+  "extension_sha256": "f3dfe1c3cb1aacea28abe654419c76ca7c1353afc998e4087c3b6ec86483c674",
+  "failed": 0,
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "game_build": 13725832,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "held_out_evaluation": "not evaluated",
+  "information_mode": "offline supplied corridor; privileged native RNG excluded from Rust inputs; no fair corpus admission",
+  "ledger_promotions": 0,
+  "matched": 1,
+  "objective": "conditional post-move pawn position and HP only",
+  "observation_sha256": "2d2702ebb89253ff9e73e0a9c62cb0f40369fd0e343caf1edefb13d9ff782f27",
+  "original_completed_action_transitions": 0,
+  "original_projection": {
+    "hp": 3,
+    "position": [
+      0,
+      1
+    ]
+  },
+  "original_receipt_sha256": "7950fce188cca15febd23f20a84afe0345734b7a14d54e04d3527d70bd2f4d28",
+  "original_report_sha256": "f51e27ecdbea8f131897a065b029e3ca348e0d5ec0f285c7868f06f77abcd4de",
+  "rust_action_events": [],
+  "rust_projection": {
+    "hp": 3,
+    "position": [
+      0,
+      1
+    ],
+    "replay_accepted": true
+  },
+  "schema_version": 1,
+  "search_certificates": 0,
+  "search_status": "not evaluated",
+  "simulator_version": 413,
+  "source_lf_sha256": {
+    "data/solver_first/s0_information_contract.json": "4436fa932f58a2820b0f6edd54ac485bb65aef1c7b5d454c15b00c96401fa068",
+    "rust_solver/src/lib.rs": "c76e58cd342c5188280b38f472a0345c4e5c77d50b9b8d28e2868b55142d8af8",
+    "rust_solver/src/movement.rs": "711fa28eca7c84943d80c92040cfee4dcb30c15af79a9ec390b3a7db6b2ee2bf",
+    "rust_solver/src/primitive.rs": "f17c6a10842253d304080847707b1f129279ad3578c65d95fe1d573aa5fefb69",
+    "rust_solver/src/serde_bridge.rs": "8d2a70aed234d46b84c01ad7c4af6b9e8fb09935fc5babd7585a20681d5e14aa",
+    "scripts/solver_first_ground_step_compare.py": "4050dd817076ba0def9d9fafb8f6d83f009636079470f29f1b59b1c3b9f0467d",
+    "scripts/solver_first_s0.py": "dcc56cefa5efea7fd880856f35eb669efe45fcda44f04b3532f7190f2216740e",
+    "src/solver/observation_contract.py": "56324aecc749ec51f1383957fe1fd2db72a9ef12966f20b3210fd50c0e2148f7"
+  },
+  "valid_bounds": null
+}

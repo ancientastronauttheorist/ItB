@@ -46,8 +46,9 @@ class CacheEmitterMachine(EmitterMachine):
                 return
             self.fail('undeclared TLS-slot access');return
         super().memory(uc,kind,at,width,value,user)
-def acquire(executable, admission=None):
-    exe=Path(executable);m=CacheEmitterMachine(exe,admission)
+def acquire(executable, admission=None, *, continuation=None, machine_type=None):
+    """Run a declared continuation before closing the actual host GL context."""
+    exe=Path(executable);m=(machine_type or CacheEmitterMachine)(exe,admission)
     calls=[];observations={};status='failed';failure=None
     def original(entry,args=(),receiver=0,cleanup=0,edx=0):
         begin=len(m.allocator_calls);row=m.execute(entry,list(args),receiver,edx,cleanup)
@@ -244,7 +245,10 @@ def acquire(executable, admission=None):
                 initialized_particle_cells_per_row=11,particle_padding_offsets_ungraded=[29,30,31],
                 particle_evolution_ungraded=True,draw_record=draw,draw_resource=m.get(draw+0xc),
                 vertices=vertices,vertex_storage_sha256=api.sha(vertex_bytes))
-            status='complete_native_resource_cache_metadata_and_Dust_constructor'
+            if continuation is not None:
+                continuation(m,calls,observations,original,dll)
+            status=('complete_joined_dependency_and_declared_continuation' if continuation is not None
+                    else 'complete_native_resource_cache_metadata_and_Dust_constructor')
         except Exception as exc:
             failure=str(exc)
             status='failed'

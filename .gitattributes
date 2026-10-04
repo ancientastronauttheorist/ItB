@@ -55,3 +55,6 @@ src/observatory/solver_first_image_resource.py text eol=lf
 src/observatory/solver_first_gl_texture.py text eol=lf
 scripts/solver_first_cache_emitter.py text eol=lf
 src/observatory/solver_first_cache_emitter.py text eol=lf
+scripts/solver_first_ground_step.py text eol=lf
+src/observatory/solver_first_ground_step.py text eol=lf
+scripts/solver_first_ground_step_compare.py text eol=lf

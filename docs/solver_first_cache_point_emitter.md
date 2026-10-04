@@ -1,5 +1,10 @@
 # Original Point, cache and Dust constructor join
 
+The follow-up [joined Ground N2 continuation](solver_first_joined_ground_step.md)
+now executes before host cleanup and closes its biome/CRT RNG/route return
+dependency. This historical constructor report keeps its original source pins;
+loaded Move/action admission and full tactical continuity remain open.
+
 The original Dust constructor now returns through its normal image lookup. One
 offline guest joins original RTTI insertion, luabind Point registration/construction/
 holder conversion, exact stock image metadata, real texture upload, native resource
