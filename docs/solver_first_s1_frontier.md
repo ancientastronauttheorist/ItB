@@ -2,6 +2,14 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [conditional stock Move callback acquisition](solver_first_move_callbacks.md)
+closes typed Board/Pawn/PointList/SkillEffect callback composition under declared
+raw actor/Pilot query inputs. Original targets are G8/F8/E8; the native normal
+H8/G8 type-4/mode-0 effect owns its path. The distinct-destination Rust
+comparison retains the origin/skip boundary separately. Full loaded/deployed
+actor, selected-action post-processing, dispatch, settlement and turn
+continuity remain open; no fair/held-out/search/whole-gate promotion follows.
+
 October 4 [genuine Skill constructor acquisition](solver_first_loaded_skills.md)
 closes unchanged native TipData/Skill defaults, Move/Repair construction and
 base-manager ownership. It supplies no loaded Pawn, legal-action or full-turn

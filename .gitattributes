@@ -60,3 +60,6 @@ src/observatory/solver_first_ground_step.py text eol=lf
 scripts/solver_first_ground_step_compare.py text eol=lf
 scripts/solver_first_loaded_skill.py text eol=lf
 src/observatory/solver_first_loaded_skill.py text eol=lf
+scripts/solver_first_move_callback.py text eol=lf
+src/observatory/solver_first_move_callback.py text eol=lf
+scripts/solver_first_move_callback_compare.py text eol=lf

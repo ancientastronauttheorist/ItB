@@ -1,0 +1,2092 @@
+{
+  "actor_input": {
+    "Board": "Existing declaredqueryworld andsuppliedoriginalBoard receiver; pointedactorcoords/gridmembership/occupancy provenance explicit. BoardGetReachable has additionalworld/occupancy reads outsidethisgetter-onlyfootprint; reuseits reviewedqueryfixture instead ofclaiming thispacket mapswholeBoard domain.",
+    "Lua": "Actual VM/registry wrapper boundaries inheritedfromreviewedLua module; exactstockCreateClass, Pawn defaults+customcallbacks, AddPawn andPunchMech loaded BEFORESetPawn shadowsglobalPawnclass. Allseven nativeconstant values pinned separately. Genuine stringlibrary needed byCallMethod. Verify inheritedGetTeleporter/GetJumper/GetBurrows/GetFlying/GetMassive/GetMoveSpeed exist and returntyped rawsourcevalues. No callbackstub/nilfallback.",
+    "Pawn": "Mapped inputrecord through+1314. Real executable vtableVA82e320. Definitionstring+94=\"PunchMech\", SSOlength9/capacity15. Team+B0=1; HP+8a8=3; f81=0;10c0=1;a64=0;990=3 rawspeed;a58=0;8e0=0;1314=0;99d=1;994/998 explicit0. Upgradevector+c4c/c50/c54 oneactualor declaredzeroI32cell. Alternatepair980/984 null; retainedPilot/control+a6c/a70 valid.",
+    "Pilot": "Declared projection only: +5c=0, +25c=0; actualempty24BmainSkill at+60, length+70=0, capacity+74=15. No physical unearnedskillrecords need be fabricated for this read footprint; their producing chain remainsexcluded. Retain arbitraryphysicalvector layout only if supplied and clearlyunread, do not callit nativeproduced.",
+    "control": "Source-correct sharedcontrol retains baseline strong+4=1, weak+8=1 and authenticcontrolvtable if fullrecorddeclared. Each originalcopy incrementsstrong2 and ordinarydrop restores1. No destructor is reached with validheldowner; require balance. Controlcells are inputs, not proofgenuinePilotctorownership.",
+    "raw_values_vs_results": "3 at+990 and1 at+99d are declared RAWdefinitionstate consistentwith exactstockLua, not supplied finaleffectiveMoveSpeed3/profile18. Grade rawgetter values independently; then derive effective getter outputs only through original code."
+  },
+  "binding_data_windows": [
+    {
+      "dwords": [
+        "0x69cf70",
+        "0x69b7b0",
+        "0x8593a8"
+      ],
+      "label": "GetReachable methoddescriptor vtable",
+      "raw_sha256": "f88b8cfb6414576813d2736ef58deb1b4ad4d9ed49f8c6eefbc142809dc770ce",
+      "size": 12,
+      "va": "0x83b2cc"
+    },
+    {
+      "dwords": [
+        "0x69cf70",
+        "0x69b520",
+        "0x859330"
+      ],
+      "label": "GetPath methoddescriptor vtable",
+      "raw_sha256": "9932f8b83d46c555f7f7e300dc35ed412e5e69577a61ef853abed985afa91b22",
+      "size": 12,
+      "va": "0x83b308"
+    },
+    {
+      "dwords": [
+        "0x69cf70",
+        "0x695d10",
+        "0x858b10"
+      ],
+      "label": "integergetter methoddescriptor vtable",
+      "raw_sha256": "930dadff80f7afe2200cd7722a512ce24ec19eb88384c94d4ce83640a5df3eef",
+      "size": 12,
+      "va": "0x83b7e8"
+    },
+    {
+      "dwords": [
+        "0x69cf70",
+        "0x695c30",
+        "0x858ad4"
+      ],
+      "label": "boolgetter methoddescriptor vtable",
+      "raw_sha256": "41f7f745a09ffa484368826dd1c1ecf5775cd690159de06d979dc813baea04f5",
+      "size": 12,
+      "va": "0x83b800"
+    },
+    {
+      "dwords": [
+        "0x69cf70",
+        "0x695710",
+        "0x858a70"
+      ],
+      "label": "IsAbility methoddescriptor vtable",
+      "raw_sha256": "c26d8c1a8bc0ebd29680a90071974e72be9cc2fcdc5d9697c12b5d3fa6c4fbac",
+      "size": 12,
+      "va": "0x83b848"
+    },
+    {
+      "dwords": [
+        "0x55f0c0",
+        "0x63aee0",
+        "0x63f5e0",
+        "0x63f550",
+        "0x62cdd0",
+        "0x63c690"
+      ],
+      "label": "Pawn original vtable prefix",
+      "raw_sha256": "a5e3ecd1232c509cb19c3e7b612cdc24a7ece9522656ba4291566088bc14040e",
+      "size": 24,
+      "va": "0x82e320"
+    },
+    {
+      "dwords": [
+        "0x468db0",
+        "0x578970",
+        "0x468c60"
+      ],
+      "label": "Board pointerholder vtable",
+      "raw_sha256": "df4c1a0d85d4497e0e12de2ede0655b77b347bbef827ab983326b937a1b9e1a2",
+      "size": 12,
+      "va": "0x82e1b4"
+    },
+    {
+      "dwords": [
+        "0x468db0",
+        "0x4f8e80",
+        "0x468c60"
+      ],
+      "label": "Pawn pointerholder vtable",
+      "raw_sha256": "3e2b96858e1f19e73fe28c71c562c4ab181fcefeef8f39f743725433a4707791",
+      "size": 12,
+      "va": "0x82a930"
+    },
+    {
+      "dwords": [
+        "0x6743d0",
+        "0x674330",
+        "0x465a30"
+      ],
+      "label": "PointList ownedholder vtable",
+      "raw_sha256": "8355a6ff29c1dbb8668bac00bc76c362211bb2d15d9fab9d509181b29118102d",
+      "size": 12,
+      "va": "0x838314"
+    },
+    {
+      "ascii": "Board",
+      "raw_sha256": "cb69667eab56b366ec31405b7b76b5405009bc6411d3418377b8dcaf552cfdb9",
+      "size": 6,
+      "va": "0x83853c"
+    },
+    {
+      "ascii": "BoardPawn",
+      "raw_sha256": "d65bb70dcd94c3c6009352c0b5cd0fa1280cd7ecb5133453a41bf04c818204de",
+      "size": 10,
+      "va": "0x838ec4"
+    },
+    {
+      "ascii": "PointList",
+      "raw_sha256": "7c1821f36dd086b6c696e8f523846cd53664bb6d9f279c581c789f1b6ff90dcb",
+      "size": 10,
+      "va": "0x8384e8"
+    },
+    {
+      "ascii": "GetReachable",
+      "raw_sha256": "b547e64c7c7d660f0d7f186890d2941bd38f637ed0baf845cb12405cd3a1a61b",
+      "size": 13,
+      "va": "0x838644"
+    },
+    {
+      "ascii": "GetPath",
+      "raw_sha256": "49b2ee71e9346781a9a408230c03eed557e02420b44a5ac09a52bc4c281b85b9",
+      "size": 8,
+      "va": "0x838678"
+    },
+    {
+      "ascii": "GetPathProf",
+      "raw_sha256": "7241892fae3e5678f561294bd1d2e034cde158db75ec83e792553aa4175d5b71",
+      "size": 12,
+      "va": "0x839068"
+    },
+    {
+      "ascii": "GetMoveSpeed",
+      "raw_sha256": "e294cb5e1a5c26f333f17d8f9458cb3fc898963f5435646b6af1d22d8fab288f",
+      "size": 13,
+      "va": "0x83907c"
+    },
+    {
+      "ascii": "IsTeleporter",
+      "raw_sha256": "fd4823b5fd30e15f4caca727f52074c6f3aa36d3f2397c9e378039985f95e945",
+      "size": 13,
+      "va": "0x839188"
+    },
+    {
+      "ascii": "IsJumper",
+      "raw_sha256": "6b07ebab9dcbd281f21abfea20df03bf0835f9abd45981db84383a2b3010c678",
+      "size": 9,
+      "va": "0x8391ac"
+    },
+    {
+      "ascii": "IsAbility",
+      "raw_sha256": "d4fadc524b642881f86bf2194f36b448c498d324ca2c90bc8154630a24dff7d8",
+      "size": 10,
+      "va": "0x838f5c"
+    },
+    {
+      "ascii": ".?AVPawn@@",
+      "raw_sha256": "6616b5a646a8ef0e25bc0a65aa7ec8a103736c9e1f315af2f0f64703cecbbb25",
+      "size": 11,
+      "va": "0x89e3f8"
+    },
+    {
+      "ascii": ".PAVPawn@@",
+      "raw_sha256": "9634465e5ee61740da8beab88576bc15eca6d1e9308e5120dfe3b8ce8be408dd",
+      "size": 11,
+      "va": "0x89e40c"
+    },
+    {
+      "ascii": ".?AVBoard@@",
+      "raw_sha256": "b8ece58934c5749ab4c927695d77986f5fad118f65067e16179266fa707afc0e",
+      "size": 12,
+      "va": "0x89e820"
+    },
+    {
+      "ascii": ".PAVBoard@@",
+      "raw_sha256": "aba86003fb234e390390ec94195ca7134b90b6e7f13270e2931e518c16d3f204",
+      "size": 12,
+      "va": "0x89e834"
+    },
+    {
+      "ascii": ".?AUPointList@@",
+      "raw_sha256": "26aab3d1450e784e545888527a205e961ec6f2f975461d2c610e3122eedcf79f",
+      "size": 16,
+      "va": "0x89e848"
+    },
+    {
+      "boundary": "exact5B decodedthunk, originalregistrymemberVA6e39b4; not a claimed separate atlasbody",
+      "instructions": [
+        "2e39b4 mov eax,[ecx]",
+        "2e39b6 jmp DWORD[eax+4]"
+      ],
+      "kind": "decoded_callable_thunk_window_not_atlas_owner",
+      "raw_sha256": "5a90d0bd0afcbaffbae31458745dba34a323191670616da2e2939913e474ad99",
+      "rva": "0x2e39b4",
+      "size": 5
+    }
+  ],
+  "class_registration": {
+    "apply_abi": "Complete original2e66c0, ECX=&8B{actualL,NULLnamespace}, stack[0]=descriptor[0] node,RET4. Transfers/applies original owned descriptor via actualmethod vtables; no partial279880 execution required.",
+    "builder_abi": "ECX=12B writable descriptor; stack[0]=unused DWORD constructor marker; RET4. Original allocates72B class node, writes desc[0]=desc[1]=node,desc[2]=desc.",
+    "classes": [
+      {
+        "builder_rva": "0x2825c0",
+        "name": "Board",
+        "pointer_type_id_va": "0x8d906c",
+        "rtti_va": "0x89e818",
+        "value_type_id_va": "0x8d9070"
+      },
+      {
+        "builder_rva": "0x281c60",
+        "name": "BoardPawn",
+        "pointer_type_id_va": "0x8d8e58",
+        "rtti_va": "0x89e3f0",
+        "value_type_id_va": "0x8d8e5c"
+      },
+      {
+        "builder_rva": "0x282700",
+        "name": "PointList",
+        "rtti_va": "0x89e840",
+        "value_type_id_va": "0x8d9068"
+      }
+    ],
+    "method_builder_abi": "ECX=constructed descriptor; five DWORD arguments RET20. Generic int/bool builder: [nameVA,&8Bmemberpair,unused,unused,unused]. NamedGetReachable/GetPath/IsAbility builders: [unused,&8Bmemberpair,unused,unused,unused]. Pair is [actual preferred VA,zero this-adjustment]. Original owns32B appended methodnode.",
+    "pointlist_needed": "Both nativequery invokers return an ownedPointList through274120/274210, which requires actual registeredID8d9068/classrep. No PointListmethods are needed merely to return/pass it into genuine AddMove.",
+    "type_ids": "Execute complete wrappers 4d00 Pawn*,4d20 Pawn,5940 PointList,5960 Board*,5980 Board through existing genuine2e8d20 registry. Results are actual IDs in declared isolated registration order, never assigned guessed IDs."
+  },
+  "effect_data_windows": [
+    {
+      "label": "SkillEffect name",
+      "raw_sha256": "f091ebe8031cc8573195cfaf95549ba7e54c9d2e6d8b1ae931df199fba59f878",
+      "size": 12,
+      "start_rva": "0x438cd0"
+    },
+    {
+      "label": "AddMove name",
+      "raw_sha256": "c134fe543463b5dda4b0f86277a700a0882d0b2601bf2a570247ffe9f25eb452",
+      "size": 8,
+      "start_rva": "0x438d20"
+    },
+    {
+      "label": "PointList name",
+      "raw_sha256": "7c1821f36dd086b6c696e8f523846cd53664bb6d9f279c581c789f1b6ff90dcb",
+      "size": 10,
+      "start_rva": "0x4384e8"
+    },
+    {
+      "label": "SkillEffect RTTI",
+      "raw_sha256": "ed3548869d0f14aac6be6603268dd934978547e2b595f623140ea564415c046d",
+      "size": 27,
+      "start_rva": "0x49ee08"
+    },
+    {
+      "label": "PointList RTTI",
+      "raw_sha256": "3bb78d607df3337e03943fed797ee8bc02887f4d70d8cf35cfec8c02375341fd",
+      "size": 25,
+      "start_rva": "0x49e840"
+    },
+    {
+      "label": "constructor descriptor vtable",
+      "raw_sha256": "d1f6feeec4db656e716baef21c8cbe83d9eac9e6f381b437973df5a9425f6622",
+      "size": 12,
+      "start_rva": "0x43b6c8"
+    },
+    {
+      "label": "AddMove descriptor vtable",
+      "raw_sha256": "dbc5b989466578dbdb850c8af29bdf1e302e94c251b6b3e4c7debf9030a8442f",
+      "size": 12,
+      "start_rva": "0x43b710"
+    },
+    {
+      "label": "SkillEffect CFunction object vtable",
+      "raw_sha256": "6c328a0017ae4bae978a9f7aabbf83fca81ae141d013aed07b776d95b6edb640",
+      "size": 16,
+      "start_rva": "0x43aaa4"
+    },
+    {
+      "label": "SkillEffect holder vtable",
+      "raw_sha256": "b33d36daffb35b51a1e2ceb0a861998c8659caff3a807da31cc0f193b68d7b63",
+      "size": 12,
+      "start_rva": "0x439ed4"
+    },
+    {
+      "label": "PointList constructor descriptor vtable",
+      "raw_sha256": "cbdbb9e2f742326180d87cd4eb84a5b22c9947e343aaf08814ee7a931bd7bb32",
+      "size": 12,
+      "start_rva": "0x43b1a0"
+    },
+    {
+      "label": "PointList constructor holder vtable",
+      "raw_sha256": "8355a6ff29c1dbb8668bac00bc76c362211bb2d15d9fab9d509181b29118102d",
+      "size": 12,
+      "start_rva": "0x439fb4"
+    },
+    {
+      "label": "PointList query holder vtable",
+      "raw_sha256": "8355a6ff29c1dbb8668bac00bc76c362211bb2d15d9fab9d509181b29118102d",
+      "size": 12,
+      "start_rva": "0x438314"
+    },
+    {
+      "label": "GetSkillEffect literal",
+      "raw_sha256": "d06d5b7da19851251a333231686eb5ae5270ab8b6fb584588aca5c8a33670017",
+      "size": 15,
+      "start_rva": "0x437f40"
+    },
+    {
+      "label": "CallMethod literal",
+      "raw_sha256": "2dcb6c8bf6213787c9679035983b87e6630de9bdf78e85cbd18990ab5d751916",
+      "size": 11,
+      "start_rva": "0x41ff08"
+    },
+    {
+      "label": "Move literal",
+      "raw_sha256": "d043e1bcbf133b4820da7af3203c58cbbe275ea952663afc7874ce535f9cc11b",
+      "size": 5,
+      "start_rva": "0x42a7a0"
+    }
+  ],
+  "evidence_class": "source-pinned conditional stock Move callback acquisition boundary",
+  "exact_stock_slices": [
+    {
+      "byte_start": 2260,
+      "complete_file_raw_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "game_relative_path": "scripts/global.lua",
+      "line_end": 162,
+      "line_start": 107,
+      "raw_sha256": "7a3abc4c29b15759796b492cee6cde7846e0532c30e7073d98afa9e5a6257355",
+      "size": 1332
+    },
+    {
+      "byte_start": 4171,
+      "complete_file_raw_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "game_relative_path": "scripts/global.lua",
+      "line_end": 198,
+      "line_start": 197,
+      "raw_sha256": "ed9cdbceaf87ec12efc85d62a4f29804e31d3ea59b44627aae2d94e51ca4b130",
+      "size": 30
+    },
+    {
+      "byte_start": 4293,
+      "complete_file_raw_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "game_relative_path": "scripts/global.lua",
+      "line_end": 211,
+      "line_start": 205,
+      "raw_sha256": "41c9f4bfa9b9278969e9d1165f927aa60d8921a9916e2d554206c45c68efb228",
+      "size": 120
+    },
+    {
+      "byte_start": 1310,
+      "complete_file_raw_sha256": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "game_relative_path": "scripts/global.lua",
+      "line_end": 59,
+      "line_start": 53,
+      "raw_sha256": "21bd42fa1244a4e4cd4b36412503cc3f01edef803e0ae0d981555af04db921f2",
+      "size": 92
+    },
+    {
+      "byte_start": 347,
+      "complete_file_raw_sha256": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+      "game_relative_path": "scripts/pawns.lua",
+      "line_end": 22,
+      "line_start": 9,
+      "raw_sha256": "b7875e946429683139d7c09722d19bcf5f81adcc173f6113e989becbcc455863",
+      "size": 302
+    }
+  ],
+  "exclusions": [
+    "Supplied query world and raw actor/Pilot state; no full Pawn/Pilot/animation/stock-equipment constructor or deployment.",
+    "Original lower callbacks2726d0/272190 only; selected268050/269cc0 context and postprocessing, dispatch, action settlement and full turns open.",
+    "No player-information, heldout, search certificate, practical strength or acceptance/ledger promotion."
+  ],
+  "executable_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "expected": {
+    "delay_bits": "0xbf800000",
+    "effect_mode": 0,
+    "effect_type": 4,
+    "getter_types": [
+      3,
+      3,
+      1,
+      1,
+      1,
+      1
+    ],
+    "getters": [
+      3,
+      18,
+      false,
+      false,
+      false,
+      false
+    ],
+    "normal_path": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "target_area": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  "inherited_boundary_sha256": "f3a933bb079ce263139db6cfb7e4d4c15b2ab48d09a45edcc0725386a59e9571",
+  "methods": [
+    {
+      "apply_rva": "0x29b7b0",
+      "argument_match_call_rva": "0x2c4c90",
+      "builder_rva": "0x287930",
+      "class": "Board",
+      "descriptor_vtable_va": "0x83b2cc",
+      "function_factory_rva": "0x2a40f0",
+      "lua_cfunction_invoker_rva": "0x2ad490",
+      "member_pair": [
+        "0x574180",
+        0
+      ],
+      "name": "GetReachable",
+      "name_va": "0x838644",
+      "original_registration_call_rva": "0x279e3a"
+    },
+    {
+      "apply_rva": "0x29b520",
+      "argument_match_call_rva": "0x2c5380",
+      "builder_rva": "0x287b20",
+      "class": "Board",
+      "descriptor_vtable_va": "0x83b308",
+      "function_factory_rva": "0x2a3f70",
+      "lua_cfunction_invoker_rva": "0x2ad760",
+      "member_pair": [
+        "0x5742d0",
+        0
+      ],
+      "name": "GetPath",
+      "name_va": "0x838678",
+      "original_registration_call_rva": "0x279ebf"
+    },
+    {
+      "apply_rva": "0x295d10",
+      "argument_match_call_rva": "0x2d0160",
+      "builder_rva": "0x28c3a0",
+      "class": "BoardPawn",
+      "descriptor_vtable_va": "0x83b7e8",
+      "function_factory_rva": "0x2a0c70",
+      "lua_cfunction_invoker_rva": "0x2b3840",
+      "member_pair": [
+        "0x63e0f0",
+        0
+      ],
+      "name": "GetMoveSpeed",
+      "name_va": "0x83907c",
+      "original_registration_call_rva": "0x27c249"
+    },
+    {
+      "apply_rva": "0x295d10",
+      "argument_match_call_rva": "0x2d0160",
+      "builder_rva": "0x28c3a0",
+      "class": "BoardPawn",
+      "descriptor_vtable_va": "0x83b7e8",
+      "function_factory_rva": "0x2a0c70",
+      "lua_cfunction_invoker_rva": "0x2b3840",
+      "member_pair": [
+        "0x632f90",
+        0
+      ],
+      "name": "GetPathProf",
+      "name_va": "0x839068",
+      "original_registration_call_rva": "0x27c203"
+    },
+    {
+      "apply_rva": "0x295c30",
+      "argument_match_call_rva": "0x2d0270",
+      "builder_rva": "0x28c450",
+      "class": "BoardPawn",
+      "descriptor_vtable_va": "0x83b800",
+      "function_factory_rva": "0x2a0bf0",
+      "lua_cfunction_invoker_rva": "0x2b3930",
+      "member_pair": [
+        "0x63e850",
+        0
+      ],
+      "name": "IsJumper",
+      "name_va": "0x8391ac",
+      "original_registration_call_rva": "0x27c61a"
+    },
+    {
+      "apply_rva": "0x295c30",
+      "argument_match_call_rva": "0x2d0270",
+      "builder_rva": "0x28c450",
+      "class": "BoardPawn",
+      "descriptor_vtable_va": "0x83b800",
+      "function_factory_rva": "0x2a0bf0",
+      "lua_cfunction_invoker_rva": "0x2b3930",
+      "member_pair": [
+        "0x63e7f0",
+        0
+      ],
+      "name": "IsTeleporter",
+      "name_va": "0x839188",
+      "original_registration_call_rva": "0x27c5f5"
+    },
+    {
+      "apply_rva": "0x295710",
+      "argument_match_call_rva": "0x2d09b0",
+      "builder_rva": "0x28c840",
+      "class": "BoardPawn",
+      "descriptor_vtable_va": "0x83b848",
+      "function_factory_rva": "0x2a08f0",
+      "lua_cfunction_invoker_rva": "0x2b3ed0",
+      "member_pair": [
+        "0x6e39b4",
+        0
+      ],
+      "name": "IsAbility",
+      "name_va": "0x838f5c",
+      "original_registration_call_rva": "0x27bef5"
+    }
+  ],
+  "native_export_constants": [
+    {
+      "backing": {
+        "RVA": "0x00415684",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      },
+      "code_sha256": "d72021c3142dfc7331c6401192f7199c0e57b1c8862ed225b9a32ee0ec33de91",
+      "name": "LEADER_NONE",
+      "size": 55,
+      "start_rva": "0x2806f1",
+      "value": 0
+    },
+    {
+      "backing": {
+        "RVA": "0x00415654",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      },
+      "code_sha256": "e0de843ff8271d5285667d4c274c357515e96526c48c9cb269f77e175dc17ad2",
+      "name": "TIER_NORMAL",
+      "size": 55,
+      "start_rva": "0x281561",
+      "value": 0
+    },
+    {
+      "backing": null,
+      "code_sha256": "a5a18d1c66efdf14fe66329b4a8f34249ea13698e3e80731ce2773180086bd43",
+      "name": "TEAM_NONE",
+      "size": 86,
+      "start_rva": "0x27ea69",
+      "value": 2
+    },
+    {
+      "backing": null,
+      "code_sha256": "d942fd5b0cf7c4270c29247f775da27533de2da41986779d8da5b4d6d96ebc6b",
+      "name": "FACTION_DEFAULT",
+      "size": 86,
+      "start_rva": "0x27ec28",
+      "value": 0
+    },
+    {
+      "backing": null,
+      "code_sha256": "cb1c228016fa127055eb12c0eb2b08fb945b639885993b6d1517aa3064e0bdf2",
+      "name": "IMPACT_NULL",
+      "size": 86,
+      "start_rva": "0x27f861",
+      "value": 0
+    },
+    {
+      "backing": null,
+      "code_sha256": "69e00fa0e54473f2a7c150f8550294608342230b02a8ae030fabd9961520a969",
+      "name": "TEAM_PLAYER",
+      "size": 86,
+      "start_rva": "0x27e815",
+      "value": 1
+    },
+    {
+      "backing": null,
+      "code_sha256": "ad8ef99832b89c55553a19f45c5f6e6de62bdc845b1832937593a30d32fb8526",
+      "name": "IMPACT_METAL",
+      "size": 86,
+      "start_rva": "0x27f8f6",
+      "value": 1
+    }
+  ],
+  "original_body_pins": [
+    {
+      "body_sha256": "2369efec49e38462d94854f0ae4b8f1a63fff57918b3369e5518618e8bc382dd",
+      "body_size": 28,
+      "entry_rva": "0x00004d00",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00004d00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "08bf5aaabb47285b5c6682da9b432fd5e5fc2617113665317f2213ae4cc749ed",
+      "body_size": 28,
+      "entry_rva": "0x00004d20",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00004d20"
+        }
+      ]
+    },
+    {
+      "body_sha256": "80a34a91916c34cd14f1b0ce8a7355d1ba20c402f39e5cd1a3e7c6528ee0ebce",
+      "body_size": 28,
+      "entry_rva": "0x00005940",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00005940"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cdd1197f4d38777621557fd461b863252542dbff730f004865873fc876698548",
+      "body_size": 28,
+      "entry_rva": "0x00005960",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00005960"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d2a931b86779525b7786995a91a094d474713d1285cc8811d6f538cc187db8ee",
+      "body_size": 28,
+      "entry_rva": "0x00005980",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00005980"
+        }
+      ]
+    },
+    {
+      "body_sha256": "051265d706e72171395fc5924ccfd1c0cd48db45603df1411c46770e2f0a119e",
+      "body_size": 145,
+      "entry_rva": "0x00281c60",
+      "ranges": [
+        {
+          "size": 145,
+          "start_rva": "0x00281c60"
+        }
+      ]
+    },
+    {
+      "body_sha256": "381646958d6bc75cc96fbef0a186ad209ec9ac0de267a2156ce001ffe9abb89a",
+      "body_size": 145,
+      "entry_rva": "0x002825c0",
+      "ranges": [
+        {
+          "size": 145,
+          "start_rva": "0x002825c0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4b7d66d893ba7e373f055fa96d1a2fc9c795a0087394c58dea27db23975d28b9",
+      "body_size": 145,
+      "entry_rva": "0x00282700",
+      "ranges": [
+        {
+          "size": 145,
+          "start_rva": "0x00282700"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6cf7a55929dec62aee4fcdb205c4562144e2b3a43289f8bbdd81578df90f2b4b",
+      "body_size": 160,
+      "entry_rva": "0x00287930",
+      "ranges": [
+        {
+          "size": 160,
+          "start_rva": "0x00287930"
+        }
+      ]
+    },
+    {
+      "body_sha256": "51234d6a761583777e338e22b19a099d5dabed27f8e3ec82b48ad1d281bfc9fd",
+      "body_size": 160,
+      "entry_rva": "0x00287b20",
+      "ranges": [
+        {
+          "size": 160,
+          "start_rva": "0x00287b20"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d4cce132c30c619b317fe3153d1de3dc36c8f974c899a4d59eb53a7a3566852b",
+      "body_size": 161,
+      "entry_rva": "0x0028c3a0",
+      "ranges": [
+        {
+          "size": 161,
+          "start_rva": "0x0028c3a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "69ab0c86acc45f1488aa5285ab7341649692571dc492f59e195e48cd25d65e28",
+      "body_size": 161,
+      "entry_rva": "0x0028c450",
+      "ranges": [
+        {
+          "size": 161,
+          "start_rva": "0x0028c450"
+        }
+      ]
+    },
+    {
+      "body_sha256": "42d1461d28383ea02746c0b032961b6cb35e0a93aa736d64b23ae16901081416",
+      "body_size": 160,
+      "entry_rva": "0x0028c840",
+      "ranges": [
+        {
+          "size": 160,
+          "start_rva": "0x0028c840"
+        }
+      ]
+    },
+    {
+      "body_sha256": "5c8250f96daa853d7fe2be157d6a4fb2e6785997e7cf9a4bb288cb9919c98823",
+      "body_size": 210,
+      "entry_rva": "0x0029b7b0",
+      "ranges": [
+        {
+          "size": 210,
+          "start_rva": "0x0029b7b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "87df9125b44168b1f34f2616e4aa24682fa6f7b18d8bc554a96f4ad4558212ef",
+      "body_size": 210,
+      "entry_rva": "0x0029b520",
+      "ranges": [
+        {
+          "size": 210,
+          "start_rva": "0x0029b520"
+        }
+      ]
+    },
+    {
+      "body_sha256": "53b5f00942a374ac19f674f6d6a259f49d13bb9d321273c01f18d79425cf822e",
+      "body_size": 210,
+      "entry_rva": "0x00295d10",
+      "ranges": [
+        {
+          "size": 210,
+          "start_rva": "0x00295d10"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0676636e54e5a84e3729a347c17c1bb3839c44bb84a32d903a8bc003cd398817",
+      "body_size": 210,
+      "entry_rva": "0x00295c30",
+      "ranges": [
+        {
+          "size": 210,
+          "start_rva": "0x00295c30"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3e9e43bea0eb9597c462322fea88d64e3aa07c51570a6489693467d86178d050",
+      "body_size": 210,
+      "entry_rva": "0x00295710",
+      "ranges": [
+        {
+          "size": 210,
+          "start_rva": "0x00295710"
+        }
+      ]
+    },
+    {
+      "body_sha256": "927ba53e6095249b42b405fda97d1bac0d357b2a0b7d2c2569b5de7718aa4ad6",
+      "body_size": 121,
+      "entry_rva": "0x002a40f0",
+      "ranges": [
+        {
+          "size": 121,
+          "start_rva": "0x002a40f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "489d484d5f1a6ce90f24e2d795f04c7b49ccf46dd850b3f7f658f2b56ee39843",
+      "body_size": 121,
+      "entry_rva": "0x002a3f70",
+      "ranges": [
+        {
+          "size": 121,
+          "start_rva": "0x002a3f70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4f7b22dab1821d6d4e37647aa9a4c8af736bc2104dc9835fbbe19fcae3dbea14",
+      "body_size": 121,
+      "entry_rva": "0x002a0c70",
+      "ranges": [
+        {
+          "size": 121,
+          "start_rva": "0x002a0c70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3cf9caf201216a06b9a771e76f14abba4814a023d08297100224d7a00e3e087c",
+      "body_size": 121,
+      "entry_rva": "0x002a0bf0",
+      "ranges": [
+        {
+          "size": 121,
+          "start_rva": "0x002a0bf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0b7a8acf545a9a206ecfffea1f323fca5f8add664e56c4bf6a18884e39c544f4",
+      "body_size": 121,
+      "entry_rva": "0x002a08f0",
+      "ranges": [
+        {
+          "size": 121,
+          "start_rva": "0x002a08f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "338592728e33226f634a7e9655cd1500612b70dad38f0e6e0da324ac9a8fb27e",
+      "body_size": 139,
+      "entry_rva": "0x002ad490",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002ad490"
+        }
+      ]
+    },
+    {
+      "body_sha256": "54ff1e9474229a6704106880e6f49a36df54cb47803cf9b8a6fc429aac3b84bb",
+      "body_size": 46,
+      "entry_rva": "0x002ad545",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002ad545"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d468a4e1e6d481279f59c53239c086c967e877522ba358e6140ceca126dfcee3",
+      "body_size": 139,
+      "entry_rva": "0x002ad760",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002ad760"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8af49f2b6b83e7d169a51a78b73ae3c4828c82d23ee73b327a562451d9dabc54",
+      "body_size": 46,
+      "entry_rva": "0x002ad815",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002ad815"
+        }
+      ]
+    },
+    {
+      "body_sha256": "564156cc8e004fccfc96d0aa060e6367600207942a322414f289ee26cf54a16b",
+      "body_size": 139,
+      "entry_rva": "0x002b3840",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002b3840"
+        }
+      ]
+    },
+    {
+      "body_sha256": "9013089c54b74b9adc199a8e2e2b07f0cad2943edda87fc4c7b1586e75df776a",
+      "body_size": 46,
+      "entry_rva": "0x002b38f5",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002b38f5"
+        }
+      ]
+    },
+    {
+      "body_sha256": "b0ad899469b89c9cea559855d5d296f8a531f63ed801abd206e384bc089e406b",
+      "body_size": 139,
+      "entry_rva": "0x002b3930",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002b3930"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4936555dc3a677aa34c38c0fa49b1534556ae59604e670e029b7be54fe4bc1ec",
+      "body_size": 46,
+      "entry_rva": "0x002b39e5",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002b39e5"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3d0122ad7252ab363b09201ebe581ef39118418a3971e644b54bbf5badb311fa",
+      "body_size": 139,
+      "entry_rva": "0x002b3ed0",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002b3ed0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d391c35fcde8900e38eb50e7f4266209d070c4c0dc0629e776ef6ffe953a996e",
+      "body_size": 46,
+      "entry_rva": "0x002b3f85",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002b3f85"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3d2b5b8a9b698fc191ff49b7d1a35f73f62e81f179bb576981922382738e3887",
+      "body_size": 618,
+      "entry_rva": "0x002c4c90",
+      "ranges": [
+        {
+          "size": 618,
+          "start_rva": "0x002c4c90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d01a7c295f2e124bc2bc5798e9ecbc8425c372c722bd463e7580e43eadd1decc",
+      "body_size": 651,
+      "entry_rva": "0x002c5380",
+      "ranges": [
+        {
+          "size": 651,
+          "start_rva": "0x002c5380"
+        }
+      ]
+    },
+    {
+      "body_sha256": "b5eee2550df684d04ae4ebaad33051e68952955fa9ba4c6b8ccd70900e87cfae",
+      "body_size": 258,
+      "entry_rva": "0x002d0160",
+      "ranges": [
+        {
+          "size": 258,
+          "start_rva": "0x002d0160"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f2915fb628eb511b75429bff9ef0cb6cd61c88df22fa2db3cb3b75a46e54d5a0",
+      "body_size": 261,
+      "entry_rva": "0x002d0270",
+      "ranges": [
+        {
+          "size": 261,
+          "start_rva": "0x002d0270"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2d9db22d8e7200f8075e5a86fcc676c6c61db293452d9ac9a9fce0df6cc55b23",
+      "body_size": 356,
+      "entry_rva": "0x002d09b0",
+      "ranges": [
+        {
+          "size": 356,
+          "start_rva": "0x002d09b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "901637e492509838519df8f729bcca077a02eb9595d018b40e99f11f13fec60f",
+      "body_size": 98,
+      "entry_rva": "0x002dd740",
+      "ranges": [
+        {
+          "size": 98,
+          "start_rva": "0x002dd740"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8349e6d10437d025cc4281fd9bcb6245fb3dce5be7a145650d43851a88035454",
+      "body_size": 98,
+      "entry_rva": "0x002dde00",
+      "ranges": [
+        {
+          "size": 98,
+          "start_rva": "0x002dde00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "945d4e67a6dc9d744ee4643a42bd4880ca08acd29af543148f6353d5ad802d70",
+      "body_size": 145,
+      "entry_rva": "0x00274120",
+      "ranges": [
+        {
+          "size": 145,
+          "start_rva": "0x00274120"
+        }
+      ]
+    },
+    {
+      "body_sha256": "be1e0bfd5d29ba9dc6fe81194abad66b79d24d71a4a8f3897d52d1855fcd3f44",
+      "body_size": 273,
+      "entry_rva": "0x00274210",
+      "ranges": [
+        {
+          "size": 273,
+          "start_rva": "0x00274210"
+        }
+      ]
+    },
+    {
+      "body_sha256": "9c31bacfa5313616531470a4739924ff47f9c767efec6cdb01c1a12f2902cba0",
+      "body_size": 115,
+      "entry_rva": "0x000f88f0",
+      "ranges": [
+        {
+          "size": 115,
+          "start_rva": "0x000f88f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0dfc88f8e1db6aab7e5c66afdeb2e5e94232d0ce1695f3c6c42ed215b28ff9f1",
+      "body_size": 275,
+      "entry_rva": "0x000f8970",
+      "ranges": [
+        {
+          "size": 275,
+          "start_rva": "0x000f8970"
+        }
+      ]
+    },
+    {
+      "body_sha256": "5618c958481134290357ffde67775a5bc721f9a4a30ee6435c18d5f0090ceebe",
+      "body_size": 170,
+      "entry_rva": "0x000f8dd0",
+      "ranges": [
+        {
+          "size": 170,
+          "start_rva": "0x000f8dd0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6c823f3830753569966a4e0e3cd484d78e25fedd7bb409d047a8778c48832232",
+      "body_size": 157,
+      "entry_rva": "0x000f8e80",
+      "ranges": [
+        {
+          "size": 157,
+          "start_rva": "0x000f8e80"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2154b096f2348e70c67bf1419afcb1b504567dc6d17b84321288df505abe40f3",
+      "body_size": 100,
+      "entry_rva": "0x000f8f20",
+      "ranges": [
+        {
+          "size": 100,
+          "start_rva": "0x000f8f20"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0b11a31a5badd8a3318af519fc03b5456bf0dbccffffa384f4350ac613182bc3",
+      "body_size": 117,
+      "entry_rva": "0x000f8f90",
+      "ranges": [
+        {
+          "size": 117,
+          "start_rva": "0x000f8f90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c73bf94757ca31e8c69eb652d5e85d7374d517ae49179e5ff8c9e9e093ae791d",
+      "body_size": 115,
+      "entry_rva": "0x00176f00",
+      "ranges": [
+        {
+          "size": 115,
+          "start_rva": "0x00176f00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e14eccf5f0d0b3df9eef7464836f448b6b1b88bfab0f2658b445567e57a2c75a",
+      "body_size": 275,
+      "entry_rva": "0x00177570",
+      "ranges": [
+        {
+          "size": 275,
+          "start_rva": "0x00177570"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ef4071b141ad83c00b090cfc84a4ea7f098caf91a5f0daf787ffa726cb880138",
+      "body_size": 170,
+      "entry_rva": "0x00178820",
+      "ranges": [
+        {
+          "size": 170,
+          "start_rva": "0x00178820"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7b7b4dbef0e626a2800e61bf570fac06c432b04676ae1bc208f7abab58aa1366",
+      "body_size": 128,
+      "entry_rva": "0x001788d0",
+      "ranges": [
+        {
+          "size": 108,
+          "start_rva": "0x001788d0"
+        },
+        {
+          "size": 20,
+          "start_rva": "0x00178954"
+        }
+      ]
+    },
+    {
+      "body_sha256": "86ac8e8905d8298a2463d3866640d8593d62bbe395c0ace069ec79648cbe0e63",
+      "body_size": 100,
+      "entry_rva": "0x00178ad0",
+      "ranges": [
+        {
+          "size": 100,
+          "start_rva": "0x00178ad0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "808e2e3825939deeeb34e3095adb121d2addf3f96e99e1f6d64bb0463425b6df",
+      "body_size": 111,
+      "entry_rva": "0x00178b40",
+      "ranges": [
+        {
+          "size": 111,
+          "start_rva": "0x00178b40"
+        }
+      ]
+    },
+    {
+      "body_sha256": "796e37704e055f76418b78d65847638e8ab1611ffd9279007835c9864c7dea23",
+      "body_size": 88,
+      "entry_rva": "0x00054350",
+      "ranges": [
+        {
+          "size": 88,
+          "start_rva": "0x00054350"
+        }
+      ]
+    },
+    {
+      "body_sha256": "573636a11692b0fd2a378f50b3e9eed425c71f4dda5bba342fa1b7b574d5f5d1",
+      "body_size": 235,
+      "entry_rva": "0x002e66c0",
+      "ranges": [
+        {
+          "size": 235,
+          "start_rva": "0x002e66c0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e283c5dd59fcf995221823cc3b5af3de9db2889b026e10c1623be492374a416b",
+      "body_size": 321,
+      "entry_rva": "0x00174180",
+      "ranges": [
+        {
+          "size": 321,
+          "start_rva": "0x00174180"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a018d8395fcc60e14794c778029607fff585a4d4fb40524b26abafe53972fb31",
+      "body_size": 190,
+      "entry_rva": "0x001742d0",
+      "ranges": [
+        {
+          "size": 190,
+          "start_rva": "0x001742d0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d7d8a549c84d65c12de9e53daf99f248fd09ee0064e406fe0a6dd11cfc507751",
+      "body_size": 66,
+      "entry_rva": "0x0023e0f0",
+      "ranges": [
+        {
+          "size": 66,
+          "start_rva": "0x0023e0f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "52d5c73b8be3b26489e1384206eb567563d5bd9a7e2f5d69f3ceb831e59eab01",
+      "body_size": 531,
+      "entry_rva": "0x0023e180",
+      "ranges": [
+        {
+          "size": 531,
+          "start_rva": "0x0023e180"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f0dfe0b0f5c9f6e263bcc4d10563055487bf8496457fd76fdbb447139846aede",
+      "body_size": 42,
+      "entry_rva": "0x0023e3b0",
+      "ranges": [
+        {
+          "size": 42,
+          "start_rva": "0x0023e3b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3cc91e8ef2be9950114b088f141a4087057bf7eee702aade83be716e1bccfa40",
+      "body_size": 314,
+      "entry_rva": "0x00232f90",
+      "ranges": [
+        {
+          "size": 314,
+          "start_rva": "0x00232f90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "070e9bb133241ee59b526e0351dacd858d77e1e03139f92c9089301be6792677",
+      "body_size": 83,
+      "entry_rva": "0x0023e7f0",
+      "ranges": [
+        {
+          "size": 83,
+          "start_rva": "0x0023e7f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "16102aa9e51d4cbb1d206aea337138c033b3f922467d489e27eb01b3140d02d8",
+      "body_size": 83,
+      "entry_rva": "0x0023e850",
+      "ranges": [
+        {
+          "size": 83,
+          "start_rva": "0x0023e850"
+        }
+      ]
+    },
+    {
+      "body_sha256": "bc1c71c99d2ec99bc29be629f608aa9542435313c5de46c9fee564ebd383aecd",
+      "body_size": 205,
+      "entry_rva": "0x0023aee0",
+      "ranges": [
+        {
+          "size": 205,
+          "start_rva": "0x0023aee0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e9d4cbacdec95b15cd3c3db6c0cc5fe8aef57903915c4b3d2e59d6b2defafa29",
+      "body_size": 316,
+      "entry_rva": "0x00225150",
+      "ranges": [
+        {
+          "size": 316,
+          "start_rva": "0x00225150"
+        }
+      ]
+    },
+    {
+      "body_sha256": "97a35010a3faf482ff3d545d1c194ec59cff999618253445714690ecd9b94a60",
+      "body_size": 289,
+      "entry_rva": "0x00220a30",
+      "ranges": [
+        {
+          "size": 289,
+          "start_rva": "0x00220a30"
+        }
+      ]
+    },
+    {
+      "body_sha256": "103862d9f57e9def6fb88c2c00dccdf0003f228698175bfea726403dd5989db8",
+      "body_size": 42,
+      "entry_rva": "0x00234e90",
+      "ranges": [
+        {
+          "size": 42,
+          "start_rva": "0x00234e90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "06fe4311381c6f3a5f31db9b53004c771762327a02ef33ced2c3af2bb021fbdb",
+      "body_size": 225,
+      "entry_rva": "0x0023e490",
+      "ranges": [
+        {
+          "size": 225,
+          "start_rva": "0x0023e490"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ab8871fdc84043ad2f7bfd83e50e14acfa7ea7a4cf7c03709ad7b6e1c597f3b2",
+      "body_size": 270,
+      "entry_rva": "0x000493b0",
+      "ranges": [
+        {
+          "size": 270,
+          "start_rva": "0x000493b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "bd1262285282b7b6fc1f1c66cbbf850e219c0cb9a517da8f6e92e60471a0a6e1",
+      "body_size": 11,
+      "entry_rva": "0x0022cdd0",
+      "ranges": [
+        {
+          "size": 11,
+          "start_rva": "0x0022cdd0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+      "body_size": 4520,
+      "entry_rva": "0x0022a920",
+      "ranges": [
+        {
+          "size": 4520,
+          "start_rva": "0x0022a920"
+        }
+      ]
+    },
+    {
+      "body_sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+      "body_size": 2759,
+      "entry_rva": "0x0022c0f0",
+      "ranges": [
+        {
+          "size": 2759,
+          "start_rva": "0x0022c0f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "51f3a81b7b832098c11f81beb1c85e1fe488434adce745dd8af5cb5af64200c2",
+      "body_size": 32310,
+      "entry_rva": "0x00279880",
+      "ranges": [
+        {
+          "size": 32310,
+          "start_rva": "0x00279880"
+        }
+      ]
+    },
+    {
+      "body_sha256": "254d9cd585060687fc1fc363157fea299ef4f3f8d3d3713345fc301a1eb34223",
+      "body_size": 326,
+      "entry_rva": "0x00237940",
+      "ranges": [
+        {
+          "size": 326,
+          "start_rva": "0x00237940"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fce18674333a529d3d0a5ffcce726dd5a163b60eafc72fa4eb61c1c81216f0ff",
+      "body_size": 111,
+      "entry_rva": "0x00172900",
+      "ranges": [
+        {
+          "size": 111,
+          "start_rva": "0x00172900"
+        }
+      ]
+    },
+    {
+      "body_sha256": "1fd220c0f40bd16dc787649523f32cbf08d24e23fac5d939ff7cab3f463e85b0",
+      "body_size": 109,
+      "entry_rva": "0x00049620",
+      "ranges": [
+        {
+          "size": 109,
+          "start_rva": "0x00049620"
+        }
+      ]
+    },
+    {
+      "body_sha256": "768054563f9f2f20d084dc5436dd492a0ce678b412947917e3cae68ba645a88e",
+      "body_size": 381,
+      "entry_rva": "0x0004d3d0",
+      "ranges": [
+        {
+          "size": 381,
+          "start_rva": "0x0004d3d0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "73a9b4302bd9d88c5773264e1b124d28388f81e091943797d7a61cb818b8b932",
+      "body_size": 96,
+      "entry_rva": "0x0006c1b0",
+      "ranges": [
+        {
+          "size": 96,
+          "start_rva": "0x0006c1b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6fbffb05c8f7ee3c9909b060fdc861f7bd2343b6aaf274a03746d3ab8c6836a1",
+      "body_size": 141,
+      "entry_rva": "0x0006fb40",
+      "ranges": [
+        {
+          "size": 141,
+          "start_rva": "0x0006fb40"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7fb57c2ae3650b9d352e19da3617b63b5787c898b616a274502c03cfda5a18cc",
+      "body_size": 169,
+      "entry_rva": "0x0014e4e0",
+      "ranges": [
+        {
+          "size": 169,
+          "start_rva": "0x0014e4e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "24e93097c00be174cbaf94b7f06f306cfd1387fd8aac8fdd061fb2db0aa2ae65",
+      "body_size": 794,
+      "entry_rva": "0x0021ed70",
+      "ranges": [
+        {
+          "size": 794,
+          "start_rva": "0x0021ed70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fb89ca85fff64e64fa412cba6c2debb4c4e5ee915b2442762a4ccc479402d889",
+      "body_size": 101,
+      "entry_rva": "0x00226570",
+      "ranges": [
+        {
+          "size": 101,
+          "start_rva": "0x00226570"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e4cb6a615d86bfda23e6d4734c9b2b60f85c974999a62dcf8155c9c80983e375",
+      "body_size": 28,
+      "entry_rva": "0x00006a70",
+      "ranges": [
+        {
+          "size": 28,
+          "start_rva": "0x00006a70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6f8290a3aab662f70143eae8e9eaf1d4402863dfec720f62c68d5e2ace84239f",
+      "body_size": 113,
+      "entry_rva": "0x00054690",
+      "ranges": [
+        {
+          "size": 113,
+          "start_rva": "0x00054690"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f98caeef6cb8508028c8619cdc7a3c87025281220bb41ceb567b25a13933c8de",
+      "body_size": 112,
+      "entry_rva": "0x000551d0",
+      "ranges": [
+        {
+          "size": 112,
+          "start_rva": "0x000551d0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "be82a2be97ee023b4db0b3ea2436ed2913e3eae0482aeb6b64e37f91bf01dd97",
+      "body_size": 104,
+      "entry_rva": "0x000e06b0",
+      "ranges": [
+        {
+          "size": 104,
+          "start_rva": "0x000e06b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7b4e4bc4ab4afbf63eb187d87b14b76498f4ee392560e53f8192e6c39c1162c8",
+      "body_size": 247,
+      "entry_rva": "0x0015e800",
+      "ranges": [
+        {
+          "size": 247,
+          "start_rva": "0x0015e800"
+        }
+      ]
+    },
+    {
+      "body_sha256": "30471eac4d66d47a928438248a7d8f26e2c0a6384bafe7b0c02e42b2250efcd6",
+      "body_size": 281,
+      "entry_rva": "0x00160760",
+      "ranges": [
+        {
+          "size": 281,
+          "start_rva": "0x00160760"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8d4ac1740a61570e59449541e162cb3ff8100757f3e355e437e68c3fd8be1b18",
+      "body_size": 113,
+      "entry_rva": "0x001781a0",
+      "ranges": [
+        {
+          "size": 113,
+          "start_rva": "0x001781a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f7a540dff702fb72ad7652e14e245272710234dff1cdbeb43eb4137027a4deff",
+      "body_size": 30,
+      "entry_rva": "0x00178220",
+      "ranges": [
+        {
+          "size": 30,
+          "start_rva": "0x00178220"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2ae327e68779a1c13f0fe854509833919cd53fe9bed78e5afd8fda21fda4b4da",
+      "body_size": 90,
+      "entry_rva": "0x001984f0",
+      "ranges": [
+        {
+          "size": 90,
+          "start_rva": "0x001984f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2f17cc9bd3616c14305fb7fc1871bf0e37d09262825a99213f5b0568d6c6045d",
+      "body_size": 669,
+      "entry_rva": "0x001999a0",
+      "ranges": [
+        {
+          "size": 669,
+          "start_rva": "0x001999a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "b21c9b095f81a81a03d9f7992300b725ef14e0dab1848b97e7a3b10c913c7556",
+      "body_size": 214,
+      "entry_rva": "0x0022a5c0",
+      "ranges": [
+        {
+          "size": 214,
+          "start_rva": "0x0022a5c0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "e39aa69fdfd29742c141ee96ae2fdc666fb81f0bc4c794532d814e4cf4189ee4",
+      "body_size": 92,
+      "entry_rva": "0x0022a6a0",
+      "ranges": [
+        {
+          "size": 92,
+          "start_rva": "0x0022a6a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6dec49c58e37eb2368524a3aefa005b083cd721d159eb930cdecec836af70e86",
+      "body_size": 260,
+      "entry_rva": "0x00244900",
+      "ranges": [
+        {
+          "size": 260,
+          "start_rva": "0x00244900"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8460770036aa4d1833ce55c31f3b67e20a20413e1d74b30c9afdeed08abb0195",
+      "body_size": 113,
+      "entry_rva": "0x00244c70",
+      "ranges": [
+        {
+          "size": 113,
+          "start_rva": "0x00244c70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "070b2af08c3a0a391dad9f3618aef483f70bd29f3d8584f155848c939a4bac91",
+      "body_size": 30,
+      "entry_rva": "0x00244cf0",
+      "ranges": [
+        {
+          "size": 30,
+          "start_rva": "0x00244cf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "910d5418dbd9db30c75adcd8b74077c5c4e99119b2298c6c252045f8c9803d67",
+      "body_size": 231,
+      "entry_rva": "0x00257340",
+      "ranges": [
+        {
+          "size": 231,
+          "start_rva": "0x00257340"
+        }
+      ]
+    },
+    {
+      "body_sha256": "39a9908012609c47f77556aea5af0865f3eb36943b5a1860c4c338bb6ea6fbb7",
+      "body_size": 183,
+      "entry_rva": "0x00259f00",
+      "ranges": [
+        {
+          "size": 183,
+          "start_rva": "0x00259f00"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d37e4f7e5ebe24eb61219fe0c8b87b2ab9534ca39c36192912ae2f8db4bb3de1",
+      "body_size": 330,
+      "entry_rva": "0x0025e700",
+      "ranges": [
+        {
+          "size": 330,
+          "start_rva": "0x0025e700"
+        }
+      ]
+    },
+    {
+      "body_sha256": "771a522903bf79af9e8e0aad8d137275aedbde53ab1eb8e9cec0d365a3fae647",
+      "body_size": 525,
+      "entry_rva": "0x00267710",
+      "ranges": [
+        {
+          "size": 525,
+          "start_rva": "0x00267710"
+        }
+      ]
+    },
+    {
+      "body_sha256": "6bb49352f06f6b4c19cc0e469e8d6e2a95afc87c8214eb68e85fdd5d5085155a",
+      "body_size": 751,
+      "entry_rva": "0x00268050",
+      "ranges": [
+        {
+          "size": 751,
+          "start_rva": "0x00268050"
+        }
+      ]
+    },
+    {
+      "body_sha256": "595e58ad603664da5ba5270a18c14b93690c929d9e5ee2c36fa0c5ab5a2f673c",
+      "body_size": 559,
+      "entry_rva": "0x00268340",
+      "ranges": [
+        {
+          "size": 559,
+          "start_rva": "0x00268340"
+        }
+      ]
+    },
+    {
+      "body_sha256": "363cb9a295dee60f4a5a20ebdaca51838c6cc8f8d4a1972cba7342d6c520bc40",
+      "body_size": 176,
+      "entry_rva": "0x00272190",
+      "ranges": [
+        {
+          "size": 176,
+          "start_rva": "0x00272190"
+        }
+      ]
+    },
+    {
+      "body_sha256": "1a4bda0b050c2c2501834b331c4fe8fda784ac53e27bacca260e24eb54790af3",
+      "body_size": 96,
+      "entry_rva": "0x002722cc",
+      "ranges": [
+        {
+          "size": 96,
+          "start_rva": "0x002722cc"
+        }
+      ]
+    },
+    {
+      "body_sha256": "4aec37c4d081091fdbfac93736df191bb9625f4d629c3f9a26ffa226d114a204",
+      "body_size": 207,
+      "entry_rva": "0x002726d0",
+      "ranges": [
+        {
+          "size": 207,
+          "start_rva": "0x002726d0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "d0365382b6d97e5d427c47dc89a82c2bcd15f28773942c210ab3a670473dc64b",
+      "body_size": 96,
+      "entry_rva": "0x00272828",
+      "ranges": [
+        {
+          "size": 96,
+          "start_rva": "0x00272828"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cc5f4bbc02f20b491cd8ddb8d6419ddb247fb67a3a78ad6a142fbd4b74b39de1",
+      "body_size": 375,
+      "entry_rva": "0x00273550",
+      "ranges": [
+        {
+          "size": 375,
+          "start_rva": "0x00273550"
+        }
+      ]
+    },
+    {
+      "body_sha256": "9ba3309563f82551a8b047e4bc10086ff4bc5ef0d87f3fd0094bb8c2dd9c47e1",
+      "body_size": 385,
+      "entry_rva": "0x00273af0",
+      "ranges": [
+        {
+          "size": 385,
+          "start_rva": "0x00273af0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a81f35ce90883a35fea36bb5ac37d16929c0bc6acdefb1307ec28d6d19f10aac",
+      "body_size": 157,
+      "entry_rva": "0x00274330",
+      "ranges": [
+        {
+          "size": 157,
+          "start_rva": "0x00274330"
+        }
+      ]
+    },
+    {
+      "body_sha256": "69d6891f896ff1118c05fcd336db67b245186f229512296be01592e8958a5e39",
+      "body_size": 145,
+      "entry_rva": "0x00281da0",
+      "ranges": [
+        {
+          "size": 145,
+          "start_rva": "0x00281da0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7ae22fbfd86bb06d590d61b9f548e5de5da0de9f2e17d9fc38f503d0037bd005",
+      "body_size": 211,
+      "entry_rva": "0x00286740",
+      "ranges": [
+        {
+          "size": 211,
+          "start_rva": "0x00286740"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fc545e463467c5eebfbcce52db25e12ec67d71050e9a94110d794d51c51a0d6c",
+      "body_size": 211,
+      "entry_rva": "0x0028b420",
+      "ranges": [
+        {
+          "size": 211,
+          "start_rva": "0x0028b420"
+        }
+      ]
+    },
+    {
+      "body_sha256": "528764075a6750bf842e27e49aa860a6c4f269db63d85c63c8c259e04e1c2437",
+      "body_size": 147,
+      "entry_rva": "0x0028b780",
+      "ranges": [
+        {
+          "size": 147,
+          "start_rva": "0x0028b780"
+        }
+      ]
+    },
+    {
+      "body_sha256": "47a9390bf590baae0de3863d20cb12ef3e06fbbe5f77d01a4232f0d844ab7cca",
+      "body_size": 207,
+      "entry_rva": "0x00296c90",
+      "ranges": [
+        {
+          "size": 207,
+          "start_rva": "0x00296c90"
+        }
+      ]
+    },
+    {
+      "body_sha256": "da9c09ad34348fbb2491b8f1cd00934e81412c1d088a5f225d43b2eecf190bc3",
+      "body_size": 205,
+      "entry_rva": "0x002970a0",
+      "ranges": [
+        {
+          "size": 205,
+          "start_rva": "0x002970a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a44342a4f8fef8233fc421d541aeba52a83e0190621d4f107a91c34b53a92b3c",
+      "body_size": 205,
+      "entry_rva": "0x0029cea0",
+      "ranges": [
+        {
+          "size": 205,
+          "start_rva": "0x0029cea0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fce746bba4cb0314916173a41e1426dc1c08ce45fdf0f63df7585f919d448f2d",
+      "body_size": 115,
+      "entry_rva": "0x002a15e0",
+      "ranges": [
+        {
+          "size": 115,
+          "start_rva": "0x002a15e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "0d2fea78bf3623d1a29cc94a25e36ef0c865eb47cbedfd1839add57dd47a122f",
+      "body_size": 105,
+      "entry_rva": "0x002a1860",
+      "ranges": [
+        {
+          "size": 105,
+          "start_rva": "0x002a1860"
+        }
+      ]
+    },
+    {
+      "body_sha256": "796aa0df6b9d4b73115967e9152077c9db42412d6c22d2a874dfedf065880bb5",
+      "body_size": 105,
+      "entry_rva": "0x002a4e60",
+      "ranges": [
+        {
+          "size": 105,
+          "start_rva": "0x002a4e60"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ec411aea5872dc057399d70deda04bd50b3763d08d552c4509704f3a9c2d8aee",
+      "body_size": 136,
+      "entry_rva": "0x002abb60",
+      "ranges": [
+        {
+          "size": 136,
+          "start_rva": "0x002abb60"
+        }
+      ]
+    },
+    {
+      "body_sha256": "b02760c31f459967b874ae352d022dfd0ef6ba2b6d39c3c916585298fc9907e5",
+      "body_size": 46,
+      "entry_rva": "0x002abc12",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002abc12"
+        }
+      ]
+    },
+    {
+      "body_sha256": "051ce1aa835abc8c989945ace120979dcb4a97b29c8a01d3c4fb8a18dd646765",
+      "body_size": 136,
+      "entry_rva": "0x002b21e0",
+      "ranges": [
+        {
+          "size": 136,
+          "start_rva": "0x002b21e0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3363d9e5ac4b45731ea481e9c19bb847f52e4889736ad5a0bb45ef6c93a4fffb",
+      "body_size": 46,
+      "entry_rva": "0x002b2292",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002b2292"
+        }
+      ]
+    },
+    {
+      "body_sha256": "29f28c2ad02897d7068ac01cc29d50234b850a28238a2b861a07175c346e899e",
+      "body_size": 139,
+      "entry_rva": "0x002b2680",
+      "ranges": [
+        {
+          "size": 139,
+          "start_rva": "0x002b2680"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cace5142d6810a5ed873605f21e3e34e5f1c06f6d201e5e35b962b5857cbbbfb",
+      "body_size": 46,
+      "entry_rva": "0x002b2735",
+      "ranges": [
+        {
+          "size": 46,
+          "start_rva": "0x002b2735"
+        }
+      ]
+    },
+    {
+      "body_sha256": "96e197f8158b8744ff532ac6eaaac7819bca21dd35a7685db4839d45a12ae07d",
+      "body_size": 248,
+      "entry_rva": "0x002cd610",
+      "ranges": [
+        {
+          "size": 248,
+          "start_rva": "0x002cd610"
+        }
+      ]
+    },
+    {
+      "body_sha256": "2f42907890b2c207419f64ce6275d2657c256eb6a23cb35af891e1c0748a72c2",
+      "body_size": 438,
+      "entry_rva": "0x002cde10",
+      "ranges": [
+        {
+          "size": 438,
+          "start_rva": "0x002cde10"
+        }
+      ]
+    },
+    {
+      "body_sha256": "cf2787ddea551a738af3cb13ccabc4acd7c4c8d3c08bf696a1fa7f3e962c39bf",
+      "body_size": 193,
+      "entry_rva": "0x002d9d80",
+      "ranges": [
+        {
+          "size": 193,
+          "start_rva": "0x002d9d80"
+        }
+      ]
+    },
+    {
+      "body_sha256": "980f6ec032e0cce75a6e3399770b178ed971878d65a3ddef638343dc78251ae9",
+      "body_size": 209,
+      "entry_rva": "0x002db440",
+      "ranges": [
+        {
+          "size": 209,
+          "start_rva": "0x002db440"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8e964de79102f02ddc54f45b7b0985c43c26a6145b5e5f47d1b104eae8a4e1cd",
+      "body_size": 157,
+      "entry_rva": "0x002dcd40",
+      "ranges": [
+        {
+          "size": 157,
+          "start_rva": "0x002dcd40"
+        }
+      ]
+    },
+    {
+      "body_sha256": "555504a1bdb81f15c416888f5017ae5b76a5928f8a0c2a946b20252d7001cfdd",
+      "body_size": 98,
+      "entry_rva": "0x002ddc20",
+      "ranges": [
+        {
+          "size": 98,
+          "start_rva": "0x002ddc20"
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "source_packet_sha256": {
+    "actor": "3df7d409c0af974a98570f66ba408f7138c91c54c0a04e5a3337e1f254914b26",
+    "binding": "8f16da5718cb62cf18b7cc6dedd54881c18cbd2a4d7964b3605fbfb05a3bf927",
+    "constants": "400cf6a6eb1958d6b8fe406317fde307481c3c5cb469f72d6f48cae315007409",
+    "effect": "e9b1829cf8dec5bee76c670e9bcbd0fa088abec5c2a6dcb557aa623767a0bcac"
+  }
+}
