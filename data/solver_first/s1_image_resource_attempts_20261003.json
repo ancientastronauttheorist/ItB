@@ -1,0 +1,142 @@
+{
+  "accounting": "One original PNG decoder prototype + one host context prototype + three two-asset original pipeline runs + two synthetic host cleanup controls. Mixed domains are not aggregated as original fidelity passes.",
+  "baseline_solver_commit": "84c186ae440163056c5c39b9aea9c20e6f49983e",
+  "context_only_prototype": {
+    "attempted": 1,
+    "exclusion": "Real external WGL context only, no original body or texture calls.",
+    "observations": {
+      "context_deleted": true,
+      "dc_released": 1,
+      "error": 0,
+      "failure": null,
+      "pixel_format": 12,
+      "renderer": "NVIDIA GeForce GTX 1080/PCIe/SSE2",
+      "status": "complete",
+      "vendor": "NVIDIA Corporation",
+      "version": "4.6.0 NVIDIA 572.61",
+      "window_destroyed": true
+    },
+    "private_receipt_sha256": "ecb45d3172356200348d57d53e65cb92d04fa6059e51678fa5ca60e9a1354ac8"
+  },
+  "corpus_version": "s1-original-image-resource-acquisition-accounting-v1",
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "game_build": 13725832,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "independent_source_packets": {
+    "original_resource_cache_object_source_03.json": "b0673572a4f5fcab95bc4e511e8ba8396a2a0d8f49bd09b3cedca57e9da6afe8",
+    "stock_resource_asset_packet_01.json": "bdb4e395c4dc90aed0979b6e33b90308ffa3ae3b84bac1fbedb80755768b7958",
+    "stock_resource_rgba_packet_01.json": "ee957fc2c6467e808cf7152a612c3a5e451028e37636a715fe422385f2288488"
+  },
+  "information_mode": "supplied offline original-byte oracle; no fair player admission",
+  "ledger_promotions": 0,
+  "native_world_attempts": 10,
+  "next_blocker": "Normal image-cache registration and genuine Lua GetImageLoc/Point metadata, then emitter completion and joined Ground N2 Move dispatch/settlement.",
+  "original_completed_action_transitions": 0,
+  "pipeline_runs": [
+    {
+      "admitted": 2,
+      "attempted": 2,
+      "case_receipt_sha256": [
+        "c11171b8d1b06b50a2ad78ac77050a5968d43eb8814ac82f8305a7b8c0e9860d",
+        "1e22824aead1ba24d36aee4a51491059ca2b3741acb4d142266b70b7ff29fb10"
+      ],
+      "excluded": 0,
+      "failed": 0,
+      "grading": "Superseded zero-DWORD projection included supplied padding.",
+      "id": "exploratory_01",
+      "matched": 2,
+      "report_sha256": "c4207e08e3b5344124c9d86d6b38f95280bb53807bdcf6370f074827dbf0a330"
+    },
+    {
+      "admitted": 2,
+      "attempted": 2,
+      "case_receipt_sha256": [
+        "88078c91b18ff57bf2bf6a9bf9bd6023846e210b19458fb913c05c6aeefc51e6",
+        "a2f9949bc1dfbfc96160802a3432d65a9506a638a15d0771a092302208043670"
+      ],
+      "excluded": 0,
+      "failed": 0,
+      "grading": "Flag byte and ungraded padding; superseded tracked-name cleanup label.",
+      "id": "frozen_01",
+      "matched": 2,
+      "report_sha256": "02938eec4fa82907472fa7567443b60b039a559abf693234b1cdbd986f8712ef"
+    },
+    {
+      "admitted": 2,
+      "attempted": 2,
+      "case_receipt_sha256": [
+        "0ef60c92f0d6771c5aa3aa5d40609b0a92e8b6dbfcc306ef4b869ac52e519120",
+        "e6c2ee6428a229c234fe82737a508073f0e44998b9abba4c134adc8099b49afe"
+      ],
+      "excluded": 0,
+      "failed": 0,
+      "grading": "Final source pins, flag-byte projection and tracked-name cleanup reporting.",
+      "id": "frozen_02",
+      "matched": 2,
+      "report_sha256": "839f0623717715d850dae7482d1c12660a6ff6313492f2f5acbf4cfd14261ae2"
+    }
+  ],
+  "png_only_prototype": {
+    "attempted": 1,
+    "exclusion": "Decoder output retained without CPU/resource/texture construction or pixel cleanup; not ownership closure.",
+    "instruction_count": 76180,
+    "observations": {
+      "expected_sha256": "50b6a690739309d004d6c13ca15de92c986bb62465a923d491130b7318ab6dbc",
+      "height": 13,
+      "matches": true,
+      "pixel_bytes": 780,
+      "pixels_sha256": "50b6a690739309d004d6c13ca15de92c986bb62465a923d491130b7318ab6dbc",
+      "returned_pointer": 536895488,
+      "source_components": 4,
+      "width": 15
+    },
+    "private_receipt_sha256": "394c9bbb003d82ca063546024558a2d583a6f75f62b657bea42801dd6ae7b5c8",
+    "remaining_allocations": 1,
+    "status": "complete"
+  },
+  "schema_version": 1,
+  "simulator_version": 413,
+  "source_corrections": [
+    "c4410 first argument is GLuint, not decoded pixel pointer; corrected before the pipeline.",
+    "Resource +c is a BYTE flag, with three supplied-storage padding bytes ungraded in final runs.",
+    "Texture cleanup name count is tracking, not physical lifetime after a validation failure/context deletion.",
+    "Ordinary Dust loader selects bee20, not c0ac0; only its memory-input decoder context setup is reused.",
+    "99800/99620 are CPU vertex construction, not image construction or complete rendering."
+  ],
+  "synthetic_cleanup_controls": {
+    "attempted": 2,
+    "cases": [
+      {
+        "cleanup": {
+          "context_deleted": true,
+          "dc_released": 1,
+          "errors": [],
+          "made_not_current": true,
+          "textures_remaining": 0,
+          "window_destroyed": true
+        },
+        "control": "source setup rejection",
+        "failure": "controlled source admission rejection"
+      },
+      {
+        "cleanup": {
+          "context_deleted": true,
+          "dc_released": 1,
+          "errors": [
+            "texture 1 deletion: controlled texture deletion validation failure"
+          ],
+          "made_not_current": true,
+          "textures_remaining": 1,
+          "window_destroyed": true
+        },
+        "control": "first texture teardown validation rejection",
+        "failure": "texture 1 deletion: controlled texture deletion validation failure"
+      }
+    ],
+    "classification": "synthetic host-boundary cleanup sensitivity; original action admissions zero",
+    "matched": 2,
+    "private_receipt_sha256": "482b96806ea5d5a3ab2715499b02a11458fe7959aaad276a823e65428f2f405c"
+  }
+}

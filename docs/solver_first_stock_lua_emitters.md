@@ -3,8 +3,10 @@
 The original DLL now interprets the exact stock `CreateClass`, `Emitter`,
 `Emitter_Dust` and `Emitter_tiles_grass` source slices and executes their generated
 getters. A separate partial native Dust constructor reaches the actual image-cache
-entry with its correct receiver. Real image/resource construction, original biome
-substitution, loaded Move dispatch and completed Ground N2 movement remain open.
+entry with its correct receiver. The later [image-resource acquisition](solver_first_image_resources.md)
+closes bounded original decode/copy/resource ownership with real external textures.
+Cache registration, image metadata, original biome substitution, loaded Move
+dispatch and completed Ground N2 movement remain open.
 
 The [frozen report](../data/solver_first/s1_lua_emitters_20261003.json), raw SHA256
 `2c6c8c2b6be3723d71910c3d83fb40a596c9a5a360926db803ba2d38abb9f3b4`, records

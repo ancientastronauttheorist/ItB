@@ -50,3 +50,6 @@ scripts/solver_first_lua_vm.py text eol=lf
 src/observatory/solver_first_lua_vm.py text eol=lf
 scripts/solver_first_lua_emitters.py text eol=lf
 src/observatory/solver_first_lua_emitters.py text eol=lf
+scripts/solver_first_image_resource.py text eol=lf
+src/observatory/solver_first_image_resource.py text eol=lf
+src/observatory/solver_first_gl_texture.py text eol=lf
