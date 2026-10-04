@@ -1,5 +1,11 @@
 # Conditional selected Move submission
 
+The later [fresh grade-completion acquisition](solver_first_move_submission_completion.md)
+acquires the missing particle/emitter readback and final original Lua getter,
+then supplies a conditional Rust endpoint comparison. The three failed attempts
+and all observations below retain their historical scope. Deployed actor action
+availability, queue settlement, next decision and full-turn continuity remain open.
+
 October 4, 2026. The solver-facing question is whether the selected **H8-to-G8 Move** can reach original submission and immediate relocation using the genuine Move, Stats and nine-record Animation prerequisites. Build 13725832 and the installed overlay/script/resource identities remain pinned. The prior solver baseline is `84c186ae`, simulator 413. This is one declared development corridor with a raw query actor, native effect owner -1 and stored_active 0. **S1 and all seven acceptance gates remain open.**
 
 ## Captured result

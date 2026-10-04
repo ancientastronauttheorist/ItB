@@ -1,0 +1,370 @@
+{
+  "actor_boundary": {
+    "Pawn_constructor_rva": "0x0022a920",
+    "action_rva": "0x00237730",
+    "active_query_rva": "0x0023e8b0",
+    "append_rva": "0x00227110",
+    "factory_rva": "0x00245070",
+    "inherited_manager_constructor_rva": "0x00226f00",
+    "manager_execution_rva": "0x00227bf0",
+    "negative_boundary": "The raw actor stored_active0 immediately fails IsActive. Direct 0x00237730 execution does not itself check IsActive or reject bMoved before manager execution, so a returned direct call cannot establish ordinary once-per-turn legality.",
+    "ordinary_Move_postprocessing": "After manager result1, saved selected index0 and admitted bMoved/bonus conditions, native writes bMoved+0x99e1 and clears selected index+0x40 to -1. Stored activity depends on actor team and bonus/other branches, which remain excluded until acquired.",
+    "positive_active_predicates": [
+      "stored_active +0x91c nonzero",
+      "Pawn dead virtual +0x10 false",
+      "original usable pair vector nonempty",
+      "Pawn+0x10c0 nonzero"
+    ],
+    "required_ownership": "Actor-owned inherited manager and Move/Repair shared owners, context, owner identifier, selected index and usable-action producers; no transplant from base Board manager"
+  },
+  "all_seven_gates": "open",
+  "build": 13725832,
+  "conditional_idle_admissions": 0,
+  "data_pins": [
+    {
+      "file_offset": 4439544,
+      "meaning": "FULL_DELAY -1f",
+      "rva": "0x0043cdf8",
+      "sha256": "c68830a25204a09f8e77aada6bc5807f607cccaaa0ebb2a7122d317584478a8b",
+      "size": 4,
+      "va": "0x0083cdf8",
+      "value": -1.0
+    },
+    {
+      "file_offset": 4439560,
+      "meaning": "-2f alternate activity-only delay",
+      "rva": "0x0043ce08",
+      "sha256": "e4767380eb5e2fc046bce28b8b2a30c81c733be1a56203cd9499066086617f6c",
+      "size": 4,
+      "va": "0x0083ce08",
+      "value": -2.0
+    },
+    {
+      "file_offset": 4438760,
+      "meaning": "positive delay dt multiplier .0625",
+      "rva": "0x0043cae8",
+      "sha256": "b1801134f2c71f5540537dc8ab78eb44398b15f76af4ab4fdf3a24468d8e50d6",
+      "size": 4,
+      "va": "0x0083cae8",
+      "value": 0.0625
+    },
+    {
+      "file_offset": 4379236,
+      "meaning": "secondaryBoard virtualslot+c dispatcherVA5610d0",
+      "rva": "0x0042e264",
+      "sha256": "e59369b0524d4502a54a152d8122b3f0b50376de62e92a3c5ec1997fad262ca9",
+      "size": 4,
+      "va": "0x0082e264",
+      "value": "0x005610d0"
+    },
+    {
+      "file_offset": 4379440,
+      "meaning": "Pawn virtualdeadpredicateVA62cdd0",
+      "rva": "0x0042e330",
+      "sha256": "53f9c904bb2ffc7fc3e9b08dfdb179269a77a1f36cf13b958a5352d98e8c1c14",
+      "size": 4,
+      "va": "0x0082e330",
+      "value": "0x0062cdd0"
+    },
+    {
+      "file_offset": 4379464,
+      "meaning": "Pawn position virtualVA639830",
+      "rva": "0x0042e348",
+      "sha256": "14df31da13013d0ff3a4d9f1fcf527bf38acfec8a0777e560a1713515826bacb",
+      "size": 4,
+      "va": "0x0082e348",
+      "value": "0x00639830"
+    },
+    {
+      "file_offset": 4364192,
+      "meaning": "originalMove literal",
+      "rva": "0x0042a7a0",
+      "sha256": "d043e1bcbf133b4820da7af3203c58cbbe275ea952663afc7874ce535f9cc11b",
+      "size": 5,
+      "va": "0x0082a7a0",
+      "value": "Move"
+    }
+  ],
+  "evidence_class": "source-only original body and data extraction; future observable exits, no new original execution",
+  "exe_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+  "fair_input_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "ledger_promotions": 0,
+  "native_executions": 0,
+  "next_exit_tests": [
+    "Fresh pre-host-teardown joined world with source-valid selector premise and all submission grades complete",
+    "Capture the complete activity-query footprint; preserve and report any actual category1/2/8 blocker",
+    "Execute original queue consumer and verify destructor/memmove, retained owners, both queue counts0 and unchanged actor position/HP/readiness",
+    "Execute actual activity query; category0 is only a conditional Board projection under its declared empty-selector/registry/other-queue inputs",
+    "Acquire genuine actor-owned readiness/selection and consume available Move before joining the next decision",
+    "Then complete enemy/environment/spawn S1 continuation"
+  ],
+  "original_body_pins": [
+    {
+      "body_sha256": "ef2b5bfdba77a599c1ebbc26d445513c88f102b3a532a50e8f118d6a8857f5da",
+      "body_size": 522,
+      "entry_rva": "0x00237730",
+      "ranges": [
+        {
+          "size": 522,
+          "start_rva": "0x00237730"
+        }
+      ]
+    },
+    {
+      "body_sha256": "612697e5d8ec51a2bd9fad39587e64aaaa5c99ebcb67ea0a819a578ff1b13078",
+      "body_size": 551,
+      "entry_rva": "0x00227bf0",
+      "ranges": [
+        {
+          "size": 551,
+          "start_rva": "0x00227bf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "fb439c5dc8bad387316998d5c47b8d1bf8bf181c68df25a80d5ef98db885750b",
+      "body_size": 49,
+      "entry_rva": "0x00227ae0",
+      "ranges": [
+        {
+          "size": 49,
+          "start_rva": "0x00227ae0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "3315ee0d31c687a99829b097af3b67be361be8b59d42d5d0a8bd1f876146d598",
+      "body_size": 93,
+      "entry_rva": "0x00229bb0",
+      "ranges": [
+        {
+          "size": 93,
+          "start_rva": "0x00229bb0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "99f2cda5ff269645f72f6b3e5a2ca14da457b6c6cf8c70f7566759ef74386b52",
+      "body_size": 260,
+      "entry_rva": "0x00228800",
+      "ranges": [
+        {
+          "size": 260,
+          "start_rva": "0x00228800"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a2fbe5d348d34a7d859a03e7da7732918f5856d255f59a5cd58171f9b3566f67",
+      "body_size": 96,
+      "entry_rva": "0x00228b70",
+      "ranges": [
+        {
+          "size": 96,
+          "start_rva": "0x00228b70"
+        }
+      ]
+    },
+    {
+      "body_sha256": "adb89495a27b93b259891a3a1996e62b23355b0b2d1bb6cd11b2e1b1cbff100a",
+      "body_size": 70,
+      "entry_rva": "0x00234e40",
+      "ranges": [
+        {
+          "size": 70,
+          "start_rva": "0x00234e40"
+        }
+      ]
+    },
+    {
+      "body_sha256": "449310a80188de96a31ca52afdd3c1db0784bfd136322352f467c2d770ff41b9",
+      "body_size": 137,
+      "entry_rva": "0x0023e8b0",
+      "ranges": [
+        {
+          "size": 137,
+          "start_rva": "0x0023e8b0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+      "body_size": 478,
+      "entry_rva": "0x00245070",
+      "ranges": [
+        {
+          "size": 478,
+          "start_rva": "0x00245070"
+        }
+      ]
+    },
+    {
+      "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+      "body_size": 4520,
+      "entry_rva": "0x0022a920",
+      "ranges": [
+        {
+          "size": 4520,
+          "start_rva": "0x0022a920"
+        }
+      ]
+    },
+    {
+      "body_sha256": "ebeddd7980834f5a8a2715f2df794d51675107b478758cfd2db10f1d3fb11f16",
+      "body_size": 1802,
+      "entry_rva": "0x0015f150",
+      "ranges": [
+        {
+          "size": 1802,
+          "start_rva": "0x0015f150"
+        }
+      ]
+    },
+    {
+      "body_sha256": "dc9eced8706681fbaa20781c972724170efe9653c37d277e6b8eaaacc5b61a13",
+      "body_size": 562,
+      "entry_rva": "0x001698f0",
+      "ranges": [
+        {
+          "size": 562,
+          "start_rva": "0x001698f0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "c047a08e5f274e629b6fec7151c94c89f5576ec3bbf11b0535546fb65d7c7877",
+      "body_size": 1541,
+      "entry_rva": "0x00169bf0",
+      "ranges": [
+        {
+          "size": 1541,
+          "start_rva": "0x00169bf0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "7ec05de400b92b540c43bbed2b0e565d1ec86fe0324a27a841a32e8e8e842abc",
+      "body_size": 161,
+      "entry_rva": "0x0019e130",
+      "ranges": [
+        {
+          "size": 161,
+          "start_rva": "0x0019e130"
+        }
+      ]
+    },
+    {
+      "body_sha256": "439323130f1d94bfd214c1f1e93e13d1b82b176f9922a9cb2c6471550f1bb992",
+      "body_size": 104,
+      "entry_rva": "0x00175600",
+      "ranges": [
+        {
+          "size": 104,
+          "start_rva": "0x00175600"
+        }
+      ]
+    },
+    {
+      "body_sha256": "575ff092e9f832770c6c3a2eb5a4ed19eb0c27ff636ad816fbb5573fdcd6c836",
+      "body_size": 171,
+      "entry_rva": "0x0010e4a0",
+      "ranges": [
+        {
+          "size": 171,
+          "start_rva": "0x0010e4a0"
+        }
+      ]
+    },
+    {
+      "body_sha256": "8b0b052a9ad8d284940e5886d952cc89ebbcef586b2c46075afb6b4ce26dbc34",
+      "body_size": 1330,
+      "entry_rva": "0x0036e580",
+      "ranges": [
+        {
+          "size": 604,
+          "start_rva": "0x0036e580"
+        },
+        {
+          "size": 7,
+          "start_rva": "0x0036e7f4"
+        },
+        {
+          "size": 11,
+          "start_rva": "0x0036e7fc"
+        },
+        {
+          "size": 17,
+          "start_rva": "0x0036e808"
+        },
+        {
+          "size": 23,
+          "start_rva": "0x0036e81c"
+        },
+        {
+          "size": 91,
+          "start_rva": "0x0036e834"
+        },
+        {
+          "size": 7,
+          "start_rva": "0x0036e8a0"
+        },
+        {
+          "size": 13,
+          "start_rva": "0x0036e8a8"
+        },
+        {
+          "size": 19,
+          "start_rva": "0x0036e8b8"
+        },
+        {
+          "size": 255,
+          "start_rva": "0x0036e8cc"
+        },
+        {
+          "size": 231,
+          "start_rva": "0x0036e9d0"
+        },
+        {
+          "size": 52,
+          "start_rva": "0x0036eac0"
+        }
+      ]
+    }
+  ],
+  "original_completed_action_transitions": 0,
+  "particle_boundary": "Original Tile activity query 0x0019e130 does not read emitter-owner vector +0x2acc; this activity gate alone does not require particle evolution. All other activity inputs and flags must be captured.",
+  "queue_branch": {
+    "FULL_DELAY_blocked_activity_codes": [
+      1,
+      2,
+      8
+    ],
+    "activity_rva": "0x001698f0",
+    "consumer_rva": "0x00169bf0",
+    "delay_memmove_rva": "0x0036e580",
+    "empty_primary_branch_rva": "0x00169d01",
+    "expected_queue_delay_count_after": 0,
+    "expected_queue_effect_count_after": 0,
+    "expected_transition_executed": false,
+    "metadata_destructor_rva": "0x0010e4a0",
+    "metadata_erase_rva": "0x00175600",
+    "nonempty_metadata_activity_code": 6,
+    "secondary_board_dispatch_skipped": true
+  },
+  "scenario": "Selected H8-G8 Move; empty primary metadata queue with FULL_DELAY(-1)",
+  "schema": "solver_first_move_actor_queue_frontier_v1",
+  "search_certificates": 0,
+  "selector_boundary": {
+    "current_raw_fixture_value": 0,
+    "field": "Board+0x2d68",
+    "original_constructor_rva": "0x0015f150",
+    "original_constructor_write_rva": "0x0015f5b1",
+    "raw_zero_after_empty_queue_activity_code": 4,
+    "requirement": "Produce or declare the source-valid no-selection sentinel before any new fresh acquisition. Never patch an observed outcome or claim the full constructor was executed.",
+    "source_default": "0xffffffff"
+  },
+  "source_packet_raw_sha256": "12164ad6e2d2202aeaf036e0e28a8302c18fff3f2c4c329a553c0f99b50334c8"
+}

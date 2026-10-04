@@ -2,6 +2,16 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [fresh selected Move submission grade completion](solver_first_move_submission_completion.md)
+records all 311 original calls returning, the corrected eight-key Stats/history
+checks, the acquired particle/emitter grade and final original Lua getter.
+The conditional Rust endpoint/HP comparison follows complete output grading.
+Earlier failed acquisitions remain unchanged. The new source-only frontier
+identifies original empty-primary metadata queue erasure and the required
+pre-acquisition no-selection sentinel; neither queue settlement nor genuine
+actor-owned readiness/action eligibility is admitted. S1, full-turn, fair-input,
+held-out, search, strength and all seven gates remain open.
+
 October 4 [conditional selected Move submission acquisition](solver_first_move_submission.md)
 records original caller return, H8-to-G8 relocation, native continuation queues
 and eight source-correct Stats resets. All three acquired worlds remain failed:
