@@ -2,6 +2,18 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [Pawn constructor input and ownership review](solver_first_pawn_constructor_boundary.md)
+corrects the component-only recommendation: the inherited constructor installs
+a base-manager vtable; complete Pawn construction restores the death/class/sound
+virtuals needed for genuine eligibility and Skill append. It pins the finite
+stock inputs and 28 resource keys, with 26 independent PNG references and two
+absent assets retained. Actual ordinary loader predicates, graphics services,
+1 MiB inflate reallocation, missing-resource behavior and Artificial Pilot
+construction remain open. No native factory/action was attempted or admitted;
+the earlier queue result and all seven open gates are unchanged. A complete
+constructor still precedes equipment, placement, positive readiness, guarded
+action consumption and full-turn continuity.
+
 October 4 [fresh conditional Move queue settlement](solver_first_move_queue_continuity.md)
 records all 317 original calls returning, activity 6-to-0, native metadata/delay
 erasure and unchanged actor/particle state. Original Move availability remains

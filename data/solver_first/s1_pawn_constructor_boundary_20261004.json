@@ -1,0 +1,2660 @@
+{
+  "PNG_reference": {
+    "builder_raw_sha256": "cdbbb475476bb07585ecd3fd706efb4efaebc05bd44df99ee8b283c8db390ba5",
+    "evidence_class": "Independently authored PNG reference, not original resource execution",
+    "independent_scalar_unfilter_recheck": {
+      "exact_byte_matches": 26,
+      "mismatches": 0,
+      "present_checked": 26
+    },
+    "prior_failed_builder": "First builder decoded files but failed on built-in zlib module metadata; failure and files retained, second builder used a fresh directory",
+    "runtime": {
+      "Pillow_version": "12.1.0",
+      "Pillow_zlib_version": "1.3.1.zlib-ng",
+      "Python_version": "3.13.11 (tags/v3.13.11:6278944, Dec  5 2025, 16:26:58) [MSC v.1944 64 bit (AMD64)]",
+      "executable_filename": "python.exe",
+      "executable_sha256": "29d6486dc5fa86c9d19db9d390fdbb62c4830e2b305761723c0b42e6f3596954",
+      "implementation_files": [
+        {
+          "filename": "__init__.py",
+          "module": "PIL",
+          "sha256": "67eb17066b48015983c2ac01748e8be115a35b172056f437bf8486d0dc4a7965",
+          "size": 2118
+        },
+        {
+          "filename": "Image.py",
+          "module": "PIL.Image",
+          "sha256": "472fb0b48fa29aaae8b2aa1f648007979f8e4490b9798d1b8c87709565023fec",
+          "size": 153145
+        },
+        {
+          "filename": "PngImagePlugin.py",
+          "module": "PIL.PngImagePlugin",
+          "sha256": "243250ec47deaa482f83c61eedc8aaecf4316b282e1c303195d90200352bf30b",
+          "size": 53285
+        },
+        {
+          "filename": "_imaging.cp313-win_amd64.pyd",
+          "module": "PIL._imaging",
+          "sha256": "c446a1e3e03ac2bc836eeb7c4e1547625958e04e625547663c737b3b370b7ff2",
+          "size": 2588160
+        },
+        {
+          "binding": "pinned Python executable runtime; no module file",
+          "built_in": true,
+          "module": "zlib"
+        }
+      ],
+      "zlib_runtime_version": "1.3.1",
+      "zlib_version": "1.3.1"
+    },
+    "totals": {
+      "PNG_filtered_scanline_bytes": 1558163,
+      "RGBA8_bytes": 1567920,
+      "encoded_payload_bytes": 432733,
+      "missing_not_replaced": 2,
+      "present_decoded": 26,
+      "requested": 28
+    }
+  },
+  "S1": "open",
+  "all_seven_gates": "open",
+  "archive_entry_count": 2854,
+  "assets": [
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "dd4f1a170329b2440d0ac5479504ec8e2f4e4775f385297c7f6b34530d7c658a",
+      "RGBA8_size": 4576,
+      "archive_path": "img/combat/icons/guard.png",
+      "height": 13,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 4589,
+      "payload_sha256": "0d4b38c4670db60c495b89987e2ec3f02de9fd8250675b4d270ff0c0be253318",
+      "payload_size": 3455,
+      "present": true,
+      "request_name": "combat/icons/guard.png",
+      "source_components": 4,
+      "width": 88
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "66fce6c8a20f28e424d23562e5335c902304dd9afd1cbf72033a3ce18cccbeac",
+      "RGBA8_size": 2704,
+      "archive_path": "img/combat/icons/icon_supply_glow.png",
+      "height": 26,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 2730,
+      "payload_sha256": "99c995f81d38ef5f76f419c3e6a96e9921a08ded6f97a95e5c9646457d4b2390",
+      "payload_size": 3515,
+      "present": true,
+      "request_name": "combat/icons/icon_supply_glow.png",
+      "source_components": 4,
+      "width": 26
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "ea3961d24fd9c1461182f6c5151fa5738ef6a69a7198fe1dc43adec9e2d74f05",
+      "RGBA8_size": 2704,
+      "archive_path": "img/combat/icons/icon_fire_glow.png",
+      "height": 26,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 2730,
+      "payload_sha256": "016ea9b8a8c32e444a5db6e932a5201ae2ce9b8a417f3b83bb3934523e9072fe",
+      "payload_size": 3656,
+      "present": true,
+      "request_name": "combat/icons/icon_fire_glow.png",
+      "source_components": 4,
+      "width": 26
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "540a17aec5eec88f23a91e40431c500618cc555c3950f31b80dbd55ca5f5cc10",
+      "RGBA8_size": 2704,
+      "archive_path": "img/combat/icons/icon_spawnblock_glow.png",
+      "height": 26,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 2730,
+      "payload_sha256": "48ee60a654e8e5d841b494ac44067a0bfc569e996ee2318c4af7a63f4fd88f13",
+      "payload_size": 3631,
+      "present": true,
+      "request_name": "combat/icons/icon_spawnblock_glow.png",
+      "source_components": 4,
+      "width": 26
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "d025ec1d0a6a679ad91fcebe26d45fb3c1bc4352fd2555dd9fe0aadaf7e1b65a",
+      "RGBA8_size": 2704,
+      "archive_path": "img/combat/icons/icon_acid_glow.png",
+      "height": 26,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 2730,
+      "payload_sha256": "6fea885c977ffde6804d5fc81b29fed83e885530c049ff5c8021c4327973782f",
+      "payload_size": 3668,
+      "present": true,
+      "request_name": "combat/icons/icon_acid_glow.png",
+      "source_components": 4,
+      "width": 26
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "d4fe8b16d6a18cf3e0a46e657e48777ecb8e31df16d7d35c3d5d943087419d6f",
+      "RGBA8_size": 10692,
+      "archive_path": "img/combat/icons/radio_animate.png",
+      "height": 27,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 10719,
+      "payload_sha256": "76176aba5325684a0d9139ee7d2572fd426fe5b74f85e871a7317d22d7b0fffe",
+      "payload_size": 4030,
+      "present": true,
+      "request_name": "combat/icons/radio_animate.png",
+      "source_components": 4,
+      "width": 99
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "481b123ceec2b7241e3ffebfbd3a6c0af9a809b2bab74970db70df6ddaa6ff47",
+      "RGBA8_size": 267168,
+      "archive_path": "img/combat/rift_unit.png",
+      "height": 92,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 267260,
+      "payload_sha256": "d5cb580d8bd1420d1842bbae3551903112afc908ab0e1f1836139816a4b83882",
+      "payload_size": 17301,
+      "present": true,
+      "request_name": "combat/rift_unit.png",
+      "source_components": 4,
+      "width": 726
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "9f9475b9f2facc4ff247d6962ae3545295eadf7c2b6da834d7fb3b5c38e84330",
+      "RGBA8_size": 943616,
+      "archive_path": "img/effects/timetravel.png",
+      "height": 194,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 943810,
+      "payload_sha256": "f15305054b7ea96410bceac4190f9ae698f14ce5fbe1edcfded4109917c47687",
+      "payload_size": 31686,
+      "present": true,
+      "request_name": "effects/timetravel.png",
+      "source_components": 4,
+      "width": 1216
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "47092ea212c38aae03ed56f7532bdd48c30c2a8053f442741a588a1e14c91421",
+      "RGBA8_size": 59536,
+      "archive_path": "img/portraits/pilots/Pilot_Original_blink.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 59597,
+      "payload_sha256": "5234e9082856a9d7bca71f0dae67ce224343598fc77ddb772354c55f5f5fb197",
+      "payload_size": 20741,
+      "present": true,
+      "request_name": "portraits/pilots/Pilot_Original_blink.png",
+      "source_components": 4,
+      "width": 244
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "62ef89a8814c16dcd8ada610ddf9b5e8993eb3a1dab3a8f409e5dba291b3ffa8",
+      "RGBA8_size": 832,
+      "archive_path": "img/combat/pod/pod_smoke.png",
+      "height": 13,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 845,
+      "payload_sha256": "a9c172574ef7f6b44691df0510d2fdf8932a284fdf3d1384344a384756be2059",
+      "payload_size": 2927,
+      "present": true,
+      "request_name": "combat/pod/pod_smoke.png",
+      "source_components": 4,
+      "width": 16
+    },
+    {
+      "archive_path": "img/combat/particle_boost.png",
+      "present": false,
+      "reference_generated": false,
+      "request_name": "combat/particle_boost.png"
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "2f133f06f708612aa1b2918f6eaddf8c514c2c52be9318ad41a3301e73d827d1",
+      "RGBA8_size": 676,
+      "archive_path": "img/advanced/effects/infected_burst.png",
+      "height": 13,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 689,
+      "payload_sha256": "675f9048c7a25ee02dd9daab0b5fcefa5b973a7a4f2e7f797689c91740e0b799",
+      "payload_size": 40094,
+      "present": true,
+      "request_name": "advanced/effects/infected_burst.png",
+      "source_components": 4,
+      "width": 13
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "dfdba31f6a168c3d4ec3c931768157ccb62564001a53b5d7036fe6e48df01df6",
+      "RGBA8_size": 14884,
+      "archive_path": "img/portraits/pilots/pilot_todo.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 14945,
+      "payload_sha256": "856648bd56407e076092487106b6d4ce564e61cdf0411c7f1555c96a408f1710",
+      "payload_size": 4678,
+      "present": true,
+      "request_name": "portraits/pilots/pilot_todo.png",
+      "source_components": 4,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 4,
+      "RGBA8_sha256": "aab53e0768b6f0b8214c49ca4ac62c8cd0616cd80d7d06b74e12e7ae7a15dd56",
+      "RGBA8_size": 14884,
+      "archive_path": "img/portraits/enemy/enemy_todo.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 7503,
+      "payload_sha256": "f9eac5022adef2ab4de8fb1bdfaef0f85b0cf9cc097aa582a088661fadc8eca8",
+      "payload_size": 2364,
+      "present": true,
+      "request_name": "portraits/enemy/enemy_todo.png",
+      "source_components": 2,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "1696b716569ea35146a2734fa4c61b691c0934e1c1fb8568557427fd5a0fc2f1",
+      "RGBA8_size": 14884,
+      "archive_path": "img/portraits/pilots/back_1.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 14945,
+      "payload_sha256": "91d1b2aca17151d2c49842003e195f77f24af0762b173acb9b756ed808b47721",
+      "payload_size": 3708,
+      "present": true,
+      "request_name": "portraits/pilots/back_1.png",
+      "source_components": 4,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 2,
+      "RGBA8_sha256": "90e68f19f739369e3246cf05c2aa8112aac36dfb5efb73461dbe40be48a78c77",
+      "RGBA8_size": 14884,
+      "archive_path": "img/ui/hangar/small_swirl.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 11224,
+      "payload_sha256": "bcf91cbf0b1ea2be427c4b33b496fc9c17ab0a15b06e97ed01e19e8e2ac94d5b",
+      "payload_size": 21033,
+      "present": true,
+      "request_name": "ui/hangar/small_swirl.png",
+      "source_components": 3,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "0c74a7f836ffce0e56a420f45c624123c8ab3d0693d1704e509077023b8c280c",
+      "RGBA8_size": 14884,
+      "archive_path": "img/portraits/pilots/Pilot_Artificial.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 14945,
+      "payload_sha256": "c23518d4671f042010afc4b3c0960276099eee2ac48bc646d73af95e6d53aaa4",
+      "payload_size": 4704,
+      "present": true,
+      "request_name": "portraits/pilots/Pilot_Artificial.png",
+      "source_components": 4,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "9cc635b82d5618253155b4964f5214dc82232a8bd425541e05ca677d8f9ebd95",
+      "RGBA8_size": 14884,
+      "archive_path": "img/portraits/pilots/Pilot_Artificial_2.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 14945,
+      "payload_sha256": "991ed4cbb122a6f498471a1e503241b979af65978af2843a1267740a872b49db",
+      "payload_size": 34153,
+      "present": true,
+      "request_name": "portraits/pilots/Pilot_Artificial_2.png",
+      "source_components": 4,
+      "width": 61
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "a20516b274136ee8ef629473ab690ccdbc0e62db90998ca8b00774674451fc16",
+      "RGBA8_size": 59536,
+      "archive_path": "img/portraits/pilots/Pilot_Artificial_blink.png",
+      "height": 61,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 59597,
+      "payload_sha256": "690b39f1c1ba20c1b79f55c9ac6dd410a586728d160bdf0e592c7d871cf57d60",
+      "payload_size": 19984,
+      "present": true,
+      "request_name": "portraits/pilots/Pilot_Artificial_blink.png",
+      "source_components": 4,
+      "width": 244
+    },
+    {
+      "archive_path": "img/portraits/pilots/Pilot_Artificial_glare.png",
+      "present": false,
+      "reference_generated": false,
+      "request_name": "portraits/pilots/Pilot_Artificial_glare.png"
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "a45cbf3742dc214c248ec5b5a9359c46d4302ce21e89754df8ac4cf60ef85ec6",
+      "RGBA8_size": 7544,
+      "archive_path": "img/combat/shield_back.png",
+      "height": 41,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 7585,
+      "payload_sha256": "f2a42dffddf2f84465eddc3a251ad298b216a022d4e34c5f587c5d9e269fc885",
+      "payload_size": 17497,
+      "present": true,
+      "request_name": "combat/shield_back.png",
+      "source_components": 4,
+      "width": 46
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "1fe83e15dd13cf0c23e8f54d688ef767d19d29f85f37a3cf1cfad121fe38b75f",
+      "RGBA8_size": 7544,
+      "archive_path": "img/combat/shield_front.png",
+      "height": 41,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 7585,
+      "payload_sha256": "b40333d0ff039c070f880781c8798a21b2534e50afa2f7e7c12f7d02777f31bd",
+      "payload_size": 17504,
+      "present": true,
+      "request_name": "combat/shield_front.png",
+      "source_components": 4,
+      "width": 46
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "4d53794154c4c7e5f6ea3b22844a3abd88e7ae10dac14704b3f192b32cc5330b",
+      "RGBA8_size": 11648,
+      "archive_path": "img/combat/shield2_back.png",
+      "height": 56,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 11704,
+      "payload_sha256": "249b348728e13a1ec1dadfeb83da24770b226b42c2309dfbbea0167654042db9",
+      "payload_size": 17584,
+      "present": true,
+      "request_name": "combat/shield2_back.png",
+      "source_components": 4,
+      "width": 52
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "959136c10f8a87c0ce1b2eac5f569298c293f52cef05c46919d316ab1004ff14",
+      "RGBA8_size": 11648,
+      "archive_path": "img/combat/shield2_front.png",
+      "height": 56,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 11704,
+      "payload_sha256": "fe7be7c4dc8cf30757ea2a91638a98d87a0c505df59cb82755e9f5b03a21ed90",
+      "payload_size": 17594,
+      "present": true,
+      "request_name": "combat/shield2_front.png",
+      "source_components": 4,
+      "width": 52
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "f9f15b600f5c6bd80c50a133ed43632635357a7b69f57e0859e4caf10912acfa",
+      "RGBA8_size": 23040,
+      "archive_path": "img/combat/shielddam_front.png",
+      "height": 72,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 23112,
+      "payload_sha256": "9f1a244e692e5ad5451419264b13f9d867951c324c6c35f44a0e46b9bb3c80dc",
+      "payload_size": 34581,
+      "present": true,
+      "request_name": "combat/shielddam_front.png",
+      "source_components": 4,
+      "width": 80
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "bd9608c8cb24a4aee5cf5b4b48c1f11bdc56dd603dcc9c2b4dcf7bc9d77dffcb",
+      "RGBA8_size": 23040,
+      "archive_path": "img/combat/shielddam_back.png",
+      "height": 72,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 23112,
+      "payload_sha256": "d263fb131400168da6cfd14b489c64141e1042c1b892a9a264cd6ad968b73bae",
+      "payload_size": 33932,
+      "present": true,
+      "request_name": "combat/shielddam_back.png",
+      "source_components": 4,
+      "width": 80
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "28a5c5922fd8641822c750b9b4eb592f4ebbd16a8506a566a758932fbc00c550",
+      "RGBA8_size": 18352,
+      "archive_path": "img/combat/shieldtrain_front.png",
+      "height": 62,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 18414,
+      "payload_sha256": "59631f7acc5264d85e0c121e392a833189ca8f63380dfd739d23c1d5e039b244",
+      "payload_size": 34419,
+      "present": true,
+      "request_name": "combat/shieldtrain_front.png",
+      "source_components": 4,
+      "width": 74
+    },
+    {
+      "PNG_bitdepth": 8,
+      "PNG_color_type": 6,
+      "RGBA8_sha256": "02eeeb1b520676e5208820c5187f62bb5b95109b05cd84bfd719291053e3a5cf",
+      "RGBA8_size": 18352,
+      "archive_path": "img/combat/shieldtrain_back.png",
+      "height": 62,
+      "interlace": 0,
+      "noninterlaced_filtered_scanline_bytes": 18414,
+      "payload_sha256": "ce914ecb4727a86b123304e114e4f70cf96d7f7ecef6eaecbff57c6e42202aeb",
+      "payload_size": 34294,
+      "present": true,
+      "request_name": "combat/shieldtrain_back.png",
+      "source_components": 4,
+      "width": 74
+    }
+  ],
+  "before_to_after": "Component-only proposal narrowed to base-manager ownership; genuine Pawn vtable restoration, constructor inputs and normal image seams pinned, but no new native actor or action admitted",
+  "build": {
+    "archive_sha256": "fd933aa7d13fe02a9ea577eb100c779f053734816e6c87abae863ae1c9efa4d5",
+    "build": 13725832,
+    "depot": 590381,
+    "depot_manifest": "8335438558621014449",
+    "exe_sha256": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "overlay": "Installed Mod Loader overlay; not a pristine-depot claim",
+    "steam_app": 590380
+  },
+  "checkout_commit_before_publication": "8968c76f04c3f810a14971e60fc40d89c16a2b56",
+  "constructor_admissions": 0,
+  "constructor_contract": {
+    "arguments": "DWORD team1 then owned24B MSVC string PunchMech",
+    "cleanup_bytes": 28,
+    "constructor_rva": "0x0022a920",
+    "factory_arguments": "DWORD team1 then owned24B string PunchMech",
+    "factory_cleanup_bytes": 28,
+    "factory_expected_output": "actual allocated Pawn and appended pointer, native owned Repair plus Move",
+    "factory_not_equipment": "245070 does not equip Prime_Punchmech; stock SkillList equipment follows separate244df0 owner",
+    "factory_receiver": "declared writable empty Pawn-pointer vector header (not Board registration)",
+    "factory_rva": "0x00245070",
+    "native_receiver_result": "EAX receiver; original constructor installs Pawn vtable82e320",
+    "post_ctor_lifecycle": "coordinates remain-1; storedactive91c=0; IsMech9e4=0. No positive readiness/action inference until placement/registration/equipping/activation acquired.",
+    "receiver": "actual native writable allocation0x1328"
+  },
+  "date": "2026-10-04",
+  "differential": {
+    "independent_PNG_reference": {
+      "absent_unreplaced": 2,
+      "matched": 26,
+      "mismatched": 0,
+      "present_checked": 26,
+      "requested": 28
+    },
+    "original_action": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 0,
+      "failed": 0,
+      "passed": 0
+    },
+    "original_factory": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 0,
+      "failed": 0,
+      "passed": 0
+    },
+    "original_resource": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 0,
+      "failed": 0,
+      "passed": 0
+    }
+  },
+  "fair_input_admissions": 0,
+  "full_action_admissions": 0,
+  "full_constructor_named_inputs": {
+    "Pilot": "real243d80 allocation0x2b4 control+object12,21e260 Pilot_Artificial,21f090 definitions,21fc80 portraits,21fb20 two actual empty-ID ability records. Portrait and Skills empty strings are inherited public values, not no-Pilot permission.",
+    "additional_named_Animations": [
+      "UnitRift",
+      "Mech_TimeTravel",
+      "Pilot_Blink"
+    ],
+    "default_Animations": "two85ce0 defaults still must execute actual constructors",
+    "emitters": [
+      "Emitter_Boost",
+      "Emitter_Boost2",
+      "Emitter_Infected"
+    ],
+    "globals": "actual uid894d64 increment/228b70; actual CRT random387f16 atPawn924; shield global8b9e78 zero-domain invokes eight BE8F0 lookups. Never preload fake positive globals to avoid owners.",
+    "six_named_embedded_Animations": [
+      "Guarding",
+      "Supply",
+      "OnFire",
+      "Blocking",
+      "Acid",
+      "Radio"
+    ]
+  },
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "heap_boundary": {
+    "HeapReAlloc_IAT_rva": "0x003d6214",
+    "HeapReAlloc_call_rva": "0x003894d6",
+    "HeapReAlloc_return_rva": "0x003894dc",
+    "all_26_decode_CPU_copy_monotonic_lower_bound_bytes": 4686561,
+    "largest_RGBA_bytes": 943616,
+    "lower_bound_scope": "Conditional on decoding all 26 through the reusable decode plus CPU-copy composition; BEE20 normally uploads directly and has a conditional grayscale CPU-copy branch. That composition is not established for every full factory resource",
+    "new_budget_or_service_implemented": false,
+    "not_peak_live_or_factory_total": true,
+    "original_growth_rva": "0x00042780",
+    "original_realloc_rva": "0x00389479",
+    "prior_guest_heap_bytes": 4194304,
+    "prior_individual_request_exclusive_upper_bound": 1048576,
+    "requirements": "Declare bounded total and per-request capacity, preserve caller/IAT/stack/ownership/copy checks, cover extended heap reads and writes, and account for all fresh-world allocations; no silent guard relaxation",
+    "timetravel_filtered_scanline_bytes": 943810,
+    "timetravel_inflate_capacity_lower_bound": 1048576
+  },
+  "heap_source_packet_raw_sha256": "5903965fdaf6ce1691d35fb3074912476a84aba767f8a67dcc92fd59b2aa1b8b",
+  "held_out_cases": 0,
+  "held_out_outcome_latency_memory": "Not evaluated; no new Rust replay or simulator semantics change",
+  "information_mode": "Original validation oracle; internal UID, RNG and resource owners excluded from planner input",
+  "ledger_promotions": 0,
+  "native_executions": 0,
+  "next_end_to_end_exit": "One fresh world only after resource, allocator and stock-input closure: genuine factory return/RET28, original Pawn vtable and owned Move/Repair, then guarded selection/consumption/repeated-Move rejection/Use legality and queue continuity",
+  "normalizer_raw_sha256": "93f7c726bb50ab5b44a21aa2cb27e3ba24789e682378074b327951688913005e",
+  "objective": "Existing provisional lexicographic preservation; no objective or weight change",
+  "ordinary_resource_boundary": {
+    "entries_RET_cleanup_bytes": 32,
+    "input": "PNG pointer, length and owned 24-byte full cache key; output through genuine cache lookup, not EAX",
+    "native_branch_predicates_acquired": false,
+    "no_player_palette_expansion": true,
+    "normal_entry_rva": "0x000bee20",
+    "open_seams": [
+      "Actual outline/grayscale regex initialization and predicates; source-inferred branches are not native results",
+      "BEE20 glTexParameterf IAT0x3d623c at RVA0xbef0f/0xbef24 with float9728.0 needs real host service and exact guards",
+      "BEE20 GL generation/binding/upload callsites differ from prior 0x9a2c0-only provider",
+      "Two absent assets need actual native missing/fallback lookup behavior; no invented resource wrapper",
+      "Outline crop/resource fields and stock shield Location metadata require actual producer and readback"
+    ],
+    "outline_entry_rva": "0x000c0eb0",
+    "pattern_domain_description": "Stock outline matching includes these four combat icons; stock grayscale matching concerns achievement image keys. Exact regex text remains private; actual native predicates remain unacquired.",
+    "patterns": {
+      "first_line": 2,
+      "game_path": "scripts/images.lua",
+      "last_line": 6,
+      "slice_LF_sha256": "ccaa86df73cb4672b7c21c2893233c7015131e38aa49a2ea7d750c472a8aaa4c",
+      "slice_raw_sha256": "69bd9589a3061389fd66084d2a0d3fd89ec788cedd513c247dcd701ee43d448d",
+      "whole_raw_sha256": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+    },
+    "per_key_source_inference": [
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/guard.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/icon_supply_glow.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0xc0eb0",
+        "outline_pattern_inferred_match": true,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/icon_fire_glow.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0xc0eb0",
+        "outline_pattern_inferred_match": true,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/icon_spawnblock_glow.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0xc0eb0",
+        "outline_pattern_inferred_match": true,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/icon_acid_glow.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0xc0eb0",
+        "outline_pattern_inferred_match": true,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/icons/radio_animate.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/rift_unit.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/effects/timetravel.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/Pilot_Original_blink.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/pod/pod_smoke.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/particle_boost.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": false,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/advanced/effects/infected_burst.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/pilot_todo.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/enemy/enemy_todo.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/back_1.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/ui/hangar/small_swirl.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/Pilot_Artificial.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/Pilot_Artificial_2.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/Pilot_Artificial_blink.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/portraits/pilots/Pilot_Artificial_glare.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": false,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shield_back.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shield_front.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shield2_back.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shield2_front.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shielddam_front.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shielddam_back.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shieldtrain_front.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      },
+      {
+        "OL_condition": false,
+        "cache_key": "img/combat/shieldtrain_back.png",
+        "ordinary_lower_entry_if_actual_predicate_agrees": "0x000bee20",
+        "outline_pattern_inferred_match": false,
+        "palette_condition": false,
+        "present": true,
+        "source_inference_only": true
+      }
+    ],
+    "shield_metadata": {
+      "declaration": "Execute exact stock shield Location assignments with genuinePoint binding beforeC2A90/BE8F0. FullInitializeImageList includesunneededUI. Retain as partial exactLua initialization; do not describe Location={} as actual stockshield metadata.",
+      "required_exact_offsets": {
+        "combat/shield2_back.png": [
+          -26,
+          -15
+        ],
+        "combat/shield2_front.png": [
+          -26,
+          -15
+        ],
+        "combat/shield_back.png": [
+          -23,
+          -4
+        ],
+        "combat/shield_front.png": [
+          -23,
+          -4
+        ],
+        "combat/shielddam_back.png": [
+          -25,
+          -8
+        ],
+        "combat/shielddam_front.png": [
+          -25,
+          -8
+        ],
+        "combat/shieldtrain_back.png": [
+          -51,
+          -6
+        ],
+        "combat/shieldtrain_front.png": [
+          -51,
+          -6
+        ]
+      },
+      "shield_slice": {
+        "first_line": 320,
+        "game_path": "scripts/images.lua",
+        "last_line": 327,
+        "slice_LF_sha256": "ce603a106dc66c8738b152b11867be9cc04e941133317604bc9283a7a55741a4",
+        "slice_raw_sha256": "171b7151e3b4f40653a0869b37b74ff87cd50c34c47af42ff56a9464901b6129",
+        "whole_raw_sha256": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+      }
+    },
+    "source_inferred_present_nonoutline_count": 22,
+    "source_inferred_present_outline_count": 4
+  },
+  "ownership_correction": {
+    "Pawn_constructor_rva": "0x0022a920",
+    "Pawn_vtable_restore_rva": "0x0022a9bf",
+    "Pawn_vtable_va": "0x0082e320",
+    "UID": "Pawn UID at +0x9a4 comes from incremented counter VA0x894d64, then original 0x228b70 propagates manager/Skill IDs; counter lifecycle remains open",
+    "affected_virtual_slots": {
+      "0x10": "Base always false versus Pawn HP death predicate",
+      "0x20": "Base empty versus Pawn Class",
+      "0x24": "Base empty versus Pawn SoundLocation"
+    },
+    "base_constructor_rva": "0x00226f00",
+    "base_vtable_va": "0x0082e184",
+    "base_vtable_write_rva": "0x00226f31",
+    "component_only_preserves_Pawn_semantics": false,
+    "context": "Manager context +0x3c propagated by original 0x2287b0 is distinct from Pawn Board owner +0x944",
+    "host_vtable_or_owner_patch_admitted": false,
+    "random": "Separate original CRT random call supplies Pawn+0x924, not the UID"
+  },
+  "positive_readiness_admissions": 0,
+  "private_packet_raw_sha256": {
+    "actor_ctor_archive_inputs_01.json": "b70116ff38c628922caee70f72a982ab44035c24b9dbcb87adb09d0a6c7c5ad6",
+    "actor_ctor_feasibility_01.json": "8e1dc4d04e3fee66bc44e3ef32644041e4644bd3877e13d04a92307051f5153c",
+    "actor_ctor_source_inventory_01.json": "f4ae492ea4023beaad968b81f30c2bfca4d4a64e0e284d5cf02fd09dbea79f35",
+    "component_cross_review_01.json": "a445a10a466f20c869e57597b166b16f4fcb977a987de0e2729adde8d642701c",
+    "inherited_Pawn_components_source_01.json": "e8d568e4335238dfcf3bfc2261baad985088cc4867b2d531a63e8a5e9c61dd96",
+    "ordinary_RGBA8_references_01.json": "612fc936a16a8a3d0ba7a983e0f2c7aff3fcada271f1b274a3c08ce5e7ebd9dd",
+    "ordinary_heap_route_clarification_01.json": "9f095c9e7f33ded8f3785a46cc3bbf818ac14e43c701437188d864d6f944ee6c",
+    "ordinary_heap_source_bound_01.json": "5903965fdaf6ce1691d35fb3074912476a84aba767f8a67dcc92fd59b2aa1b8b",
+    "ordinary_reference_verification_01.json": "696ffdf2194656b4b48bea068576bede264a67aa18017ccabfa84455ab88dc85"
+  },
+  "remaining_exclusions": [
+    "Actual resources and Artificial Pilot construction",
+    "Stock weapon equipment, placement and Board membership",
+    "Session confirmation and positive actor readiness",
+    "Enemy/environment/spawn and next-decision continuity",
+    "Complete fair legal-action comparison, independent held-out corpus, certified search and practical evaluation"
+  ],
+  "scenario": "Stock PunchMech H8-to-G8 development corridor; existing inactive query actor remains excluded from deployed legality",
+  "schema": "solver_first_Pawn_constructor_source_boundary_v1",
+  "search_certificates": 0,
+  "search_status": "not evaluated",
+  "selection_decision": "Publish necessary dependency closure and correction; next acquisition should grade ordinary inputs without substituting rendering counts for solver acceptance",
+  "simulator_version": 413,
+  "solver_facing_question": "Which original owner must construct the same Pawn before positive Move eligibility and guarded action consumption can be acquired?",
+  "source_body_groups": {
+    "PNG_allocation_law": [
+      {
+        "body_sha256": "80b55004ab7eb31a49a07fbf40374a28ef7964dd299b132b5cd0dcddb454cdf6",
+        "body_size": 108,
+        "entry_rva": "0x00042780",
+        "ranges": [
+          {
+            "size": 108,
+            "start_rva": "0x00042780"
+          }
+        ]
+      },
+      {
+        "body_sha256": "6cf011af6cabc92c16af67979aba722559c160e0c35ba81737d638f65c1ab757",
+        "body_size": 844,
+        "entry_rva": "0x000427f0",
+        "ranges": [
+          {
+            "size": 844,
+            "start_rva": "0x000427f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "1098961eb2fbe1f7f7d85dc72355738a8b2ef8622b998493f5a488e20cf59729",
+        "body_size": 219,
+        "entry_rva": "0x00043110",
+        "ranges": [
+          {
+            "size": 219,
+            "start_rva": "0x00043110"
+          }
+        ]
+      },
+      {
+        "body_sha256": "bf25849cbbf67902ef62ec3457f8a8cc4719de089e2b4e26ca1d2f5ba0a6820a",
+        "body_size": 185,
+        "entry_rva": "0x000431f0",
+        "ranges": [
+          {
+            "size": 185,
+            "start_rva": "0x000431f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "24e3e23ca01e2515affb59b728cd8e3e37b9f7fb05fbe6f4326ff5e72fe06664",
+        "body_size": 2749,
+        "entry_rva": "0x00043320",
+        "ranges": [
+          {
+            "size": 301,
+            "start_rva": "0x00043320"
+          },
+          {
+            "size": 26,
+            "start_rva": "0x00043450"
+          },
+          {
+            "size": 26,
+            "start_rva": "0x00043470"
+          },
+          {
+            "size": 30,
+            "start_rva": "0x00043490"
+          },
+          {
+            "size": 2366,
+            "start_rva": "0x000434b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9ff3f4f1125eb9ab8fe59cf56435fec2b18617424e4c55964eb59577ffdde5dd",
+        "body_size": 697,
+        "entry_rva": "0x00043e50",
+        "ranges": [
+          {
+            "size": 697,
+            "start_rva": "0x00043e50"
+          }
+        ]
+      },
+      {
+        "body_sha256": "e9f8bea574aa7552e29a4fa490d8d179c27fb5a8fc8acaf781ddfebf9958abf2",
+        "body_size": 2594,
+        "entry_rva": "0x00044360",
+        "ranges": [
+          {
+            "size": 2594,
+            "start_rva": "0x00044360"
+          }
+        ]
+      },
+      {
+        "body_sha256": "b7585f2f6d9e619a036c6df27bcc15c5df425aa0282b510bb99fd61f28346207",
+        "body_size": 202,
+        "entry_rva": "0x00044d90",
+        "ranges": [
+          {
+            "size": 202,
+            "start_rva": "0x00044d90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ddd4ceba9c05cb83da6ec88ae4256f9ed2ceffdbff7ce29dc199901f5f4e95d4",
+        "body_size": 230,
+        "entry_rva": "0x00099ea0",
+        "ranges": [
+          {
+            "size": 230,
+            "start_rva": "0x00099ea0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "cc6c099b22ffbca66c708a7819eedde8a3c1a2f012500995efa51c1c132123e5",
+        "body_size": 11,
+        "entry_rva": "0x00379f5d",
+        "ranges": [
+          {
+            "size": 11,
+            "start_rva": "0x00379f5d"
+          }
+        ]
+      },
+      {
+        "body_sha256": "75a7aaecc2452612af2ef0747f857c1895606b86a0b792934d03eaa6aac2809e",
+        "body_size": 105,
+        "entry_rva": "0x00389479",
+        "ranges": [
+          {
+            "size": 105,
+            "start_rva": "0x00389479"
+          }
+        ]
+      }
+    ],
+    "Pawn_component_ownership": [
+      {
+        "body_sha256": "3524ac242335de198252f75161f4499f06d5b8f1be7e845d6eddfe61f9ed8dac",
+        "body_size": 388,
+        "entry_rva": "0x00226f00",
+        "ranges": [
+          {
+            "size": 388,
+            "start_rva": "0x00226f00"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2925cdf9d1c6c3197c579d6cee94bf608b731840a3893c4dee6b2982f6e549d8",
+        "body_size": 59,
+        "entry_rva": "0x0022a200",
+        "ranges": [
+          {
+            "size": 59,
+            "start_rva": "0x0022a200"
+          }
+        ]
+      },
+      {
+        "body_sha256": "aa2f887477481e5dc5dc20676815d6b4339fcc4e2a9131e65548a75270068fb1",
+        "body_size": 175,
+        "entry_rva": "0x0022a240",
+        "ranges": [
+          {
+            "size": 175,
+            "start_rva": "0x0022a240"
+          }
+        ]
+      },
+      {
+        "body_sha256": "c125ba433c372f125cee931ab236521b8fd2c7c320e265bbcc3a8363f4239189",
+        "body_size": 124,
+        "entry_rva": "0x001c9bf0",
+        "ranges": [
+          {
+            "size": 124,
+            "start_rva": "0x001c9bf0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "58fa20e4a276a96fa197b9bec5b34772c94715dbbdd9867c134f50f3633f89fb",
+        "body_size": 157,
+        "entry_rva": "0x001c9ca0",
+        "ranges": [
+          {
+            "size": 157,
+            "start_rva": "0x001c9ca0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "cb07c328fe445f8e12898094cb37b7fc15f689a1a7a70f4056e74db93a5c9c6d",
+        "body_size": 357,
+        "entry_rva": "0x00227110",
+        "ranges": [
+          {
+            "size": 357,
+            "start_rva": "0x00227110"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f93e7c0a7a635a68c36de4ca0c7c4071beddeee08690ece4d565c3782c0f045b",
+        "body_size": 77,
+        "entry_rva": "0x002287b0",
+        "ranges": [
+          {
+            "size": 77,
+            "start_rva": "0x002287b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a2fbe5d348d34a7d859a03e7da7732918f5856d255f59a5cd58171f9b3566f67",
+        "body_size": 96,
+        "entry_rva": "0x00228b70",
+        "ranges": [
+          {
+            "size": 96,
+            "start_rva": "0x00228b70"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+        "body_size": 4520,
+        "entry_rva": "0x0022a920",
+        "ranges": [
+          {
+            "size": 4520,
+            "start_rva": "0x0022a920"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+        "body_size": 478,
+        "entry_rva": "0x00245070",
+        "ranges": [
+          {
+            "size": 478,
+            "start_rva": "0x00245070"
+          }
+        ]
+      },
+      {
+        "body_sha256": "247eccc6d4587cf6101b169dfd98bc1ea9d20582a8fb27330ae9c6be3f336554",
+        "body_size": 83,
+        "entry_rva": "0x002375f0",
+        "ranges": [
+          {
+            "size": 83,
+            "start_rva": "0x002375f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "99f2cda5ff269645f72f6b3e5a2ca14da457b6c6cf8c70f7566759ef74386b52",
+        "body_size": 260,
+        "entry_rva": "0x00228800",
+        "ranges": [
+          {
+            "size": 260,
+            "start_rva": "0x00228800"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ef2b5bfdba77a599c1ebbc26d445513c88f102b3a532a50e8f118d6a8857f5da",
+        "body_size": 522,
+        "entry_rva": "0x00237730",
+        "ranges": [
+          {
+            "size": 522,
+            "start_rva": "0x00237730"
+          }
+        ]
+      },
+      {
+        "body_sha256": "254d9cd585060687fc1fc363157fea299ef4f3f8d3d3713345fc301a1eb34223",
+        "body_size": 326,
+        "entry_rva": "0x00237940",
+        "ranges": [
+          {
+            "size": 326,
+            "start_rva": "0x00237940"
+          }
+        ]
+      },
+      {
+        "body_sha256": "449310a80188de96a31ca52afdd3c1db0784bfd136322352f467c2d770ff41b9",
+        "body_size": 137,
+        "entry_rva": "0x0023e8b0",
+        "ranges": [
+          {
+            "size": 137,
+            "start_rva": "0x0023e8b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "66329829d5c5b475feb95e72465cf8a031b5f8a9c4c9ab54100ca94ad0719c23",
+        "body_size": 78,
+        "entry_rva": "0x00234cd0",
+        "ranges": [
+          {
+            "size": 78,
+            "start_rva": "0x00234cd0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "bd1262285282b7b6fc1f1c66cbbf850e219c0cb9a517da8f6e92e60471a0a6e1",
+        "body_size": 11,
+        "entry_rva": "0x0022cdd0",
+        "ranges": [
+          {
+            "size": 11,
+            "start_rva": "0x0022cdd0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "20d1c353610728f2faf99bf87b34c14ce4c6c7ccb20d5cb1eaeeaa64a1cab20e",
+        "body_size": 229,
+        "entry_rva": "0x0022a0a0",
+        "ranges": [
+          {
+            "size": 229,
+            "start_rva": "0x0022a0a0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "4622a20b1203c295ca8531e79832a2cd388a0814ab816cbb2962857732f21e9e",
+        "body_size": 144,
+        "entry_rva": "0x0026b0b0",
+        "ranges": [
+          {
+            "size": 144,
+            "start_rva": "0x0026b0b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "cad7d086784a24a326cb61434baa29a00c02eb0ea82f708e4dc492211fde50e2",
+        "body_size": 288,
+        "entry_rva": "0x0026ae00",
+        "ranges": [
+          {
+            "size": 288,
+            "start_rva": "0x0026ae00"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d7d8a549c84d65c12de9e53daf99f248fd09ee0064e406fe0a6dd11cfc507751",
+        "body_size": 66,
+        "entry_rva": "0x0023e0f0",
+        "ranges": [
+          {
+            "size": 66,
+            "start_rva": "0x0023e0f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "adb89495a27b93b259891a3a1996e62b23355b0b2d1bb6cd11b2e1b1cbff100a",
+        "body_size": 70,
+        "entry_rva": "0x00234e40",
+        "ranges": [
+          {
+            "size": 70,
+            "start_rva": "0x00234e40"
+          }
+        ]
+      },
+      {
+        "body_sha256": "01cb47d078b4841b8408ec4fe278efa83115c6f6e101972987507d2b2b57dcf0",
+        "body_size": 3,
+        "entry_rva": "0x0006e990",
+        "ranges": [
+          {
+            "size": 3,
+            "start_rva": "0x0006e990"
+          }
+        ]
+      },
+      {
+        "body_sha256": "48a7d9e4e7fcf13fe3a03d191b7592d410d5458f19ee260b30e38fa9e5022987",
+        "body_size": 55,
+        "entry_rva": "0x0015ea90",
+        "ranges": [
+          {
+            "size": 55,
+            "start_rva": "0x0015ea90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2d2440d2b0360f6b94f6cc665865c089f8fbbc67e43481f65e1e065d2cb55aec",
+        "body_size": 59,
+        "entry_rva": "0x0023c850",
+        "ranges": [
+          {
+            "size": 59,
+            "start_rva": "0x0023c850"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d3da761e6c339d9dc28410f24f3c37b76c746b9d32fbb360dc251586359e7848",
+        "body_size": 59,
+        "entry_rva": "0x0023c890",
+        "ranges": [
+          {
+            "size": 59,
+            "start_rva": "0x0023c890"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f84019b85672aafc138b0ab24dd72032297af33237033f4ad27abc82defdbf85",
+        "body_size": 860,
+        "entry_rva": "0x0023f5e0",
+        "ranges": [
+          {
+            "size": 860,
+            "start_rva": "0x0023f5e0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "52d5c73b8be3b26489e1384206eb567563d5bd9a7e2f5d69f3ceb831e59eab01",
+        "body_size": 531,
+        "entry_rva": "0x0023e180",
+        "ranges": [
+          {
+            "size": 531,
+            "start_rva": "0x0023e180"
+          }
+        ]
+      }
+    ],
+    "Pawn_constructor_inputs": [
+      {
+        "body_sha256": "3cadcce7cc4ecf87fd02fa0373032608472e286d6f6ef54fe01865303ec4ee98",
+        "body_size": 203,
+        "entry_rva": "0x0004d970",
+        "ranges": [
+          {
+            "size": 203,
+            "start_rva": "0x0004d970"
+          }
+        ]
+      },
+      {
+        "body_sha256": "920d057dc1eb6a60a3e69515e084d79dbf944d873468870a0e58c6ea8a79c722",
+        "body_size": 81,
+        "entry_rva": "0x00050890",
+        "ranges": [
+          {
+            "size": 81,
+            "start_rva": "0x00050890"
+          }
+        ]
+      },
+      {
+        "body_sha256": "8355b471d05fd477beba441091408e82b7e04dfa0fa1cd1f3bc42b8d5ed0dccc",
+        "body_size": 119,
+        "entry_rva": "0x00050e00",
+        "ranges": [
+          {
+            "size": 119,
+            "start_rva": "0x00050e00"
+          }
+        ]
+      },
+      {
+        "body_sha256": "e0089db3b4121885c2d578f1fac9900d2ed19b56f17a34be63797aec7326285c",
+        "body_size": 300,
+        "entry_rva": "0x00080d60",
+        "ranges": [
+          {
+            "size": 300,
+            "start_rva": "0x00080d60"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a3da4d374a37787e1169d93314ee84fa374ad971271a93d79167f02bdbb7b506",
+        "body_size": 474,
+        "entry_rva": "0x00085e70",
+        "ranges": [
+          {
+            "size": 474,
+            "start_rva": "0x00085e70"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d24f08150e75942fde48d84234a61dfeb5b1a302a457c5b31a62f5a8a5b061c9",
+        "body_size": 370,
+        "entry_rva": "0x00086050",
+        "ranges": [
+          {
+            "size": 370,
+            "start_rva": "0x00086050"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f7d6b871ad78c095ff2a7a95be29390a955ae5189010a65414b0428a0adce3ff",
+        "body_size": 313,
+        "entry_rva": "0x000861d0",
+        "ranges": [
+          {
+            "size": 313,
+            "start_rva": "0x000861d0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "5036498f21b1a7b9dcd8c5187b233a1bbaaebe025d7627b2cb0cf1a2a67fa8f7",
+        "body_size": 1306,
+        "entry_rva": "0x00086310",
+        "ranges": [
+          {
+            "size": 1306,
+            "start_rva": "0x00086310"
+          }
+        ]
+      },
+      {
+        "body_sha256": "e92146f33a79af2547bf86d646372b284b994f41a2312539c66de969d909c87a",
+        "body_size": 28,
+        "entry_rva": "0x000c43f0",
+        "ranges": [
+          {
+            "size": 28,
+            "start_rva": "0x000c43f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ddfb76802bad04dd48cd85e0d313012c57e5a36ea0dd75792c7629d03c0704e9",
+        "body_size": 112,
+        "entry_rva": "0x000c6100",
+        "ranges": [
+          {
+            "size": 112,
+            "start_rva": "0x000c6100"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f6141d5b295e4e1a2d7250d44cdf34e6a2d077a40f01882598377bac81f7defb",
+        "body_size": 280,
+        "entry_rva": "0x00132240",
+        "ranges": [
+          {
+            "size": 280,
+            "start_rva": "0x00132240"
+          }
+        ]
+      },
+      {
+        "body_sha256": "572645b8d2814a0112219a04c181fddfbb8c2435c8c379f49a112fe9cea2fff3",
+        "body_size": 1141,
+        "entry_rva": "0x0021e260",
+        "ranges": [
+          {
+            "size": 1141,
+            "start_rva": "0x0021e260"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f43031a9194a8c3f4e5524535596ad0bdcf2dd9341ecd7378e3ceff3ad5ccd82",
+        "body_size": 2703,
+        "entry_rva": "0x0021f090",
+        "ranges": [
+          {
+            "size": 2703,
+            "start_rva": "0x0021f090"
+          }
+        ]
+      },
+      {
+        "body_sha256": "b3d6e3ac487e1e9d930ba009c3258e85564d6b556e360fb73447bf93f3a2a881",
+        "body_size": 337,
+        "entry_rva": "0x0021fb20",
+        "ranges": [
+          {
+            "size": 337,
+            "start_rva": "0x0021fb20"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f878cc1d31784a0ba899f7d0e1fd5375c9c4a445208e95d01e483e2034aadb31",
+        "body_size": 748,
+        "entry_rva": "0x0021fc80",
+        "ranges": [
+          {
+            "size": 748,
+            "start_rva": "0x0021fc80"
+          }
+        ]
+      },
+      {
+        "body_sha256": "97a35010a3faf482ff3d545d1c194ec59cff999618253445714690ecd9b94a60",
+        "body_size": 289,
+        "entry_rva": "0x00220a30",
+        "ranges": [
+          {
+            "size": 289,
+            "start_rva": "0x00220a30"
+          }
+        ]
+      },
+      {
+        "body_sha256": "e9d4cbacdec95b15cd3c3db6c0cc5fe8aef57903915c4b3d2e59d6b2defafa29",
+        "body_size": 316,
+        "entry_rva": "0x00225150",
+        "ranges": [
+          {
+            "size": 316,
+            "start_rva": "0x00225150"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f358d6de02d4e48a82c3a8d02fe52617cf280ea89bf959dcf0e4c4aadf60887d",
+        "body_size": 4520,
+        "entry_rva": "0x0022a920",
+        "ranges": [
+          {
+            "size": 4520,
+            "start_rva": "0x0022a920"
+          }
+        ]
+      },
+      {
+        "body_sha256": "7e9cc4d9d5a4e149b5d84039309bc02e8e3dd53fa5288954a3b5641417c7c8f8",
+        "body_size": 905,
+        "entry_rva": "0x0022bc00",
+        "ranges": [
+          {
+            "size": 905,
+            "start_rva": "0x0022bc00"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9c705957ab7a8afa137bb56e4d075b40a29ca8da45222fd318f2c821ac138148",
+        "body_size": 2759,
+        "entry_rva": "0x0022c0f0",
+        "ranges": [
+          {
+            "size": 2759,
+            "start_rva": "0x0022c0f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "806702601f6a75193f6479e0357150d5264c10b7661a434bac7eeb1a807606c7",
+        "body_size": 103,
+        "entry_rva": "0x0022cde0",
+        "ranges": [
+          {
+            "size": 103,
+            "start_rva": "0x0022cde0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f0dfe0b0f5c9f6e263bcc4d10563055487bf8496457fd76fdbb447139846aede",
+        "body_size": 42,
+        "entry_rva": "0x0023e3b0",
+        "ranges": [
+          {
+            "size": 42,
+            "start_rva": "0x0023e3b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "6ce8571402e3f505c4ba7d5295a44a3c66ae3898fd517b3d2017c8b76cd1594d",
+        "body_size": 165,
+        "entry_rva": "0x00243d80",
+        "ranges": [
+          {
+            "size": 165,
+            "start_rva": "0x00243d80"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d32e7c8858493de3502cd5d75fc52e81290959b268a6ec5b272c161cb20c2a03",
+        "body_size": 731,
+        "entry_rva": "0x00243e30",
+        "ranges": [
+          {
+            "size": 731,
+            "start_rva": "0x00243e30"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a6960b16cf81bfc75671f7901ade8f6dff4e1320e003aa93a7a1a245b3acae7e",
+        "body_size": 478,
+        "entry_rva": "0x00245070",
+        "ranges": [
+          {
+            "size": 478,
+            "start_rva": "0x00245070"
+          }
+        ]
+      },
+      {
+        "body_sha256": "3524ac242335de198252f75161f4499f06d5b8f1be7e845d6eddfe61f9ed8dac",
+        "body_size": 388,
+        "entry_rva": "0x00226f00",
+        "ranges": [
+          {
+            "size": 388,
+            "start_rva": "0x00226f00"
+          }
+        ]
+      },
+      {
+        "body_sha256": "cb07c328fe445f8e12898094cb37b7fc15f689a1a7a70f4056e74db93a5c9c6d",
+        "body_size": 357,
+        "entry_rva": "0x00227110",
+        "ranges": [
+          {
+            "size": 357,
+            "start_rva": "0x00227110"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f93e7c0a7a635a68c36de4ca0c7c4071beddeee08690ece4d565c3782c0f045b",
+        "body_size": 77,
+        "entry_rva": "0x002287b0",
+        "ranges": [
+          {
+            "size": 77,
+            "start_rva": "0x002287b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a2fbe5d348d34a7d859a03e7da7732918f5856d255f59a5cd58171f9b3566f67",
+        "body_size": 96,
+        "entry_rva": "0x00228b70",
+        "ranges": [
+          {
+            "size": 96,
+            "start_rva": "0x00228b70"
+          }
+        ]
+      },
+      {
+        "body_sha256": "c125ba433c372f125cee931ab236521b8fd2c7c320e265bbcc3a8363f4239189",
+        "body_size": 124,
+        "entry_rva": "0x001c9bf0",
+        "ranges": [
+          {
+            "size": 124,
+            "start_rva": "0x001c9bf0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "7fb57c2ae3650b9d352e19da3617b63b5787c898b616a274502c03cfda5a18cc",
+        "body_size": 169,
+        "entry_rva": "0x0014e4e0",
+        "ranges": [
+          {
+            "size": 169,
+            "start_rva": "0x0014e4e0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "123487064545e5c7fa3aba38c4c1950afd1d58ddc7ec8bbeeaed24ac4074ef55",
+        "body_size": 276,
+        "entry_rva": "0x0015dfb0",
+        "ranges": [
+          {
+            "size": 276,
+            "start_rva": "0x0015dfb0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2033be4151f2e6913299f76083a0dfd290ae1bad764a0b8c70685b812004ddb7",
+        "body_size": 668,
+        "entry_rva": "0x0015b080",
+        "ranges": [
+          {
+            "size": 668,
+            "start_rva": "0x0015b080"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f3fbfffb25cc8b2c724e710134cc9222bd35a4f16fcbad1a1cbf44c7394ca3c2",
+        "body_size": 377,
+        "entry_rva": "0x000f91e0",
+        "ranges": [
+          {
+            "size": 377,
+            "start_rva": "0x000f91e0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "24e93097c00be174cbaf94b7f06f306cfd1387fd8aac8fdd061fb2db0aa2ae65",
+        "body_size": 794,
+        "entry_rva": "0x0021ed70",
+        "ranges": [
+          {
+            "size": 794,
+            "start_rva": "0x0021ed70"
+          }
+        ]
+      },
+      {
+        "body_sha256": "fb89ca85fff64e64fa412cba6c2debb4c4e5ee915b2442762a4ccc479402d889",
+        "body_size": 101,
+        "entry_rva": "0x00226570",
+        "ranges": [
+          {
+            "size": 101,
+            "start_rva": "0x00226570"
+          }
+        ]
+      },
+      {
+        "body_sha256": "449310a80188de96a31ca52afdd3c1db0784bfd136322352f467c2d770ff41b9",
+        "body_size": 137,
+        "entry_rva": "0x0023e8b0",
+        "ranges": [
+          {
+            "size": 137,
+            "start_rva": "0x0023e8b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "66329829d5c5b475feb95e72465cf8a031b5f8a9c4c9ab54100ca94ad0719c23",
+        "body_size": 78,
+        "entry_rva": "0x00234cd0",
+        "ranges": [
+          {
+            "size": 78,
+            "start_rva": "0x00234cd0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "247eccc6d4587cf6101b169dfd98bc1ea9d20582a8fb27330ae9c6be3f336554",
+        "body_size": 83,
+        "entry_rva": "0x002375f0",
+        "ranges": [
+          {
+            "size": 83,
+            "start_rva": "0x002375f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "15a9ff7b5140c97a90f9907c90c506d051136da05475580861c2ba557cf88559",
+        "body_size": 496,
+        "entry_rva": "0x00244df0",
+        "ranges": [
+          {
+            "size": 496,
+            "start_rva": "0x00244df0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "360b2ac97aa3007f0ff45da0a9ecd68cf22a11665da3ed1301e1972bb84dff1c",
+        "body_size": 99,
+        "entry_rva": "0x00050ecc",
+        "ranges": [
+          {
+            "size": 99,
+            "start_rva": "0x00050ecc"
+          }
+        ]
+      }
+    ],
+    "ordinary_resource_routes": [
+      {
+        "body_sha256": "6e59d941f50ff2dc863bb7e0b0baff85fe16ce4545027b8c148a8a0497dad8ee",
+        "body_size": 3007,
+        "entry_rva": "0x000c1d20",
+        "ranges": [
+          {
+            "size": 3007,
+            "start_rva": "0x000c1d20"
+          }
+        ]
+      },
+      {
+        "body_sha256": "bed0a770c427e09faba19b0b0f802b2edc734eb28b70d434240b32f73e13321e",
+        "body_size": 671,
+        "entry_rva": "0x000c0ac0",
+        "ranges": [
+          {
+            "size": 671,
+            "start_rva": "0x000c0ac0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9e2c14865c8c29b5071e9cb15b468a94aa55886d7acfa88cc9594a241eb86c25",
+        "body_size": 1190,
+        "entry_rva": "0x000c0eb0",
+        "ranges": [
+          {
+            "size": 1190,
+            "start_rva": "0x000c0eb0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d4e96126aa463bf8f04206ea64af9ff73515f5f4e6f8110eba5c52199fe3d1bd",
+        "body_size": 947,
+        "entry_rva": "0x000bee20",
+        "ranges": [
+          {
+            "size": 947,
+            "start_rva": "0x000bee20"
+          }
+        ]
+      },
+      {
+        "body_sha256": "da9b9866e9a3fc47c2478a187c20b98796563666809ea1b0e79b07805bf6667e",
+        "body_size": 180,
+        "entry_rva": "0x000be060",
+        "ranges": [
+          {
+            "size": 180,
+            "start_rva": "0x000be060"
+          }
+        ]
+      },
+      {
+        "body_sha256": "5e806d169da4e2bfb6f4444313203216b7c4271a052e39a53552596f7a8127cf",
+        "body_size": 129,
+        "entry_rva": "0x000be120",
+        "ranges": [
+          {
+            "size": 129,
+            "start_rva": "0x000be120"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d9292a815eb31b41a831d95553a5e42384e1240395c9211ece8558060521c24c",
+        "body_size": 207,
+        "entry_rva": "0x000be1b0",
+        "ranges": [
+          {
+            "size": 207,
+            "start_rva": "0x000be1b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "783e519c1804dc32cf8580057d6c6ab0a4930edcd7ce0f3e06c9f514a6d9b948",
+        "body_size": 329,
+        "entry_rva": "0x000c0d60",
+        "ranges": [
+          {
+            "size": 329,
+            "start_rva": "0x000c0d60"
+          }
+        ]
+      },
+      {
+        "body_sha256": "264fb18b98eb9108e08ba5a88488ec5db9ac5ef8521857eee5af539b69478bfc",
+        "body_size": 253,
+        "entry_rva": "0x000c2a90",
+        "ranges": [
+          {
+            "size": 253,
+            "start_rva": "0x000c2a90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "b6ac918500404d4a34543482bd84f8792ad0358de3aff1bb47a94e156ef07ed8",
+        "body_size": 352,
+        "entry_rva": "0x000c8660",
+        "ranges": [
+          {
+            "size": 352,
+            "start_rva": "0x000c8660"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ef2efd6fc4da385a8f88664b1adb7f5f3c87f892dfc6c2d071904c85077b239a",
+        "body_size": 415,
+        "entry_rva": "0x0003f330",
+        "ranges": [
+          {
+            "size": 415,
+            "start_rva": "0x0003f330"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ddd4ceba9c05cb83da6ec88ae4256f9ed2ceffdbff7ce29dc199901f5f4e95d4",
+        "body_size": 230,
+        "entry_rva": "0x00099ea0",
+        "ranges": [
+          {
+            "size": 230,
+            "start_rva": "0x00099ea0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2b60a4be98dae5dedc031ed8b65910998dfa97c5d5acc315ce3b1013999c7ddd",
+        "body_size": 222,
+        "entry_rva": "0x0009a2c0",
+        "ranges": [
+          {
+            "size": 222,
+            "start_rva": "0x0009a2c0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "67447bd743c0969d3605ddcbf15f715f7d206a922168866dd04e07fcf2818050",
+        "body_size": 235,
+        "entry_rva": "0x000c4410",
+        "ranges": [
+          {
+            "size": 235,
+            "start_rva": "0x000c4410"
+          }
+        ]
+      },
+      {
+        "body_sha256": "901cedcca23b0ae63948ee9fd434830d6b8c47863d488735dc144619d04463d9",
+        "body_size": 1776,
+        "entry_rva": "0x000bd380",
+        "ranges": [
+          {
+            "size": 1776,
+            "start_rva": "0x000bd380"
+          }
+        ]
+      }
+    ]
+  },
+  "source_data_groups": {
+    "Pawn_components": [
+      {
+        "rva": "0x42e184",
+        "sha256": "320183f210e5aa66d5423cdf5daa88c81823e982a7441ab17c5e168dff6e7153",
+        "size": 40
+      },
+      {
+        "rva": "0x42e320",
+        "sha256": "8ca2267ba6af24a20be60c4ed977552265b240ef3f688a8a15ddabd9eb7cf9ad",
+        "size": 52
+      },
+      {
+        "rva": "0x435df8",
+        "sha256": "eaabf9cb3498148c1db95d3c535acd52f08be4eb1f5c6c1ad263b94b9def101e",
+        "size": 13
+      },
+      {
+        "rva": "0x42a7a0",
+        "sha256": "d043e1bcbf133b4820da7af3203c58cbbe275ea952663afc7874ce535f9cc11b",
+        "size": 5
+      }
+    ],
+    "constructor_inputs": [
+      {
+        "rva": "0x00435f04",
+        "sha256": "4297160018eb7eb6a8cfaa43d3683fa47564f1ee24263979b7a31aa4b2b2e154",
+        "size": 9
+      },
+      {
+        "rva": "0x00435efc",
+        "sha256": "72ec46a9d31b9db16bcfc0af5f0e486a5fdc9f8e6b36e8a9dfc856ea6614f1bb",
+        "size": 7
+      },
+      {
+        "rva": "0x00435f1c",
+        "sha256": "6885bc2dbbeedaef566ea93bcaf928c75c5d2868181a89a60567d6c80bf8627e",
+        "size": 7
+      },
+      {
+        "rva": "0x00435f10",
+        "sha256": "34e28012a9f4bbb52bfa8f43f788e7fa4f9693c9b0fbe5fd727c119508665fe0",
+        "size": 9
+      },
+      {
+        "rva": "0x0042ed34",
+        "sha256": "f96553fc6d4fd641eaeb5437d2439e808feb5c4a9219a5a8ebbe7c3e005c4775",
+        "size": 5
+      },
+      {
+        "rva": "0x0043443c",
+        "sha256": "55e652141a70e88d4d3198d272a11f9f7bda5dd15b726c8a67babf5b061df3c0",
+        "size": 6
+      },
+      {
+        "rva": "0x00435f34",
+        "sha256": "51a1b1c39ceca813de16a4cc29e3f26d123b1ac8497910f60fcd30e7323b7094",
+        "size": 14
+      },
+      {
+        "rva": "0x00435f24",
+        "sha256": "b0384a19dab90fc88044e8d534cee5203e7fa33bd4bdb1905f2ac15432503830",
+        "size": 15
+      },
+      {
+        "rva": "0x00435f50",
+        "sha256": "ddbfe56da1e3a0e2d86f1c18d2739090aadce3fcbff52997dc7858ad673858b8",
+        "size": 17
+      },
+      {
+        "rva": "0x00435f44",
+        "sha256": "c63449e8be6fcbbf6c21474ab4be410feba1885716d9ab75c6e04052d44f78fc",
+        "size": 9
+      },
+      {
+        "rva": "0x00435f78",
+        "sha256": "49bb255ad7a743ce71823778a874234f8e37350962553537e5ee151b7a35323c",
+        "size": 16
+      },
+      {
+        "rva": "0x00435f64",
+        "sha256": "d984da0ed513d5ee5f81bec6b28bb472fcac88b723d87b1dd10398f779904a21",
+        "size": 17
+      },
+      {
+        "rva": "0x00435a30",
+        "sha256": "958e7a57c5873837a750c29f5ffb0db2de53a5f60d9622ea756507a67342125f",
+        "size": 12
+      },
+      {
+        "rva": "0x00435a00",
+        "sha256": "020d601be8d6a958d08eee0b43a5eb0386026084552c99708c43565a5e0516a0",
+        "size": 11
+      },
+      {
+        "rva": "0x00420e34",
+        "sha256": "d3ea9086c96f0d8b86a052846e4c03c21005aea4c1335b834058c25d5503a2b0",
+        "size": 9
+      },
+      {
+        "rva": "0x004262e8",
+        "sha256": "efc77ed579c42d09d4a2ed09508f83942a0bac877191a1961a2431fed6914aff",
+        "size": 14
+      },
+      {
+        "rva": "0x00421ee8",
+        "sha256": "f26722a17c0fc758e4a0b500e1035e486c9add2479b95ee55bf49810c880fabb",
+        "size": 6
+      },
+      {
+        "rva": "0x00435ab0",
+        "sha256": "b518f08584a97e6425af115deb66f1593f409822a7eee1f9071ec064acdd2801",
+        "size": 12
+      },
+      {
+        "rva": "0x00435acc",
+        "sha256": "225659b03bfca3ba4d37f93778cb50e99bef8041ac84e856694f8f932bb93806",
+        "size": 8
+      },
+      {
+        "rva": "0x00435ac4",
+        "sha256": "603cd45d4de465699d636c6dbaf6760e0f19946b650cda17d9bf08dfc36bca1b",
+        "size": 8
+      },
+      {
+        "rva": "0x00435ae4",
+        "sha256": "079320fdd4f7b1b2104f222fb21ba39750d231a1a452e504d6de3b725a9219eb",
+        "size": 9
+      },
+      {
+        "rva": "0x00435ad4",
+        "sha256": "73699e76e2d3ee4a38b6c1fa895d1873704c42d3e20bfd8b65b1fe15afa9177f",
+        "size": 15
+      },
+      {
+        "rva": "0x00435af8",
+        "sha256": "eeccc21492a2846a7f0027299473291b9e7dabaf20887cecfaa988298b852034",
+        "size": 12
+      },
+      {
+        "rva": "0x00435af0",
+        "sha256": "90cb98993de3230ace8c54dbd064912937a8c717ebdb4e6b6cecc9e6ed6a16b2",
+        "size": 7
+      },
+      {
+        "rva": "0x00435b14",
+        "sha256": "17d65e1046eb58fcf24eb021729937c450b1f924e85c7e937488e49449c8ab27",
+        "size": 9
+      },
+      {
+        "rva": "0x00435b04",
+        "sha256": "c29a2166421f7af0273bcc4adeb202ed794ca2db98afae6a8ee012a00416f493",
+        "size": 13
+      },
+      {
+        "rva": "0x00435b40",
+        "sha256": "53011b33d5cd89e10d69dc87dffaeb8f84cac6549decb64c86782af5cace3f3b",
+        "size": 32
+      },
+      {
+        "rva": "0x00435b20",
+        "sha256": "28417f85f132c747941bf44b47c230c1daa4ac920aa5f8c7b6f51dfa6c62b095",
+        "size": 31
+      },
+      {
+        "rva": "0x0042b770",
+        "sha256": "e0da389c496cb76837fe94f81cc13343a9de7f0d3df5f8b46b92cdde4f8be28e",
+        "size": 28
+      },
+      {
+        "rva": "0x00435b68",
+        "sha256": "68f2cf80a9dcb3457386ac09b5d32cf0f6835363eca890d8f55dc4b4ee675f0c",
+        "size": 26
+      },
+      {
+        "rva": "0x0042b420",
+        "sha256": "7322d28350246d39a9c9502e536d8672f9c3761d87084e1bd48a96f39333d2bc",
+        "size": 11
+      },
+      {
+        "rva": "0x00421e18",
+        "sha256": "1c9491783edca67c243994427ff9100bbff34ff38b8e1dabfe27456fe2f5a6ce",
+        "size": 5
+      },
+      {
+        "rva": "0x00435b60",
+        "sha256": "4ec3e9ae40a9d6cabb13e78b051d39a33b2d2fe6bf0000c62382c759e72147b7",
+        "size": 7
+      },
+      {
+        "rva": "0x00435b84",
+        "sha256": "ece8c43ed4f6ac2f5d8eebf12990aafee70339d80db014efcc16b3561249069a",
+        "size": 11
+      },
+      {
+        "rva": "0x00435ba8",
+        "sha256": "9b2ab0c1e11bd0d844e0cea05df389bc56bad41618c2a6959f93e7c55ed4f829",
+        "size": 11
+      },
+      {
+        "rva": "0x00431020",
+        "sha256": "07fcf467347aa5516f66649b272c9eeced6d83759b62d0eb6d7689c9f4163a23",
+        "size": 23
+      },
+      {
+        "rva": "0x00431008",
+        "sha256": "0908fe84a3e747461b4438b6827225326ed9b6ed5c5cb2dabecb50def54baf5c",
+        "size": 24
+      },
+      {
+        "rva": "0x00431054",
+        "sha256": "014644ff8aed9beb121af77da8a9506251f3eac46e86d3f6fc742c4bf36a0c8a",
+        "size": 24
+      },
+      {
+        "rva": "0x00431038",
+        "sha256": "235d7bd3f3b77f1bbf361d255ee86945983d7c56d37fe4721ea8c135abe52739",
+        "size": 25
+      },
+      {
+        "rva": "0x00435f88",
+        "sha256": "a1245afc2f913b171500ea0ac8e7cfe50e606290c77fd4eed7cc4c3e7dae547f",
+        "size": 27
+      },
+      {
+        "rva": "0x00435fcc",
+        "sha256": "348f764ec5ee6f75e2c5bc159746667f60bcf46574aae1d4884e93052b9d3b63",
+        "size": 26
+      },
+      {
+        "rva": "0x00435fac",
+        "sha256": "30691460e4b0f2ba94ecb8ebeced5f0fd1144b6ec3d554993fe102ea19ab810e",
+        "size": 29
+      },
+      {
+        "rva": "0x00435ff8",
+        "sha256": "9beed20235373e73e989543632b3fb5197ec1ee7472f64a3f68e593a6f0e0677",
+        "size": 28
+      },
+      {
+        "rva": "0x00422af8",
+        "sha256": "f3f89439afdad266f46bc1182ffe917c506d1aaaf95458abc6eb1767e656f446",
+        "size": 8
+      },
+      {
+        "rva": "0x00422b18",
+        "sha256": "cf45eab19e4f2ad7bcb0904bffdaecb1538f1f7ee7b7851e58f6a317749161df",
+        "size": 9
+      },
+      {
+        "rva": "0x00422ae0",
+        "sha256": "6b672b9a7e4feb4fd38386f90405bc0ae261413a758dd8eb2786be61df8dc27d",
+        "size": 2
+      },
+      {
+        "rva": "0x004209b0",
+        "sha256": "8c574afa5655a72c151c567933f694a98d120cc08b462f418dcdda3172ee0c20",
+        "size": 2
+      },
+      {
+        "rva": "0x00420a08",
+        "sha256": "ffe9aaeaa2a2d5048174df0b80599ef0197ec024c4b051bc9860cff58ef7f9f3",
+        "size": 2
+      },
+      {
+        "rva": "0x00422aec",
+        "sha256": "4658d6abbbaf7748c172ed5a3e003cdb8997648f88724834e41f75e54520e142",
+        "size": 2
+      },
+      {
+        "rva": "0x00422b08",
+        "sha256": "941700040b1123dcc02e4fe94d60e57c764bb5cdb36459216cec158f35906493",
+        "size": 4
+      },
+      {
+        "rva": "0x00422b34",
+        "sha256": "ed2a7327092beefa07e138a8a87709f1a63e9483616e04c40547426388d69301",
+        "size": 4
+      },
+      {
+        "rva": "0x0042e320",
+        "sha256": "b9ea7f987e8dc598fa3ba88db9da2be1efe058acf4d2b1a3491fb893b5210145",
+        "size": 48
+      },
+      {
+        "rva": "0x00415684",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      },
+      {
+        "rva": "0x00415654",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      },
+      {
+        "rva": "0x00415564",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      },
+      {
+        "rva": "0x004156cc",
+        "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+        "size": 4
+      }
+    ],
+    "ordinary_resource_routes": [
+      {
+        "rva": "0x42626c",
+        "sha256": "fdb7a1ba9bb1269e2e30af8ae85204c835a4d24ff03a58c0d1a4bee50d023dac",
+        "size": 7
+      },
+      {
+        "rva": "0x426274",
+        "sha256": "5d706d00c2ff2f6f2551f1057a232462711c5ef4fa0c4e1c92180798df91ed25",
+        "size": 8
+      },
+      {
+        "rva": "0x426578",
+        "sha256": "d13b2c092b8963a2c09d47940826abd2801b473db463620ba47b36516f3c12de",
+        "size": 13
+      },
+      {
+        "rva": "0x426588",
+        "sha256": "1874589e888e05fae6fdc3125ee1f3d3981d4f98edcc8780da8fc0fcf5437ba5",
+        "size": 7
+      }
+    ]
+  },
+  "source_only": true,
+  "stock_slices": [
+    {
+      "first_line": 86,
+      "last_line": 104,
+      "original": "scripts/global.lua",
+      "slice_sha256_LF": "2e66a26a844a8d5d268efd4f7c6d7b0f18285b6816cfa2037f09bca6682f0c68",
+      "source_sha256_raw": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "first_line": 107,
+      "last_line": 162,
+      "original": "scripts/global.lua",
+      "slice_sha256_LF": "8f8b8de9c315787700cbb0f52ff43355357cdd4421707ad5c89f2a13486eb5f4",
+      "source_sha256_raw": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "first_line": 197,
+      "last_line": 209,
+      "original": "scripts/global.lua",
+      "slice_sha256_LF": "6469cec2f6ff863165aaa5d1d1ca8ac3882e7ec2a63f6cca1afd416d67d81bdf",
+      "source_sha256_raw": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "first_line": 526,
+      "last_line": 542,
+      "original": "scripts/global.lua",
+      "slice_sha256_LF": "342a54dd0e907acd01e18929aff7dba84f5be24e3479ddeeb8ac0a3cf68bfc33",
+      "source_sha256_raw": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "first_line": 43,
+      "last_line": 43,
+      "original": "scripts/global.lua",
+      "slice_sha256_LF": "265289dcdc1052913035661fa8011b15cadb2ab4f176645bd00e727dd99a85a0",
+      "source_sha256_raw": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2"
+    },
+    {
+      "first_line": 9,
+      "last_line": 22,
+      "original": "scripts/pawns.lua",
+      "slice_sha256_LF": "b7875e946429683139d7c09722d19bcf5f81adcc173f6113e989becbcc455863",
+      "source_sha256_raw": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239"
+    },
+    {
+      "first_line": 47,
+      "last_line": 64,
+      "original": "scripts/pilots.lua",
+      "slice_sha256_LF": "154bb352c5be46e76033d031f6556a36cfcbb650158badfd1a693454d8f65f99",
+      "source_sha256_raw": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5"
+    },
+    {
+      "first_line": 66,
+      "last_line": 74,
+      "original": "scripts/pilots.lua",
+      "slice_sha256_LF": "42642967bca459a08547dabec42f2c52e46f4da725a6a3d569104b14627d3f03",
+      "source_sha256_raw": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5"
+    },
+    {
+      "first_line": 130,
+      "last_line": 136,
+      "original": "scripts/pilots.lua",
+      "slice_sha256_LF": "c43c31b1cad1968820da3f7200302535d23cadd96ba774e2cd60344f2e8a58a5",
+      "source_sha256_raw": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5"
+    },
+    {
+      "first_line": 1245,
+      "last_line": 1245,
+      "original": "scripts/images.lua",
+      "slice_sha256_LF": "120b7860c6c7e808e93107bfbb3feaf3c0f6884b6a1e9463c9da5e881358151d",
+      "source_sha256_raw": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+    },
+    {
+      "first_line": 1285,
+      "last_line": 1293,
+      "original": "scripts/images.lua",
+      "slice_sha256_LF": "cbff9471ef1b2ce2df7fe00ef0cf65540dc4a5a35ac04cc89f83dd768f5ddc8a",
+      "source_sha256_raw": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+    },
+    {
+      "first_line": 21,
+      "last_line": 21,
+      "original": "scripts/game.lua",
+      "slice_sha256_LF": "d073f4e1492071405c9ab98d1280b106e840e8c92966efd7e4f714d3fa2b3ae2",
+      "source_sha256_raw": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7"
+    },
+    {
+      "first_line": 5,
+      "last_line": 26,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "73cb9b900d10995c1800aabda146618b0c336da595540517284a34e18aba66ef",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 166,
+      "last_line": 176,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "10d34930a7ef81c348276c897872ee8762c8bde55fccab3a0618a9596cea0f88",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1,
+      "last_line": 229,
+      "original": "scripts/color_map.lua",
+      "slice_sha256_LF": "f79f4ee1880d6d198021153d3edebbc3e2a6218f93f0bb4726ed18c64cda1dec",
+      "source_sha256_raw": "c7adcd6e88dc9a78a8977ecbd649f51fcd4f97a451a07b4ecaed04a67b8204ac"
+    },
+    {
+      "first_line": 31,
+      "last_line": 31,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "195203406940a20edea288e822c6bab0e4a9ce5e533bae41301280fd1ed628cb",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1137,
+      "last_line": 1137,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "c4eec6f112bf1bef4cc01e3b08155894c4f904beeff9895a0bc3d1ed3cc38502",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1139,
+      "last_line": 1139,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "e8b27175d7b157ce9bfa865f2de11514b819775d1d80141e043d9b01977b1647",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1140,
+      "last_line": 1140,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "713322ec22af65f4fd3df5882bb64c141cce106cb03c5169b3126af3bf8db170",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1162,
+      "last_line": 1162,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "18bba0997899783391fe17baa499c15185d84f6bf89af6f004f9d97dd93583fe",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1163,
+      "last_line": 1163,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "8272d88fcc2e18f69ff7a1faf782b46acaf26d052051317f9827f7357d334e2e",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1164,
+      "last_line": 1164,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "2594f2a411cfa19c64cd034b70b32f747901c5dd276eedf7d7a2603ae8d1dd4c",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1165,
+      "last_line": 1165,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "028480f23816903d7afccd5ba27a38bc7507e36534696c95a588e54e0ca670d5",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1166,
+      "last_line": 1166,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "ca47d5cceaf26c9418da8fca314a7a3e80dd5be5cdb058d3646a68a6d18868f1",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1167,
+      "last_line": 1167,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "04fd37c85aba2b8e61b6e6e28c046518d1ecc4b698e08fee2527487b7551da1f",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1777,
+      "last_line": 1783,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "a2c276c810409453a8c77d3aa39e68ff8a120f81a596fbab53b7a1a49cb7fe12",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1792,
+      "last_line": 1798,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "dfc9727a001d10cff5ac558d768db6a8a23504c3c6d0ebc8173d29d8a7317733",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1800,
+      "last_line": 1806,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "d5aa4a1e87802ac803ac7178f8af564d37eebe992e2e26353b17eba50722bae1",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1808,
+      "last_line": 1814,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "9f19db0b6b04220ad7f902852ad26d3145b78e40e494092ad1be8b1f26a4d686",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1816,
+      "last_line": 1822,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "a8caeff5d7348b967951d67b87650a863f12eaaa089e8abc390538eb754e9654",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1824,
+      "last_line": 1830,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "1413240cd4d2d01e9ff53ee576c71ebb7bae326ed9d2cc8e46674d4f7cc1bfc3",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 1839,
+      "last_line": 1842,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "4c9fb7bc669c3b50edafd6e8a786065327452e219e390505ced734f08ace915b",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 102,
+      "last_line": 109,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "8bb78c78fc1cd7a3c04b7a31920a42ef4b70d2c0f9a2e925fce3f3a3636faed8",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 56,
+      "last_line": 63,
+      "original": "scripts/animations.lua",
+      "slice_sha256_LF": "c0621ba9f537c6058dab86803f6add3f39f49e93d4cc9f35bba3b8f455ccbf80",
+      "source_sha256_raw": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706"
+    },
+    {
+      "first_line": 2,
+      "last_line": 24,
+      "original": "scripts/emitters.lua",
+      "slice_sha256_LF": "d104831173ff2ccdcddadcc847fcfa7a2d5cb9f3ddfc9556924b1f92fee913c7",
+      "source_sha256_raw": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1"
+    },
+    {
+      "first_line": 43,
+      "last_line": 71,
+      "original": "scripts/emitters.lua",
+      "slice_sha256_LF": "c161129828d7bf72a39997bcb22c9147a8a01cbc769b3f56bbb60a4c9858dac6",
+      "source_sha256_raw": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1"
+    },
+    {
+      "first_line": 188,
+      "last_line": 201,
+      "original": "scripts/emitters.lua",
+      "slice_sha256_LF": "e4467a63b24b21810f63306ebaafac22b63ee6c689781901362a7a3c7744e2b8",
+      "source_sha256_raw": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1"
+    },
+    {
+      "first_line": 241,
+      "last_line": 255,
+      "original": "scripts/emitters.lua",
+      "slice_sha256_LF": "56a5f356595c965399a2d95c7c8ce9c5581a44e2cf83bce45e57a71af917fe9b",
+      "source_sha256_raw": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1"
+    },
+    {
+      "first_line": 361,
+      "last_line": 380,
+      "original": "scripts/emitters.lua",
+      "slice_sha256_LF": "1e11cb8f8e2ec22f4e64d4b69de22e5f0a5af88e507fc58218b59dc913f37c87",
+      "source_sha256_raw": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1"
+    }
+  ],
+  "stock_whole_raw_sha256": {
+    "scripts/animations.lua": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706",
+    "scripts/color_map.lua": "c7adcd6e88dc9a78a8977ecbd649f51fcd4f97a451a07b4ecaed04a67b8204ac",
+    "scripts/emitters.lua": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1",
+    "scripts/game.lua": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
+    "scripts/global.lua": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+    "scripts/images.lua": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55",
+    "scripts/pawns.lua": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+    "scripts/pilots.lua": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5"
+  },
+  "tranche_exit": "Source boundary and finite required input inventory reviewed; no predictably incomplete factory launch",
+  "unique_complete_body_pins": 84,
+  "valid_bounds": null
+}
