@@ -2,6 +2,15 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [retained ordinary-input prefix deadline](solver_first_ordinary_inputs_prefix_limit.md)
+records a new failed fresh world: inherited CRT/PTD dispatch now passes, but
+the fifth prerequisite palette producer does not return within its declared
+wall budget. Of 260 roots, 259 complete; no ordinary continuation runs.
+The source-pinned 512-byte ctype service has 28 synthetic controls and remains
+unexecuted. All 143 source copies and 13 protected files match. Stop this
+acquisition and review prefix necessity/runtime cost before another hypothesis;
+full actor, guarded action, turn continuity and all seven gates remain open.
+
 October 4 [ordinary constructor input boundary and failed acquisition](solver_first_ordinary_constructor_inputs.md)
 pins the regex/loader/string/Point interfaces and resolves outline sizing to
 full-size textures with content-center metadata. Its one fresh world stops

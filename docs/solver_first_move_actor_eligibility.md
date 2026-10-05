@@ -14,4 +14,14 @@ A complete stock PunchMech still needs its definition-owned equipment, genuine P
 
 The later [ordinary constructor input tranche](solver_first_ordinary_constructor_inputs.md) pins native predicate, loader, string and Point contracts, but its one fresh world fails in the CRT prefix before those inputs execute. A separate runtime dispatch correction passes synthetic checks only. This retains zero native ordinary-resource/factory/positive-actor admissions and leaves this eligibility join open; neither source references nor host graphics smoke tests supply original Pawn readiness.
 
+The subsequent [prefix deadline receipt](solver_first_ordinary_inputs_prefix_limit.md)
+passes inherited CRT/PTD dispatch in one new world, then stops in the fifth
+prerequisite palette producer at its wall budget. It retains 259 completed roots
+and one incomplete root, with no ordinary input continuation. The new exact
+512-byte ctype service is source-reviewed and synthetically checked but remains
+unexecuted. Review prefix necessity and runtime cost before another acquisition;
+this leaves ordinary inputs, complete actor ownership and positive eligibility
+unacquired. Neither successful prefix returns nor partial palette storage admit
+an actor action or full turn.
+
 Empty metadata/delay queues or conditional Board activity 0 do not establish available Pawn actions. The next integration exit is original actor-owned readiness and guarded selection, then Move action consumption, repeated-Move rejection and retained Use eligibility, followed by queue settlement into an actual next decision. Enemy/environment/spawn continuity remains afterward. Source-only execution, action, idle, ledger and gate admissions are zero; no helper expansion is justified without a named blocker in that join.
