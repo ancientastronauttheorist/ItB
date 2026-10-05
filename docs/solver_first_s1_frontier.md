@@ -2,6 +2,17 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [ordinary constructor input boundary and failed acquisition](solver_first_ordinary_constructor_inputs.md)
+pins the regex/loader/string/Point interfaces and resolves outline sizing to
+full-size textures with content-center metadata. Its one fresh world stops
+in the CRT prefix after 224 completed roots and one failed allocation caller;
+none of the planned ordinary input producers execute. A separate narrow
+dispatch candidate preserves the inherited zero-filled PTD allocation and
+passes 13 synthetic controls, but has no native execution. The failed world
+and planned unacquired cases remain retained; all 122 frozen sources and 13
+protected files match. Actual ordinary inputs, complete factory ownership,
+positive readiness, guarded action and full-turn continuity remain open.
+
 October 4 [Pawn constructor input and ownership review](solver_first_pawn_constructor_boundary.md)
 corrects the component-only recommendation: the inherited constructor installs
 a base-manager vtable; complete Pawn construction restores the death/class/sound

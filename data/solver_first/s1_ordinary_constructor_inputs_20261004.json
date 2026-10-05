@@ -1,0 +1,1185 @@
+{
+  "S1": "open",
+  "actual_world_bytes": 306754587,
+  "actual_world_raw_sha256": "87964cd787a560b20938b0f1fe301190816783b57418bd9ee1a42795b81fdc89",
+  "all_seven_gates": "open",
+  "build": 13725832,
+  "checkout_commit_before_publication": "5cfb26bdc451f511702d7faf00f6b5ac40d2517a",
+  "date": "2026-10-04",
+  "diagnosis": {
+    "actual_failed_response_recorded": false,
+    "call_rva": "0x00388c77",
+    "candidate": "Runtime04 handles local malloc/free only at exact ordinary return addresses; other callers retain inherited guarded dispatch.",
+    "candidate_native_closure_pending": true,
+    "candidate_native_executions": 0,
+    "candidate_synthetic_checks": 13,
+    "cause": "Runtime03 intercepted every HeapAlloc before the inherited CRT service; its ordinary seam accepts only return389463 and flags0.",
+    "classification": "Supplied host-service dispatch regression; no original regex/PNG/Pawn mismatch established",
+    "iat_rva": "0x003d6220",
+    "import_name": "HeapAlloc",
+    "inherited_source": "src/observatory/solver_first_ground_step.py",
+    "inherited_source_contract_arguments": [
+      305419896,
+      8,
+      868
+    ],
+    "opcode_sha256": "4bcc1d8c24e58843a20a6c342145e90e1e70b628eb14b0c3b06c61e77dc14556",
+    "retained_predecessor_failure_reproduced_synthetically": true,
+    "return_rva": "0x00388c7d"
+  },
+  "differential": {
+    "absent_global_default_control": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 1,
+      "failed": 0,
+      "passed": 0,
+      "planned": 1,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    },
+    "full_action": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 0,
+      "failed": 0,
+      "passed": 0
+    },
+    "full_factory": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 0,
+      "failed": 0,
+      "passed": 0
+    },
+    "missing_resource_lookups": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 2,
+      "failed": 0,
+      "passed": 0,
+      "planned": 2,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    },
+    "ordinary_asset_predicates": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 26,
+      "failed": 0,
+      "passed": 0,
+      "planned": 26,
+      "queries_per_case": 3,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    },
+    "ordinary_asset_resources": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 26,
+      "failed": 0,
+      "passed": 0,
+      "planned": 26,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    },
+    "ordinary_patterns": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 2,
+      "failed": 0,
+      "passed": 0,
+      "planned": 2,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    },
+    "original_world": {
+      "admitted": 0,
+      "attempted": 1,
+      "excluded": 0,
+      "failed": 1,
+      "passed": 0,
+      "planned": 1
+    },
+    "predicate_controls": {
+      "admitted": 0,
+      "attempted": 0,
+      "excluded": 3,
+      "failed": 0,
+      "passed": 0,
+      "planned": 3,
+      "queries_per_case": 3,
+      "reason": "Fresh acquisition stopped in CRT prefix before ordinary input continuation; planned cases remain unacquired."
+    }
+  },
+  "fair_input_admissions": 0,
+  "fresh_acquisition": {
+    "actual_context_cleanup": {
+      "context_deleted": true,
+      "dc_released": 1,
+      "errors": [],
+      "made_not_current": true,
+      "tracked_texture_names_remaining": 0,
+      "window_destroyed": true
+    },
+    "entire_planned_prefix_completed": false,
+    "failure": "call 0x38ee3b: returned=False, stack_ok=False, failure=unadmitted import caller",
+    "inherited_prefix_resource_outputs": 2,
+    "instruction_visits": 4436573,
+    "last_call": {
+      "entry_rva": "0x0038ee3b",
+      "failure": "unadmitted import caller",
+      "imports_sha256": "f486157439dc5f2655fb285b25ddfab805c68a866f138040c0b5c1b78935ae5e",
+      "instructions": 280,
+      "last_original_call_rva": "0x00388c77",
+      "returned": false,
+      "stack_ok": false,
+      "trace_sha256": "20921502d60ac49d937c3ff4026dadcee7520a738939f6e4352e9e098aaae4f1"
+    },
+    "new_ordinary_resource_outputs": 0,
+    "original_call_roots_attempted": 225,
+    "original_call_roots_failed": 1,
+    "original_call_roots_returned_and_stack_correct": 224,
+    "protected_user_work_equal": true,
+    "roots_are_independent_cases": false,
+    "source_runtime_inputs_stable": true,
+    "status": "failed"
+  },
+  "frozen_source_count": 122,
+  "frozen_source_manifest_raw_sha256": "2cd31960cb51b7c918c2435462beee411f5859d124f91ba5da5213a856ecfbcb",
+  "full_action_admissions": 0,
+  "full_turn_original_comparisons": 0,
+  "gate_promotions": 0,
+  "held_out_cases": 0,
+  "held_out_outcome": null,
+  "information_mode": "Offline original-validation oracle; no fair planner-input admissions",
+  "latency_memory_vs_baseline": null,
+  "ledger_promotions": 0,
+  "native_factory_admissions": 0,
+  "native_new_resource_admissions": 0,
+  "native_worlds_attempted": 1,
+  "new_uncertainty": "Runtime04 has only synthetic dispatch validation; actual ordinary regex, resources, missing routes, full factory and legal actor remain unacquired.",
+  "next_milestone": "New reviewed fresh world using corrected dispatch, then complete factory/equipment/placement/activation, guarded Move consumption and queue/full-turn continuity.",
+  "normalizer_raw_sha256": "72b8d0cb1a7182a5cea540ef6eb9186a0e0b44535f901c68c5b7479ad6d0ba49",
+  "objective": "Existing provisional preservation order; no weights changed",
+  "old_worlds_resumed": 0,
+  "original_inputs": {
+    "archive": "fd933aa7d13fe02a9ea577eb100c779f053734816e6c87abae863ae1c9efa4d5",
+    "dll": "0157f0c34e72b32e63ebf3fdd9a21215de674b51b6d1750ebe545ef3093a0c14",
+    "exe": "31fe352655982398fb3ee8b0bbe80efd5d65e3a9aa11e3dc39d0364354493fe9",
+    "scripts": {
+      "scripts/advanced/ae_global.lua": "1786dbdc4ba7848a8e0cb681a4ebf6feb1d6aceb8d09181023cad5125ca07538",
+      "scripts/advanced/ae_weapons_base.lua": "4444af60a0b4d38894690425a83a4f610cbdc88f20b3fb322db410f257a89742",
+      "scripts/animations.lua": "dca3e7033f710a1875d9a24efc77bba9ea76d5723d92baaca0ea6ab245a37706",
+      "scripts/color_map.lua": "c7adcd6e88dc9a78a8977ecbd649f51fcd4f97a451a07b4ecaed04a67b8204ac",
+      "scripts/emitters.lua": "6e599b71006cde4ceb85ff4fa17c8bc88aa0e6173d7d16dff8139fa569f38cd1",
+      "scripts/game.lua": "8fc587a6d341f43cf521ae2c95e91e5739355cb929581a18f9c374fba2c88db7",
+      "scripts/global.lua": "96d82d83a1620061e6fd013aa8462883e1f3764d03752757ad77fbbbd04bc9b2",
+      "scripts/images.lua": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55",
+      "scripts/pawns.lua": "e999b8d98526c1e36f4746dd65b9d9e7ee3ca0b22029ed391d5b71fda49dc239",
+      "scripts/pilots.lua": "e304dc7ebf8487c5ec2225a727874db1da585d43548d2386070ee318a47f0bb5",
+      "scripts/scripts.lua": "53632a1abe38638eae14b7a0cc9cee80590a9a90da9d110200d81eb3281b3a60",
+      "scripts/weapons_base.lua": "bdb55457746d08b46e8b62ad7cfc27f0a08bde9fab7397a4780dfe945b5f8f38"
+    }
+  },
+  "outcome": "Source and reference boundary pinned; fresh acquisition failed before new inputs; separate runtime dispatch candidate checked synthetically.",
+  "positive_actor_admissions": 0,
+  "prior_frozen_source_count": 54,
+  "private_evidence_raw_sha256": {
+    "check_ordinary_dispatch_01.py": "8a0ee0a88d98aba67b63b0418ea16d2537093535ba3e598348a35143ba29bfa7",
+    "gl_source/heap_dispatch_failure_review_01.json": "e02267a700d23ab4dae47e2422aa41217440ce6532a957752a8471e41e74fafa",
+    "gl_source/ordinary_gl_source_seams_01.json": "d84af1ef897dffedd27fe8a9744241c60c32eb0721470aa7835c599b151409b0",
+    "gl_source/ordinary_prelaunch_review_02.json": "649e1ae1ae197b8a5bc6c09521fe373199c8bb8b338ee5c09aa92646253b7235",
+    "gl_source/outline_references_01.json": "56a2d2a1fab737b97c460b3065a3d0b57a6e2e6ed487da2e85dc6f8af4a274cd",
+    "gl_source/runtime_review_03.json": "7b41fd85586a7acd04bf272c1955aa988eba2a2a61e3db4b0d239ca31dce8446",
+    "ordinary_dispatch_guard_results_01.json": "bd64cbf946257d8cc4b4a815a32426e2b9ecfe97d7b99de41238d44372b45f9b",
+    "ordinary_inputs_plan_01.json": "c4979f2d49c99c425969eab9fdbe5cb52176d26b61f2cd3fbee31194f69a043c",
+    "ordinary_inputs_probe_01/postflight.json": "99e2c8c8643993b54bdb5d4e34cde872cad7ae9e0515973afbb88b8eafcb713b",
+    "ordinary_inputs_probe_01/source_manifest.json": "2cd31960cb51b7c918c2435462beee411f5859d124f91ba5da5213a856ecfbcb",
+    "ordinary_inputs_probe_01/world.json": "87964cd787a560b20938b0f1fe301190816783b57418bd9ee1a42795b81fdc89",
+    "ordinary_runtime_03.py": "49e37cae21353474ed734cebea0da5f6ddf8aa8f3db53f5172c6c116d53ffb57",
+    "ordinary_runtime_04.py": "c2d302521d8df0152db22c313a4333f9be0dd3794da8d996235edd28d931e522",
+    "ordinary_runtime_guard_results_02.json": "5474441b5e8f5d54c45b207ac1202159259c937471a716e9e79b7dbdacabf449",
+    "postflight_review_01.json": "99fcd55e8d6bee9ab37c36c6710fddfce16d8a6e7bdf85c23582719a8badbd49",
+    "preflight_source_manifest_02.json": "e39f029ba5be883a1dd02efbb3cd6b80c03076a44070770a5de0651949e6b1fa",
+    "prelaunch_review_01.json": "3d0e187f8300d6214d2139607055651c754e78de156629e3594c6b631aec7678",
+    "regex_source/native_string_Point_ABI_01.json": "bee3249e0b2e249892faae37a6b6cf8e92e882f086e098b5ad4bdb8177e3446d",
+    "regex_source/ordinary_regex_source_02.json": "a9c1dc3f5fcfc0eb579012a60d0bb355dd3e81336c70dbed0edf42d078a47928"
+  },
+  "protected_user_file_count": 13,
+  "question": "Can actual ordinary resource and regex inputs remove the complete Pawn constructor blocker?",
+  "runtime_identity": {
+    "binding_sha256": "b4de7d560790a587157b17edd71c83b4f2d2bade2447d1a5433c497468ac8aeb",
+    "cpu_model": 19,
+    "decoder_binding_sha256": "94571d1314355e261aff0ddfc94985fe8761232ddff6874181fd21efa9fab47f",
+    "decoder_library_sha256": "76958e18380023a68fd1714fa2e01c594cc6db1955a07ad6937b66e66dc5d6c3",
+    "decoder_version": "5.0.7",
+    "instruction_limit": 2000000,
+    "loaded_library_sha256": "010d85dce84b8f6ffaec3d5420f1b5f7768f859eb831be574c7da23e656ee8f1",
+    "unicorn_package_sha256": "0e8ac7115c755994a968fa865bd1b2f2075edea715c17e91d62af2cc52c13392",
+    "unicorn_version": "2.1.4",
+    "wall_time_limit_us": 10000000
+  },
+  "scenario": "Stock PunchMech H8-to-G8 corridor; ordinary inputs required by complete actor-owned factory",
+  "schema": "solver_first_ordinary_Pawn_inputs_source_and_failed_acquisition_v1",
+  "search_certificates": 0,
+  "search_status": "not evaluated",
+  "simulator_version": 413,
+  "source_boundary": {
+    "body_pins": [
+      {
+        "body_sha256": "2d09033991193eea352dab418355232650d3aeb45906f909b384e0b662cd1ef6",
+        "body_size": 91,
+        "entry_rva": "0x00007800",
+        "ranges": [
+          {
+            "size": 91,
+            "start_rva": "0x00007800"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f446b9c3adef9173e662653b24a34fae445cbff3f6e148569b7a3a89f418b7cb",
+        "body_size": 57,
+        "entry_rva": "0x00007dd0",
+        "ranges": [
+          {
+            "size": 57,
+            "start_rva": "0x00007dd0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9e239096e05d4860313ba9410c156fa28503a5469cd89493f0b01f700af394c0",
+        "body_size": 188,
+        "entry_rva": "0x0004d310",
+        "ranges": [
+          {
+            "size": 188,
+            "start_rva": "0x0004d310"
+          }
+        ]
+      },
+      {
+        "body_sha256": "90b1cd09ea5f4404bb6a3bdddf997eacb7f3735462718fd69358e8588ffadbef",
+        "body_size": 403,
+        "entry_rva": "0x0004d550",
+        "ranges": [
+          {
+            "size": 403,
+            "start_rva": "0x0004d550"
+          }
+        ]
+      },
+      {
+        "body_sha256": "60b90f92f7213d72930f3b33d639e8f3a98244d3f3330123dec48d98b269c6f3",
+        "body_size": 201,
+        "entry_rva": "0x0004d7d0",
+        "ranges": [
+          {
+            "size": 201,
+            "start_rva": "0x0004d7d0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "1d3768b40261a53b6a1ade771265f2fde1f08e7bb1203c82a5490ce98027c1cd",
+        "body_size": 52,
+        "entry_rva": "0x00050b30",
+        "ranges": [
+          {
+            "size": 52,
+            "start_rva": "0x00050b30"
+          }
+        ]
+      },
+      {
+        "body_sha256": "4b75cf7e4d162d4852c4f2fa50df3acf1f47a03e306bdaef72d01941d48e8d04",
+        "body_size": 167,
+        "entry_rva": "0x000542a0",
+        "ranges": [
+          {
+            "size": 167,
+            "start_rva": "0x000542a0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "6f8290a3aab662f70143eae8e9eaf1d4402863dfec720f62c68d5e2ace84239f",
+        "body_size": 113,
+        "entry_rva": "0x00054690",
+        "ranges": [
+          {
+            "size": 113,
+            "start_rva": "0x00054690"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9ebc5d251e974506cb5b873ee52d01832206b7986ec6da2e69cbc53cd8d72fad",
+        "body_size": 215,
+        "entry_rva": "0x0006a330",
+        "ranges": [
+          {
+            "size": 215,
+            "start_rva": "0x0006a330"
+          }
+        ]
+      },
+      {
+        "body_sha256": "b61c2e84e9bb0d66e097ceeff7efd8ca1eeb27687f6a67d40e7e9c00ba6c350a",
+        "body_size": 180,
+        "entry_rva": "0x0006a520",
+        "ranges": [
+          {
+            "size": 180,
+            "start_rva": "0x0006a520"
+          }
+        ]
+      },
+      {
+        "body_sha256": "7f2b98d020fe4b9fd8ca7152e8aba176f6aa545a7cf19ea3a8a577397445f5a3",
+        "body_size": 291,
+        "entry_rva": "0x0006a640",
+        "ranges": [
+          {
+            "size": 291,
+            "start_rva": "0x0006a640"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ed059e361991083be61a45e0ca5d238c252bc53c06df3ac8df9a9646dcad81ef",
+        "body_size": 68,
+        "entry_rva": "0x0006c3e0",
+        "ranges": [
+          {
+            "size": 68,
+            "start_rva": "0x0006c3e0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "32808abde2dee0a60b439f43d058ec4e3b0ba2116a905209a8a9fd8ad47d899d",
+        "body_size": 55,
+        "entry_rva": "0x00076130",
+        "ranges": [
+          {
+            "size": 55,
+            "start_rva": "0x00076130"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9b80cf6a642457822e87abfe3f93a1925728ed4fbc9ce57d61ca7feeae38e28c",
+        "body_size": 229,
+        "entry_rva": "0x00099f90",
+        "ranges": [
+          {
+            "size": 229,
+            "start_rva": "0x00099f90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "4fc009527de570d3839afe0168600c5626a6c676d2e94051e631c5ffcfa68de1",
+        "body_size": 136,
+        "entry_rva": "0x0009a120",
+        "ranges": [
+          {
+            "size": 136,
+            "start_rva": "0x0009a120"
+          }
+        ]
+      },
+      {
+        "body_sha256": "95ce01dcd3de557a7e880983dee84f24c461e11ffadcaf0ea8eba3c7161cc1b6",
+        "body_size": 88,
+        "entry_rva": "0x0009a260",
+        "ranges": [
+          {
+            "size": 88,
+            "start_rva": "0x0009a260"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2b60a4be98dae5dedc031ed8b65910998dfa97c5d5acc315ce3b1013999c7ddd",
+        "body_size": 222,
+        "entry_rva": "0x0009a2c0",
+        "ranges": [
+          {
+            "size": 222,
+            "start_rva": "0x0009a2c0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "901cedcca23b0ae63948ee9fd434830d6b8c47863d488735dc144619d04463d9",
+        "body_size": 1776,
+        "entry_rva": "0x000bd380",
+        "ranges": [
+          {
+            "size": 1776,
+            "start_rva": "0x000bd380"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9cf15fb39641092590fbc793ef846f812aa5d714a094bed956f85cdefac0f419",
+        "body_size": 982,
+        "entry_rva": "0x000bdaa0",
+        "ranges": [
+          {
+            "size": 982,
+            "start_rva": "0x000bdaa0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "da9b9866e9a3fc47c2478a187c20b98796563666809ea1b0e79b07805bf6667e",
+        "body_size": 180,
+        "entry_rva": "0x000be060",
+        "ranges": [
+          {
+            "size": 180,
+            "start_rva": "0x000be060"
+          }
+        ]
+      },
+      {
+        "body_sha256": "5e806d169da4e2bfb6f4444313203216b7c4271a052e39a53552596f7a8127cf",
+        "body_size": 129,
+        "entry_rva": "0x000be120",
+        "ranges": [
+          {
+            "size": 129,
+            "start_rva": "0x000be120"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d9292a815eb31b41a831d95553a5e42384e1240395c9211ece8558060521c24c",
+        "body_size": 207,
+        "entry_rva": "0x000be1b0",
+        "ranges": [
+          {
+            "size": 207,
+            "start_rva": "0x000be1b0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f6043a0123f252509c30c8ace11d48497e97a548782ba2898794ec5691d977ce",
+        "body_size": 431,
+        "entry_rva": "0x000be8f0",
+        "ranges": [
+          {
+            "size": 431,
+            "start_rva": "0x000be8f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d4e96126aa463bf8f04206ea64af9ff73515f5f4e6f8110eba5c52199fe3d1bd",
+        "body_size": 947,
+        "entry_rva": "0x000bee20",
+        "ranges": [
+          {
+            "size": 947,
+            "start_rva": "0x000bee20"
+          }
+        ]
+      },
+      {
+        "body_sha256": "783e519c1804dc32cf8580057d6c6ab0a4930edcd7ce0f3e06c9f514a6d9b948",
+        "body_size": 329,
+        "entry_rva": "0x000c0d60",
+        "ranges": [
+          {
+            "size": 329,
+            "start_rva": "0x000c0d60"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9e2c14865c8c29b5071e9cb15b468a94aa55886d7acfa88cc9594a241eb86c25",
+        "body_size": 1190,
+        "entry_rva": "0x000c0eb0",
+        "ranges": [
+          {
+            "size": 1190,
+            "start_rva": "0x000c0eb0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "264fb18b98eb9108e08ba5a88488ec5db9ac5ef8521857eee5af539b69478bfc",
+        "body_size": 253,
+        "entry_rva": "0x000c2a90",
+        "ranges": [
+          {
+            "size": 253,
+            "start_rva": "0x000c2a90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "1bda67a8e297463e3887c4a462d15f0d52cce79b2d1dc2af3d161305ff288093",
+        "body_size": 983,
+        "entry_rva": "0x000c3450",
+        "ranges": [
+          {
+            "size": 983,
+            "start_rva": "0x000c3450"
+          }
+        ]
+      },
+      {
+        "body_sha256": "67447bd743c0969d3605ddcbf15f715f7d206a922168866dd04e07fcf2818050",
+        "body_size": 235,
+        "entry_rva": "0x000c4410",
+        "ranges": [
+          {
+            "size": 235,
+            "start_rva": "0x000c4410"
+          }
+        ]
+      },
+      {
+        "body_sha256": "2a5f0ec7090fc2c69b99d30c441678e2e3693d4cc174057058964dd70c6b4b74",
+        "body_size": 187,
+        "entry_rva": "0x000c6ef0",
+        "ranges": [
+          {
+            "size": 187,
+            "start_rva": "0x000c6ef0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "dbe7cbea1b77ab9cedeb9b6b4aea16a36db551230536e39801ffcfe0d7007fad",
+        "body_size": 291,
+        "entry_rva": "0x000c70c0",
+        "ranges": [
+          {
+            "size": 291,
+            "start_rva": "0x000c70c0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "b6ac918500404d4a34543482bd84f8792ad0358de3aff1bb47a94e156ef07ed8",
+        "body_size": 352,
+        "entry_rva": "0x000c8660",
+        "ranges": [
+          {
+            "size": 352,
+            "start_rva": "0x000c8660"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a7c42022798aae06dd74db7507cd0c172d88612a4a677f85c945d6c31665e613",
+        "body_size": 201,
+        "entry_rva": "0x000c87c0",
+        "ranges": [
+          {
+            "size": 201,
+            "start_rva": "0x000c87c0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "50891513e9e19fbba2b80ec3294717b6acfafadd71e54f4dfee047665aaf832c",
+        "body_size": 109,
+        "entry_rva": "0x000c8d80",
+        "ranges": [
+          {
+            "size": 109,
+            "start_rva": "0x000c8d80"
+          }
+        ]
+      },
+      {
+        "body_sha256": "dcf13f4c613f4e845b029e1a37d90447357bedd66299b036ed784c7f5f9d9abd",
+        "body_size": 271,
+        "entry_rva": "0x000c8fe0",
+        "ranges": [
+          {
+            "size": 271,
+            "start_rva": "0x000c8fe0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "7afbe65c1d0b55739c1d80e3056fb4e21b6e3011bda255843a68e5819834b5dc",
+        "body_size": 160,
+        "entry_rva": "0x000c9160",
+        "ranges": [
+          {
+            "size": 160,
+            "start_rva": "0x000c9160"
+          }
+        ]
+      },
+      {
+        "body_sha256": "94e083a0d13af66c0e547ad29ed2ff3b19cfe6bb292297827b64be067fab52ad",
+        "body_size": 297,
+        "entry_rva": "0x000c9b60",
+        "ranges": [
+          {
+            "size": 297,
+            "start_rva": "0x000c9b60"
+          }
+        ]
+      },
+      {
+        "body_sha256": "f6281cef0fd4e3857f238e13468606f844a13cdd5c740176efc7220e903127eb",
+        "body_size": 157,
+        "entry_rva": "0x000c9c90",
+        "ranges": [
+          {
+            "size": 157,
+            "start_rva": "0x000c9c90"
+          }
+        ]
+      },
+      {
+        "body_sha256": "a4c3ab72c1073fe76c9226927b07c7dcc33ffa87bfeded3e829312cfaecae144",
+        "body_size": 242,
+        "entry_rva": "0x000ce1a0",
+        "ranges": [
+          {
+            "size": 242,
+            "start_rva": "0x000ce1a0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "1b927594500fc7b7d14c8a07b802d69ce4ad35462949c1dadcc86c4f9d57a6e7",
+        "body_size": 46,
+        "entry_rva": "0x000ce2a0",
+        "ranges": [
+          {
+            "size": 46,
+            "start_rva": "0x000ce2a0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "9ec45caadebaf9cf7544b84180130cc455845b56d45ea79da5d0e98bec5da5ed",
+        "body_size": 67,
+        "entry_rva": "0x0034377d",
+        "ranges": [
+          {
+            "size": 67,
+            "start_rva": "0x0034377d"
+          }
+        ]
+      },
+      {
+        "body_sha256": "ba66aad328c150b7640f2f84a063d0a9d95c59f370ab02da8512d61949770042",
+        "body_size": 6,
+        "entry_rva": "0x003438f1",
+        "ranges": [
+          {
+            "size": 6,
+            "start_rva": "0x003438f1"
+          }
+        ]
+      },
+      {
+        "body_sha256": "7356ba2f16a32ba4337e69a18ddd12552ef58190dba68c8b4c4661fe7339ec61",
+        "body_size": 142,
+        "entry_rva": "0x003438f7",
+        "ranges": [
+          {
+            "size": 142,
+            "start_rva": "0x003438f7"
+          }
+        ]
+      },
+      {
+        "body_sha256": "058e533d35ad3ff8c4c61237eda93c44cea41ae1e77bf37890123550505dc503",
+        "body_size": 75,
+        "entry_rva": "0x003439fa",
+        "ranges": [
+          {
+            "size": 75,
+            "start_rva": "0x003439fa"
+          }
+        ]
+      },
+      {
+        "body_sha256": "5ef46398e564059239184c9d074267401cbafb76b638108e0925c95246c14402",
+        "body_size": 37,
+        "entry_rva": "0x00343a97",
+        "ranges": [
+          {
+            "size": 37,
+            "start_rva": "0x00343a97"
+          }
+        ]
+      },
+      {
+        "body_sha256": "6510c02bd35d94edddb3193ee343af357b33c7c8c7f82d36e43c9d09a4f4cf6e",
+        "body_size": 40,
+        "entry_rva": "0x00343abc",
+        "ranges": [
+          {
+            "size": 40,
+            "start_rva": "0x00343abc"
+          }
+        ]
+      },
+      {
+        "body_sha256": "d2e02954eeea922f661f2232940eec07b5d48112a158fde049e851ba936004f5",
+        "body_size": 49,
+        "entry_rva": "0x00343be6",
+        "ranges": [
+          {
+            "size": 49,
+            "start_rva": "0x00343be6"
+          }
+        ]
+      },
+      {
+        "body_sha256": "baa3d3c032da6dcf04adf9415292a1778c47332dfe0326b60070310df77fc15b",
+        "body_size": 40,
+        "entry_rva": "0x00343c3e",
+        "ranges": [
+          {
+            "size": 31,
+            "start_rva": "0x00343c3e"
+          },
+          {
+            "size": 9,
+            "start_rva": "0x00388c2d"
+          }
+        ]
+      },
+      {
+        "body_sha256": "0fc9d179c42f50c837f032ce5c55a52466e1a22bd5387d77ffbc97dc342d91ef",
+        "body_size": 107,
+        "entry_rva": "0x00343c75",
+        "ranges": [
+          {
+            "size": 107,
+            "start_rva": "0x00343c75"
+          }
+        ]
+      },
+      {
+        "body_sha256": "4627b22a6fc5d3252a420ffbc6e946039abb1f30e7380b2b1daa5d0430635f82",
+        "body_size": 33,
+        "entry_rva": "0x0034580a",
+        "ranges": [
+          {
+            "size": 33,
+            "start_rva": "0x0034580a"
+          }
+        ]
+      },
+      {
+        "body_sha256": "841c14990815f5130ad0038ab4ebded08c3e5b5f2503372d72302534d95d2e22",
+        "body_size": 337,
+        "entry_rva": "0x00388a27",
+        "ranges": [
+          {
+            "size": 337,
+            "start_rva": "0x00388a27"
+          }
+        ]
+      },
+      {
+        "body_sha256": "69b4aa2f4b6af7246c4b83b20a5dd4f3129a2a2116800a974709e84e0b687c8e",
+        "body_size": 23,
+        "entry_rva": "0x00388bc5",
+        "ranges": [
+          {
+            "size": 23,
+            "start_rva": "0x00388bc5"
+          }
+        ]
+      },
+      {
+        "body_sha256": "3116525636f914a334af18391f864b3d5006e90e38203f4fd2f0cbf20777db01",
+        "body_size": 23,
+        "entry_rva": "0x00388c0d",
+        "ranges": [
+          {
+            "size": 23,
+            "start_rva": "0x00388c0d"
+          }
+        ]
+      },
+      {
+        "body_sha256": "1759308e34536cef0dabe98ff0445023fdf2d5aa77a0e51ddeed97152f711b4e",
+        "body_size": 9,
+        "entry_rva": "0x00388c24",
+        "ranges": [
+          {
+            "size": 9,
+            "start_rva": "0x00388c24"
+          }
+        ]
+      },
+      {
+        "body_sha256": "6f5285e01e6fb9922accff1405c0f2402231d043b53879fb41030e03c657fc2b",
+        "body_size": 38,
+        "entry_rva": "0x00388c93",
+        "ranges": [
+          {
+            "size": 38,
+            "start_rva": "0x00388c93"
+          }
+        ]
+      },
+      {
+        "body_sha256": "904c02c89f668cbedd014617ba259bd2a27d4236cb782c830cb9833d206867a1",
+        "body_size": 39,
+        "entry_rva": "0x00388d1a",
+        "ranges": [
+          {
+            "size": 39,
+            "start_rva": "0x00388d1a"
+          }
+        ]
+      },
+      {
+        "body_sha256": "3130b727ed1e7e803c199b46a6e3750bca295cc1cbba0438d8a8fa1fbcff3274",
+        "body_size": 39,
+        "entry_rva": "0x00388d41",
+        "ranges": [
+          {
+            "size": 39,
+            "start_rva": "0x00388d41"
+          }
+        ]
+      },
+      {
+        "body_sha256": "c56f00488ce52fbbc0585c553251ef07d4f19cf6c7a3ad00a6e8f66c7ac47880",
+        "body_size": 41,
+        "entry_rva": "0x00388d68",
+        "ranges": [
+          {
+            "size": 41,
+            "start_rva": "0x00388d68"
+          }
+        ]
+      },
+      {
+        "body_sha256": "db0c599f49594fdb9856180cf4337d3b95a0bdd7b1d227c662e25caf2a76a12f",
+        "body_size": 131,
+        "entry_rva": "0x0038ed32",
+        "ranges": [
+          {
+            "size": 131,
+            "start_rva": "0x0038ed32"
+          }
+        ]
+      },
+      {
+        "body_sha256": "fe8c307b7bc66104b66205b87c66827a674bf4574e66667357e19c10fecc9344",
+        "body_size": 45,
+        "entry_rva": "0x0038fd9a",
+        "ranges": [
+          {
+            "size": 45,
+            "start_rva": "0x0038fd9a"
+          }
+        ]
+      },
+      {
+        "body_sha256": "78de0d9518465f35a0bd76c9735982a456e30ed59f0de9a153a644e3be1ec085",
+        "body_size": 44,
+        "entry_rva": "0x003924f0",
+        "ranges": [
+          {
+            "size": 44,
+            "start_rva": "0x003924f0"
+          }
+        ]
+      },
+      {
+        "body_sha256": "141a48d4d0e9d0551070f4bf09f3d59c912f0c913323ce5751fdbf9e3cd5749c",
+        "body_size": 22,
+        "entry_rva": "0x0039c123",
+        "ranges": [
+          {
+            "size": 22,
+            "start_rva": "0x0039c123"
+          }
+        ]
+      },
+      {
+        "body_sha256": "40f6656e858d797cce6adcd401a535839f2b888ccb9a925fa8679c63d09796b4",
+        "body_size": 470,
+        "entry_rva": "0x0039c4e0",
+        "ranges": [
+          {
+            "size": 285,
+            "start_rva": "0x0039c4e0"
+          },
+          {
+            "size": 185,
+            "start_rva": "0x0039c8d0"
+          }
+        ]
+      }
+    ],
+    "data_windows": [
+      {
+        "rva": "0x00426664",
+        "sha256": "dc82d9fb29ac7b557aa4d0d3639a3cd11b914593ed9beaff1d123951c15c3134",
+        "size": 16
+      },
+      {
+        "rva": "0x00426674",
+        "sha256": "94da03a06282ffd52ec22bcbc2091535dad8ff1b8050653771220bee3afa772b",
+        "size": 13
+      },
+      {
+        "rva": "0x0040dfdc",
+        "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+        "size": 1
+      },
+      {
+        "rva": "0x0042626c",
+        "sha256": "fdb7a1ba9bb1269e2e30af8ae85204c835a4d24ff03a58c0d1a4bee50d023dac",
+        "size": 7
+      },
+      {
+        "rva": "0x00426274",
+        "sha256": "5d706d00c2ff2f6f2551f1057a232462711c5ef4fa0c4e1c92180798df91ed25",
+        "size": 8
+      },
+      {
+        "rva": "0x00421d54",
+        "sha256": "01e643c1ddbcfa98712cdae680d39cd77fd42e45c569bd81e6f4eeb6a6755121",
+        "size": 5
+      },
+      {
+        "rva": "0x0042627c",
+        "sha256": "495527f66a259bfa303e7e5f83349dce890e5ec9cb593e8181974c92fbf0538a",
+        "size": 14
+      },
+      {
+        "rva": "0x0042628c",
+        "sha256": "5def22bd3c9834c70182cf887b70717d3a2584bda215a852a482d0f65e091cb7",
+        "size": 17
+      },
+      {
+        "rva": "0x00388c2d",
+        "sha256": "63f17c2bed19e1c6aa4636e69c03b20d6a4b2a8ddc813e78e5a6da154c07bb98",
+        "size": 9
+      },
+      {
+        "rva": "0x00494b54",
+        "sha256": "b1ef5d4f4b0f6134be45240394c3b38a7c01a5137229fbbf954ad54c40401351",
+        "size": 4
+      },
+      {
+        "rva": "0x0043d3f0",
+        "sha256": "02bd5a9e6eed0a25fee9c844f40c8215598fe2811a15a1aaccae99e197ea0841",
+        "size": 16
+      },
+      {
+        "rva": "0x0043cb34",
+        "sha256": "d99e58435243d9fef9c88273b8d553b4fba4d0baf8009d29eae74fa99e0d9f57",
+        "size": 4
+      }
+    ],
+    "declared_body_rows": 66,
+    "graphics": {
+      "exact_original_service_seams": 13,
+      "external_target": 3553,
+      "min_and_mag_parameter_float": 9728.0,
+      "native_ordinary_loader_service_admissions": 0,
+      "real_host_API_smoke_only": true
+    },
+    "missing_resources": {
+      "exact_primary_and_advanced_paths_absent": true,
+      "native_new_lookup_admissions": 0,
+      "planned_keys": [
+        "combat/particle_boost.png",
+        "portraits/pilots/Pilot_Artificial_glare.png"
+      ],
+      "shared_marker_persists": true,
+      "source_inventory_only": true,
+      "source_route": "Primary miss, then advanced miss, then recursive nullResource lookup; shared wrapper missing byte+30 set1."
+    },
+    "ordinary_loaders": {
+      "arguments": "Actual encoded PNG pointer and length plus owned24B full image key",
+      "cleanup_bytes": 32,
+      "entries": [
+        "0x000bee20",
+        "0x000c0eb0"
+      ],
+      "native_admissions": 0,
+      "required_grade": "Actual live owners, flag and UV fields, dimensions, full GPU pixels, stripped owned name, all Location pairs and consumed heap-string retirement",
+      "resource_padding_offsets_ungraded": [
+        13,
+        14,
+        15
+      ],
+      "resource_requested_bytes": 32,
+      "wrapper_requested_bytes": 60
+    },
+    "outline": {
+      "acceptance": "Alpha255, or alpha126..254 with at least one RGB channel greater than2 and less than255; outside coordinates and alpha<=125 rejected.",
+      "center": "X=minX+ceil((maxX-minX)/2); Y=minY+trunc((maxY-minY)/2)",
+      "empty_content_bounds_excluded": true,
+      "full_size_upload": true,
+      "native_admissions": 0,
+      "pixel_law": "White output iff original center or one of eight neighbors passes source alpha/color predicate; otherwise zero.",
+      "primary_pixels_unchanged": true,
+      "references": [
+        {
+          "content_bounds_inclusive": [
+            4,
+            5,
+            20,
+            21
+          ],
+          "evidence_class": "Independent source-law reference, not original execution",
+          "height": 26,
+          "key": "combat/icons/icon_supply_glow.png",
+          "outline_RGBA8_sha256": "2dde9b95586e8e9a587a163f29b0d486189746d1cdf799533cc196cc2d30963b",
+          "outline_pixels": 270,
+          "primary_RGBA8_sha256": "66fce6c8a20f28e424d23562e5335c902304dd9afd1cbf72033a3ce18cccbeac",
+          "width": 26,
+          "wrapper_center": [
+            12,
+            13
+          ]
+        },
+        {
+          "content_bounds_inclusive": [
+            5,
+            5,
+            21,
+            21
+          ],
+          "evidence_class": "Independent source-law reference, not original execution",
+          "height": 26,
+          "key": "combat/icons/icon_fire_glow.png",
+          "outline_RGBA8_sha256": "2c7b93f1dd919678b49f9574a3b896c548f4a3b939260909ed4a8b0552011032",
+          "outline_pixels": 239,
+          "primary_RGBA8_sha256": "ea3961d24fd9c1461182f6c5151fa5738ef6a69a7198fe1dc43adec9e2d74f05",
+          "width": 26,
+          "wrapper_center": [
+            13,
+            13
+          ]
+        },
+        {
+          "content_bounds_inclusive": [
+            5,
+            3,
+            20,
+            22
+          ],
+          "evidence_class": "Independent source-law reference, not original execution",
+          "height": 26,
+          "key": "combat/icons/icon_spawnblock_glow.png",
+          "outline_RGBA8_sha256": "a7ade99a5fe6dfb0ecd0ad43cc73af6f605d4fca88b00b1f8740c99a30dc7d39",
+          "outline_pixels": 260,
+          "primary_RGBA8_sha256": "540a17aec5eec88f23a91e40431c500618cc555c3950f31b80dbd55ca5f5cc10",
+          "width": 26,
+          "wrapper_center": [
+            13,
+            12
+          ]
+        },
+        {
+          "content_bounds_inclusive": [
+            6,
+            3,
+            18,
+            21
+          ],
+          "evidence_class": "Independent source-law reference, not original execution",
+          "height": 26,
+          "key": "combat/icons/icon_acid_glow.png",
+          "outline_RGBA8_sha256": "96ab5ff62af801fdcb362a1145a51822e20d81f8be7f9f1fc6eadaaf3b6b930d",
+          "outline_pixels": 222,
+          "primary_RGBA8_sha256": "d025ec1d0a6a679ad91fcebe26d45fb3c1bc4352fd2555dd9fe0aadaf7e1b65a",
+          "width": 26,
+          "wrapper_center": [
+            12,
+            12
+          ]
+        }
+      ],
+      "source_x87_instruction": "FRNDINT; earlier private source-packet prose typo is not a new instruction"
+    },
+    "pattern_getter": {
+      "arguments": "Output native24B string pointer; owned24B name and owned24B default strings",
+      "cleanup_bytes": 52,
+      "ecx_preferred_VA": "0x00896038",
+      "entry_rva": "0x0004d550",
+      "result": "Actual EAX output pointer, string bytes and same-state Lua stack must be graded"
+    },
+    "predicates": {
+      "arguments": "Owned native24B full image key by value",
+      "cleanup_bytes": 24,
+      "entries": [
+        "0x000be060",
+        "0x000be120",
+        "0x000be1b0"
+      ],
+      "native_predicate_admissions": 0,
+      "null_regex_root_not_admitted": true,
+      "planned_ordinary_keys": 26,
+      "planned_source_inferred_outline_keys": 4,
+      "result": "AL Boolean only; high EAX bits ungraded"
+    },
+    "regex_constructor": {
+      "arguments": "Borrowed pointer to genuine produced native24B pattern string; flags1",
+      "cleanup_bytes": 8,
+      "entry_rva": "0x000c6ef0",
+      "receiver_bytes": 20,
+      "result": "Actual compiled root, facets and locale owners, followed by native borrowed-input string destruction"
+    },
+    "stock_slices": [
+      {
+        "first_line": 2,
+        "game_relative_path": "scripts/images.lua",
+        "last_line": 2,
+        "slice_raw_sha256": "9ff7b7b87d187d7d9b0131cbd585556766be26fb39a4b187c2af8b57cb440afd",
+        "whole_raw_sha256": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+      },
+      {
+        "first_line": 6,
+        "game_relative_path": "scripts/images.lua",
+        "last_line": 6,
+        "slice_raw_sha256": "42e48807217ff1b78d08dbcddb1a622bffb2bef8c69599f0a6d9361a62a7d5bb",
+        "whole_raw_sha256": "8ce8b17724e99ae3c2785ef5a5c69439620e3520125badf3ec4e25c73c21af55"
+      }
+    ],
+    "unique_complete_bodies": 63
+  },
+  "source_only": false,
+  "supplied_boundaries": [
+    "Finite monotonic no-reuse16MiB ordinary heap, inclusive1MiB Win32 malloc/realloc limit; Lua exclusive1MiB unchanged. This is not native Windows allocator identity or a certified complete-factory budget.",
+    "Runtime04 preserves the inherited exact868B zero-filled flags8 CRT PTD allocation and its existing4MiB prefix budget; only ordinary malloc/free use the16MiB local extension.",
+    "Exact IAT/caller/opcode/flags/liveness/extents, moving-realloc prefix and narrow source-pinned Lua terminal padding-read guards remain required. Fresh unused realloc tail is supplied, not a Windows API guarantee.",
+    "Original calls use a sliced initialized validation world, not complete game startup. Raw legacy prefix prose denying CRT/lock execution is superseded by actual reached initializer calls; this world stops before completed joined CRT/PTD observation.",
+    "Source-law outline references and actual host GL smoke are separate from original resource execution. No expected pixel, predicate, locale or resource result is substituted into original code.",
+    "Guest allocations and oracle owners are retained private. Actual host GL handles are closed; the failed world is immutable and cannot be resumed."
+  ],
+  "tranche_decision": "Stop this acquisition after first failure. Publish retained fault and source boundary; next tranche may continue with the explicit inherited-dispatch hypothesis, not a resumed or silently repeated world.",
+  "valid_bounds": null,
+  "verification": {
+    "actual_host_GL_synthetic_1x1_RGBA": true,
+    "actual_host_parameter_readback": [
+      9728.0,
+      9728.0
+    ],
+    "actual_host_setup_failure_cleanup": true,
+    "candidate_actual_host_GL_contexts": 0,
+    "candidate_dispatch_synthetic_checks": 13,
+    "no_Rust_semantic_change": true,
+    "no_new_Rust_comparison": true,
+    "prior_runtime03_synthetic_checks": 17,
+    "reference_input_integrity_only": 26,
+    "source_law_outline_references_recomputed": 4
+  }
+}
