@@ -24,4 +24,14 @@ this leaves ordinary inputs, complete actor ownership and positive eligibility
 unacquired. Neither successful prefix returns nor partial palette storage admit
 an actor action or full turn.
 
+The later [guard cost experiment](solver_first_ordinary_inputs_guard_cost.md)
+passes synthetic equivalence checks but again fails before ordinary inputs.
+Its 259 completed roots match the earlier captured prefix; no positive actor
+or guarded action is admitted. A conditional source plan favors equipped root
+`0x00244df0`, which calls factory `0x00245070` itself, and retains additional
+stock Skill inputs and placement/Board/IsMech/confirmation as open dependencies.
+Keep ownership and initialization in one fresh world; neither returned objects
+from earlier worlds nor synthetic readiness can close this join. Reprioritize
+acquisition cost before extending that unexecuted plan.
+
 Empty metadata/delay queues or conditional Board activity 0 do not establish available Pawn actions. The next integration exit is original actor-owned readiness and guarded selection, then Move action consumption, repeated-Move rejection and retained Use eligibility, followed by queue settlement into an actual next decision. Enemy/environment/spawn continuity remains afterward. Source-only execution, action, idle, ledger and gate admissions are zero; no helper expansion is justified without a named blocker in that join.

@@ -2,6 +2,15 @@
 
 Date: 2026-10-03. Source baseline: `4c5cfc60` on `main`.
 
+October 4 [ordinary-input guard cost experiment](solver_first_ordinary_inputs_guard_cost.md)
+retains an equivalent memory-callback candidate and 22,848 synthetic comparisons,
+but its one fresh world again stops in the fifth prefix palette producer:
+259 of 260 roots return and no ordinary continuation runs. The completed prefix
+matches the preceding world; direct callback timings establish no native or
+planner improvement. All 159 source copies and 13 protected files match.
+Stop and reprioritize acquisition instrumentation and initialization needs
+before another hypothesis; actor/action/turn integration and all gates stay open.
+
 October 4 [retained ordinary-input prefix deadline](solver_first_ordinary_inputs_prefix_limit.md)
 records a new failed fresh world: inherited CRT/PTD dispatch now passes, but
 the fifth prerequisite palette producer does not return within its declared
