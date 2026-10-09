@@ -74,3 +74,14 @@ TEST_CASE("tiles default to empty road") {
   b.tile(Point{7, 7}).terrain = Terrain::Mountain;
   CHECK(b.tile(Point{7, 7}).is_mountain());
 }
+
+TEST_CASE("new pawn uids never reuse a removed pawn's uid") {
+  Board b;
+  b.add_pawn(make(3, Team::Enemy));
+  b.add_pawn(make(7, Team::Enemy));
+  CHECK(b.next_uid == 8);
+  b.remove_pawn(7);
+  CHECK(b.next_uid == 8);  // a later spawn gets 8, not 7 again
+  b.add_pawn(make(b.next_uid++, Team::Enemy));
+  CHECK(b.next_uid == 9);
+}

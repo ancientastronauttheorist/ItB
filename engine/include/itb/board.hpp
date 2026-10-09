@@ -240,6 +240,10 @@ class Board {
   int total_turns = 5;
   bool player_phase = true;  // false during the enemy phase
   uint32_t passives = kPassiveNone;  // active squad passives
+  // The uid the next new pawn gets. Like the game's pawn id counter it only
+  // increases, so a uid is never reused within a turn; add_pawn keeps it
+  // above every uid on the board.
+  int32_t next_uid = 0;
   Leader psion = Leader::None;       // active Vek psion mutation
   std::vector<Point> spawn_points;   // emerging Vek locations
   // Teleporter pads (Board:AddTeleport), paired 0<->1, 2<->3, ... and, per

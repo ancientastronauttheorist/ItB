@@ -115,9 +115,6 @@ struct RulesContext {
   // Preview / event-freeze mode: populated buildings lose HP but no grid.
   bool freeze_events = false;
 
-  // Uid for the next spawned pawn; -1 = one more than the largest uid on board.
-  int32_t next_uid = -1;
-
   // Frame-exact executor hooks (busy pawns, deferred chasms, falls).
   FrameHooks* frame = nullptr;
 

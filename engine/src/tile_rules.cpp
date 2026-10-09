@@ -100,12 +100,7 @@ void burrow_dive(Board& board, Pawn& pawn, RulesContext& ctx) {
   emit(ctx, RulesEventType::PawnBurrowed, pawn.pos, pawn.uid);
 }
 
-int32_t next_uid(const Board& board, RulesContext& ctx) {
-  if (ctx.next_uid >= 0) return ctx.next_uid++;
-  int32_t top = -1;
-  for (const Pawn& p : board.pawns()) top = std::max(top, p.uid);
-  return top + 1;
-}
+int32_t next_uid(Board& board) { return board.next_uid++; }
 
 // B6: sPawn. Kills whatever stands there, then creates the pawn unless the
 // tile is blocked for ground units. Water and chasms always accept it; the
@@ -126,7 +121,7 @@ void spawn_from_damage(Board& board, const SpaceDamage& sd, RulesContext& ctx) {
     ctx.spawns.push_back(SpawnRequest{sd.spawn_pawn, p, sd.spawn_team});
     return;
   }
-  Pawn pawn = ctx.data->make_pawn(*def, next_uid(board, ctx), p);
+  Pawn pawn = ctx.data->make_pawn(*def, next_uid(board), p);
   // iPawnTeam left at TEAM_NONE means the type's default team.
   if (sd.spawn_team != Team::None) pawn.team = sd.spawn_team;
   if (detail::type_is(pawn, "SpiderlingEgg1")) pawn.active = false;

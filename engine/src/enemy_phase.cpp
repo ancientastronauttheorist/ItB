@@ -69,14 +69,7 @@ class Host final : public EnvHost {
     out_.events.push_back(PhaseEvent{type, where, uid, amount, std::move(detail)});
   }
 
-  int32_t new_uid() override {
-    if (rules_.next_uid < 0) {
-      int32_t top = -1;
-      for (const Pawn& p : r_.board().pawns()) top = std::max(top, p.uid);
-      rules_.next_uid = top + 1;
-    }
-    return rules_.next_uid++;
-  }
+  int32_t new_uid() override { return r_.board().next_uid++; }
 
   bool busy() const override { return r_.busy(); }
   int turn() const override { return r_.board().turn; }
@@ -210,13 +203,6 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
     ++ended;
   }
   out.events.push_back(PhaseEvent{PhaseEventType::EndTurn, kInvalidPoint, -1, ended, ""});
-
-  // Fresh uids for everything this phase adds.
-  {
-    int32_t top = -1;
-    for (const Pawn& p : board.pawns()) top = std::max(top, p.uid);
-    ctx.rules.next_uid = top + 1;
-  }
 
   Resolver r(board, ctx);
   Host host(r, ctx.rules, impl_->data, tc, out);

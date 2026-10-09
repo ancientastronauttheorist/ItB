@@ -160,6 +160,9 @@ BoardHash hash_board(const Board& b, HashMode mode) {
     k.put(static_cast<uint32_t>(b.turn), 32);
     k.put(static_cast<uint32_t>(b.total_turns), 32);
     k.put(b.passives, 32);
+    // next_uid only labels pawns created later; kept so that equal hashes
+    // mean equal futures, uids included.
+    k.put(static_cast<uint32_t>(b.next_uid), 32);
     k.put(b.player_phase, 1);
     k.put(u8(static_cast<int>(b.psion)), 8);
     k.put(b.spawn_points.size(), 16);

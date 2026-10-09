@@ -1770,7 +1770,7 @@ TEST_CASE("SpiderlingEgg1 spawns inactive") {
   }
   World w;
   w.ctx.data = data;
-  w.ctx.next_uid = 40;
+  w.board.next_uid = 40;
   SpaceDamage sd = World::sd_at(0);
   sd.spawn_pawn = intern("SpiderlingEgg1");
   sd.spawn_team = Team::Enemy;

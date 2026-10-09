@@ -20,6 +20,7 @@ int list_pass(const Pawn& p) {
 }  // namespace
 
 Pawn& Board::add_pawn(const Pawn& pawn) {
+  next_uid = std::max(next_uid, pawn.uid + 1);
   pawns_.push_back(pawn);
   const int32_t uid = pawn.uid;
   std::stable_sort(pawns_.begin(), pawns_.end(), [](const Pawn& a, const Pawn& b) {

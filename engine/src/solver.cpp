@@ -233,22 +233,23 @@ std::vector<PlayerAction> to_player_actions(const std::vector<SubAction>& line) 
   return out;
 }
 
+// As score.cpp counts them.
 int building_hp(const Board& b) {
   int total = 0;
   for (int i = 0; i < kTileCount; ++i) {
     const Tile& t = b.tile(Point::from_index(i));
-    if (t.is_building()) total += t.hp;
+    if (t.is_building()) total += std::max<int>(0, t.hp);
   }
   return total;
 }
 
-bool scored_vek(const Pawn& p) { return p.team == Team::Enemy && p.faction == Faction::Default; }
+bool scored_enemy(const Pawn& p) { return p.team == Team::Enemy && !p.neutral && !p.mech; }
 
 // ---- Tier upper bounds ------------------------------------------------------------
 //
-// ub(B) is a Score that no plan continuing from board B can beat (it is
-// componentwise >= the score of every such plan, hence lexicographically >=).
-// Per component:
+// ub(B) is a Score that no plan continuing from board B can beat: it is
+// componentwise >= the score of every such plan, hence lexicographically >=.
+// Per component of score_turn (score.cpp):
 //   GridLost       = after.grid - root.grid. The engine raises grid power only
 //                    through Lua Game:ModifyPowerGrid (Engine::apply_writes),
 //                    which no shipped script calls with a gain except
@@ -259,12 +260,17 @@ bool scored_vek(const Pawn& p) { return p.team == Team::Enemy && p.faction == Fa
 //                    in add_building (SpaceDamage iTerrain = TERRAIN_BUILDING),
 //                    which no weapon, pawn or death script produces and the
 //                    native environments never request (only mission_final's
-//                    mission setup scripts do, which the engine does not run).
-//                    So the total never rises: <= hp(B) - hp(root).
-//   MechsLost, MechHpLost, ObjectivesFailed: losses, <= 0 by definition
-//                    (score.hpp stores them negated; HP lost is max(0, ..)).
-//   VekKilled      <= Vek alive at the root (only those are counted).
-//   VekHpRemoved   <= their total HP (each counts at most its HP).
+//                    setup scripts do, which the engine does not run). So the
+//                    total never rises: <= hp(B) - hp(root).
+//   MechsLost      = sum over the root's mechs of alive_after - alive_before:
+//                    <= the number of mechs dead at the root (revived corpses).
+//   MechHpLost     = sum of hp_after - hp_before: a pawn's HP never exceeds
+//                    its max HP (every heal clamps), and a mech's max HP only
+//                    rises by the Soldier psion's +1, which reaches mechs only
+//                    with Psion Leech. So <= sum of (max_hp [+1] - hp_before).
+//   ObjectivesFailed = -(stars lost) <= 0.
+//   VekKilled      <= enemies alive at the root (only those are counted).
+//   VekHpRemoved   <= their total HP (hp_before - hp_after, hp_after >= 0).
 //   ObjectiveProgress, Position: unbounded (INT32_MAX) unless the caller
 //                    gives SolveOptions::tier_caps.
 // tier_caps lowers any component further (the caller vouches for them).
@@ -281,20 +287,25 @@ class TierBounds {
     caps_ = kHigh;
     caps_[ScoreKey::GridLost] = std::max(root.grid_power_max, root.grid_power) - root.grid_power;
     caps_[ScoreKey::BuildingHpLost] = 0;
-    caps_[ScoreKey::MechsLost] = 0;
-    caps_[ScoreKey::MechHpLost] = 0;
-    caps_[ScoreKey::ObjectivesFailed] = 0;
-    int vek = 0, vek_hp = 0;
+    const int leech = root.has_passive(kPassivePsionLeech) ? 1 : 0;
+    int dead_mechs = 0, mech_room = 0, enemies = 0, enemy_hp = 0;
     for (const Pawn& p : root.pawns()) {
-      if (scored_vek(p) && p.alive()) {
-        ++vek;
-        vek_hp += p.hp;
+      const int hp0 = p.alive() && !p.fallen && p.pos.valid() ? p.hp : 0;
+      if (p.mech && p.team == Team::Player) {
+        if (hp0 <= 0) ++dead_mechs;
+        mech_room += std::max(0, p.max_hp + leech - hp0);
+      } else if (scored_enemy(p) && hp0 > 0) {
+        ++enemies;
+        enemy_hp += hp0;
       }
     }
-    caps_[ScoreKey::VekKilled] = vek;
-    caps_[ScoreKey::VekHpRemoved] = vek_hp;
+    caps_[ScoreKey::MechsLost] = dead_mechs;
+    caps_[ScoreKey::MechHpLost] = mech_room;
+    caps_[ScoreKey::ObjectivesFailed] = 0;
+    caps_[ScoreKey::VekKilled] = enemies;
+    caps_[ScoreKey::VekHpRemoved] = enemy_hp;
     if (caps) {
-      for (int i = 0; i < kScoreKeys; ++i) caps_.v[i] = std::min(caps_.v[i], caps->v[i]);
+      for (size_t i = 0; i < caps_.v.size(); ++i) caps_.v[i] = std::min(caps_.v[i], caps->v[i]);
     }
   }
 

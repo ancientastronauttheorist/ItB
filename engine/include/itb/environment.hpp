@@ -54,6 +54,29 @@ struct FinalEnvState {
   std::vector<Point> locations;
 };
 
+// Stage 8: the mission's objective bookkeeping (missions.lua Mission fields
+// and the mission subclasses' counters) as far as the bridge exports it.
+// -1 / empty = not recorded. See objectives.hpp for how each is scored.
+struct ObjectiveData {
+  // Mission.BonusObjs (BONUS_* ids, objectives.hpp BonusId). `bonus_known`:
+  // the bridge exported the list (bonus_objective_ids); otherwise only the
+  // bonuses other fields reveal are known (objectives.hpp active_bonuses).
+  std::vector<int> bonus;
+  bool bonus_known = false;
+  int kills_done = -1;   // Mission.KilledVek (Mission_AcidTank: AcidKills)
+  int kill_target = -1;  // BONUS_KILL_FIVE GetKillBonus() (Mission_AcidTank: 4)
+  int kill_limit = -1;   // BONUS_PACIFIST GetPacifistCount()
+  int blocked_spawns = -1;  // Mission.BlockedSpawns so far (BONUS_BLOCK)
+  int power_start = -1;     // Mission.PowerStart: grid power at deployment (BONUS_GRID)
+  int repairs_done = -1, repair_target = -1;      // Mission_Repair RepairPickups / 3
+  int mountains_done = -1, mountain_target = -1;  // Mission_Force Mountains / MountainsGoal
+  int freeze_target = -1;                         // Mission_FreezeBldg (5)
+  std::vector<Point> freeze_buildings;            // Mission_FreezeBldg Buildings
+  // Mission_Terraform: zone "grass" tiles still grass (custom tile).
+  std::vector<Point> grass;
+  bool grass_known = false;
+};
+
 struct MissionData {
   std::string mission_id;  // M.ID: what environments dispatch on
   std::string env_type;    // the bridge's heuristic label (informational only)
@@ -71,6 +94,7 @@ struct MissionData {
   std::optional<bool> infinite_spawn;
   std::vector<int32_t> launching;  // satellite rockets with a queued launch
   int difficulty = -1;
+  ObjectiveData objectives;  // stage 8
 };
 
 // ---- Events ----------------------------------------------------------------------
