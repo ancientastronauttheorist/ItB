@@ -46,8 +46,12 @@ SpaceDamage to_engine(const LuaSpaceDamage& sd) {
   out.owner_team = static_cast<Team>(sd.owner_team);
   out.evacuate = sd.bEvacuate;
   out.delay = sd.fDelay;
+  if (!sd.sAnimation.empty()) out.animation = intern(sd.sAnimation);
+  out.anim_flags = static_cast<uint8_t>(sd.anim_flags);
+  out.mode_override = static_cast<int8_t>(sd.mode_override);
   out.projectile = static_cast<ProjectileKind>(sd.projectile_kind);
   out.projectile_source = sd.projectile_source;
+  if (!sd.projectile_art.empty()) out.art = intern(sd.projectile_art);
   out.move_kind = static_cast<MoveKind>(sd.move_kind);
   out.path = sd.path;
   out.grapple_source = sd.grapple_source;
@@ -65,6 +69,8 @@ SkillEffect to_engine(const LuaSkillEffect& se) {
   out.origin = se.piOrigin;
   out.target = se.target;
   out.owner = se.iOwner;
+  out.team = static_cast<Team>(se.team);
+  out.follow_up = se.follow_up;
   return out;
 }
 
@@ -500,6 +506,49 @@ std::vector<Point> LuaHost::second_target_area(const Board& board, const Pawn& s
   return area;
 }
 
+bool LuaHost::two_click_exception(const Board& board, const Pawn& shooter, std::string_view weapon,
+                                  Point origin, Point target, LuaCall* call) {
+  LuaCall local;
+  LuaCall& c = call ? *call : local;
+  Scope scope(*impl_, &board, &c);
+  set_selected(*impl_, &shooter);
+  if (!call_method(*impl_, weapon, "IsTwoClickException", c, [&](lua_State* L) {
+        lua::push_point(L, origin);
+        lua::push_point(L, target);
+        return 2;
+      })) {
+    return false;
+  }
+  lua_State* L = impl_->L;
+  if (lua_type(L, -1) != LUA_TBOOLEAN) {
+    fail(c, weapon, "IsTwoClickException", std::string("cast_failed: returned ") + lua_type_label(L, -1));
+    return false;
+  }
+  return lua_toboolean(L, -1) != 0;
+}
+
+Point LuaHost::translate_first_click(const Board& board, const Pawn& shooter, std::string_view weapon,
+                                     Point origin, Point target, LuaCall* call) {
+  LuaCall local;
+  LuaCall& c = call ? *call : local;
+  Scope scope(*impl_, &board, &c);
+  set_selected(*impl_, &shooter);
+  if (!call_method(*impl_, weapon, "TranslateFirstClick", c, [&](lua_State* L) {
+        lua::push_point(L, origin);
+        lua::push_point(L, target);
+        return 2;
+      })) {
+    return target;
+  }
+  lua::Instance* in = lua::to_instance(impl_->L, -1, Cls::Point);
+  if (!in) {
+    fail(c, weapon, "TranslateFirstClick",
+         std::string("cast_failed: returned ") + lua_type_label(impl_->L, -1) + ", expected Point");
+    return target;
+  }
+  return *static_cast<Point*>(lua::resolve(in));
+}
+
 LuaSkillEffect LuaHost::final_effect_raw(const Board& board, const Pawn& shooter,
                                          std::string_view weapon, Point origin, Point first,
                                          Point target, LuaCall* call) {
@@ -547,9 +596,7 @@ SkillEffect LuaHost::death_effect(const Board& board, const Pawn& dying, std::op
 LuaCall LuaHost::run_script(const Board& board, std::string_view code, const Pawn* selected) {
   LuaCall c;
   Scope scope(*impl_, &board, &c);
-  if (selected) {
-    set_selected(*impl_, selected);
-    }
+  if (selected) set_selected(*impl_, selected);
   lua_State* L = impl_->L;
   // LuaEnv::DirectLua: chunk name "line", errors returned (and ignored in game).
   if (luaL_loadbuffer(L, code.data(), code.size(), "line") != 0 || lua_pcall(L, 0, 0, 0) != 0) {
@@ -560,6 +607,8 @@ LuaCall LuaHost::run_script(const Board& board, std::string_view code, const Paw
 }
 
 void LuaHost::seed(uint32_t s) { lua::rng(impl_->L).srand(s); }
+
+uint64_t LuaHost::rand_draws() const { return lua::rng(impl_->L).draws(); }
 
 int LuaHost::rand() { return lua::rng(impl_->L).rand(); }
 

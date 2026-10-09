@@ -118,6 +118,8 @@ class Simulation final : public FrameHooks {
   ResolveResult settle();
   void add_effect(SkillEffect effect);
   void add_delay(float seconds);
+  void damage_space(const SpaceDamage& sd);
+  void add_chance(const ChanceRecord& chance);
 
   Board& board() { return board_; }
   int64_t frame() const { return frame_; }

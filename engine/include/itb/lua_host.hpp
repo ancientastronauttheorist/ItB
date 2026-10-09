@@ -100,8 +100,9 @@ struct LuaSkillEffect {
   bool operator==(const LuaSkillEffect&) const = default;
 };
 
-// Converts to the engine types. Fields the engine SpaceDamage does not carry
-// yet (animation, sound, art, UI flags) are dropped.
+// Converts to the engine types: every field the executor uses (animation and
+// its flags, projectile kind/source/art, mode override, team, follow-up).
+// Sounds, image marks, grapple art and the UI-only flags are dropped.
 SpaceDamage to_engine(const LuaSpaceDamage& sd);
 SkillEffect to_engine(const LuaSkillEffect& se);
 
@@ -195,6 +196,14 @@ class LuaHost {
   std::vector<Point> second_target_area(const Board& board, const Pawn& shooter,
                                         std::string_view weapon, Point origin, Point first,
                                         LuaCall* call = nullptr);
+  // Lua IsTwoClickException(self, origin, target): the weapon fires on the
+  // first click after all (Skill::NeedsSecondClick). False on error.
+  bool two_click_exception(const Board& board, const Pawn& shooter, std::string_view weapon,
+                           Point origin, Point target, LuaCall* call = nullptr);
+  // Lua TranslateFirstClick(self, origin, target): the stored first click
+  // (Skill::SetFirstClick). The target itself on error.
+  Point translate_first_click(const Board& board, const Pawn& shooter, std::string_view weapon,
+                              Point origin, Point target, LuaCall* call = nullptr);
   LuaSkillEffect final_effect_raw(const Board& board, const Pawn& shooter, std::string_view weapon,
                                   Point origin, Point first, Point target, LuaCall* call = nullptr);
 
@@ -218,6 +227,9 @@ class LuaHost {
   // The shared rand() stream (glibc TYPE_3).
   void seed(uint32_t s);
   int rand();
+  // How many numbers scripts have drawn from the stream so far (seeding
+  // does not count): a call that changes it used randomness.
+  uint64_t rand_draws() const;
 
   // Every global table derived from the Lua Skill class (all weapons,
   // including upgrade variants), sorted.
