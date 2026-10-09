@@ -45,6 +45,7 @@ add_executable(itb_tests
   tests/test_board.cpp
   tests/test_game_data.cpp
   tests/test_recording.cpp
+  tests/test_tile_rules.cpp
 )
 target_link_libraries(itb_tests PRIVATE itb_engine doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE
