@@ -1691,19 +1691,38 @@ TEST_CASE("bEvacuate: Vek retreat, players stay") {
   CHECK_FALSE(w.pawn(10).retreating);
 }
 
-TEST_CASE("grapple source webs the occupant") {
+TEST_CASE("the hit tile webs the pawn on the grapple point") {
+  // Lua AddGrapple(webber, target): loc = the webber's tile, grapple point =
+  // the target. BoardSpace::DamageSpace D16 -> SetGrappled(dir): the loc tile
+  // emits, the neighbour's pawn is held.
   World w;
   w.add(vek(1, 3, kP));
   w.add(mech(10, 3, kRight));
-  SpaceDamage sd = World::sd_at(0, kRight);
-  sd.grapple_source = kP;
+  SpaceDamage sd = World::sd_at(0, kP);
+  sd.grapple_source = kRight;
   w.hit(sd);
   CHECK(w.pawn(10).webbed);
   CHECK(w.pawn(10).web_source == 1);
+  CHECK(w.pawn(10).web_tile == kP);
+  CHECK_FALSE(w.pawn(1).webbed);
   // Smoking the webber's tile releases it.
   SpaceDamage smoke = World::sd_at(0);
   smoke.smoke = StatusChange::Apply;
   w.hit(smoke);
+  CHECK_FALSE(w.pawn(10).webbed);
+}
+
+TEST_CASE("a web breaks when its emitter tile loses its Vek") {
+  World w;
+  w.add(vek(1, 3, kP));
+  w.add(mech(10, 3, kRight));
+  SpaceDamage sd = World::sd_at(0, kP);
+  sd.grapple_source = kRight;
+  w.hit(sd);
+  REQUIRE(w.pawn(10).webbed);
+  // BoardSpace::OnLoop: no living pawn on the emitting tile -> released.
+  w.pawn(1).hp = 0;
+  w.settle();
   CHECK_FALSE(w.pawn(10).webbed);
 }
 

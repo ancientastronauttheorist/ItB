@@ -468,6 +468,7 @@ void set_space(Board& b, Pawn& p, Point to, bool no_injury, RulesContext* ctx) {
   // Any relocation frees a webbed pawn.
   p.webbed = false;
   p.web_source = -1;
+  p.web_tile = kInvalidPoint;
   p.pos = to;
   if (to != from) b.stamp_arrival(p);
   // AE Injured: 1 HP per tile change while not busy. Whether every step of a

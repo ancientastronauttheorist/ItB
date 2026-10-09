@@ -175,6 +175,7 @@ class Simulation final : public FrameHooks {
   bool is_exploding(const Pawn& pawn) const;
   void detonate_corpse(Pawn& pawn, PawnSim& ps);
   void update_leaders();
+  void update_teleporters();
   bool removable(const Pawn& pawn, const PawnSim& ps) const;
   void remove(int32_t uid);
   void cancel_queued_shot(Pawn& pawn);

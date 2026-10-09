@@ -1238,8 +1238,9 @@ TEST_CASE("resolve_effects keeps one clock across effects") {
   CHECK(w.pawn(1)->pos == Point{4, 2});
   const auto moves = w.frames(ResolveEventType::PushMoved, 1);
   REQUIRE(moves.size() == 2);
-  // The second effect fires on the frame after the board went idle.
-  CHECK(moves[1] == moves[0] + 24);
+  // The second effect fires once the board went idle and then had a frame
+  // in which nothing changed.
+  CHECK(moves[1] == moves[0] + 25);
 }
 
 TEST_CASE("a frame-rate change shifts timings but not a robust outcome") {
@@ -1389,4 +1390,84 @@ TEST_CASE("timing: an impact landing with a push on its tiles is flagged") {
   CHECK(w.pawn(1)->hp == 3);  // the shell landed (P1) before the push did (P3)
   REQUIRE(w.last.timing.size() == 1);
   CHECK(w.last.timing[0].kind == TimingKind::ImpactVsPush);
+}
+
+// ---- Found by replaying recorded games (itb_inspect --replay) -----------------------
+
+TEST_CASE("an idle board that still changed runs another frame: a walker picks up a pod") {
+  World w;
+  w.add(mech(1, A));
+  w.tile({2, 4}).pod = PodState::Present;
+  SkillEffect se = effect_from(A);
+  se.add_move({A, {2, 3}, {2, 4}}, kFullDelay);
+  w.fire(se);
+  CHECK(w.pawn(1)->pos == Point{2, 4});
+  // The walk ends (P3) with the board idle; the pod goes on the next frame's
+  // tile rules (P2), which the game always runs.
+  CHECK(w.tile({2, 4}).pod == PodState::Collected);
+}
+
+TEST_CASE("the Soldier psion's death takes its +1 HP back (and can kill)") {
+  // Pawn::SetMutation via Board::UpdateLeaders: ComputeHealthTotal drops by 1.
+  World w;
+  Pawn psion = vek(1, A, 1, 1);
+  psion.leader = Leader::Health;
+  w.add(psion);
+  w.add(vek(2, {5, 5}, 3, 3));  // 2 HP + the psion's 1
+  w.add(vek(3, {6, 6}, 1, 3));  // only alive thanks to the bonus
+  w.board.psion = Leader::Health;
+  SkillEffect se = effect_from(R);
+  se.add_damage(space_damage(A, 1));
+  w.fire(se);
+  CHECK(w.board.psion == Leader::None);
+  CHECK(w.pawn(2)->hp == 2);
+  CHECK(w.pawn(2)->max_hp == 2);
+  CHECK((!w.pawn(3) || !w.pawn(3)->alive()));
+}
+
+TEST_CASE("the board psion is the last living leader in list order") {
+  World w;
+  Pawn soldier = vek(1, A, 1, 1);
+  soldier.leader = Leader::Health;
+  w.add(soldier);
+  Pawn shell = vek(2, R, 1, 1);
+  shell.leader = Leader::Armor;
+  w.add(shell);
+  w.add(vek(3, {5, 5}, 2, 2));
+  w.board.psion = Leader::Armor;
+  SkillEffect se = effect_from({0, 0});
+  se.add_damage(space_damage(R, 1));  // the Shell psion (last) dies
+  w.fire(se);
+  CHECK(w.board.psion == Leader::Health);
+  // The Soldier psion's mutation now reaches the Vek: +1 maximum and current HP.
+  CHECK(w.pawn(3)->hp == 3);
+  CHECK(w.pawn(3)->max_hp == 3);
+}
+
+TEST_CASE("psion mutations skip Minor pawns") {
+  World w;
+  Pawn egg = vek(1, A);
+  egg.minor = true;
+  w.add(egg);
+  w.add(vek(2, R));
+  w.board.psion = Leader::Armor;
+  CHECK_FALSE(mutation_affects(w.board, *w.pawn(1), Leader::Armor));
+  CHECK(mutation_affects(w.board, *w.pawn(2), Leader::Armor));
+}
+
+TEST_CASE("a pawn arriving on a teleporter pad swaps with the partner pad") {
+  // Board::OnLoop -> Board::Teleport once no effect is active.
+  World w;
+  w.board.teleporters = {{2, 4}, {6, 6}};
+  w.board.teleporter_occupants = {-1, -1};
+  w.tile({2, 4}).teleporter = w.tile({6, 6}).teleporter = true;
+  w.add(mech(1, A));
+  w.add(vek(2, {6, 6}));
+  SkillEffect se = effect_from(A);
+  se.add_move({A, {2, 3}, {2, 4}}, kFullDelay);
+  w.fire(se);
+  CHECK(w.pawn(1)->pos == Point{6, 6});
+  CHECK(w.pawn(2)->pos == Point{2, 4});
+  // Both now stand where they arrived: nobody bounces back.
+  CHECK(w.board.teleporter_occupants == std::vector<int32_t>{2, 1});
 }

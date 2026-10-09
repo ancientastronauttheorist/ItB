@@ -97,6 +97,34 @@ void settle_tile_frame(Board& board, Point p, RulesContext& ctx) {
   check_terrain_dangers(board, p, ctx);
   if (t.on_fire() && t.item != kNoSymbol) trigger_item(board, p, ctx);
   if (tile_frozen(board, p)) detail::release_webs(board, p);
+  check_webs(board, p, ctx);
+}
+
+// BoardSpace::OnLoop's web check for the webs `p` emits: a web breaks once
+// the emitting tile no longer holds a living pawn or corpse, or its first
+// occupant is not on the enemy team (Pawn::IsEnemy), or the webbed tile is
+// no longer grappleable (a building, or a living pawn / corpse on it), or the
+// webbed pawn is immune (Disable_Immunity) and not busy.
+void check_webs(Board& board, Point p, RulesContext& ctx) {
+  const bool emitter_ok = has_pawn(board, p) && first_occupant(board, p)->team == Team::Enemy;
+  for (Pawn& pawn : board.pawns()) {
+    if (!pawn.webbed) continue;
+    Point from = pawn.web_tile;
+    if (!from.valid()) {
+      // A web loaded without its tile: the source's tile.
+      const Pawn* src = board.find_pawn(pawn.web_source);
+      if (!src) continue;
+      from = src->pos;
+    }
+    if (from != p) continue;
+    const bool grappleable = pawn.pos.valid() && (board.tile(pawn.pos).is_building() || has_pawn(board, pawn.pos));
+    const bool immune = pawn.has_pilot(kPilotDisableImmunity) && !busy(ctx, pawn);
+    if (!emitter_ok || !grappleable || immune) {
+      pawn.webbed = false;
+      pawn.web_source = -1;
+      pawn.web_tile = kInvalidPoint;
+    }
+  }
 }
 
 // One frame of Pawn::OnLoop, rule effects only.
@@ -120,6 +148,7 @@ void release_webs(Board& board, Point p) {
       if (pawn.webbed && pawn.web_source == holder->uid) {
         pawn.webbed = false;
         pawn.web_source = -1;
+        pawn.web_tile = kInvalidPoint;
       }
     }
   }
@@ -139,7 +168,9 @@ bool is_vek(const Pawn& pawn) {
 bool mutation_affects(const Board& board, const Pawn& pawn, Leader mutation) {
   if (mutation == Leader::None || board.psion != mutation) return false;
   if (!is_vek(pawn) && !(pawn.mech && board.has_passive(kPassivePsionLeech))) return false;
-  return pawn.leader == Leader::None && !pawn.retreating;
+  // Pawn::IsPsionAffected: never a Minor pawn (+0x10F0, the Lua Minor flag,
+  // which Retreat also sets).
+  return pawn.leader == Leader::None && !pawn.minor && !pawn.retreating;
 }
 
 bool is_corpse(const Board& board, const Pawn& pawn) {

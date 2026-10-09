@@ -242,9 +242,16 @@ void Simulation::run(ResolveResult& result) {
     changed_ = false;
     run_frame(f);
     const bool dirty = changed_ || !(board_ == before);
-    if (idle()) {
+    // Idle and a whole frame changed nothing: settled. An idle board that
+    // still changed (e.g. a walker arriving on a pod, picked up by the next
+    // frame's tile rules) runs on, as the game's frames do.
+    if (idle() && !dirty) {
       frame_ = f + 1;
       break;
+    }
+    if (idle()) {
+      f = f + 1;
+      continue;
     }
     const int64_t next = dirty ? f + 1 : next_event(f);
     if (next <= f) {
@@ -289,6 +296,7 @@ void Simulation::run_frame(int64_t f) {
     for (int32_t uid : order) {
       if (Pawn* p = board_.find_pawn(uid)) detonate_corpse(*p, state(uid));
     }
+    update_teleporters();
   }
 
   // P6: death animations and XP popups advance; their state is a function of
