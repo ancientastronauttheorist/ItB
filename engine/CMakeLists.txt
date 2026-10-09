@@ -39,6 +39,7 @@ add_library(itb_engine
   src/engine.cpp
   src/enemy_phase.cpp
   src/environments.cpp
+  src/score.cpp
 )
 target_include_directories(itb_engine PUBLIC include PRIVATE src)
 target_link_libraries(itb_engine PRIVATE itb_lua nlohmann_json::nlohmann_json)
