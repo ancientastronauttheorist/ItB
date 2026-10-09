@@ -152,6 +152,31 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
     }
   }
 
+  // AE pilot level-up skills (Pilot::GetAllPilotSkills order: Health, Move,
+  // Grid, Reactor, Opener, Closer, Popular, Thick, Skilled, Invulnerable,
+  // Adrenaline, Pain, Regen, Conservative), active from levels 1 and 2. Only
+  // the ones that change rules map to abilities: Thick Skin (no fire, no
+  // ACID) and Technician (Regen).
+  if (auto it = u.find("pilot_skills"); it != u.end() && it->is_array()) {
+    const int level = get_or<int>(u, "pilot_level", 0);
+    for (const json& sk : *it) {
+      if (!sk.is_string()) continue;
+      const std::string text = sk.get<std::string>();
+      const size_t eq = text.find('=');
+      if (eq == std::string::npos) continue;
+      const int slot = text.rfind("skill2", 0) == 0 ? 2 : 1;
+      if (level < slot) continue;
+      int id = -1;
+      try {
+        id = std::stoi(text.substr(eq + 1));
+      } catch (const std::exception&) {
+        continue;
+      }
+      if (id == 7) p.pilot_abilities |= kPilotThick;
+      if (id == 12) p.pilot_abilities |= kPilotRegen;
+    }
+  }
+
   if (get_or<bool>(u, "has_queued_attack", false)) {
     // The bridge does not report which weapon is queued; Vek carry one.
     p.queued.weapon = 0;

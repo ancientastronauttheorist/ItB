@@ -322,7 +322,12 @@ void Simulation::detonate_corpse(Pawn& pawn, PawnSim& ps) {
 // bonus dies. The bonus is tracked per pawn (Pawn::health_bonus), which also
 // gives it to pawns that appear while the Soldier psion lives.
 void Simulation::update_leaders() {
-  if (!track_leaders_) return;
+  if (!track_leaders_) {
+    // A psion that appears (a spawn, an emerging Vek) starts the tracking.
+    track_leaders_ = std::any_of(board_.pawns().begin(), board_.pawns().end(),
+                                 [](const Pawn& p) { return p.leader != Leader::None; });
+    if (!track_leaders_) return;
+  }
   Leader leader = Leader::None;
   for (const Pawn& p : board_.pawns()) {
     if (p.alive() && p.leader != Leader::None) leader = p.leader;

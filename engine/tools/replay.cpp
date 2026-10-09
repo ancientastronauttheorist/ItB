@@ -624,6 +624,7 @@ int run_replay(const ReplayOptions& opt) {
   std::map<std::string, int> upgrade_explained;
   std::vector<std::string> refusal_examples;
   int timing_sensitive = 0, chance_lua = 0;
+  std::vector<TurnStart> ends;  // --turns
 
   const std::regex verify_re(R"(_action_(\d+)_(move|attack|repair|skip)_verify\.json$)");
 
@@ -691,7 +692,7 @@ int run_replay(const ReplayOptions& opt) {
       desyncs.push_back(std::move(d));
     }
     const std::string key = run + "/" + std::to_string(rec->mission_index) + "/" + std::to_string(rec->turn);
-    const bool trace = key == opt.trace;
+    const bool trace = key == opt.trace && !opt.turns;
     if (auto it = fdb.find(key); it != fdb.end()) {
       for (const Desync& d : it->second) {
         const bool have = std::any_of(desyncs.begin(), desyncs.end(), [&](const Desync& x) {
@@ -726,6 +727,8 @@ int run_replay(const ReplayOptions& opt) {
     }
     const int last = first ? first->action : static_cast<int>(actions.size()) - 1;
     std::set<std::string> skipped;  // "#uid" of mechs whose step was move-only
+    bool turn_real = false;  // some step had a real mismatch
+    int done = -1;           // last action replayed to its end
     if (last + 1 < static_cast<int>(actions.size())) {
       skips["action: after the turn's first desync (re-solved plan not recorded)"] +=
           static_cast<int>(actions.size()) - last - 1;
@@ -771,6 +774,7 @@ int run_replay(const ReplayOptions& opt) {
           }
         }
         bool real = std::any_of(mm.begin(), mm.end(), [](const Mismatch& m) { return m.artefact.empty(); });
+        turn_real = turn_real || real;
         if (real && static_cast<int>(shown[b].size()) < opt.show) shown[b].push_back(Shown{label, mm});
       };
       // Mismatches the old verifier tolerated without logging, when this
@@ -1002,8 +1006,13 @@ int run_replay(const ReplayOptions& opt) {
       (void)bucket_name;
       (void)bucket;
       if (opt.sync) sync(board, gt, data);
+      done = i;
+    }
+    if (opt.turns && done == static_cast<int>(actions.size()) - 1) {
+      ends.push_back(TurnStart{run, input, *rec, board, !turn_real});
     }
   }
+  if (opt.turns) return report_turns(*engine, ends, opt);
 
   std::printf("turns with a solve input and plan: %d  replayed: %d\n", turns, turns_used);
   std::printf("\nattack steps (board after the move + attack vs the game):\n");

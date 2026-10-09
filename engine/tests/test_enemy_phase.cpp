@@ -1018,6 +1018,39 @@ TEST_CASE("a Vek emerging under the Soldier psion gets its +1") {
   CHECK(fresh->hp == 4);
 }
 
+TEST_CASE("a Soldier psion emerging gives the Vek already on the board +1") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t v = place(b, "Scorpion1", {2, 2});
+  hp(b, v, 2);
+  b.spawn_points = {{6, 6}};
+  TurnContext ctx = context();
+  ctx.spawn_types = {"Jelly_Health1"};
+  E.end_turn(b, ctx);
+  CHECK(b.psion == Leader::Health);
+  CHECK(hp_of(b, v) == 3);
+  CHECK(P(b, v).max_hp == 4);
+}
+
+TEST_CASE("recorded AE pilot skills: Thick Skin and Technician") {
+  NEED_ENGINE();
+  // Pilot::GetAllPilotSkills ids 7 (Thick) and 12 (Regen), active from the
+  // pilot's level.
+  const std::filesystem::path path =
+      std::filesystem::path(ITB_REPO_ROOT) / "recordings/20260506_114649_974/m19_turn_02_solve_input.json";
+  if (!std::filesystem::exists(path)) {
+    WARN_MESSAGE(false, "recording not found");
+    return;
+  }
+  std::string error;
+  auto rec = load_recording(path, &E.data(), &error);
+  REQUIRE(rec.has_value());
+  const Pawn* rocket = rec->board.find_pawn(1);  // RocketMech: skill1=7, skill2=8, level 2
+  REQUIRE(rocket != nullptr);
+  CHECK(rocket->has_pilot(kPilotThick));
+  CHECK_FALSE(rocket->has_pilot(kPilotRegen));
+}
+
 TEST_CASE("End Turn: Networked Shielding is off during the enemy phase") {
   NEED_ENGINE();
   Board b;
