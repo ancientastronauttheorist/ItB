@@ -3815,7 +3815,7 @@ mod tests {
     }
 
     #[test]
-    fn test_observatory_selected_record_drives_firefly_queue_direction() {
+    fn test_selected_record_drives_firefly_queue_direction() {
         // Windows build 13725832 selected/queue campaign, all three armed
         // captures: Firefly1 commits aiDest=(5,4), aiTarget=(4,4), then the
         // queue stores origin=(5,4), target/queuedShot=(4,4), skill=1.

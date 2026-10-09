@@ -415,7 +415,7 @@ pub(crate) fn get_weapon_targets(
         // Base Punch inherits Skill:GetTargetArea(PathSize=1); base Tank
         // inherits the non-phase TankDefault getter. The pinned original
         // GetSimpleReachable body includes a valid first blocker, including
-        // Building terrain (s2_primitive_target_membership_412.json).
+        // Building terrain.
         // Keep every in-bounds direction, even when it only damages a
         // building. Tank uses adjacent direction representatives here, not
         // the native getter's complete set of points along each ray.

@@ -11,30 +11,7 @@ import os
 from src.solver.solver import MechAction
 from src.solver.action_classification import action_has_attack, is_repair_action
 from src.model.board import Board
-from src.bridge.protocol import (
-    BridgeError,
-    abort_observatory_spawn_coordinate,
-    arm_observatory_native_rng,
-    arm_observatory_native_rng_spawn_replay,
-    finish_observatory_native_rng,
-    finish_observatory_native_rng_spawn_replay,
-    finish_observatory_native_rng_spawn_span,
-    finish_observatory_spawn_coordinate,
-    prepare_observatory_spawn_coordinate,
-    prepare_observatory_spawn_replay_control,
-    request_observatory_callback_bindings,
-    request_observatory_callback_manifest,
-    run_observatory_enemy_callback_trial,
-    run_observatory_enemy_materialized_effect_trial,
-    run_observatory_enemy_tournament_trial,
-    run_observatory_selected_queue_trial,
-    seed_and_arm_observatory_native_rng,
-    seed_and_arm_observatory_native_rng_spawn_span,
-    seed_observatory_native_rng,
-    status_observatory_native_rng,
-    write_command,
-    wait_for_ack,
-)
+from src.bridge.protocol import BridgeError, write_command, wait_for_ack
 
 
 def _action_timeout() -> float:
@@ -248,15 +225,13 @@ def repair_mech(uid: int) -> str:
 def execute_bridge_end_turn() -> str:
     """Send END_TURN command via bridge.
 
-    The ordinary bridge path ACKs immediately with NEEDS_MCP_CLICK. An armed
-    Observatory trial can instead use the reviewed native action, whose Lua
-    handler deliberately waits through the complete player/enemy/player cycle
-    for up to 60 seconds before acknowledging. Keep the Python deadline beyond
-    that in-game deadline so a successful one-shot delivery is not mislabeled
-    as unconfirmed while enemy animations are still running.
+    On this ITB build the Lua handler can only SetActive all player pawns —
+    it cannot advance the turn. It ACKs immediately with NEEDS_MCP_CLICK and
+    Python's cmd_end_turn routes through plan_end_turn for the actual click.
+    SetActive iteration is sub-second; 10 s is plenty of headroom.
     """
     write_command("END_TURN")
-    return wait_for_ack(timeout=max(70.0, _ACTION_TIMEOUT))
+    return wait_for_ack(timeout=10.0)
 
 
 def reactivate_player_pawns() -> str:
@@ -303,198 +278,3 @@ def bridge_ui_probe() -> str:
     """Run the read-only Lua UI/menu probe."""
     write_command("UI_PROBE")
     return wait_for_ack(timeout=5.0)
-
-
-def bridge_observatory_callback_manifest(
-    *, timeout: float = 10.0
-) -> tuple[str, dict]:
-    """Capture one fresh inert enemy callback-identity manifest."""
-    return request_observatory_callback_manifest(timeout=timeout)
-
-
-def bridge_observatory_callback_bindings(
-    *, timeout: float = 15.0
-) -> tuple[str, dict]:
-    """Capture one fresh inert enemy callback-slot manifest."""
-    return request_observatory_callback_bindings(timeout=timeout)
-
-
-def bridge_observatory_native_rng_arm(
-    capture_id: str,
-    *,
-    timeout: float = 15.0,
-) -> str:
-    """Arm the fixed build-keyed native RNG-core observer."""
-    return arm_observatory_native_rng(capture_id, timeout=timeout)
-
-
-def bridge_observatory_native_rng_seed(*, timeout: float = 10.0) -> str:
-    """Apply the fixed build-keyed RNG seed for a matched trial."""
-    return seed_observatory_native_rng(timeout=timeout)
-
-
-def bridge_observatory_native_rng_seed_and_arm(
-    capture_id: str,
-    *,
-    timeout: float = 15.0,
-) -> str:
-    """Atomically apply the fixed seed and arm the native RNG observer."""
-    return seed_and_arm_observatory_native_rng(capture_id, timeout=timeout)
-
-
-def bridge_observatory_native_rng_seed_and_arm_spawn_span(
-    capture_id: str,
-    *,
-    timeout: float = 15.0,
-) -> str:
-    """Atomically seed, arm native RNG, and wrap exact NextPawn."""
-    return seed_and_arm_observatory_native_rng_spawn_span(
-        capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_native_rng_arm_spawn_replay(
-    capture_id: str,
-    *,
-    timeout: float = 15.0,
-) -> str:
-    """Atomically arm native RNG and exact spawn replay observation."""
-    return arm_observatory_native_rng_spawn_replay(
-        capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_spawn_replay_control(
-    capture_id: str,
-    *,
-    timeout: float = 15.0,
-) -> str:
-    """Load replay artifacts inertly for an unmodified matched control."""
-    return prepare_observatory_spawn_replay_control(
-        capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_native_rng_status(
-    *, timeout: float = 10.0
-) -> tuple[str, dict]:
-    """Read the native RNG-core observer status."""
-    return status_observatory_native_rng(timeout=timeout)
-
-
-def bridge_observatory_native_rng_finish(
-    capture_id: str,
-    *,
-    timeout: float = 30.0,
-) -> tuple[str, dict]:
-    """Restore the native hook and retrieve a fresh complete snapshot."""
-    return finish_observatory_native_rng(capture_id, timeout=timeout)
-
-
-def bridge_observatory_native_rng_finish_spawn_span(
-    capture_id: str,
-    *,
-    timeout: float = 30.0,
-) -> tuple[str, dict, dict]:
-    """Restore native RNG and NextPawn, retrieving both fresh outputs."""
-    return finish_observatory_native_rng_spawn_span(capture_id, timeout=timeout)
-
-
-def bridge_observatory_native_rng_finish_spawn_replay(
-    capture_id: str,
-    *,
-    timeout: float = 30.0,
-) -> tuple[str, dict, dict]:
-    """Restore native RNG and both replay wrappers, retrieving both outputs."""
-    return finish_observatory_native_rng_spawn_replay(
-        capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_selected_queue_trial(
-    condition: str,
-    capture_id: str,
-    *,
-    timeout: float = 75.0,
-) -> tuple[str, dict | None]:
-    """Run one fixed one-enemy selected-record/queue diagnostic."""
-    return run_observatory_selected_queue_trial(
-        condition, capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_enemy_tournament_trial(
-    condition: str,
-    capture_id: str,
-    *,
-    timeout: float = 75.0,
-) -> tuple[str, dict | None]:
-    """Run one fixed complete enemy-record tournament diagnostic."""
-    return run_observatory_enemy_tournament_trial(
-        condition, capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_enemy_materialized_effect_trial(
-    condition: str,
-    capture_id: str,
-    *,
-    timeout: float = 75.0,
-) -> tuple[str, dict | None]:
-    """Run one fixed selected-SkillEffect materialization diagnostic."""
-    return run_observatory_enemy_materialized_effect_trial(
-        condition, capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_enemy_callback_trial(
-    condition: str,
-    family: str,
-    capture_id: str,
-    activation_nonce: str,
-    capsule_sha256: str,
-    *,
-    timeout: float = 75.0,
-) -> tuple[str, dict, dict | None]:
-    """Run one callback family over the fixed synthetic Firefly scenario."""
-    return run_observatory_enemy_callback_trial(
-        condition,
-        family,
-        capture_id,
-        activation_nonce,
-        capsule_sha256,
-        timeout=timeout,
-    )
-
-
-def bridge_observatory_spawn_coordinate_prepare(
-    condition: str,
-    capture_id: str,
-    *,
-    timeout: float = 10.0,
-) -> str:
-    """Seed and optionally arm one natural spawn-coordinate boundary."""
-    return prepare_observatory_spawn_coordinate(
-        condition, capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_spawn_coordinate_finish(
-    condition: str,
-    capture_id: str,
-    *,
-    timeout: float = 30.0,
-) -> tuple[str, dict | None]:
-    """Restore one natural spawn-coordinate boundary and fetch evidence."""
-    return finish_observatory_spawn_coordinate(
-        condition, capture_id, timeout=timeout
-    )
-
-
-def bridge_observatory_spawn_coordinate_abort(
-    capture_id: str,
-    *,
-    timeout: float = 10.0,
-) -> str:
-    """Restore an armed coordinate boundary without publishing evidence."""
-    return abort_observatory_spawn_coordinate(capture_id, timeout=timeout)

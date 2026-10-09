@@ -168,18 +168,3 @@ def test_lua_bridge_removes_temporary_append_and_checks_false_result():
     ) == 2
     assert "restore_wname" not in execute_source
 
-
-def test_bridge_end_turn_wait_covers_native_enemy_cycle(monkeypatch):
-    commands = []
-    timeouts = []
-    monkeypatch.setattr(writer, "write_command", commands.append)
-    monkeypatch.setattr(
-        writer,
-        "wait_for_ack",
-        lambda *, timeout: timeouts.append(timeout) or "OK END_TURN",
-    )
-
-    assert writer.execute_bridge_end_turn() == "OK END_TURN"
-    assert commands == ["END_TURN"]
-    assert len(timeouts) == 1
-    assert timeouts[0] >= 70.0

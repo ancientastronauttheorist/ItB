@@ -70,10 +70,6 @@ from src.loop.commands import (
     cmd_recommend_mission,
     cmd_bridge_speed,
     cmd_bridge_ui_probe,
-    cmd_observatory_callback_bindings,
-    cmd_observatory_callback_bindings_arm_startup,
-    cmd_observatory_callback_manifest,
-    cmd_observatory_callback_manifest_arm_startup,
     cmd_lightning_preflight,
     cmd_lightning_ui,
     cmd_lightning_route_start,
@@ -632,36 +628,6 @@ def main():
     sub.add_parser(
         "bridge_ui_probe",
         help="Read-only Lua probe for pause/menu/UI state candidates",
-    )
-
-    sub.add_parser(
-        "observatory_callback_manifest",
-        help=(
-            "Capture inert runtime enemy callback identities during an "
-            "unpaused deployment or active mission in an accepted, "
-            "inventoried Observatory capture track"
-        ),
-    )
-    sub.add_parser(
-        "observatory_callback_manifest_arm_startup",
-        help=(
-            "Create the fixed one-shot request for a callback manifest on "
-            "the next ITB startup"
-        ),
-    )
-    sub.add_parser(
-        "observatory_callback_bindings",
-        help=(
-            "Capture inert runtime callback table-slot identities during an "
-            "unpaused deployment or active mission"
-        ),
-    )
-    sub.add_parser(
-        "observatory_callback_bindings_arm_startup",
-        help=(
-            "Create the fixed one-shot request for a callback slot manifest "
-            "on the next ITB startup"
-        ),
     )
 
     # lightning_preflight
@@ -2267,14 +2233,6 @@ def main():
         cmd_bridge_speed(args.mode)
     elif args.command == "bridge_ui_probe":
         cmd_bridge_ui_probe()
-    elif args.command == "observatory_callback_manifest":
-        cmd_observatory_callback_manifest()
-    elif args.command == "observatory_callback_manifest_arm_startup":
-        cmd_observatory_callback_manifest_arm_startup()
-    elif args.command == "observatory_callback_bindings":
-        cmd_observatory_callback_bindings()
-    elif args.command == "observatory_callback_bindings_arm_startup":
-        cmd_observatory_callback_bindings_arm_startup()
     elif args.command == "lightning_preflight":
         cmd_lightning_preflight(
             profile=args.profile,

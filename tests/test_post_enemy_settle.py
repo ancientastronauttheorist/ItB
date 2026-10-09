@@ -1583,7 +1583,7 @@ def _m16_moved_spider_egg_web_case():
     return board, solve_data, deltas, punch_item, vip_item
 
 
-def _observatory_pair4_vacated_spider_destination_case():
+def _pair4_vacated_spider_destination_case():
     """Model pair 004's Spider entering a tile vacated by another Vek."""
     board, solve_data, deltas, punch_item, vip_item = (
         _m16_moved_spider_egg_web_case()
@@ -1922,9 +1922,9 @@ def test_m16_moved_spider_egg_web_explains_mech_and_vip_status():
     )
 
 
-def test_observatory_pair4_spider_destination_vacated_by_proven_enemy_move():
+def test_pair4_spider_destination_vacated_by_proven_enemy_move():
     board, solve_data, deltas, _punch_item, _vip_item, vacater = (
-        _observatory_pair4_vacated_spider_destination_case()
+        _pair4_vacated_spider_destination_case()
     )
 
     result = commands._classify_next_turn_web_grapples(
@@ -1952,7 +1952,7 @@ def test_observatory_pair4_spider_destination_vacated_by_proven_enemy_move():
     )
 
 
-def test_observatory_pair4_vacated_destination_proof_stays_fail_closed():
+def test_pair4_vacated_destination_proof_stays_fail_closed():
     cases = (
         "missing_live_vacater",
         "identity_mismatch",
@@ -1965,7 +1965,7 @@ def test_observatory_pair4_vacated_destination_proof_stays_fail_closed():
     )
     for case in cases:
         board, solve_data, deltas, punch_item, vip_item, vacater = (
-            _observatory_pair4_vacated_spider_destination_case()
+            _pair4_vacated_spider_destination_case()
         )
         final_vacater = solve_data["final_board"]["units"][-1]
         if case == "missing_live_vacater":

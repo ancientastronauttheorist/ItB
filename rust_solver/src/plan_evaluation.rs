@@ -1,20 +1,13 @@
-//! Shared completed-plan objective for compound and primitive callers.
+//! Shared completed-plan objective for compound search callers.
 //!
 //! These counters and the terminal expression preserve the compound search's
 //! scoring contract. Action admission, disabled-weapon penalty accrual and the
 //! clean-building selection policy remain the caller's responsibility.
 
-use crate::board::{count_unit_deaths_between, ActionResult, Board};
+use crate::board::{count_unit_deaths_between, Board};
 use crate::enemy::{apply_spawn_blocking, simulate_enemy_attacks};
 use crate::evaluate::{consumed_spawn_block_bonus, evaluate, EvalWeights, PsionState};
-use crate::solver::{
-    arachnoid_spawns_from_events, boosted_from_events, core_of_the_earth_chasm_falls_from_events,
-    efficient_explosives_from_events, feed_the_flame_from_events,
-    lets_walk_control_distance_from_events, maximum_firepower_from_events,
-    miner_inconvenience_mountain_damage_from_events, mission_missiles_action_bonus,
-    powered_blast_from_events, reverse_thrusters_four_damage_from_events,
-    viscera_nanobots_heal_from_events, working_together_from_events, MechAction,
-};
+use crate::solver::{mission_missiles_action_bonus, MechAction};
 use crate::types::Terrain;
 use crate::weapons::WeaponTable;
 
@@ -42,45 +35,9 @@ pub(crate) struct PlanTotals {
     pub(crate) soft_disable_penalty_so_far: f64,
 }
 
-impl PlanTotals {
-    /// Record one admitted transition, using the compound search's extractors.
-    /// Disabled-weapon penalties depend on the caller's weapon/mask admission,
-    /// so the caller accrues `soft_disable_penalty_so_far` separately.
-    pub(crate) fn record(&mut self, before: &Board, after: &Board, result: &ActionResult) {
-        self.kills_so_far += result.enemies_killed;
-        self.mission_kills_so_far += result.mission_kills;
-        self.unit_deaths_so_far += count_unit_deaths_between(before, after);
-        self.bumps_so_far += result.buildings_bump_damaged;
-        self.buildings_damaged_so_far += result.buildings_damaged;
-        self.nanobots_heal_so_far += viscera_nanobots_heal_from_events(&result.events);
-        self.powered_blast_so_far += powered_blast_from_events(&result.events);
-        self.reverse_thrusters_four_damage_so_far +=
-            reverse_thrusters_four_damage_from_events(&result.events);
-        self.feed_the_flame_so_far += feed_the_flame_from_events(&result.events);
-        self.boosted_so_far += boosted_from_events(&result.events);
-        self.maximum_firepower_so_far += maximum_firepower_from_events(&result.events);
-        self.arachnoid_spawns_so_far += arachnoid_spawns_from_events(&result.events);
-        self.efficient_explosives_so_far += efficient_explosives_from_events(&result.events);
-        self.working_together_so_far += working_together_from_events(&result.events);
-        self.lets_walk_control_distance_so_far +=
-            lets_walk_control_distance_from_events(&result.events);
-        self.core_of_the_earth_so_far += core_of_the_earth_chasm_falls_from_events(&result.events);
-        self.miner_inconvenience_mountain_damage_so_far +=
-            miner_inconvenience_mountain_damage_from_events(&result.events);
-        self.stay_with_me_heal_so_far += result.mech_hp_repaired;
-        self.pods_collected_so_far += result.pods_collected;
-    }
-}
-
 pub(crate) struct TerminalEvaluation {
-    /// Board after environment/enemy attacks and spawn blocking, without a
-    /// next-turn refresh or heuristic enemy requeue.
-    pub(crate) final_board: Board,
     pub(crate) score: f64,
     pub(crate) buildings_before_enemy: i32,
-    pub(crate) projected_kills: i32,
-    pub(crate) projected_mission_kills: i32,
-    pub(crate) projected_unit_deaths: i32,
 }
 
 fn count_buildings(board: &Board) -> i32 {
@@ -197,11 +154,7 @@ pub(crate) fn evaluate_terminal(
         - totals.soft_disable_penalty_so_far * penalty_scale;
 
     TerminalEvaluation {
-        final_board: b_eval,
         score,
         buildings_before_enemy,
-        projected_kills,
-        projected_mission_kills,
-        projected_unit_deaths,
     }
 }

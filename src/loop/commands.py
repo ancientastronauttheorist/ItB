@@ -75,11 +75,7 @@ from src.capture.detect_grid import find_game_window, grid_from_window
 from src.bridge.protocol import (
     is_bridge_active, is_bridge_alive, refresh_bridge_state,
     refresh_bridge_state_fresh, read_state,
-    BridgeError, ACK_FILE, CALLBACK_BINDINGS_FILE,
-    CALLBACK_BINDINGS_REQUEST_BYTES, CALLBACK_MANIFEST_FILE,
-    CALLBACK_MANIFEST_REQUEST_BYTES, CMD_FILE, STATE_FILE, STATE_TMP,
-    arm_observatory_callback_bindings_startup,
-    arm_observatory_callback_manifest_startup,
+    BridgeError, ACK_FILE, CMD_FILE, STATE_FILE, STATE_TMP,
 )
 from src.bridge.reader import (
     WEB_SOURCE_WEAPONS,
@@ -90,19 +86,8 @@ from src.bridge.reader import (
 from src.bridge.writer import (
     execute_bridge_action, execute_bridge_end_turn,
     deploy_mech, set_bridge_speed, bridge_ui_probe,
-    bridge_observatory_callback_bindings,
-    bridge_observatory_callback_manifest,
     move_mech, attack_mech, attack_mech_two, skip_mech, repair_mech,
     reactivate_player_pawns,
-)
-from src.observatory.runtime_callback_manifest import (
-    RuntimeCallbackManifestError,
-    validate_runtime_callback_manifest,
-)
-from src.observatory.runtime_callback_bindings import (
-    RuntimeCallbackBindingError,
-    callback_binding_manifest_sha256,
-    validate_runtime_callback_bindings,
 )
 from src.loop.session import RunSession, SolverAction, resolve_session_file
 from src.itb_paths import get_artifact_path
@@ -21472,158 +21457,6 @@ def cmd_bridge_ui_probe() -> dict:
         ]
         if callable_bits:
             print(f"  callable methods:  {'; '.join(callable_bits)}")
-    _print_result(result)
-    return result
-
-
-def cmd_observatory_callback_manifest() -> dict:
-    """Capture and strictly validate one inert callback-identity manifest."""
-    if not is_bridge_alive(max_stale_sec=5.0):
-        result = {
-            "status": "NO_BRIDGE",
-            "reason": "bridge_heartbeat_stale_or_missing",
-            "next_step": (
-                "Use an accepted, inventoried Observatory capture track with "
-                "the callback module installed. Either arm the fixed startup "
-                "request and restart ITB, or enter an unpaused deployment or "
-                "active mission so Mission.BaseUpdate can poll."
-            ),
-        }
-        _print_result(result)
-        return result
-    try:
-        ack, raw_manifest = bridge_observatory_callback_manifest(timeout=15.0)
-        manifest = validate_runtime_callback_manifest(raw_manifest)
-        raw_sha256 = hashlib.sha256(
-            CALLBACK_MANIFEST_FILE.read_bytes()
-        ).hexdigest()
-    except (
-        TimeoutError,
-        BridgeError,
-        RuntimeCallbackManifestError,
-        OSError,
-    ) as exc:
-        result = {"status": "ERROR", "error": str(exc)}
-        _print_result(result)
-        return result
-
-    summary = manifest["summary"]
-    function_cap = summary["status_counts"].get("function_cap", 0)
-    result = {
-        "status": "INCOMPLETE" if function_cap else "OK",
-        "ack": ack,
-        "manifest_file": str(CALLBACK_MANIFEST_FILE),
-        "manifest_sha256": raw_sha256,
-        "summary": summary,
-        "root_ids": [root["root_id"] for root in manifest["roots"]],
-    }
-    if function_cap:
-        result["reason"] = "runtime function catalog reached its hard cap"
-    print("\n=== OBSERVATORY CALLBACK MANIFEST ===")
-    print(f"  status:      {result['status']}")
-    print(f"  roots:       {summary['root_count']}")
-    print(f"  functions:   {summary['function_count']}")
-    print(f"  replacements:{summary['replaced_count']}")
-    print(f"  sha256:      {raw_sha256}")
-    _print_result(result)
-    return result
-
-
-def cmd_observatory_callback_manifest_arm_startup() -> dict:
-    """Create the fixed one-shot request for a title-screen capture."""
-    try:
-        request_file = arm_observatory_callback_manifest_startup()
-    except BridgeError as exc:
-        result = {"status": "ERROR", "error": str(exc)}
-        _print_result(result)
-        return result
-    result = {
-        "status": "ARMED",
-        "request_file": str(request_file),
-        "request_sha256": hashlib.sha256(
-            CALLBACK_MANIFEST_REQUEST_BYTES
-        ).hexdigest(),
-        "next_step": (
-            "Restart ITB. The request is consumed once after shipped scripts "
-            "load, and the result is written to the callback manifest file."
-        ),
-    }
-    _print_result(result)
-    return result
-
-
-def cmd_observatory_callback_bindings() -> dict:
-    """Capture and strictly validate one inert callback-slot manifest."""
-    if not is_bridge_alive(max_stale_sec=5.0):
-        result = {
-            "status": "NO_BRIDGE",
-            "reason": "bridge_heartbeat_stale_or_missing",
-            "next_step": (
-                "Use the fixed startup request and restart ITB, or enter an "
-                "unpaused deployment/mission with both callback modules installed."
-            ),
-        }
-        _print_result(result)
-        return result
-    try:
-        ack, raw_manifest = bridge_observatory_callback_bindings(timeout=20.0)
-        manifest = validate_runtime_callback_bindings(raw_manifest)
-        raw_sha256 = hashlib.sha256(CALLBACK_BINDINGS_FILE.read_bytes()).hexdigest()
-        canonical_sha256 = callback_binding_manifest_sha256(manifest)
-    except (
-        TimeoutError,
-        BridgeError,
-        RuntimeCallbackBindingError,
-        OSError,
-    ) as exc:
-        result = {"status": "ERROR", "error": str(exc)}
-        _print_result(result)
-        return result
-
-    summary = manifest["summary"]
-    function_cap = manifest["identity_manifest"]["summary"]["status_counts"].get(
-        "function_cap", 0
-    )
-    result = {
-        "status": "INCOMPLETE" if function_cap else "OK",
-        "ack": ack,
-        "manifest_file": str(CALLBACK_BINDINGS_FILE),
-        "raw_sha256": raw_sha256,
-        "canonical_sha256": canonical_sha256,
-        "summary": summary,
-        "slot_ids": [slot["slot_id"] for slot in manifest["slots"]],
-    }
-    if function_cap:
-        result["reason"] = "nested callback identity catalog reached its hard cap"
-    print("\n=== OBSERVATORY CALLBACK BINDINGS ===")
-    print(f"  status:      {result['status']}")
-    print(f"  roots:       {summary['root_count']}")
-    print(f"  functions:   {summary['function_count']}")
-    print(f"  slots:       {summary['slot_count']}")
-    print(f"  canonical:   {canonical_sha256}")
-    _print_result(result)
-    return result
-
-
-def cmd_observatory_callback_bindings_arm_startup() -> dict:
-    """Create the fixed one-shot request for a title-screen slot capture."""
-    try:
-        request_file = arm_observatory_callback_bindings_startup()
-    except BridgeError as exc:
-        result = {"status": "ERROR", "error": str(exc)}
-        _print_result(result)
-        return result
-    result = {
-        "status": "ARMED",
-        "request_file": str(request_file),
-        "request_sha256": hashlib.sha256(
-            CALLBACK_BINDINGS_REQUEST_BYTES
-        ).hexdigest(),
-        "next_step": (
-            "Restart ITB. The request is consumed once after shipped scripts "
-            "load, without calling or wrapping a candidate callback."
-        ),
-    }
     _print_result(result)
     return result
 
@@ -55218,35 +55051,6 @@ def _check_winnability(turn: int, score: float,
     }
 
 
-def _end_turn_with_observatory_boundary(boundary, end_turn):
-    """Run one diagnostic pre/post boundary around an End Turn delivery.
-
-    ``boundary`` is deliberately private to the Observatory runner.  Ordinary
-    ``game_loop.py auto_turn`` calls pass ``None`` and retain the exact normal
-    path.  A diagnostic boundary must arm and seed only after every player
-    actor is spent, then restore its native hook immediately after the
-    synchronous End Turn transition returns.  Any failure asks the boundary
-    to restore itself before propagating the error.
-    """
-    if boundary is None:
-        return end_turn(), None
-
-    try:
-        boundary.before_end_turn()
-        result = end_turn()
-        evidence = boundary.after_end_turn(result)
-        return result, evidence
-    except Exception:
-        try:
-            boundary.abort()
-        except Exception:
-            # The caller will fail closed and stop further combat.  Preserve
-            # the original exception; process teardown also removes a native
-            # in-memory patch if an observer restore command itself failed.
-            pass
-        raise
-
-
 def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   wait_for_turn: bool = True, max_wait: float = 45.0,
                   wait_poll_interval: float = 1.5,
@@ -55263,8 +55067,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   resume_fast_guard_seconds: float = 0.0,
                   pause_between_actions: bool = False,
                   frontier_diagnostics: bool = True,
-                  quiet: bool = False,
-                  _observatory_native_rng_boundary=None) -> dict:
+                  quiet: bool = False) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
@@ -55292,10 +55095,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
     ``frontier_diagnostics`` controls blocked-plan lookahead/robust previews.
     Lightning hot paths disable it to avoid spending timed-run seconds and
     emitting large nested JSON when a safety block is already decisive.
-
-    ``_observatory_native_rng_boundary`` is an internal, fail-closed hook used
-    only by the build-keyed native RNG trial runner.  It is intentionally not
-    exposed by the ordinary game-loop CLI.
 
     Returns dict with turn results or error.
     """
@@ -57321,32 +57120,10 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         )
         _print_result(pause_error)
         return pause_error
-    try:
-        end_result, observatory_boundary_evidence = (
-            _end_turn_with_observatory_boundary(
-                _observatory_native_rng_boundary,
-                lambda: cmd_end_turn(
-                    _prevalidated=True,
-                    _lightning_speed_loss_allowed=allow_lightning_speed_loss,
-                ),
-            )
-        )
-    except Exception as exc:
-        result = {
-            "status": "OBSERVATORY_NATIVE_RNG_BOUNDARY_BLOCKED",
-            "blocking": True,
-            "error": str(exc),
-            "turn": turn,
-            "actions_completed": actions_completed,
-            "retry_allowed": False,
-            "next_step": (
-                "Stop this diagnostic process. Do not retry End Turn; "
-                "restore the exact trial save and start a fresh process."
-            ),
-        }
-        result = _persist_held_end_turn_block(session, result, turn=turn)
-        _print_result(result)
-        return result
+    end_result = cmd_end_turn(
+        _prevalidated=True,
+        _lightning_speed_loss_allowed=allow_lightning_speed_loss,
+    )
     if "error" in end_result:
         result = {
             "status": "END_TURN_BLOCKED",
@@ -57463,10 +57240,6 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         "solver_gap_events": solver_gap_events,
         "research_queue_peek": _research_peek(session),
     }
-    if observatory_boundary_evidence is not None:
-        result["observatory_native_rng_boundary"] = (
-            observatory_boundary_evidence
-        )
     if resume_before_execute_result is not None:
         result["resume_before_execute"] = resume_before_execute_result
     if lightning_speed_loss_summary:

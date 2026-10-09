@@ -13,36 +13,7 @@ pub mod serde_bridge;
 pub mod turn_projection;
 pub mod beam;
 pub mod replay;
-pub mod native_rng;
 mod plan_evaluation;
-pub mod primitive;
-
-/// Read-only selectable-point inspection for the native-derived base domain.
-#[pyfunction]
-fn inspect_base_target_area(json_input: &str, actor_uid: u16, weapon_id: &str) -> PyResult<String> {
-    let (board, _, _, _, _, overlays) = serde_bridge::board_from_json(json_input)
-        .map_err(pyo3::exceptions::PyValueError::new_err)?;
-    let pairs: Vec<_> = overlays.iter().map(|e| (e.wid, e.patch.clone())).collect();
-    let table = weapons::build_overlay_table(&pairs);
-    let weapons = table.as_deref().unwrap_or(&weapons::WEAPONS);
-    let weapon = weapons::wid_from_str(weapon_id);
-    if !matches!(weapon, weapons::WId::BruteTankmech | weapons::WId::PrimePunchmech)
-        || weapons[weapon as usize].phase()
-    {
-        return Err(pyo3::exceptions::PyValueError::new_err("unsupported_base_target_area"));
-    }
-    let unit = (0..board.unit_count as usize)
-        .map(|i| &board.units[i])
-        .find(|u| u.uid == actor_uid && !u.is_extra_tile())
-        .ok_or_else(|| pyo3::exceptions::PyValueError::new_err("unknown_actor"))?;
-    let pos = (unit.x, unit.y);
-    Ok(serde_json::json!({
-        "schema_version":1,"simulator_version":SIMULATOR_VERSION,
-        "scope":"base Tank/Punch target area only; readiness/effects not admitted",
-        "targets":solver::get_weapon_target_area(&board,pos.0,pos.1,weapon,pos,weapons),
-        "search_representatives":solver::get_weapon_targets(&board,pos.0,pos.1,weapon,pos,weapons)
-    }).to_string())
-}
 
 /// Read-only regression admission using the same parsed board as search.
 /// Actor admission is not a proof that an available legal action exists.
@@ -58,37 +29,6 @@ fn inspect_admission(json_input: &str) -> PyResult<String> {
         "actor_uids":actors,"enemy_uids":enemies,
         "requires_actions":!actors.is_empty() && !enemies.is_empty()
     }).to_string())
-}
-
-/// Offline atomic planner. Emits `steps`, never legacy live action batches.
-#[pyfunction]
-fn solve_primitives(py: Python<'_>, json_input: &str, time_limit: f64) -> PyResult<String> {
-    py.allow_threads(|| {
-        let (board, spawns, _, weights, disabled, overlays) = serde_bridge::board_from_json(json_input)
-            .map_err(pyo3::exceptions::PyValueError::new_err)?;
-        let pairs: Vec<_> = overlays.iter().map(|e| (e.wid,e.patch.clone())).collect();
-        let table = weapons::build_overlay_table(&pairs);
-        primitive::solve(&board,&spawns,&weights,disabled,
-            table.as_deref().unwrap_or(&weapons::WEAPONS),time_limit)
-            .map_err(pyo3::exceptions::PyValueError::new_err)
-    })
-}
-
-/// Readiness-checked prefix replay, with terminal score only after completion.
-#[pyfunction]
-#[pyo3(signature = (json_input, steps_json, include_internal_state=false))]
-fn replay_primitives(py: Python<'_>, json_input: &str, steps_json: &str, include_internal_state: bool) -> PyResult<String> {
-    py.allow_threads(|| {
-        let steps: Vec<primitive::Step> = serde_json::from_str(steps_json)
-            .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("steps parse: {e}")))?;
-        let (board, spawns, _, weights, disabled, overlays) = serde_bridge::board_from_json(json_input)
-            .map_err(pyo3::exceptions::PyValueError::new_err)?;
-        let pairs: Vec<_> = overlays.iter().map(|e| (e.wid,e.patch.clone())).collect();
-        let table = weapons::build_overlay_table(&pairs);
-        primitive::replay_with_inspection(&board,&steps,&spawns,&weights,disabled,
-            table.as_deref().unwrap_or(&weapons::WEAPONS),include_internal_state)
-            .map_err(pyo3::exceptions::PyValueError::new_err)
-    })
 }
 
 /// Solve a turn given bridge JSON data.
@@ -2715,10 +2655,7 @@ fn solve_beam(
 
 #[pymodule]
 fn itb_solver(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(inspect_base_target_area, m)?)?;
     m.add_function(wrap_pyfunction!(inspect_admission, m)?)?;
-    m.add_function(wrap_pyfunction!(solve_primitives, m)?)?;
-    m.add_function(wrap_pyfunction!(replay_primitives, m)?)?;
     m.add_function(wrap_pyfunction!(solve, m)?)?;
     m.add_function(wrap_pyfunction!(solve_top_k, m)?)?;
     m.add_function(wrap_pyfunction!(score_plan, m)?)?;
