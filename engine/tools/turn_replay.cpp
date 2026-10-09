@@ -589,7 +589,9 @@ int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const Repl
       const PawnDef* def = data.pawn(m.type);
       if (!def || def->extra_spaces.empty() || !m.alive()) continue;
       for (Point x : def->extra_spaces) {
-        for (const Pawn& q : t.board.pawns()) extra_hit = extra_hit || (q.queued.active() && q.queued.target == m.pos + x);
+        for (const Pawn& q : t.board.pawns()) {
+          extra_hit = extra_hit || (q.queued.active() && q.queued.target == m.pos + x);
+        }
       }
     }
     if (extra_hit) {

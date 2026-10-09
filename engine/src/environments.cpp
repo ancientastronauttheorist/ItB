@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <map>
-#include <numeric>
 #include <set>
 #include <string>
 
@@ -772,7 +771,10 @@ class DamMission final : public Environment {
     dam_ = find_type(host.board(), "Dam_Pawn");
     if (const Pawn* d = host.board().find_pawn(dam_)) {
       pos_ = d->pos;
-      flooded_ = !d->alive();
+      // A dam that died before (Flooded) left water below it; one the
+      // player just destroyed (Engine::play_turn) floods now.
+      const Point below = pos_ + Point{0, 1};
+      flooded_ = !d->alive() && below.valid() && host.board().tile(below).is_liquid();
     }
   }
   void update(EnvHost& host) override {
