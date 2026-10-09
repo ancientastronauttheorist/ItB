@@ -134,6 +134,14 @@ class Engine {
   // shot is used up whether or not it fizzles.
   ActionResult fire_queued(Board& board, int32_t uid, const ActionOptions& opts = {});
 
+  // A pilot's rule-changing ability (board.hpp PilotAbility) from its Lua
+  // table's Skill, e.g. "Pilot_Rock" -> Rock_Skill. kPilotNone if none.
+  uint32_t pilot_ability(std::string_view pilot_id);
+  // The repair skill a pilot brings: Skill_Repair unless the pilot's Skill
+  // replaces it (Power_Repair -> Skill_Repair_Power, Mantis_Skill ->
+  // Skill_Repair_Punch; the mapping is inferred from the names).
+  std::string repair_skill(std::string_view pilot_id);
+
   // Resolves a ready effect with the Lua hooks wired (scripts, death
   // effects), e.g. an environment effect. `out` collects Lua diagnostics.
   ResolveResult resolve(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,

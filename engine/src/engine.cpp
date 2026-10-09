@@ -242,6 +242,31 @@ void Engine::apply_writes(Resolver& r, RulesContext& rules, const std::vector<Lu
   }
 }
 
+uint32_t Engine::pilot_ability(std::string_view pilot_id) {
+  static const std::pair<const char*, PilotAbility> kNames[] = {
+      {"Armored", kPilotArmored},          {"Thick", kPilotThick},
+      {"Rock_Skill", kPilotRockSkill},     {"Retaliation", kPilotRetaliation},
+      {"Flying", kPilotFlying},            {"Disable_Immunity", kPilotDisableImmunity},
+      {"Freeze_Walk", kPilotFreezeWalk},   {"Pain_Immunity", kPilotPainImmunity},
+      {"Road_Runner", kPilotRoadRunner},   {"Shifty", kPilotShifty},
+      {"Post_Move", kPilotPostMove},       {"Double_Shot", kPilotDoubleShot},
+      {"Youth_Move", kPilotYouthMove},     {"Arrogant_Boost", kPilotArrogantBoost},
+  };
+  const std::optional<std::string> skill = impl_->host->lua_string(pilot_id, "Skill");
+  if (!skill) return kPilotNone;
+  for (const auto& [name, bit] : kNames) {
+    if (*skill == name) return bit;
+  }
+  return kPilotNone;
+}
+
+std::string Engine::repair_skill(std::string_view pilot_id) {
+  const std::optional<std::string> skill = impl_->host->lua_string(pilot_id, "Skill");
+  if (skill == "Power_Repair") return "Skill_Repair_Power";
+  if (skill == "Mantis_Skill") return "Skill_Repair_Punch";
+  return "Skill_Repair";
+}
+
 ResolveResult Engine::resolve(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,
                               const ActionOptions& opts, ActionResult* out) {
   ActionResult local;

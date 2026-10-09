@@ -35,7 +35,12 @@ engine/build/itb_inspect --pawns                                        # every 
 engine/build/itb_inspect --scripts                                      # script load report
 engine/build/itb_inspect --corpus recordings                            # load all recorded boards
 engine/build/itb_inspect --weapons recordings                           # run weapon Lua on recorded boards
+engine/build/itb_inspect --replay recordings                            # replay recorded actions vs the game
 ```
+
+`--replay` takes `--show N`, `--weapon ID`, `--trace RUN/MISSION/TURN`
+(boards and effects of one turn), `--json FILE` (every mismatch) and
+`--no-sync`.
 
 ## How game data is loaded
 
@@ -115,19 +120,41 @@ Done so far (build order from the decompile):
      every mech weapon and queued Vek attack in the recordings runs cleanly:
      `itb_inspect --weapons recordings`.
 
-Next up: wire the Lua host into the executor so a shot runs end to end from
-the real weapon script (stage 6 integration), then stage 7 (the enemy phase).
+- **Stage 6 integration: shots end to end** (`engine.hpp`).
+   - `Engine::move / fire_weapon / repair / fire_queued` run the game's
+     own skill: Lua target area and `GetSkillEffect` (two-click weapons
+     through `TranslateFirstClick`, `GetSecondTargetArea`,
+     `GetFinalEffect`), `PrepareEffect` and `CheckAlterations`, the
+     executor, then the `Pawn::FireWeapon` bookkeeping.
+   - `sScript`s and `GetDeathEffect` run in the same Lua host against the
+     board as it is at that frame; their writes (`Board:AddEffect`,
+     `SetTerrain`, `Pawn:SetFrozen`, `Game:ModifyPowerGrid`, ...) are
+     applied, the rest reported. Death effects that draw random numbers
+     are logged as chance nodes.
+- **Replay validation** (`itb_inspect --replay recordings`).
+   - Replays every recorded player action from the board the old bot
+     solved, and compares each move and attack with what the game did: the
+     old bot's prediction plus the differences its verifier recorded, on
+     exactly the fields that verifier compared. Results are split by how
+     the bridge executed the action (native `FireWeapon`, `AddEffect`, or
+     the bridge's own emulation) and by whether the old simulator was right.
+   - Known recording artefacts are labelled, not counted as engine errors:
+     multi-tile pawns, the old simulator's `active`, unrecorded weapon
+     upgrades (a powered variant reproduces the game exactly), the bridge's
+     SKIP behaviour.
+
+Next up: stage 7 (the enemy phase).
 
 Integration notes:
 
 - A tile's occupant order is arrival order (`Pawn::arrival`). Boards loaded
   from recordings have no arrival history, so their shared tiles fall back to
   board-list order.
-- The Lua host's `to_engine` still drops `sAnimation`, its flags and the
-  projectile art. `SpaceDamage` has those fields now, so map them when
-  wiring the host to the executor. Each entry's `sScript` should then run
-  through `LuaHost::run_script` via `ResolveContext::run_script`, with its
-  `LuaWrite`s applied.
+- Lua writes are applied when the script returns, so a script does not see
+  its own writes (no shipped weapon script reads back what it wrote).
+- Burrowers record their dive (`RulesContext::burrow_dives`) but stay on the
+  board until stage 7 resolves the dive; the game lists them as gone.
+- Multi-tile pawns (trains, dams) occupy only their main tile here.
 
 ### Open questions for live-game testing
 
@@ -146,3 +173,11 @@ Integration notes:
   when things happen. Measure them in game.
 - **Frame rate.** Some outcomes depend on the frame rate (the executor flags
   them). Check what frame rate and speed level the game really runs at.
+- **Mechs standing in fire (Mission_BurnbugBoss).** Recorded mechs on a
+  burning tile were not set on fire, although `CheckAcidFire` runs every
+  frame for idle occupants. Find what prevents it.
+- **Spider eggs webbing newcomers.** Mechs that moved next to a `WebbEgg1`
+  were webbed in game. The decompiled web check releases webs to empty
+  tiles, so how the egg re-webs is not understood yet.
+- **Pilot level-ups.** A kill can level a pilot up mid-mission (+2 HP seen
+  in the recordings); pilot XP is not in the bridge data.
