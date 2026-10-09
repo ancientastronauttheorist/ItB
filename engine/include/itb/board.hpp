@@ -177,6 +177,9 @@ struct Pawn {
   bool fallen = false;   // fell into a chasm: off the board, never a corpse
   bool retreating = false;  // end-of-mission retreat started (bEvacuate)
   int32_t web_source = -1;  // uid of the webbing pawn
+  // The tile the web comes from (natively webs belong to tiles: the emitting
+  // tile keeps a list of directions it webs).
+  Point web_tile = kInvalidPoint;
   // When the pawn entered its tile (Board::stamp_arrival). Natively each tile
   // keeps its occupants in arrival order; pawns that share a stamp (0 for
   // boards loaded without that history) fall back to board-list order.
@@ -231,6 +234,11 @@ class Board {
   uint32_t passives = kPassiveNone;  // active squad passives
   Leader psion = Leader::None;       // active Vek psion mutation
   std::vector<Point> spawn_points;   // emerging Vek locations
+  // Teleporter pads (Board:AddTeleport), paired 0<->1, 2<->3, ... and, per
+  // pad, the uid of the pawn last seen arriving on it (-1: none). A pawn on a
+  // pad that is not its recorded occupant is warped (Board::Teleport).
+  std::vector<Point> teleporters;
+  std::vector<int32_t> teleporter_occupants;
 
  private:
   std::array<Tile, kTileCount> tiles_{};

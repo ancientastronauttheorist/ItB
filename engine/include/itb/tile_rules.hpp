@@ -233,6 +233,10 @@ void check_acid_fire(Board& board, Point p, Pawn& pawn, RulesContext& ctx);
 // CheckTerrainDangers: drowning, falling, Fire Boost, item pickup.
 void check_terrain_dangers(Board& board, Point p, RulesContext& ctx);
 
+// BoardSpace::OnLoop's web check for the webs tile p emits (part of
+// settle_tile_frame): breaks webs whose emitter or target no longer holds.
+void check_webs(Board& board, Point p, RulesContext& ctx);
+
 // One frame of BoardSpace::OnLoop's rules on p: deferred chasms, tile
 // cleanup, then hazards for every idle occupant and CheckTerrainDangers.
 void settle_tile_frame(Board& board, Point p, RulesContext& ctx);

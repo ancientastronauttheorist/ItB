@@ -1,6 +1,9 @@
 #include <doctest/doctest.h>
 
+#include <filesystem>
+#include <fstream>
 #include <string>
+#include <vector>
 
 #include "itb/recording.hpp"
 
@@ -64,6 +67,44 @@ TEST_CASE("recorded units keep their live stats and queued attacks") {
 
   // Player units come first in the board list.
   CHECK(b.pawns().front().team == Team::Player);
+}
+
+TEST_CASE("bridge quirks are corrected on load") {
+  const auto path = std::filesystem::temp_directory_path() / "itb_recording_quirks.json";
+  {
+    std::ofstream out(path);
+    out << R"({"tiles": [
+        {"x": 1, "y": 1, "terrain": "lava", "terrain_id": 5},
+        {"x": 2, "y": 2, "terrain": "lava", "terrain_id": 3, "lava": true},
+        {"x": 3, "y": 3, "terrain": "ground", "terrain_id": 0}],
+      "units": [
+        {"uid": 0, "type": "PunchMech", "x": 3, "y": 3, "hp": 5, "max_hp": 3, "team": 1, "mech": true,
+         "move": 0, "base_move": 3, "web": true, "web_source_uid": 9,
+         "weapons": ["Prime_Punchmech", "Passive_ForceAmp"], "pilot_id": "Pilot_Rock"},
+        {"uid": 9, "type": "Scorpion1", "x": 3, "y": 4, "hp": 3, "max_hp": 3, "team": 6}],
+      "teleporter_pairs": [[0, 0, 7, 7]]})";
+  }
+  std::string error;
+  auto rec = load_recording(path, nullptr, &error);
+  std::filesystem::remove(path);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  // Bridges before 2026-05-04 named ice (id 5) "lava"; real lava is water + flag.
+  CHECK(b.tile({1, 1}).terrain == Terrain::Ice);
+  CHECK_FALSE(b.tile({1, 1}).lava);
+  CHECK(b.tile({2, 2}).terrain == Terrain::Water);
+  CHECK(b.tile({2, 2}).lava);
+  const Pawn& mech = *b.find_pawn(0);
+  CHECK(mech.max_hp == 5);                   // base Health was reported as max_hp
+  CHECK(mech.movement.pilot_bonus == 0);     // GetMoveSpeed() read 0 while webbed
+  CHECK(mech.web_tile == Point{3, 4});       // the web comes from the source's tile
+  CHECK(b.has_passive(kPassiveForceAmp));    // squad passives from the mechs' weapons
+  REQUIRE(rec->pilots.size() == 1);
+  CHECK(rec->pilots[0].second == "Pilot_Rock");
+  REQUIRE(b.teleporters.size() == 2);
+  CHECK(b.teleporters[1] == Point{7, 7});
+  CHECK(b.tile({0, 0}).teleporter);
+  CHECK(b.teleporter_occupants == std::vector<int32_t>{-1, -1});
 }
 
 TEST_CASE("rejects files that are not boards") {

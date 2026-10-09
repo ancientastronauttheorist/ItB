@@ -31,9 +31,12 @@ class GlibcRand {
   explicit GlibcRand(uint32_t seed) { srand(seed); }
   void srand(uint32_t seed);
   int32_t rand();
+  // rand() calls made by scripts so far (srand's own warm-up not counted).
+  uint64_t draws() const { return draws_; }
 
  private:
   int32_t state_[31];
+  uint64_t draws_ = 0;
   int front_ = 3;  // index of the "f" pointer
   int rear_ = 0;   // index of the "r" pointer
 };

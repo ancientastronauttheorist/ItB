@@ -99,6 +99,8 @@ int64_t Resolver::frame() const { return sim_->frame(); }
 const FrameClock& Resolver::clock() const { return sim_->clock(); }
 void Resolver::add_effect(SkillEffect effect) { sim_->add_effect(std::move(effect)); }
 void Resolver::add_delay(float seconds) { sim_->add_delay(seconds); }
+void Resolver::damage_space(const SpaceDamage& sd) { sim_->damage_space(sd); }
+void Resolver::add_chance(const ChanceRecord& chance) { sim_->add_chance(chance); }
 
 ResolveResult resolve_effect(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,
                              ResolveContext& ctx) {
@@ -219,6 +221,12 @@ void Simulation::add_delay(float seconds) {
   push_back(SkillEffect{}, seconds, last_shot_, new_cause());
 }
 
+void Simulation::damage_space(const SpaceDamage& sd) { apply_hit(sd, new_cause()); }
+
+void Simulation::add_chance(const ChanceRecord& chance) {
+  if (result_) result_->chances.push_back(chance);
+}
+
 // ---- Frame loop ------------------------------------------------------------------------
 
 void Simulation::run(ResolveResult& result) {
@@ -234,9 +242,16 @@ void Simulation::run(ResolveResult& result) {
     changed_ = false;
     run_frame(f);
     const bool dirty = changed_ || !(board_ == before);
-    if (idle()) {
+    // Idle and a whole frame changed nothing: settled. An idle board that
+    // still changed (e.g. a walker arriving on a pod, picked up by the next
+    // frame's tile rules) runs on, as the game's frames do.
+    if (idle() && !dirty) {
       frame_ = f + 1;
       break;
+    }
+    if (idle()) {
+      f = f + 1;
+      continue;
     }
     const int64_t next = dirty ? f + 1 : next_event(f);
     if (next <= f) {
@@ -281,6 +296,7 @@ void Simulation::run_frame(int64_t f) {
     for (int32_t uid : order) {
       if (Pawn* p = board_.find_pawn(uid)) detonate_corpse(*p, state(uid));
     }
+    update_teleporters();
   }
 
   // P6: death animations and XP popups advance; their state is a function of

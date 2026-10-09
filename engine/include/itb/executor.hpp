@@ -104,6 +104,9 @@ struct ResolveEvent {
 enum class ChanceKind : uint8_t {
   GridDefense,  // a populated building rolled to resist (outcome 1 = resisted)
   SpiderEgg,    // a spider psion egg picked a tile among `options`
+  // A Lua hook (death effect, script) drew random numbers: its result is
+  // one sample. `amount` = the seed used, `outcome` = numbers drawn.
+  LuaRandom,
 };
 
 struct ChanceRecord {
@@ -190,6 +193,11 @@ class Resolver {
   // For scripts: Board:AddEffect (append, FULL_DELAY) and Board:AddDelay.
   void add_effect(SkillEffect effect);
   void add_delay(float seconds);
+  // Board:DamageSpace(SD): applied at once, as if it were an entry of the
+  // effect being applied (pushes start from it, deaths are noted).
+  void damage_space(const SpaceDamage& sd);
+  // Records a chance node of a hook into the result of the call in progress.
+  void add_chance(const ChanceRecord& chance);
 
  private:
   std::unique_ptr<detail::Simulation> sim_;

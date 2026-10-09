@@ -35,7 +35,9 @@ void GlibcRand::srand(uint32_t seed) {
   }
   front_ = 3;
   rear_ = 0;
+  const uint64_t draws = draws_;
   for (int i = 0; i < 310; ++i) rand();  // glibc discards 10 * degree outputs
+  draws_ = draws;
 }
 
 int32_t GlibcRand::rand() {
@@ -43,6 +45,7 @@ int32_t GlibcRand::rand() {
   state_[front_] = static_cast<int32_t>(sum);
   if (++front_ == 31) front_ = 0;
   if (++rear_ == 31) rear_ = 0;
+  ++draws_;
   return static_cast<int32_t>(sum >> 1);
 }
 

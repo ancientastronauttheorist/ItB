@@ -313,19 +313,89 @@ void Simulation::detonate_corpse(Pawn& pawn, PawnSim& ps) {
   log(ResolveEventType::CorpseExploded, pos, pawn.uid);
 }
 
-// Board::UpdateLeaders: the board psion comes from living leaders only.
+// Board::UpdateLeaders: the board psion is the leader type of the last
+// living leader in list order (stage 7 spec 1.4). Every pawn the new psion
+// affects gets Pawn::SetMutation, which recomputes its maximum HP
+// (ComputeHealthTotal: +1 under the Soldier psion) and moves its HP by the
+// same amount; a pawn that only lived on the bonus dies.
 void Simulation::update_leaders() {
   if (!track_leaders_) return;
   Leader leader = Leader::None;
   for (const Pawn& p : board_.pawns()) {
-    if (p.alive() && p.leader != Leader::None) {
-      leader = p.leader;
-      break;
+    if (p.alive() && p.leader != Leader::None) leader = p.leader;
+  }
+  if (board_.psion == leader) return;
+  const Leader old = board_.psion;
+  auto bonus = [](Leader m) { return m == Leader::Health ? 1 : 0; };
+  std::vector<std::pair<int32_t, int>> deltas;
+  for (const Pawn& p : board_.pawns()) {
+    if (!p.alive()) continue;
+    const bool had = mutation_affects(board_, p, old);
+    board_.psion = leader;
+    // Mutation 0 (no psion left) is set on everyone; otherwise only on the
+    // pawns the new psion affects (the rest keep their old mutation).
+    const bool gets = leader == Leader::None || mutation_affects(board_, p, leader);
+    board_.psion = old;
+    if (!gets) continue;
+    const int delta = bonus(leader) - (had ? bonus(old) : 0);
+    if (delta != 0) deltas.emplace_back(p.uid, delta);
+  }
+  board_.psion = leader;
+  changed_ = true;
+  for (const auto& [uid, delta] : deltas) {
+    Pawn* p = board_.find_pawn(uid);
+    if (!p) continue;
+    p->max_hp = static_cast<int8_t>(std::max(0, p->max_hp + delta));
+    p->hp = static_cast<int8_t>(std::max(0, p->hp + delta));
+    if (p->hp <= 0) {
+      p->hp = 1;  // kill_pawn takes it from alive to dying
+      kill_pawn(board_, *p, rules_);
     }
   }
-  if (board_.psion != leader) {
-    board_.psion = leader;
+  note_deaths();
+}
+
+// Board::OnLoop's teleporter scan (P5, after the corpse explosions): the
+// first pad holding a living pawn other than its recorded occupant warps it
+// (Board::Teleport): nothing on water or chasm pads or cracked ones;
+// otherwise the pawn and whatever stands on the partner pad (living, or a
+// corpse) swap through an appended teleport effect.
+void Simulation::update_teleporters() {
+  std::vector<Point>& pads = board_.teleporters;
+  std::vector<int32_t>& seen = board_.teleporter_occupants;
+  if (pads.empty()) return;
+  seen.resize(pads.size(), -1);
+  auto living = [&](Point p) -> const Pawn* {
+    const Pawn* q = has_pawn(board_, p) ? board_pawn(board_, p) : nullptr;
+    return q && q->alive() ? q : nullptr;
+  };
+  for (size_t i = 0; i < pads.size(); ++i) {
+    const Pawn* arrival = living(pads[i]);
+    if (!arrival) {
+      if (seen[i] != -1) changed_ = true;
+      seen[i] = -1;
+      continue;
+    }
+    if (arrival->uid == seen[i]) continue;
+    const size_t j = i ^ 1u;
+    if (j >= pads.size()) return;
+    // Board::Teleport(i).
+    seen[j] = arrival->uid;
     changed_ = true;
+    const Tile& from = board_.tile(pads[i]);
+    const Tile& to = board_.tile(pads[j]);
+    if (from.is_chasm() || from.is_liquid() || to.is_chasm() || from.cracked || to.cracked) return;
+    const Pawn* other = has_pawn(board_, pads[j]) ? board_pawn(board_, pads[j]) : nullptr;
+    const bool swap = other && (other->alive() || is_corpse(board_, *other));
+    seen[i] = swap ? other->uid : -1;
+    SkillEffect fx;
+    fx.add_teleport(pads[i], pads[j]);
+    if (swap) fx.add_teleport(pads[j], pads[i]);
+    prepare_effect(fx, pads[i], pads[j], Team::None, kNoSymbol);
+    fx.owner = arrival->uid;
+    fx.follow_up = true;
+    push_back(std::move(fx), kFullDelay, last_shot_, new_cause());
+    return;
   }
 }
 

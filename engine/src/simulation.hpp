@@ -118,6 +118,8 @@ class Simulation final : public FrameHooks {
   ResolveResult settle();
   void add_effect(SkillEffect effect);
   void add_delay(float seconds);
+  void damage_space(const SpaceDamage& sd);
+  void add_chance(const ChanceRecord& chance);
 
   Board& board() { return board_; }
   int64_t frame() const { return frame_; }
@@ -173,6 +175,7 @@ class Simulation final : public FrameHooks {
   bool is_exploding(const Pawn& pawn) const;
   void detonate_corpse(Pawn& pawn, PawnSim& ps);
   void update_leaders();
+  void update_teleporters();
   bool removable(const Pawn& pawn, const PawnSim& ps) const;
   void remove(int32_t uid);
   void cancel_queued_shot(Pawn& pawn);

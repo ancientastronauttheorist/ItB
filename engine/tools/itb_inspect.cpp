@@ -6,6 +6,8 @@
 //   itb_inspect [--game DIR] --corpus DIR       load every *_solve_input.json under DIR
 //   itb_inspect [--game DIR] --moves DIR        check recorded first moves are reachable
 //   itb_inspect [--game DIR] --weapons DIR      run every mech weapon's Lua on recorded boards
+//   itb_inspect [--game DIR] --replay DIR [--show N] [--no-sync] [--weapon ID] [--json FILE]
+//                                               replay recorded actions, compare with the game
 
 #include <algorithm>
 #include <cstdio>
@@ -25,6 +27,7 @@
 #include "itb/lua_host.hpp"
 #include "itb/movement.hpp"
 #include "itb/recording.hpp"
+#include "replay.hpp"
 
 namespace fs = std::filesystem;
 using namespace itb;
@@ -33,7 +36,7 @@ namespace {
 
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
-               "--moves DIR | --weapons DIR)\n";
+               "--moves DIR | --weapons DIR | --replay DIR [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE])\n";
   return 2;
 }
 
@@ -314,6 +317,30 @@ int main(int argc, char** argv) {
   if (args[0] == "--weapons") {
     if (args.size() < 2) return usage();
     return run_weapons(args[1], game, data);
+  }
+  if (args[0] == "--replay") {
+    if (args.size() < 2) return usage();
+    tools::ReplayOptions o;
+    o.recordings = args[1];
+    o.game = game;
+    for (size_t i = 2; i < args.size(); ++i) {
+      if (args[i] == "--show" && i + 1 < args.size()) {
+        o.show = std::stoi(args[++i]);
+      } else if (args[i] == "--no-sync") {
+        o.sync = false;
+      } else if (args[i] == "--weapon" && i + 1 < args.size()) {
+        o.only_weapon = args[++i];
+      } else if (args[i] == "--trace" && i + 1 < args.size()) {
+        o.trace = args[++i];
+      } else if (args[i] == "--json" && i + 1 < args.size()) {
+        o.json_out = args[++i];
+      } else if (args[i] == "--failure-db" && i + 1 < args.size()) {
+        o.failure_db = args[++i];
+      } else {
+        return usage();
+      }
+    }
+    return tools::run_replay(o);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();
