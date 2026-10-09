@@ -101,6 +101,9 @@ void Resolver::add_effect(SkillEffect effect) { sim_->add_effect(std::move(effec
 void Resolver::add_delay(float seconds) { sim_->add_delay(seconds); }
 void Resolver::damage_space(const SpaceDamage& sd) { sim_->damage_space(sd); }
 void Resolver::add_chance(const ChanceRecord& chance) { sim_->add_chance(chance); }
+ResolveResult Resolver::apply(const std::function<void()>& edit) { return sim_->apply(edit); }
+void Resolver::update_leaders() { sim_->leaders_now(); }
+bool Resolver::busy() const { return sim_->is_busy(); }
 
 ResolveResult resolve_effect(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,
                              ResolveContext& ctx) {
@@ -158,6 +161,10 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
     PawnSim& ps = state(p.uid);
     // Bodies already on the board: their death was handled long ago.
     if (!p.alive()) ps.dead = true;
+  }
+  // Pawns the Soldier psion affects already carry its +1.
+  for (Pawn& p : board_.pawns()) {
+    if (p.alive() && mutation_affects(board_, p, Leader::Health)) p.health_bonus = true;
   }
 }
 
@@ -225,6 +232,25 @@ void Simulation::damage_space(const SpaceDamage& sd) { apply_hit(sd, new_cause()
 
 void Simulation::add_chance(const ChanceRecord& chance) {
   if (result_) result_->chances.push_back(chance);
+}
+
+ResolveResult Simulation::apply(const std::function<void()>& edit) {
+  ResolveResult result;
+  result.start_frame = frame_;
+  result_ = &result;
+  phase_ = Phase::Input;
+  changed_ = true;
+  rules_.pushes.clear();
+  if (edit) edit();
+  note_deaths();
+  register_holes();
+  const std::vector<PendingPush> pushes = std::move(rules_.pushes);
+  rules_.pushes.clear();
+  const int cause = new_cause();
+  for (const PendingPush& push : pushes) start_push(push.uid, push.dir, cause);
+  run(result);
+  result_ = nullptr;
+  return result;
 }
 
 // ---- Frame loop ------------------------------------------------------------------------
@@ -297,6 +323,13 @@ void Simulation::run_frame(int64_t f) {
       if (Pawn* p = board_.find_pawn(uid)) detonate_corpse(*p, state(uid));
     }
     update_teleporters();
+  }
+
+  // The mission's per-frame Lua (BaseUpdate), with the frame's board.
+  if (ctx_.frame_hook) {
+    ctx_.frame_hook(owner_);
+    note_deaths();
+    register_holes();
   }
 
   // P6: death animations and XP popups advance; their state is a function of

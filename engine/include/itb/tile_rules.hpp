@@ -150,6 +150,9 @@ void damage_pawn(Board& board, Pawn& pawn, int damage, DamageMode mode, RulesCon
 // burrow dive and Retaliation.
 void modify_health(Board& board, Pawn& pawn, int delta, DamageMode mode, RulesContext& ctx);
 
+// Pawn::Retreat (bEvacuate, Mission_Volatile): see tile_rules.cpp.
+void retreat_pawn(Board& board, Pawn& pawn, RulesContext& ctx);
+
 // Pawn::Kill: death pending, HP 0, queued shot cleared. No-op on a dead pawn.
 void kill_pawn(Board& board, Pawn& pawn, RulesContext& ctx);
 // Pawn::KillInstant (drowning, falling, chasms): Kill, and the death

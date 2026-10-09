@@ -36,11 +36,14 @@ engine/build/itb_inspect --scripts                                      # script
 engine/build/itb_inspect --corpus recordings                            # load all recorded boards
 engine/build/itb_inspect --weapons recordings                           # run weapon Lua on recorded boards
 engine/build/itb_inspect --replay recordings                            # replay recorded actions vs the game
+engine/build/itb_inspect --replay recordings --turns                    # whole turns, through the enemy phase
 ```
 
 `--replay` takes `--show N`, `--weapon ID`, `--trace RUN/MISSION/TURN`
 (boards and effects of one turn), `--json FILE` (every mismatch) and
-`--no-sync`.
+`--no-sync`. With `--turns` it replays each recorded turn whose plan it can
+follow to the end, runs the enemy phase and compares with the game's board
+at the start of the next turn (see "Validating the enemy phase").
 
 ## How game data is loaded
 
@@ -143,7 +146,92 @@ Done so far (build order from the decompile):
      upgrades (a powered variant reproduces the game exactly), the bridge's
      SKIP behaviour.
 
-Next up: stage 7 (the enemy phase).
+- **Stage 7: the enemy phase** (`enemy_phase.hpp`, `environment.hpp`).
+   - `Engine::end_turn(board, TurnContext)` runs End Turn up to the end of
+     the enemy's spawns, in the game's order: Pawn::EndTurn on player pawns
+     (Networked Shielding off), webs released, the six status-tick phases
+     (one pawn per idle step, fresh list per phase, UpdateLeaders after each),
+     environment steps, queued shooters (first in list order, re-aimed from
+     the current tile, smoke/death/ice/water cancel), then the victory check,
+     the mission's enemy NextTurn and the spawn cursor (blocked spawns take a
+     push-mode hit and keep their marker; spawns on water/chasm are dropped).
+     Every step resolves to idle on one frame clock; mission per-frame hooks
+     (UpdateMission) run at every simulated frame. It stops before AI
+     planning. `Engine::play_turn` runs the player's actions first.
+   - `PhaseResult`: events, every chance node (Grid Defense, environment
+     orders and choices, Lua death-effect randomness, spider eggs, mission
+     picks), timing flags, Lua diagnostics, spawns of unknown type, and
+     `exact = false` when the recorded data does not pin the result down.
+   - Environments sit behind `Environment` (the mission's LiveEnvironment
+     plus its combat hooks), dispatched on `mission_id`; a Lua-backed
+     implementation can replace the native ones once the bridge exports the
+     mission instance (spec stage 7 section 4). Table below.
+   - The Soldier psion's +1 is tracked per pawn (`Pawn::health_bonus`):
+     pawns that appear while it lives get it, pawns another psion does not
+     affect keep a stale one. The Psion Tyrant reaches every player-team pawn.
+   - Recordings: the mission data stage 7 reads (`Recording::mission`) and
+     AE pilot level-up skills (Thick Skin, Technician).
+
+### Environments and mission hooks
+
+"Exact" means: reproduced from what today's recordings contain. Newer bridge
+fields (`environment_tides_index`, `environment_wind_dir`,
+`mission_final_volcano`, `mission_final_cave`, `mission_hacking_*_id`) are
+used when present.
+
+| mission (env) | native behaviour | from recorded data |
+|---|---|---|
+| Mission_Airstrike (Env_Airstrike) | plane, then DAMAGE_DEATH on the 5-tile cross | exact (centre = the mark with 4 marked neighbours) |
+| Mission_Lightning (Env_Lightning) | 4 strikes, DAMAGE_DEATH, one per step | strike order is hidden RNG: chance node `EnvOrder` over the k! orders of occupied strikes (empty strikes commute) |
+| Mission_Crack (Env_Seismic) | 3 path tiles become chasms, in path order | exact when the path direction follows from last turn's chasm or the board edge; else chance node (2 orders, only if 2+ strikes are occupied) |
+| Mission_Cataclysm (Env_Cataclysm) | column collapses top to bottom, 0.2 s per tile, buildings spared | exact (column from the marks; no marks = nothing can change) |
+| Mission_Tides (Env_Tides) | row Index floods, building shadows, mountains DAMAGE_DEATH first | exact (row from the marks or the recorded index) |
+| Mission_Terratide (Env_Terratide) | row 7-Index smoked from the bottom, no shadow | exact |
+| Mission_SnowStorm (Env_SnowStorm) | 3x3 block frozen in one frame | exact (`environment_freeze`) |
+| Mission_Wind (Env_RandomWind) | two columns pushed from the downwind edge, 0.2 s after occupied rows | exact with `environment_wind_dir`; old recordings: chance node `EnvChoice` (Down/Up) + EnvInexact |
+| Mission_Belt / BeltRandom (Env_Belt) | belts push downstream first, 0.2 s after occupied belts | exact unless chains feed each other or a belt breaks mid-phase (EnvInexact: `Belts` order / CheckBelts quirk) |
+| Mission_Final (Env_Volcano) | rocks: fire artillery DAMAGE_DEATH; lava: tile to lava; super-volcano repaired | exact with `mission_final_volcano`; old: mode and order from the tile pattern (EnvInexact for a single tile) |
+| Mission_Final_Cave (Env_Final) | rocks drop (DAMAGE_DEATH, ground), tentacles (DAMAGE_DEATH, lava); bomb re-drop | exact with `mission_final_cave`; old: phase from the turn number (EnvInexact), phase-2 order a chance node; bomb drop a chance node `MissionRandom` |
+| Mission_AcidStorm | every pawn ACID every frame while the generator lives | exact |
+| Mission_Shields | new pawns shielded; generator death drops every shield | assumes every recorded pawn already had its shield (`ShieldedUnits` not recorded) |
+| Mission_Hacking | facility death turns the bot into Snowtank1_Player | exact with ids; old recordings infer the bot (EnvInexact if several) |
+| Mission_Dam | dam death floods two columns, 0.3 s per row | exact |
+| Mission_Train / Armored_Train | train fires after every Vek; wreck replaces a dead train | queued move inferred (bridge omits team-1 shots); the rear tile is not modelled |
+| Mission_Satellite | queued launch: DAMAGE_DEATH around, rocket flies away; NextTurn powering | exact with `queued_launch` |
+| Mission_Volatile | last enemy retreats | exact with `is_infinite_spawn` |
+| Mission_Reactivation | NextTurn thaws 2 random frozen enemies | chance node `MissionRandom` over the pairs |
+| anything else with marks | none | `EnvUnsupported` (NanoStorm, Sandstorm, LandChange are unshipped) |
+
+Spawn types are hidden (decided when queued, not shown): spawns without a
+type in `TurnContext::spawn_types` emerge without a pawn
+(`PhaseResult::emerged_unknown`). The bridge reports spawns in scan order,
+not queue order; when that can matter (a blocked spawn among several) the
+result says so (EnvInexact).
+
+### Validating the enemy phase
+
+`itb_inspect --replay recordings --turns` (corpus of 469 recorded turns):
+324 turns have a plan the per-action replay follows to its end; 231 of them
+have a trustworthy next-turn board (the board read when the next player turn
+began, `m*_turn_<t+1>_solve_input.json`, or the `post_enemy` summary when that
+board was read after the next turn had begun). 77 final turns have neither,
+9 have captures that disagree on grid power.
+
+Between the end of the spawns (where the engine stops) and that capture the
+game ran AI planning and movement. Differences that step explains are
+classified, not counted: instant smoke on queued targets (Mosquitoes), pawns
+created at planning (Digger walls, spider eggs, blobs, totems, hatching), ACID
+pools picked up by AI moves, Vek stepping on mines, UpdateSpawning additions
+(Holes, Factory, Spider boss, Acid). So are recording artefacts: lava the old
+bridge reported as water, pilot level-ups, and the Storm Generator upgrade
+(the bridge reports `Passive_Electric` without `_A`). Hidden choices and
+Grid Defense rolls are tried as branches; emerged spawn types are taken from
+the next board.
+
+Turns whose player steps all matched the game: 217, of which 148 exact
+(68.2%) and 68 more with only explained differences (99.5%); the one left is
+a post_enemy-only comparison (building HP total off by 1, grid power
+matching). Turns that needed a mid-turn sync: 14, 64.3%.
 
 Integration notes:
 
@@ -153,8 +241,14 @@ Integration notes:
 - Lua writes are applied when the script returns, so a script does not see
   its own writes (no shipped weapon script reads back what it wrote).
 - Burrowers record their dive (`RulesContext::burrow_dives`) but stay on the
-  board until stage 7 resolves the dive; the game lists them as gone.
-- Multi-tile pawns (trains, dams) occupy only their main tile here.
+  board during the player phase; in the enemy phase they leave it
+  (`Pawn::pos` invalid, previous tile in `movement.prev_pos`) until the AI
+  resurfaces them.
+- `Engine::end_turn` leaves `Board::player_phase` false and does not apply
+  the next player turn's start (Zoltan shields, Opener/Closer, last-turn
+  spawn clearing): score those as next-turn context.
+- Multi-tile pawns (trains, dams) occupy only their main tile here. In game
+  a Vek attack on a train's rear tile kills it (seen in the recordings).
 
 ### Open questions for live-game testing
 
@@ -181,3 +275,16 @@ Integration notes:
   tiles, so how the egg re-webs is not understood yet.
 - **Pilot level-ups.** A kill can level a pilot up mid-mission (+2 HP seen
   in the recordings); pilot XP is not in the bridge data.
+- **Enemy phase (stage 7).**
+   - Spawn types and queue order are hidden; the bridge could forward the
+     save's `spawns` / `spawn_ids` / `spawn_points`.
+   - Passive upgrades: six recorded turns only match with the Storm
+     Generator's +1, which the bridge does not report.
+   - The train's queued move is assumed every turn (the bridge omits team-1
+     queued shots); Mission_Shields' `ShieldedUnits` is assumed complete.
+   - Lightning's realised strike order (spec stage 7 section 4.4 ledger)
+     would confirm the order chance node.
+   - A pawn killed by `SetMutation` at the quiescent frame (psion death)
+     might leave the board idle for one frame (spec stage 7 O1).
+   - Nine turns' `post_enemy` summaries disagree with the next turn's board
+     on grid power: check when each is captured.

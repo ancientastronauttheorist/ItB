@@ -314,43 +314,43 @@ void Simulation::detonate_corpse(Pawn& pawn, PawnSim& ps) {
 }
 
 // Board::UpdateLeaders: the board psion is the leader type of the last
-// living leader in list order (stage 7 spec 1.4). Every pawn the new psion
-// affects gets Pawn::SetMutation, which recomputes its maximum HP
-// (ComputeHealthTotal: +1 under the Soldier psion) and moves its HP by the
-// same amount; a pawn that only lived on the bonus dies.
+// living leader in list order (stage 7 spec 1.4). Every living pawn the psion
+// affects gets Pawn::SetMutation (mutation 0, no psion left, reaches
+// everyone); the rest keep their old mutation. Only the Soldier psion changes
+// HP: SetMutation recomputes the maximum (ComputeHealthTotal: +1 under it)
+// and moves current HP by the same amount, so a pawn that only lived on the
+// bonus dies. The bonus is tracked per pawn (Pawn::health_bonus), which also
+// gives it to pawns that appear while the Soldier psion lives.
 void Simulation::update_leaders() {
-  if (!track_leaders_) return;
+  if (!track_leaders_) {
+    // A psion that appears (a spawn, an emerging Vek) starts the tracking.
+    track_leaders_ = std::any_of(board_.pawns().begin(), board_.pawns().end(),
+                                 [](const Pawn& p) { return p.leader != Leader::None; });
+    if (!track_leaders_) return;
+  }
   Leader leader = Leader::None;
   for (const Pawn& p : board_.pawns()) {
     if (p.alive() && p.leader != Leader::None) leader = p.leader;
   }
-  if (board_.psion == leader) return;
-  const Leader old = board_.psion;
-  auto bonus = [](Leader m) { return m == Leader::Health ? 1 : 0; };
-  std::vector<std::pair<int32_t, int>> deltas;
-  for (const Pawn& p : board_.pawns()) {
-    if (!p.alive()) continue;
-    const bool had = mutation_affects(board_, p, old);
-    board_.psion = leader;
-    // Mutation 0 (no psion left) is set on everyone; otherwise only on the
-    // pawns the new psion affects (the rest keep their old mutation).
-    const bool gets = leader == Leader::None || mutation_affects(board_, p, leader);
-    board_.psion = old;
-    if (!gets) continue;
-    const int delta = bonus(leader) - (had ? bonus(old) : 0);
-    if (delta != 0) deltas.emplace_back(p.uid, delta);
-  }
+  if (board_.psion != leader) changed_ = true;
   board_.psion = leader;
-  changed_ = true;
-  for (const auto& [uid, delta] : deltas) {
+  const bool bonus = leader == Leader::Health;
+  std::vector<int32_t> dying;
+  for (Pawn& p : board_.pawns()) {
+    if (!p.alive() || p.health_bonus == bonus) continue;
+    if (leader != Leader::None && !mutation_affects(board_, p, leader)) continue;
+    const int delta = bonus ? 1 : -1;
+    p.health_bonus = bonus;
+    p.max_hp = static_cast<int8_t>(std::max(0, p.max_hp + delta));
+    p.hp = static_cast<int8_t>(std::max(0, p.hp + delta));
+    changed_ = true;
+    if (p.hp <= 0) dying.push_back(p.uid);
+  }
+  for (int32_t uid : dying) {
     Pawn* p = board_.find_pawn(uid);
     if (!p) continue;
-    p->max_hp = static_cast<int8_t>(std::max(0, p->max_hp + delta));
-    p->hp = static_cast<int8_t>(std::max(0, p->hp + delta));
-    if (p->hp <= 0) {
-      p->hp = 1;  // kill_pawn takes it from alive to dying
-      kill_pawn(board_, *p, rules_);
-    }
+    p->hp = 1;  // kill_pawn takes it from alive to dying
+    kill_pawn(board_, *p, rules_);
   }
   note_deaths();
 }

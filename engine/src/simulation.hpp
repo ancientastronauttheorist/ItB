@@ -120,6 +120,9 @@ class Simulation final : public FrameHooks {
   void add_delay(float seconds);
   void damage_space(const SpaceDamage& sd);
   void add_chance(const ChanceRecord& chance);
+  ResolveResult apply(const std::function<void()>& edit);
+  void leaders_now() { update_leaders(); }
+  bool is_busy() const { return busy_state() != 0; }
 
   Board& board() { return board_; }
   int64_t frame() const { return frame_; }

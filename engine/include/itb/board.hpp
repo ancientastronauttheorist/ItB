@@ -84,6 +84,8 @@ enum PilotAbility : uint32_t {
   kPilotDoubleShot = 1u << 11,      // Double_Shot
   kPilotYouthMove = 1u << 12,       // Youth_Move
   kPilotArrogantBoost = 1u << 13,   // Arrogant_Boost
+  kPilotRegen = 1u << 14,           // Regen: +1 HP at the end of each enemy phase's ticks
+  kPilotZoltan = 1u << 15,          // Zoltan_Skill: shield at turn start, kept by Mission_Shields
 };
 
 // Squad passives that change rules. Comments give the Lua weapon name and,
@@ -109,6 +111,7 @@ enum Passive : uint32_t {
   kPassiveFriendlyFireAB = 1u << 14,   // Passive_FriendlyFire_AB
   kPassiveFastDecay = 1u << 15,        // Passive_FastDecay: dead Vek leave forest
   kPassiveVoidShock = 1u << 16,        // Passive_VoidShock (AE)
+  kPassiveElectricSmokeA = 1u << 17,   // Passive_Electric_A: Storm Generator deals 2
 };
 
 inline constexpr int kMaxWeapons = 4;
@@ -176,6 +179,10 @@ struct Pawn {
   bool infected = false;
   bool injured = false;  // loses 1 HP whenever it changes tile
   bool dying = false;    // HP reached 0; death not processed yet
+  // Carries the Soldier psion's +1 (Pawn::SetMutation(LEADER_HEALTH) raised
+  // max and current HP). Natively a per-pawn mutation that a pawn keeps while
+  // a psion of another type, which does not affect it, is the board psion.
+  bool health_bonus = false;
   bool fallen = false;   // fell into a chasm: off the board, never a corpse
   int32_t web_source = -1;  // uid of the webbing pawn
   // The tile the web comes from (natively webs belong to tiles: the emitting

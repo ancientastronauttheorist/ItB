@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "itb/board.hpp"
+#include "itb/enemy_phase.hpp"
 #include "itb/executor.hpp"
 #include "itb/lua_host.hpp"
 #include "itb/space_damage.hpp"
@@ -94,6 +95,17 @@ struct ActionResult {
   bool ok() const { return status == ActionStatus::Ok; }
 };
 
+// Engine::play_turn: the player's actions, then the enemy phase.
+struct TurnResult {
+  std::vector<ActionResult> actions;  // one per PlayerAction that ran
+  // Index of the first action the engine refused (the enemy phase did not
+  // run), -1 if every action ran.
+  int refused = -1;
+  PhaseResult enemy;
+
+  bool ok() const { return refused < 0; }
+};
+
 class Engine {
  public:
   // Loads the game data and the Lua host from a game install
@@ -141,6 +153,14 @@ class Engine {
   // replaces it (Power_Repair -> Skill_Repair_Power, Mantis_Skill ->
   // Skill_Repair_Punch; the mapping is inferred from the names).
   std::string repair_skill(std::string_view pilot_id);
+
+  // Stage 7: End Turn and the enemy phase (enemy_phase.hpp), up to the end of
+  // the enemy's spawns. `board` must be the board as the player leaves it.
+  PhaseResult end_turn(Board& board, const TurnContext& ctx);
+  // The player's actions in order (move, then weapon or repair), then
+  // end_turn. Stops before the enemy phase at the first refused action.
+  TurnResult play_turn(Board& board, const std::vector<PlayerAction>& actions,
+                       const TurnContext& ctx);
 
   // Resolves a ready effect with the Lua hooks wired (scripts, death
   // effects), e.g. an environment effect. `out` collects Lua diagnostics.

@@ -8,6 +8,8 @@
 //   itb_inspect [--game DIR] --weapons DIR      run every mech weapon's Lua on recorded boards
 //   itb_inspect [--game DIR] --replay DIR [--show N] [--no-sync] [--weapon ID] [--json FILE]
 //                                               replay recorded actions, compare with the game
+//   itb_inspect [--game DIR] --replay DIR --turns [--show N] [--trace RUN/M/T]
+//                                               replay whole turns through the enemy phase
 
 #include <algorithm>
 #include <cstdio>
@@ -36,7 +38,7 @@ namespace {
 
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
-               "--moves DIR | --weapons DIR | --replay DIR [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE])\n";
+               "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE])\n";
   return 2;
 }
 
@@ -334,6 +336,8 @@ int main(int argc, char** argv) {
         o.trace = args[++i];
       } else if (args[i] == "--json" && i + 1 < args.size()) {
         o.json_out = args[++i];
+      } else if (args[i] == "--turns") {
+        o.turns = true;
       } else if (args[i] == "--failure-db" && i + 1 < args.size()) {
         o.failure_db = args[++i];
       } else {
