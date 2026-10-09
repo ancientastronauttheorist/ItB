@@ -54,3 +54,6 @@ tmp_*.png
 tmp_research_*/
 research_*.png
 *.tmp
+
+# Claude Code agent worktrees
+.claude/worktrees/
