@@ -164,9 +164,17 @@ bool is_vek(const Pawn& pawn) {
 
 // Pawn::IsPsionAffected for the plain mutations: Vek (and mechs under Psion
 // Leech) take the board's mutation; psions themselves and minor pawns
-// (including retreated ones) do not.
+// (including retreated ones) do not. The Psion Tyrant (8) affects every
+// player-team pawn and Vek only under Psion Leech; the fire psion always
+// reaches spider eggs and the spider psion never reaches spiderlings.
 bool mutation_affects(const Board& board, const Pawn& pawn, Leader mutation) {
   if (mutation == Leader::None || board.psion != mutation) return false;
+  if (mutation == Leader::Tentacle) {
+    if (pawn.team == Team::Player) return true;
+    return is_vek(pawn) && board.has_passive(kPassivePsionLeech);
+  }
+  if (mutation == Leader::Fire && detail::type_is(pawn, "SpiderlingEgg1")) return true;
+  if (mutation == Leader::Spider && detail::type_is(pawn, "Spiderling1")) return false;
   if (!is_vek(pawn) && !(pawn.mech && board.has_passive(kPassivePsionLeech))) return false;
   // Pawn::IsPsionAffected: never a Minor pawn (+0x10F0, the Lua Minor flag,
   // which Retreat also sets).

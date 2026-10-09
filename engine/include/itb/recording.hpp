@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "itb/board.hpp"
+#include "itb/environment.hpp"
 
 namespace itb {
 
@@ -31,6 +32,8 @@ struct Recording {
   // gives its ability (Engine::pilot_ability).
   std::vector<std::pair<int32_t, std::string>> pilots;
   int difficulty = -1;  // the bridge's GetDifficulty(), -1 if not recorded
+  // The mission and environment data stage 7 needs (TurnContext::mission).
+  MissionData mission;
   std::vector<std::string> warnings;  // fields the loader could not map
 };
 

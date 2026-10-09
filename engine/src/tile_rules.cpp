@@ -136,6 +136,8 @@ void spawn_from_damage(Board& board, const SpaceDamage& sd, RulesContext& ctx) {
 
 }  // namespace
 
+void retreat_pawn(Board& board, Pawn& pawn, RulesContext& ctx) { retreat(board, pawn, ctx); }
+
 Pawn* board_pawn(Board& board, Point p) {
   if (!has_pawn(board, p)) return nullptr;
   const std::vector<Pawn*> occ = occupants(board, p);

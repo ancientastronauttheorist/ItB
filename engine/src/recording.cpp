@@ -179,6 +179,7 @@ uint32_t passive_of(std::string_view weapon) {
       {"Passive_HealingSmoke", kPassiveHealingSmoke},
       {"Passive_PlayerTurnShield", kPassivePlayerTurnShield},
       {"Passive_Leech", kPassivePsionLeech},
+      {"Passive_Electric_A", kPassiveElectricSmoke | kPassiveElectricSmokeA},
       {"Passive_Electric", kPassiveElectricSmoke},
       {"Passive_Burrows", kPassiveBurrows},
       {"Passive_FastDecay", kPassiveFastDecay},
@@ -188,6 +189,67 @@ uint32_t passive_of(std::string_view weapon) {
     if (weapon.starts_with(name)) return bits;
   }
   return kPassiveNone;
+}
+
+std::vector<Point> point_list(const json& j) {
+  std::vector<Point> out;
+  if (!j.is_array()) return out;
+  for (const json& p : j) {
+    if (p.is_array() && p.size() >= 2 && p[0].is_number() && p[1].is_number()) {
+      out.emplace_back(p[0].get<int>(), p[1].get<int>());
+    }
+  }
+  return out;
+}
+
+std::optional<FinalEnvState> final_env(const json& s, const char* key) {
+  auto it = s.find(key);
+  if (it == s.end() || !it->is_object()) return std::nullopt;
+  FinalEnvState f;
+  f.complete = get_or<bool>(*it, "complete", false);
+  f.mode = get_or<int>(*it, "mode", 0);
+  f.phase = get_or<int>(*it, "phase", 0);
+  f.instant = get_or<bool>(*it, "instant", false);
+  if (auto l = it->find("locations"); l != it->end()) f.locations = point_list(*l);
+  return f;
+}
+
+// Stage 7 mission data: environment marks and the env/mission fields newer
+// bridges export (stage 7 spec section 2.4).
+void load_mission(const json& s, Recording& rec) {
+  MissionData& m = rec.mission;
+  m.mission_id = rec.mission_id;
+  m.env_type = get_or<std::string>(s, "env_type", "");
+  m.difficulty = get_or<int>(s, "difficulty", -1);
+  if (auto it = s.find("environment_danger_v2"); it != s.end() && it->is_array()) {
+    for (const json& d : *it) {
+      if (!d.is_array() || d.size() < 2 || !d[0].is_number() || !d[1].is_number()) continue;
+      DangerTile t;
+      t.p = {d[0].get<int>(), d[1].get<int>()};
+      if (d.size() > 2 && d[2].is_number()) t.damage = d[2].get<int>();
+      if (d.size() > 3 && d[3].is_number()) t.kill = d[3].get<int>() != 0;
+      if (d.size() > 4 && d[4].is_number()) t.flying_immune = d[4].get<int>();
+      m.danger.push_back(t);
+    }
+  } else if (auto v1 = s.find("environment_danger"); v1 != s.end()) {
+    for (Point p : point_list(*v1)) m.danger.push_back(DangerTile{p, 1, true, -1});
+  }
+  if (auto it = s.find("environment_freeze"); it != s.end()) m.freeze = point_list(*it);
+  if (auto it = s.find("environment_tides_index"); it != s.end() && it->is_number()) m.tides_index = it->get<int>();
+  if (auto it = s.find("environment_wind_dir"); it != s.end() && it->is_number()) {
+    const int d = it->get<int>();
+    if (d >= 0 && d < 4) m.wind_dir = static_cast<Dir>(d);
+  }
+  m.volcano = final_env(s, "mission_final_volcano");
+  m.final_cave = final_env(s, "mission_final_cave");
+  m.hacking_bot = get_or<int>(s, "mission_hacking_bot_id", -1);
+  m.hacking_building = get_or<int>(s, "mission_hacking_hack_id", -1);
+  if (auto it = s.find("is_infinite_spawn"); it != s.end() && it->is_boolean()) m.infinite_spawn = it->get<bool>();
+  for (const json& u : s["units"]) {
+    if (get_or<bool>(u, "queued_launch", false) && !get_or<bool>(u, "is_extra_tile", false)) {
+      m.launching.push_back(get_or<int>(u, "uid", -1));
+    }
+  }
 }
 
 }  // namespace
@@ -255,6 +317,10 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   for (const Pawn& p : b.pawns()) {
     if (p.alive() && p.leader != Leader::None) b.psion = p.leader;
   }
+  // Recorded HP already includes the Soldier psion's +1.
+  for (Pawn& p : b.pawns()) {
+    if (p.alive() && mutation_affects(b, p, Leader::Health)) p.health_bonus = true;
+  }
   // The bridge's `boosted` is Pawn:IsBoosted(), which includes the Boost
   // psion: only a boost the psion does not explain is the pawn's status.
   for (Pawn& p : b.pawns()) {
@@ -281,6 +347,7 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
       }
     }
   }
+  load_mission(s, rec);
   if (auto it = s.find("attack_order"); it != s.end() && it->is_array()) {
     for (const json& uid : *it) {
       if (uid.is_number_integer()) rec.attack_order.push_back(uid.get<int32_t>());

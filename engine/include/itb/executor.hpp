@@ -107,6 +107,17 @@ enum class ChanceKind : uint8_t {
   // A Lua hook (death effect, script) drew random numbers: its result is
   // one sample. `amount` = the seed used, `outcome` = numbers drawn.
   LuaRandom,
+  // Stage 7. The order of environment strikes the game draws at random
+  // (Lightning) or that the recording does not pin down (Seismic path
+  // direction): `outcome` indexes the permutations of the strikes that can
+  // interact, `options` = how many (1 = order irrelevant).
+  EnvOrder,
+  // A hidden environment parameter the recording lacks (e.g. the wind
+  // direction of old recordings): `outcome` of `options`.
+  EnvChoice,
+  // A mission hook's random pick (Mission_Reactivation thaw, Final Cave
+  // bomb drop): `outcome` of `options`.
+  MissionRandom,
 };
 
 struct ChanceRecord {
@@ -159,6 +170,12 @@ struct ResolveContext {
   // Default: 0.
   std::function<int(Resolver&, const Pawn& pawn, const std::vector<Point>& tiles)> spider_egg;
 
+  // Called at the end of every simulated frame (after the quiescent work):
+  // the mission's per-frame Lua (Mission:BaseUpdate / UpdateMission), which
+  // may edit the board and append effects. Frames skipped because nothing
+  // could change are not reported.
+  std::function<void(Resolver&)> frame_hook;
+
   // Optional log of what happened, frame by frame.
   std::vector<ResolveEvent>* log = nullptr;
 };
@@ -198,6 +215,16 @@ class Resolver {
   void damage_space(const SpaceDamage& sd);
   // Records a chance node of a hook into the result of the call in progress.
   void add_chance(const ChanceRecord& chance);
+
+  // Runs `edit` on the board as part of a frame (the enemy driver's own
+  // board changes: status ticks, blocked spawns, mission hooks): deaths it
+  // causes are noted and pushes it starts are run, then frames run until the
+  // board is idle again. Grid Defense rolls inside `edit` are logged.
+  ResolveResult apply(const std::function<void()>& edit);
+  // Board::UpdateLeaders now (it also runs at every quiescent frame).
+  void update_leaders();
+  // Board::IsBusy(): something is still resolving.
+  bool busy() const;
 
  private:
   std::unique_ptr<detail::Simulation> sim_;

@@ -8,6 +8,7 @@
 
 #include "itb/game_data.hpp"
 #include "itb/movement.hpp"
+#include "engine_impl.hpp"
 
 namespace itb {
 
@@ -23,14 +24,6 @@ const char* to_string(ActionStatus s) {
   }
   return "?";
 }
-
-struct Engine::Impl {
-  EngineOptions options;
-  GameData data;
-  std::unique_ptr<LuaHost> host;
-  // The Lua `Pawn` global: the pawn selected last (sticky, as in game).
-  int32_t selected = -1;
-};
 
 namespace {
 
@@ -179,6 +172,9 @@ bool apply_pawn_write(Board& b, RulesContext& rules, const LuaWrite& w) {
     pawn->hp = static_cast<int8_t>(std::min<int>(static_cast<int>(*n), pawn->max_hp));
   } else if (m == "Kill") {
     kill_pawn(b, *pawn, rules);
+  } else if (m == "FlyAway") {
+    // Pawn::FlyAway: flies off and leaves the board (MapRemoval), no death.
+    b.remove_pawn(pawn->uid);
   } else if (m == "ClearQueued") {
     pawn->queued.weapon = -1;
     pawn->queued.target = kInvalidPoint;
@@ -251,6 +247,7 @@ uint32_t Engine::pilot_ability(std::string_view pilot_id) {
       {"Road_Runner", kPilotRoadRunner},   {"Shifty", kPilotShifty},
       {"Post_Move", kPilotPostMove},       {"Double_Shot", kPilotDoubleShot},
       {"Youth_Move", kPilotYouthMove},     {"Arrogant_Boost", kPilotArrogantBoost},
+      {"Regen", kPilotRegen},              {"Zoltan_Skill", kPilotZoltan},
   };
   const std::optional<std::string> skill = impl_->host->lua_string(pilot_id, "Skill");
   if (!skill) return kPilotNone;
@@ -267,44 +264,52 @@ std::string Engine::repair_skill(std::string_view pilot_id) {
   return "Skill_Repair";
 }
 
-ResolveResult Engine::resolve(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,
-                              const ActionOptions& opts, ActionResult* out) {
-  ActionResult local;
-  ActionResult& diag = out ? *out : local;
-  LuaHost& host = *impl_->host;
-  ResolveContext ctx;
-  ctx.data = &impl_->data;
-  ctx.config = impl_->options.config;
-  ctx.durations = impl_->options.durations;
-  ctx.rules.data = &impl_->data;
+void Engine::Impl::wire(Engine& engine, ResolveContext& ctx, const ActionOptions& opts,
+                        ActionResult& diag) {
+  ctx.data = &data;
+  ctx.config = options.config;
+  ctx.durations = options.durations;
+  ctx.rules.data = &data;
   ctx.rules.grid_resist = opts.grid_resist;
   ctx.rules.events = opts.events;
   ctx.log = opts.log;
   ctx.spider_egg = opts.spider_egg;
-  RulesContext& rules = ctx.rules;
+  LuaHost* lua = host.get();
+  RulesContext* rules = &ctx.rules;
+  ActionResult* out = &diag;
+  Engine* e = &engine;
   // Nested Lua reads the board under resolution (Resolver::board), i.e. the
   // state at the frame the script or death effect runs.
-  ctx.run_script = [&](Resolver& r, const std::string& script, Point) {
-    const Pawn* sel = r.board().find_pawn(impl_->selected);
-    const LuaCall call = host.run_script(r.board(), script, sel);
-    note_error(diag, call);
-    apply_writes(r, rules, call.writes, diag.unapplied);
+  ctx.run_script = [this, lua, rules, out, e](Resolver& r, const std::string& script, Point) {
+    const Pawn* sel = r.board().find_pawn(selected);
+    const LuaCall call = lua->run_script(r.board(), script, sel);
+    note_error(*out, call);
+    e->apply_writes(r, *rules, call.writes, out->unapplied);
   };
-  ctx.death_effect = [&](Resolver& r, const Pawn& pawn, Point tile) {
-    const uint32_t seed = opts.death_seed ? opts.death_seed(pawn) : static_cast<uint32_t>(pawn.uid + 1);
-    const Pawn* sel = r.board().find_pawn(impl_->selected);
-    const uint64_t before = host.rand_draws();
+  auto death_seed = opts.death_seed;
+  ctx.death_effect = [this, lua, rules, out, e, death_seed](Resolver& r, const Pawn& pawn, Point tile) {
+    const uint32_t seed = death_seed ? death_seed(pawn) : static_cast<uint32_t>(pawn.uid + 1);
+    const Pawn* sel = r.board().find_pawn(selected);
+    const uint64_t before = lua->rand_draws();
     LuaCall call;
-    SkillEffect fx = host.death_effect(r.board(), pawn, seed, sel, &call);
-    const uint64_t drawn = host.rand_draws() - before;
+    SkillEffect fx = lua->death_effect(r.board(), pawn, seed, sel, &call);
+    const uint64_t drawn = lua->rand_draws() - before;
     if (drawn > 0) {
       r.add_chance(ChanceRecord{ChanceKind::LuaRandom, r.frame(), tile, static_cast<int>(seed),
                                 static_cast<int>(drawn), 0});
     }
-    note_error(diag, call);
-    apply_writes(r, rules, call.writes, diag.unapplied);
+    note_error(*out, call);
+    e->apply_writes(r, *rules, call.writes, out->unapplied);
     return fx;
   };
+}
+
+ResolveResult Engine::resolve(Board& board, const SkillEffect& effect, const WeaponInfo& weapon,
+                              const ActionOptions& opts, ActionResult* out) {
+  ActionResult local;
+  ActionResult& diag = out ? *out : local;
+  ResolveContext ctx;
+  impl_->wire(*this, ctx, opts, diag);
   return resolve_effect(board, effect, weapon, ctx);
 }
 
@@ -458,7 +463,7 @@ ActionResult Engine::repair(Board& board, int32_t uid, Point target, std::string
                     opts);
 }
 
-ActionResult Engine::fire_queued(Board& board, int32_t uid, const ActionOptions& opts) {
+ActionResult Engine::Impl::queued_effect(Board& board, int32_t uid, WeaponInfo& info) {
   ActionResult out;
   Pawn* pawn = board.find_pawn(uid);
   if (!pawn) {
@@ -476,12 +481,12 @@ ActionResult Engine::fire_queued(Board& board, int32_t uid, const ActionOptions&
   // SkillManager::FireQueued: the stored shot is used up, the shooter is
   // selected, then the effect is recomputed from its current tile.
   pawn->queued = QueuedShot{};
-  impl_->selected = uid;
+  selected = uid;
   LuaCall call;
-  const LuaSkillEffect raw = impl_->host->queued_effect_raw(board, *pawn, out.weapon, shot.target, &call);
+  const LuaSkillEffect raw = host->queued_effect_raw(board, *pawn, out.weapon, shot.target, &call);
   note_error(out, call);
   SkillEffect fx = to_engine(raw);
-  const std::optional<std::string> explosion = impl_->host->lua_string(out.weapon, "Explosion");
+  const std::optional<std::string> explosion = host->lua_string(out.weapon, "Explosion");
   const Symbol explosion_sym = explosion && !explosion->empty() ? intern(*explosion) : kNoSymbol;
   prepare_effect(fx, pawn->pos, shot.target, pawn->team, explosion_sym);
   fx.owner = uid;
@@ -491,11 +496,18 @@ ActionResult Engine::fire_queued(Board& board, int32_t uid, const ActionOptions&
     out.status = ActionStatus::NoEffect;  // fizzled: target outside the area
     return out;
   }
-  WeaponInfo info;
+  info = WeaponInfo{};
   info.name = intern(out.weapon);
   info.explosion = explosion_sym;
   info.prepared = true;
-  out.resolve = resolve(board, fx, info, opts, &out);
+  return out;
+}
+
+ActionResult Engine::fire_queued(Board& board, int32_t uid, const ActionOptions& opts) {
+  WeaponInfo info;
+  ActionResult out = impl_->queued_effect(board, uid, info);
+  if (!out.ok()) return out;
+  out.resolve = resolve(board, out.effect, info, opts, &out);
   const Pawn* p = board.find_pawn(uid);
   out.end = p ? p->pos : kInvalidPoint;
   return out;
