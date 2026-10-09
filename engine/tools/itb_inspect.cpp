@@ -4,6 +4,7 @@
 //   itb_inspect [--game DIR] --pawns            list pawn definitions
 //   itb_inspect [--game DIR] --scripts          report the script load
 //   itb_inspect [--game DIR] --corpus DIR       load every *_solve_input.json under DIR
+//   itb_inspect [--game DIR] --moves DIR        check recorded first moves are reachable
 
 #include <algorithm>
 #include <cstdio>
@@ -13,8 +14,13 @@
 #include <string>
 #include <vector>
 
+#include <fstream>
+
+#include <nlohmann/json.hpp>
+
 #include "itb/format.hpp"
 #include "itb/game_data.hpp"
+#include "itb/movement.hpp"
 #include "itb/recording.hpp"
 
 namespace fs = std::filesystem;
@@ -23,7 +29,7 @@ using namespace itb;
 namespace {
 
 int usage() {
-  std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR)\n";
+  std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | --moves DIR)\n";
   return 2;
 }
 
@@ -96,6 +102,53 @@ int run_corpus(const fs::path& dir, const GameData& data) {
   return failed == 0 ? 0 : 1;
 }
 
+// The old bot recorded the move it executed for each mech. The first action
+// runs on the untouched recorded board, so its destination must be in that
+// mech's reachable set.
+int run_moves(const fs::path& dir, const GameData& data) {
+  int checked = 0, reachable_ok = 0, skipped = 0;
+  std::vector<std::string> misses;
+  for (const auto& e : fs::recursive_directory_iterator(dir)) {
+    const std::string name = e.path().filename().string();
+    if (!e.is_regular_file() || !name.ends_with("_solve_input.json")) continue;
+    fs::path solve = e.path();
+    solve.replace_filename(name.substr(0, name.size() - std::string("_input.json").size()) + ".json");
+    if (!fs::exists(solve)) continue;
+    std::string error;
+    auto rec = load_recording(e.path(), &data, &error);
+    if (!rec) continue;
+    nlohmann::json root;
+    try {
+      std::ifstream in(solve);
+      in >> root;
+    } catch (const std::exception&) {
+      continue;
+    }
+    const auto& actions = root["data"]["actions"];
+    if (!actions.is_array() || actions.empty()) continue;
+    const auto& a = actions[0];
+    if (!a.contains("move_to") || !a["move_to"].is_array()) continue;
+    const Point dest{a["move_to"][0].get<int>(), a["move_to"][1].get<int>()};
+    const Pawn* mech = rec->board.find_pawn(a.value("mech_uid", -1));
+    if (!mech || dest == mech->pos) {
+      ++skipped;
+      continue;
+    }
+    ++checked;
+    const std::vector<Point> area = reachable(rec->board, *mech);
+    if (std::find(area.begin(), area.end(), dest) != area.end()) {
+      ++reachable_ok;
+    } else if (misses.size() < 12) {
+      misses.push_back(e.path().parent_path().filename().string() + "/" + name + ": " +
+                       describe_pawn(*mech) + " -> " + to_visual(dest));
+    }
+  }
+  std::printf("first moves checked: %d  reachable: %d  (skipped stay-in-place: %d)\n", checked,
+              reachable_ok, skipped);
+  for (const std::string& m : misses) std::printf("  not reachable: %s\n", m.c_str());
+  return reachable_ok == checked ? 0 : 1;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -145,6 +198,10 @@ int main(int argc, char** argv) {
       std::printf("]\n");
     }
     return 0;
+  }
+  if (args[0] == "--moves") {
+    if (args.size() < 2) return usage();
+    return run_moves(args[1], data);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();

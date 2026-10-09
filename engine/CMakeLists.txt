@@ -27,6 +27,8 @@ add_library(itb_engine
   src/recording.cpp
   src/format.cpp
   src/movement.cpp
+  src/tile_rules.cpp
+  src/tile_status.cpp
 )
 target_include_directories(itb_engine PUBLIC include PRIVATE src)
 target_link_libraries(itb_engine PRIVATE itb_lua nlohmann_json::nlohmann_json)
@@ -37,7 +39,7 @@ target_compile_definitions(itb_engine PRIVATE
 target_compile_options(itb_engine PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 
 add_executable(itb_inspect tools/itb_inspect.cpp)
-target_link_libraries(itb_inspect PRIVATE itb_engine)
+target_link_libraries(itb_inspect PRIVATE itb_engine nlohmann_json::nlohmann_json)
 
 enable_testing()
 add_executable(itb_tests
@@ -47,6 +49,7 @@ add_executable(itb_tests
   tests/test_game_data.cpp
   tests/test_recording.cpp
   tests/test_movement.cpp
+  tests/test_tile_rules.cpp
 )
 target_link_libraries(itb_tests PRIVATE itb_engine doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE

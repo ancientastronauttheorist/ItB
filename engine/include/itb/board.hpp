@@ -53,6 +53,8 @@ struct Tile {
   bool is_liquid() const { return terrain == Terrain::Water; }  // includes lava
   bool on_fire() const { return fire != FireState::None; }
   bool has_wall(Dir d) const { return (walls >> static_cast<int>(d)) & 1; }
+
+  bool operator==(const Tile&) const = default;
 };
 
 struct QueuedShot {
@@ -61,6 +63,8 @@ struct QueuedShot {
   Point target = kInvalidPoint;
 
   bool active() const { return weapon >= 0 && target.valid(); }
+
+  bool operator==(const QueuedShot&) const = default;
 };
 
 // Pilot abilities that change rules (pilots.lua Skill names in comments).
@@ -113,6 +117,8 @@ struct MoveState {
   bool powered = true;        // unpowered pawns can neither act nor move
   bool undo_ready = false;    // the last player move can still be undone
   Point prev_pos = kInvalidPoint;  // last tile left; an underground burrower resurfaces near it
+
+  bool operator==(const MoveState&) const = default;
 };
 
 struct Pawn {
@@ -158,6 +164,8 @@ struct Pawn {
   bool infected = false;
   bool injured = false;  // loses 1 HP whenever it changes tile
   bool dying = false;    // HP reached 0; death not processed yet
+  bool fallen = false;   // fell into a chasm: off the board, never a corpse
+  bool retreating = false;  // end-of-mission retreat started (bEvacuate)
   int32_t web_source = -1;  // uid of the webbing pawn
   QueuedShot queued;
   MoveState movement;
@@ -165,6 +173,8 @@ struct Pawn {
   bool alive() const { return hp > 0; }
   bool controlled() const { return team == Team::Player && !neutral; }
   bool has_pilot(PilotAbility a) const { return (pilot_abilities & a) != 0; }
+
+  bool operator==(const Pawn&) const = default;
 };
 
 class Board {
@@ -191,6 +201,8 @@ class Board {
   const Pawn* find_pawn(int32_t uid) const;
 
   bool has_passive(Passive p) const { return (passives & p) != 0; }
+
+  bool operator==(const Board&) const = default;
 
   int grid_power = 7;
   int grid_power_max = 7;

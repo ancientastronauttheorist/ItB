@@ -246,13 +246,6 @@ std::vector<Point> mask_points(TileMask mask) {
 
 // --- Pawn-level facts ----------------------------------------------------
 
-bool is_corpse(const Board& b, const Pawn& p) {
-  if (p.mech || p.corpse) return true;
-  // The Necro psion's mutation makes affected Vek leave corpses; the psion
-  // itself is not affected.
-  return b.psion == Leader::Necro && p.team == Team::Enemy && p.faction == Faction::Default &&
-         p.leader != Leader::Necro;
-}
 
 Pathing path_profile(const Board& b, const Pawn& p) {
   const int team = static_cast<int>(p.team);

@@ -15,6 +15,7 @@
 
 #include "itb/board.hpp"
 #include "itb/core.hpp"
+#include "itb/tile_rules.hpp"
 
 namespace itb {
 
@@ -43,10 +44,7 @@ using DistanceMap = std::array<int, kTileCount>;
 
 // --- Pawn-level facts ----------------------------------------------------
 
-// A dead pawn that still occupies its tile: mech wrecks and Lua Corpse=true
-// pawns, plus Vek under the Necro psion. Pawns that fell, fled or sank leave
-// no corpse; the engine is expected to remove them from the board.
-bool is_corpse(const Board& b, const Pawn& p);
+// is_corpse (tile_rules.hpp) decides which dead pawns still occupy a tile.
 
 // Pawn::GetPathingProfile: teleporter > jumper > burrower > flying >
 // Road_Runner pilot > massive > ground, tagged with the pawn's team.

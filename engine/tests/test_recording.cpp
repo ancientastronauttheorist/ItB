@@ -50,6 +50,9 @@ TEST_CASE("recorded units keep their live stats and queued attacks") {
   CHECK(punch->mech);
   CHECK(punch->massive);
   CHECK(punch->team == Team::Player);
+  // Recorded base move 3, effective move 5.
+  CHECK(punch->move == 3);
+  CHECK(punch->movement.pilot_bonus == 2);
 
   const Pawn* digger = b.find_pawn(969);
   REQUIRE(digger != nullptr);

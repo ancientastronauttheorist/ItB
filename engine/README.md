@@ -52,23 +52,42 @@ derived from `Pawn`: 232 definitions in build 21601364.
 
 ## Status
 
-Stage 1 of the build order (core state and data) is done:
+Done so far (build order from the decompile):
 
-- `core.hpp`: points, directions, terrain, team and leader constants, plus
-  A1–H8 notation.
-- `board.hpp`: tiles, pawns, and the board's pawn-list order. That order is
-  the regrouping `Board::AddPawn` performs, which drives Vek attack order.
-- `game_data.hpp`: pawn definitions read from the game's scripts.
-- `recording.hpp`: boards loaded from the bridge recordings. All 469
-  recorded boards load, and every unit type resolves.
+- **Stage 1: core state and data.**
+   - `core.hpp`: constants and A1–H8 notation.
+   - `board.hpp`: tiles, pawns, and the pawn-list order that `Board::AddPawn`
+     produces.
+   - `game_data.hpp`: all pawn definitions, read from the game's scripts.
+   - `recording.hpp`: all 469 recorded boards load.
+- **Stage 2: per-tile damage and status rules** (`tile_rules.hpp`).
+   - The game's ordered `DamageSpace` steps in both modes (weapon and
+     push/bump).
+   - Pawn damage: shields, frozen, turn shield, armor and ACID.
+   - Terrain, buildings and grid, cracks, items/mines.
+   - Fire, smoke, acid and freeze interactions, terrain dangers, and a `settle`
+     that applies the game's per-frame rules until the board stops changing.
+   - Grid Defense resists are a chance node: the caller resolves each roll, and
+     every roll is logged. Pushes, spawns and Lua scripts are recorded for the
+     later stages.
+- **Stage 5: movement** (`movement.hpp`).
+   - Pathing profiles, move budget and pilot move skills.
+   - The game's reachability search and its weighted A* walk path (float32,
+     (f, x, y) tie-break).
+   - Walks, leaps, charges, teleports and burrows. Callers settle the tile a
+     move ends on (arrival hazards are stage 2 rules).
+   - Every first move the old bot executed in a recording is reachable here:
+     `itb_inspect --moves recordings`.
 
-Next up: stage 2, the per-tile damage and status rules (`ApplySpaceDamage`).
+Next up: stage 3 (push and death resolution) and stage 4 (the SkillEffect
+executor).
 
-Stage 5 (movement) is in `movement.hpp`: pathing profiles, move budget and
-pilot move skills, the game's reachability search and its weighted A* walk
-path (float32, (f, x, y) tie-break), and executing walks, leaps, teleports and
-burrows. Arrival hazards are left to stage 2: callers settle the returned
-tile.
+Integration debts:
+
+- Injured's per-step HP loss in `set_space` is a plain decrement for now. It
+  should go through `modify_health` once moves carry a `RulesContext`, so the
+  turn shield and Retaliation apply.
+- A tile's occupant order is approximated by board-list order.
 
 ### Open questions for live-game testing
 

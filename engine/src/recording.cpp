@@ -101,7 +101,12 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   // Recorded values win over definition defaults (pilots, upgrades, statuses).
   p.hp = static_cast<int8_t>(get_or<int>(u, "hp", p.hp));
   p.max_hp = static_cast<int8_t>(get_or<int>(u, "max_hp", p.max_hp));
-  p.move = static_cast<int8_t>(get_or<int>(u, "move", p.move));
+  // The bridge reports the Lua MoveSpeed (base_move) and the current
+  // effective speed (move). Pilots and upgrades aren't recorded separately, so
+  // the whole difference is kept as a standing bonus.
+  const int effective_move = get_or<int>(u, "move", p.move);
+  p.move = static_cast<int8_t>(get_or<int>(u, "base_move", effective_move));
+  p.movement.pilot_bonus = static_cast<int8_t>(effective_move - p.move);
   p.team = static_cast<Team>(get_or<int>(u, "team", static_cast<int>(p.team)));
   p.mech = get_or<bool>(u, "mech", p.mech);
   p.flying = get_or<bool>(u, "flying", p.flying);
