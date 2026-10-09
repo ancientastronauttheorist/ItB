@@ -5,12 +5,14 @@
 //   itb_inspect [--game DIR] --scripts          report the script load
 //   itb_inspect [--game DIR] --corpus DIR       load every *_solve_input.json under DIR
 //   itb_inspect [--game DIR] --moves DIR        check recorded first moves are reachable
+//   itb_inspect [--game DIR] --weapons DIR      run every mech weapon's Lua on recorded boards
 
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -20,6 +22,7 @@
 
 #include "itb/format.hpp"
 #include "itb/game_data.hpp"
+#include "itb/lua_host.hpp"
 #include "itb/movement.hpp"
 #include "itb/recording.hpp"
 
@@ -29,7 +32,8 @@ using namespace itb;
 namespace {
 
 int usage() {
-  std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | --moves DIR)\n";
+  std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
+               "--moves DIR | --weapons DIR)\n";
   return 2;
 }
 
@@ -149,6 +153,110 @@ int run_moves(const fs::path& dir, const GameData& data) {
   return reachable_ok == checked ? 0 : 1;
 }
 
+// Runs the game's Lua for every recorded board: each player mech's weapons
+// (target area from its current tile, then the effect on every target) and
+// every queued Vek attack (recomputed from the Vek's tile, as when it fires).
+// Recorded weapon ids are the Lua table names, upgrade suffix included.
+int run_weapons(const fs::path& dir, const fs::path& game, const GameData& data) {
+  std::unique_ptr<LuaHost> host;
+  try {
+    host = LuaHost::create(game);
+  } catch (const std::exception& e) {
+    std::cerr << "error: " << e.what() << "\n";
+    return 1;
+  }
+  std::vector<fs::path> files;
+  for (const auto& e : fs::recursive_directory_iterator(dir)) {
+    const std::string name = e.path().filename().string();
+    if (e.is_regular_file() && name.ends_with("_solve_input.json")) files.push_back(e.path());
+  }
+  std::sort(files.begin(), files.end());
+
+  int boards = 0, weapons = 0, suffixed = 0, unknown = 0, empty_areas = 0, targets = 0, effects = 0;
+  int queued = 0, queued_in_area = 0, queued_errors = 0;
+  std::map<std::string, int> errors;
+  std::map<std::string, int> unknown_ids;
+  std::map<std::string, int> empty_area_ids;
+  std::vector<std::string> fizzles;
+  for (const fs::path& f : files) {
+    std::string error;
+    auto rec = load_recording(f, &data, &error);
+    if (!rec) continue;
+    ++boards;
+    const Board& b = rec->board;
+    for (const Pawn& p : b.pawns()) {
+      if (!p.alive()) continue;
+      if (p.mech && p.team == Team::Player) {
+        for (Symbol w : p.weapons) {
+          if (w == kNoSymbol) continue;
+          const std::string id(symbol_name(w));
+          ++weapons;
+          if (id.ends_with("_A") || id.ends_with("_B") || id.ends_with("_AB")) ++suffixed;
+          if (!host->lua_string(id, "Name")) {
+            ++unknown;
+            ++unknown_ids[id];
+            continue;
+          }
+          LuaCall call;
+          const std::vector<Point> area = host->target_area(b, p, id, p.pos, &call);
+          if (!call.ok) {
+            ++errors[id + ": " + call.error];
+            continue;
+          }
+          if (area.empty()) {
+            ++empty_areas;
+            ++empty_area_ids[id];
+          }
+          for (Point t : area) {
+            ++targets;
+            LuaCall c2;
+            const LuaSkillEffect se = host->skill_effect_raw(b, p, id, p.pos, t, &c2);
+            if (!c2.ok) {
+              ++errors[id + " -> " + to_visual(t) + ": " + c2.error];
+              break;
+            }
+            if (!se.effect.empty() || !se.q_effect.empty()) ++effects;
+          }
+        }
+      } else if (p.queued.active() && p.weapons[0] != kNoSymbol) {
+        ++queued;
+        const std::string id(symbol_name(p.weapons[0]));
+        LuaCall call;
+        const std::vector<Point> area = host->target_area(b, p, id, p.pos, &call);
+        if (!call.ok) {
+          ++queued_errors;
+          ++errors[id + " (queued): " + call.error];
+          continue;
+        }
+        if (std::find(area.begin(), area.end(), p.queued.target) == area.end()) {
+          if (fizzles.size() < 8) {
+            fizzles.push_back(f.parent_path().filename().string() + "/" + f.filename().string() + ": " +
+                              id + " at " + to_visual(p.pos) + " -> " + to_visual(p.queued.target));
+          }
+          continue;
+        }
+        ++queued_in_area;
+        host->queued_effect_raw(b, p, id, p.queued.target, &call);
+        if (!call.ok) {
+          ++queued_errors;
+          ++errors[id + " (queued): " + call.error];
+        }
+      }
+    }
+  }
+  std::printf("boards: %d  mech weapons: %d (%d with an upgrade suffix)  unknown ids: %d\n", boards,
+              weapons, suffixed, unknown);
+  std::printf("targets: %d  non-empty effects: %d  empty target areas: %d\n", targets, effects,
+              empty_areas);
+  std::printf("queued Vek attacks: %d  target still in the recomputed area: %d  errors: %d\n", queued,
+              queued_in_area, queued_errors);
+  for (const auto& [id, n] : unknown_ids) std::printf("  unknown weapon id: %s (%d)\n", id.c_str(), n);
+  for (const auto& [id, n] : empty_area_ids) std::printf("  empty target area: %s (%d)\n", id.c_str(), n);
+  for (const std::string& m : fizzles) std::printf("  queued target outside the area: %s\n", m.c_str());
+  for (const auto& [e, n] : errors) std::printf("  %5d  %s\n", n, e.c_str());
+  return errors.empty() ? 0 : 1;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -202,6 +310,10 @@ int main(int argc, char** argv) {
   if (args[0] == "--moves") {
     if (args.size() < 2) return usage();
     return run_moves(args[1], data);
+  }
+  if (args[0] == "--weapons") {
+    if (args.size() < 2) return usage();
+    return run_weapons(args[1], game, data);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();
