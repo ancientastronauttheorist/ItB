@@ -24,6 +24,8 @@ add_library(itb_engine
   src/board.cpp
   src/lua_env.cpp
   src/lua_host_values.cpp
+  src/lua_host_board.cpp
+  src/lua_host.cpp
   src/game_data.cpp
   src/recording.cpp
   src/format.cpp
@@ -51,6 +53,7 @@ add_executable(itb_tests
   tests/test_recording.cpp
   tests/test_movement.cpp
   tests/test_tile_rules.cpp
+  tests/test_lua_host.cpp
 )
 target_link_libraries(itb_tests PRIVATE itb_engine doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE

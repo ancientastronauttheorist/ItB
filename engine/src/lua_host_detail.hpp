@@ -107,6 +107,9 @@ T* push_owned(lua_State* L, Cls cls, T value) {
 void push_alias(lua_State* L, int parent_idx, Cls cls, Kind kind, uintptr_t index,
                 void* (*project)(void*, uintptr_t));
 void push_ref(lua_State* L, Cls cls, void* obj);
+// Gives the userdata on top of the stack the instance metatable and the
+// shared empty per-instance table.
+void finish_instance(lua_State* L);
 
 template <class T>
 T& get(lua_State* L, int idx, Cls cls) {
@@ -142,6 +145,7 @@ enum class A : uint8_t {
 
 // True iff lua_gettop(L) == sig.size() and each argument converts.
 bool match(lua_State* L, std::initializer_list<A> sig);
+bool match_one(lua_State* L, int idx, A a);
 
 // lua_tointeger as the game's build does it: truncate toward zero to 64 bits,
 // keep the low 32 bits; NaN/huge give 0.
@@ -197,6 +201,8 @@ int guarded(lua_State* L) {
   }
   return lua_error(L);
 }
+
+void add_methods(lua_State* L, Cls cls, std::span<const Method> methods);
 
 #define ITB_G(fn) (&::itb::lua::guarded<fn>)
 

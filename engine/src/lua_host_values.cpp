@@ -123,16 +123,12 @@ Instance* to_instance(lua_State* L, int idx, Cls cls) {
   return in && in->cls == cls ? in : nullptr;
 }
 
-namespace {
-
 void finish_instance(lua_State* L) {
   push_registry(L, &kInstanceMtKey);
   lua_setmetatable(L, -2);
   push_registry(L, &kEmptyEnvKey);
   lua_setfenv(L, -2);
 }
-
-}  // namespace
 
 Instance* new_owned(lua_State* L, Cls cls, size_t size, size_t align) {
   const size_t off = (sizeof(Instance) + align - 1) / align * align;
@@ -182,9 +178,7 @@ std::string to_str(lua_State* L, int idx) {
   return s ? std::string(s, len) : std::string();
 }
 
-namespace {
-
-bool arg_ok(lua_State* L, int i, A a) {
+bool match_one(lua_State* L, int i, A a) {
   switch (a) {
     case A::Int:
     case A::Num:
@@ -229,13 +223,11 @@ bool arg_ok(lua_State* L, int i, A a) {
   return false;
 }
 
-}  // namespace
-
 bool match(lua_State* L, std::initializer_list<A> sig) {
   if (lua_gettop(L) != static_cast<int>(sig.size())) return false;
   int i = 1;
   for (A a : sig) {
-    if (!arg_ok(L, i++, a)) return false;
+    if (!match_one(L, i++, a)) return false;
   }
   return true;
 }
@@ -438,6 +430,16 @@ void register_class(lua_State* L, Cls cls, const char* global_name, lua_CFunctio
     }
     lua_setglobal(L, global_name);
   }
+}
+
+void add_methods(lua_State* L, Cls cls, std::span<const Method> methods) {
+  push_registry(L, &kClassesKey);
+  lua_rawgeti(L, -1, static_cast<int>(cls));
+  for (const Method& m : methods) {
+    lua_pushcfunction(L, m.fn);
+    lua_setfield(L, -2, m.name);
+  }
+  lua_pop(L, 2);
 }
 
 void set_global_function(lua_State* L, const char* name, lua_CFunction fn) {
