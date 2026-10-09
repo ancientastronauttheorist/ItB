@@ -23,6 +23,7 @@ add_library(itb_engine
   src/symbols.cpp
   src/board.cpp
   src/lua_env.cpp
+  src/lua_host_values.cpp
   src/game_data.cpp
   src/recording.cpp
   src/format.cpp
