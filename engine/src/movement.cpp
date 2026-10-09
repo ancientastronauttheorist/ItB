@@ -32,13 +32,15 @@ struct Occupant {
   bool occupied = false;  // IsPawnSpace: some pawn here is alive or a corpse
   int team = static_cast<int>(Team::None);  // first listed pawn's team
   bool non_grid = false;  // first listed pawn is NonGrid
+  uint32_t arrival = 0;   // the first listed pawn's tile order
 };
 
 void note_pawn(const Board& b, const Pawn& p, Occupant& o) {
-  if (!o.listed) {
+  if (!o.listed || p.arrival < o.arrival) {
     o.listed = true;
     o.team = static_cast<int>(p.team);
     o.non_grid = p.non_grid;
+    o.arrival = p.arrival;
   }
   if (p.alive() || is_corpse(b, p)) o.occupied = true;
 }
@@ -218,17 +220,14 @@ TileMask reachable_list_mask(const Board& b, const Occupancy& occ, Point start, 
   return pts;
 }
 
-// Pawn::PushQueuedShot: a queued attack travels with its pawn. Re-validating
-// the shifted attack (ComputeAffectedPoints) is the attack stage's job.
-void shift_queued(Pawn& p, Point delta) {
-  if (!p.queued.active()) return;
-  if (p.queued.origin.valid()) p.queued.origin = p.queued.origin + delta;
-  p.queued.target = p.queued.target + delta;
+void step_to(Board& b, Pawn& p, Point to, RulesContext* ctx, bool no_injury = false) {
+  shift_queued_shot(p, to - p.pos);
+  set_space(b, p, to, no_injury, ctx);
 }
 
-void step_to(Board& b, Pawn& p, Point to, bool no_injury = false) {
-  shift_queued(p, to - p.pos);
-  set_space(b, p, to, no_injury);
+Point settled(Board& b, Point end, RulesContext* ctx) {
+  if (ctx && end.valid()) settle_at(b, end, *ctx);
+  return end;
 }
 
 }  // namespace
@@ -455,25 +454,46 @@ std::vector<Point> find_path(const Board& b, Point from, Point to, Pathing pr) {
 
 // --- Executing moves -----------------------------------------------------
 
-void set_space(Board&, Pawn& p, Point to, bool no_injury) {
+void shift_queued_shot(Pawn& p, Point delta) {
+  if (!p.queued.active()) return;
+  if (p.queued.origin.valid()) p.queued.origin = p.queued.origin + delta;
+  p.queued.target = p.queued.target + delta;
+}
+
+void set_space(Board& b, Pawn& p, Point to, bool no_injury, RulesContext* ctx) {
   // (Board::MovePawn also moves ExtraSpaces tiles; multi-tile pawns are not
   // modelled.)
+  const Point from = p.pos;
   if (p.pos.valid()) p.movement.prev_pos = p.pos;
   // Any relocation frees a webbed pawn.
   p.webbed = false;
   p.web_source = -1;
   p.pos = to;
+  if (to != from) b.stamp_arrival(p);
   // AE Injured: 1 HP per tile change while not busy. Whether every step of a
   // walk counts is unconfirmed in game (spec open question 2); this follows
   // the code, which charges each step.
-  // STAGE 2 HOOK: route this through stage 2's health change when integrated.
   if (!no_injury && p.injured && to != p.movement.prev_pos && p.hp > 0) {
-    p.hp = static_cast<int8_t>(p.hp - 1);
-    if (p.hp <= 0) p.dying = true;
+    if (ctx) {
+      // Pawn::ModifyHealth(-1): turn shield, burrow dive and Retaliation apply.
+      modify_health(b, p, -1, DamageMode::Weapon, *ctx);
+      if (!p.alive() && !p.dying) {
+        p.dying = true;
+        if (ctx->events) ctx->events->push_back({RulesEventType::PawnKilled, p.pos, p.uid});
+      }
+    } else {
+      p.hp = static_cast<int8_t>(p.hp - 1);
+      if (p.hp <= 0) p.dying = true;
+    }
   }
 }
 
-Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced) {
+bool final_step_allowed(const Board& b, Point to) {
+  return !is_blocked(b, to, Pathing::lua(PathProfile::FinalStep)) && !tile_occupied(b, to);
+}
+
+Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced,
+                RulesContext* ctx) {
   // A pawn that holds its ground (Pushable = false) ignores unforced walks.
   if (!forced && !p.pushable) return p.pos;
   size_t i = (!path.empty() && path.front() == p.pos) ? 1 : 0;
@@ -484,64 +504,64 @@ Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced) 
       // A non-adjacent step makes the game re-path from where it stands and
       // drop the rest of the queue. Board paths are always contiguous, so
       // this is only an approximation of that fallback.
-      return walk_path(b, p, find_path(b, p.pos, target, path_profile(b, p)), true);
+      return walk_path(b, p, find_path(b, p.pos, target, path_profile(b, p)), true, ctx);
     }
     const bool last = i + 1 == path.size();
     // The final step re-checks its tile: no mountain/building and nobody
     // there (water and chasms are fine). If refused, the pawn stays put, even
     // on a friendly's tile it was passing through.
-    if (last && (is_blocked(b, target, Pathing::lua(PathProfile::FinalStep)) ||
-                 tile_occupied(b, target))) {
-      break;
-    }
-    step_to(b, p, target);
+    if (last && !final_step_allowed(b, target)) break;
+    step_to(b, p, target, ctx);
+    // Only the tile where movement ends sees hazards: the final step checks
+    // its terrain dangers at once (fire and acid wait for the tile rules).
+    if (last && ctx) check_terrain_dangers(b, target, *ctx);
   }
-  // STAGE 2 HOOK: the caller settles p.pos (CheckTerrainDangers etc.); only
-  // the tile where movement ends sees hazards.
   return p.pos;
 }
 
-Point leap(Board& b, Pawn& p, Point to, bool forced) {
+Point leap(Board& b, Pawn& p, Point to, bool forced, RulesContext* ctx) {
   if (!forced && !p.pushable) return p.pos;
-  // The animation is cosmetic: the pawn is on `to` at once. Landing in a
-  // chasm falls via stage 2 settle.
-  step_to(b, p, to);
+  // The pawn is on `to` at once; the arc is animation. Landing in a chasm
+  // falls via the stage 2 rules.
+  step_to(b, p, to, ctx);
   return p.pos;
 }
 
-Point charge(Board& b, Pawn& p, Point to, bool forced) { return leap(b, p, to, forced); }
+Point charge(Board& b, Pawn& p, Point to, bool forced, RulesContext* ctx) {
+  return leap(b, p, to, forced, ctx);
+}
 
-Point teleport(Board& b, Pawn& p, Point to) {
+Point teleport(Board& b, Pawn& p, Point to, RulesContext* ctx) {
   // (Board::ClearGrapple here only affects grapple visuals.)
-  step_to(b, p, to);
+  step_to(b, p, to, ctx);
   return p.pos;
 }
 
-Point burrow(Board& b, Pawn& p, Point to, bool ai) {
+Point burrow(Board& b, Pawn& p, Point to, bool ai, RulesContext* ctx) {
   if (ai) {
     p.queued = QueuedShot{};
   } else {
-    shift_queued(p, to - p.pos);
+    shift_queued_shot(p, to - p.pos);
   }
   p.fire = false;  // burrowing puts the fire out
   // Underground pawns relocate at once; surfaced ones dive first and are
   // relocated while still busy (so Injured does not apply).
   const bool underground = !p.pos.valid();
-  set_space(b, p, to, /*no_injury=*/!underground);
+  set_space(b, p, to, /*no_injury=*/!underground, ctx);
   return p.pos;
 }
 
-Point move_pawn(Board& b, int32_t uid, Point dest) {
+Point move_pawn(Board& b, int32_t uid, Point dest, RulesContext* ctx) {
   Pawn* p = b.find_pawn(uid);
   if (!p) return kInvalidPoint;
   const Pathing pr = path_profile(b, *p);
-  if (pr.type == PathProfile::Jumper) return leap(b, *p, dest, true);
-  if (pr.type == PathProfile::Teleporter) return teleport(b, *p, dest);
+  if (pr.type == PathProfile::Jumper) return settled(b, leap(b, *p, dest, true, ctx), ctx);
+  if (pr.type == PathProfile::Teleporter) return settled(b, teleport(b, *p, dest, ctx), ctx);
   // Burrowers walk too: only the AI's ManualMove burrows.
-  return walk_path(b, *p, find_path(b, p->pos, dest, pr), true);
+  return settled(b, walk_path(b, *p, find_path(b, p->pos, dest, pr), true, ctx), ctx);
 }
 
-std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest) {
+std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest, RulesContext* ctx) {
   Pawn* p = b.find_pawn(uid);
   if (!p || !can_move(*p) || !mask_has(move_area(b, *p), dest)) return std::nullopt;
   MoveUndo u;
@@ -559,12 +579,12 @@ std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest) {
   u.injured = p->injured;
   u.infected = p->infected;
   p->movement.undo_ready = true;
-  u.end = move_pawn(b, uid, dest);
+  u.end = move_pawn(b, uid, dest, ctx);
   on_skill_fired(b, *p, /*move_skill=*/true);
   return u;
 }
 
-bool undo_move(Board& b, const MoveUndo& u) {
+bool undo_move(Board& b, const MoveUndo& u, RulesContext* ctx) {
   Pawn* p = b.find_pawn(u.uid);
   if (!p || !p->movement.undo_ready || p->team != Team::Player || p->neutral) return false;
   // The pawn ends up active whatever happened (a bonus move that ended its
@@ -581,7 +601,7 @@ bool undo_move(Board& b, const MoveUndo& u) {
   p->infected = u.infected;
   // Natively the relocation back is a plain SetSpace after the statuses are
   // restored, so an Injured pawn pays 1 HP for the undo too (unverified).
-  set_space(b, *p, u.from);
+  set_space(b, *p, u.from, false, ctx);
   b.tile(u.to) = u.to_tile;
   p->moved = false;
   p->movement.undo_ready = false;
@@ -589,14 +609,14 @@ bool undo_move(Board& b, const MoveUndo& u) {
   return true;
 }
 
-Point ai_move(Board& b, int32_t uid, Point dest) {
+Point ai_move(Board& b, int32_t uid, Point dest, RulesContext* ctx) {
   Pawn* p = b.find_pawn(uid);
   if (!p) return kInvalidPoint;
   if (!can_move(*p)) return p->pos;
   const Pathing pr = path_profile(b, *p);
-  if (p->burrows) return burrow(b, *p, dest, /*ai=*/true);
-  if (p->jumper && p->alive()) return leap(b, *p, dest, true);
-  return walk_path(b, *p, find_path(b, p->pos, dest, pr), true);
+  if (p->burrows) return settled(b, burrow(b, *p, dest, /*ai=*/true, ctx), ctx);
+  if (p->jumper && p->alive()) return settled(b, leap(b, *p, dest, true, ctx), ctx);
+  return settled(b, walk_path(b, *p, find_path(b, p->pos, dest, pr), true, ctx), ctx);
 }
 
 }  // namespace itb
