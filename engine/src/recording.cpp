@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include "itb/game_data.hpp"
+#include "itb/tile_rules.hpp"
 
 namespace itb {
 namespace {
@@ -30,8 +31,8 @@ Point get_point(const json& j, const char* key) {
 }
 
 Terrain terrain_from(const json& t, Tile& tile, std::vector<std::string>& warnings) {
-  // The bridge's terrain name is authoritative: lava arrives with id 5.
   const std::string name = get_or<std::string>(t, "terrain", "");
+  const int id = get_or<int>(t, "terrain_id", -1);
   if (name == "ground") return Terrain::Road;
   if (name == "building") return Terrain::Building;
   if (name == "rubble") return Terrain::Rubble;
@@ -42,6 +43,12 @@ Terrain terrain_from(const json& t, Tile& tile, std::vector<std::string>& warnin
   if (name == "sand") return Terrain::Sand;
   if (name == "chasm") return Terrain::Hole;
   if (name == "lava") {
+    // Bridges before 2026-05-04 named terrain id 5 (ice) "lava" by mistake.
+    // Real lava is water (id 3) with the lava flag (IsTerrain(TERRAIN_LAVA)).
+    if (id == static_cast<int>(Terrain::Ice) && !get_or<bool>(t, "lava", false)) {
+      warnings.push_back(kIceNamedLava);
+      return Terrain::Ice;
+    }
     tile.lava = true;
     return Terrain::Water;
   }
@@ -101,12 +108,21 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   // Recorded values win over definition defaults (pilots, upgrades, statuses).
   p.hp = static_cast<int8_t>(get_or<int>(u, "hp", p.hp));
   p.max_hp = static_cast<int8_t>(get_or<int>(u, "max_hp", p.max_hp));
+  if (p.hp > p.max_hp) {
+    // Older bridges reported the type's base Health as max_hp, without the
+    // pilot and upgrade bonuses that the live HP includes.
+    warnings.push_back("hp above the recorded max_hp (max_hp raised)");
+    p.max_hp = p.hp;
+  }
   // The bridge reports the Lua MoveSpeed (base_move) and the current
   // effective speed (move). Pilots and upgrades aren't recorded separately, so
   // the whole difference is kept as a standing bonus.
   const int effective_move = get_or<int>(u, "move", p.move);
   p.move = static_cast<int8_t>(get_or<int>(u, "base_move", effective_move));
-  p.movement.pilot_bonus = static_cast<int8_t>(effective_move - p.move);
+  // A speed below the base is Pawn:GetMoveSpeed() reading 0 for a webbed (or
+  // otherwise held) pawn at that moment, not a lasting penalty.
+  if (effective_move < p.move) warnings.push_back("effective move below base move (ignored)");
+  p.movement.pilot_bonus = static_cast<int8_t>(std::max(0, effective_move - p.move));
   p.team = static_cast<Team>(get_or<int>(u, "team", static_cast<int>(p.team)));
   p.mech = get_or<bool>(u, "mech", p.mech);
   p.flying = get_or<bool>(u, "flying", p.flying);
@@ -143,6 +159,35 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
     p.queued.target = get_point(u, "queued_target");
   }
   return p;
+}
+
+// Squad passives (board.hpp Passive) by Lua weapon name; upgraded variants
+// carry a suffix. Order matters: longer names first.
+uint32_t passive_of(std::string_view weapon) {
+  static const std::pair<const char*, uint32_t> kNames[] = {
+      {"Passive_FriendlyFire_AB", kPassiveFriendlyFireAB | kPassiveFriendlyFire},
+      {"Passive_FriendlyFire_A", kPassiveFriendlyFireA | kPassiveFriendlyFire},
+      {"Passive_FriendlyFire_B", kPassiveFriendlyFireB | kPassiveFriendlyFire},
+      {"Passive_FriendlyFire", kPassiveFriendlyFire},
+      {"Passive_Boosters_A", kPassiveKickoff | kPassiveKickoffUpgraded},
+      {"Passive_Boosters_AB", kPassiveKickoff | kPassiveKickoffUpgraded},
+      {"Passive_Boosters", kPassiveKickoff},
+      {"Passive_ForceAmp", kPassiveForceAmp},
+      {"Passive_AutoShields", kPassiveAutoShield},
+      {"Passive_FlameImmune", kPassiveFlameImmune},
+      {"Passive_FireBoost", kPassiveFireBoost},
+      {"Passive_HealingSmoke", kPassiveHealingSmoke},
+      {"Passive_PlayerTurnShield", kPassivePlayerTurnShield},
+      {"Passive_Leech", kPassivePsionLeech},
+      {"Passive_Electric", kPassiveElectricSmoke},
+      {"Passive_Burrows", kPassiveBurrows},
+      {"Passive_FastDecay", kPassiveFastDecay},
+      {"Passive_VoidShock", kPassiveVoidShock},
+  };
+  for (const auto& [name, bits] : kNames) {
+    if (weapon.starts_with(name)) return bits;
+  }
+  return kPassiveNone;
 }
 
 }  // namespace
@@ -189,11 +234,51 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   for (const json& u : s["units"]) {
     // Multi-tile pawns are reported once per extra tile; keep the main entry.
     if (get_or<bool>(u, "is_extra_tile", false)) continue;
-    b.add_pawn(load_unit(u, data, rec.warnings));
+    const Pawn& p = b.add_pawn(load_unit(u, data, rec.warnings));
+    if (auto pilot = get_or<std::string>(u, "pilot_id", ""); !pilot.empty()) {
+      rec.pilots.emplace_back(p.uid, pilot);
+    }
   }
+  // Webs come from the tile their source stands on.
+  for (Pawn& p : b.pawns()) {
+    if (!p.webbed) continue;
+    if (const Pawn* src = b.find_pawn(p.web_source)) p.web_tile = src->pos;
+  }
+  for (const Pawn& p : b.pawns()) {
+    if (p.mech && p.team == Team::Player) {
+      for (Symbol w : p.weapons) {
+        if (w != kNoSymbol) b.passives |= passive_of(symbol_name(w));
+      }
+    }
+  }
+  // Board::UpdateLeaders: the last living leader in list order.
+  for (const Pawn& p : b.pawns()) {
+    if (p.alive() && p.leader != Leader::None) b.psion = p.leader;
+  }
+  // The bridge's `boosted` is Pawn:IsBoosted(), which includes the Boost
+  // psion: only a boost the psion does not explain is the pawn's status.
+  for (Pawn& p : b.pawns()) {
+    if (p.boosted && mutation_affects(b, p, Leader::Boosted)) p.boosted = false;
+  }
+  rec.difficulty = get_or<int>(s, "difficulty", -1);
   if (auto it = s.find("spawning_tiles"); it != s.end() && it->is_array()) {
     for (const json& p : *it) {
       if (p.is_array() && p.size() >= 2) b.spawn_points.emplace_back(p[0].get<int>(), p[1].get<int>());
+    }
+  }
+  // Teleporter pads: [x1, y1, x2, y2] per pair. Whoever stands on a pad
+  // now has already arrived there.
+  if (auto it = s.find("teleporter_pairs"); it != s.end() && it->is_array()) {
+    for (const json& pair : *it) {
+      if (!pair.is_array() || pair.size() < 4) continue;
+      for (int k = 0; k < 2; ++k) {
+        const Point p{pair[2 * k].get<int>(), pair[2 * k + 1].get<int>()};
+        if (!p.valid()) continue;
+        b.teleporters.push_back(p);
+        b.tile(p).teleporter = true;
+        const Pawn* on = b.pawn_at(p);
+        b.teleporter_occupants.push_back(on && on->alive() ? on->uid : -1);
+      }
     }
   }
   if (auto it = s.find("attack_order"); it != s.end() && it->is_array()) {
