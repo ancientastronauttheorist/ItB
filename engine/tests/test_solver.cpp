@@ -488,12 +488,16 @@ TEST_CASE("solver: anytime budget returns a plan and a sound bound") {
 
 TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
   NEED_ENGINE();
+  // A 4x4 corner of the board (the rest is mountains): 1-2 mechs of mixed
+  // types with move 1-2, 1-2 Vek with an adjacent queued target, two
+  // buildings (Grid Defense rolls happen), sometimes water.
+  static const char* kMechs[] = {"PunchMech", "TankMech", "ArtiMech", "LaserMech", "JudoMech", "ChargeMech"};
+  static const char* kVek[] = {"Hornet1", "Scorpion1", "Firefly1"};
   std::mt19937 rng(20261009);
   auto pick = [&](int n) { return static_cast<int>(rng() % static_cast<unsigned>(n)); };
-  int checked = 0;
-  for (int trial = 0; trial < 8; ++trial) {
-    // A 4x4 corner of the board (the rest is mountains), 1-2 mechs with
-    // move 1-2, 1-2 Hornets with an adjacent queued target, 2 buildings.
+  int checked = 0, with_chance = 0;
+  constexpr int kTrials = 30;
+  for (int trial = 0; trial < kTrials; ++trial) {
     Board b;
     for (int i = 0; i < kTileCount; ++i) {
       const Point p = Point::from_index(i);
@@ -507,15 +511,16 @@ TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
     size_t k = 0;
     set_building(b, free[k++]);
     set_building(b, free[k++]);
+    if (pick(3) == 0) b.tile(free[k++]).terrain = Terrain::Water;
     const int mechs = 1 + pick(2);
     for (int i = 0; i < mechs; ++i) {
-      const int32_t m = place(b, "PunchMech", free[k++], true);
+      const int32_t m = place(b, kMechs[pick(6)], free[k++], true);
       P(b, m).move = static_cast<int8_t>(1 + pick(2));
     }
     const int vek = 1 + pick(2);
     for (int i = 0; i < vek; ++i) {
       const Point at = free[k++];
-      const int32_t h = place(b, "Hornet1", at);
+      const int32_t h = place(b, kVek[pick(3)], at);
       std::vector<Point> adj;
       for (Point d : kDirVectors) {
         if ((at + d).valid()) adj.push_back(at + d);
@@ -530,13 +535,89 @@ TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
       o.use_tt = tt;
       o.use_bounds = tt;
       o.order_children = tt;
+      o.beam_width = tt ? 6 : 0;
       const SolveResult r = solve_turn(E, b, ctx, o);
       INFO("trial " << trial << " tt " << tt << " naive " << want.describe() << " solver "
                     << r.best.worst_case.describe());
       CHECK(r.proven_optimal);
       CHECK(r.best.worst_case == want);
+      if (tt && r.stats.chance_branches > 0) ++with_chance;
     }
     ++checked;
   }
-  CHECK(checked == 8);
+  CHECK(checked == kTrials);
+  MESSAGE("brute-force boards: " << checked << ", with chance branches: " << with_chance);
+}
+
+// ---- Threads and recorded boards ----------------------------------------------------
+
+namespace {
+
+std::vector<Engine*> helpers(size_t n) {
+  static std::vector<std::unique_ptr<Engine>> pool;
+  while (pool.size() < n) pool.push_back(Engine::create(GameData::default_game_root()));
+  std::vector<Engine*> out;
+  for (size_t i = 0; i < n; ++i) out.push_back(pool[i].get());
+  return out;
+}
+
+}  // namespace
+
+TEST_CASE("solver: several threads prove the same value as one") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t a = place(b, "PunchMech", {3, 4}, true);
+  const int32_t c = place(b, "PunchMech", {3, 6}, true);
+  P(b, a).move = 2;
+  P(b, c).move = 3;
+  const int32_t h1 = place(b, "Hornet1", {3, 3});
+  queue(b, h1, {3, 2});
+  set_building(b, {3, 2});
+  const int32_t h2 = place(b, "Scorpion1", {5, 4});
+  queue(b, h2, {6, 4});
+  set_building(b, {6, 4});
+  const TurnContext ctx = context();
+  const SolveResult one = solve_turn(E, b, ctx, quick());
+  SolveOptions o = quick();
+  o.helper_engines = helpers(3);
+  const SolveResult four = solve_turn(E, b, ctx, o);
+  CHECK(four.stats.threads == 4);
+  REQUIRE(one.proven_optimal);
+  REQUIRE(four.proven_optimal);
+  CHECK(one.best.worst_case == four.best.worst_case);
+  const auto again = evaluate_plan(E, b, ctx, four.best.actions);
+  REQUIRE(again);
+  CHECK(*again == four.best.worst_case);
+}
+
+TEST_CASE("solver: a recorded board, anytime and threaded, stays consistent") {
+  NEED_ENGINE();
+  std::string error;
+  auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/board_m07_turn01.json", &E.data(), &error);
+  REQUIRE_MESSAGE(rec, error);
+  Board board = rec->board;
+  SolveOptions o;
+  for (const auto& [uid, pilot] : rec->pilots) {
+    if (Pawn* p = board.find_pawn(uid)) {
+      p->pilot_abilities |= E.pilot_ability(pilot);
+      o.repair_skills.emplace_back(uid, E.repair_skill(pilot));
+    }
+  }
+  TurnContext ctx;
+  ctx.mission = rec->mission;
+  o.time_limit_s = 3;
+  o.helper_engines = helpers(2);
+  const SolveResult r = solve_turn(E, board, ctx, o);
+  REQUIRE(r.upper_bound);
+  CHECK(*r.upper_bound >= r.best.worst_case);
+  // Doing nothing is a plan too: the search can only do better.
+  const auto idle = evaluate_plan(E, board, ctx, {}, o);
+  REQUIRE(idle);
+  CHECK(r.best.worst_case >= *idle);
+  if (!r.best.contingent) {
+    const auto again = evaluate_plan(E, board, ctx, r.best.actions, o);
+    REQUIRE(again);
+    CHECK(*again == r.best.worst_case);
+  }
+  for (const std::string& w : r.warnings) CHECK_MESSAGE(w.rfind("re-running", 0) != 0, w);
 }

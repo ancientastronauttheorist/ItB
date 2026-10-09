@@ -83,7 +83,15 @@ struct SolveOptions {
   bool use_tt = true;      // transposition table and end-of-turn memo
   bool use_bounds = true;  // branch-and-bound with the tier bounds
   bool order_children = true;
+  // Entries per table (transposition table, end-of-turn memo).
   size_t tt_max_entries = size_t{1} << 21;
+  // Beam pre-pass for a quick first plan: this many states kept per unit
+  // turn (0 = off).
+  int beam_width = 6;
+  // More engines to search with, one thread each (with `engine`, threads =
+  // 1 + helper_engines.size()). Each must be loaded from the same game
+  // install and is used by its thread alone while the search runs.
+  std::vector<Engine*> helper_engines;
 };
 
 struct Plan {
@@ -101,6 +109,8 @@ struct Plan {
 };
 
 struct SolveStats {
+  int threads = 1;
+  // Counts and engine times are summed over the threads.
   uint64_t nodes = 0;            // boards expanded (children generated)
   uint64_t sub_actions = 0;      // engine sub-action runs (all chance branches)
   uint64_t enemy_phases = 0;     // Engine::end_turn runs (all chance branches)

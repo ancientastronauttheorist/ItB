@@ -13,7 +13,7 @@
 //   itb_inspect [--game DIR] --score <recording.json>
 //                                               score the recorded plan (tiers, objectives, position)
 //   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
-//               [--sample N] [--shard I/N] [--verbose] [--json FILE]
+//               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
 //                                               the perfect-turn search vs the recorded plan
 
 #include <algorithm>
@@ -45,7 +45,7 @@ namespace {
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
                "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
-               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--sample N] [--shard I/N] [--verbose] [--json FILE])\n";
+               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE])\n";
   return 2;
 }
 
@@ -367,6 +367,10 @@ int main(int argc, char** argv) {
         o.time_limit = std::stod(args[++i]);
       } else if (args[i] == "--nodes" && i + 1 < args.size()) {
         o.node_limit = std::stoull(args[++i]);
+      } else if (args[i] == "--beam" && i + 1 < args.size()) {
+        o.beam = std::stoi(args[++i]);
+      } else if (args[i] == "--threads" && i + 1 < args.size()) {
+        o.threads = std::max(1, std::stoi(args[++i]));
       } else if (args[i] == "--sample" && i + 1 < args.size()) {
         o.sample = std::stoi(args[++i]);
       } else if (args[i] == "--shard" && i + 1 < args.size()) {

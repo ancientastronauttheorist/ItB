@@ -130,6 +130,11 @@ int run_solve(const SolveToolOptions& opt) {
     std::fprintf(stderr, "error: %s\n", e.what());
     return 1;
   }
+  // One engine per extra search thread, loaded once for every board.
+  std::vector<std::unique_ptr<Engine>> helpers;
+  for (int i = 1; i < opt.threads; ++i) helpers.push_back(Engine::create(opt.game));
+  std::vector<Engine*> helper_ptrs;
+  for (auto& h : helpers) helper_ptrs.push_back(h.get());
   std::vector<fs::path> files;
   if (fs::is_directory(opt.target)) {
     for (const auto& e : fs::recursive_directory_iterator(opt.target)) {
@@ -171,6 +176,8 @@ int run_solve(const SolveToolOptions& opt) {
     SolveOptions so;
     so.time_limit_s = opt.time_limit;
     so.node_limit = opt.node_limit;
+    so.helper_engines = helper_ptrs;
+    if (opt.beam >= 0) so.beam_width = opt.beam;
     for (const auto& [uid, pilot] : rec->pilots) {
       if (Pawn* p = board.find_pawn(uid)) {
         p->pilot_abilities |= engine->pilot_ability(pilot);
@@ -219,9 +226,10 @@ int run_solve(const SolveToolOptions& opt) {
         std::printf("upper bound: %s (optimal in the first %d tiers)\n", score_text(*r.upper_bound).c_str(),
                     r.proven_components);
       }
-      std::printf("search: %llu nodes, %llu sub-actions (%.2fs), %llu enemy phases (%.2fs), %llu chance branches, "
+      std::printf("search (%d threads): %llu nodes, %llu sub-actions (%.2fs), %llu enemy phases (%.2fs), %llu chance branches, "
                   "%llu TT hits, %llu leaf hits, %llu duplicates, %llu bound prunes, first plan %.3fs, best %.3fs\n",
-                  static_cast<unsigned long long>(r.stats.nodes), static_cast<unsigned long long>(r.stats.sub_actions),
+                  r.stats.threads, static_cast<unsigned long long>(r.stats.nodes),
+                  static_cast<unsigned long long>(r.stats.sub_actions),
                   r.stats.sub_action_s, static_cast<unsigned long long>(r.stats.enemy_phases), r.stats.enemy_phase_s,
                   static_cast<unsigned long long>(r.stats.chance_branches),
                   static_cast<unsigned long long>(r.stats.tt_hits), static_cast<unsigned long long>(r.stats.leaf_hits),
@@ -242,6 +250,7 @@ int run_solve(const SolveToolOptions& opt) {
              {"proven", row.proven},
              {"time", row.time},
              {"units", units},
+             {"threads", r.stats.threads},
              {"nodes", r.stats.nodes},
              {"sub_actions", r.stats.sub_actions},
              {"enemy_phases", r.stats.enemy_phases},

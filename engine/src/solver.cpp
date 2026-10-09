@@ -17,10 +17,15 @@
 #include "itb/solver.hpp"
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <chrono>
 #include <climits>
 #include <cstdio>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -346,80 +351,147 @@ struct TTEntry {
   bool has_best = false;
 };
 
-class Searcher {
+// A hash map in independently locked shards, shared by the search threads.
+// Entries are only ever sound intervals, so any thread may use any entry.
+template <class V>
+class SharedMap {
  public:
-  Searcher(Engine& engine, const Board& root, const TurnContext& ctx, const SolveOptions& o)
-      : e_(engine),
-        root_(root),
-        o_(o),
-        bounds_(root, o.tier_caps),
-        driver_(root.grid_defense, o.extra_death_seeds) {
-    tc_ = ctx;
-    tc_.events = nullptr;
-    tc_.log = nullptr;
+  explicit SharedMap(size_t cap) : cap_(cap) {}
+  bool get(const BoardHash& k, V& out) {
+    Shard& s = shard(k);
+    std::lock_guard lock(s.mu);
+    auto it = s.map.find(k);
+    if (it == s.map.end()) return false;
+    out = it->second;
+    return true;
+  }
+  void put(const BoardHash& k, const V& v) {
+    Shard& s = shard(k);
+    std::lock_guard lock(s.mu);
+    auto it = s.map.find(k);
+    if (it != s.map.end()) {
+      it->second = v;
+      return;
+    }
+    if (size_.load(std::memory_order_relaxed) >= cap_) return;
+    s.map.emplace(k, v);
+    size_.fetch_add(1, std::memory_order_relaxed);
+  }
+  // In-progress counts (V = int): boards some thread is searching now.
+  void add(const BoardHash& k, int delta) {
+    Shard& s = shard(k);
+    std::lock_guard lock(s.mu);
+    if ((s.map[k] += delta) == 0) s.map.erase(k);
+  }
+
+ private:
+  static constexpr size_t kShards = 64;
+  struct Shard {
+    std::mutex mu;
+    std::unordered_map<BoardHash, V, BoardHashOf> map;
+  };
+  Shard& shard(const BoardHash& k) { return shards_[k.hi % kShards]; }
+  std::array<Shard, kShards> shards_;
+  std::atomic<size_t> size_{0};
+  size_t cap_;
+};
+
+// What the search threads share.
+struct Shared {
+  Shared(const Board& r, const TurnContext& ctx, const SolveOptions& opt)
+      : root(r), o(opt), bounds(r, opt.tier_caps), tt(opt.tt_max_entries), leaf(opt.tt_max_entries), busy(SIZE_MAX) {
+    base = ctx;
+    base.events = nullptr;
+    base.log = nullptr;
+  }
+  const Board& root;
+  const SolveOptions& o;
+  TierBounds bounds;
+  TurnContext base;
+  SharedMap<TTEntry> tt;
+  SharedMap<Interval> leaf;
+  SharedMap<int> busy;
+  size_t threads = 1;
+  Clock::time_point start;
+  std::atomic<bool> stop{false};       // budget spent or the search completed
+  std::atomic<bool> completed{false};  // some thread finished the root search
+  std::atomic<uint64_t> nodes{0};
+  std::atomic<bool> chance_exact{true};
+
+  std::mutex mu;  // the incumbent and the warnings
+  bool has_incumbent = false;
+  Score incumbent = kLow;
+  std::vector<SubAction> best_line;
+  double first_plan_s = 0, best_plan_s = 0;
+  std::vector<std::string> warnings;
+
+  bool incumbent_value(Score& out) {
+    std::lock_guard lock(mu);
+    out = incumbent;
+    return has_incumbent;
+  }
+  void note(const std::string& w) {
+    std::lock_guard lock(mu);
+    if (std::find(warnings.begin(), warnings.end(), w) == warnings.end()) warnings.push_back(w);
+  }
+};
+
+// One search thread: its own engine (Lua state), chance driver and path.
+class Worker {
+ public:
+  Worker(Engine& engine, Shared& shared, size_t index)
+      : e_(engine), sh_(shared), o_(shared.o), index_(index), driver_(shared.root.grid_defense, shared.o.extra_death_seeds) {
+    tc_ = shared.base;
     driver_.bind(tc_);
     driver_.bind(aopts_);
     aopts_.check_legal = true;
-    for (const auto& [uid, skill] : o.repair_skills) repair_[uid] = intern(skill);
+    for (const auto& [uid, skill] : o_.repair_skills) repair_[uid] = intern(skill);
     move_skill_ = intern("Move");
     default_repair_ = intern("Skill_Repair");
   }
 
-  SolveResult run() {
-    start_ = Clock::now();
-    const BoardHash h = hash_board(root_, HashMode::Search);
+  // Beam pre-pass (thread 0), then the full search. Returns the root's
+  // interval; complete() says whether the search ran to its end.
+  Interval run() {
+    if (index_ == 0 && o_.beam_width > 0) beam();
+    const BoardHash h = hash_board(sh_.root, HashMode::Search);
     std::vector<SubAction> pv;
-    const Interval r = search(root_, h, kLow, kHigh, true, &pv, 0);
-
-    SolveResult out;
-    out.stats = stats_;
-    out.stats.time_s = seconds_since(start_);
-    out.timed_out = aborted_;
-    out.chance_exact = chance_exact_ && !driver_.sampled();
-    if (!has_incumbent_) return out;
-    out.best.actions = to_player_actions(best_line_);
-    out.best.worst_case = incumbent_;
-    out.best.contingent = std::any_of(best_line_.begin(), best_line_.end(),
-                                      [](const SubAction& a) { return a.chance; });
-    out.proven_optimal = !aborted_ && out.chance_exact;
-    Score upper = std::max(r.hi, incumbent_);
-    if (!aborted_ && r.hi > incumbent_) {
-      warnings_.push_back("search completed with a root bound above the plan: " + r.hi.describe());
+    const Interval r = search(sh_.root, h, kLow, kHigh, true, &pv, 0);
+    if (!aborted_) {
+      sh_.completed = true;
+      sh_.stop = true;
     }
-    if (out.proven_optimal) upper = incumbent_;
-    out.upper_bound = upper;
-    int k = 0;
-    while (k < kScoreKeys && upper.v[k] == incumbent_.v[k]) ++k;
-    out.proven_components = upper == incumbent_ ? kScoreKeys : k;
-    if (!out.chance_exact) out.warnings.push_back("chance not enumerated exactly (sampled death-effect seed or chance tree over the cap)");
-    for (const std::string& w : warnings_) out.warnings.push_back(w);
-    return out;
+    return r;
   }
+  bool complete() const { return !aborted_; }
+  const SolveStats& stats() const { return stats_; }
+  bool sampled() const { return driver_.sampled(); }
 
  private:
   bool budget_exceeded() {
     if (aborted_) return true;
-    if (o_.node_limit && stats_.nodes >= o_.node_limit) aborted_ = true;
-    if (o_.time_limit_s > 0 && seconds_since(start_) >= o_.time_limit_s) aborted_ = true;
+    bool spent = false;
+    if (o_.node_limit && sh_.nodes.load(std::memory_order_relaxed) >= o_.node_limit) spent = true;
+    if (o_.time_limit_s > 0 && seconds_since(sh_.start) >= o_.time_limit_s) spent = true;
+    if (spent) sh_.stop = true;
+    if (sh_.stop.load(std::memory_order_relaxed)) aborted_ = true;
     return aborted_;
   }
 
-  void note(const std::string& w) {
-    if (std::find(warnings_.begin(), warnings_.end(), w) == warnings_.end()) warnings_.push_back(w);
-  }
-
   void improve(const Score& v, const std::vector<SubAction>& tail) {
-    if (has_incumbent_ && v <= incumbent_) return;
-    if (!has_incumbent_) stats_.first_plan_s = seconds_since(start_);
-    has_incumbent_ = true;
-    incumbent_ = v;
-    best_line_ = path_;
-    best_line_.insert(best_line_.end(), tail.begin(), tail.end());
-    stats_.best_plan_s = seconds_since(start_);
+    std::lock_guard lock(sh_.mu);
+    if (sh_.has_incumbent && v <= sh_.incumbent) return;
+    if (!sh_.has_incumbent) sh_.first_plan_s = seconds_since(sh_.start);
+    sh_.has_incumbent = true;
+    sh_.incumbent = v;
+    sh_.best_line = path_;
+    sh_.best_line.insert(sh_.best_line.end(), tail.begin(), tail.end());
+    sh_.best_plan_s = seconds_since(sh_.start);
   }
 
-  Score alpha_of(const Score& alpha) const {
-    return has_incumbent_ ? std::max(alpha, incumbent_) : alpha;
+  Score alpha_of(const Score& alpha) {
+    Score inc;
+    return sh_.incumbent_value(inc) ? std::max(alpha, inc) : alpha;
   }
 
   // E(B): the worst case of ending the turn on B.
@@ -427,11 +499,10 @@ class Searcher {
     BoardHash key{};
     if (o_.use_tt) {
       key = hash_board(b, HashMode::EndTurn);
-      if (auto it = leaf_memo_.find(key); it != leaf_memo_.end()) {
-        if (it->second.exact() || it->second.hi <= alpha) {
-          ++stats_.leaf_hits;
-          return it->second;
-        }
+      Interval memo;
+      if (sh_.leaf.get(key, memo) && (memo.exact() || memo.hi <= alpha)) {
+        ++stats_.leaf_hits;
+        return memo;
       }
     }
     Score worst = kHigh;
@@ -444,19 +515,19 @@ class Searcher {
       stats_.enemy_phase_s += seconds_since(t0);
       ++stats_.enemy_phases;
       driver_.mark_random(pr.chances);
-      if (!pr.exact) note("enemy phase: the recorded data does not pin every step down (EnvInexact)");
-      if (!pr.emerged_unknown.empty()) note("enemy phase: spawns of unknown type emerge without a pawn");
-      worst = std::min(worst, score_turn(root_, after, &tc_, &pr));
+      if (!pr.exact) sh_.note("enemy phase: the recorded data does not pin every step down (EnvInexact)");
+      if (!pr.emerged_unknown.empty()) sh_.note("enemy phase: spawns of unknown type emerge without a pawn");
+      worst = std::min(worst, score_turn(sh_.root, after, &tc_, &pr));
       if (worst <= alpha) {
         cut = true;
         return false;
       }
       return true;
     });
-    if (end == EnumEnd::Truncated) chance_exact_ = false;
+    if (end == EnumEnd::Truncated) sh_.chance_exact = false;
     if (cut) ++stats_.chance_cutoffs;
     const Interval r = cut ? Interval{kLow, worst} : Interval{worst, worst};
-    if (o_.use_tt && leaf_memo_.size() < o_.tt_max_entries) leaf_memo_[key] = r;
+    if (o_.use_tt) sh_.leaf.put(key, r);
     return r;
   }
 
@@ -511,87 +582,171 @@ class Searcher {
       return true;
     });
     if (refused) return false;
-    if (end == EnumEnd::Truncated) chance_exact_ = false;
+    if (end == EnumEnd::Truncated) sh_.chance_exact = false;
     act.chance = outs.size() > 1;
     return true;
   }
+
+  // The sub-actions unit p may try on b (not yet run): weapons and repair if
+  // `acts`, moves if `moves`.
+  void unit_actions(const Board& b, const Pawn& p, bool acts, bool moves, std::vector<SubAction>& out) {
+    LuaHost& lua = e_.lua();
+    const int32_t uid = p.uid;
+    const Point at = p.pos;
+    if (acts && p.active && p.movement.powered && !p.frozen) {
+      for (int slot = 0; slot < kMaxWeapons; ++slot) {
+        const Symbol w = p.weapons[static_cast<size_t>(slot)];
+        if (w == kNoSymbol || passive(w)) continue;
+        const std::string name(symbol_name(w));
+        std::vector<Point> targets = lua.target_area(b, p, name, at);
+        valid_unique(targets);
+        const bool two = two_click(w);
+        for (Point t : targets) {
+          SubAction a;
+          a.uid = uid;
+          a.kind = SubAction::Weapon;
+          a.slot = static_cast<int8_t>(slot);
+          a.skill = w;
+          a.target = t;
+          if (two && !lua.two_click_exception(b, p, name, at, t)) {
+            const Point first = lua.translate_first_click(b, p, name, at, t);
+            std::vector<Point> second = lua.second_target_area(b, p, name, at, first);
+            valid_unique(second);
+            for (Point t2 : second) {
+              a.target2 = t2;
+              out.push_back(a);
+            }
+          } else {
+            out.push_back(a);
+          }
+        }
+      }
+      if (p.mech) {
+        auto it = repair_.find(uid);
+        const Symbol skill = it != repair_.end() ? it->second : default_repair_;
+        std::vector<Point> targets = lua.target_area(b, p, symbol_name(skill), at);
+        valid_unique(targets);
+        if (targets.empty()) targets.push_back(at);
+        for (Point t : targets) {
+          SubAction a;
+          a.uid = uid;
+          a.kind = SubAction::Repair;
+          a.skill = skill;
+          a.target = t;
+          out.push_back(a);
+        }
+      }
+    }
+    if (moves && can_move(p)) {
+      std::vector<Point> dests = lua.target_area(b, p, "Move", at);
+      valid_unique(dests);
+      for (Point d : dests) {
+        if (d == at) continue;
+        SubAction a;
+        a.uid = uid;
+        a.kind = SubAction::Move;
+        a.skill = move_skill_;
+        a.target = d;
+        out.push_back(a);
+      }
+    }
+  }
+
+  static bool unit_can_play(const Pawn& p) { return p.controlled() && p.alive() && p.pos.valid(); }
 
   void generate(const Board& b, const BoardHash& h, std::vector<Child>& out) {
     out.clear();
     std::unordered_set<BoardHash, BoardHashOf> seen;
     seen.insert(h);
-    auto add = [&](SubAction act) {
+    std::vector<SubAction> acts;
+    for (const Pawn& p : b.pawns()) {
+      if (unit_can_play(p)) unit_actions(b, p, true, true, acts);
+    }
+    for (SubAction& act : acts) {
       Child c;
-      if (!execute(b, act, c.outcomes)) return;
+      if (!execute(b, act, c.outcomes)) continue;
       if (c.outcomes.size() == 1 && !seen.insert(c.outcomes[0].hash).second) {
         ++stats_.duplicate_children;
-        return;
+        continue;
       }
       c.act = act;
       out.push_back(std::move(c));
+    }
+  }
+
+  // A quick first plan: a beam over whole unit turns (an optional move, then
+  // an optional action), ranked by the value of ending the turn there. To
+  // keep plans whose value needs the other units' turns, the beam keeps the
+  // best `beam_width` states for every set of units that have played. It
+  // only finds incumbents; the search proper proves them.
+  void beam() {
+    struct State {
+      Board board;
+      std::vector<SubAction> line;
+      bool chance_free = true;
+      uint32_t played = 0;  // bit i: units[i] has had its turn
+      Score key;
     };
-    LuaHost& lua = e_.lua();
-    for (const Pawn& p : b.pawns()) {
-      if (!p.controlled() || !p.alive() || !p.pos.valid()) continue;
-      const int32_t uid = p.uid;
-      const Point at = p.pos;
-      if (p.active && p.movement.powered && !p.frozen) {
-        for (int slot = 0; slot < kMaxWeapons; ++slot) {
-          const Symbol w = p.weapons[static_cast<size_t>(slot)];
-          if (w == kNoSymbol || passive(w)) continue;
-          const std::string name(symbol_name(w));
-          std::vector<Point> targets = lua.target_area(b, p, name, at);
-          valid_unique(targets);
-          const bool two = two_click(w);
-          for (Point t : targets) {
-            SubAction a;
-            a.uid = uid;
-            a.kind = SubAction::Weapon;
-            a.slot = static_cast<int8_t>(slot);
-            a.skill = w;
-            a.target = t;
-            if (two && !lua.two_click_exception(b, p, name, at, t)) {
-              const Point first = lua.translate_first_click(b, p, name, at, t);
-              std::vector<Point> second = lua.second_target_area(b, p, name, at, first);
-              valid_unique(second);
-              for (Point t2 : second) {
-                a.target2 = t2;
-                add(a);
-              }
-            } else {
-              add(a);
+    std::vector<int32_t> units;
+    for (const Pawn& p : sh_.root.pawns()) {
+      if (unit_can_play(p) && units.size() < 31) units.push_back(p.uid);
+    }
+    std::vector<State> beam(1);
+    beam[0].board = sh_.root;
+    std::unordered_set<BoardHash, BoardHashOf> seen;
+    seen.insert(hash_board(sh_.root, HashMode::Search));
+    std::vector<Outcome> outs;
+    for (size_t level = 0; level < units.size() && !beam.empty(); ++level) {
+      std::vector<State> next;
+      auto consider = [&](Outcome& o, std::vector<SubAction> line, bool chance_free, uint32_t played) {
+        if (!seen.insert(o.hash).second) return;
+        const Interval end = leaf(o.board, alpha_of(kLow));
+        if (chance_free && end.exact()) improve(end.lo, line);
+        next.push_back(State{std::move(o.board), std::move(line), chance_free, played, end.hi});
+      };
+      for (const State& st : beam) {
+        for (size_t u = 0; u < units.size(); ++u) {
+          if (st.played & (1u << u)) continue;
+          const Pawn* p = st.board.find_pawn(units[u]);
+          if (!p || !unit_can_play(*p)) continue;
+          if (budget_exceeded()) return;
+          const uint32_t played = st.played | (1u << u);
+          // Where the unit acts from: here, or after each of its moves.
+          std::vector<State> bases;
+          bases.push_back(State{st.board, st.line, st.chance_free, played, kLow});
+          std::vector<SubAction> moves;
+          unit_actions(st.board, *p, false, true, moves);
+          for (SubAction& m : moves) {
+            if (!execute(st.board, m, outs) || outs.empty()) continue;
+            std::vector<SubAction> line = st.line;
+            line.push_back(m);
+            bases.push_back(State{outs[0].board, line, st.chance_free && !m.chance, played, kLow});
+            consider(outs[0], line, st.chance_free && !m.chance, played);
+          }
+          for (const State& base : bases) {
+            const Pawn* q = base.board.find_pawn(units[u]);
+            if (!q || !unit_can_play(*q)) continue;
+            std::vector<SubAction> acts;
+            unit_actions(base.board, *q, true, false, acts);
+            for (SubAction& a : acts) {
+              if (budget_exceeded()) return;
+              if (!execute(base.board, a, outs) || outs.empty()) continue;
+              std::vector<SubAction> line = base.line;
+              line.push_back(a);
+              consider(outs[0], std::move(line), base.chance_free && !a.chance, played);
             }
           }
         }
-        if (p.mech) {
-          auto it = repair_.find(uid);
-          const Symbol skill = it != repair_.end() ? it->second : default_repair_;
-          std::vector<Point> targets = lua.target_area(b, p, symbol_name(skill), at);
-          valid_unique(targets);
-          if (targets.empty()) targets.push_back(at);
-          for (Point t : targets) {
-            SubAction a;
-            a.uid = uid;
-            a.kind = SubAction::Repair;
-            a.skill = skill;
-            a.target = t;
-            add(a);
-          }
-        }
       }
-      if (can_move(p)) {
-        std::vector<Point> dests = lua.target_area(b, p, "Move", at);
-        valid_unique(dests);
-        for (Point d : dests) {
-          if (d == at) continue;
-          SubAction a;
-          a.uid = uid;
-          a.kind = SubAction::Move;
-          a.skill = move_skill_;
-          a.target = d;
-          add(a);
-        }
+      std::stable_sort(next.begin(), next.end(), [](const State& x, const State& y) {
+        return x.played != y.played ? x.played < y.played : x.key > y.key;
+      });
+      std::vector<State> kept;
+      for (size_t i = 0, run = 0; i < next.size(); ++i) {
+        run = (i > 0 && next[i].played == next[i - 1].played) ? run + 1 : 0;
+        if (run < static_cast<size_t>(o_.beam_width)) kept.push_back(std::move(next[i]));
       }
+      beam = std::move(kept);
     }
   }
 
@@ -602,9 +757,9 @@ class Searcher {
     Board cur = start;
     std::vector<Outcome> outs;
     for (int guard = 0; guard < kMaxDepth; ++guard) {
-      auto it = tt_.find(hash_board(cur, HashMode::Search));
-      if (it == tt_.end() || !it->second.has_best) break;
-      SubAction act = it->second.best;
+      TTEntry e;
+      if (!sh_.tt.get(hash_board(cur, HashMode::Search), e) || !e.has_best) break;
+      SubAction act = e.best;
       if (!execute(cur, act, outs) || outs.empty()) break;
       line.push_back(act);
       cur = std::move(outs[0].board);
@@ -622,11 +777,10 @@ class Searcher {
       if (k == 0 && pv) *pv = std::move(sub);
       lo = std::min(lo, r.lo);
       hi = std::min(hi, r.hi);
-      if (hi <= alpha_of(alpha) && k + 1 < c.outcomes.size()) {
-        ++stats_.chance_cutoffs;
+      if (k + 1 < c.outcomes.size() && (hi <= alpha_of(alpha) || aborted_)) {
+        if (!aborted_) ++stats_.chance_cutoffs;
         return Interval{kLow, hi};  // the outcomes left can only lower it
       }
-      if (aborted_ && k + 1 < c.outcomes.size()) return Interval{kLow, hi};
     }
     return Interval{lo, hi};
   }
@@ -634,15 +788,17 @@ class Searcher {
   Interval search(const Board& b, const BoardHash& h, Score alpha, const Score& beta, bool chance_free,
                   std::vector<SubAction>* pv, int depth) {
     if (pv) pv->clear();
-    if (budget_exceeded()) return Interval{kLow, bounds_.of(b)};
+    if (budget_exceeded()) return Interval{kLow, sh_.bounds.of(b)};
     alpha = alpha_of(alpha);
     if (o_.use_tt) {
-      auto it = tt_.find(h);
-      if (it != tt_.end()) {
-        const Interval& v = it->second.v;
+      TTEntry e;
+      if (sh_.tt.get(h, e)) {
+        const Interval& v = e.v;
         if (v.exact() || v.hi <= alpha || v.lo >= beta) {
           ++stats_.tt_hits;
-          if (chance_free && v.lo > kLow && (!has_incumbent_ || v.lo > incumbent_)) {
+          Score inc;
+          const bool has = sh_.incumbent_value(inc);
+          if (chance_free && v.lo > kLow && (!has || v.lo > inc)) {
             const std::vector<SubAction> line = table_line(b);
             improve(v.lo, line);
             if (pv) *pv = line;
@@ -654,6 +810,9 @@ class Searcher {
       }
     }
     ++stats_.nodes;
+    sh_.nodes.fetch_add(1, std::memory_order_relaxed);
+    const bool shared = sh_.threads > 1;
+    if (shared) sh_.busy.add(h, 1);
 
     // End the turn here.
     const Interval end = leaf(b, alpha);
@@ -664,11 +823,10 @@ class Searcher {
     if (chance_free && end.exact()) improve(end.lo, {});
     alpha = std::max(alpha_of(alpha), lo);
 
-    const Score ub = bounds_.of(b);
+    const Score ub = sh_.bounds.of(b);
     auto finish = [&](Interval r) {
-      if (o_.use_tt && !aborted_ && tt_.size() < o_.tt_max_entries) {
-        tt_[h] = TTEntry{r, best_act, has_best};
-      }
+      if (shared) sh_.busy.add(h, -1);
+      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best});
       if (chance_free && r.lo > kLow) improve(r.lo, best_pv);
       if (pv) *pv = best_pv;
       return r;
@@ -679,8 +837,8 @@ class Searcher {
       return finish(Interval{lo, std::max(hi, ub)});
     }
     if (depth >= kMaxDepth) {
-      note("search depth limit reached");
-      chance_exact_ = false;
+      sh_.note("search depth limit reached");
+      sh_.chance_exact = false;
       return finish(Interval{lo, std::max(hi, ub)});
     }
 
@@ -697,20 +855,19 @@ class Searcher {
                        [](const Child& x, const Child& y) { return x.order > y.order; });
     }
 
-    for (size_t i = 0; i < children.size(); ++i) {
-      Child& c = children[i];
-      if (budget_exceeded()) {
-        hi = std::max(hi, ub);
-        break;
-      }
+    // With several threads, children another thread is searching right now
+    // wait for a second pass (by then usually settled in the table).
+    std::vector<size_t> later;
+    bool cut = false;
+    auto visit = [&](Child& c) {
       alpha = std::max(alpha_of(alpha), lo);
       if (o_.use_bounds) {
         Score cub = kLow;
-        for (const Outcome& oc : c.outcomes) cub = std::max(cub, bounds_.of(oc.board));
+        for (const Outcome& oc : c.outcomes) cub = std::max(cub, sh_.bounds.of(oc.board));
         if (cub <= alpha) {
           ++stats_.bound_prunes;
           hi = std::max(hi, cub);
-          continue;
+          return;
         }
       }
       std::vector<SubAction> sub;
@@ -720,7 +877,9 @@ class Searcher {
         r = search(c.outcomes[0].board, c.outcomes[0].hash, alpha, beta, chance_free, &sub, depth + 1);
       } else {
         r = chance_node(c, alpha, beta, &sub, depth);
-        if (chance_free && r.lo > kLow && (!has_incumbent_ || r.lo > incumbent_)) improve(r.lo, sub);
+        Score inc;
+        const bool has = sh_.incumbent_value(inc);
+        if (chance_free && r.lo > kLow && (!has || r.lo > inc)) improve(r.lo, sub);
       }
       path_.pop_back();
       hi = std::max(hi, r.hi);
@@ -732,18 +891,35 @@ class Searcher {
         best_pv.push_back(c.act);
         best_pv.insert(best_pv.end(), sub.begin(), sub.end());
       }
-      if (lo >= beta) {
-        hi = std::max(hi, ub);  // the children left are not searched
-        break;
+      if (lo >= beta) cut = true;
+    };
+    for (int pass = 0; pass < 2 && !cut; ++pass) {
+      const size_t n = pass == 0 ? children.size() : later.size();
+      for (size_t i = 0; i < n && !cut; ++i) {
+        Child& c = children[pass == 0 ? i : later[i]];
+        if (budget_exceeded()) {
+          hi = std::max(hi, ub);  // the children left are not searched
+          cut = true;
+          break;
+        }
+        if (pass == 0 && shared && c.outcomes.size() == 1) {
+          int n_busy = 0;
+          if (sh_.busy.get(c.outcomes[0].hash, n_busy) && n_busy > 0) {
+            later.push_back(i);
+            continue;
+          }
+        }
+        visit(c);
       }
     }
+    if (cut && lo >= beta) hi = std::max(hi, ub);  // the children left are not searched
     return finish(Interval{lo, hi});
   }
 
   Engine& e_;
-  const Board& root_;
+  Shared& sh_;
   const SolveOptions& o_;
-  TierBounds bounds_;
+  size_t index_;
   ChanceDriver driver_;
   TurnContext tc_;
   ActionOptions aopts_;
@@ -751,35 +927,87 @@ class Searcher {
   std::unordered_map<Symbol, bool> passive_, two_click_;
   Symbol move_skill_ = kNoSymbol;
   Symbol default_repair_ = kNoSymbol;
-
-  std::unordered_map<BoardHash, TTEntry, BoardHashOf> tt_;
-  std::unordered_map<BoardHash, Interval, BoardHashOf> leaf_memo_;
-
-  Clock::time_point start_;
   bool aborted_ = false;
-  bool chance_exact_ = true;
-  bool has_incumbent_ = false;
-  Score incumbent_ = kLow;
   std::vector<SubAction> path_;
-  std::vector<SubAction> best_line_;
-  std::vector<std::string> warnings_;
   SolveStats stats_;
 };
 
 }  // namespace
 
 SolveResult solve_turn(Engine& engine, const Board& board, const TurnContext& ctx, const SolveOptions& options) {
-  Searcher s(engine, board, ctx, options);
-  SolveResult r = s.run();
+  Shared sh(board, ctx, options);
+  std::vector<Engine*> engines{&engine};
+  for (Engine* e : options.helper_engines) {
+    if (e && e != &engine) engines.push_back(e);
+  }
+  sh.threads = engines.size();
+  sh.start = Clock::now();
+  std::vector<std::unique_ptr<Worker>> workers;
+  for (size_t i = 0; i < engines.size(); ++i) workers.push_back(std::make_unique<Worker>(*engines[i], sh, i));
+  std::vector<Interval> roots(engines.size());
+  std::vector<std::thread> threads;
+  for (size_t i = 1; i < engines.size(); ++i) {
+    threads.emplace_back([&, i] { roots[i] = workers[i]->run(); });
+  }
+  roots[0] = workers[0]->run();
+  for (std::thread& t : threads) t.join();
+
+  SolveResult out;
+  for (const auto& w : workers) {
+    const SolveStats& s = w->stats();
+    out.stats.nodes += s.nodes;
+    out.stats.sub_actions += s.sub_actions;
+    out.stats.enemy_phases += s.enemy_phases;
+    out.stats.chance_branches += s.chance_branches;
+    out.stats.tt_hits += s.tt_hits;
+    out.stats.leaf_hits += s.leaf_hits;
+    out.stats.duplicate_children += s.duplicate_children;
+    out.stats.bound_prunes += s.bound_prunes;
+    out.stats.chance_cutoffs += s.chance_cutoffs;
+    out.stats.sub_action_s += s.sub_action_s;
+    out.stats.enemy_phase_s += s.enemy_phase_s;
+    if (w->sampled()) sh.chance_exact = false;
+  }
+  out.stats.time_s = seconds_since(sh.start);
+  out.stats.first_plan_s = sh.first_plan_s;
+  out.stats.best_plan_s = sh.best_plan_s;
+  out.stats.threads = static_cast<int>(engines.size());
+  out.chance_exact = sh.chance_exact;
+  out.timed_out = !sh.completed;
+  out.warnings = sh.warnings;
+  if (!sh.has_incumbent) return out;
+  out.best.actions = to_player_actions(sh.best_line);
+  out.best.worst_case = sh.incumbent;
+  out.best.contingent =
+      std::any_of(sh.best_line.begin(), sh.best_line.end(), [](const SubAction& a) { return a.chance; });
+  out.proven_optimal = sh.completed && out.chance_exact;
+  // Every root interval is sound; the tightest bound wins. A completed
+  // search has root.hi <= the incumbent (solver.cpp header).
+  Score upper = kHigh;
+  for (size_t i = 0; i < workers.size(); ++i) {
+    if (workers[i]->complete() && roots[i].hi > sh.incumbent) {
+      out.warnings.push_back("search completed with a root bound above the plan: " + roots[i].hi.describe());
+    }
+    upper = std::min(upper, roots[i].hi);
+  }
+  upper = std::max(upper, sh.incumbent);
+  if (out.proven_optimal) upper = sh.incumbent;
+  out.upper_bound = upper;
+  int k = 0;
+  while (k < kScoreKeys && upper.v[static_cast<size_t>(k)] == sh.incumbent.v[static_cast<size_t>(k)]) ++k;
+  out.proven_components = k;
+  if (!out.chance_exact) {
+    out.warnings.push_back("chance not enumerated exactly (sampled death-effect seed or chance tree over the cap)");
+  }
   // The returned plan, re-run open-loop: the same value unless it branches
   // on a chance node (then the plan is a policy, see Plan::contingent).
-  if (!r.best.contingent && !r.best.actions.empty()) {
-    const std::optional<Score> again = evaluate_plan(engine, board, ctx, r.best.actions, options);
-    if (!again || *again != r.best.worst_case) {
-      r.warnings.push_back("re-running the plan gives " + (again ? again->describe() : std::string("a refusal")));
+  if (!out.best.contingent && !out.best.actions.empty()) {
+    const std::optional<Score> again = evaluate_plan(engine, board, ctx, out.best.actions, options);
+    if (!again || *again != out.best.worst_case) {
+      out.warnings.push_back("re-running the plan gives " + (again ? again->describe() : std::string("a refusal")));
     }
   }
-  return r;
+  return out;
 }
 
 std::optional<Score> evaluate_plan(Engine& engine, const Board& board, const TurnContext& ctx,
