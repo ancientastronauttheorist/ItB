@@ -101,6 +101,14 @@ enum Passive : uint32_t {
   kPassiveBurrows = 1u << 8,           // Passive_Burrows
   kPassiveKickoff = 1u << 9,           // Passive_Boosters (Kickoff Boosters)
   kPassiveKickoffUpgraded = 1u << 10,  // Passive_Boosters_A / "Kickoff_Booster_A" (+2 move)
+  // Vek Hormones: enemy shots hitting Vek get +1, +2 with either upgrade, +3
+  // with both.
+  kPassiveFriendlyFire = 1u << 11,     // Passive_FriendlyFire
+  kPassiveFriendlyFireA = 1u << 12,    // Passive_FriendlyFire_A
+  kPassiveFriendlyFireB = 1u << 13,    // Passive_FriendlyFire_B
+  kPassiveFriendlyFireAB = 1u << 14,   // Passive_FriendlyFire_AB
+  kPassiveFastDecay = 1u << 15,        // Passive_FastDecay: dead Vek leave forest
+  kPassiveVoidShock = 1u << 16,        // Passive_VoidShock (AE)
 };
 
 inline constexpr int kMaxWeapons = 4;
@@ -148,6 +156,8 @@ struct Pawn {
   bool jumper = false;
   bool teleporter = false;
   bool explodes = false;
+  bool burns = false;        // Lua Burns (AE): leaves fire when it dies
+  bool ignore_flip = false;  // Lua IgnoreFlip: DIR_FLIP leaves its attack alone
   bool neutral = false;
   bool non_grid = false;
   bool mission_critical = false;
@@ -167,6 +177,10 @@ struct Pawn {
   bool fallen = false;   // fell into a chasm: off the board, never a corpse
   bool retreating = false;  // end-of-mission retreat started (bEvacuate)
   int32_t web_source = -1;  // uid of the webbing pawn
+  // When the pawn entered its tile (Board::stamp_arrival). Natively each tile
+  // keeps its occupants in arrival order; pawns that share a stamp (0 for
+  // boards loaded without that history) fall back to board-list order.
+  uint32_t arrival = 0;
   QueuedShot queued;
   MoveState movement;
 
@@ -191,12 +205,16 @@ class Board {
   Pawn& add_pawn(const Pawn& pawn);
   void remove_pawn(int32_t uid);
 
-  // The first pawn standing on p, in list order (natively each tile keeps its
-  // own occupant list; it rarely holds more than one pawn).
+  // The first pawn standing on p, in tile order (arrival, then list order;
+  // a tile rarely holds more than one pawn).
   Pawn* pawn_at(Point p);
   const Pawn* pawn_at(Point p) const;
-  // Every pawn standing on p (corpses and dying pawns can share a tile).
+  // Every pawn standing on p in tile order (corpses and dying pawns can share
+  // a tile).
   std::vector<Pawn*> pawns_at(Point p);
+  // Records that `pawn` just entered its tile: it goes last in the tile's
+  // occupant order.
+  void stamp_arrival(Pawn& pawn) { pawn.arrival = ++arrival_clock_; }
   Pawn* find_pawn(int32_t uid);
   const Pawn* find_pawn(int32_t uid) const;
 
@@ -217,6 +235,7 @@ class Board {
  private:
   std::array<Tile, kTileCount> tiles_{};
   std::vector<Pawn> pawns_;
+  uint32_t arrival_clock_ = 0;
 };
 
 }  // namespace itb

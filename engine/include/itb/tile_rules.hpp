@@ -5,11 +5,14 @@
 // buildings and grid damage, tile and pawn status setters, terrain dangers and
 // the continuous "settle" rules the game runs every frame.
 //
-// The game is real-time; this engine is turn-step. Things the game finishes in
-// later frames are either recorded for a later stage (pushes, spawn requests,
-// burrow dives) or completed by `settle` (deferred chasms, drowning, falling,
-// acid/fire pickup). Every pawn is treated as not busy. Deaths only set
-// `Pawn::dying` (and HP 0); dead pawns stay on the board for stage 3.
+// The game is real-time. On its own this layer is turn-step: things the game
+// finishes in later frames are either recorded for a later stage (pushes,
+// spawn requests, burrow dives) or completed by `settle` (deferred chasms,
+// drowning, falling, acid/fire pickup), and every pawn is treated as not busy.
+// The frame-exact executor (executor.hpp) plugs in through
+// `RulesContext::frame`, which tells these rules which pawns are busy, when a
+// deferred chasm may open and takes over falls. Deaths only set
+// `Pawn::dying` (and HP 0); the executor processes and removes dead pawns.
 //
 // Grid Defense is the one random branch here. It is a chance node: each hit on
 // a populated building asks `RulesContext::grid_resist`, and every such call is
@@ -72,6 +75,24 @@ struct SpawnRequest {
   Team team = Team::None;  // Team::None = the type's default team
 };
 
+// What the frame-exact executor tells the rules (RulesContext::frame). Without
+// it every pawn is idle, deferred chasms open at the next settle, and falls
+// kill at once.
+class FrameHooks {
+ public:
+  virtual ~FrameHooks() = default;
+  // Pawn::IsBusy. With `ignore_push`, a pawn busy only because a push is
+  // running counts as idle (CheckTerrainDangers).
+  virtual bool pawn_busy(const Pawn& pawn, bool ignore_push) const = 0;
+  // The deferred chasm on p finished its animation and may open now.
+  virtual bool hole_ready(Point p) const = 0;
+  // Pawn::Fall reached the animation: return true if the executor animates
+  // the fall (and calls finish_fall later) or ignores it for now.
+  virtual bool start_fall(Pawn& pawn) = 0;
+  // KillInstant on `pawn`: its death animation stops where it is.
+  virtual void instant_kill(const Pawn& pawn) = 0;
+};
+
 struct RulesContext {
   // Pawn definitions for sPawn. Without it, spawns become SpawnRequests.
   const GameData* data = nullptr;
@@ -96,6 +117,9 @@ struct RulesContext {
 
   // Uid for the next spawned pawn; -1 = one more than the largest uid on board.
   int32_t next_uid = -1;
+
+  // Frame-exact executor hooks (busy pawns, deferred chasms, falls).
+  FrameHooks* frame = nullptr;
 
   // Outputs, in the order they happened.
   std::vector<PendingPush> pushes;
@@ -126,12 +150,17 @@ void damage_pawn(Board& board, Pawn& pawn, int damage, DamageMode mode, RulesCon
 // burrow dive and Retaliation.
 void modify_health(Board& board, Pawn& pawn, int delta, DamageMode mode, RulesContext& ctx);
 
-// Pawn::Kill / KillInstant: death pending, HP 0, queued shot cleared. No-op on
-// a dead pawn.
+// Pawn::Kill: death pending, HP 0, queued shot cleared. No-op on a dead pawn.
 void kill_pawn(Board& board, Pawn& pawn, RulesContext& ctx);
+// Pawn::KillInstant (drowning, falling, chasms): Kill, and the death
+// animation stops where it is (also on an already dead pawn).
+void kill_pawn_instant(Board& board, Pawn& pawn, RulesContext& ctx);
 
 // Pawn::Fall: a non-flying (or frozen) pawn drops into the chasm and dies.
+// With frame hooks the executor animates the fall and calls finish_fall.
 void fall_pawn(Board& board, Pawn& pawn, RulesContext& ctx);
+// The end of the fall animation: off the board (never a corpse), KillInstant.
+void finish_fall(Board& board, Pawn& pawn, RulesContext& ctx);
 
 // ---- Terrain ----------------------------------------------------------------
 
@@ -193,6 +222,9 @@ std::vector<Pawn*> occupants(Board& board, Point p);
 bool has_pawn(const Board& board, Point p);
 // occ[0]: the first occupant (alive or not), or null.
 Pawn* first_occupant(Board& board, Point p);
+// Board::GetPawn(p): the first living occupant, else the last one (a corpse);
+// null when the tile has no pawn (IsPawnSpace).
+Pawn* board_pawn(Board& board, Point p);
 
 // ---- Continuous rules ----------------------------------------------------------
 
@@ -201,8 +233,20 @@ void check_acid_fire(Board& board, Point p, Pawn& pawn, RulesContext& ctx);
 // CheckTerrainDangers: drowning, falling, Fire Boost, item pickup.
 void check_terrain_dangers(Board& board, Point p, RulesContext& ctx);
 
-// Runs the per-frame tile and pawn rules (BoardSpace::OnLoop, Pawn::OnLoop)
-// over the whole board until nothing changes. Returns the passes used.
+// One frame of BoardSpace::OnLoop's rules on p: deferred chasms, tile
+// cleanup, then hazards for every idle occupant and CheckTerrainDangers.
+void settle_tile_frame(Board& board, Point p, RulesContext& ctx);
+// One frame of Pawn::OnLoop's status rules (Fire Boost, smoke and water put
+// out fire).
+void settle_pawn_frame(Board& board, Pawn& pawn, RulesContext& ctx);
+
+// The tile rules on p and the pawn rules of its occupants, until they stop
+// changing anything: what arriving on p does once the mover is idle.
+int settle_at(Board& board, Point p, RulesContext& ctx);
+
+// Runs the per-frame tile and pawn rules over the whole board until nothing
+// changes (every tile in x-major order, then every pawn in list order, as the
+// game's frame does). Returns the passes used.
 int settle(Board& board, RulesContext& ctx);
 
 }  // namespace itb

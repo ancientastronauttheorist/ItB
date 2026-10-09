@@ -41,14 +41,17 @@ std::vector<Pawn*> Board::pawns_at(Point p) {
   for (Pawn& pawn : pawns_) {
     if (pawn.pos == p) out.push_back(&pawn);
   }
+  std::stable_sort(out.begin(), out.end(),
+                   [](const Pawn* a, const Pawn* b) { return a->arrival < b->arrival; });
   return out;
 }
 
 Pawn* Board::pawn_at(Point p) {
+  Pawn* first = nullptr;
   for (Pawn& pawn : pawns_) {
-    if (pawn.pos == p) return &pawn;
+    if (pawn.pos == p && (!first || pawn.arrival < first->arrival)) first = &pawn;
   }
-  return nullptr;
+  return first;
 }
 
 const Pawn* Board::pawn_at(Point p) const {

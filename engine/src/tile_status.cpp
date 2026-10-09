@@ -12,10 +12,11 @@ namespace {
 using detail::emit;
 
 const Pawn* first_occupant_const(const Board& board, Point p) {
+  const Pawn* first = nullptr;
   for (const Pawn& pawn : board.pawns()) {
-    if (pawn.pos == p && !pawn.fallen) return &pawn;
+    if (pawn.pos == p && !pawn.fallen && (!first || pawn.arrival < first->arrival)) first = &pawn;
   }
-  return nullptr;
+  return first;
 }
 
 void destroy_pod(Tile& t, Point p, RulesContext& ctx) {
@@ -24,32 +25,39 @@ void destroy_pod(Tile& t, Point p, RulesContext& ctx) {
   emit(ctx, RulesEventType::PodDestroyed, p);
 }
 
-// Pawn::IsSmoked: on smoke and not immune to it.
-bool is_smoked(const Board& board, const Pawn& pawn) {
-  return pawn.pos.valid() && board.tile(pawn.pos).smoke && !pawn.ignore_smoke &&
-         !pawn.has_pilot(kPilotDisableImmunity);
+bool busy(const RulesContext& ctx, const Pawn& pawn, bool ignore_push = false) {
+  return ctx.frame && ctx.frame->pawn_busy(pawn, ignore_push);
 }
 
-// Pawn::IsSubmerged: in water and not flying.
-bool is_submerged(const Board& board, const Pawn& pawn) {
-  return pawn.pos.valid() && board.tile(pawn.pos).terrain == Terrain::Water && !is_flying(pawn);
+// Pawn::IsSmoked: on smoke, not busy, and not immune to it.
+bool is_smoked(const Board& board, const Pawn& pawn, const RulesContext& ctx) {
+  return pawn.pos.valid() && board.tile(pawn.pos).smoke && !busy(ctx, pawn) &&
+         !pawn.ignore_smoke && !pawn.has_pilot(kPilotDisableImmunity);
 }
+
+// Pawn::IsSubmerged: in water, not busy and not flying.
+bool is_submerged(const Board& board, const Pawn& pawn, const RulesContext& ctx) {
+  return pawn.pos.valid() && board.tile(pawn.pos).terrain == Terrain::Water &&
+         !busy(ctx, pawn) && !is_flying(pawn);
+}
+
+}  // namespace
 
 // One frame of BoardSpace::OnLoop, rule effects only.
-void settle_tile(Board& board, Point p, RulesContext& ctx) {
+void settle_tile_frame(Board& board, Point p, RulesContext& ctx) {
   Tile& t = board.tile(p);
 
   if (t.terrain == Terrain::Hole && tile_frozen(board, p) && !has_pawn(board, p)) t.frozen = false;
   if (t.lava && t.terrain != Terrain::Water && t.terrain != Terrain::Ice) t.lava = false;
 
-  // A deferred chasm (iTerrain = HOLE) opens. Its first pawn dies unless it
-  // flies (frozen flyers drop too).
-  if (t.pending_hole) {
+  // A deferred chasm (iTerrain = HOLE) opens once its animation is over. Its
+  // first pawn dies unless it flies (frozen flyers drop too).
+  if (t.pending_hole && (!ctx.frame || ctx.frame->hole_ready(p))) {
     t.pending_hole = false;
     set_terrain(board, p, Terrain::Hole, ctx);
     if (has_pawn(board, p)) {
       Pawn* occ0 = first_occupant(board, p);
-      if (!(is_flying(*occ0) && !occ0->frozen)) kill_pawn(board, *occ0, ctx);
+      if (!(is_flying(*occ0) && !occ0->frozen)) kill_pawn_instant(board, *occ0, ctx);
     }
   }
 
@@ -69,6 +77,7 @@ void settle_tile(Board& board, Point p, RulesContext& ctx) {
   if (t.on_fire() && t.terrain == Terrain::Sand) set_terrain(board, p, Terrain::Road, ctx);
 
   for (Pawn* pawn : occupants(board, p)) {
+    if (busy(ctx, *pawn)) continue;
     if (t.terrain == Terrain::Water && pawn->has_pilot(kPilotFreezeWalk)) {
       set_terrain(board, p, Terrain::Ice, ctx);
     }
@@ -91,19 +100,17 @@ void settle_tile(Board& board, Point p, RulesContext& ctx) {
 }
 
 // One frame of Pawn::OnLoop, rule effects only.
-void settle_pawn(Board& board, Pawn& pawn) {
+void settle_pawn_frame(Board& board, Pawn& pawn, RulesContext& ctx) {
   if (pawn.fallen) return;
   if (pawn.mech && pawn.fire && board.has_passive(kPassiveFireBoost)) {
     set_pawn_fire(board, pawn, false);
     pawn.boosted = true;
   }
-  if (pawn.fire && is_smoked(board, pawn)) set_pawn_fire(board, pawn, false);
-  if (pawn.fire && is_submerged(board, pawn) && !detail::is_lava(board.tile(pawn.pos))) {
+  if (pawn.fire && is_smoked(board, pawn, ctx)) set_pawn_fire(board, pawn, false);
+  if (pawn.fire && is_submerged(board, pawn, ctx) && !detail::is_lava(board.tile(pawn.pos))) {
     set_pawn_fire(board, pawn, false);
   }
 }
-
-}  // namespace
 
 namespace detail {
 
@@ -174,6 +181,10 @@ std::vector<Pawn*> occupants(Board& board, Point p) {
   std::vector<Pawn*> out;
   for (Pawn& pawn : board.pawns()) {
     if (pawn.pos == p && !pawn.fallen) out.push_back(&pawn);
+  }
+  if (out.size() > 1) {
+    std::stable_sort(out.begin(), out.end(),
+                     [](const Pawn* a, const Pawn* b) { return a->arrival < b->arrival; });
   }
   return out;
 }
@@ -495,14 +506,28 @@ void check_acid_fire(Board& board, Point p, Pawn& pawn, RulesContext& ctx) {
 void check_terrain_dangers(Board& board, Point p, RulesContext& ctx) {
   Tile& t = board.tile(p);
   for (Pawn* pawn : occupants(board, p)) {
+    // Busy pawns (other than mid-push) only see their bodies sink or drop.
+    if (busy(ctx, *pawn, /*ignore_push=*/true)) {
+      if (pawn->alive()) continue;
+      if (t.terrain == Terrain::Water) {
+        kill_pawn_instant(board, *pawn, ctx);
+      } else if (t.terrain == Terrain::Hole && !detail::type_contains(*pawn, "Train_")) {
+        fall_pawn(board, *pawn, ctx);
+      }
+      continue;
+    }
     if (t.terrain == Terrain::Water) {
       if (is_flying(*pawn) && !pawn->frozen) continue;
       if (!is_massive(board, *pawn)) {
         // Drowns: the living, and the dying that leave no corpse.
         const bool alive = pawn->alive();
         if ((alive || !is_corpse(board, *pawn)) && (alive || pawn->dying)) {
-          kill_pawn(board, *pawn, ctx);
-          if (detail::type_contains(*pawn, "Train_")) pawn->corpse = false;
+          if (detail::type_contains(*pawn, "Train_")) {
+            kill_pawn(board, *pawn, ctx);
+            pawn->corpse = false;
+          } else {
+            kill_pawn_instant(board, *pawn, ctx);
+          }
         }
       } else {
         if (pawn->frozen && !detail::type_is(*pawn, "Dam_Pawn")) {
@@ -536,12 +561,23 @@ void check_terrain_dangers(Board& board, Point p, RulesContext& ctx) {
   }
 }
 
+int settle_at(Board& board, Point p, RulesContext& ctx) {
+  constexpr int kMaxPasses = 16;
+  for (int pass = 1; pass <= kMaxPasses; ++pass) {
+    const Board before = board;
+    settle_tile_frame(board, p, ctx);
+    for (Pawn* pawn : occupants(board, p)) settle_pawn_frame(board, *pawn, ctx);
+    if (board == before) return pass;
+  }
+  return kMaxPasses;
+}
+
 int settle(Board& board, RulesContext& ctx) {
   constexpr int kMaxPasses = 16;
   for (int pass = 1; pass <= kMaxPasses; ++pass) {
     const Board before = board;
-    for (int i = 0; i < kTileCount; ++i) settle_tile(board, Point::from_index(i), ctx);
-    for (size_t i = 0; i < board.pawns().size(); ++i) settle_pawn(board, board.pawns()[i]);
+    for (int i = 0; i < kTileCount; ++i) settle_tile_frame(board, Point::from_index(i), ctx);
+    for (size_t i = 0; i < board.pawns().size(); ++i) settle_pawn_frame(board, board.pawns()[i], ctx);
     if (board == before) return pass;
   }
   return kMaxPasses;

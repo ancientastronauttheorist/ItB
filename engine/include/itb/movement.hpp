@@ -1,11 +1,14 @@
 // Movement and pathfinding (stage 5): which tiles a unit can reach, the exact
 // path it walks, its move budget, and relocating it.
 //
-// Arrival hazards (water, chasm, fire, acid, mines, ...) are not applied here.
-// Every function that relocates a pawn returns the tile it ended on; the
-// caller must then run the stage 2 settle rules (CheckTerrainDangers /
-// CheckAcidFire) on that tile. Intermediate tiles of a walk never trigger
-// hazards.
+// Every function that relocates a pawn returns the tile it ended on and takes
+// an optional stage 2 RulesContext. With one, Injured's HP loss goes through
+// the stage 2 health change (turn shield, Retaliation), a walk's final step
+// checks the terrain dangers there (drowning, falling, mines), and the
+// whole-move entry points (move_pawn, player_move, ai_move) settle the tile the
+// move ended on (settle_at). Without one, the caller applies arrival hazards.
+// Intermediate tiles of a walk never trigger hazards. The frame-exact
+// executor (executor.hpp) drives moves step by step instead.
 #pragma once
 
 #include <array>
@@ -122,31 +125,41 @@ std::vector<Point> ai_move_candidates(const Board& b, const Pawn& p);
 std::vector<Point> find_path(const Board& b, Point from, Point to, Pathing pr);
 
 // --- Executing moves -----------------------------------------------------
-// Each returns the tile the pawn ended on. Run stage 2 settle there.
+// Each returns the tile the pawn ended on.
 
-// Pawn::SetSpace: relocates the pawn, records the tile it left, frees it from
-// webs, and costs an Injured pawn 1 HP per tile change (unless `no_injury`).
-// Pushes and swaps should relocate through this too.
-void set_space(Board& b, Pawn& p, Point to, bool no_injury = false);
+// Pawn::PushQueuedShot: a queued attack travels with its pawn. Re-validating
+// the shifted attack (ComputeAffectedPoints) is the attack stage's job.
+void shift_queued_shot(Pawn& p, Point delta);
+
+// Pawn::SetSpace: relocates the pawn (last in the new tile's occupant order),
+// records the tile it left, frees it from webs, and costs an Injured pawn
+// 1 HP per tile change (unless `no_injury`, i.e. the pawn is busy). Pushes and
+// swaps relocate through this too.
+void set_space(Board& b, Pawn& p, Point to, bool no_injury = false, RulesContext* ctx = nullptr);
 
 // SetManualPath: walk a path step by step. `forced` is true when the pawn
 // moves itself; a non-Pushable pawn ignores unforced walks. The last step is
 // re-checked and refused if that tile is now blocked or occupied, leaving the
 // pawn on the previous tile.
-Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced);
+Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced,
+                RulesContext* ctx = nullptr);
+// Whether a walk's final step onto `to` goes ahead (Pawn::Move): not a
+// mountain or building, and no living pawn or corpse there.
+bool final_step_allowed(const Board& b, Point to);
 // Leap / Charge: jump straight to `to` (no intermediate tiles, no re-check).
-Point leap(Board& b, Pawn& p, Point to, bool forced);
-Point charge(Board& b, Pawn& p, Point to, bool forced);
+Point leap(Board& b, Pawn& p, Point to, bool forced, RulesContext* ctx = nullptr);
+Point charge(Board& b, Pawn& p, Point to, bool forced, RulesContext* ctx = nullptr);
 // Teleport: relocate to `to`, ignoring Pushable.
-Point teleport(Board& b, Pawn& p, Point to);
+Point teleport(Board& b, Pawn& p, Point to, RulesContext* ctx = nullptr);
 // Burrow: dive and resurface at `to`; puts out fire. `ai` (forced) clears
 // the queued shot instead of carrying it along.
-Point burrow(Board& b, Pawn& p, Point to, bool ai);
+Point burrow(Board& b, Pawn& p, Point to, bool ai, RulesContext* ctx = nullptr);
 
 // The Move skill's effect for pawn `uid` (Lua Move:GetSkillEffect): jumpers
 // leap, teleporters teleport, everyone else walks the find_path route with
-// its own profile. No legality check and no moved/active bookkeeping.
-Point move_pawn(Board& b, int32_t uid, Point dest);
+// its own profile. No legality check and no moved/active bookkeeping. With a
+// context the end tile is settled.
+Point move_pawn(Board& b, int32_t uid, Point dest, RulesContext* ctx = nullptr);
 
 // A player's move action, undoable until any weapon fires.
 struct MoveUndo {
@@ -167,16 +180,17 @@ struct MoveUndo {
 };
 
 // Checks can_move() and that dest is in move_area(), then moves (move_pawn)
-// and books the Move skill. nullopt if the move is not legal. Run stage 2
-// settle on the result's `end`.
-std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest);
+// and books the Move skill. nullopt if the move is not legal. With a context
+// the end tile is settled; without one, settle the result's `end`.
+std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest,
+                                    RulesContext* ctx = nullptr);
 // Pawn::Undo. False (and nothing changes) once a weapon has fired since the
 // move, or for a pawn that cannot undo.
-bool undo_move(Board& b, const MoveUndo& undo);
+bool undo_move(Board& b, const MoveUndo& undo, RulesContext* ctx = nullptr);
 
 // Pawn::ManualMove (AI): burrowers burrow, jumpers leap, everyone else
 // (teleporters included) walks the find_path route. Returns the pawn's tile
-// unchanged if it cannot move.
-Point ai_move(Board& b, int32_t uid, Point dest);
+// unchanged if it cannot move. With a context the end tile is settled.
+Point ai_move(Board& b, int32_t uid, Point dest, RulesContext* ctx = nullptr);
 
 }  // namespace itb

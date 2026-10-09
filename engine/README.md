@@ -60,15 +60,17 @@ Done so far (build order from the decompile):
    - `core.hpp`: constants and A1–H8 notation.
    - `board.hpp`: tiles, pawns, and the pawn-list order that `Board::AddPawn`
      produces.
-   - `game_data.hpp`: all pawn definitions, read from the game's scripts.
+   - `game_data.hpp`: all pawn definitions, animation definitions and tuning
+     values, read from the game's scripts.
    - `recording.hpp`: all 469 recorded boards load.
 - **Stage 2: per-tile damage and status rules** (`tile_rules.hpp`).
-   - The game's ordered `DamageSpace` steps in both modes (weapon and
-     push/bump).
+   - The game's ordered `DamageSpace` steps in all three modes (weapon,
+     push/bump, and the explosion mode corpse explosions use).
    - Pawn damage: shields, frozen, turn shield, armor and ACID.
    - Terrain, buildings and grid, cracks, items/mines.
-   - Fire, smoke, acid and freeze interactions, terrain dangers, and a `settle`
-     that applies the game's per-frame rules until the board stops changing.
+   - Fire, smoke, acid and freeze interactions, terrain dangers, and the
+     game's per-frame tile and pawn rules, either one frame at a time for the
+     executor (skipping busy pawns) or until the board stops changing.
    - Grid Defense resists are a chance node: the caller resolves each roll, and
      every roll is logged. Pushes, spawns and Lua scripts are recorded for the
      later stages.
@@ -76,11 +78,27 @@ Done so far (build order from the decompile):
    - Pathing profiles, move budget and pilot move skills.
    - The game's reachability search and its weighted A* walk path (float32,
      (f, x, y) tie-break).
-   - Walks, leaps, charges, teleports and burrows. Callers settle the tile a
-     move ends on (arrival hazards are stage 2 rules).
+   - Walks, leaps, charges, teleports and burrows. With a stage 2 context,
+     Injured goes through the stage 2 health change and the tile a move ends
+     on is settled.
    - Every first move the old bot executed in a recording is reachable here:
      `itb_inspect --moves recordings`.
-
+- **Stages 3 and 4: pushes, deaths and the SkillEffect executor**
+  (`executor.hpp`, `timing.hpp`).
+   - A frame-exact simulation of how the game resolves an effect: the six
+     phases of the game's frame, an integer frame clock at a fixed frame rate,
+     and every timer replayed in the game's float32 arithmetic. Frames where
+     nothing can happen are skipped.
+   - `Board::ApplyEffect` and the stacked-effect queue (FULL/PROJ/positive
+     delays), projectiles, artillery, lasers, melee lunges, walks, leaps,
+     charges, teleports and burrows.
+   - Pushes and bumps with the game's same-frame ordering, dying bodies that
+     block for half their death animation, death effects (ACID pools, Fast
+     Decay, Lua hooks), corpse explosions, psion leaders and body removal.
+   - Boost and Vek Hormones are baked in when an effect is computed.
+   - Outcomes that hinge on two events within one frame are reported as
+     timing-sensitive; Grid Defense rolls and spider-egg picks are logged as
+     chance nodes.
 - **Stage 6: the Lua host** (`lua_host.hpp`).
    - Runs the game's own weapon scripts (`GetTargetArea`, `GetSkillEffect`,
      queued Vek attacks, two-click weapons) and death effects on an engine
@@ -97,22 +115,19 @@ Done so far (build order from the decompile):
      every mech weapon and queued Vek attack in the recordings runs cleanly:
      `itb_inspect --weapons recordings`.
 
-Next up: stage 3 (push and death resolution) and stage 4 (the SkillEffect
-executor).
+Next up: wire the Lua host into the executor so a shot runs end to end from
+the real weapon script (stage 6 integration), then stage 7 (the enemy phase).
 
-Integration debts:
+Integration notes:
 
-- Lua host and executor: `Skill::PrepareEffect` (empty `sAnimation` := the
-  weapon's `Explosion`, owner team, projectile source) and
-  `CheckAlterations` (Vek Hormones, Boost) run after Lua returns and belong
-  to the executor. So does running each entry's `sScript` (`run_script`)
-  and applying the `LuaWrite`s it reports. `to_engine` drops the fields the
-  engine `SpaceDamage` lacks so far (animation and flags, sound, art).
-
-- Injured's per-step HP loss in `set_space` is a plain decrement for now. It
-  should go through `modify_health` once moves carry a `RulesContext`, so the
-  turn shield and Retaliation apply.
-- A tile's occupant order is approximated by board-list order.
+- A tile's occupant order is arrival order (`Pawn::arrival`). Boards loaded
+  from recordings have no arrival history, so their shared tiles fall back to
+  board-list order.
+- The Lua host's `to_engine` still drops `sAnimation`, its flags and the
+  projectile art. `SpaceDamage` has those fields now, so map them when
+  wiring the host to the executor. Each entry's `sScript` should then run
+  through `LuaHost::run_script` via `ResolveContext::run_script`, with its
+  `LuaWrite`s applied.
 
 ### Open questions for live-game testing
 
@@ -126,3 +141,8 @@ Integration debts:
   check in game.
 - **Point plus number.** What `Point + number` means natively. It's only
   seen in UI layout code so far.
+- **Estimated durations.** Teleport, burrow, walk-step, air-strike and
+  dropper animation lengths are estimates (`timing.hpp`); they only shift
+  when things happen. Measure them in game.
+- **Frame rate.** Some outcomes depend on the frame rate (the executor flags
+  them). Check what frame rate and speed level the game really runs at.
