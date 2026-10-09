@@ -32,6 +32,18 @@ Pawn& Board::add_pawn(const Pawn& pawn) {
   return pawns_.back();  // unreachable
 }
 
+void Board::remove_pawn(int32_t uid) {
+  std::erase_if(pawns_, [uid](const Pawn& p) { return p.uid == uid; });
+}
+
+std::vector<Pawn*> Board::pawns_at(Point p) {
+  std::vector<Pawn*> out;
+  for (Pawn& pawn : pawns_) {
+    if (pawn.pos == p) out.push_back(&pawn);
+  }
+  return out;
+}
+
 Pawn* Board::pawn_at(Point p) {
   for (Pawn& pawn : pawns_) {
     if (pawn.pos == p) return &pawn;

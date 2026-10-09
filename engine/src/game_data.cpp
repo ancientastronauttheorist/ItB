@@ -271,6 +271,8 @@ Pawn GameData::make_pawn(const PawnDef& def, int32_t uid, Point pos) const {
   p.teleporter = def.teleporter;
   p.explodes = def.explodes;
   p.neutral = def.neutral;
+  p.non_grid = def.non_grid;
+  p.leader = def.leader;
   p.mission_critical = def.mission;
   p.active = true;
   return p;

@@ -88,7 +88,7 @@ std::string render_board(const Board& b) {
         if (b.pawns()[i].pos == p) mark = pawn_label(i);
       }
       char status = ' ';
-      if (t.fire) status = '^';
+      if (t.on_fire()) status = '^';
       else if (t.smoke) status = '%';
       else if (t.acid) status = 'a';
       out << terrain_glyph(t) << mark << status;

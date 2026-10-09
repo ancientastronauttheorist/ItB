@@ -65,13 +65,15 @@ void load_tile(const json& t, Board& board, std::vector<std::string>& warnings) 
     // structures carry their own frozen state.
     tile.frozen = get_or<bool>(t, "frozen", false);
   }
-  if (tile.is_building()) tile.population = static_cast<int8_t>(get_or<int>(t, "population", 1));
+  // The bridge only reports population on mountains, where it is
+  // meaningless; recorded buildings are populated unless proven otherwise.
+  if (tile.is_building()) tile.populated = true;
   if (tile.terrain == Terrain::Ice) tile.hp = tile.max_hp = 2;
-  tile.fire = get_or<bool>(t, "fire", false);
+  if (get_or<bool>(t, "fire", false)) tile.fire = FireState::Burning;
   tile.smoke = get_or<bool>(t, "smoke", false);
   tile.acid = get_or<bool>(t, "acid", false);
   tile.cracked = get_or<bool>(t, "cracked", false);
-  tile.pod = get_or<bool>(t, "pod", false);
+  if (get_or<bool>(t, "pod", false)) tile.pod = PodState::Present;
   tile.conveyor = static_cast<int8_t>(get_or<int>(t, "conveyor", -1));
   if (auto item = get_or<std::string>(t, "item", ""); !item.empty()) tile.item = intern(item);
   if (auto obj = get_or<std::string>(t, "objective_name", ""); !obj.empty()) {
