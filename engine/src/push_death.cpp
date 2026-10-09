@@ -197,7 +197,7 @@ void Simulation::process_death(Pawn& pawn, PawnSim& ps) {
   ps.death_fx_pending = true;
   if (pawn.team == Team::Player) set_pawn_fire(board_, pawn, false);
   // The XP popup over a dead enemy keeps the body on the board.
-  if (pawn.team == Team::Enemy && !pawn.mech && !pawn.retreating) {
+  if (pawn.team == Team::Enemy && !pawn.mech && !pawn.minor) {
     ps.xp_gone = frame_ + clock_.tracker_updates(dur_.xp_popup);
   }
   changed_ = true;

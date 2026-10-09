@@ -68,15 +68,24 @@ void damage_terrain_step(Board& board, Point p, const SpaceDamage& sd, int damag
   }
 }
 
-// Pawn::Retreat (bEvacuate, end-of-mission only).
+// Pawn::Retreat (bEvacuate, end-of-mission only). The retreat mark is the
+// minor flag, so a pawn that is already minor (Lua Minor, or retreated
+// before) is killed instead, unless it is a mission pawn.
 void retreat(Board& board, Pawn& pawn, RulesContext& ctx) {
   if (pawn.frozen || pawn.team == Team::Player) return;
-  if (pawn.retreating) {
+  if (pawn.minor) {
     if (!pawn.mission_critical) kill_pawn(board, pawn, ctx);
     return;
   }
-  pawn.retreating = true;
-  if (is_flying(pawn)) return;  // flies away; nothing changes on the board
+  pawn.minor = true;
+  // Bots power down where they stand.
+  if (pawn.faction == Faction::Bots) {
+    pawn.movement.powered = false;
+    return;
+  }
+  // Flyers fly off: over a chasm or water natively that is a fall-state
+  // animation; over ground only an animation plays. Not modelled further.
+  if (is_flying(pawn)) return;
   if (board.tile(pawn.pos).terrain == Terrain::Water) {
     kill_pawn_instant(board, pawn, ctx);
   } else {

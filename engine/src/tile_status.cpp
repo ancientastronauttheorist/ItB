@@ -163,14 +163,14 @@ bool is_vek(const Pawn& pawn) {
 }
 
 // Pawn::IsPsionAffected for the plain mutations: Vek (and mechs under Psion
-// Leech) take the board's mutation; psions themselves and retreating pawns
-// do not.
+// Leech) take the board's mutation; psions themselves and minor pawns
+// (including retreated ones) do not.
 bool mutation_affects(const Board& board, const Pawn& pawn, Leader mutation) {
   if (mutation == Leader::None || board.psion != mutation) return false;
   if (!is_vek(pawn) && !(pawn.mech && board.has_passive(kPassivePsionLeech))) return false;
   // Pawn::IsPsionAffected: never a Minor pawn (+0x10F0, the Lua Minor flag,
   // which Retreat also sets).
-  return pawn.leader == Leader::None && !pawn.minor && !pawn.retreating;
+  return pawn.leader == Leader::None && !pawn.minor;
 }
 
 bool is_corpse(const Board& board, const Pawn& pawn) {

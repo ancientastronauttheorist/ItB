@@ -1685,10 +1685,28 @@ TEST_CASE("bEvacuate: Vek retreat, players stay") {
   w.hit(sd);
   sd.loc = kRight;
   w.hit(sd);
-  CHECK(w.pawn(1).retreating);
+  CHECK(w.pawn(1).minor);
   CHECK(w.pawn(1).hp == 0);
   CHECK_FALSE(w.pawn(1).dying);
-  CHECK_FALSE(w.pawn(10).retreating);
+  CHECK_FALSE(w.pawn(10).minor);
+}
+
+TEST_CASE("bEvacuate: an already-minor Vek dies, a bot powers down") {
+  // Pawn::Retreat: the retreat mark is the minor flag (+0x10F0).
+  World w;
+  w.add(vek(1, 3, kP));
+  w.pawn(1).minor = true;  // e.g. Lua Minor = true
+  w.add(vek(2, 3, kRight));
+  w.pawn(2).faction = Faction::Bots;
+  SpaceDamage sd = World::sd_at(0);
+  sd.evacuate = true;
+  w.hit(sd);
+  sd.loc = kRight;
+  w.hit(sd);
+  CHECK(w.pawn(1).dying);
+  CHECK(w.pawn(2).minor);
+  CHECK(w.pawn(2).hp == 3);
+  CHECK_FALSE(w.pawn(2).movement.powered);
 }
 
 TEST_CASE("the hit tile webs the pawn on the grapple point") {

@@ -150,6 +150,8 @@ struct Pawn {
   bool armor = false;
   bool ignore_smoke = false;
   bool ignore_fire = false;
+  // Natively one flag (+0x10F0): Lua Minor pawns start with it, and a pawn
+  // that retreats (bEvacuate) gets it. Minor pawns are never psion-affected.
   bool minor = false;
   bool corpse = false;  // leaves a corpse (mechs)
   bool burrows = false;
@@ -175,7 +177,6 @@ struct Pawn {
   bool injured = false;  // loses 1 HP whenever it changes tile
   bool dying = false;    // HP reached 0; death not processed yet
   bool fallen = false;   // fell into a chasm: off the board, never a corpse
-  bool retreating = false;  // end-of-mission retreat started (bEvacuate)
   int32_t web_source = -1;  // uid of the webbing pawn
   // The tile the web comes from (natively webs belong to tiles: the emitting
   // tile keeps a list of directions it webs).
