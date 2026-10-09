@@ -7,11 +7,13 @@
 //
 //   1. grid and buildings: grid power lost, then building HP lost
 //   2. mech survival:      mechs destroyed, then mech HP lost
-//   3. mission objectives: objective failures (stage 8)
+//   3. mission objectives: stars failed, then progress (objectives.hpp)
 //   4. kills and damage:   Vek killed, then Vek HP removed
-//   5. position:           end-of-turn position quality (stage 8)
+//   5. position:           end-of-turn position quality (objectives.hpp)
 //
 // Losses are stored negated so that every component is "larger is better".
+// HP components are net changes: a repair offsets damage, a regenerating
+// psion offsets damage dealt (README "Turn score").
 #pragma once
 
 #include <array>
@@ -29,13 +31,13 @@ struct PhaseResult;
 enum class ScoreKey : int {
   GridLost = 0,      // -(grid power lost)
   BuildingHpLost,    // -(building HP lost, populated or not)
-  MechsLost,         // -(mechs destroyed)
-  MechHpLost,        // -(mech HP lost)
-  ObjectivesFailed,  // -(mission/bonus objective failures), stage 8
-  ObjectiveProgress, // + objective progress, stage 8
-  VekKilled,         // + Vek killed
-  VekHpRemoved,      // + Vek HP removed
-  Position,          // + position quality, stage 8
+  MechsLost,         // -(mechs destroyed) (+1 for a revived corpse)
+  MechHpLost,        // -(mech HP lost, net of repairs)
+  ObjectivesFailed,  // -(objective stars lost this turn)
+  ObjectiveProgress, // + objective progress, kStar units per star
+  VekKilled,         // + enemies killed (Vek and enemy bots, not neutral props)
+  VekHpRemoved,      // + enemy HP removed (net of regeneration)
+  Position,          // + position quality (objectives.hpp position_terms)
   Count,
 };
 
@@ -55,8 +57,9 @@ struct Score {
 };
 
 // Scores the turn from `before` (start of the player's turn) to `after` (end
-// of the enemy phase). `phase` and `ctx` may be null; stage 8 uses them for
-// mission objectives.
+// of the enemy phase). `ctx` gives the mission (objectives) and `phase` the
+// enemy phase's events (blocked spawns, spawned uids, mission end); either
+// may be null.
 Score score_turn(const Board& before, const Board& after, const TurnContext* ctx = nullptr,
                  const PhaseResult* phase = nullptr);
 

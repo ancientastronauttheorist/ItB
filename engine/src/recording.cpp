@@ -239,6 +239,8 @@ std::optional<FinalEnvState> final_env(const json& s, const char* key) {
   return f;
 }
 
+void load_objectives(const json& s, Recording& rec);
+
 // Stage 7 mission data: environment marks and the env/mission fields newer
 // bridges export (stage 7 spec section 2.4).
 void load_mission(const json& s, Recording& rec) {
@@ -274,6 +276,36 @@ void load_mission(const json& s, Recording& rec) {
     if (get_or<bool>(u, "queued_launch", false) && !get_or<bool>(u, "is_extra_tile", false)) {
       m.launching.push_back(get_or<int>(u, "uid", -1));
     }
+  }
+  load_objectives(s, rec);
+}
+
+// Stage 8: the mission's objective bookkeeping (environment.hpp ObjectiveData).
+void load_objectives(const json& s, Recording& rec) {
+  ObjectiveData& o = rec.mission.objectives;
+  if (auto it = s.find("bonus_objective_ids"); it != s.end() && it->is_array()) {
+    o.bonus_known = true;
+    for (const json& b : *it) {
+      if (b.is_number_integer()) o.bonus.push_back(b.get<int>());
+    }
+  }
+  o.kills_done = get_or<int>(s, "mission_kills_done", -1);
+  o.kill_target = get_or<int>(s, "mission_kill_target", -1);
+  o.kill_limit = get_or<int>(s, "mission_kill_limit", -1);
+  o.blocked_spawns = get_or<int>(s, "mission_blocked_spawns", -1);
+  o.power_start = get_or<int>(s, "mission_power_start", -1);
+  // PowerStart is the grid at deployment; nothing can damage the grid before
+  // the first player turn.
+  if (o.power_start < 0 && rec.board.turn == 1 && s.contains("grid_power")) o.power_start = rec.board.grid_power;
+  o.repair_target = get_or<int>(s, "repair_platform_target", -1);
+  o.repairs_done = get_or<int>(s, "repair_platforms_used", -1);
+  o.mountain_target = get_or<int>(s, "mission_mountain_target", -1);
+  o.mountains_done = get_or<int>(s, "mission_mountains_destroyed", -1);
+  o.freeze_target = get_or<int>(s, "freeze_building_target", -1);
+  if (auto it = s.find("freeze_building_tiles"); it != s.end()) o.freeze_buildings = point_list(*it);
+  if (auto it = s.find("terraform_grass_tiles"); it != s.end() && it->is_array()) {
+    o.grass = point_list(*it);
+    o.grass_known = true;
   }
 }
 

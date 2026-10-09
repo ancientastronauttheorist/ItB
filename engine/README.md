@@ -37,6 +37,7 @@ engine/build/itb_inspect --corpus recordings                            # load a
 engine/build/itb_inspect --weapons recordings                           # run weapon Lua on recorded boards
 engine/build/itb_inspect --replay recordings                            # replay recorded actions vs the game
 engine/build/itb_inspect --replay recordings --turns                    # whole turns, through the enemy phase
+engine/build/itb_inspect --score recordings/<run>/m07_turn_01_solve_input.json  # score a recorded plan
 ```
 
 `--replay` takes `--show N`, `--weapon ID`, `--trace RUN/MISSION/TURN`
@@ -172,6 +173,15 @@ Done so far (build order from the decompile):
    - Recordings: the mission data stage 7 reads (`Recording::mission`) and
      AE pilot level-up skills (Thick Skin, Technician).
 
+- **Stage 8: the turn score** (`score.hpp`, `objectives.hpp`).
+   - Strict tiers: grid and buildings, mechs, mission objectives, kills,
+     position (see "Turn score" below).
+   - Every shipped mission's objectives and the nine bonus objectives, in the
+     game's reward units, from the recorded mission fields
+     (`MissionData::objectives`).
+   - `itb_inspect --score` scores a recorded plan; `--replay --turns` checks
+     the objective counters against the game.
+
 ### Environments and mission hooks
 
 "Exact" means: reproduced from what today's recordings contain. Newer bridge
@@ -233,6 +243,111 @@ Turns whose player steps all matched the game: 217, of which 148 exact
 a post_enemy-only comparison (building HP total off by 1, grid power
 matching). Turns that needed a mid-turn sync: 14, 64.3%.
 
+### Turn score (stage 8)
+
+`score_turn(before, after, ctx, phase)` (`score.hpp`) compares the board at
+the start of the player's turn with the board after the enemy phase. Tiers
+are strict and compared lexicographically; the search takes the worst case
+over chance outcomes, the score judges one concrete outcome.
+
+1. **Grid and buildings.** Grid power, then structure HP over building
+   tiles, both as net changes. Unpopulated and objective buildings count; a
+   destroyed building (rubble, or water for a building on water) has left
+   the sum with all its HP. A grid gain counts for the player (none happens
+   mid-turn in the shipped missions).
+2. **Mechs.** Mechs alive, then mech HP, over the mechs on the board at the
+   start, both net: a repair offsets damage and a revived corpse counts +1
+   (the game's own `Board:GetMechDamage`, which BONUS_MECHS reads, is max HP
+   minus current HP). A mech fallen into a chasm is lost with its HP.
+3. **Objectives** (`objectives.hpp`): stars failed this turn, then progress.
+4. **Kills.** Enemies killed, then enemy HP removed (net, so psion
+   regeneration counts against the player). Enemies are team-6 pawns that
+   are not neutral: Vek and enemy bots alike (both threaten buildings the
+   same way); neutral team-6 pawns are mission props (hacked building, storm
+   and shield generators, acid vats, minefield bots) scored as objectives.
+   Only enemies alive at the start count, so this turn's spawns are not
+   scored; kills by the enemy phase itself (fire, other Vek, environments)
+   count like the player's. A retreat (minor flag set, HP 0) is not a kill.
+5. **Position** (`position_terms`), a tie-break on the end board only:
+   -3 per mech on fire (not fire-immune), -2 per mech with ACID, -2 per
+   frozen mech, -1 per mech on smoke, -2 per mech at 1 HP; -1 per (enemy,
+   adjacent building) pair (-2 for an objective building) and per enemy next
+   to a player-team non-mech unit; +1 per enemy on fire or frozen. One pass
+   over the pawns. Spawn tiles are left out: a blocked spawn stays queued and
+   hurts its blocker again next turn, so occupying one is not a clear gain.
+
+Pawn identity: engine uids of removed pawns can be handed out again within a
+turn (new pawns take one more than the largest uid still on the board), so a
+pawn on `after` is the same pawn only if its type matches and it did not
+emerge from a spawn this phase (`same_pawn`).
+
+**Objective units.** A *star* is the game's reward unit: each objective's
+`Objective(text, value)` reputation, power or asset reward (every bonus
+objective is 1). `ObjectivesFailed` is stars lost for good this turn: latched
+failures when they happen, end-of-mission checks on the turn the mission
+ends (`PhaseResult::mission_ended`; without a phase, `turn >= total_turns`).
+Objectives are weighted by their stars, not equally: that is how the game
+pays them. `ObjectiveProgress` is progress toward stars not yet earned, in
+`kStar` = 840 units per star (lcm 1..8, so "1 of 5 kills" is exact); it can
+be negative (fires put out, bots thawed). Time pods are not in the game's
+objective list but are weighted as 1 star: lost when broken, secured when a
+player unit picks one up.
+
+| objective | failed (stars) | progress | data | exact |
+|---|---|---|---|---|
+| time pod | broken: 1 | collected: 1 star | tiles | yes |
+| BONUS_ASSET (AssetLoc) | building damaged (`IsDamaged`): 1 | - | `objective_name` Str_* | yes |
+| Mission_Critical: Solar/Wind/Power/Factory | each building damaged: 1 | - | `objective_name` Mission_* | yes |
+| BONUS_KILL_FIVE | end: KilledVek < target | kills toward the target | `mission_kill_target`, `mission_kills_done` | yes |
+| BONUS_PACIFIST | KilledVek crosses the limit | - | `mission_kill_limit`, kills | yes |
+| BONUS_GRID | grid damage since deployment reaches 3 | - | PowerStart: turn-1 grid (later turns: this turn only) | turn 1 |
+| BONUS_MECHS | end: mech damage >= 4 | (tier 2) | board | yes |
+| BONUS_BLOCK | end: BlockedSpawns < 3 | blocked spawns (`SpawnBlocked`) | BlockedSpawns not exported | no |
+| BONUS_DEBRIS | end: an egg sack left | sack destroyed: 1/2 | BonusDebris pawns | yes |
+| BONUS_SELFDAMAGE | end: a mech infected | mite removed: 1/3 | `infected` | yes |
+| BONUS_KILL | end: an enemy left | - | board | yes |
+| Tanks, Civilians, Bomb, BotDefense (2 units) | each unit dies: 1 | - | pawn types | yes |
+| Artillery, Filler, Volatile (no kill; a retreat is fine), Final_Cave bomb | dies: 1 | - | pawn types | yes |
+| Train / Armored_Train (2) | stopped: 1; wreck dies: 1 | - | pawn types | yes |
+| Satellite (2) | rocket destroyed: 1 | launched: 1 star | pawn types | yes |
+| Dam, Shields, AcidStorm, Hacking tower, bosses | end: target alive | destroyed: 1 star | pawn types (`Mission_XBoss` -> `XBoss*`, Jelly_Boss) | yes |
+| Hacking bot | bot dies (not its player-team swap): 1 | - | `mission_hacking_bot_id` or the shielded Cannon Bot | with ids |
+| Disposal | unit dies: 1; end: mountains left: 1 | mountains destroyed | board | yes |
+| Terraform | unit dies: 1; end: grass left: 1 | grass turned to sand | grass zone not exported | no |
+| Force | end: Mountains < 2 | mountains destroyed (EVENT_MOUNTAIN_DESTROYED) | `mission_mountains_destroyed` | yes |
+| AcidTank (2) | end: 2 - stars(AcidKills) | acid kills (1st: 1 star, 4th: 2) | `mission_kills_done` = AcidKills | yes |
+| Barrels (2) | end: each vat left: 1 | vat destroyed: 1 star | AcidVat pawns | yes |
+| BoomBots (2) | end: 2 - stars(destroyed) | bots destroyed (2: 1 star, 4: 2) | `_Boom` pawns, 4 placed | yes |
+| ForestFire (2) | end: 2 - stars(fires) | fires on the board (8: 2 stars) | tiles | yes |
+| Repair | end: RepairPickups < 3 | platforms used by player units | `repair_platforms_used` | yes |
+| FreezeBldg | end: thawed < 5 | buildings thawed or destroyed | `freeze_building_tiles` | with tiles |
+| FreezeBots (2) | bot dies: 1; end: bot not frozen: 1 | bot frozen: 1 star | pawn types | yes |
+| BlobBoss | end: dead blobs < 5 | blobs killed | dead blobs estimated from the living | no |
+| Missiles (2) | - | - | Missile_Unit shots not modelled | no |
+| Final (survive) | - (no reward) | - | - | - |
+
+Bonus objectives come from the bridge's `bonus_objective_ids` when exported
+(51 of 469 recorded boards); otherwise from what other fields reveal: a kill
+target (KILL_FIVE; on Mission_AcidTank it is the mission's own goal), a kill
+limit (PACIFIST), an Str_* building (ASSET), egg sacks (DEBRIS), infected
+mechs (SELFDAMAGE). GRID, MECHS and BLOCK cannot be inferred; GRID and MECHS
+only add a threshold to what tiers 1 and 2 already rank.
+
+Native counters follow the decompile: `Pawn::ProcessDeath` raises
+EVENT_ENEMY_KILLED for every team-6 non-minor death (bots included, any
+killer) and EVENT_ACID_DESTROYED for team-6 deaths with ACID; Mission.KilledVek
+only counts while KILL_FIVE or PACIFIST is active (Mission:BaseUpdate).
+
+Validation (`itb_inspect --replay recordings --turns`, the 216 replayed
+turns with a trustworthy next board, 15 more against post_enemy): the
+engine's kill count matches the next turn's `mission_kills_done` on all 19
+turns where the game counts kills; repair platforms 4/4; objective buildings
+standing 231/231; pods 231/231; infected mechs 216/216. Every scored failure
+(8: a Cannon Bot, an Archive tank, three Volatile Vek, two trains stopped,
+a pod) happened in game too.
+`itb_inspect --score <recording>` prints one recorded plan's score, every
+objective line and the position terms beside the game's outcome.
+
 Integration notes:
 
 - A tile's occupant order is arrival order (`Pawn::arrival`). Boards loaded
@@ -273,6 +388,11 @@ Integration notes:
 - **Spider eggs webbing newcomers.** Mechs that moved next to a `WebbEgg1`
   were webbed in game. The decompiled web check releases webs to empty
   tiles, so how the egg re-webs is not understood yet.
+- **Stage 8 objectives.** The bridge could export Mission.BlockedSpawns,
+  PowerStart, the Terraform grass zone and Missile_Unit's shots left; until
+  then BONUS_BLOCK, BONUS_GRID after turn 1, Terraform and Missiles are
+  approximate. That a pod still intact at mission end is recovered is
+  assumed, not checked against the game.
 - **Pilot level-ups.** A kill can level a pilot up mid-mission (+2 HP seen
   in the recordings); pilot XP is not in the bridge data.
 - **Enemy phase (stage 7).**

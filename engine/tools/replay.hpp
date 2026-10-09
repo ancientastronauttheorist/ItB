@@ -8,7 +8,9 @@
 
 #include "itb/board.hpp"
 #include "itb/engine.hpp"
+#include "itb/objectives.hpp"
 #include "itb/recording.hpp"
+#include "itb/score.hpp"
 
 namespace itb::tools {
 
@@ -39,5 +41,18 @@ struct TurnStart {
 };
 
 int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const ReplayOptions& options);
+
+// itb_inspect --score <recording>: replays the recorded plan (no syncing),
+// runs the enemy phase and prints the turn score breakdown.
+int run_score(const std::filesystem::path& input, const std::filesystem::path& game);
+
+// Objective state the old bot's post-enemy summary also records.
+struct ObjectiveTally {
+  int objective_buildings = 0;  // unique buildings standing
+  int pods = 0;                 // pods still on the board
+  int mites = 0;                // infected mechs
+};
+ObjectiveTally objective_counts(const Board& board);
+void print_score(const Score& score, const ObjectiveReport& objectives, const PositionTerms& position);
 
 }  // namespace itb::tools

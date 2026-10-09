@@ -10,6 +10,8 @@
 //                                               replay recorded actions, compare with the game
 //   itb_inspect [--game DIR] --replay DIR --turns [--show N] [--trace RUN/M/T]
 //                                               replay whole turns through the enemy phase
+//   itb_inspect [--game DIR] --score <recording.json>
+//                                               score the recorded plan (tiers, objectives, position)
 
 #include <algorithm>
 #include <cstdio>
@@ -38,7 +40,7 @@ namespace {
 
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
-               "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE])\n";
+               "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE)\n";
   return 2;
 }
 
@@ -345,6 +347,10 @@ int main(int argc, char** argv) {
       }
     }
     return tools::run_replay(o);
+  }
+  if (args[0] == "--score") {
+    if (args.size() < 2) return usage();
+    return tools::run_score(args[1], game);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();
