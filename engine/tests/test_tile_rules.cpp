@@ -1744,3 +1744,96 @@ TEST_CASE("SpiderlingEgg1 spawns inactive") {
   CHECK_FALSE(egg->active);
   CHECK(w.count(RulesEventType::PawnSpawned) == 1);
 }
+
+// ---- Explosion mode (SpaceDamage mode override 2) --------------------------------
+// Pawn::DetonateCorpse builds its hits with the mode override set to 2: the
+// tile treats them as weapon hits, pawns get mode 2.
+
+namespace {
+
+SpaceDamage explosion(int damage, Point p = kP) {
+  SpaceDamage sd = World::sd_at(damage, p);
+  sd.mode_override = kModeExplosion;
+  return sd;
+}
+
+}  // namespace
+
+TEST_CASE("explosion mode skips armor and ACID arithmetic") {
+  World w;
+  Pawn p = vek(1, 4);
+  p.armor = true;
+  p.acid = true;
+  p.infected = true;
+  w.add(p);
+  w.hit(explosion(1));
+  CHECK(w.pawn(1).hp == 3);  // a weapon hit would deal 2 (ACID doubles, armor is off)
+  CHECK_FALSE(w.pawn(1).infected);
+  Pawn a = vek(2, 3, kRight);
+  a.armor = true;
+  w.add(a);
+  w.hit(explosion(1, kRight));
+  CHECK(w.pawn(2).hp == 2);  // armor would have absorbed it
+}
+
+TEST_CASE("explosion mode gets no Force Amp bonus") {
+  World w;
+  w.board.passives = kPassiveForceAmp;
+  w.add(vek(1, 3));
+  w.hit(explosion(1));
+  CHECK(w.pawn(1).hp == 2);
+}
+
+TEST_CASE("explosion mode is not a bump, even through the push-mode entry point") {
+  for (bool via_push : {false, true}) {
+    CAPTURE(via_push);
+    World w;
+    auto apply = [&](SpaceDamage sd) {
+      if (via_push) {
+        w.bump(sd);
+      } else {
+        w.hit(sd);
+      }
+    };
+    make_ice(w.tile(kP));
+    apply(explosion(1));
+    CHECK(w.tile(kP).hp == 1);  // ice cracks
+
+    w.tile(kUp).terrain = Terrain::Forest;
+    apply(explosion(1, kUp));
+    CHECK(w.tile(kUp).terrain == Terrain::Road);  // the forest ignites
+    CHECK(w.tile(kUp).on_fire());
+
+    w.tile(kRight).item = intern("Item_Mine");
+    w.tile(kRight).pod = PodState::Present;
+    apply(explosion(1, kRight));
+    CHECK(w.tile(kRight).item == kNoSymbol);  // the mine goes off
+    CHECK(w.tile(kRight).pod == PodState::Destroyed);
+  }
+}
+
+TEST_CASE("explosion mode on a cracked tile: collapses, the burrower doesn't dive") {
+  World w;
+  w.tile().cracked = true;
+  Pawn p = vek(1, 3);
+  p.burrows = true;
+  w.add(p);
+  w.hit(explosion(1));
+  CHECK(w.tile().terrain == Terrain::Hole);
+  CHECK(w.ctx.burrow_dives.empty());
+}
+
+TEST_CASE("explosion mode still pops shields and hits buildings") {
+  World w;
+  Pawn p = vek(1, 3);
+  p.shield = true;
+  w.add(p);
+  w.hit(explosion(1));
+  CHECK_FALSE(w.pawn(1).shield);
+  CHECK(w.pawn(1).hp == 3);
+  make_building(w.tile(kRight), 1, 1);
+  w.board.grid_power = 5;
+  w.hit(explosion(1, kRight));
+  CHECK(w.tile(kRight).terrain == Terrain::Rubble);
+  CHECK(w.board.grid_power == 4);
+}

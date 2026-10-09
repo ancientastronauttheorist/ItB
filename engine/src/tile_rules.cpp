@@ -18,17 +18,6 @@ bool is_train_shot(Symbol shot) {
   return name == "Train_Move" || name == "Armored_Train_Move";
 }
 
-// Board::GetPawn(p): if the tile has a pawn, its first living occupant, else
-// its last one (a corpse).
-Pawn* pawn_on(Board& board, Point p) {
-  if (!has_pawn(board, p)) return nullptr;
-  const std::vector<Pawn*> occ = occupants(board, p);
-  for (Pawn* pawn : occ) {
-    if (pawn->alive()) return pawn;
-  }
-  return occ.back();
-}
-
 // D6d: a damaging hit on a building. Populated buildings roll Grid Defense
 // first; a resisted hit leaves the building untouched.
 void damage_building(Board& board, Point p, int damage, RulesContext& ctx) {
@@ -88,7 +77,7 @@ void retreat(Board& board, Pawn& pawn, RulesContext& ctx) {
   pawn.retreating = true;
   if (is_flying(pawn)) return;  // flies away; nothing changes on the board
   if (board.tile(pawn.pos).terrain == Terrain::Water) {
-    kill_pawn(board, pawn, ctx);
+    kill_pawn_instant(board, pawn, ctx);
   } else {
     pawn.hp = 0;  // burrows out: gone without a death
   }
@@ -137,6 +126,15 @@ void spawn_from_damage(Board& board, const SpaceDamage& sd, RulesContext& ctx) {
 
 }  // namespace
 
+Pawn* board_pawn(Board& board, Point p) {
+  if (!has_pawn(board, p)) return nullptr;
+  const std::vector<Pawn*> occ = occupants(board, p);
+  for (Pawn* pawn : occ) {
+    if (pawn->alive()) return pawn;
+  }
+  return occ.back();
+}
+
 int effective_damage(const SpaceDamage& sd) {
   return sd.damage == kDamageZero ? 0 : sd.damage;
 }
@@ -164,7 +162,11 @@ void damage_tile(Board& board, Point p, int damage, DamageMode mode, RulesContex
 
 void damage_tile(Board& board, Point p, SpaceDamage sd, DamageMode mode, RulesContext& ctx) {
   if (!p.valid()) return;
-  const bool bump = mode == DamageMode::Push;
+  // D0: the explosion override makes the tile treat the hit as a weapon hit
+  // and hands pawns explosion mode.
+  const bool explosion = sd.mode_override == kModeExplosion;
+  const bool bump = mode == DamageMode::Push && !explosion;
+  const DamageMode pawn_mode = explosion ? DamageMode::Explosion : mode;
   Tile& t = board.tile(p);
 
   // D2: shield field.
@@ -199,7 +201,7 @@ void damage_tile(Board& board, Point p, SpaceDamage sd, DamageMode mode, RulesCo
   if (has_pawn(board, p)) {
     for (Pawn* pawn : occupants(board, p)) {
       check_acid_fire(board, p, *pawn, ctx);
-      damage_pawn(board, *pawn, sd, mode, ctx);
+      damage_pawn(board, *pawn, sd, pawn_mode, ctx);
     }
     had_pawn = true;
   }
@@ -300,7 +302,7 @@ void damage_tile(Board& board, Point p, SpaceDamage sd, DamageMode mode, RulesCo
   if (sd.grapple_source.x >= 0 && has_pawn(board, p)) {
     Pawn* target = first_occupant(board, p);
     const Pawn* source =
-        sd.grapple_source.valid() ? pawn_on(board, sd.grapple_source) : nullptr;
+        sd.grapple_source.valid() ? board_pawn(board, sd.grapple_source) : nullptr;
     target->webbed = true;
     target->web_source = source ? source->uid : -1;
   }
@@ -340,10 +342,12 @@ void damage_pawn(Board& board, Pawn& pawn, SpaceDamage sd, DamageMode mode, Rule
     if (pawn.acid) x *= 2;
     pawn.infected = false;
   }
-  // P4: Force Amp adds 1 to bumps on Vek.
+  // P4: Force Amp adds 1 to bumps on Vek (never to explosions).
   if (x > 0 && mode == DamageMode::Push) {
     pawn.infected = false;
     if (board.has_passive(kPassiveForceAmp) && is_vek(pawn)) ++x;
+  } else if (x > 0 && mode == DamageMode::Explosion) {
+    pawn.infected = false;
   }
 
   // P5: fire and injury land before the HP change.
@@ -412,7 +416,7 @@ void modify_health(Board& board, Pawn& pawn, int delta, DamageMode mode, RulesCo
     for (int d = 0; d < 4; ++d) {
       const Point q = step(origin, static_cast<Dir>(d));
       if (!q.valid()) continue;
-      const Pawn* target = pawn_on(board, q);
+      const Pawn* target = board_pawn(board, q);
       if (!target || target->team != Team::Enemy) continue;
       SpaceDamage hit;
       hit.loc = q;
@@ -432,12 +436,23 @@ void kill_pawn(Board& board, Pawn& pawn, RulesContext& ctx) {
   emit(ctx, RulesEventType::PawnKilled, pawn.pos, pawn.uid);
 }
 
+void kill_pawn_instant(Board& board, Pawn& pawn, RulesContext& ctx) {
+  kill_pawn(board, pawn, ctx);
+  if (ctx.frame) ctx.frame->instant_kill(pawn);
+}
+
 void fall_pawn(Board& board, Pawn& pawn, RulesContext& ctx) {
   if (is_flying(pawn) && !pawn.frozen) return;
   if (pawn.fallen) return;
+  if (ctx.frame && ctx.frame->start_fall(pawn)) return;
+  finish_fall(board, pawn, ctx);
+}
+
+void finish_fall(Board& board, Pawn& pawn, RulesContext& ctx) {
+  if (pawn.fallen) return;
   pawn.fallen = true;
   emit(ctx, RulesEventType::PawnFell, pawn.pos, pawn.uid);
-  kill_pawn(board, pawn, ctx);
+  kill_pawn_instant(board, pawn, ctx);
 }
 
 }  // namespace itb
