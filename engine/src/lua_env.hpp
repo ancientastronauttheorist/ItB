@@ -4,6 +4,7 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,8 +34,12 @@ class LuaEnv {
   // functions the scripts need at load time are discovered from "attempt to
   // call/index global" errors and stubbed, then the whole load is repeated in
   // a fresh state until no new stubs are needed.
+  // `bind` (optional) installs extra native bindings before the scripts run
+  // (the Lua host's Board/Pawn/Game classes); names it defines are never
+  // stubbed.
+  using Binder = std::function<void(lua_State*)>;
   static std::unique_ptr<LuaEnv> load_game_scripts(const std::filesystem::path& game_root,
-                                                   ScriptRun* run);
+                                                   ScriptRun* run, const Binder& bind = {});
 
  private:
   void install_prelude(const std::vector<std::string>& stubs);

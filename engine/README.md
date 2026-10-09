@@ -34,6 +34,7 @@ engine/build/itb_inspect recordings/<run>/m07_turn_01_solve_input.json  # render
 engine/build/itb_inspect --pawns                                        # every pawn definition
 engine/build/itb_inspect --scripts                                      # script load report
 engine/build/itb_inspect --corpus recordings                            # load all recorded boards
+engine/build/itb_inspect --weapons recordings                           # run weapon Lua on recorded boards
 ```
 
 ## How game data is loaded
@@ -41,9 +42,10 @@ engine/build/itb_inspect --corpus recordings                            # load a
 `GameData::load` runs the game's scripts in Lua 5.1, in the same
 `GetScripts()` order the game uses. It supplies:
 
-- the constants the binary binds natively;
-- a working `Point`;
-- inert stubs for native functions the scripts call while loading.
+- the constants and value classes the binary binds natively (`Point`,
+  `SpaceDamage`, `SkillEffect`, the list types), with luabind's rules;
+- inert stubs for the remaining native functions the scripts call while
+  loading (UI classes only).
 
 The stubs are discovered automatically and reported, and the load verifies
 that no stub shadows a Lua definition. Pawn definitions are read with normal
@@ -79,10 +81,33 @@ Done so far (build order from the decompile):
    - Every first move the old bot executed in a recording is reachable here:
      `itb_inspect --moves recordings`.
 
+- **Stage 6: the Lua host** (`lua_host.hpp`).
+   - Runs the game's own weapon scripts (`GetTargetArea`, `GetSkillEffect`,
+     queued Vek attacks, two-click weapons) and death effects on an engine
+     Board, as the accuracy reference for C++ ports.
+   - Native bindings follow luabind's rules: exact-arity overloads, strict
+     argument types, aliasing `SpaceDamage&` / field references, one shared
+     instance metatable (so `tostring(p)` and pawn `==` raise, as in game).
+   - `random_int`, `random_bool` and `math.random` share a glibc `rand()`
+     clone. Live seeds are hidden, so seeded results (e.g. the Large Goo
+     split) are one sample of a random outcome.
+   - Board queries read the engine Board directly; mutating bindings are
+     reported (`LuaWrite`), not applied.
+   - All 559 weapon ids run on the test boards without Lua errors, and
+     every mech weapon and queued Vek attack in the recordings runs cleanly:
+     `itb_inspect --weapons recordings`.
+
 Next up: stage 3 (push and death resolution) and stage 4 (the SkillEffect
 executor).
 
 Integration debts:
+
+- Lua host and executor: `Skill::PrepareEffect` (empty `sAnimation` := the
+  weapon's `Explosion`, owner team, projectile source) and
+  `CheckAlterations` (Vek Hormones, Boost) run after Lua returns and belong
+  to the executor. So does running each entry's `sScript` (`run_script`)
+  and applying the `LuaWrite`s it reports. `to_engine` drops the fields the
+  engine `SpaceDamage` lacks so far (animation and flags, sound, art).
 
 - Injured's per-step HP loss in `set_space` is a plain decrement for now. It
   should go through `modify_health` once moves carry a `RulesContext`, so the

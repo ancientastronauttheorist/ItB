@@ -81,7 +81,7 @@ class FieldReader {
       const int n = static_cast<int>(lua_objlen(L_, -1));
       for (int i = 1; i <= n; ++i) {
         lua_rawgeti(L_, -1, i);
-        if (lua_istable(L_, -1)) {
+        if (lua_istable(L_, -1) || lua_isuserdata(L_, -1)) {  // native Point userdata
           lua_getfield(L_, -1, "x");
           lua_getfield(L_, -2, "y");
           out.emplace_back(static_cast<int>(lua_tonumber(L_, -2)),
