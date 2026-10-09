@@ -186,6 +186,13 @@ void record_write(lua_State* L, const char* object, const char* method, int firs
         if (Instance* in = to_instance(L, i)) {
           if (in->cls == Cls::Point) {
             w.args.emplace_back(*static_cast<Point*>(resolve(in)));
+          } else if (in->cls == Cls::SkillEffect && !w.effect) {
+            w.effect = *static_cast<LuaSkillEffect*>(resolve(in));
+            w.args.emplace_back(std::string("<SkillEffect>"));
+          } else if (in->cls == Cls::SpaceDamage && !w.effect) {
+            w.effect.emplace();
+            w.effect->effect.push_back(*static_cast<LuaSpaceDamage*>(resolve(in)));
+            w.args.emplace_back(std::string("<SpaceDamage>"));
           } else if (in->cls == Cls::BoardPawn) {
             w.args.emplace_back(static_cast<double>(static_cast<int32_t>(in->index)));
           } else {

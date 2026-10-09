@@ -114,6 +114,9 @@ struct LuaWrite {
   std::string method;
   int32_t pawn = -1;   // receiver uid for Pawn writes
   std::vector<LuaArg> args;  // Pawn* arguments are recorded as their uid (double)
+  // A SkillEffect argument (Board:AddEffect), or a SpaceDamage argument
+  // wrapped as its only entry (Board:AddEffect(SD), Board:DamageSpace(SD)).
+  std::optional<LuaSkillEffect> effect;
 
   std::string describe() const;
 };
@@ -132,7 +135,8 @@ struct LuaHostOptions {
   int sector = 1;              // Game:GetSector()
   // IsPassiveSkill(name) is true if any of these starts with `name`
   // (SquadControl::sTempPassive plus the Passive strings of powered skills).
-  // Empty: derived from the board's mechs' weapons on every query.
+  // nullopt: derived on every query from the Lua Passive field of each
+  // weapon carried by a mech on the board.
   std::optional<std::vector<std::string>> passives;
   uint32_t seed = 1;           // initial rand() seed (srand)
 };

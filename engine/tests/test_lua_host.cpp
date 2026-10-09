@@ -133,6 +133,13 @@ TEST_CASE("Lua host: scripts load with every native bound") {
   }
 }
 
+TEST_CASE("Lua host: weapon table names carry the powered upgrades") {
+  CHECK(LuaHost::weapon_name("Prime_Punchmech", false, false) == "Prime_Punchmech");
+  CHECK(LuaHost::weapon_name("Prime_Punchmech", true, false) == "Prime_Punchmech_A");
+  CHECK(LuaHost::weapon_name("Prime_Punchmech", false, true) == "Prime_Punchmech_B");
+  CHECK(LuaHost::weapon_name("Prime_Punchmech", true, true) == "Prime_Punchmech_AB");
+}
+
 TEST_CASE("Lua host: rand() is glibc's TYPE_3 stream") {
   NEED_GAME();
   H.seed(1);
@@ -801,6 +808,10 @@ TEST_CASE("Lua host: BlobBoss split is seeded") {
   CHECK(se.effect[1].fDelay == 0.0f);
   // Same seed, same split.
   CHECK(H.death_effect_raw(b, pawn(b, boss), seed) == se);
+  // The smallest goo has DeathSpawn "" and splits no further.
+  REQUIRE(H.lua_string("BlobBossSmall", "DeathSpawn") == std::optional<std::string>(""));
+  const int32_t small = place(b, "BlobBossSmall", {1, 1});
+  CHECK(H.death_effect_raw(b, pawn(b, small), seed).effect.empty());
 }
 
 // ---- board queries and globals ------------------------------------------------------
@@ -860,6 +871,15 @@ TEST_CASE("Lua host: mutating bindings are reported, not applied") {
   CHECK(c.writes[0].describe() == "Game:ModifyPowerGrid(3626)");
   CHECK(c.writes[1].describe() == "Board:SetTerrain(Point( 2, 2 ), 3)");
   CHECK(c.writes[2].describe() == "Pawn:SetFrozen(true) [pawn 1]");
+  // Effects handed to the board are captured whole.
+  const LuaCall e = H.run_script(s.b,
+                                 "local se = SkillEffect() se:AddDamage(SpaceDamage(Point(1, 1), 2))"
+                                 " Board:AddEffect(se) Board:DamageSpace(SpaceDamage(Point(2, 2), 1))");
+  REQUIRE(e.writes.size() == 2);
+  REQUIRE(e.writes[0].effect.has_value());
+  CHECK(e.writes[0].effect->effect.at(0).iDamage == 2);
+  REQUIRE(e.writes[1].effect.has_value());
+  CHECK(e.writes[1].effect->effect.at(0).loc == Point{2, 2});
   // Strict types still apply to mutators.
   CHECK_FALSE(H.run_script(s.b, "Board:SetTerrain(Point(2, 2), 'x')").ok);
   // LOG/print output is captured.

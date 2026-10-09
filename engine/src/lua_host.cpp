@@ -215,6 +215,8 @@ bool take_skill_effect(lua_State* L, LuaSkillEffect& out, LuaCall& call, std::st
 std::vector<Point> target_area_impl(LuaHost::Impl& im, std::string_view weapon, Point origin,
                                     LuaCall& call) {
   std::vector<Point> area;
+  // Skill::GetTargetArea only asks Lua for an origin on the board.
+  if (!origin.valid()) return area;
   if (!call_method(im, weapon, "GetTargetArea", call, [&](lua_State* L) {
         lua::push_point(L, origin);
         return 1;
@@ -386,6 +388,12 @@ std::unique_ptr<LuaHost> LuaHost::create(const std::filesystem::path& game_root,
   lua_State* L = im.L;
   lua::rng(L).srand(options.seed);
 
+  // In combat a game is running: CallMethod looks names containing
+  // "Mission" up in GAME.Missions before _G. An empty game object keeps that
+  // lookup from failing (it finds nothing and falls through to _G).
+  if (luaL_dostring(L, "if GAME == nil and GameObject ~= nil then GAME = GameObject:new{} end") != 0) {
+    lua_pop(L, 1);
+  }
   // What Board::StartBattle and GameMap::GameMap do: SetBoard / SetGame.
   lua_getglobal(L, "SetBoard");
   lua::host_push_board(L);
