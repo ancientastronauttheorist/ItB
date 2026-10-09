@@ -13,8 +13,7 @@ one bounded budget for a living active player actor; include controllable missio
 allies. Never retry End Turn to obtain readiness or admit the last inactive
 snapshot on timeout. Preserve rejected snapshots in the acquisition denominator.
 Regression anchor: August 29 capsule controls pair002/pair003 report turn2/player
-phase with all three mechs inactive; see
-[the archive conformance checkpoint](../solver_first_archived_turn_conformance.md).
+phase with all three mechs inactive.
 
 **Typical turn = 2 agent rounds:** `auto_turn` → click End Turn → `auto_turn` (blocks in Python until next player turn) → click End Turn → ...
 

@@ -63,7 +63,7 @@ For each case:
 5. The number requested by `--rolls` of `math.random(5)`, `math.random(7)`, and `math.random(8)` outputs is printed. These are candidate pool sizes, not a recovered engine pool.
 6. The script performs no pool mapping or formal call-order/offset fit and does not auto-declare a match. It prints streams for manual inspection.
 
-The two recording manifests predate Observatory build identity and do not pin
+The two recording manifests predate build identity pinning and do not pin
 their platform, executable, native libraries, depot/build, libc, or content
 revisions. They are useful exploratory artifacts, not build-keyed RNG evidence.
 
@@ -92,7 +92,8 @@ hidden state, and complete call order:
 
 - The pinned Windows executable's registration mechanism, four binding bodies,
   shared RNG core, seed setter, and enemy-planning seed ritual are now mapped.
-  See `docs/itb_native_anchor_research.md`. Those facts apply only to that
+  See `docs/itb_native_anchor_research.md` on the archived
+  `archive/codex-decompile` branch. Those facts apply only to that
   exact executable hash.
 - `nm -gU` on the unrelated-provenance local `itb_test.dylib` exports only
   `_luaopen_itb_test`; this does not locate the game's RNG bindings.
@@ -138,7 +139,7 @@ Even with prediction blocked, `ai_seed` capture remains valuable for:
 - `scripts/seed_replay.py` — pure-Python Park-Miller / Lua 5.1 `math.random` reproducer (existing).
 - `docs/seed_replay_hypotheses.md` — formal H1/H2/H3 hypotheses for the resist-roll problem (existing).
 - `tests/test_seed_replay.py` — golden values against macOS libc (existing).
-- `docs/itb_native_anchor_research.md` — exact Windows boundary follow-up.
+- `docs/itb_native_anchor_research.md` (archived on the `archive/codex-decompile` branch) — exact Windows boundary follow-up.
 
 ## Honest scorecard
 

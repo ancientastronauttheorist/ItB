@@ -56,7 +56,6 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 - Massive units (all player Mechs, boss Vek) survive but are submerged and cannot attack or repair.
 - Exact Windows build `13725832` path review proves `PATH_MASSIVE=2` may
   traverse and stop on Water; simulator v402 preserves those ordinary routes.
-  See `data/observatory/native/windows_build_13725832_31fe35265598_path_cost_ordering.json`.
 - Flying units hover over water with no effect.
 - Extinguishes fire on units that enter.
 - Freezing water creates an Ice Tile.
@@ -149,8 +148,6 @@ Each mission consists of 4-5 turns. Each turn follows this sequence:
 - Simulator v403 carries current `corpse`, static `corpse_on_death`, and the
   legacy disabled-player-mech fallback through checkpoints. General
   same-effect push/collision corpse handling remains separate from pathing.
-- Exact provenance:
-  `data/observatory/native/windows_build_13725832_31fe35265598_path_occupancy_lifecycle.json`.
 
 ---
 
