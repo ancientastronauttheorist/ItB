@@ -125,3 +125,38 @@ TEST_CASE("make_pawn copies the definition") {
   CHECK(p.team == Team::Enemy);
   CHECK(symbol_name(p.weapons[0]) == "HornetAtk1");
 }
+
+TEST_CASE("animation definitions and tuning values") {
+  const GameData* data = game_data();
+  if (!data) {
+    WARN_MESSAGE(false, "no game install found; set ITB_GAME_DIR to run game-data tests");
+    return;
+  }
+  // A Vek's death animation is "<Image>d".
+  const PawnDef* firefly = data->pawn("Firefly1");
+  REQUIRE(firefly);
+  CHECK(firefly->image == "firefly");
+  const AnimDef* death = data->animation(firefly->image + "d");
+  REQUIRE(death);
+  CHECK(death->num_frames == 8);
+  CHECK(death->time == doctest::Approx(0.14f));
+  CHECK_FALSE(death->loop);
+  // Inherited fields resolve through the Animation base class.
+  const AnimDef* push = data->animation("explopush1_2");
+  REQUIRE(push);
+  CHECK(push->num_frames == 9);
+  CHECK(push->time == doctest::Approx(0.06f));
+  // A Frames list sets the frame count; Lengths the per-frame times.
+  const AnimDef* look = data->animation("Pilot_Look");
+  REQUIRE(look);
+  CHECK(look->num_frames == 5);
+  REQUIRE(look->lengths.size() == 5);
+  CHECK(look->frame_length(4) == doctest::Approx(1.2f));
+  CHECK(data->animation("no_such_animation") == nullptr);
+  // Values (game.lua).
+  CHECK(data->value("x_velocity", 0) == doctest::Approx(0.7f));
+  CHECK(data->value("y_velocity", 0) == doctest::Approx(18.0f));
+  CHECK(data->value("gravity", 0) == doctest::Approx(3.0f));
+  CHECK(data->value("laser_length", 0) == doctest::Approx(0.5f));
+  CHECK(data->value("no_such_value", -1) == -1);
+}

@@ -74,6 +74,38 @@ class FieldReader {
     return out;
   }
 
+  // A Lua array of numbers (indices 1..n).
+  std::vector<float> numbers(const char* key) {
+    std::vector<float> out;
+    lua_getfield(L_, -1, key);
+    if (lua_istable(L_, -1)) {
+      const int n = static_cast<int>(lua_objlen(L_, -1));
+      for (int i = 1; i <= n; ++i) {
+        lua_rawgeti(L_, -1, i);
+        out.push_back(static_cast<float>(lua_tonumber(L_, -1)));
+        lua_pop(L_, 1);
+      }
+    }
+    lua_pop(L_, 1);
+    return out;
+  }
+
+  // The length of a Lua array field (0 when absent).
+  int length(const char* key) {
+    lua_getfield(L_, -1, key);
+    const int n = lua_istable(L_, -1) ? static_cast<int>(lua_objlen(L_, -1)) : 0;
+    lua_pop(L_, 1);
+    return n;
+  }
+
+  float number(const char* key, float fallback) {
+    lua_getfield(L_, -1, key);
+    float v = fallback;
+    if (lua_type(L_, -1) == LUA_TNUMBER) v = static_cast<float>(lua_tonumber(L_, -1));
+    lua_pop(L_, 1);
+    return v;
+  }
+
   std::vector<Point> points(const char* key) {
     std::vector<Point> out;
     lua_getfield(L_, -1, key);
@@ -111,6 +143,7 @@ PawnDef read_pawn(lua_State* L, const std::string& name, std::vector<std::string
   d.name = name;
   d.symbol = intern(name);
   d.pawn_class = f.string("Class");
+  d.image = f.string("Image");
   d.health = f.integer("Health", 3);
   d.move_speed = f.integer("MoveSpeed", 0);
   d.skills = f.strings("SkillList");
@@ -132,6 +165,7 @@ PawnDef read_pawn(lua_State* L, const std::string& name, std::vector<std::string
   d.jumper = f.boolean("Jumper", false);
   d.teleporter = f.boolean("Teleporter", false);
   d.explodes = f.boolean("Explodes", false);
+  d.burns = f.boolean("Burns", false);
   d.neutral = f.boolean("Neutral", false);
   d.non_grid = f.boolean("NonGrid", false);
   d.large_shield = f.boolean("LargeShield", false);
@@ -144,6 +178,21 @@ PawnDef read_pawn(lua_State* L, const std::string& name, std::vector<std::string
   d.extra_spaces = f.points("ExtraSpaces");
   for (const std::string& skill : d.skills) intern(skill);
   return d;
+}
+
+// Animation::GetAnimInfo reads NumFrames, Time, Loop and Lengths; a non-empty
+// Frames list replaces the frame count.
+AnimDef read_anim(lua_State* L, const std::string& name) {
+  FieldReader f(L, name, nullptr);
+  AnimDef a;
+  a.name = name;
+  a.symbol = intern(name);
+  a.num_frames = f.integer("NumFrames", 1);
+  if (const int frames = f.length("Frames"); frames > 0) a.num_frames = frames;
+  a.time = f.number("Time", 1.0f);
+  a.loop = f.boolean("Loop", false);
+  a.lengths = f.numbers("Lengths");
+  return a;
 }
 
 }  // namespace
@@ -221,6 +270,40 @@ GameData GameData::load(const std::filesystem::path& game_root, ScriptLoadReport
     lua_pop(L, 1);
   }
 
+  // Animations: every table in ANIMS (sorted by name for a stable order).
+  std::vector<std::string> anim_names;
+  lua_getglobal(L, "ANIMS");
+  if (lua_istable(L, -1)) {
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+      if (lua_type(L, -2) == LUA_TSTRING && lua_istable(L, -1)) {
+        anim_names.emplace_back(lua_tostring(L, -2));
+      }
+      lua_pop(L, 1);
+    }
+    std::sort(anim_names.begin(), anim_names.end());
+    for (const std::string& name : anim_names) {
+      lua_getfield(L, -1, name.c_str());
+      data.anim_by_symbol_[intern(name)] = data.anims_.size();
+      data.anims_.push_back(read_anim(L, name));
+      lua_pop(L, 1);
+    }
+  }
+  lua_pop(L, 1);
+
+  // Values (game.lua).
+  lua_getglobal(L, "Values");
+  if (lua_istable(L, -1)) {
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+      if (lua_type(L, -2) == LUA_TSTRING && lua_type(L, -1) == LUA_TNUMBER) {
+        data.values_[lua_tostring(L, -2)] = static_cast<float>(lua_tonumber(L, -1));
+      }
+      lua_pop(L, 1);
+    }
+  }
+  lua_pop(L, 1);
+
   if (report) {
     report->files_ok = run.files_ok;
     report->files_failed = static_cast<int>(run.errors.size());
@@ -241,6 +324,21 @@ const PawnDef* GameData::pawn(std::string_view name) const {
 const PawnDef* GameData::pawn(Symbol symbol) const {
   auto it = by_symbol_.find(symbol);
   return it == by_symbol_.end() ? nullptr : &pawns_[it->second];
+}
+
+const AnimDef* GameData::animation(std::string_view name) const {
+  const Symbol s = find_symbol(name);
+  return s == kNoSymbol ? nullptr : animation(s);
+}
+
+const AnimDef* GameData::animation(Symbol symbol) const {
+  auto it = anim_by_symbol_.find(symbol);
+  return it == anim_by_symbol_.end() ? nullptr : &anims_[it->second];
+}
+
+float GameData::value(std::string_view name, float fallback) const {
+  auto it = values_.find(std::string(name));
+  return it == values_.end() ? fallback : it->second;
 }
 
 Pawn GameData::make_pawn(const PawnDef& def, int32_t uid, Point pos) const {
@@ -270,6 +368,8 @@ Pawn GameData::make_pawn(const PawnDef& def, int32_t uid, Point pos) const {
   p.jumper = def.jumper;
   p.teleporter = def.teleporter;
   p.explodes = def.explodes;
+  p.burns = def.burns;
+  p.ignore_flip = def.ignore_flip;
   p.neutral = def.neutral;
   p.non_grid = def.non_grid;
   p.leader = def.leader;

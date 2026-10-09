@@ -20,6 +20,7 @@ struct PawnDef {
   std::string name;
   Symbol symbol = kNoSymbol;
   std::string pawn_class;  // "Prime", "Brute", ... for mechs
+  std::string image;       // animation base name; "<image>d" is the death animation
   int health = 3;
   int move_speed = 0;
   std::vector<std::string> skills;
@@ -41,6 +42,7 @@ struct PawnDef {
   bool jumper = false;
   bool teleporter = false;
   bool explodes = false;
+  bool burns = false;
   bool neutral = false;
   bool non_grid = false;
   bool large_shield = false;
@@ -51,6 +53,21 @@ struct PawnDef {
   bool avoiding_mines = false;
   bool is_death_effect = false;
   std::vector<Point> extra_spaces;
+};
+
+// An entry of the ANIMS table (animations.lua): what the timing of an
+// Animation needs. Frame i lasts lengths[i] when given, else `time`.
+struct AnimDef {
+  std::string name;
+  Symbol symbol = kNoSymbol;
+  int num_frames = 1;  // the Frames list length when present, else NumFrames
+  float time = 1.0f;
+  std::vector<float> lengths;
+  bool loop = false;
+
+  float frame_length(int i) const {
+    return i >= 0 && i < static_cast<int>(lengths.size()) ? lengths[static_cast<size_t>(i)] : time;
+  }
 };
 
 struct ScriptLoadReport {
@@ -79,9 +96,22 @@ class GameData {
   // A fresh pawn of this type with its definition's traits and full health.
   Pawn make_pawn(const PawnDef& def, int32_t uid, Point pos) const;
 
+  // Animation definitions (ANIMS), e.g. weapon explosions and "<image>d"
+  // death animations.
+  const std::vector<AnimDef>& animations() const { return anims_; }
+  const AnimDef* animation(std::string_view name) const;
+  const AnimDef* animation(Symbol symbol) const;
+
+  // A number from the game's Values table (game.lua: x_velocity, gravity,
+  // laser_length, ...), or `fallback`.
+  float value(std::string_view name, float fallback) const;
+
  private:
   std::vector<PawnDef> pawns_;
   std::unordered_map<Symbol, size_t> by_symbol_;
+  std::vector<AnimDef> anims_;
+  std::unordered_map<Symbol, size_t> anim_by_symbol_;
+  std::unordered_map<std::string, float> values_;
 };
 
 }  // namespace itb
