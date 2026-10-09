@@ -1,0 +1,542 @@
+// Stage 9: the perfect-turn search (solver.hpp) and board hashes
+// (board_hash.hpp). Hand-built boards whose best plan is known, chance nodes
+// whose worst case is not the default outcome, and a brute-force cross-check:
+// on tiny boards a naive exhaustive enumeration (no table, no bounds, no
+// ordering, written independently of the solver) must give the same value.
+
+#include <doctest/doctest.h>
+
+#include <algorithm>
+#include <filesystem>
+#include <functional>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
+#include "itb/board_hash.hpp"
+#include "itb/engine.hpp"
+#include "itb/game_data.hpp"
+#include "itb/lua_host.hpp"
+#include "itb/movement.hpp"
+#include "itb/recording.hpp"
+#include "itb/solver.hpp"
+
+using namespace itb;
+
+namespace {
+
+Engine* engine() {
+  static Engine* e = [] {
+    const auto root = GameData::default_game_root();
+    if (root.empty() || !std::filesystem::exists(root / "scripts" / "scripts.lua")) {
+      return static_cast<Engine*>(nullptr);
+    }
+    return Engine::create(root).release();
+  }();
+  return e;
+}
+
+#define NEED_ENGINE()                                                                     \
+  if (!engine()) {                                                                        \
+    WARN_MESSAGE(false, "no game install found; set ITB_GAME_DIR to run engine tests"); \
+    return;                                                                               \
+  }                                                                                       \
+  Engine& E = *engine()
+
+void set_building(Board& b, Point p, int hp = 1) {
+  Tile& t = b.tile(p);
+  t.terrain = Terrain::Building;
+  t.hp = t.max_hp = static_cast<int8_t>(hp);
+  t.populated = true;
+}
+
+void set_mountain(Board& b, Point p) {
+  Tile& t = b.tile(p);
+  t.terrain = Terrain::Mountain;
+  t.hp = t.max_hp = 2;
+}
+
+int32_t place(Board& b, const char* type, Point p, bool mech = false) {
+  const PawnDef* def = engine()->data().pawn(type);
+  REQUIRE_MESSAGE(def != nullptr, type);
+  int32_t uid = 0;
+  for (const Pawn& q : b.pawns()) uid = std::max(uid, q.uid + 1);
+  Pawn pawn = engine()->data().make_pawn(*def, uid, p);
+  if (mech) {
+    pawn.mech = true;
+    pawn.corpse = true;
+    pawn.team = Team::Player;
+    pawn.active = true;
+  }
+  b.add_pawn(pawn);
+  return uid;
+}
+
+Pawn& P(Board& b, int32_t uid) {
+  Pawn* p = b.find_pawn(uid);
+  REQUIRE(p != nullptr);
+  return *p;
+}
+
+void queue(Board& b, int32_t uid, Point target) {
+  Pawn& p = P(b, uid);
+  p.queued = QueuedShot{0, p.pos, target};
+}
+
+TurnContext context(const char* mission = "") {
+  TurnContext ctx;
+  ctx.mission.mission_id = mission;
+  return ctx;
+}
+
+SolveOptions quick(double seconds = 60) {
+  SolveOptions o;
+  o.time_limit_s = seconds;
+  return o;
+}
+
+// ---- The naive reference: every sequence of sub-actions, every chance outcome --
+//
+// Written without the solver's machinery: plain recursion, chance outcomes by
+// re-running each prefix of choices, values by the definition
+//   V(B) = max(E(B), max_a min_o V(B·a·o)),  E(B) = min_o score(end_turn(B, o)).
+
+struct Choices {
+  std::vector<int> forced;
+  std::vector<int> options;  // per call
+  int next(int n) {
+    const size_t i = options.size();
+    options.push_back(n);
+    const int c = i < forced.size() ? forced[i] : 0;
+    return std::min(c, n - 1);
+  }
+};
+
+// Runs `run` once per chance outcome: the run with `prefix` forced (default
+// choices after it), then every other option of each later call.
+template <class Run>
+void each_outcome(Run&& run, const std::vector<int>& prefix = {}) {
+  Choices c;
+  c.forced = prefix;
+  run(c);
+  for (size_t i = prefix.size(); i < c.options.size(); ++i) {
+    for (int j = 1; j < c.options[i]; ++j) {
+      std::vector<int> p = prefix;
+      p.resize(i, 0);
+      p.push_back(j);
+      each_outcome(run, p);
+    }
+  }
+}
+
+struct Naive {
+  Engine& e;
+  const Board& root;
+  const TurnContext& base;
+  uint64_t evaluations = 0;
+
+  void hooks(Choices& c, ActionOptions& o, TurnContext* tc) {
+    auto resist = [&c](Point, int) { return c.next(2) == 1; };
+    auto egg = [&c](Resolver&, const Pawn&, const std::vector<Point>& t) {
+      return c.next(static_cast<int>(t.size()));
+    };
+    o.grid_resist = resist;
+    o.spider_egg = egg;
+    if (tc) {
+      tc->grid_resist = resist;
+      tc->spider_egg = egg;
+      tc->choose = [&c](const ChanceRecord& n) { return c.next(std::max(1, n.options)); };
+    }
+  }
+
+  Score end_value(const Board& b) {
+    Score worst;
+    worst.v.fill(INT32_MAX);
+    each_outcome([&](Choices& c) {
+      Board after = b;
+      TurnContext tc = base;
+      ActionOptions unused;
+      hooks(c, unused, &tc);
+      e.lua().seed(1);
+      const PhaseResult pr = e.end_turn(after, tc);
+      ++evaluations;
+      worst = std::min(worst, score_turn(root, after, &tc, &pr));
+    });
+    return worst;
+  }
+
+  // Every sub-action from b: (description, runner).
+  std::vector<std::function<bool(Board&, ActionOptions&)>> actions(const Board& b) {
+    std::vector<std::function<bool(Board&, ActionOptions&)>> out;
+    LuaHost& lua = e.lua();
+    for (const Pawn& p : b.pawns()) {
+      if (!p.controlled() || !p.alive()) continue;
+      const int32_t uid = p.uid;
+      if (can_move(p)) {
+        for (Point d : lua.target_area(b, p, "Move", p.pos)) {
+          if (!d.valid() || d == p.pos) continue;
+          out.push_back([this, uid, d](Board& x, ActionOptions& o) { return e.move(x, uid, d, o).ok(); });
+        }
+      }
+      if (!(p.active && p.movement.powered && !p.frozen)) continue;
+      for (int slot = 0; slot < kMaxWeapons; ++slot) {
+        const Symbol w = p.weapons[static_cast<size_t>(slot)];
+        if (w == kNoSymbol) continue;
+        const std::string name(symbol_name(w));
+        const auto passive = lua.lua_string(name, "Passive");
+        if (passive && !passive->empty()) continue;
+        for (Point t : lua.target_area(b, p, name, p.pos)) {
+          if (!t.valid()) continue;
+          if (lua.is_two_click(name) && !lua.two_click_exception(b, p, name, p.pos, t)) {
+            const Point first = lua.translate_first_click(b, p, name, p.pos, t);
+            for (Point t2 : lua.second_target_area(b, p, name, p.pos, first)) {
+              if (!t2.valid()) continue;
+              out.push_back([this, uid, slot, t, t2](Board& x, ActionOptions& o) {
+                return e.fire_weapon(x, uid, slot, t, t2, o).ok();
+              });
+            }
+          } else {
+            out.push_back([this, uid, slot, t](Board& x, ActionOptions& o) {
+              return e.fire_weapon(x, uid, slot, t, std::nullopt, o).ok();
+            });
+          }
+        }
+      }
+      if (p.mech) {
+        out.push_back([this, uid](Board& x, ActionOptions& o) {
+          return e.repair(x, uid, kInvalidPoint, "Skill_Repair", o).ok();
+        });
+      }
+    }
+    return out;
+  }
+
+  Score value(const Board& b, int depth = 0) {
+    REQUIRE(depth < 16);
+    Score best = end_value(b);
+    for (auto& act : actions(b)) {
+      Score worst;
+      worst.v.fill(INT32_MAX);
+      bool legal = true;
+      each_outcome([&](Choices& c) {
+        if (!legal) return;
+        Board next = b;
+        ActionOptions o;
+        hooks(c, o, nullptr);
+        e.lua().seed(1);
+        if (!act(next, o)) {
+          legal = false;
+          return;
+        }
+        worst = std::min(worst, value(next, depth + 1));
+      });
+      if (legal) best = std::max(best, worst);
+    }
+    return best;
+  }
+};
+
+}  // namespace
+
+// ---- Board hashes -----------------------------------------------------------------
+
+TEST_CASE("board hash: equal boards, different histories, every field counts") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t a = place(b, "PunchMech", {2, 2}, true);
+  const int32_t c = place(b, "PunchMech", {5, 5}, true);
+  P(b, a).move = 3;
+  P(b, c).move = 3;
+
+  // Two orders of the same two moves: different arrival stamps and undo
+  // flags, the same board for the search.
+  Board x = b, y = b;
+  REQUIRE(E.move(x, a, {2, 4}).ok());
+  REQUIRE(E.move(x, c, {5, 3}).ok());
+  REQUIRE(E.move(y, c, {5, 3}).ok());
+  REQUIRE(E.move(y, a, {2, 4}).ok());
+  CHECK_FALSE(x == y);  // arrival stamps differ
+  CHECK(hash_board(x, HashMode::Search) == hash_board(y, HashMode::Search));
+  CHECK(hash_board(x, HashMode::Exact) == hash_board(y, HashMode::Exact));
+
+  // Undo flags only matter in Exact mode.
+  Board u = b;
+  P(u, a).movement.undo_ready = true;
+  CHECK_FALSE(hash_board(u, HashMode::Exact) == hash_board(b, HashMode::Exact));
+  CHECK(hash_board(u, HashMode::Search) == hash_board(b, HashMode::Search));
+
+  // A player unit's active flag: the search sees it, End Turn does not.
+  Board d = b;
+  P(d, a).active = false;
+  CHECK_FALSE(hash_board(d, HashMode::Search) == hash_board(b, HashMode::Search));
+  CHECK(hash_board(d, HashMode::EndTurn) == hash_board(b, HashMode::EndTurn));
+
+  // Single fields change the hash.
+  Board t = b;
+  t.tile({0, 0}).smoke = true;
+  CHECK_FALSE(hash_board(t) == hash_board(b));
+  Board h = b;
+  P(h, c).hp = 1;
+  CHECK_FALSE(hash_board(h) == hash_board(b));
+  Board g = b;
+  g.grid_power = 3;
+  CHECK_FALSE(hash_board(g) == hash_board(b));
+  Board s = b;
+  s.spawn_points.push_back({1, 1});
+  CHECK_FALSE(hash_board(s) == hash_board(b));
+  // Pawn list order counts (it drives attack order).
+  Board o1;
+  place(o1, "Hornet1", {1, 1});
+  place(o1, "Hornet1", {2, 1});
+  Board o2 = o1;
+  std::swap(o2.pawns()[0], o2.pawns()[1]);
+  CHECK_FALSE(hash_board(o1) == hash_board(o2));
+}
+
+// ---- Hand-built boards ------------------------------------------------------------
+
+TEST_CASE("solver: one Vek threatens a building; the punch saves it") {
+  NEED_ENGINE();
+  // Punching from D5 would push the dying Hornet into the building; only the
+  // side tiles save it.
+  Board b;
+  const int32_t m = place(b, "PunchMech", {2, 6}, true);
+  const int32_t h = place(b, "Hornet1", {3, 3});
+  queue(b, h, {3, 2});
+  set_building(b, {3, 2});
+  const TurnContext ctx = context();
+
+  // Doing nothing loses the building.
+  const auto idle = evaluate_plan(E, b, ctx, {});
+  REQUIRE(idle);
+  CHECK((*idle)[ScoreKey::GridLost] == -1);
+
+  const SolveResult r = solve_turn(E, b, ctx, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.worst_case[ScoreKey::GridLost] == 0);
+  CHECK(r.best.worst_case[ScoreKey::BuildingHpLost] == 0);
+  CHECK(r.best.worst_case[ScoreKey::VekKilled] == 1);  // the punch (2) kills the Hornet (2)
+  REQUIRE(r.best.actions.size() == 1);
+  CHECK(r.best.actions[0].uid == m);
+  CHECK(r.best.actions[0].kind == PlayerAction::Kind::Weapon);
+  CHECK(r.best.actions[0].target == Point{3, 3});
+  CHECK(r.best.actions[0].move == Point{2, 3});
+  CHECK(r.upper_bound == r.best.worst_case);
+  CHECK(r.proven_components == kScoreKeys);
+  // The plan's value, re-run open-loop.
+  const auto again = evaluate_plan(E, b, ctx, r.best.actions);
+  REQUIRE(again);
+  CHECK(*again == r.best.worst_case);
+  CHECK(r.warnings.empty());
+}
+
+TEST_CASE("solver: the greedy first action loses a building later") {
+  NEED_ENGINE();
+  // The Hornet next to the mech is a free kill, but punching it uses the
+  // mech's only action; the Scorpion two tiles away is about to hit a
+  // building and only a move-and-punch from the far side saves it.
+  Board b;
+  const int32_t m = place(b, "PunchMech", {4, 4}, true);
+  const int32_t easy = place(b, "Hornet1", {4, 3});
+  queue(b, easy, {4, 2});  // the Hornet attacks an empty tile
+  const int32_t s = place(b, "Scorpion1", {2, 5});
+  queue(b, s, {1, 5});
+  set_building(b, {1, 5});
+  const TurnContext ctx = context();
+  const SolveResult r = solve_turn(E, b, ctx, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.worst_case[ScoreKey::GridLost] == 0);
+  REQUIRE(r.best.actions.size() == 1);
+  CHECK(r.best.actions[0].uid == m);
+  CHECK(r.best.actions[0].target == Point{2, 5});
+  // Killing the Hornet instead is worse in the first tier.
+  PlayerAction greedy;
+  greedy.uid = m;
+  greedy.kind = PlayerAction::Kind::Weapon;
+  greedy.weapon = "Prime_Punchmech";
+  greedy.target = {4, 3};
+  const auto g = evaluate_plan(E, b, ctx, {greedy});
+  REQUIRE(g);
+  CHECK((*g)[ScoreKey::GridLost] == -1);
+  CHECK(*g < r.best.worst_case);
+}
+
+TEST_CASE("solver: two threats, two mechs; the order of actions matters") {
+  NEED_ENGINE();
+  // Mech A stands where B must stand to punch the Hornet towards nothing;
+  // A must leave first, B punches, then A deals with the second Vek. Whatever
+  // the exact plan, the search must save both buildings and match the
+  // brute-force value.
+  Board b;
+  const int32_t a = place(b, "PunchMech", {3, 4}, true);
+  const int32_t c = place(b, "PunchMech", {3, 6}, true);
+  P(b, a).move = 2;
+  P(b, c).move = 3;
+  const int32_t h1 = place(b, "Hornet1", {3, 3});
+  queue(b, h1, {3, 2});
+  set_building(b, {3, 2});
+  const int32_t h2 = place(b, "Hornet1", {5, 4});
+  queue(b, h2, {6, 4});
+  set_building(b, {6, 4});
+  const TurnContext ctx = context();
+  const SolveResult r = solve_turn(E, b, ctx, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.worst_case[ScoreKey::GridLost] == 0);
+  CHECK(r.best.worst_case[ScoreKey::VekKilled] == 2);
+  const auto again = evaluate_plan(E, b, ctx, r.best.actions);
+  REQUIRE(again);
+  CHECK(*again == r.best.worst_case);
+  (void)a;
+  (void)c;
+}
+
+TEST_CASE("solver: a chance node whose worst case is not the default outcome") {
+  NEED_ENGINE();
+  // Lightning strike order (stage 7 V29): the psion struck first is the
+  // default branch (no explosion); the Vek struck first explodes next to the
+  // mech. The mech cannot act, so the only plan is to end the turn.
+  Board b;
+  place(b, "Jelly_Explode1", {1, 1});
+  place(b, "Scorpion1", {5, 2});
+  const int32_t m = place(b, "PunchMech", {5, 3}, true);
+  P(b, m).active = false;
+  for (const Pawn& p : b.pawns()) {
+    if (p.alive() && p.leader != Leader::None) b.psion = p.leader;
+  }
+  TurnContext ctx = context("Mission_Lightning");
+  for (Point p : {Point{1, 1}, Point{5, 2}, Point{1, 5}, Point{6, 6}}) {
+    ctx.mission.danger.push_back(DangerTile{p, 1, true, -1});
+  }
+  // The default branch alone.
+  Board d = b;
+  E.end_turn(d, ctx);
+  const Score dflt = score_turn(b, d, &ctx);
+  CHECK(dflt[ScoreKey::MechHpLost] == 0);
+
+  const SolveResult r = solve_turn(E, b, ctx, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.actions.empty());
+  CHECK(r.best.worst_case[ScoreKey::MechHpLost] == -1);
+  CHECK(r.best.worst_case < dflt);
+  CHECK(r.stats.chance_branches >= 1);
+}
+
+TEST_CASE("solver: a resisted building is worse than a destroyed one") {
+  NEED_ENGINE();
+  // The Hornet hits the building (Grid Defense roll); then the Bouncer
+  // pushes the mech towards it. Destroyed: the mech slides onto the rubble.
+  // Resisted: the mech bumps into the building (1 HP) and the building rolls
+  // again. The worst case is "resist, then no resist", not the default.
+  Board b;
+  const int32_t h = place(b, "Hornet1", {5, 3});
+  queue(b, h, {4, 3});
+  set_building(b, {4, 3});
+  const int32_t bouncer = place(b, "Bouncer1", {2, 3});
+  queue(b, bouncer, {3, 3});
+  const int32_t m = place(b, "PunchMech", {3, 3}, true);
+  P(b, m).active = false;
+  const TurnContext ctx = context();
+
+  auto run = [&](std::vector<bool> resists) {
+    Board x = b;
+    TurnContext tc = ctx;
+    size_t n = 0;
+    tc.grid_resist = [&](Point, int) { return n < resists.size() && resists[n++]; };
+    E.end_turn(x, tc);
+    return score_turn(b, x, &tc);
+  };
+  const Score none = run({});
+  const Score once = run({true, false});
+  CHECK(once < none);
+
+  const SolveResult r = solve_turn(E, b, ctx, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.worst_case == std::min({none, once, run({true, true})}));
+  CHECK(r.best.worst_case == once);
+  // With Grid Defense off nothing resists: the default is the only outcome.
+  Board off = b;
+  off.grid_defense = 0;
+  const SolveResult r0 = solve_turn(E, off, ctx, quick());
+  CHECK(r0.best.worst_case == none);
+}
+
+TEST_CASE("solver: anytime budget returns a plan and a sound bound") {
+  NEED_ENGINE();
+  Board b;
+  place(b, "PunchMech", {3, 6}, true);
+  place(b, "PunchMech", {4, 6}, true);
+  place(b, "PunchMech", {5, 6}, true);
+  const int32_t h = place(b, "Hornet1", {3, 3});
+  queue(b, h, {3, 2});
+  set_building(b, {3, 2});
+  SolveOptions o;
+  o.node_limit = 20;
+  o.time_limit_s = 0;
+  const SolveResult r = solve_turn(E, b, context(), o);
+  CHECK_FALSE(r.proven_optimal);
+  CHECK(r.timed_out);
+  REQUIRE(r.upper_bound);
+  CHECK(*r.upper_bound >= r.best.worst_case);
+  CHECK(r.proven_components >= 0);
+  const auto again = evaluate_plan(E, b, context(), r.best.actions);
+  REQUIRE(again);
+  CHECK(*again == r.best.worst_case);
+}
+
+// ---- Brute force cross-check -------------------------------------------------------
+
+TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
+  NEED_ENGINE();
+  std::mt19937 rng(20261009);
+  auto pick = [&](int n) { return static_cast<int>(rng() % static_cast<unsigned>(n)); };
+  int checked = 0;
+  for (int trial = 0; trial < 8; ++trial) {
+    // A 4x4 corner of the board (the rest is mountains), 1-2 mechs with
+    // move 1-2, 1-2 Hornets with an adjacent queued target, 2 buildings.
+    Board b;
+    for (int i = 0; i < kTileCount; ++i) {
+      const Point p = Point::from_index(i);
+      if (p.x >= 4 || p.y >= 4) set_mountain(b, p);
+    }
+    std::vector<Point> free;
+    for (int x = 0; x < 4; ++x) {
+      for (int y = 0; y < 4; ++y) free.push_back({x, y});
+    }
+    std::shuffle(free.begin(), free.end(), rng);
+    size_t k = 0;
+    set_building(b, free[k++]);
+    set_building(b, free[k++]);
+    const int mechs = 1 + pick(2);
+    for (int i = 0; i < mechs; ++i) {
+      const int32_t m = place(b, "PunchMech", free[k++], true);
+      P(b, m).move = static_cast<int8_t>(1 + pick(2));
+    }
+    const int vek = 1 + pick(2);
+    for (int i = 0; i < vek; ++i) {
+      const Point at = free[k++];
+      const int32_t h = place(b, "Hornet1", at);
+      std::vector<Point> adj;
+      for (Point d : kDirVectors) {
+        if ((at + d).valid()) adj.push_back(at + d);
+      }
+      queue(b, h, adj[static_cast<size_t>(pick(static_cast<int>(adj.size())))]);
+    }
+    const TurnContext ctx = context();
+    Naive naive{E, b, ctx};
+    const Score want = naive.value(b);
+    for (bool tt : {true, false}) {
+      SolveOptions o = quick(120);
+      o.use_tt = tt;
+      o.use_bounds = tt;
+      o.order_children = tt;
+      const SolveResult r = solve_turn(E, b, ctx, o);
+      INFO("trial " << trial << " tt " << tt << " naive " << want.describe() << " solver "
+                    << r.best.worst_case.describe());
+      CHECK(r.proven_optimal);
+      CHECK(r.best.worst_case == want);
+    }
+    ++checked;
+  }
+  CHECK(checked == 8);
+}
