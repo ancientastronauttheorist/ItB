@@ -29,12 +29,24 @@ class GlibcRand {
  public:
   GlibcRand() { srand(1); }
   explicit GlibcRand(uint32_t seed) { srand(seed); }
-  void srand(uint32_t seed);
-  int32_t rand();
+  // Seeding is deferred to the first draw (the state fill and warm-up are
+  // the costly part, and most seeded calls never draw).
+  void srand(uint32_t seed) {
+    pending_ = seed;
+    has_pending_ = true;
+  }
+  int32_t rand() {
+    if (has_pending_) seed_now();
+    return next();
+  }
   // rand() calls made by scripts so far (srand's own warm-up not counted).
   uint64_t draws() const { return draws_; }
 
  private:
+  void seed_now();
+  int32_t next();
+  uint32_t pending_ = 1;
+  bool has_pending_ = false;
   int32_t state_[31];
   uint64_t draws_ = 0;
   int front_ = 3;  // index of the "f" pointer

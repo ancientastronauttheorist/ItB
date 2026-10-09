@@ -19,7 +19,9 @@ namespace itb::lua {
 
 // ---- glibc rand() ---------------------------------------------------------
 
-void GlibcRand::srand(uint32_t seed) {
+void GlibcRand::seed_now() {
+  has_pending_ = false;
+  uint32_t seed = pending_;
   if (seed == 0) seed = 1;
   // Park-Miller "minimal standard" fill, done with Schrage's split so no
   // intermediate overflows 31 bits (glibc keeps the running value as int32).
@@ -36,11 +38,11 @@ void GlibcRand::srand(uint32_t seed) {
   front_ = 3;
   rear_ = 0;
   const uint64_t draws = draws_;
-  for (int i = 0; i < 310; ++i) rand();  // glibc discards 10 * degree outputs
+  for (int i = 0; i < 310; ++i) next();  // glibc discards 10 * degree outputs
   draws_ = draws;
 }
 
-int32_t GlibcRand::rand() {
+int32_t GlibcRand::next() {
   const uint32_t sum = static_cast<uint32_t>(state_[front_]) + static_cast<uint32_t>(state_[rear_]);
   state_[front_] = static_cast<int32_t>(sum);
   if (++front_ == 31) front_ = 0;

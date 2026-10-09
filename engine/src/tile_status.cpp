@@ -43,8 +43,31 @@ bool is_submerged(const Board& board, const Pawn& pawn, const RulesContext& ctx)
 
 }  // namespace
 
+// A tile on which settle_tile_frame provably changes nothing: no pawn
+// stands on it (fallen ones included, so every occupant loop below is empty
+// and has_pawn / tile_frozen read the tile alone), no web hangs from it, and
+// none of the tile rules below applies to its state. Each condition mirrors
+// one branch of settle_tile_frame, in order.
+static bool inert_empty_tile(const Board& board, Point p) {
+  const Tile& t = board.tile(p);
+  if (t.pending_hole) return false;
+  if (t.terrain == Terrain::Hole && t.frozen) return false;
+  if (t.lava && t.terrain != Terrain::Water && t.terrain != Terrain::Ice) return false;
+  if ((t.terrain == Terrain::Hole || t.terrain == Terrain::Mountain) && ((t.acid && !t.lava) || t.cracked)) return false;
+  if ((t.terrain == Terrain::Building || t.terrain == Terrain::Water) && t.cracked) return false;
+  if (t.acid && (t.terrain == Terrain::Forest || t.terrain == Terrain::Sand || t.pod == PodState::Present)) return false;
+  if (t.on_fire() && (t.terrain == Terrain::Sand || t.item != kNoSymbol)) return false;
+  for (const Pawn& pawn : board.pawns()) {
+    if (pawn.pos == p) return false;
+    // check_webs: a web whose emitting tile is p (or unknown) may break.
+    if (pawn.webbed) return false;
+  }
+  return true;
+}
+
 // One frame of BoardSpace::OnLoop, rule effects only.
 void settle_tile_frame(Board& board, Point p, RulesContext& ctx) {
+  if (inert_empty_tile(board, p)) return;
   Tile& t = board.tile(p);
 
   if (t.terrain == Terrain::Hole && tile_frozen(board, p) && !has_pawn(board, p)) t.frozen = false;
