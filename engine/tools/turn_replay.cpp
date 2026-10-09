@@ -24,6 +24,7 @@
 // buildings and mech HP.
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <fstream>
 #include <map>
@@ -371,6 +372,20 @@ int real_count(const std::vector<Diff>& d) {
   return static_cast<int>(std::count_if(d.begin(), d.end(), [](const Diff& x) { return x.why.empty(); }));
 }
 
+// Stage 8: an objective quantity the engine derived, checked against what the
+// game recorded.
+struct Check {
+  int compared = 0, agree = 0;
+  std::vector<std::string> examples;
+  void add(bool ok, const std::string& label, int engine, int game) {
+    ++compared;
+    agree += ok ? 1 : 0;
+    if (!ok && examples.size() < 6) {
+      examples.push_back(label + ": engine " + std::to_string(engine) + ", game " + std::to_string(game));
+    }
+  }
+};
+
 struct Tally {
   int turns = 0, exact = 0, explained = 0, resist = 0, branch = 0, upgrade = 0, inexact = 0;
   std::map<std::string, int> fields;
@@ -395,6 +410,9 @@ int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const Repl
   std::map<std::string, std::map<std::string, int>> chance_use;
   std::map<std::string, int> events, inexact_why;
   std::vector<std::pair<std::string, std::vector<Diff>>> shown;
+  std::map<std::string, Check> checks;  // stage 8 objective checks
+  std::map<std::string, std::array<int, 4>> obj_lines;  // id -> lines, failed, progress>0, inexact
+  std::vector<std::string> obj_failures;                // every scored failure, for review
   std::ofstream jout;
   if (!opt.json_out.empty()) jout.open(opt.json_out);
 
@@ -636,6 +654,66 @@ int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const Repl
       }
     }
     if (real(d) && static_cast<int>(shown.size()) < opt.show) shown.emplace_back(label, d);
+    {
+      // Stage 8: score the turn from its start and check the objective
+      // counters against the game's records.
+      TurnContext sctx;
+      sctx.mission = t.rec.mission;
+      const ObjectiveReport obj = evaluate_objectives(t.rec.board, end, &sctx, &pr);
+      for (const ObjectiveLine& l : obj.lines) {
+        auto& c = obj_lines[l.id.substr(0, l.id.find(' '))];
+        ++c[0];
+        c[1] += l.failed;
+        if (l.failed > 0) {
+          obj_failures.push_back(label + ": " + l.id + " failed " + std::to_string(l.failed) + " (" + l.detail +
+                                 (t.steps_ok ? "" : ", player steps synced") + ")");
+        }
+        c[2] += l.progress > 0 ? 1 : 0;
+        c[3] += l.exact ? 0 : 1;
+      }
+      const ObjectiveData& o0 = t.rec.mission.objectives;
+      if (use_next) {
+        const ObjectiveData& o1 = next->mission.objectives;
+        // Mission.KilledVek only counts while BONUS_KILL_FIVE or
+        // BONUS_PACIFIST is active (Mission:BaseUpdate); AcidKills always.
+        const std::vector<BonusId> bonus = active_bonuses(t.rec.board, t.rec.mission);
+        const bool counted = mission == "Mission_AcidTank" ||
+                             std::find(bonus.begin(), bonus.end(), BonusId::KillFive) != bonus.end() ||
+                             std::find(bonus.begin(), bonus.end(), BonusId::Pacifist) != bonus.end();
+        if (counted && o0.kills_done >= 0 && o1.kills_done >= 0) {
+          const bool acid = mission == "Mission_AcidTank";
+          const int engine_kills = o0.kills_done + (acid ? obj.acid_kills : obj.enemy_kills);
+          checks[acid ? "acid kills (next mission_kills_done)" : "kills (next mission_kills_done)"].add(
+              engine_kills == o1.kills_done, label, engine_kills, o1.kills_done);
+        }
+        if (o0.repairs_done >= 0 && o1.repairs_done >= 0) {
+          checks["repair platforms (next repair_platforms_used)"].add(
+              o0.repairs_done + obj.repairs_used == o1.repairs_done, label, o0.repairs_done + obj.repairs_used,
+              o1.repairs_done);
+        }
+        if (o0.mountains_done >= 0 && o1.mountains_done >= 0) {
+          checks["mountains (next mission_mountains_destroyed)"].add(
+              o0.mountains_done + obj.mountains_destroyed == o1.mountains_done, label,
+              o0.mountains_done + obj.mountains_destroyed, o1.mountains_done);
+        }
+        const ObjectiveTally e = objective_counts(end), g = objective_counts(next->board);
+        checks["objective buildings (next board)"].add(e.objective_buildings == g.objective_buildings, label,
+                                                         e.objective_buildings, g.objective_buildings);
+        checks["pods (next board)"].add(e.pods == g.pods, label, e.pods, g.pods);
+        checks["infected mechs (next board)"].add(e.mites == g.mites, label, e.mites, g.mites);
+      } else if (post) {
+        const ObjectiveTally e = objective_counts(end);
+        if (jint(*post, "objective_buildings_alive") >= 0) {
+          checks["objective buildings (post_enemy)"].add(e.objective_buildings == jint(*post, "objective_buildings_alive"),
+                                                         label, e.objective_buildings,
+                                                         jint(*post, "objective_buildings_alive"));
+        }
+        if (jint(*post, "pods_present") >= 0) {
+          checks["pods (post_enemy)"].add(e.pods == jint(*post, "pods_present"), label, e.pods,
+                                          jint(*post, "pods_present"));
+        }
+      }
+    }
     if (trace) {
       std::printf("==== %s\n---- enemy phase starts from:\n%s", label.c_str(), render_board(t.board).c_str());
       for (const PhaseEvent& ev : pr.events) {
@@ -685,6 +763,18 @@ int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const Repl
   std::printf("\nevents:\n");
   for (const auto& [k, n] : events) std::printf("  %-24s %d\n", k.c_str(), n);
   for (const auto& [k, n] : inexact_why) std::printf("  inexact/unsupported %4d  %s\n", n, k.c_str());
+  std::printf("\nobjectives (stage 8), engine counters vs the game's records:\n");
+  for (const auto& [k, c] : checks) {
+    std::printf("  %-48s %4d compared, %4d agree (%s)\n", k.c_str(), c.compared, c.agree,
+                pct(c.agree, c.compared).c_str());
+    for (const std::string& x : c.examples) std::printf("      %s\n", x.c_str());
+  }
+  std::printf("objective lines scored (id: turns, stars failed, turns with progress, approximate):\n");
+  for (const auto& [k, c] : obj_lines) {
+    std::printf("  %-32s %4d  failed %3d  progress %3d  approx %3d\n", k.c_str(), c[0], c[1], c[2], c[3]);
+  }
+  std::printf("objective failures scored:\n");
+  for (const std::string& f : obj_failures) std::printf("  %s\n", f.c_str());
   std::printf("\nfirst mismatching turns:\n");
   for (const auto& [label, d] : shown) {
     std::printf("  %s\n", label.c_str());

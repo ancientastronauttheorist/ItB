@@ -50,7 +50,7 @@ target_compile_definitions(itb_engine PRIVATE
 # rounding (movement.cpp).
 target_compile_options(itb_engine PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 
-add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_replay.cpp)
+add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_replay.cpp tools/score_tool.cpp)
 target_compile_options(itb_inspect PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(itb_inspect PRIVATE itb_engine nlohmann_json::nlohmann_json)
 
