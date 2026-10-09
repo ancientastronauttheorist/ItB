@@ -64,6 +64,12 @@ Stage 1 of the build order (core state and data) is done:
 
 Next up: stage 2, the per-tile damage and status rules (`ApplySpaceDamage`).
 
+Stage 5 (movement) is in `movement.hpp`: pathing profiles, move budget and
+pilot move skills, the game's reachability search and its weighted A* walk
+path (float32, (f, x, y) tie-break), and executing walks, leaps, teleports and
+burrows. Arrival hazards are left to stage 2: callers settle the returned
+tile.
+
 ### Open questions for live-game testing
 
 - **Vek attack order.** The decompile says board-list order, which is
@@ -71,5 +77,8 @@ Next up: stage 2, the per-tile damage and status rules (`ApplySpaceDamage`).
   before 2026-06-23 only have a bot-computed uid order, and just 3 later
   boards carry the game's real order. Confirm against the live game,
   especially for re-added pawns.
+- **Injured and walking.** AE Injured costs 1 HP per tile change. The code
+  suggests every step of a walk counts (and undoing the move costs 1 more);
+  check in game.
 - **Point plus number.** What `Point + number` means natively. It's only
   seen in UI layout code so far.
