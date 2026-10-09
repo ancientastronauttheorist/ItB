@@ -110,6 +110,7 @@ enum class PathProfile : int8_t {
   Teleporter = 5,
   Jumper = 6,
   Burrower = 7,
+  FinalStep = 8,  // internal: re-checks the last tile of a walk (never a pawn's own profile)
   Phasing = 9,
 };
 

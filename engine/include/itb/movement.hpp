@@ -1,0 +1,184 @@
+// Movement and pathfinding (stage 5): which tiles a unit can reach, the exact
+// path it walks, its move budget, and relocating it.
+//
+// Arrival hazards (water, chasm, fire, acid, mines, ...) are not applied here.
+// Every function that relocates a pawn returns the tile it ended on; the
+// caller must then run the stage 2 settle rules (CheckTerrainDangers /
+// CheckAcidFire) on that tile. Intermediate tiles of a walk never trigger
+// hazards.
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <vector>
+
+#include "itb/board.hpp"
+#include "itb/core.hpp"
+
+namespace itb {
+
+// A pathing profile as the game passes it around: (team << 4) | type. Pawns
+// carry their own team; Lua callers pass bare PATH_* constants, i.e. team 0.
+// A few rules compare the whole value (e.g. "exactly PATH_PROJECTILE"), so the
+// team is part of the identity.
+struct Pathing {
+  PathProfile type = PathProfile::Ground;
+  int team = 0;
+
+  constexpr int raw() const { return team * 16 + static_cast<int>(type); }
+  // A bare Lua PATH_* constant.
+  static constexpr Pathing lua(PathProfile t) { return {t, 0}; }
+  constexpr bool operator==(const Pathing&) const = default;
+};
+
+// Bit i set = Point::from_index(i). Index order is the game's Point order
+// (x-major, then y), which is the order reachable lists come out in.
+using TileMask = uint64_t;
+std::vector<Point> mask_points(TileMask mask);
+constexpr bool mask_has(TileMask m, Point p) { return p.valid() && ((m >> p.index()) & 1u); }
+
+inline constexpr int kUnreached = 0x7fffffff;
+using DistanceMap = std::array<int, kTileCount>;
+
+// --- Pawn-level facts ----------------------------------------------------
+
+// A dead pawn that still occupies its tile: mech wrecks and Lua Corpse=true
+// pawns, plus Vek under the Necro psion. Pawns that fell, fled or sank leave
+// no corpse; the engine is expected to remove them from the board.
+bool is_corpse(const Board& b, const Pawn& p);
+
+// Pawn::GetPathingProfile: teleporter > jumper > burrower > flying >
+// Road_Runner pilot > massive > ground, tagged with the pawn's team.
+Pathing path_profile(const Board& b, const Pawn& p);
+
+// --- Move budget ---------------------------------------------------------
+
+// Pawn::GetBaseMove: MoveSpeed plus pilot, Kickoff and upgrade bonuses and the
+// turn-dependent pilot terms (Youth_Move, Reset_Bonus, Arrogant_Boost),
+// clamped at 0.
+int base_move(const Board& b, const Pawn& p);
+// Pawn::GetMoveSpeed: 0 when dead, webbed or unpowered; a pending bonus shift
+// replaces the base move.
+int move_speed(const Board& b, const Pawn& p);
+// Pawn::IsMovable: may use its move skill now.
+bool can_move(const Pawn& p);
+// Pawn::IsMoved: has moved and has no bonus shift left.
+bool is_moved(const Pawn& p);
+
+// Bookkeeping after a skill fires (Pawn::FireWeapon): `move_skill` for the
+// Move skill (slot 0), false for any weapon or repair. Handles moved/active,
+// Shifty, Double_Shot, Post_Move and, for weapons, clears every pawn's move
+// undo and the shooter's Boosted.
+void on_skill_fired(Board& b, Pawn& p, bool move_skill);
+
+// The movement part of Pawn::StartTurn for one pawn: resets moved/bonus
+// shift/reset bonus, counts the turn, and (Kickoff Boosters) gives adjacent
+// mechs their bonus. Run it for every pawn at turn start; order does not
+// matter because the Kickoff bonus is assigned, not added.
+void start_turn_movement(Board& b, int32_t uid);
+// The movement part of Pawn::EndTurn: drops the Kickoff bonus.
+void end_turn_movement(Pawn& p);
+
+// --- Tile predicates -----------------------------------------------------
+
+// BoardSpace::IsPawnSpace: some pawn on p is alive or a corpse.
+bool tile_occupied(const Board& b, Point p);
+// Board::IsWall: the wall on `from`'s `d` edge stops this profile.
+bool wall_blocks(const Board& b, Point from, Dir d, Pathing pr);
+// Board::IsEnterable: a walker with this profile may pass through p.
+bool can_pass(const Board& b, Point p, Pathing pr);
+// BoardSpace::IsTerrainBlocking: the terrain alone forbids ending on p.
+bool terrain_blocks(const Board& b, Point p, Pathing pr);
+// Board::IsBlocked: a unit with this profile may not end its move on p.
+bool is_blocked(const Board& b, Point p, Pathing pr);
+// GridSearchable::GetWalkPenalty for a step into p (not out of the start):
+// 1000 for an exact PATH_PROJECTILE entering a building, else 1.
+int step_cost(const Board& b, Point p, Pathing pr);
+
+// --- Searches ------------------------------------------------------------
+
+// GridSearchable::CalculateDijkstraMap: distances from `start`, finalized for
+// every tile within max_dist; kUnreached elsewhere.
+DistanceMap distance_map(const Board& b, Point start, Pathing pr, int max_dist);
+// GridSearchable::GetReachablePoints: tiles within max_dist that are not
+// blocked for this profile (the start is normally excluded, being occupied).
+TileMask reachable_points(const Board& b, Point start, int max_dist, Pathing pr);
+// Board::GetReachablePointList (Lua Board:GetReachable): as above, minus
+// water/lava for jumpers (unless the profile is exactly PATH_PROJECTILE).
+TileMask reachable_list(const Board& b, Point start, int max_dist, Pathing pr);
+
+// Player move target area (Lua Move:GetTargetArea), in the game's order.
+// Does not check can_move(); an immobile pawn's speed is usually 0 anyway.
+TileMask move_area(const Board& b, const Pawn& p);
+std::vector<Point> reachable(const Board& b, const Pawn& p);
+
+// AI move candidates (AiPlanner::SetPawn): GetReachablePoints from the move
+// origin minus blocked tiles, then the pawn's own tile. Unlike the player
+// area, jumpers keep water/lava tiles.
+std::vector<Point> ai_move_candidates(const Board& b, const Pawn& p);
+
+// Board::GetPath: the weighted A* path the game walks, [from, ..., to];
+// empty if from == to, either is invalid, or there is no path. The goal itself
+// need not be passable.
+std::vector<Point> find_path(const Board& b, Point from, Point to, Pathing pr);
+
+// --- Executing moves -----------------------------------------------------
+// Each returns the tile the pawn ended on. Run stage 2 settle there.
+
+// Pawn::SetSpace: relocates the pawn, records the tile it left, frees it from
+// webs, and costs an Injured pawn 1 HP per tile change (unless `no_injury`).
+// Pushes and swaps should relocate through this too.
+void set_space(Board& b, Pawn& p, Point to, bool no_injury = false);
+
+// SetManualPath: walk a path step by step. `forced` is true when the pawn
+// moves itself; a non-Pushable pawn ignores unforced walks. The last step is
+// re-checked and refused if that tile is now blocked or occupied, leaving the
+// pawn on the previous tile.
+Point walk_path(Board& b, Pawn& p, const std::vector<Point>& path, bool forced);
+// Leap / Charge: jump straight to `to` (no intermediate tiles, no re-check).
+Point leap(Board& b, Pawn& p, Point to, bool forced);
+Point charge(Board& b, Pawn& p, Point to, bool forced);
+// Teleport: relocate to `to`, ignoring Pushable.
+Point teleport(Board& b, Pawn& p, Point to);
+// Burrow: dive and resurface at `to`; puts out fire. `ai` (forced) clears
+// the queued shot instead of carrying it along.
+Point burrow(Board& b, Pawn& p, Point to, bool ai);
+
+// The Move skill's effect for pawn `uid` (Lua Move:GetSkillEffect): jumpers
+// leap, teleporters teleport, everyone else walks the find_path route with
+// its own profile. No legality check and no moved/active bookkeeping.
+Point move_pawn(Board& b, int32_t uid, Point dest);
+
+// A player's move action, undoable until any weapon fires.
+struct MoveUndo {
+  int32_t uid = -1;
+  Point from = kInvalidPoint;
+  Point to = kInvalidPoint;   // the chosen destination
+  Point end = kInvalidPoint;  // where the move actually ended: settle here
+  Tile to_tile;               // the destination tile before the move
+  int8_t hp = 0;
+  int8_t bonus_shift = 0;
+  bool fire = false;
+  bool frozen = false;
+  bool acid = false;
+  bool shield = false;
+  bool boosted = false;
+  bool injured = false;
+  bool infected = false;
+};
+
+// Checks can_move() and that dest is in move_area(), then moves (move_pawn)
+// and books the Move skill. nullopt if the move is not legal. Run stage 2
+// settle on the result's `end`.
+std::optional<MoveUndo> player_move(Board& b, int32_t uid, Point dest);
+// Pawn::Undo. False (and nothing changes) once a weapon has fired since the
+// move, or for a pawn that cannot undo.
+bool undo_move(Board& b, const MoveUndo& undo);
+
+// Pawn::ManualMove (AI): burrowers burrow, jumpers leap, everyone else
+// (teleporters included) walks the find_path route. Returns the pawn's tile
+// unchanged if it cannot move.
+Point ai_move(Board& b, int32_t uid, Point dest);
+
+}  // namespace itb

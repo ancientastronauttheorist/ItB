@@ -96,9 +96,24 @@ enum Passive : uint32_t {
   kPassiveElectricSmoke = 1u << 7,     // Passive_Electric
   kPassiveBurrows = 1u << 8,           // Passive_Burrows
   kPassiveKickoff = 1u << 9,           // Passive_Boosters (Kickoff Boosters)
+  kPassiveKickoffUpgraded = 1u << 10,  // Passive_Boosters_A / "Kickoff_Booster_A" (+2 move)
 };
 
 inline constexpr int kMaxWeapons = 4;
+
+// Movement bookkeeping beyond Pawn::move / Pawn::moved (stage 5). Natively
+// these are separate pawn fields; the defaults describe a plain pawn.
+struct MoveState {
+  int8_t bonus_shift = 0;     // >0: replaces the move speed (Shifty 1, Post_Move full move)
+  int8_t kickoff_bonus = 0;   // Kickoff Boosters bonus, assigned at turn start
+  int8_t pilot_bonus = 0;     // move from the pilot's learned level-up skills
+  int8_t turn_count = 0;      // turn starts so far; Youth_Move applies while <= 1
+  bool move_upgrade = false;  // powered +1 move upgrade
+  bool reset_bonus = false;   // Reset_Bonus pilot after Reset Turn: +2 until next turn start
+  bool powered = true;        // unpowered pawns can neither act nor move
+  bool undo_ready = false;    // the last player move can still be undone
+  Point prev_pos = kInvalidPoint;  // last tile left; an underground burrower resurfaces near it
+};
 
 struct Pawn {
   int32_t uid = -1;
@@ -106,7 +121,7 @@ struct Pawn {
   Point pos = kInvalidPoint;
   int8_t hp = 0;
   int8_t max_hp = 0;
-  int8_t move = 0;  // base move speed (MoveSpeed plus upgrades)
+  int8_t move = 0;  // base move speed (Lua MoveSpeed); bonuses live in `movement`
   Team team = Team::None;
   Faction faction = Faction::Default;
   Leader leader = Leader::None;  // own psion/boss leader type
@@ -145,6 +160,7 @@ struct Pawn {
   bool dying = false;    // HP reached 0; death not processed yet
   int32_t web_source = -1;  // uid of the webbing pawn
   QueuedShot queued;
+  MoveState movement;
 
   bool alive() const { return hp > 0; }
   bool controlled() const { return team == Team::Player && !neutral; }
