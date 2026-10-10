@@ -18,7 +18,9 @@ Earn all 70 achievements in Into the Breach autonomously. The game runs natively
 - **Layer 0 — Game loop:** `game_loop.py` CLI + `src/loop/` (session, logger, commands). Claude is the control loop; Python commands are stateless.
 - **Layer 1 — State extraction:** `src/bridge/` (primary) and `src/capture/save_parser.py` (fallback). The bridge delivers richer data: targeted tiles, per-enemy attack data, environment hazards with kill flag, deployment zones, objective buildings, attack order.
 - **Layer 2 — Game state:** `src/model/` (Board, Unit, WeaponDef). Single source of truth for solver.
-- **Layer 3 — Solver:** `rust_solver/` (the only solver AND the only simulator, pyo3 extension `itb_solver` with entry points `solve` / `solve_top_k` / `solve_beam` / `score_plan` / `project_plan` / `replay_solution`). Search is constraint-based threat response + bounded search. `EvalWeights` tune scoring without changing search logic. On the Python side: `src/solver/solver.py` is now a 121-line wrapper holding `MechAction` / `Solution` dataclasses and `replay_solution()` (a thin shim around `itb_solver.replay_solution` that adds Python's `evaluate_breakdown` for audit-only `score_breakdown`). `src/solver/evaluate.py` owns weight/threat/psion machinery for that breakdown — never touched by `solve()`. **`src/solver/simulate.py` is gone** (deleted in the simulate.py-removal PR series); every diagnose-loop fix targets `rust_solver/src/*.rs`, validator + agent prompt enforce `target_language=rust`.
+- **Layer 3 — Solver:** two solvers, selected by `ITB_SOLVER=cpp|rust` (default `cpp`) or `--solver` on `solve` / `auto_turn` (`solve_cpp` forces C++; `solve_cpp --file <solve_input.json>` solves a recording offline).
+  - **C++ perfect-turn engine (primary):** `engine/` (rules engine + `solve_turn`, see `engine/README.md`), Python module `itb_engine` (`engine/python/itb_engine_py.cpp`), adapter `src/solver/cpp_solver.py`. Ranks plans by strict tiers (grid/buildings > mechs > objectives > kills > position), worst case over chance; reports proof status and an upper bound. The adapter converts its plan to `MechAction`s and builds `replay_solution()`-shaped data (`predicted_states` via `verify.snapshot_after_*`, `post_player_board`, `final_board`), so `verify_action`/desync logging work unchanged. Plans may interleave units (A moves, B fires, A fires): kept only when regrouping per unit would score worse; `auto_turn` then skips the SKIP after a move-only entry whose unit acts later. Falls back to Rust on any error, empty plan, unexecutable plan, `--beam`/`--candidate-rank`, or an achievement weight overlay (`ITB_CPP_IGNORE_OVERLAYS=1` overrides). Records carry `solver`, `engine_version` (`ENGINE_VERSION` in the binding — bump it when predictions change) and `cpp_solve` (worst case, upper bound, proof, stats). `SIMULATOR_VERSION` stays the Rust sim's version; failure_db rows tagged `solver: cpp` are excluded from `tune` and not queued for the (Rust-only) diagnosis loop. `ITB_CPP_THREADS` (default min(8, cores-2)); `auto_turn` loads the engine during the enemy-phase wait; engine load time counts against `--time-limit`.
+  - **Rust (fallback):** `rust_solver/` (pyo3 extension `itb_solver`: `solve` / `solve_top_k` / `solve_beam` / `score_plan` / `project_plan` / `replay_solution`). Constraint-based threat response + bounded search; `EvalWeights` tune scoring. `src/solver/solver.py` holds `MechAction` / `Solution` and `replay_solution()` (shim around `itb_solver.replay_solution` + Python `evaluate_breakdown` for the audit-only `score_breakdown`). `src/solver/simulate.py` is gone; every diagnose-loop fix targets `rust_solver/src/*.rs`, validator + agent prompt enforce `target_language=rust`.
 - **Layer 4 — Strategist:** `src/strategy/` picks `EvalWeights` per achievement target; manages squad/island/shop choices.
 
 **Rebuild the solver** after editing any `rust_solver/src/*.rs`:
@@ -26,6 +28,15 @@ Earn all 70 achievements in Into the Breach autonomously. The game runs natively
 cd rust_solver && maturin build --release && \
   pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
 ```
+
+**Rebuild the C++ engine module** after editing anything under `engine/` (the adapter warns when sources are newer than the module). It builds for the interpreter the bot runs (`python3`, CPython 3.9 arm64); the adapter imports it from `engine/build/python/` (or `ITB_ENGINE_MODULE_DIR`), no install step:
+```bash
+cmake -S engine -B engine/build -G Ninja -DITB_BUILD_PYTHON=ON -DPython_EXECUTABLE="$(command -v python3)" && \
+  cmake --build engine/build
+python3 -m unittest tests.test_cpp_solver          # isolated: adapter + module only
+python3 scripts/validate_cpp_solver.py --sample 40  # recorded boards, no game
+```
+Game scripts: `ITB_GAME_DIR`, else `.local_decompile/builds/mac_21601364/.../Resources` (pristine copy), else the Steam install.
 
 ## Execution Model
 

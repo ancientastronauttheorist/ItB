@@ -165,6 +165,22 @@ def main():
         default=True,
         help="Skip heavy blocked-plan lookahead/robust frontier diagnostics",
     )
+    p_solve.add_argument("--solver", choices=["cpp", "rust"], default=None,
+                         help="cpp = C++ perfect-turn engine (falls back to "
+                              "rust on any failure), rust = itb_solver. "
+                              "Default: $ITB_SOLVER, else cpp")
+
+    # solve_cpp
+    p_solve_cpp = sub.add_parser(
+        "solve_cpp",
+        help="Solve with the C++ engine (live board, or --file for a recording)")
+    p_solve_cpp.add_argument("--profile", default="Alpha")
+    p_solve_cpp.add_argument("--time-limit", type=float, default=10.0)
+    p_solve_cpp.add_argument("--file", default=None,
+                             help="Offline: a recordings/<run>/m*_solve_input.json "
+                                  "(or bare bridge JSON); prints the plan, nothing "
+                                  "is stored or executed")
+    p_solve_cpp.add_argument("--threads", type=int, default=None)
 
     # execute
     p_exec = sub.add_parser("execute", help="Plan clicks for one mech action")
@@ -1237,6 +1253,9 @@ def main():
         default=True,
         help="Skip heavy blocked-plan lookahead/robust frontier diagnostics",
     )
+    p_auto_turn.add_argument("--solver", choices=["cpp", "rust"], default=None,
+                             help="Solver for this turn (default: $ITB_SOLVER, "
+                                  "else cpp with automatic Rust fallback)")
 
     # lightning_auto_turn_pause
     p_lightning_auto_turn_pause = sub.add_parser(
@@ -2155,7 +2174,18 @@ def main():
         cmd_solve(profile=args.profile, time_limit=args.time_limit,
                   beam=args.beam, candidate_rank=args.candidate_rank,
                   destroy_time_pods=args.destroy_time_pods,
-                  frontier_diagnostics=args.frontier_diagnostics)
+                  frontier_diagnostics=args.frontier_diagnostics,
+                  solver=args.solver)
+    elif args.command == "solve_cpp":
+        if args.file:
+            import json as _json
+            from src.solver.cpp_solver import solve_file_report
+            report = solve_file_report(args.file, args.time_limit,
+                                       threads=args.threads)
+            print(_json.dumps(report, indent=2))
+            sys.exit(0 if report.get("ok") else 1)
+        cmd_solve(profile=args.profile, time_limit=args.time_limit,
+                  solver="cpp")
     elif args.command == "execute":
         cmd_execute(args.index, profile=args.profile)
     elif args.command == "verify":
@@ -2452,7 +2482,8 @@ def main():
                       allow_mech_loss=args.allow_mech_loss,
                       destroy_time_pods=args.destroy_time_pods,
                       pause_between_actions=args.pause_between_actions,
-                      frontier_diagnostics=args.frontier_diagnostics)
+                      frontier_diagnostics=args.frontier_diagnostics,
+                      solver=args.solver)
     elif args.command == "lightning_auto_turn_pause":
         cmd_lightning_auto_turn_pause(
             label=args.label,
