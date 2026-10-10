@@ -358,6 +358,14 @@ json live_board_json(const Board& b) {
            {"web", p->webbed}};
     // A psion's mutation (Leader: 1 Soldier = +1 HP to every Vek, ...).
     if (p->leader != Leader::None) u["leader"] = static_cast<int>(p->leader);
+    // The queued shot as the engine has it. The bridge reads queued shots
+    // from the save (written at turn start), so it cannot see one cleared
+    // during the turn (smoke, freezing, water: Pawn::OnLoop) or retargeted
+    // (DIR_FLIP); the driver carries these forward from the predictions.
+    u["queued"] = p->queued.active() ? json{{"weapon", static_cast<int>(p->queued.weapon)},
+                                            {"origin", point_json(p->queued.origin)},
+                                            {"target", point_json(p->queued.target)}}
+                                     : json(nullptr);
     units.push_back(std::move(u));
   }
   return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units}};

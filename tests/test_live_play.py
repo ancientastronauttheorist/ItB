@@ -105,25 +105,42 @@ PLAN = [
 
 
 class FakeEngine:
-    def __init__(self, plan=PLAN, after_enemy=None, enemy_phase=None):
+    def __init__(self, plan=PLAN, after_enemy=None, enemy_phase=None, clears=None):
         self.plan = plan
         self.after_enemy = after_enemy
         self.enemy_phase = enemy_phase or {"mission_ended": False}
+        # {uid: plan step index}: the engine clears that unit's queued shot
+        # in that step (smoke, say), which the bridge's save copy never shows.
+        # None: boards without "queued" (an itb_live from before it).
+        self.clears = clears
         self.solves = []
         self.budgets = []  # (time_limit, max_time, min_tiers) per solve
         self.predicts = []
+        self.predict_states = []
 
     @staticmethod
     def _state(path) -> dict:
         d = json.loads(Path(path).read_text())
         return d["data"]["bridge_state"] if "data" in d else d
 
+    def _board(self, b: dict) -> dict:
+        c = compact(b)
+        if self.clears is not None:
+            for u in c["units"]:
+                src = unit(b, u["uid"])
+                u["queued"] = ({"weapon": 0, "origin": src.get("queued_origin"), "target": src["queued_target"]}
+                               if src.get("has_queued_attack") and src.get("queued_target") else None)
+        return c
+
     def _simulate(self, st: dict, steps: list) -> dict:
         b = copy.deepcopy(st)
         out = []
         for i, s in enumerate(steps):
             apply(b, s)
-            out.append(dict(s, index=i, status="ok", board=compact(b)))
+            for uid, k in (self.clears or {}).items():
+                if k == self.plan.index(s) and any(u["uid"] == uid for u in b["units"]):
+                    unit(b, uid)["has_queued_attack"] = False
+            out.append(dict(s, index=i, status="ok", board=self._board(b)))
         after = compact(b)
         enemy = copy.deepcopy(self.after_enemy(b)) if self.after_enemy else compact(b)
         plan = [{"uid": s["uid"], "description": f"#{s['uid']} {s['sub']}"} for s in steps]
@@ -144,6 +161,7 @@ class FakeEngine:
 
     def predict(self, path, plan):
         self.predicts.append(plan)
+        self.predict_states.append(self._state(path))
         return self._simulate(self._state(path), [])
 
     def board(self, path):
@@ -420,6 +438,113 @@ class LivePlayTest(unittest.TestCase):
         self.assertNotIn("moved", unit(eng.solves[0], 0))
         self.assertTrue(unit(eng.solves[1], 0).get("moved"))
 
+    # ---------------------------------------------------------------- queued shots
+    # Live 2026-10-10 m36 turn 2: Aerial Bombs smoked Beetle2#943 (its shot
+    # cleared), a Gravwell pulled it out; the bridge, reading the save, still
+    # showed the shot, and the end-of-turn prediction charged the Beetle.
+
+    def quiet(self, argv, engine):
+        out = []
+        orig = lp.say
+        lp.say = lambda m="": out.append(m)
+        try:
+            code = self.run_cmd(argv, engine)
+        finally:
+            lp.say = orig
+        return code, "\n".join(out)
+
+    def test_end_turn_drops_a_queued_shot_the_engine_cleared(self):
+        self.bridge()
+        code, _ = self.quiet(["turn"], FakeEngine(clears={100: 0}))
+        self.assertEqual(code, 0)
+        self.assertTrue(unit(self.fb.state, 100)["has_queued_attack"])  # the bridge's stale copy
+        eng = FakeEngine(clears={100: 0})
+        code, text = self.quiet(["end-turn", "--run", str(self.run_dir())], eng)
+        self.assertEqual(code, 0, text)
+        scorpion = unit(eng.predict_states[0], 100)
+        self.assertFalse(scorpion["has_queued_attack"])
+        self.assertNotIn("queued_target", scorpion)
+        self.assertIn("note: Scorpion1#100 queued attack cleared during the turn (engine)", text)
+        # The live state is archived as it was, beside the patched input.
+        raw = next(self.run_dir().glob("m00_turn_01_end_turn_raw_*.json"))
+        self.assertTrue(unit(json.loads(raw.read_text())["data"]["bridge_state"], 100)["has_queued_attack"])
+        # The tracked shots belong to that turn only.
+        manifest = json.loads((self.run_dir() / "manifest.json").read_text())
+        self.assertEqual((manifest["engine_queued"]["mission"], manifest["engine_queued"]["turn"]), (0, 1))
+        self.assertIsNone(manifest["engine_queued"]["units"]["100"])
+        run = lp.Run.open(str(self.run_dir()), False)
+        self.assertEqual(run.engine_queued(self.fb.state), {})  # turn 2 now
+
+    def test_a_re_solve_does_not_resurrect_a_cleared_shot(self):
+        self.bridge()
+        self.fb.damage = 2  # step 2 mismatches: re-solve
+        eng = FakeEngine(clears={100: 0})
+        code, text = self.quiet(["turn"], eng)
+        self.assertEqual(code, 1)
+        self.assertEqual(len(eng.solves), 2)
+        self.assertTrue(unit(eng.solves[0], 100)["has_queued_attack"])
+        self.assertFalse(unit(eng.solves[1], 100)["has_queued_attack"])
+        self.assertIn("Scorpion1#100 queued attack cleared", text)
+
+    def test_a_clear_in_a_step_that_went_differently_for_the_unit_is_not_taken(self):
+        self.bridge()
+        self.fb.damage = 2  # the Scorpion's HP differs after step 2
+        eng = FakeEngine(clears={100: 1})
+        self.assertEqual(self.quiet(["turn"], eng)[0], 1)
+        self.assertTrue(unit(eng.solves[1], 100)["has_queued_attack"])
+
+    def test_an_engine_without_queued_boards_changes_nothing(self):
+        self.bridge()
+        self.assertEqual(self.quiet(["turn"], FakeEngine())[0], 0)
+        eng = FakeEngine()
+        self.assertEqual(self.quiet(["end-turn", "--run", str(self.run_dir())], eng)[0], 0)
+        self.assertTrue(unit(eng.predict_states[0], 100)["has_queued_attack"])
+        self.assertFalse(list(self.run_dir().glob("*_end_turn_raw_*.json")))
+
+    def test_override_queued(self):
+        st = base_state()
+        scorpion = unit(st, 100)
+        scorpion.update(queued_origin=[3, 3], queued_target=[2, 3])
+        st["units"].append({"uid": 7, "type": "Train_Pawn", "x": 5, "y": 1, "hp": 1, "team": 1,
+                            "queued_any": {"skill": 1, "target": [5, 0], "origin": [5, 1], "source": "save"}})
+        # Same shot: nothing to change.
+        same = {100: {"weapon": 0, "origin": [3, 3], "target": [2, 3]}}
+        self.assertEqual(lp.override_queued(copy.deepcopy(st), same), {})
+        # Only the origin (the bridge does not shift it): changed, no note.
+        s = copy.deepcopy(st)
+        found = lp.override_queued(s, {100: {"weapon": 0, "origin": [3, 4], "target": [2, 3]}})
+        self.assertEqual(found[100][0], "")
+        self.assertEqual(unit(s, 100)["queued_origin"], [3, 4])
+        # Retargeted (DIR_FLIP): the engine's target, with a note.
+        s = copy.deepcopy(st)
+        found = lp.override_queued(s, {100: {"weapon": 0, "origin": [3, 3], "target": [4, 3]}})
+        self.assertIn("retargeted", found[100][0])
+        self.assertEqual(unit(s, 100)["queued_target"], [4, 3])
+        # Cleared, for a non-enemy unit's queued_any too.
+        s = copy.deepcopy(st)
+        found = lp.override_queued(s, {100: None, 7: None})
+        self.assertEqual(sorted(found), [7, 100])
+        self.assertFalse(unit(s, 100)["has_queued_attack"])
+        self.assertNotIn("queued_any", unit(s, 7))
+        # A shot the bridge does not have is left alone; untracked units too.
+        s = copy.deepcopy(st)
+        unit(s, 100)["has_queued_attack"] = False
+        self.assertEqual(lp.override_queued(s, {100: {"weapon": 0, "origin": None, "target": [2, 3]}}), {})
+        self.assertEqual(lp.override_queued(copy.deepcopy(st), {}), {})
+
+    def test_track_queued_needs_the_live_unit_to_match(self):
+        pred = {"units": [dict(compact(base_state())["units"][2], queued=None)]}
+        live = copy.deepcopy(pred)
+        tracked = {}
+        lp.track_queued(tracked, pred, live, {100})
+        self.assertEqual(tracked, {100: None})
+        tracked = {100: {"weapon": 0, "origin": None, "target": [2, 3]}}
+        live["units"][0]["hp"] = 1
+        lp.track_queued(tracked, pred, live, {100})
+        self.assertEqual(tracked[100]["target"], [2, 3])  # the last confirmed shot stands
+        lp.track_queued(tracked, pred, copy.deepcopy(pred), set())  # not a turn-start unit
+        self.assertEqual(tracked[100]["target"], [2, 3])
+
     # ---------------------------------------------------------------- end turn
 
     def test_end_turn_clicks_when_the_bridge_cannot_and_compares(self):
@@ -620,6 +745,54 @@ class ItbLiveTest(unittest.TestCase):
         self.assertTrue(out["ok"], out)
         self.assertEqual(out["turn"], 2)
         self.assertEqual(len([u for u in out["board"]["units"] if u["mech"]]), 3)
+
+    def itb_live(self, *args) -> dict:
+        res = subprocess.run([str(lp.ITB_LIVE), *args], capture_output=True, text=True, timeout=300)
+        out = json.loads(res.stdout)
+        if not out.get("ok") and "scripts" in out.get("error", ""):
+            self.skipTest("no game install (set ITB_GAME_DIR)")
+        self.assertTrue(out["ok"], out)
+        return out
+
+    def test_end_of_turn_prediction_uses_the_engines_queued_shots(self):
+        """Live 2026-10-10 m36 turn 2 (Mission_Filler), end to end: the
+        plan's predicted boards clear the smoked Firefly2's and Beetle2's
+        shots; the bridge's End Turn snapshot still has them; patched with
+        the tracked shots, the prediction is the game's (the Beetle dies
+        blocking the E3 spawn, the Filler_Pawn lives)."""
+        fixtures = REPO / "engine" / "tests" / "fixtures"
+        tmp = Path(tempfile.mkdtemp(prefix="itb_live_queued_"))
+        self.addCleanup(shutil.rmtree, tmp, True)
+        plan = [
+            {"uid": 1, "move": [1, 4], "kind": "weapon", "weapon": "Ranged_Defensestrike_A", "target": [4, 4]},
+            {"uid": 0, "move": [5, 3], "kind": "weapon", "weapon": "Brute_Jetmech_A", "target": [5, 1]},
+            {"uid": 2, "move": [5, 4], "kind": "weapon", "weapon": "Science_Gravwell", "target": [5, 2]},
+        ]
+        pred = self.itb_live("predict", str(fixtures / "live_filler_t2_solve_input.json"), "--plan", json.dumps(plan))
+        start = json.loads((fixtures / "live_filler_t2_solve_input.json").read_text())["data"]["bridge_state"]
+        known = {u["uid"] for u in lp.units(start)}
+        tracked = {}
+        for step in pred["steps"]:  # every step matched live
+            lp.track_queued(tracked, step["board"], step["board"], known)
+        self.assertIsNone(tracked[943])
+        self.assertIsNone(tracked[941])
+        self.assertEqual(tracked[942]["target"], [4, 3])
+
+        stale = json.loads((fixtures / "live_filler_t2_end_turn.json").read_text())["data"]["bridge_state"]
+        self.assertTrue(unit(stale, 943)["has_queued_attack"])
+        notes = []
+        fixed, patches = lp.patch_state(stale, {}, set(), tracked, notes)
+        self.assertIsNone(patches["943.queued"])
+        self.assertTrue(any(n.startswith("Beetle2#943 queued attack cleared") for n in notes), notes)
+        (tmp / "stale.json").write_text(json.dumps(stale))
+        (tmp / "fixed.json").write_text(json.dumps(fixed))
+        before = self.itb_live("predict", str(tmp / "stale.json"), "--plan", "[]")["after_enemy"]
+        after = self.itb_live("predict", str(tmp / "fixed.json"), "--plan", "[]")["after_enemy"]
+        alive = lambda board: {u["uid"] for u in board["units"]}  # noqa: E731
+        self.assertIn(943, alive(before))  # the bug: the Beetle charged and lived
+        self.assertNotIn(938, alive(before))
+        self.assertNotIn(943, alive(after))
+        self.assertIn(938, alive(after))
 
 
 def tearDownModule():

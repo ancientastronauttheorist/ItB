@@ -122,6 +122,18 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
   with the grid higher by exactly the HP kept); a Soldier Psion or Psion
   Abomination emerging from a hidden spawn (every Vek of its team +1 HP at
   once). Anything else stops `mission`.
+- **Queued shots** come from the engine where the bridge's are stale. The
+  bridge reads them from the save (written at turn start) and only shifts
+  them with the pawn; no Lua API exposes a pawn's live queued shot, so a
+  shot the turn cleared (a Vek smoked, frozen or in water; live m36: a
+  Beetle smoked by Aerial Bombs, then pulled out of the smoke) or flipped
+  still shows. `itb_live` boards carry each unit's `queued` shot; after each
+  step the driver keeps the predicted one for every turn-start unit the live
+  board confirms (type, tile, HP, statuses), in the run's `manifest.json`
+  (`engine_queued`, that mission and turn only), and puts it into the state
+  of every re-solve and of the end-of-turn prediction (`<uid>.queued` in the
+  file's `patches`; the bridge's dump is archived beside it as `..._raw`),
+  with a note for each shot cleared or retargeted.
 - **deploy** uses the bridge's `drop_zone` (refused tiles are already left
   out, and `DEPLOY` refuses them anyway), checks every mech's tile in the
   state, and leaves Confirm to you.

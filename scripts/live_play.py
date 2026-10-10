@@ -31,6 +31,11 @@ clicks End Turn only if the bridge cannot end the turn itself, checks the
 phase really changed, waits for the next player turn and compares grid, HP,
 statuses, survivors and mech tiles with the prediction (Vek tiles are not
 compared: the Vek move while the AI plans). New units are reported as spawns.
+The prediction starts from the engine's queued shots where the bridge's are
+stale (the bridge reads them from the save, written at turn start, so a shot
+the turn cleared or retargeted still shows): each step's predicted shots are
+kept for the units the live board confirmed (the run's manifest carries them
+from `turn` to `end-turn`), and re-solves use them too.
 Notes, not differences: a Vek picking up an acid pool while the AI plans; a
 Grid Defense resist the prediction (worst case: no resist) could not know; a
 Soldier Psion / Psion Abomination emerging from a hidden spawn (+1 HP to
@@ -372,6 +377,20 @@ class Run:
         path.write_text(json.dumps(self.wrap(state, label, extra)))
         return path
 
+    def engine_queued(self, state: dict) -> dict:
+        """The engine's queued shots tracked during this state's turn
+        ({uid: shot or None}; see track_queued), kept across commands (turn,
+        then end-turn) in the manifest; {} for another mission or turn."""
+        rec = self.meta.get("engine_queued") or {}
+        if rec.get("mission") != self.mission_index(state) or rec.get("turn") != int(state.get("turn") or 0):
+            return {}
+        return {int(uid): shot for uid, shot in (rec.get("units") or {}).items()}
+
+    def save_engine_queued(self, state: dict, tracked: dict) -> None:
+        self.meta["engine_queued"] = {"mission": self.mission_index(state), "turn": int(state.get("turn") or 0),
+                                      "units": {str(uid): shot for uid, shot in sorted(tracked.items())}}
+        self.save_meta()
+
     def save_json(self, name: str, obj) -> Path:
         path = self.path / name
         path.write_text(json.dumps(obj, indent=1))
@@ -518,10 +537,13 @@ def load_loadout(path: str | None) -> dict:
         return json.load(f)
 
 
-def patch_state(state: dict, loadout: dict, moved: set) -> tuple[dict, dict]:
+def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = None,
+                notes: list | None = None) -> tuple[dict, dict]:
     """The solver's input: the live state, plus --loadout weapons for units
     the bridge gives no exact ids, plus moved flags the bridge does not
-    export. Returns (state, patches)."""
+    export, plus the engine's queued shots (`queued`, see track_queued) where
+    the bridge's are stale. Returns (state, patches); queued-shot notes go to
+    `notes`."""
     out = json.loads(json.dumps(state))
     patches = {}
     for u in units(out):
@@ -533,7 +555,106 @@ def patch_state(state: dict, loadout: dict, moved: set) -> tuple[dict, dict]:
         if u["uid"] in moved and "moved" not in u:
             u["moved"] = True
             patches[f"{u['uid']}.moved"] = True
+    if queued:
+        found = override_queued(out, queued)
+        for uid, (text, value) in found.items():
+            patches[f"{uid}.queued"] = value
+            if text and notes is not None:
+                notes.append(text)
     return out, patches
+
+
+# ------------------------------------------------------------------ queued shots
+#
+# The bridge reads every queued shot from the save, written at the start of
+# the turn, and only shifts it with the pawn's movement: the game exposes no
+# live queued shot to Lua (Pawn has no GetQueuedShot). So a shot the turn
+# cleared (a Vek in smoke, frozen or in water: Pawn::OnLoop; live 2026-10-10
+# m36 turn 2, a Beetle smoked then pulled out of the smoke) or retargeted
+# (DIR_FLIP) still shows in every later snapshot of the turn. The engine's
+# predictions carry each unit's queued shot ("queued" in itb_live's boards);
+# the driver keeps the engine's latest for every turn-start unit whose
+# predicted state the live board confirmed, and gives the engine that one
+# instead of the bridge's (re-solves and the end-of-turn prediction).
+
+def _same_unit(a: dict, b: dict) -> bool:
+    return (a.get("type") == b.get("type") and (a.get("x"), a.get("y")) == (b.get("x"), b.get("y"))
+            and a.get("hp") == b.get("hp") and all(bool(a.get(f)) == bool(b.get(f)) for f in STEP_FIELDS))
+
+
+def track_queued(tracked: dict, predicted: dict, live: dict, known: set) -> None:
+    """Updates `tracked` ({uid: the engine's queued shot or None}) from a
+    step's predicted board. Only turn-start units (`known`; the engine numbers
+    the units it creates itself) whose predicted type, tile, HP and statuses
+    the live board matches: after a step that went differently for a unit,
+    its last confirmed shot stands. Boards without "queued" (an older
+    itb_live) track nothing."""
+    live_units = {u["uid"]: u for u in live.get("units", [])}
+    for u in predicted.get("units", []):
+        uid = u.get("uid")
+        if "queued" not in u or uid not in known:
+            continue
+        g = live_units.get(uid)
+        if g is not None and _same_unit(u, g):
+            tracked[uid] = u["queued"]
+
+
+def override_queued(state: dict, tracked: dict) -> dict:
+    """Replaces the bridge's queued shots in `state` (in place) with the
+    engine's where they differ. Returns {uid: (note or "", the engine's
+    shot)} for every unit changed; an origin-only change (the bridge does
+    not shift the origin with the pawn, the game does) gets no note. A shot
+    the engine has and the bridge does not is left alone (nothing queues a
+    shot during the player's turn)."""
+    changed = {}
+    for u in units(state):
+        uid = u.get("uid")
+        if uid not in tracked or (u.get("hp") or 0) <= 0:
+            continue
+        e = tracked[uid]
+        enemy = u.get("team") == 6
+        if enemy:
+            has = bool(u.get("has_queued_attack"))
+            target, origin = u.get("queued_target"), u.get("queued_origin")
+        else:
+            q = u.get("queued_any") if isinstance(u.get("queued_any"), dict) else None
+            has = q is not None
+            target, origin = (q or {}).get("target"), (q or {}).get("origin")
+        if not has:
+            continue
+        who = describe_unit(u)
+        if e is None:
+            if enemy:
+                u["has_queued_attack"] = False
+                for k in ("queued_target", "queued_origin", "queued_target_raw", "queued_target_normalized"):
+                    u.pop(k, None)
+            else:
+                u.pop("queued_any", None)
+            changed[uid] = (f"{who} queued attack cleared during the turn (engine); the bridge's save copy "
+                            "is stale", None)
+            continue
+        e_target = list(e["target"]) if e.get("target") else None
+        e_origin = list(e["origin"]) if e.get("origin") else None
+        b_target = list(target) if target else None
+        b_origin = list(origin) if origin else None
+        if e_target == b_target and e_origin == b_origin:
+            continue
+        note = ""
+        if e_target != b_target:
+            note = (f"{who} queued attack retargeted during the turn (engine): "
+                    f"{visual(*e_target) if e_target else 'none'}, bridge's save copy "
+                    f"{visual(*b_target) if b_target else 'none'}")
+        if enemy:
+            u["queued_target"] = e_target
+            if e_origin:
+                u["queued_origin"] = e_origin
+            else:
+                u.pop("queued_origin", None)
+        else:
+            u["queued_any"] = dict(u["queued_any"], target=e_target, origin=e_origin,
+                                   skill=int(e.get("weapon", 0)) + 1, source="engine")
+        changed[uid] = (note, e)
+    return changed
 
 
 def check_loadout(state: dict, loadout: dict) -> None:
@@ -690,12 +811,18 @@ def play_turn(ctx) -> list:
     names = {u["uid"]: u.get("type", "?") for u in units(state)}
     moved: set = set()
     anomalies: list = []
+    # The engine's queued shots this turn (a re-run of `turn` mid-turn
+    # continues from the ones tracked so far).
+    tracked = run.engine_queued(state)
     budget = f"{args.time:g}s" + (f", up to {args.max_time:g}s until {args.min_tiers} tiers are proven"
                                   if args.min_tiers > 0 and args.max_time > args.time else "")
     say(f"== {state.get('mission_id')} turn {state.get('turn')}: solving ({budget}, {args.threads} threads)")
 
     def solve(st: dict, label: str) -> tuple[Path, dict]:
-        solver_input, patches = patch_state(st, ctx.loadout, moved)
+        notes: list = []
+        solver_input, patches = patch_state(st, ctx.loadout, moved, tracked, notes)
+        for n in notes:
+            say(f"  note: {n}")
         path = run.save_state(solver_input, label, {"patches": patches} if patches else None)
         if patches:
             run.save_state(st, label + "_raw")
@@ -730,6 +857,8 @@ def play_turn(ctx) -> list:
         path = run.save_state(state, f"step{len(executed)}")
         live = engine.board(path)
         diffs, _ = diff_boards(step["board"], live, known)
+        track_queued(tracked, step["board"], live, known)
+        run.save_engine_queued(state, tracked)
         run.event("step", {"step": text, "state": path.name, "diffs": diffs})
         if not diffs:
             say(f"  step {len(executed)} {text}: matches")
@@ -806,8 +935,15 @@ def end_turn(ctx) -> list:
     check_loadout(state, ctx.loadout)
     turn = int(state.get("turn") or 0)
     known = {u["uid"] for u in units(state)}
-    solver_input, patches = patch_state(state, ctx.loadout, set())
+    queued_notes: list = []
+    solver_input, patches = patch_state(state, ctx.loadout, set(), run.engine_queued(state), queued_notes)
+    for n in queued_notes:
+        say(f"  note: {n}")
     path = run.save_state(solver_input, "end_turn", {"patches": patches} if patches else None)
+    if patches:
+        run.save_state(state, "end_turn_raw")
+    if queued_notes:
+        run.event("queued", {"state": path.name, "notes": queued_notes})
     pred = engine.predict(path, [])
     run.save_json(prediction_path(path).name, pred)
     if args.dry_run:
