@@ -588,6 +588,24 @@ class LivePlayTest(unittest.TestCase):
         b["units"][-1]["uid"] = 120
         self.assertEqual(lp.diff_boards(a, b, {0, 1, 100})[0], [])
 
+    def test_xp_split_level_up_is_a_note(self):
+        a = compact(base_state())
+        b = copy.deepcopy(a)
+        mech = next(u for u in b["units"] if u.get("mech"))
+        mech["hp"] += 2
+        # Without an XP split in the prediction it is a difference...
+        diffs, notes = lp.diff_boards(a, b, {0, 1, 100}, enemy_phase=True)
+        self.assertEqual(len(diffs), 1)
+        # ...with one, the remainder's level-up (+2 HP) is a note.
+        diffs, notes = lp.diff_boards(a, b, {0, 1, 100}, enemy_phase=True, xp_split=True)
+        self.assertEqual(diffs, [])
+        self.assertEqual(len(notes), 1)
+        self.assertIn("XP split", notes[0])
+        # Only after the enemy phase, and only +2.
+        self.assertEqual(len(lp.diff_boards(a, b, {0, 1, 100}, xp_split=True)[0]), 1)
+        mech["hp"] += 1
+        self.assertEqual(len(lp.diff_boards(a, b, {0, 1, 100}, enemy_phase=True, xp_split=True)[0]), 1)
+
 
 @unittest.skipUnless(lp.ITB_LIVE.exists(), "engine/build/itb_live not built")
 class ItbLiveTest(unittest.TestCase):

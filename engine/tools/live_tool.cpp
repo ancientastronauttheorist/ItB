@@ -171,8 +171,17 @@ json phase_json(const Board& start, const Board& end, const PhaseResult& pr) {
       grid_defense.push_back(json{{"point", point_json(c.point)}, {"amount", c.amount}});
     }
   }
+  // XP splits whose remainder decided a level-up (the prediction takes the
+  // fewest level-ups).
+  json xp_split = json::array();
+  for (const ChanceRecord& c : pr.chances) {
+    if (c.kind == ChanceKind::XpSplit) {
+      xp_split.push_back(json{{"point", point_json(c.point)}, {"amount", c.amount}, {"options", c.options}});
+    }
+  }
   return json{{"environment", pr.environment},
               {"exact", pr.exact},
+              {"xp_split", xp_split},
               {"quiescent", pr.quiescent},
               {"mission_ended", pr.mission_ended},
               {"chance_nodes", pr.chances.size()},

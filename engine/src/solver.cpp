@@ -48,6 +48,7 @@
 #include "itb/engine.hpp"
 #include "itb/lua_host.hpp"
 #include "itb/movement.hpp"
+#include "itb/pilot_xp.hpp"
 
 namespace itb {
 namespace {
@@ -302,7 +303,9 @@ bool scored_enemy(const Pawn& p) { return p.team == Team::Enemy && !p.neutral &&
 //   MechHpLost     = sum of hp_after - hp_before: a pawn's HP never exceeds
 //                    its max HP (every heal clamps), and a mech's max HP only
 //                    rises by the Soldier psion's +1, which reaches mechs only
-//                    with Psion Leech. So <= sum of (max_hp [+1] - hp_before).
+//                    with Psion Leech, and by a pilot's Health / Skilled
+//                    level-up (+2 each, pilot_hp_room). So <= sum of
+//                    (max_hp [+1] + level-up room - hp_before).
 //   ObjectivesFailed = -(stars lost) <= 0.
 //   VekKilled      <= enemies alive at the root (only those are counted).
 //   VekHpRemoved   <= their total HP (hp_before - hp_after, hp_after >= 0).
@@ -328,7 +331,7 @@ class TierBounds {
       const int hp0 = p.alive() && !p.fallen && p.pos.valid() ? p.hp : 0;
       if (p.mech && p.team == Team::Player) {
         if (hp0 <= 0) ++dead_mechs;
-        mech_room += std::max(0, p.max_hp + leech - hp0);
+        mech_room += std::max(0, p.max_hp + leech + pilot_hp_room(p) - hp0);
       } else if (scored_enemy(p) && hp0 > 0) {
         ++enemies;
         enemy_hp += hp0;

@@ -89,6 +89,27 @@ enum PilotAbility : uint32_t {
   kPilotArrogantBoost = 1u << 13,   // Arrogant_Boost
   kPilotRegen = 1u << 14,           // Regen: +1 HP at the end of each enemy phase's ticks
   kPilotZoltan = 1u << 15,          // Zoltan_Skill: shield at turn start, kept by Mission_Shields
+  kPilotExtraXp = 1u << 16,         // Extra_XP (Experienced): +2 XP per XP-giving kill
+  kPilotKoBoost = 1u << 17,         // KO_Boost: Boost after a kill
+};
+
+// AE pilot level-up skills, in Pilot::GetAllPilotSkills order (@0085d0c0):
+// the ids the save stores as skill1/skill2.
+enum class LevelSkill : int8_t {
+  Health = 0,        // +2 Mech HP
+  Move = 1,          // +1 Move
+  Grid = 2,          // +3 Grid Defense
+  Reactor = 3,       // +1 Reactor Core
+  Opener = 4,        // Boost and +2 Move on the first turn
+  Closer = 5,        // Boost and +2 Move on the last turn
+  Popular = 6,       // sells for 4 reputation
+  Thick = 7,         // immune to ACID and fire
+  Skilled = 8,       // +1 Move, +2 Mech HP
+  Invulnerable = 9,  // the pilot survives the mech's defeat
+  Adrenaline = 10,   // +1 Move per Vek killed in the battle
+  Pain = 11,         // +2 Move when not at full HP
+  Regen = 12,        // repair 1 HP at the start of each turn
+  Conservative = 13, // limited-use weapons +1 use
 };
 
 // Squad passives that change rules. Comments give the Lua weapon name and,
@@ -101,7 +122,7 @@ enum Passive : uint32_t {
   kPassiveFireBoost = 1u << 3,         // Passive_FireBoost
   kPassiveHealingSmoke = 1u << 4,      // Passive_HealingSmoke
   kPassivePlayerTurnShield = 1u << 5,  // Passive_PlayerTurnShield
-  kPassivePsionLeech = 1u << 6,        // Passive_Leech / "Psion_Leech"
+  kPassivePsionLeech = 1u << 6,        // Passive_Psions / "Psion_Leech" (Psionic Receiver)
   kPassiveElectricSmoke = 1u << 7,     // Passive_Electric
   kPassiveBurrows = 1u << 8,           // Passive_Burrows
   kPassiveKickoff = 1u << 9,           // Passive_Boosters (Kickoff Boosters)
@@ -115,6 +136,10 @@ enum Passive : uint32_t {
   kPassiveFastDecay = 1u << 15,        // Passive_FastDecay: dead Vek leave forest
   kPassiveVoidShock = 1u << 16,        // Passive_VoidShock (AE)
   kPassiveElectricSmokeA = 1u << 17,   // Passive_Electric_A: Storm Generator deals 2
+  // Viscera Nanobots: a mech heals 1 per Vek it kills (Pawn::UpdateKills), 2
+  // with the upgrade.
+  kPassiveLeechKill = 1u << 18,        // Passive_Leech / "Leech_Kill"
+  kPassiveLeechKillA = 1u << 19,       // Passive_Leech_A / "Leech_Kill_A"
 };
 
 inline constexpr int kMaxWeapons = 4;
@@ -124,7 +149,7 @@ inline constexpr int kMaxWeapons = 4;
 struct MoveState {
   int8_t bonus_shift = 0;     // >0: replaces the move speed (Shifty 1, Post_Move full move)
   int8_t kickoff_bonus = 0;   // Kickoff Boosters bonus, assigned at turn start
-  int8_t pilot_bonus = 0;     // move from the pilot's learned level-up skills
+  int8_t pilot_bonus = 0;     // recorded speed beyond base_move's live terms (pilot, Adrenaline kills)
   int8_t turn_count = 0;      // turn starts so far; Youth_Move applies while <= 1
   bool move_upgrade = false;  // powered +1 move upgrade
   bool reset_bonus = false;   // Reset_Bonus pilot after Reset Turn: +2 until next turn start
@@ -150,6 +175,15 @@ struct Pawn {
   // unlimited or not recorded. A weapon at 0 cannot fire.
   std::array<int8_t, kMaxWeapons> uses{-1, -1, -1, -1};
   uint32_t pilot_abilities = kPilotNone;
+  // AE pilot experience (itb/pilot_xp.hpp): Pilot::GetLevel (0-2), the
+  // save's "exp" (progress toward the next level) and the level-up skill ids
+  // (LevelSkill; skill1 is learned at level 1, skill2 at level 2).
+  // pilot_level -1: no pilot (Pawn::IsPilot false). pilot_xp -1: not
+  // recorded, so no experience is tracked for this pilot.
+  int8_t pilot_level = -1;
+  int8_t pilot_skill1 = -1;
+  int8_t pilot_skill2 = -1;
+  int16_t pilot_xp = -1;
 
   // Static traits (copied from the pawn definition, overridable per board).
   bool mech = false;
@@ -204,6 +238,11 @@ struct Pawn {
   bool alive() const { return hp > 0; }
   bool controlled() const { return team == Team::Player && !neutral; }
   bool has_pilot(PilotAbility a) const { return (pilot_abilities & a) != 0; }
+  // Pilot::IsAbility for a level-up skill: learned once the level reaches its slot.
+  bool has_level_skill(LevelSkill s) const {
+    const int8_t id = static_cast<int8_t>(s);
+    return (pilot_level >= 1 && pilot_skill1 == id) || (pilot_level >= 2 && pilot_skill2 == id);
+  }
 
   bool operator==(const Pawn&) const = default;
 };

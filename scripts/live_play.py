@@ -397,7 +397,8 @@ def _health_psion(u: dict) -> bool:
 
 
 def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
-                acid_pools: frozenset = frozenset(), resist: dict | None = None) -> tuple[list, list]:
+                acid_pools: frozenset = frozenset(), resist: dict | None = None,
+                xp_split: bool = False) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
@@ -416,7 +417,10 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
       the grid higher by exactly the HP the buildings kept, was resisted.
     - A Soldier Psion / Psion Abomination that emerged from a hidden spawn
       (new in the game, absent from the prediction) gives every Vek +1 HP on
-      arrival: +1 HP on a known non-mech unit of the psion's team."""
+      arrival: +1 HP on a known non-mech unit of the psion's team.
+    - `xp_split`: the prediction split squad XP whose remainder (a random
+      draw) could level a pilot up; it takes the fewest level-ups, so a mech
+      with exactly 2 HP more (a Health / Skilled level-up) is a note."""
     diffs, notes = [], []
     fields = ENEMY_FIELDS if enemy_phase else STEP_FIELDS
     w = {u["uid"]: u for u in want["units"]}
@@ -444,6 +448,9 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
             if (psion is not None and b["hp"] == a["hp"] + 1 and not a.get("mech")
                     and a.get("team") == psion.get("team") and not _health_psion(a)):
                 buffed.append(who)
+            elif enemy_phase and xp_split and a.get("mech") and b["hp"] == a["hp"] + 2:
+                notes.append(f"{who} hp {b['hp']} (engine {a['hp']}): a pilot level-up from the squad's "
+                             "XP split (random remainder)")
             else:
                 diffs.append(f"{who} hp: engine {a['hp']}, game {b['hp']}")
         for f in fields:
@@ -857,7 +864,8 @@ def end_turn(ctx) -> list:
     live = engine.board(path)
     pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid"))
     diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
-                               resist=resist_info(pred))
+                               resist=resist_info(pred),
+                               xp_split=bool((pred.get("enemy_phase") or {}).get("xp_split")))
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})
     spawns = [f"{describe_unit(u)} at {visual(u['x'], u['y'])}" for u in live["units"] if u["uid"] not in known]
     if spawns:

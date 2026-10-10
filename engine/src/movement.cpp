@@ -1,5 +1,7 @@
 #include "itb/movement.hpp"
 
+#include "itb/pilot_xp.hpp"
+
 #include <algorithm>
 #include <bit>
 #include <cstdlib>
@@ -261,13 +263,21 @@ Pathing path_profile(const Board& b, const Pawn& p) {
 
 // --- Move budget ---------------------------------------------------------
 
-int base_move(const Board&, const Pawn& p) {
+int live_move_modifiers(const Board& b, const Pawn& p) {
+  int move = 0;
+  if (p.movement.turn_count <= 1 && p.has_pilot(kPilotYouthMove)) move += 3;
+  // Level-up skills (Move, Skilled, Opener, Closer, Pain); Adrenaline's kill
+  // count lives in pilot_bonus.
+  move += level_skill_move(b, p);
+  if (p.has_pilot(kPilotArrogantBoost) && p.hp < p.max_hp) move -= 1;
+  return move;
+}
+
+int base_move(const Board& b, const Pawn& p) {
   const MoveState& m = p.movement;
   int move = p.move + m.pilot_bonus + m.kickoff_bonus + (m.move_upgrade ? 1 : 0);
-  if (m.turn_count <= 1 && p.has_pilot(kPilotYouthMove)) move += 3;
-  // (Unshipped pilot skills Opener, Closer, Adrenaline and Pain would add here.)
+  move += live_move_modifiers(b, p);
   if (m.reset_bonus) move += 2;
-  if (p.has_pilot(kPilotArrogantBoost) && p.hp < p.max_hp) move -= 1;
   return std::max(move, 0);
 }
 

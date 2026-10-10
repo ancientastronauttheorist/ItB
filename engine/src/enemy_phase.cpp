@@ -182,6 +182,7 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
   opts.grid_resist = tc.grid_resist;
   opts.death_seed = tc.death_seed;
   opts.spider_egg = tc.spider_egg;
+  opts.choose = tc.choose;
   opts.events = tc.events;
   opts.log = tc.log;
   ResolveContext ctx;

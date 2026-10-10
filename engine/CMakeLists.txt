@@ -39,6 +39,7 @@ add_library(itb_engine
   src/timing.cpp
   src/executor.cpp
   src/push_death.cpp
+  src/pilot_xp.cpp
   src/engine.cpp
   src/enemy_phase.cpp
   src/environments.cpp
@@ -99,6 +100,7 @@ add_executable(itb_tests
   tests/test_bridge.cpp
   tests/test_live.cpp
   tests/test_weapon_ports.cpp
+  tests/test_pilot_xp.cpp
 )
 target_link_libraries(itb_tests PRIVATE itb_live_lib itb_engine itb_lua doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE

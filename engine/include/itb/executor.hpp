@@ -91,6 +91,7 @@ enum class ResolveEventType : uint8_t {
   CorpseExploded,    // pawn `uid`'s explosion was stacked
   PawnRemoved,       // pawn `uid` left the board
   TimingSensitive,   // see ResolveResult::timing
+  PilotLevelUp,      // pawn `uid`'s pilot reached level `amount` (itb/pilot_xp.hpp)
 };
 
 struct ResolveEvent {
@@ -119,6 +120,11 @@ enum class ChanceKind : uint8_t {
   // A mission hook's random pick (Mission_Reactivation thaw, Final Cave
   // bomb drop): `outcome` of `options`.
   MissionRandom,
+  // BoardPlayer::UpdateXP: which mechs get the +1s of an XP split's
+  // remainder, only when that decides a level-up (itb/pilot_xp.hpp).
+  // `amount` = the XP split, `point` = a mech that may level up; outcome 0 =
+  // the fewest level-ups.
+  XpSplit,
 };
 
 struct ChanceRecord {
@@ -185,6 +191,9 @@ struct ResolveContext {
   // A spider psion egg landing: pick an index into `tiles` (free neighbours).
   // Default: 0.
   std::function<int(Resolver&, const Pawn& pawn, const std::vector<Point>& tiles)> spider_egg;
+  // Other hidden choices of the resolution (ChanceKind::XpSplit): an
+  // outcome index in [0, node.options). Default: 0.
+  std::function<int(const ChanceRecord& node)> choose;
 
   // Called at the end of every simulated frame (after the quiescent work):
   // the mission's per-frame Lua (Mission:BaseUpdate / UpdateMission), which

@@ -303,6 +303,7 @@ uint32_t Engine::pilot_ability(std::string_view pilot_id) {
       {"Post_Move", kPilotPostMove},       {"Double_Shot", kPilotDoubleShot},
       {"Youth_Move", kPilotYouthMove},     {"Arrogant_Boost", kPilotArrogantBoost},
       {"Regen", kPilotRegen},              {"Zoltan_Skill", kPilotZoltan},
+      {"Extra_XP", kPilotExtraXp},         {"KO_Boost", kPilotKoBoost},
   };
   const std::optional<std::string> skill = impl_->host->lua_string(pilot_id, "Skill");
   if (!skill) return kPilotNone;
@@ -330,6 +331,7 @@ void Engine::Impl::wire(Engine& engine, ResolveContext& ctx, const ActionOptions
   ctx.rules.events = opts.events;
   ctx.log = opts.log;
   ctx.spider_egg = opts.spider_egg;
+  ctx.choose = opts.choose;
   LuaHost* lua = host.get();
   RulesContext* rules = &ctx.rules;
   ActionResult* out = &diag;
@@ -487,7 +489,12 @@ static ActionResult fire_skill(Engine& engine, Engine::Impl& im, Board& board, i
   out.effect = fx;
   if (!fx.effect.empty()) out.resolve = engine.resolve(board, fx, info, opts, &out);
   if (Pawn* p = board.find_pawn(uid)) {
+    // The executor spent the Boost with the first chunk (Pawn::FireWeapon);
+    // one the pawn holds now came from the resolution itself (a kill with
+    // KO_Boost, an Opener / Closer level-up) and stays.
+    const bool boost_gained = !fx.effect.empty() && !move_skill && p->boosted;
     on_skill_fired(board, *p, move_skill);
+    if (boost_gained) p->boosted = true;
     // Skill::FireInstant uses a limited charge.
     if (!move_skill && slot >= 0 && slot < kMaxWeapons && p->uses[static_cast<size_t>(slot)] > 0) {
       --p->uses[static_cast<size_t>(slot)];

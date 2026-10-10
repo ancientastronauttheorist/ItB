@@ -54,6 +54,7 @@ const char* chance_name(ChanceKind k) {
     case ChanceKind::EnvOrder: return "EnvOrder";
     case ChanceKind::EnvChoice: return "EnvChoice";
     case ChanceKind::MissionRandom: return "MissionRandom";
+    case ChanceKind::XpSplit: return "XpSplit";
   }
   return "?";
 }

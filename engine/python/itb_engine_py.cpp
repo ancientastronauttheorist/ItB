@@ -47,6 +47,7 @@
 #include "itb/engine.hpp"
 #include "itb/environment.hpp"
 #include "itb/game_data.hpp"
+#include "itb/movement.hpp"
 #include "itb/recording.hpp"
 #include "itb/score.hpp"
 #include "itb/solver.hpp"
@@ -177,7 +178,7 @@ json unit_json(const Board& b, const Pawn& p) {
          {"infected", p.infected},
          {"fallen", p.fallen},
          {"weapons", weapons},
-         {"move", static_cast<int>(p.move) + static_cast<int>(p.movement.pilot_bonus)},
+         {"move", base_move(b, p)},
          {"base_move", static_cast<int>(p.move)},
          {"has_queued_attack", p.queued.active()}};
   if (p.webbed && p.web_source >= 0) j["web_source_uid"] = p.web_source;
