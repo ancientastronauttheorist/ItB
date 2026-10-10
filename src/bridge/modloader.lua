@@ -1052,6 +1052,50 @@ local function itbx_turn_team()
     return turn, team
 end
 
+---------------------------------------------------------------- settled state
+-- Board:GetBusyState(): 0 when idle; otherwise a projectile is in flight
+-- (8), a tile animates (2), a pawn animates (1: walk, push, leap, fall), a
+-- death effect is pending (9), effects are stacked (6), status ticks are
+-- pending (7) or spawning runs (3-5). Board:IsBusy() is "state ~= 0". A
+-- pushed pawn changes tile only when its 0.4 s push finishes, so a dump
+-- taken while busy can show pawns on their pre-push tiles (live session
+-- 2026-10-09: Ranged_Ignite's side pushes read before they landed).
+ITBX.cmd_waiting = false      -- a command coroutine is waiting for the board
+ITBX.redump_when_idle = false -- the last dump was not settled: dump again when idle
+ITBX.dump_seq = 0
+
+function ITBX.busy_state()
+    local ok, s = pcall(function() return Board:GetBusyState() end)
+    if ok and type(s) == "number" then return s end
+    local ok_b, b = pcall(function() return Board:IsBusy() end)
+    if ok_b and type(b) == "boolean" then return b and 1 or 0 end
+    return nil
+end
+
+-- board_busy / busy_state: the board at dump time. command_waiting: a bridge
+-- command is still waiting for its effects. stable: neither, so positions
+-- and HP are final for now. dump_seq: increases with every dump.
+function ITBX.mark_settled(state)
+    local s = ITBX.busy_state()
+    ITBX.dump_seq = ITBX.dump_seq + 1
+    state.dump_seq = ITBX.dump_seq
+    state.busy_state = s
+    state.board_busy = s ~= nil and s ~= 0
+    state.command_waiting = ITBX.cmd_waiting == true
+    state.stable = not state.board_busy and not state.command_waiting
+    ITBX.redump_when_idle = not state.stable
+end
+
+-- Called every frame: once the board is idle again after an unsettled
+-- dump, dump again so readers do not wait for the periodic dump.
+function ITBX.settled_redump(dump)
+    if not ITBX.redump_when_idle or ITBX.cmd_waiting then return false end
+    if ITBX.busy_state() ~= 0 then return false end
+    ITBX.redump_when_idle = false
+    pcall(dump)
+    return true
+end
+
 ---------------------------------------------------------------- errors
 function ITBX.begin_dump()
     ITBX.errs = {}
@@ -2730,6 +2774,18 @@ local function dump_state(out_path, out_tmp)
                 if ok_mh and type(mh) == "number" and mh > 0 then
                     live_max_hp = mh
                 end
+                -- Pawn:GetMaxHealth is not bound in the shipped game, so
+                -- without this the dump said the type's Health: no Networked
+                -- Armor, pilot or core bonus. The engine then saw a Regen
+                -- pilot's mech as full and missed its +1 at turn start
+                -- (2026-10-09: IgniteMech 3/3 in the dump, 4 max in the save).
+                -- The save's max_health (turn-boundary value) fixes it.
+                if live_max_hp == nil then
+                    local ok_sv, sv = pcall(get_pawn_max_health, p, pid, save_data)
+                    if ok_sv and type(sv) == "number" and sv > 0 then
+                        live_max_hp = sv
+                    end
+                end
                 local base_move = pawn_def and pawn_def.MoveSpeed or p:GetMoveSpeed()
                 local ok_bm, live_base_move = pcall(function() return p:GetBaseMove() end)
                 if ok_bm and type(live_base_move) == "number" then
@@ -3747,6 +3803,8 @@ local function dump_state(out_path, out_tmp)
     ITBX.try("finish", ITBX.finish, state, _ITB_CURRENT_MISSION)
     state.bridge_errors = ITBX.errs or {}
     if ITBX.disabled then state.bridge_ext_disabled = ITBX.disabled_reason end
+    -- Not an extension export: kept even with the extension switched off.
+    pcall(ITBX.mark_settled, state)
 
     write_atomic(out_path or STATE_FILE, out_tmp or STATE_TMP, json_encode(state))
 end
@@ -3785,13 +3843,20 @@ local function wait_until_coro(predicate, max_wait)
     local start = os.time()
     while os.time() - start < max_wait do
         local ok, ready = pcall(predicate)
-        if not ok or ready then return true end
+        if not ok or ready then
+            ITBX.cmd_waiting = false
+            return true
+        end
+        -- Dumps taken while we yield (periodic ones) say command_waiting.
+        ITBX.cmd_waiting = true
         coroutine.yield()
     end
+    ITBX.cmd_waiting = false
     log_bridge("WARN: wait_until_coro timed out after " .. max_wait .. "s (wall)")
     return false
 end
 
+-- After a SetSpace move (fast mode) nothing animates: a short wait is enough.
 local function wait_for_board_coro(max_wait)
     if bridge_fast_mode() then
         max_wait = math.min(max_wait or 15, 2)
@@ -3799,6 +3864,18 @@ local function wait_for_board_coro(max_wait)
     return wait_until_coro(function()
         return not Board:IsBusy()
     end, max_wait)
+end
+
+-- After a weapon or a repair, in every speed mode: the state dumped right
+-- after the ack is what callers read, so wait until the effects have fully
+-- resolved. The 2 s fast-mode cap (os.time ticks, so 1-2 s) cut off
+-- Ranged_Ignite's side pushes (artillery flight, then 0.4 s pushes) in the
+-- 2026-10-09 live session: the dump showed the target tile burning but the
+-- pushed Vek on their old tiles.
+local function wait_for_effects_coro(max_wait)
+    return wait_until_coro(function()
+        return not Board:IsBusy()
+    end, max_wait or 15)
 end
 
 local function move_pawn_for_bridge(pawn, point)
@@ -5436,7 +5513,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_board_coro()
+        wait_for_effects_coro()
         pawn:SetActive(false)
         write_ack("OK ATTACK " .. uid .. " slot=" .. weapon_slot .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
@@ -5464,7 +5541,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_board_coro()
+        wait_for_effects_coro()
         pawn:SetActive(false)
         write_ack("OK TWO_CLICK_ATTACK " .. uid .. " slot=" .. weapon_slot ..
                   " at " .. tx1 .. "," .. ty1 .. " and " ..
@@ -5497,7 +5574,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_board_coro()
+        wait_for_effects_coro()
         pawn:SetActive(false)
         write_ack("OK MOVE_ATTACK " .. uid .. " [" .. method .. "]")
 
@@ -5595,7 +5672,7 @@ local function execute_command(cmd_str)
             write_ack("ERROR: Repair failed: " .. tostring(err))
             return
         end
-        wait_for_board_coro()
+        wait_for_effects_coro()
         pawn:SetActive(false)
         write_ack("OK REPAIR " .. uid .. " [" .. method .. "]")
 
@@ -5976,6 +6053,10 @@ Mission.BaseUpdate = function(self)
     if now - _last_state_dump >= _state_dump_interval then
         _last_state_dump = now
         pcall(dump_state)
+    elseif not _running_coroutine then
+        -- The last dump caught the board mid-animation: replace it as soon
+        -- as the board is idle.
+        pcall(ITBX.settled_redump, dump_state)
     end
     -- Bridge extension: per-frame phase log (debug flag only).
     if not ITBX.disabled and ITBX.debug_enabled() then

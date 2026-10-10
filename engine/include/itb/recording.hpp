@@ -27,6 +27,10 @@ struct Recording {
   std::string label;
   std::string mission_id;
   std::string phase;
+  // The bridge dumped this state while the board was busy or a command was
+  // still waiting for its effects (bridge `board_busy` / `command_waiting`;
+  // `stable` is their negation): not a settled board. Also in `warnings`.
+  bool board_busy = false;
   Board board;
   std::vector<int32_t> attack_order;  // Vek uids in the order the game reported
   // Pilot table name per unit uid (e.g. "Pilot_Rock"); the pilot's Lua Skill

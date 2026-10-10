@@ -489,6 +489,7 @@ class PyEngine {
     Loaded l = load_state(*main_, bridge);
     json out{{"mission_id", l.rec.mission_id},
              {"phase", l.rec.phase},
+             {"board_busy", l.rec.board_busy},
              {"turn", l.board.turn},
              {"difficulty", l.rec.difficulty},
              {"active_units", l.active_units},

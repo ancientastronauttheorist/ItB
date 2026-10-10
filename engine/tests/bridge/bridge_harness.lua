@@ -122,7 +122,8 @@ local region3 = '["region3"] = {["mission"] = "Mission3", ["player"] = {["iCurre
         .. '["primary_mod2"] = {1, 1, 1, }, ["primary_uses"] = 1, ["secondary"] = "Passive_Electric", '
         .. '["secondary_power"] = {1, }, ["secondary_mod1"] = {1, }, ["secondary_mod2"] = {}, '
         .. '["secondary_uses"] = 1, ["pilot"] = {["id"] = "Pilot_Original", ["exp"] = 17, ["level"] = 1, '
-        .. '["skill1"] = 7, ["skill2"] = 12, }, ["iMutation"] = 0, ["iQueuedSkill"] = -1')
+        .. '["skill1"] = 7, ["skill2"] = 12, }, ["iMutation"] = 0, ["iQueuedSkill"] = -1, '
+        .. '["health"] = 3, ["max_health"] = 5')
     .. pawn_block(2, '["type"] = "LimitMech", ["id"] = 1, ["mech"] = true, '
         .. '["primary"] = "Ranged_Limited", ["primary_mod1"] = {0, }, ["primary_mod2"] = {0, }, '
         .. '["primary_uses"] = 2, ["primary_damaged"] = false, '
@@ -297,6 +298,14 @@ do
     eq(m0.pilot.xp, 17, "pilot xp")
     eq(m0.pilot.skill2, 12, "pilot skill2")
     eq(m0.pilot_skills[1], "skill1=7", "old pilot_skills untouched")
+    -- Pawn:GetMaxHealth is unbound: max_hp comes from the save's
+    -- max_health (bonuses included), else the type's Health.
+    eq(m0.max_hp, 5, "mech max_hp from the save's max_health")
+    eq(unit(st, 1).max_hp, 3, "no save max_health: the type's Health")
+    eq(st.stable, true, "idle board: stable dump")
+    eq(st.board_busy, false, "idle board: not busy")
+    eq(st.busy_state, 0, "idle board: busy_state 0")
+    check(type(st.dump_seq) == "number", "dump_seq")
     local m1 = unit(st, 1)
     eq(m1.shots_remaining, 2, "shots remaining")
     eq(m1.weapon_slots[1].uses, 2, "limited uses (calibrated at turn start)")
@@ -602,6 +611,103 @@ do
     check(found, "building damage logged per frame")
     os.remove(X.DEBUG_FLAG_FILE)
     X._debug_at = nil
+end
+
+---------------------------------------------------------------- settled dumps
+-- Live 2026-10-09 (Mission_Final_Cave turns 1 and 6): ATTACK with
+-- Ranged_Ignite acked at the 2 s fast-mode cap while its side pushes were
+-- still running; the dump showed the burning target but the pushed Vek on
+-- their old tiles, and the next dump had them moved ("flip-flops").
+do
+    local real_time = os.time
+    local WALL = 100000
+    os.time = function() return WALL end
+    -- One frame = one wall second here, so the waits' budgets are frames.
+    -- dt advances os.clock: 0.25 polls commands, 0 neither polls nor
+    -- reaches the 5 s periodic dump.
+    local function frame(dt)
+        WALL = WALL + 1
+        CLOCK = CLOCK + (dt or 0.25)
+        Mission.BaseUpdate(CUR_M)
+    end
+    local function attack(cmd, max_frames)
+        os.remove(DIR .. "/itb_ack.txt")
+        write_file(DIR .. "/itb_cmd.txt", "#7 " .. cmd)
+        for i = 1, max_frames do
+            frame()
+            local ack = read_file(DIR .. "/itb_ack.txt")
+            if ack then return ack, i end
+        end
+        return nil, max_frames
+    end
+    MOCK.busy, MOCK.busy_after_mutation = 0, 0
+    frame(10)  -- the periodic dump, out of the way
+
+    -- A dump while busy is marked, and replaced once the board is idle.
+    MOCK.busy = 3
+    X._dump_state()
+    st = load_state()
+    eq(st.board_busy, true, "busy dump: board_busy")
+    eq(st.busy_state, 6, "busy dump: busy_state")
+    eq(st.stable, false, "busy dump: not stable")
+    local seq = st.dump_seq
+    frame(0)
+    eq(load_state().dump_seq, seq, "still busy: no re-dump")
+    MOCK.busy = 0
+    frame(0)
+    st = load_state()
+    eq(st.dump_seq, seq + 1, "idle again: re-dumped")
+    eq(st.stable, true, "re-dump is stable")
+    frame(0)
+    eq(load_state().dump_seq, seq + 1, "stable: no further re-dumps")
+
+    -- ATTACK waits for the weapon's effects beyond the old 2 s cap.
+    eq(X.cmd_waiting, false, "no command waiting")
+    MOCK.data(mech0).active = true
+    MOCK.fire_busy = 6
+    local ack, n = attack("ATTACK 0 0 2 3", 40)
+    check(ack ~= nil and string.find(ack, "OK ATTACK 0", 1, true) ~= nil, "ATTACK acked: " .. tostring(ack))
+    check(n >= 6, "ATTACK acked only once the effects resolved (frame " .. n .. ")")
+    st = load_state()
+    eq(MOCK.busy, 0, "board idle at the ack")
+    eq(st.stable, true, "post-ATTACK dump is stable")
+    eq(st.command_waiting, false, "post-ATTACK dump: no command waiting")
+
+    -- An effect longer than the 15 s budget: acked anyway, the dump says
+    -- it is not settled, and a settled dump follows when the board idles.
+    MOCK.data(mech0).active = true
+    MOCK.fire_busy = 1000
+    ack, n = attack("ATTACK 0 0 2 3", 40)
+    check(ack ~= nil and string.find(ack, "OK ATTACK 0", 1, true) ~= nil, "slow ATTACK acked: " .. tostring(ack))
+    check(n >= 15 and n < 40, "slow ATTACK acked at the 15 s budget (frame " .. n .. ")")
+    st = load_state()
+    eq(st.stable, false, "dump after a timed-out wait is not stable")
+    eq(st.board_busy, true, "dump after a timed-out wait: board busy")
+    seq = st.dump_seq
+    MOCK.busy = 0
+    frame()
+    st = load_state()
+    eq(st.stable, true, "settled dump once idle")
+    check(st.dump_seq > seq, "settled dump is a new dump")
+
+    -- A periodic dump taken while a command waits says so.
+    MOCK.data(mech0).active = true
+    MOCK.fire_busy = 4
+    os.remove(DIR .. "/itb_ack.txt")
+    write_file(DIR .. "/itb_cmd.txt", "#7 ATTACK 0 0 2 3")
+    frame()
+    eq(X.cmd_waiting, true, "ATTACK waiting for its effects")
+    X._dump_state()
+    st = load_state()
+    eq(st.command_waiting, true, "dump during the wait: command_waiting")
+    eq(st.stable, false, "dump during the wait: not stable")
+    for _ = 1, 10 do frame() end
+    check(read_file(DIR .. "/itb_ack.txt") ~= nil, "ATTACK acked after the wait")
+    eq(load_state().stable, true, "final dump stable")
+
+    MOCK.fire_busy = nil
+    MOCK.busy, MOCK.busy_after_mutation = 0, 2
+    os.time = real_time
 end
 
 ---------------------------------------------------------------- final mission

@@ -20,6 +20,7 @@ MOCK = {
     calls = {},       -- "Class:method" in call order (mutators only)
     busy = 0,         -- Board:IsBusy() returns true while > 0 (counts down)
     busy_after_mutation = 2,
+    fire_busy = nil,  -- if set: a mech's Pawn:FireWeapon keeps the board busy this long (effects)
     turn = 1,
     team = 1,
     pawn_ids = 100,
@@ -85,7 +86,8 @@ local function bind(class, name, overloads, impl, mutator)
                 if ok then
                     if mutator then
                         MOCK.calls[#MOCK.calls + 1] = class .. ":" .. name
-                        MOCK.busy = MOCK.busy_after_mutation
+                        -- A change never cuts a running animation short.
+                        MOCK.busy = math.max(MOCK.busy, MOCK.busy_after_mutation)
                     end
                     return impl(self, ...)
                 end
@@ -369,6 +371,7 @@ pawn_methods.FireWeapon = bind("Pawn", "FireWeapon", {{"Point", "int"}}, functio
         return 1
     end
     d.active = false
+    if MOCK.fire_busy then MOCK.busy = MOCK.fire_busy end
     return 1
 end, true)
 pawn_methods.AddWeapon = bind("Pawn", "AddWeapon", {{"string"}}, function(self, w)
