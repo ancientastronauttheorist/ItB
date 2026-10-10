@@ -362,12 +362,16 @@ def describe_unit(u: dict) -> str:
     return f"{u['type']}#{u['uid']}"
 
 
-def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False) -> tuple[list, list]:
+def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
+                acid_pools: frozenset = frozenset()) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
     numbers the units it creates itself). After the enemy phase only mech
-    tiles are compared, and new units are notes (spawns), not differences."""
+    tiles are compared, and new units are notes (spawns), not differences.
+    `acid_pools` are the pool tiles before the enemy phase: a Vek that moves
+    onto one while planning next turn (the AI move the engine doesn't model)
+    picks up ACID, which is a note, not a difference."""
     diffs, notes = [], []
     fields = ENEMY_FIELDS if enemy_phase else STEP_FIELDS
     w = {u["uid"]: u for u in want["units"]}
@@ -391,6 +395,12 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False)
             diffs.append(f"{who} hp: engine {a['hp']}, game {b['hp']}")
         for f in fields:
             if bool(a.get(f)) != bool(b.get(f)):
+                moved = (a["x"], a["y"]) != (b["x"], b["y"])
+                if (enemy_phase and f == "acid" and b.get(f) and not a.get("mech") and moved
+                        and (b["x"], b["y"]) in acid_pools):
+                    notes.append(f"{who} picked up the acid pool at {visual(b['x'], b['y'])} "
+                                 "moving during AI planning")
+                    continue
                 diffs.append(f"{who} {f}: engine {bool(a.get(f))}, game {bool(b.get(f))}")
     key = (lambda u: (u["type"], u["hp"])) if enemy_phase else \
         (lambda u: (u["type"], u["x"], u["y"], u["hp"]) + tuple(bool(u.get(f)) for f in fields))
@@ -736,7 +746,8 @@ def end_turn(ctx) -> list:
     after = bridge.settled_state()
     path = run.save_state(after, "after_enemy")
     live = engine.board(path)
-    diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True)
+    pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid"))
+    diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools)
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})
     spawns = [f"{describe_unit(u)} at {visual(u['x'], u['y'])}" for u in live["units"] if u["uid"] not in known]
     if spawns:

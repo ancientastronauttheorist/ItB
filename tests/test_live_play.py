@@ -525,3 +525,28 @@ def tearDownModule():
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DiffBoardsTest(unittest.TestCase):
+    """The enemy-phase comparison's handling of AI planning moves."""
+
+    @staticmethod
+    def board(units, buildings=(), grid=5):
+        return {"units": list(units), "buildings": list(buildings), "grid_power": grid}
+
+    @staticmethod
+    def vek(x, y, acid=False):
+        return {"uid": 97, "type": "Firefly1", "x": x, "y": y, "hp": 3, "acid": acid}
+
+    def test_acid_pool_picked_up_by_an_ai_move_is_a_note(self):
+        want = self.board([self.vek(7, 1)])
+        got = self.board([self.vek(7, 3, acid=True)])
+        diffs, notes = lp.diff_boards(want, got, {97}, enemy_phase=True, acid_pools=frozenset({(7, 3)}))
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("acid pool" in n for n in notes))
+
+    def test_acid_without_a_pool_is_still_a_difference(self):
+        want = self.board([self.vek(7, 1)])
+        got = self.board([self.vek(7, 3, acid=True)])
+        diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True, acid_pools=frozenset())
+        self.assertEqual(len(diffs), 1)
