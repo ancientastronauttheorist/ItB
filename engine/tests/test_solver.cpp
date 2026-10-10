@@ -143,6 +143,8 @@ struct Naive {
     };
     o.grid_resist = resist;
     o.spider_egg = egg;
+    o.mission = &base.mission;  // the mission's per-frame hooks, as in game
+    o.choose = [&c](const ChanceRecord& n) { return c.next(std::max(1, n.options)); };
     if (tc) {
       tc->grid_resist = resist;
       tc->spider_egg = egg;
@@ -459,6 +461,34 @@ TEST_CASE("solver: a resisted building is worse than a destroyed one") {
   off.grid_defense = 0;
   const SolveResult r0 = solve_turn(E, off, ctx, quick());
   CHECK(r0.best.worst_case == none);
+}
+
+TEST_CASE("solver: player actions run the mission's per-frame hooks (acid storm)") {
+  NEED_ENGINE();
+  // A shielded Scorpion (2 HP) and two artillery mechs that cannot move. The
+  // first shell pops the shield; while the Storm Generator lives the next
+  // frame sets ACID (Mission_AcidStorm:UpdateMission runs in the player's
+  // turn too), so the second shell's 1 damage is doubled: a kill.
+  Board b;
+  place(b, "Storm_Generator", {0, 0});
+  const int32_t v = place(b, "Scorpion1", {3, 3});
+  P(b, v).hp = P(b, v).max_hp = 2;
+  P(b, v).shield = true;
+  P(b, v).acid = false;
+  P(b, place(b, "ArtiMech", {3, 6}, true)).moved = true;
+  P(b, place(b, "ArtiMech", {6, 3}, true)).moved = true;
+  const TurnContext storm = context("Mission_AcidStorm");
+  const SolveResult r = solve_turn(E, b, storm, quick());
+  CHECK(r.proven_optimal);
+  CHECK(r.best.worst_case[ScoreKey::VekKilled] == 1);
+  CHECK(r.best.actions.size() == 2);
+  const auto again = evaluate_plan(E, b, storm, r.best.actions);
+  REQUIRE(again);
+  CHECK(*again == r.best.worst_case);
+  // No storm: the second shell does 1, no kill.
+  const SolveResult calm = solve_turn(E, b, context(), quick());
+  CHECK(calm.proven_optimal);
+  CHECK(calm.best.worst_case[ScoreKey::VekKilled] == 0);
 }
 
 TEST_CASE("solver: anytime budget returns a plan and a sound bound") {
