@@ -13,7 +13,7 @@
 //   itb_inspect [--game DIR] --score <recording.json>
 //                                               score the recorded plan (tiers, objectives, position)
 //   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
-//               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
+//               [--max-time S --min-tiers K] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
 //               [--lua-counts] [--tt ENTRIES]
 //                                               the perfect-turn search vs the recorded plan
 //   itb_inspect [--game DIR] --predict <state.json> [--actions JSON|@FILE] [--no-enemy]
@@ -54,7 +54,7 @@ namespace {
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
                "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
-               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] [--lua-counts] [--tt ENTRIES] | "
+               "--solve (<recording.json> | DIR) [--time S] [--max-time S --min-tiers K] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] [--lua-counts] [--tt ENTRIES] | "
                "--predict <state.json> [--actions JSON|@FILE] [--no-enemy] [--branches [N]] [--json FILE] | "
                "--diff-weapons [DIR] [--random N] [--seed S] [--weapon ID] [--all-tables] [--ports])\n";
   return 2;
@@ -376,6 +376,10 @@ int main(int argc, char** argv) {
     for (size_t i = 2; i < args.size(); ++i) {
       if (args[i] == "--time" && i + 1 < args.size()) {
         o.time_limit = std::stod(args[++i]);
+      } else if (args[i] == "--max-time" && i + 1 < args.size()) {
+        o.max_time = std::stod(args[++i]);
+      } else if (args[i] == "--min-tiers" && i + 1 < args.size()) {
+        o.min_tiers = std::stoi(args[++i]);
       } else if (args[i] == "--nodes" && i + 1 < args.size()) {
         o.node_limit = std::stoull(args[++i]);
       } else if (args[i] == "--beam" && i + 1 < args.size()) {

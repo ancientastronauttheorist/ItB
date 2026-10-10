@@ -12,6 +12,8 @@ struct SolveToolOptions {
   std::filesystem::path game;
   double time_limit = 10.0;
   uint64_t node_limit = 0;
+  double max_time = 0;  // SolveOptions::max_time_s (adaptive budget)
+  int min_tiers = 0;    // SolveOptions::min_proven_tiers
   int threads = 1;  // search threads (one engine each)
   int beam = -1;    // beam width (-1: the solver's default)
   int sample = 0;  // directory: this many evenly spaced boards (0 = all)

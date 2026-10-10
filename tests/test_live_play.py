@@ -105,10 +105,12 @@ PLAN = [
 
 
 class FakeEngine:
-    def __init__(self, plan=PLAN, after_enemy=None):
+    def __init__(self, plan=PLAN, after_enemy=None, enemy_phase=None):
         self.plan = plan
         self.after_enemy = after_enemy
+        self.enemy_phase = enemy_phase or {"mission_ended": False}
         self.solves = []
+        self.budgets = []  # (time_limit, max_time, min_tiers) per solve
         self.predicts = []
 
     @staticmethod
@@ -126,12 +128,13 @@ class FakeEngine:
         enemy = copy.deepcopy(self.after_enemy(b)) if self.after_enemy else compact(b)
         plan = [{"uid": s["uid"], "description": f"#{s['uid']} {s['sub']}"} for s in steps]
         return {"ok": True, "plan": plan, "steps": out, "refused": -1, "start": compact(st),
-                "after_player": after, "after_enemy": enemy, "enemy_phase": {"mission_ended": False},
+                "after_player": after, "after_enemy": enemy, "enemy_phase": copy.deepcopy(self.enemy_phase),
                 "warnings": []}
 
-    def solve(self, path, time_limit):
+    def solve(self, path, time_limit, max_time=0, min_tiers=0):
         st = self._state(path)
         self.solves.append(st)
+        self.budgets.append((time_limit, max_time, min_tiers))
         active = {u["uid"] for u in st["units"] if u.get("team") == 1 and u.get("active")}
         moved = {u["uid"] for u in st["units"] if u.get("moved")}
         steps = [s for s in self.plan if s["uid"] in active and not (s["sub"] == "move" and s["uid"] in moved)]
@@ -375,6 +378,20 @@ class LivePlayTest(unittest.TestCase):
         solve = json.loads((self.run_dir() / "m00_turn_01_solve.json").read_text())
         self.assertTrue(solve["data"]["partial_re_solve"])
 
+    def test_solves_use_the_adaptive_budget_by_default(self):
+        self.bridge()
+        eng = FakeEngine()
+        self.assertEqual(self.run_cmd(["turn"], eng), 0)
+        self.assertEqual(eng.budgets, [(10.0, 120.0, lp.MIN_TIERS)])
+        self.assertEqual(lp.MIN_TIERS, 5)
+
+    def test_re_solves_keep_the_budget_settings(self):
+        self.bridge()
+        self.fb.damage = 2  # a mismatch: re-solve
+        eng = FakeEngine()
+        self.assertEqual(self.run_cmd(["turn", "--time", "30", "--max-time", "90", "--min-tiers", "3"], eng), 1)
+        self.assertEqual(eng.budgets, [(30.0, 90.0, 3), (30.0, 90.0, 3)])
+
     def test_native_only_execution(self):
         self.bridge()
         self.assertEqual(self.run_cmd(["turn"]), 0)
@@ -465,6 +482,35 @@ class LivePlayTest(unittest.TestCase):
         self.assertIn("TankMech#1 hp: engine 3, game 1", text)
         self.assertIn("Firefly1#101", text)
         self.assertNotIn("Scorpion1#100: engine at", text)
+
+    @staticmethod
+    def building_not_resisted(st):
+        """The engine's worst case: the building at (2, 2) (F6) does not resist."""
+        b = compact(st)
+        b["buildings"] = [dict(x, hp=0) if (x["x"], x["y"]) == (2, 2) else x for x in b["buildings"]]
+        b["grid_power"] -= 1
+        return b
+
+    def test_end_turn_grid_defense_resist_is_a_note(self):
+        self.bridge()
+        phase = {"mission_ended": False, "chance_nodes": 1, "grid_defense": [{"point": [2, 2], "amount": 1}]}
+        out = []
+        orig = lp.say
+        lp.say = lambda m="": out.append(m)
+        try:
+            code = self.run_cmd(["end-turn"], FakeEngine(after_enemy=self.building_not_resisted,
+                                                         enemy_phase=phase))
+        finally:
+            lp.say = orig
+        text = "\n".join(out)
+        self.assertEqual(code, 0, text)
+        self.assertIn("Grid Defense resisted at F6", text)
+        self.assertIn("enemy phase: MATCH", text)
+
+    def test_end_turn_unexplained_building_hp_still_stops(self):
+        self.bridge()
+        # No chance node in the prediction: the same difference is an anomaly.
+        self.assertEqual(self.run_cmd(["end-turn"], FakeEngine(after_enemy=self.building_not_resisted)), 1)
 
     def test_end_turn_refuses_outside_a_player_turn(self):
         st = base_state()
@@ -588,4 +634,120 @@ class DiffBoardsTest(unittest.TestCase):
         want = self.board([self.vek(7, 1)])
         got = self.board([self.vek(7, 3, acid=True)])
         diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True, acid_pools=frozenset())
+        self.assertEqual(len(diffs), 1)
+
+    # Grid Defense: the engine predicts every roll as not resisted (worst case).
+    # Live 2026-10-09 m22 turn 3: G6 predicted 1 HP, game 2; grid 4, game 5.
+
+    @staticmethod
+    def building(x, y, hp):
+        return {"x": x, "y": y, "hp": hp}
+
+    def resist_case(self, game_hp=2, game_grid=5, tiles=None, before_hp=2):
+        want = self.board([], [self.building(2, 1, 1), self.building(5, 5, 2)], grid=4)
+        got = self.board([], [self.building(2, 1, game_hp), self.building(5, 5, 2)], grid=game_grid)
+        before = self.board([], [self.building(2, 1, before_hp), self.building(5, 5, 2)], grid=5)
+        return lp.diff_boards(want, got, set(), enemy_phase=True, resist={"before": before, "tiles": tiles})
+
+    def test_grid_defense_resist_is_a_note(self):
+        diffs, notes = self.resist_case()
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("Grid Defense resisted at G6" in n for n in notes), notes)
+        self.assertTrue(any("grid: engine 4, game 5" in n for n in notes), notes)
+
+    def test_grid_defense_resist_on_a_listed_roll_tile(self):
+        diffs, _ = self.resist_case(tiles={(2, 1)})
+        self.assertEqual(diffs, [])
+        diffs, _ = self.resist_case(tiles={(5, 5)})  # no roll on G6: not a resist
+        self.assertEqual(len(diffs), 2)
+
+    def test_resist_with_a_destroyed_building(self):
+        want = self.board([], [], grid=4)
+        got = self.board([], [self.building(2, 1, 1)], grid=5)
+        before = self.board([], [self.building(2, 1, 1)], grid=5)
+        diffs, notes = lp.diff_boards(want, got, set(), enemy_phase=True, resist={"before": before, "tiles": None})
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("engine gone, game 1" in n for n in notes), notes)
+
+    def test_building_differences_without_chance_nodes_stop(self):
+        want = self.board([], [self.building(2, 1, 1)], grid=4)
+        got = self.board([], [self.building(2, 1, 2)], grid=5)
+        diffs, _ = lp.diff_boards(want, got, set(), enemy_phase=True)
+        self.assertEqual(len(diffs), 2)
+
+    def test_resist_that_does_not_explain_the_grid_stops(self):
+        diffs, _ = self.resist_case(game_grid=6)  # one HP kept, two grid
+        self.assertEqual(len(diffs), 2)
+        diffs, _ = self.resist_case(game_grid=4)  # HP kept but grid lost anyway
+        self.assertEqual(len(diffs), 1)
+
+    def test_building_above_its_hp_before_stops(self):
+        diffs, _ = self.resist_case(game_hp=2, before_hp=1)  # more HP than before the phase: not a resist
+        self.assertEqual(len(diffs), 2)
+
+    def test_building_lower_than_predicted_stops(self):
+        want = self.board([], [self.building(2, 1, 2)], grid=5)
+        got = self.board([], [self.building(2, 1, 1)], grid=4)
+        before = self.board([], [self.building(2, 1, 2)], grid=5)
+        diffs, _ = lp.diff_boards(want, got, set(), enemy_phase=True, resist={"before": before, "tiles": None})
+        self.assertEqual(len(diffs), 2)
+
+    def test_resist_info_from_a_prediction(self):
+        self.assertIsNone(lp.resist_info({"enemy_phase": {"chance_nodes": 0}}))
+        r = lp.resist_info({"enemy_phase": {"chance_nodes": 1}, "after_player": {"buildings": []}})
+        self.assertIsNone(r["tiles"])
+        r = lp.resist_info({"enemy_phase": {"chance_nodes": 2, "grid_defense": [{"point": [2, 1], "amount": 1}]},
+                            "after_player": {"buildings": []}})
+        self.assertEqual(r["tiles"], {(2, 1)})
+
+    # A Soldier Psion emerging from a hidden spawn: every Vek +1 HP at once.
+    # Live 2026-10-10 m24 turn 1 (Jelly_Health1 from a spawn point).
+
+    @staticmethod
+    def unit(uid, type_, hp, x, y, team=6, mech=False, **kw):
+        return dict({"uid": uid, "type": type_, "hp": hp, "x": x, "y": y, "team": team, "mech": mech}, **kw)
+
+    def psion_case(self, psion=True, bonus=1, leader=1, psion_type="Jelly_Health1"):
+        known = {0, 566, 567}
+        want = self.board([self.unit(0, "JetMech", 4, 2, 3, team=1, mech=True),
+                           self.unit(566, "Digger2", 4, 4, 5), self.unit(567, "Leaper2", 3, 3, 1)])
+        got_units = [self.unit(0, "JetMech", 4, 2, 3, team=1, mech=True),
+                     self.unit(566, "Digger2", 4 + bonus, 4, 5), self.unit(567, "Leaper2", 3 + bonus, 3, 1)]
+        if psion:
+            extra = {"leader": leader} if leader else {}
+            got_units.append(self.unit(577, psion_type, 2, 6, 1, **extra))
+        return lp.diff_boards(want, self.board(got_units), known, enemy_phase=True)
+
+    def test_soldier_psion_emerging_is_a_note(self):
+        diffs, notes = self.psion_case()
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("Jelly_Health1#577 emerged" in n and "Digger2#566" in n for n in notes), notes)
+
+    def test_psion_without_the_leader_field_by_type(self):
+        diffs, _ = self.psion_case(leader=None)
+        self.assertEqual(diffs, [])
+        diffs, _ = self.psion_case(leader=None, psion_type="Jelly_Boss")
+        self.assertEqual(diffs, [])
+
+    def test_vek_hp_without_a_new_health_psion_stops(self):
+        diffs, _ = self.psion_case(psion=False)
+        self.assertEqual(len(diffs), 2)
+        diffs, _ = self.psion_case(leader=4, psion_type="Jelly_Regen1")  # regen psion: no HP on arrival
+        self.assertEqual(len(diffs), 2)
+
+    def test_psion_bonus_other_than_one_stops(self):
+        diffs, _ = self.psion_case(bonus=2)
+        self.assertEqual(len(diffs), 2)
+
+    def test_psion_does_not_explain_mech_hp(self):
+        want = self.board([self.unit(0, "JetMech", 3, 2, 3, team=1, mech=True)])
+        got = self.board([self.unit(0, "JetMech", 4, 2, 3, team=1, mech=True),
+                          self.unit(577, "Jelly_Health1", 2, 6, 1, leader=1)])
+        diffs, _ = lp.diff_boards(want, got, {0}, enemy_phase=True)
+        self.assertEqual(len(diffs), 1)
+
+    def test_psion_already_predicted_explains_nothing(self):
+        want = self.board([self.unit(566, "Digger2", 4, 4, 5), self.unit(577, "Jelly_Health1", 2, 6, 1, leader=1)])
+        got = self.board([self.unit(566, "Digger2", 5, 4, 5), self.unit(577, "Jelly_Health1", 2, 6, 1, leader=1)])
+        diffs, _ = lp.diff_boards(want, got, {566}, enemy_phase=True)
         self.assertEqual(len(diffs), 1)

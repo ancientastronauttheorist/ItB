@@ -14,6 +14,20 @@
 // computed, (b) the min/max rules above and (c) the tier upper bounds of
 // `TierBounds` (argued there). A search that runs to the end without being
 // cut by the budget therefore proves that no plan beats the incumbent.
+//
+// Adaptive budget (SolveOptions::min_proven_tiers = k, max_time_s). Before
+// the search completes, the root's interval includes the tier bound of its
+// root (every unsearched child may still reach it), so the best plan is
+// proven in its first k tiers as soon as its first k components equal
+// those of ub(root) (or the search completed). That is the stop check at
+// time_limit_s: a flag set by improve() when an incumbent reaches it. If it
+// is not set, the search goes on with every alpha raised to the incumbent
+// with tiers k.. set to INT32_MAX: a node or chance outcome that cannot beat
+// the incumbent's first k tiers is cut, including the ones that would only
+// improve later tiers. Raising alpha only adds cutoffs, and a cut always
+// reports a sound interval (hi <= alpha, or the tier bound), so every
+// interval stays sound. A search completed this way has a root bound whose
+// first k tiers equal the incumbent's: proven in k tiers, not optimal.
 #include "itb/solver.hpp"
 
 #include <algorithm>
@@ -59,6 +73,21 @@ struct Interval {
   Score hi = kHigh;
   bool exact() const { return lo == hi; }
 };
+
+// The first `tiers` components of a and b are equal.
+bool same_prefix(const Score& a, const Score& b, int tiers) {
+  for (int i = 0; i < tiers; ++i) {
+    if (a.v[static_cast<size_t>(i)] != b.v[static_cast<size_t>(i)]) return false;
+  }
+  return true;
+}
+
+// s with every tier from `tiers` on at its maximum: the least score that a
+// plan must beat to improve on s in its first `tiers` tiers.
+Score raised(Score s, int tiers) {
+  for (int i = std::max(0, tiers); i < kScoreKeys; ++i) s.v[static_cast<size_t>(i)] = INT32_MAX;
+  return s;
+}
 
 double seconds_since(Clock::time_point t) {
   return std::chrono::duration<double>(Clock::now() - t).count();
@@ -452,6 +481,9 @@ struct Shared {
     base = ctx;
     base.events = nullptr;
     base.log = nullptr;
+    adaptive = opt.min_proven_tiers > 0 && opt.time_limit_s > 0 && opt.max_time_s > opt.time_limit_s;
+    tiers = std::clamp(opt.min_proven_tiers, 0, kScoreKeys);
+    root_ub = bounds.of(r);
   }
   const Board& root;
   const SolveOptions& o;
@@ -466,6 +498,13 @@ struct Shared {
   std::atomic<bool> completed{false};  // some thread finished the root search
   std::atomic<uint64_t> nodes{0};
   std::atomic<bool> chance_exact{true};
+
+  // Adaptive budget (solver.cpp header).
+  bool adaptive = false;
+  int tiers = 0;                          // min_proven_tiers, clamped
+  Score root_ub;                          // bounds.of(root)
+  std::atomic<bool> tiers_proven{false};  // the incumbent meets root_ub in the first `tiers`
+  std::atomic<bool> prefix_mode{false};   // past time_limit_s, proving the first `tiers` only
 
   std::mutex mu;  // the incumbent and the warnings
   bool has_incumbent = false;
@@ -537,7 +576,16 @@ class Worker {
     if (aborted_) return true;
     bool spent = false;
     if (o_.node_limit && sh_.nodes.load(std::memory_order_relaxed) >= o_.node_limit) spent = true;
-    if (o_.time_limit_s > 0 && seconds_since(sh_.start) >= o_.time_limit_s) spent = true;
+    if (o_.time_limit_s > 0) {
+      const double t = seconds_since(sh_.start);
+      if (t >= o_.time_limit_s) {
+        if (!sh_.adaptive || t >= o_.max_time_s || sh_.tiers_proven.load(std::memory_order_relaxed)) {
+          spent = true;
+        } else if (!sh_.prefix_mode.load(std::memory_order_relaxed)) {
+          sh_.prefix_mode.store(true);
+        }
+      }
+    }
     if (spent) sh_.stop = true;
     if (sh_.stop.load(std::memory_order_relaxed)) aborted_ = true;
     return aborted_;
@@ -552,6 +600,7 @@ class Worker {
     sh_.best_line = path_;
     sh_.best_line.insert(sh_.best_line.end(), tail.begin(), tail.end());
     sh_.best_plan_s = seconds_since(sh_.start);
+    if (sh_.adaptive && same_prefix(v, sh_.root_ub, sh_.tiers)) sh_.tiers_proven = true;
     sh_.version.fetch_add(1, std::memory_order_release);
   }
 
@@ -568,7 +617,9 @@ class Worker {
 
   Score alpha_of(const Score& alpha) {
     Score inc;
-    return incumbent(inc) ? std::max(alpha, inc) : alpha;
+    if (!incumbent(inc)) return alpha;
+    if (sh_.prefix_mode.load(std::memory_order_relaxed)) inc = raised(inc, sh_.tiers);
+    return std::max(alpha, inc);
   }
 
   // E(B): the worst case of ending the turn on B.
@@ -1100,23 +1151,28 @@ SolveResult solve_turn(Engine& engine, const Board& board, const TurnContext& ct
   out.stats.threads = static_cast<int>(engines.size());
   out.chance_exact = sh.chance_exact;
   out.timed_out = !sh.completed;
+  out.extended = sh.prefix_mode;
   out.warnings = sh.warnings;
   if (!sh.has_incumbent) return out;
   out.best.actions = to_player_actions(sh.best_line);
   out.best.worst_case = sh.incumbent;
   out.best.contingent =
       std::any_of(sh.best_line.begin(), sh.best_line.end(), [](const SubAction& a) { return a.chance; });
-  out.proven_optimal = sh.completed && out.chance_exact;
+  // A search completed while proving only the first tiers proves those.
+  out.proven_optimal = sh.completed && out.chance_exact && !out.extended;
   // Every root interval is sound; the tightest bound wins. A completed
-  // search has root.hi <= the incumbent (solver.cpp header).
+  // search has root.hi <= the incumbent (solver.cpp header), or with the
+  // adaptive budget, <= it in the tiers being proven.
+  const Score claimed = out.extended ? raised(sh.incumbent, sh.tiers) : sh.incumbent;
   Score upper = kHigh;
   for (size_t i = 0; i < workers.size(); ++i) {
-    if (workers[i]->complete() && roots[i].hi > sh.incumbent) {
+    if (workers[i]->complete() && roots[i].hi > claimed) {
       out.warnings.push_back("search completed with a root bound above the plan: " + roots[i].hi.describe());
     }
     upper = std::min(upper, roots[i].hi);
   }
   upper = std::max(upper, sh.incumbent);
+  if (out.extended && sh.completed && out.chance_exact && upper == sh.incumbent) out.proven_optimal = true;
   if (out.proven_optimal) upper = sh.incumbent;
   out.upper_bound = upper;
   int k = 0;

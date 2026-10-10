@@ -65,6 +65,15 @@ class Engine;
 struct SolveOptions {
   double time_limit_s = 10.0;  // <= 0: no limit
   uint64_t node_limit = 0;     // search nodes expanded; 0 = no limit
+  // Adaptive budget (off unless both are set and max_time_s > time_limit_s
+  // > 0). At time_limit_s the search stops only if the best plan is already
+  // proven optimal in its first `min_proven_tiers` score tiers (ScoreKey
+  // order; 5 = grid through objectives failed). Otherwise it goes on, now
+  // proving only those tiers (a plan that merely ties the best plan on them
+  // is cut), until they are proven or max_time_s. See solver.cpp "Adaptive
+  // budget".
+  int min_proven_tiers = 0;
+  double max_time_s = 0;
   // Repair skill per unit uid (Engine::repair_skill of its pilot). Units not
   // listed use Skill_Repair.
   std::vector<std::pair<int32_t, std::string>> repair_skills;
@@ -143,7 +152,13 @@ struct SolveResult {
   // Every chance node was enumerated exactly (false: a sampled death-effect
   // seed or a chance tree over max_chance_leaves was involved).
   bool chance_exact = true;
+  // The search was cut by its budget (time or nodes) before it completed.
+  // With the adaptive budget a search that completed its tier proof is not
+  // timed out, yet only proven in those tiers (proven_components).
   bool timed_out = false;
+  // Adaptive budget: the search ran past time_limit_s, proving only the
+  // first min_proven_tiers tiers from then on.
+  bool extended = false;
   std::vector<std::string> warnings;
   SolveStats stats;
 };

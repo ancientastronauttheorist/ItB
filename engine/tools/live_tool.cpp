@@ -164,11 +164,19 @@ json phase_json(const Board& start, const Board& end, const PhaseResult& pr) {
   }
   json emerged = json::array();
   for (Point p : pr.emerged_unknown) emerged.push_back(point_json(p));
+  // Grid Defense rolls (the prediction takes the default: not resisted).
+  json grid_defense = json::array();
+  for (const ChanceRecord& c : pr.chances) {
+    if (c.kind == ChanceKind::GridDefense) {
+      grid_defense.push_back(json{{"point", point_json(c.point)}, {"amount", c.amount}});
+    }
+  }
   return json{{"environment", pr.environment},
               {"exact", pr.exact},
               {"quiescent", pr.quiescent},
               {"mission_ended", pr.mission_ended},
               {"chance_nodes", pr.chances.size()},
+              {"grid_defense", grid_defense},
               {"timing_sensitive", pr.timing_sensitive()},
               {"lua_errors", pr.lua_errors},
               {"unapplied_lua_writes", pr.unapplied.size()},
@@ -327,18 +335,21 @@ json live_board_json(const Board& b) {
   std::sort(ps.begin(), ps.end(), [](const Pawn* a, const Pawn* c) { return a->uid < c->uid; });
   json units = json::array();
   for (const Pawn* p : ps) {
-    units.push_back(json{{"uid", p->uid},
-                         {"type", std::string(symbol_name(p->type))},
-                         {"x", p->pos.x},
-                         {"y", p->pos.y},
-                         {"hp", static_cast<int>(p->hp)},
-                         {"team", static_cast<int>(p->team)},
-                         {"mech", p->mech},
-                         {"fire", p->fire},
-                         {"acid", p->acid},
-                         {"frozen", p->frozen},
-                         {"shield", p->shield},
-                         {"web", p->webbed}});
+    json u{{"uid", p->uid},
+           {"type", std::string(symbol_name(p->type))},
+           {"x", p->pos.x},
+           {"y", p->pos.y},
+           {"hp", static_cast<int>(p->hp)},
+           {"team", static_cast<int>(p->team)},
+           {"mech", p->mech},
+           {"fire", p->fire},
+           {"acid", p->acid},
+           {"frozen", p->frozen},
+           {"shield", p->shield},
+           {"web", p->webbed}};
+    // A psion's mutation (Leader: 1 Soldier = +1 HP to every Vek, ...).
+    if (p->leader != Leader::None) u["leader"] = static_cast<int>(p->leader);
+    units.push_back(std::move(u));
   }
   return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units}};
 }
@@ -403,6 +414,8 @@ json LiveSession::handle(const json& request) {
         SolveOptions so;
         so.time_limit_s = request.value("time_limit", so.time_limit_s);
         so.node_limit = request.value("node_limit", so.node_limit);
+        so.max_time_s = request.value("max_time", so.max_time_s);
+        so.min_proven_tiers = request.value("min_tiers", so.min_proven_tiers);
         const int beam = request.value("beam_width", -1);
         if (beam >= 0) so.beam_width = beam;
         so.repair_skills = l.repair_skills;
@@ -419,6 +432,7 @@ json LiveSession::handle(const json& request) {
         out["proven_components"] = r.proven_components;
         out["chance_exact"] = r.chance_exact;
         out["timed_out"] = r.timed_out;
+        out["extended"] = r.extended;
         out["contingent"] = r.best.contingent;
         out["stats"] = stats_json(r.stats);
         warnings = r.warnings;
@@ -442,7 +456,8 @@ json LiveSession::handle(const json& request) {
 namespace {
 
 int usage() {
-  std::cerr << "usage: itb_live [--game DIR] (solve <state.json> [--time S] [--nodes N] [--threads N] [--beam W] | "
+  std::cerr << "usage: itb_live [--game DIR] (solve <state.json> [--time S] [--max-time S --min-tiers K] [--nodes N] "
+               "[--threads N] [--beam W] | "
                "predict <state.json> --plan JSON|@FILE | board <state.json> | serve [--threads N]) "
                "[--out FILE] [--pretty]\n";
   return 2;
@@ -504,6 +519,10 @@ int run_live(int argc, char** argv) {
         request["time_limit"] = std::stod(args[++i]);
       } else if (args[i] == "--nodes" && more && cmd == "solve") {
         request["node_limit"] = std::stoull(args[++i]);
+      } else if (args[i] == "--max-time" && more && cmd == "solve") {
+        request["max_time"] = std::stod(args[++i]);
+      } else if (args[i] == "--min-tiers" && more && cmd == "solve") {
+        request["min_tiers"] = std::stoi(args[++i]);
       } else if (args[i] == "--beam" && more && cmd == "solve") {
         request["beam_width"] = std::stoi(args[++i]);
       } else if (args[i] == "--threads" && more && (cmd == "solve" || cmd == "serve")) {
