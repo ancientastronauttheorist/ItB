@@ -1166,14 +1166,16 @@ HostContext& host_context(lua_State* L) {
   return *ctx;
 }
 
-void push_pawn(lua_State* L, const Pawn* p) {
-  if (!p) {
+void push_pawn(lua_State* L, const Pawn* p) { push_pawn_uid(L, p ? p->uid : -1); }
+
+void push_pawn_uid(lua_State* L, int32_t uid) {
+  if (uid < 0) {
     lua_pushnil(L);
     return;
   }
   auto* in = static_cast<Instance*>(lua_newuserdata(L, sizeof(Instance)));
   *in = Instance{Cls::BoardPawn, Kind::Pawn, nullptr, nullptr,
-                 static_cast<uintptr_t>(static_cast<uint32_t>(p->uid)), nullptr, nullptr};
+                 static_cast<uintptr_t>(static_cast<uint32_t>(uid)), nullptr, nullptr};
   finish_instance(L);
 }
 

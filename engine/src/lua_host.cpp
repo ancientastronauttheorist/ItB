@@ -109,6 +109,23 @@ struct LuaHost::Impl {
   lua_State* L = nullptr;
   HostContext ctx;
   std::unordered_map<std::string, std::string> passive_of;  // weapon -> Lua Passive
+  bool count_calls = false;
+  std::unordered_map<std::string, uint64_t> call_counts;  // "table:method" -> calls
+  // The Lua `Pawn` global is assigned lazily: set_selected records the pawn
+  // (ctx.selected) and the SetPawn call runs right before the next Lua code
+  // does (flush_selected). Nothing but Lua code reads the global, so the
+  // deferral is invisible, and repeated selections cost one call.
+  bool select_pending = false;
+  // GetTwoClick per weapon table: the CreateClass getter of a static table
+  // field, so one successful call answers for good.
+  std::unordered_map<std::string, bool> two_click;
+  // Pawn types whose GetDeathEffect is the default Pawn:GetDeathEffect (an
+  // empty SkillEffect, no randomness): the call is skipped (death_effect_raw).
+  int default_death_ref = LUA_NOREF;
+  std::unordered_map<Symbol, bool> default_death;
+  // sScript chunks, compiled once (registry refs): a chunk is a plain
+  // function of the globals, so running the cached one is running the code.
+  std::unordered_map<std::string, int> chunks;
 };
 
 namespace {
@@ -149,12 +166,19 @@ void fail(LuaCall& call, std::string_view obj, std::string_view func, const std:
   }
 }
 
-// Lua SetPawn(p): what selecting a pawn does natively.
+// Lua SetPawn(p): what selecting a pawn does natively. The Lua global is
+// assigned before the next Lua code runs (flush_selected).
 void set_selected(LuaHost::Impl& im, const Pawn* p) {
-  lua_State* L = im.L;
   im.ctx.selected = p ? p->uid : -1;
+  im.select_pending = true;
+}
+
+void flush_selected(LuaHost::Impl& im) {
+  if (!im.select_pending) return;
+  im.select_pending = false;
+  lua_State* L = im.L;
   lua_getglobal(L, "SetPawn");
-  lua::push_pawn(L, p);
+  lua::push_pawn_uid(L, im.ctx.selected);
   if (lua_pcall(L, 1, 0, 0) != 0) lua_pop(L, 1);
 }
 
@@ -167,6 +191,27 @@ bool call_method(LuaHost::Impl& im, std::string_view obj, const char* func, LuaC
   if (im.ctx.depth > kMaxDepth) {
     fail(call, obj, func, "native -> Lua calls nested too deeply");
     return false;
+  }
+  flush_selected(im);
+  if (im.count_calls) {
+    std::string key(obj);
+    key += ':';
+    key += func;
+    // The Lua function that runs, as source:line (inherited methods share it).
+    const int top = lua_gettop(L);
+    lua_getglobal(L, key.substr(0, obj.size()).c_str());
+    if (lua_istable(L, -1)) {
+      lua_getfield(L, -1, func);
+      lua_Debug ar;
+      if (lua_isfunction(L, -1) && lua_getinfo(L, ">S", &ar)) {
+        key += " @";
+        key += ar.short_src;
+        key += ':';
+        key += std::to_string(ar.linedefined);
+      }
+    }
+    lua_settop(L, top);
+    ++im.call_counts[key];
   }
   lua_getglobal(L, "CallMethod");
   lua_pushlstring(L, obj.data(), obj.size());
@@ -251,6 +296,54 @@ LuaSkillEffect skill_effect_impl(LuaHost::Impl& im, std::string_view weapon, Poi
 
 LuaHost::Impl& impl_of(lua_State* L) { return *lua::host_context(L).impl; }
 
+// Whether CallMethod(type, "GetDeathEffect", tile) runs the default
+// Pawn:GetDeathEffect (global.lua: `return SkillEffect()`), which has no
+// other effect. CallMethod looks names containing "Mission" up elsewhere
+// first, so those always go to Lua.
+bool uses_default_death_effect(LuaHost::Impl& im, Symbol type) {
+  if (im.default_death_ref == LUA_NOREF) return false;
+  if (auto it = im.default_death.find(type); it != im.default_death.end()) return it->second;
+  lua_State* L = im.L;
+  const std::string name(symbol_name(type));
+  bool is = false;
+  if (!name.empty() && name.find("Mission") == std::string::npos) {
+    const int top = lua_gettop(L);
+    lua_getglobal(L, name.c_str());
+    if (lua_istable(L, -1)) {
+      lua_getfield(L, -1, "GetDeathEffect");
+      lua_rawgeti(L, LUA_REGISTRYINDEX, im.default_death_ref);
+      is = lua_rawequal(L, -1, -2) != 0;
+    }
+    lua_settop(L, top);
+  }
+  im.default_death.emplace(type, is);
+  return is;
+}
+
+// Finds the default Pawn:GetDeathEffect after loading (before anything
+// assigns the `Pawn` global) and checks that it returns an empty
+// SkillEffect without drawing numbers; otherwise the shortcut stays off.
+void find_default_death_effect(LuaHost::Impl& im) {
+  lua_State* L = im.L;
+  const int top = lua_gettop(L);
+  lua_getglobal(L, "Pawn");
+  if (lua_istable(L, -1)) {
+    lua_getfield(L, -1, "GetDeathEffect");
+    if (lua_isfunction(L, -1)) {
+      lua_pushvalue(L, -1);
+      const uint64_t draws = lua::rng(L).draws();
+      if (lua_pcall(L, 0, 1, 0) == 0 && lua::rng(L).draws() == draws) {
+        Instance* in = lua::to_instance(L, -1, Cls::SkillEffect);
+        if (in && *static_cast<LuaSkillEffect*>(lua::resolve(in)) == LuaSkillEffect{}) {
+          lua_pop(L, 1);
+          im.default_death_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        }
+      }
+    }
+  }
+  lua_settop(L, top);
+}
+
 bool lua_starts_with(const std::string& s, const std::string& prefix) {
   return s.compare(0, prefix.size(), prefix) == 0;
 }
@@ -309,6 +402,7 @@ int host_deploy_score(lua_State* L, Point p) {
   scratch.add_pawn(wall);
   LuaCall nested;
   Scope scope(im, &scratch, im.ctx.call ? im.ctx.call : &nested);
+  flush_selected(im);
   lua_getglobal(L, "ScorePositioning");
   push_point(L, p);
   push_pawn(L, scratch.find_pawn(uid));
@@ -392,6 +486,7 @@ std::unique_ptr<LuaHost> LuaHost::create(const std::filesystem::path& game_root,
       game_root, &run, [&im](lua_State* L) { lua::install_host_bindings(L, &im.ctx); });
   im.L = im.env->L();
   lua_State* L = im.L;
+  find_default_death_effect(im);
   lua::rng(L).srand(options.seed);
 
   // In combat a game is running: CallMethod looks names containing
@@ -472,18 +567,33 @@ SkillEffect LuaHost::queued_effect(const Board& board, const Pawn& shooter, std:
 }
 
 bool LuaHost::is_two_click(std::string_view weapon, LuaCall* call) {
+  const std::string name(weapon);
+  if (auto it = impl_->two_click.find(name); it != impl_->two_click.end()) return it->second;
   LuaCall local;
   LuaCall& c = call ? *call : local;
-  Scope scope(*impl_, nullptr, &c);
+  LuaCall probe;
+  Scope scope(*impl_, nullptr, &probe);
   // LuaData::GetBool("TwoClick"): false unless the table and getter exist.
   lua_State* L = impl_->L;
-  const std::string name(weapon);
+  flush_selected(*impl_);
   lua_getglobal(L, name.c_str());
   if (!lua_istable(L, -1)) return false;
   lua_getfield(L, -1, "GetTwoClick");
   if (!lua_toboolean(L, -1)) return false;
-  if (!call_method(*impl_, weapon, "GetTwoClick", c, [](lua_State*) { return 0; })) return false;
-  return lua_toboolean(L, -1) != 0;
+  if (!call_method(*impl_, weapon, "GetTwoClick", probe, [](lua_State*) { return 0; })) {
+    c.ok = false;
+    if (c.error.empty()) c.error = probe.error;
+    return false;
+  }
+  const bool two = lua_toboolean(L, -1) != 0;
+  // A clean call (no writes, no output) of a table field getter: cache it.
+  if (probe.ok && probe.writes.empty() && probe.console.empty()) {
+    impl_->two_click.emplace(name, two);
+  } else {
+    c.writes.insert(c.writes.end(), probe.writes.begin(), probe.writes.end());
+    c.console.insert(c.console.end(), probe.console.begin(), probe.console.end());
+  }
+  return two;
 }
 
 std::vector<Point> LuaHost::second_target_area(const Board& board, const Pawn& shooter,
@@ -576,6 +686,8 @@ LuaSkillEffect LuaHost::death_effect_raw(const Board& board, const Pawn& dying,
   Scope scope(*impl_, &board, &c);
   set_selected(*impl_, selected);
   if (seed) lua::rng(impl_->L).srand(*seed);
+  // The default Pawn:GetDeathEffect returns an empty SkillEffect.
+  if (uses_default_death_effect(*impl_, dying.type)) return {};
   const std::string type(symbol_name(dying.type));
   LuaSkillEffect se;
   if (!call_method(*impl_, type, "GetDeathEffect", c, [&](lua_State* L) {
@@ -598,12 +710,34 @@ LuaCall LuaHost::run_script(const Board& board, std::string_view code, const Paw
   Scope scope(*impl_, &board, &c);
   if (selected) set_selected(*impl_, selected);
   lua_State* L = impl_->L;
+  flush_selected(*impl_);
   // LuaEnv::DirectLua: chunk name "line", errors returned (and ignored in game).
-  if (luaL_loadbuffer(L, code.data(), code.size(), "line") != 0 || lua_pcall(L, 0, 0, 0) != 0) {
+  const std::string key(code);
+  if (auto it = impl_->chunks.find(key); it != impl_->chunks.end()) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, it->second);
+  } else if (luaL_loadbuffer(L, code.data(), code.size(), "line") != 0) {
+    c.ok = false;
+    c.error = lua::to_str(L, -1);
+    return c;
+  } else {
+    lua_pushvalue(L, -1);
+    impl_->chunks.emplace(key, luaL_ref(L, LUA_REGISTRYINDEX));
+  }
+  if (lua_pcall(L, 0, 0, 0) != 0) {
     c.ok = false;
     c.error = lua::to_str(L, -1);
   }
   return c;
+}
+
+void LuaHost::select(const Pawn* pawn) { set_selected(*impl_, pawn); }
+
+void LuaHost::set_call_counting(bool on) { impl_->count_calls = on; }
+
+std::vector<std::pair<std::string, uint64_t>> LuaHost::call_counts() const {
+  std::vector<std::pair<std::string, uint64_t>> out(impl_->call_counts.begin(), impl_->call_counts.end());
+  std::sort(out.begin(), out.end());
+  return out;
 }
 
 void LuaHost::seed(uint32_t s) { lua::rng(impl_->L).srand(s); }
@@ -641,7 +775,9 @@ std::vector<std::string> LuaHost::weapon_ids() const {
 namespace {
 
 // Pushes table[field] (through __index) or returns false.
-bool push_field(lua_State* L, std::string_view table, std::string_view field) {
+bool push_field(LuaHost::Impl& im, std::string_view table, std::string_view field) {
+  lua_State* L = im.L;
+  flush_selected(im);
   const std::string t(table), f(field);
   lua_getglobal(L, t.c_str());
   if (!lua_istable(L, -1)) {
@@ -657,7 +793,7 @@ bool push_field(lua_State* L, std::string_view table, std::string_view field) {
 
 std::optional<std::string> LuaHost::lua_string(std::string_view table, std::string_view field) const {
   lua_State* L = impl_->L;
-  if (!push_field(L, table, field)) return std::nullopt;
+  if (!push_field(*impl_, table, field)) return std::nullopt;
   std::optional<std::string> v;
   if (lua_type(L, -1) == LUA_TSTRING) v = lua::to_str(L, -1);
   lua_pop(L, 1);
@@ -666,7 +802,7 @@ std::optional<std::string> LuaHost::lua_string(std::string_view table, std::stri
 
 std::optional<double> LuaHost::lua_number(std::string_view table, std::string_view field) const {
   lua_State* L = impl_->L;
-  if (!push_field(L, table, field)) return std::nullopt;
+  if (!push_field(*impl_, table, field)) return std::nullopt;
   std::optional<double> v;
   if (lua_type(L, -1) == LUA_TNUMBER) v = lua_tonumber(L, -1);
   lua_pop(L, 1);
@@ -675,7 +811,7 @@ std::optional<double> LuaHost::lua_number(std::string_view table, std::string_vi
 
 std::optional<bool> LuaHost::lua_bool(std::string_view table, std::string_view field) const {
   lua_State* L = impl_->L;
-  if (!push_field(L, table, field)) return std::nullopt;
+  if (!push_field(*impl_, table, field)) return std::nullopt;
   std::optional<bool> v;
   if (lua_type(L, -1) == LUA_TBOOLEAN) v = lua_toboolean(L, -1) != 0;
   lua_pop(L, 1);

@@ -19,6 +19,7 @@ struct SolveToolOptions {
   int shards = 1;
   bool verbose = false;            // directory: print every plan
   std::filesystem::path json_out;  // one JSON line per board
+  bool lua_counts = false;         // print Lua calls by table and method at the end
 };
 
 int run_solve(const SolveToolOptions& options);

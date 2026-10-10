@@ -135,6 +135,33 @@ int run_solve(const SolveToolOptions& opt) {
   for (int i = 1; i < opt.threads; ++i) helpers.push_back(Engine::create(opt.game));
   std::vector<Engine*> helper_ptrs;
   for (auto& h : helpers) helper_ptrs.push_back(h.get());
+  if (opt.lua_counts) {
+    engine->lua().set_call_counting(true);
+    for (Engine* h : helper_ptrs) h->lua().set_call_counting(true);
+  }
+  // Lua calls by "table:method", summed over the engines (--lua-counts).
+  auto print_lua_counts = [&] {
+    if (!opt.lua_counts) return;
+    std::map<std::string, uint64_t> total;
+    for (const auto& [k, n] : engine->lua().call_counts()) total[k] += n;
+    for (Engine* h : helper_ptrs) {
+      for (const auto& [k, n] : h->lua().call_counts()) total[k] += n;
+    }
+    std::vector<std::pair<uint64_t, std::string>> by_count;
+    uint64_t sum = 0;
+    for (const auto& [k, n] : total) {
+      by_count.emplace_back(n, k);
+      sum += n;
+    }
+    std::sort(by_count.rbegin(), by_count.rend());
+    std::printf("\nLua calls: %llu\n", static_cast<unsigned long long>(sum));
+    uint64_t run = 0;
+    for (const auto& [n, k] : by_count) {
+      run += n;
+      std::printf("  %12llu %5.1f%% %5.1f%%  %s\n", static_cast<unsigned long long>(n), 100.0 * static_cast<double>(n) / static_cast<double>(std::max<uint64_t>(1, sum)),
+                  100.0 * static_cast<double>(run) / static_cast<double>(std::max<uint64_t>(1, sum)), k.c_str());
+    }
+  };
   std::vector<fs::path> files;
   if (fs::is_directory(opt.target)) {
     for (const auto& e : fs::recursive_directory_iterator(opt.target)) {
@@ -283,7 +310,10 @@ int run_solve(const SolveToolOptions& opt) {
     }
     rows.push_back(std::move(row));
   }
-  if (single) return rows.empty() ? 1 : 0;
+  if (single) {
+    print_lua_counts();
+    return rows.empty() ? 1 : 0;
+  }
 
   // Summary.
   std::vector<double> proof_times;
@@ -324,6 +354,7 @@ int run_solve(const SolveToolOptions& opt) {
               better, equal, worse, worse_proven, refused);
   for (const auto& [t, k] : better_tier) std::printf("  better in %-18s %d\n", t.c_str(), k);
   for (const auto& [t, k] : worse_tier) std::printf("  worse in  %-18s %d\n", t.c_str(), k);
+  print_lua_counts();
   return worse_proven == 0 ? 0 : 1;
 }
 

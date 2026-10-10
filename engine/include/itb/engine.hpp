@@ -76,6 +76,12 @@ struct ActionOptions {
   std::function<int(const ChanceRecord& node)> choose;
   std::vector<RulesEvent>* events = nullptr;
   std::vector<ResolveEvent>* log = nullptr;
+  // The skill's target area from the actor's tile on this same board, when
+  // the caller already has it: LuaHost::target_area for this actor and skill
+  // that raised no Lua error and drew no random numbers (so it does not
+  // depend on the random stream). The legality check uses it instead of
+  // asking Lua again.
+  const std::vector<Point>* known_area = nullptr;
 };
 
 enum class ActionStatus : uint8_t {

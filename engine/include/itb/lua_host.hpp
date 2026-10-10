@@ -27,6 +27,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -230,6 +231,16 @@ class LuaHost {
   // How many numbers scripts have drawn from the stream so far (seeding
   // does not count): a call that changes it used randomness.
   uint64_t rand_draws() const;
+
+  // Selects `pawn` (the Lua `Pawn` global, null = nil) exactly as the
+  // calls above do before running a skill: for callers that skip a call
+  // whose result they already have.
+  void select(const Pawn* pawn);
+
+  // Profiling: count every CallMethod(table, method) dispatched to Lua.
+  void set_call_counting(bool on);
+  // "table:method" -> calls since counting was switched on, sorted by key.
+  std::vector<std::pair<std::string, uint64_t>> call_counts() const;
 
   // Every global table derived from the Lua Skill class (all weapons,
   // including upgrade variants), sorted.
