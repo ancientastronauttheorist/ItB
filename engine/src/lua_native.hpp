@@ -65,6 +65,7 @@ void add_bounce(SE& se, Point p, int amount);
 void add_board_shake(SE& se, float seconds);
 void add_delay(SE& se, float seconds);
 void add_animation(SE& se, Point p, std::string anim, int flags);
+void add_sound(SE& se, std::string sound);
 
 // ---- Board queries (Board:...) -------------------------------------------------------
 

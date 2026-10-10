@@ -994,9 +994,7 @@ int se_add_burst(lua_State* L) {
 
 int se_add_sound(lua_State* L) {
   if (!match(L, {A::SE, A::Str})) no_overload("void AddSound(SkillEffect&,std::string)");
-  SD sd = template_sd();
-  sd.sSound = to_str(L, 2);
-  se_self(L).effect.push_back(std::move(sd));
+  native::add_sound(se_self(L), to_str(L, 2));
   return 0;
 }
 
@@ -1647,6 +1645,12 @@ void add_animation(SE& se, Point p, std::string anim, int flags) {
   sd.loc = p;
   sd.sAnimation = std::move(anim);
   sd.anim_flags = flags;
+  se.effect.push_back(std::move(sd));
+}
+
+void add_sound(SE& se, std::string sound) {
+  SD sd = template_sd();
+  sd.sSound = std::move(sound);
   se.effect.push_back(std::move(sd));
 }
 

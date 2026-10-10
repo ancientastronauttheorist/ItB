@@ -1147,6 +1147,107 @@ bool beetle_atk_effect(PortContext& c, const Fields& f, Point p1, Point p2, SE& 
   if (assigned) n::set_global_space_damage(c.L, "damage", global);
   return true;
 }
+// ---- batch 4: mission units -----------------------------------------------------------
+
+// Trapped_Explode:GetTargetArea(p1) (mission_trapped.lua): the neighbours that
+// are not buildings, then the tile itself.
+bool trapped_area(PortContext& c, const Fields&, Point p1, std::vector<Point>& out) {
+  for (int dir = 0; dir <= 3; ++dir) {
+    if (!n::is_building(c.board, p1 + vec(dir))) out.push_back(p1 + vec(dir));
+  }
+  out.push_back(p1);
+  return true;
+}
+
+// Trapped_Explode:GetSkillEffect(p1, p2): DAMAGE_DEATH on the tile and its
+// non-building neighbours (one SpaceDamage moved around).
+bool trapped_effect(PortContext& c, const Fields&, Point p1, Point, SE& ret) {
+  SD damage = n::space_damage(p1, kDamageDeath);
+  n::add_damage(ret, damage);
+  for (int dir = 0; dir <= 3; ++dir) {
+    if (!n::is_building(c.board, p1 + vec(dir))) {
+      damage.loc = p1 + vec(dir);
+      n::add_damage(ret, damage);
+    }
+  }
+  return true;
+}
+
+// Train_Move:GetTargetArea(point) (mission_train.lua): { point + VEC_UP }
+bool train_area(PortContext&, const Fields&, Point point, std::vector<Point>& out) {
+  out.assign(1, point + Point{0, -1});
+  return true;
+}
+
+// Train_Move:GetSkillEffect(p1, p2): a queued charge up to two tiles up,
+// crushing the first blocking tile (and hitting the one behind it).
+bool train_effect(PortContext& c, const Fields&, Point p1, Point p2, SE& ret) {
+  const Board& b = c.board;
+  std::vector<Point> q_move{p1};
+  Point current = p2;
+  for (int k = 1; k <= 2; ++k) {
+    if (n::is_blocked(b, current, kPathGround) && current.valid()) {
+      n::add_move(ret, true, q_move, kFullDelay, 2);
+      SD damage = n::space_damage(current, kDamageDeath);
+      n::add_queued_damage(ret, damage);
+      damage.sImageMark = "combat/arrow_hit.png";
+      damage.loc = current + Point{0, 1};
+      damage.iDamage = 1;
+      n::add_queued_damage(ret, damage);
+      return true;
+    }
+    if (current.valid()) q_move.push_back(current);
+    current = current + Point{0, -1};
+  }
+  n::add_move(ret, true, q_move, kFullDelay, 2);
+  return true;
+}
+
+// VIP_Truck_Move:GetTargetArea(point) (mission_civilians.lua):
+//   Board:GetReachable(point, 3, Pawn:GetPathProf())
+bool truck_area(PortContext& c, const Fields&, Point point, std::vector<Point>& out) {
+  if (!c.pawn) return false;
+  out = n::reachable(c.board, point, 3, n::path_prof(c.board, *c.pawn));
+  return true;
+}
+
+// VIP_Truck_Move:GetSkillEffect(p1, p2): a sound, then a walk along GetPath.
+bool truck_effect(PortContext& c, const Fields&, Point p1, Point p2, SE& ret) {
+  if (!c.pawn) return false;
+  n::add_sound(ret, "/support/vip_truck/move");
+  n::add_move(ret, false, n::path(c.board, p1, p2, n::path_prof(c.board, *c.pawn)), kFullDelay, 0);
+  return true;
+}
+
+// Archive_ArtShot:GetSkillEffect(p1, p2) (mission_artillery.lua): artillery
+// on p2 and the tile behind it. Fields: Damage, UpShot.
+bool archive_art_effect(PortContext&, const Fields& f, Point p1, Point p2, SE& ret) {
+  const int dir = n::direction(p2 - p1);
+  n::add_artillery(ret, kInvalidPoint, n::space_damage(p2, f[0].as_int()), f[1].s, kNoDelay);
+  if (!is_dir(dir)) return false;
+  SD damage2 = n::space_damage(p2 + vec(dir), f[0].as_int());
+  damage2.bHidePath = true;
+  n::add_artillery(ret, kInvalidPoint, damage2, f[1].s, kProjDelay);
+  return true;
+}
+
+// BlobAtk1:GetSkillEffect(p1, p2): a queued explosion on itself and
+// BombSize tiles in each direction. Fields: InnerDamage, BombSize,
+// OuterDamage, OuterExplosion.
+bool blob_effect(PortContext&, const Fields& f, Point p1, Point, SE& ret) {
+  SD damage = n::space_damage(p1, f[0].as_int());
+  damage.sSound = "/impact/generic/explosion_large";
+  damage.bHideIcon = true;
+  n::add_queued_damage(ret, damage);
+  for (int dir = 0; dir <= 3; ++dir) {
+    for (double size = 1; size <= f[1].n; size += 1) {
+      damage = n::space_damage(p1 + n::mul(vec(dir), n::to_int(size)), f[2].as_int());
+      damage.sAnimation = f[3].s + num(dir);
+      n::add_queued_damage(ret, damage);
+    }
+  }
+  return true;
+}
 
 using K = FieldKind;
 
@@ -1292,6 +1393,22 @@ const std::vector<PortSpec>& port_specs() {
       // weapons_snow.lua
       {"GetSkillEffect", "weapons_snow.lua", 120, 0x28ad6af731fdcd65,
        {{"Queued", K::Any}, {"Damage", K::Num}, {"Projectile", K::Str}}, {}, false, nullptr, snowart_effect},
+      {"GetSkillEffect", "weapons_enemy.lua", 713, 0x7a5fcf0578db075f,
+       {{"InnerDamage", K::Num}, {"BombSize", K::Num}, {"OuterDamage", K::Num}, {"OuterExplosion", K::Str}}, {}, false,
+       nullptr, blob_effect},
+      // mission units
+      {"GetTargetArea", "advanced/missions/sand/mission_trapped.lua", 54, 0xe6f5879b03604547, {}, {}, false, trapped_area,
+       nullptr},
+      {"GetSkillEffect", "advanced/missions/sand/mission_trapped.lua", 68, 0xcd0c7f166983b8bb, {}, {}, false, nullptr,
+       trapped_effect},
+      {"GetTargetArea", "missions/mission_train.lua", 145, 0x912cfe2a7f722c19, {}, {}, false, train_area, nullptr},
+      {"GetSkillEffect", "missions/mission_train.lua", 151, 0x181a1a5c02bd7b43, {}, {}, false, nullptr, train_effect},
+      {"GetTargetArea", "advanced/missions/acid/mission_civilians.lua", 73, 0x28be527b42cef626, {}, {}, false, truck_area,
+       nullptr},
+      {"GetSkillEffect", "advanced/missions/acid/mission_civilians.lua", 77, 0xa391c936635fab65, {}, {}, false, nullptr,
+       truck_effect},
+      {"GetSkillEffect", "missions/grass/mission_artillery.lua", 99, 0x21e7365d30096c24,
+       {{"Damage", K::Num}, {"UpShot", K::Str}}, {}, false, nullptr, archive_art_effect},
   };
   return specs;
 }
