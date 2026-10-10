@@ -182,8 +182,8 @@ struct Pawn {
   bool infected = false;
   bool injured = false;  // loses 1 HP whenever it changes tile
   bool dying = false;    // HP reached 0; death not processed yet
-  // Carries the Soldier psion's +1 (Pawn::SetMutation(LEADER_HEALTH) raised
-  // max and current HP). Natively a per-pawn mutation that a pawn keeps while
+  // Carries the Soldier psion's or the Psion Abomination's +1
+  // (Pawn::SetMutation(LEADER_HEALTH / LEADER_BOSS) raised max and current HP). Natively a per-pawn mutation that a pawn keeps while
   // a psion of another type, which does not affect it, is the board psion.
   bool health_bonus = false;
   bool fallen = false;   // fell into a chasm: off the board, never a corpse

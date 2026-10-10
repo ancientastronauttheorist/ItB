@@ -206,6 +206,11 @@ void set_pawn_injured(Pawn& pawn, bool on);
 
 bool is_vek(const Pawn& pawn);  // IsTeam(7): enemy team, Vek faction
 bool mutation_affects(const Board& board, const Pawn& pawn, Leader mutation);
+// Pawn::ComputeHealthTotal adds +1 max HP under mutation 1 (Soldier psion,
+// LEADER_HEALTH) or 7 (Psion Abomination, LEADER_BOSS).
+inline bool mutation_adds_health(Leader mutation) {
+  return mutation == Leader::Health || mutation == Leader::Boss;
+}
 bool is_corpse(const Board& board, const Pawn& pawn);  // leaves / is a corpse
 bool counts_as_pawn(const Board& board, const Pawn& pawn);  // alive or corpse
 bool is_flying(const Pawn& pawn);   // flying (trait or pilot) and alive
