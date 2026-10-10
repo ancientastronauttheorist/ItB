@@ -803,6 +803,23 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class PatchStateGridTest(unittest.TestCase):
+    def test_live_grid_estimate_replaces_the_stale_save_grid(self):
+        # Live 2026-10-10 (BeetleBoss turn 2): a building lost 1 HP during the
+        # player's turn; the save still said 7, the bridge estimated 6.
+        state = {"grid_power": 7, "grid_power_estimate": 6, "units": []}
+        fixed, patches = lp.patch_state(state, {}, set())
+        self.assertEqual(fixed["grid_power"], 6)
+        self.assertEqual(patches["grid_power"], 6)
+        self.assertEqual(state["grid_power"], 7)
+
+    def test_no_estimate_or_no_loss_leaves_the_grid(self):
+        for state in ({"grid_power": 7, "units": []}, {"grid_power": 7, "grid_power_estimate": 7, "units": []}):
+            fixed, patches = lp.patch_state(state, {}, set())
+            self.assertEqual(fixed["grid_power"], 7)
+            self.assertNotIn("grid_power", patches)
+
+
 class DiffBoardsTest(unittest.TestCase):
     """The enemy-phase comparison's handling of AI planning moves."""
 

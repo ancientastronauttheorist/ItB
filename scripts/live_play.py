@@ -553,10 +553,17 @@ def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = No
     """The solver's input: the live state, plus --loadout weapons for units
     the bridge gives no exact ids, plus moved flags the bridge does not
     export, plus the engine's queued shots (`queued`, see track_queued) where
-    the bridge's are stale. Returns (state, patches); queued-shot notes go to
-    `notes`."""
+    the bridge's are stale, plus the live grid estimate (the save's
+    grid_power is the turn-start value until the turn ends; the bridge
+    estimates the grid lost since from building HP: live 2026-10-10, a grid
+    loss during the player's turn left the end-turn prediction one high).
+    Returns (state, patches); queued-shot notes go to `notes`."""
     out = json.loads(json.dumps(state))
     patches = {}
+    est, grid = out.get("grid_power_estimate"), out.get("grid_power")
+    if isinstance(est, int) and isinstance(grid, int) and est < grid:
+        out["grid_power"] = est
+        patches["grid_power"] = est
     for u in units(out):
         if u.get("team") != 1:
             continue
