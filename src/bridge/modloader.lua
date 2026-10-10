@@ -182,8 +182,8 @@ local function overlay_current_weapon_from_pawn_mods(result, uid, slot, base_wea
     end
 end
 
-local function _read_save_data()
-    local result = {
+local function _empty_save_result()
+    return {
         network = nil,
         networkMax = nil,
         difficulty = nil,     -- GameData.difficulty (0=Easy, 1=Normal, 2=Hard, 3=Unfair)
@@ -200,14 +200,60 @@ local function _read_save_data()
         current_weapons = {}, -- GameData.current.weapons, 1-indexed loadout slots
         pawn_offsets = {},    -- [pawn_id] = raw save offset (diagnostic only)
     }
-    local base = SAVE_ROOT .. "/profile_Alpha/"
-    local sf = io.open(base .. "saveData.lua", "r")
-    if not sf then
-        sf = io.open(base .. "undoSave.lua", "r")
+end
+
+-- Save-file cache. The game rewrites saveData.lua / undoSave.lua whole, at
+-- turn boundaries only, but the bridge used to read and pattern-parse them
+-- on every state dump and command. Lua 5.1 has no stat(), so a file's
+-- identity is its size plus its first and last 256 bytes (cheap: one open,
+-- two short reads); the full read and the parse happen only when that key
+-- changes, or when the cached copy is older than SAVE_CACHE_MAX_AGE wall
+-- seconds (a safety net for a same-size rewrite).
+local SAVE_CACHE_MAX_AGE = 20
+local _save_file_cache = {}   -- path -> {key=, content=, at=}
+
+local function save_file_key(f)
+    local size = f:seek("end")
+    if type(size) ~= "number" then return nil end
+    f:seek("set", 0)
+    local head = f:read(256) or ""
+    local tail = ""
+    if size > 256 then
+        f:seek("set", size - 256)
+        tail = f:read(256) or ""
     end
-    if not sf then return result end
-    local content = sf:read("*a")
-    sf:close()
+    return tostring(size) .. "|" .. head .. "|" .. tail
+end
+
+-- Returns the file's content (nil if it does not exist) and its cache key.
+local function read_save_file_cached(path)
+    local f = io.open(path, "r")
+    if not f then
+        _save_file_cache[path] = nil
+        return nil, nil
+    end
+    local ok, key = pcall(save_file_key, f)
+    if not ok then key = nil end
+    local now = os.time()
+    local c = _save_file_cache[path]
+    if key ~= nil and c ~= nil and c.key == key and now - c.at < SAVE_CACHE_MAX_AGE then
+        f:close()
+        return c.content, path .. "|" .. c.key .. "|" .. c.at
+    end
+    f:seek("set", 0)
+    local content = f:read("*a")
+    f:close()
+    if type(content) ~= "string" then return nil, nil end
+    key = key or ("len" .. string.len(content))
+    _save_file_cache[path] = {key = key, content = content, at = now}
+    _SAVE_READ_COUNT = (_SAVE_READ_COUNT or 0) + 1  -- full reads (harness)
+    return content, path .. "|" .. key .. "|" .. now
+end
+
+local _save_parse_cache = {key = nil, result = nil}
+
+local function _read_save_data_uncached(content)
+    local result = _empty_save_result()
 
     -- Grid power (in first line of file, very cheap pattern match)
     local net = content:match('%["network"%]%s*=%s*(%d+)')
@@ -354,6 +400,24 @@ local function _read_save_data()
     return result
 end
 
+-- Reads saveData.lua (preferred) or undoSave.lua (fallback), parsed once
+-- per file version. Callers share the returned table: read-only.
+local function _read_save_data()
+    local base = SAVE_ROOT .. "/profile_Alpha/"
+    local content, key = read_save_file_cached(base .. "saveData.lua")
+    if not content then
+        content, key = read_save_file_cached(base .. "undoSave.lua")
+    end
+    if not content then return _empty_save_result() end
+    if _save_parse_cache.key == key and _save_parse_cache.result then
+        return _save_parse_cache.result
+    end
+    local result = _read_save_data_uncached(content)
+    _save_parse_cache = {key = key, result = result}
+    _SAVE_PARSE_COUNT = (_SAVE_PARSE_COUNT or 0) + 1  -- full parses (harness)
+    return result
+end
+
 local function get_pawn_max_health(pawn, uid, save_data)
     local pawn_def = _G[pawn:GetType()]
     local base = (pawn_def and pawn_def.Health) or pawn:GetHealth()
@@ -433,6 +497,14 @@ local function capture_deploy_zone()
         if not has_pawn and terrain_ok then
             zone[#zone + 1] = {p.x, p.y}
         end
+    end
+    -- (c) the tiles the native deploy UI refuses (pylons, spawn blocks,
+    -- items, pods, danger, ...): see ITBX.deploy_tile_ok. A mech placed on
+    -- a Mission_Final pylon tile hangs the game when the pylon lands.
+    local ext = rawget(_G, "_ITB_BRIDGE_EXT")
+    if ext and ext.filter_deploy_tiles then
+        local ok_f, filtered = pcall(ext.filter_deploy_tiles, zone)
+        if ok_f and type(filtered) == "table" then zone = filtered end
     end
     return zone
 end
@@ -1004,14 +1076,96 @@ function ITBX.note_error(where, err)
     end
 end
 
--- pcall(fn, ...) that records the failure; returns fn's first result or nil.
+---------------------------------------------------------------- safety valve
+-- Every piece of extension work (dump exports, hook bookkeeping, the
+-- per-frame log) runs through ITBX.guard. The outermost guarded call gets a
+-- CPU budget: a Lua count hook (when the game's Lua has the debug library
+-- and no hook of its own is set) aborts the call once GUARD.hard seconds
+-- are spent, and a call that ran over GUARD.hard, or GUARD.soft_max calls
+-- over GUARD.soft, switch the extension off for the rest of the session
+-- (ITBX.disabled; logged once, exported as state.bridge_ext_disabled).
+-- Disabled, every guarded call is a no-op and the old bridge carries on,
+-- so an extension bug can cost one slow frame but never hang the game.
+ITBX.GUARD = {hard = 1.0, soft = 0.25, soft_max = 3, count = 1000}
+ITBX.ABORT = "ITBX: time budget exceeded"
+ITBX._depth = 0
+ITBX._strikes = 0
+
+local function itbx_pack(...)
+    return {n = select("#", ...), ...}
+end
+ITBX.pack = itbx_pack
+
+function ITBX.disable(where, why)
+    if ITBX.disabled then return end
+    ITBX.disabled = true
+    ITBX.disabled_reason = tostring(where) .. ": " .. tostring(why)
+    pcall(log_bridge, "BRIDGE EXT DISABLED (" .. ITBX.disabled_reason
+        .. "); old bridge fields continue")
+end
+
+-- pcall(fn, ...) with the budget above. Returns pcall's results.
+function ITBX.guard(where, fn, ...)
+    if ITBX.disabled then return false, "bridge extension disabled" end
+    if ITBX._depth > 0 then
+        -- Nested: the outermost call holds the budget. Re-raise an abort so
+        -- a pcall inside the extension cannot swallow it.
+        local r = itbx_pack(pcall(fn, ...))
+        if ITBX._aborting then error(ITBX.ABORT, 0) end
+        return unpack(r, 1, r.n)
+    end
+    ITBX._depth = 1
+    ITBX._aborting = false
+    local start = os.clock()
+    local deadline = start + ITBX.GUARD.hard
+    local dbg = rawget(_G, "debug")
+    local hooked = false
+    if type(dbg) == "table" and dbg.sethook and dbg.gethook and dbg.gethook() == nil then
+        hooked = pcall(dbg.sethook, function()
+            if ITBX._aborting or os.clock() > deadline then
+                ITBX._aborting = true
+                error(ITBX.ABORT, 0)
+            end
+        end, "", ITBX.GUARD.count)
+    end
+    local r = itbx_pack(pcall(fn, ...))
+    if hooked then pcall(dbg.sethook) end
+    ITBX._depth = 0
+    local elapsed = os.clock() - start
+    local aborted = ITBX._aborting
+    ITBX._aborting = false
+    if aborted or elapsed > ITBX.GUARD.hard then
+        ITBX.disable(where, string.format("ran %.2fs CPU (budget %.2fs)%s", elapsed,
+            ITBX.GUARD.hard, aborted and ", aborted" or ""))
+        if aborted then return false, ITBX.ABORT end
+    elseif elapsed > ITBX.GUARD.soft then
+        ITBX._strikes = ITBX._strikes + 1
+        pcall(log_bridge, string.format("BRIDGE EXT SLOW: %s took %.2fs CPU (%d/%d)",
+            tostring(where), elapsed, ITBX._strikes, ITBX.GUARD.soft_max))
+        if ITBX._strikes >= ITBX.GUARD.soft_max then
+            ITBX.disable(where, ITBX._strikes .. " calls over " .. ITBX.GUARD.soft .. "s")
+        end
+    end
+    return unpack(r, 1, r.n)
+end
+
+-- Guarded call that records the failure; returns fn's first result or nil.
 function ITBX.try(where, fn, ...)
-    local ok, res = pcall(fn, ...)
+    local ok, res = ITBX.guard(where, fn, ...)
     if not ok then
-        ITBX.note_error(where, res)
+        if not ITBX.disabled then ITBX.note_error(where, res) end
         return nil
     end
     return res
+end
+
+-- Bookkeeping run from a game hook: guarded, never re-entered (a dump
+-- inside a hook can call back into game Lua), failures dropped.
+function ITBX.hook_work(where, fn, ...)
+    if ITBX.disabled or ITBX._in_hook then return end
+    ITBX._in_hook = true
+    pcall(ITBX.guard, where, fn, ...)
+    ITBX._in_hook = false
 end
 
 ---------------------------------------------------------------- values
@@ -1441,6 +1595,17 @@ function ITBX.parse_save(content)
     return out
 end
 
+-- parse_save once per file version (Lua strings are interned, so the
+-- equality test is a pointer compare). One cache slot per file name.
+ITBX._parse_cache = {}
+function ITBX.parse_save_cached(name, content)
+    local c = ITBX._parse_cache[name]
+    if c and c.content == content then return c.result end
+    local result = ITBX.parse_save(content)
+    ITBX._parse_cache[name] = {content = content, result = result}
+    return result
+end
+
 ---------------------------------------------------------------- weapons
 local function itbx_all_positive(list)
     if type(list) ~= "table" or #list == 0 then return false end
@@ -1598,13 +1763,10 @@ function ITBX.best_save(save_data_content, units)
     local key = ITBX.mission_key(_ITB_CURRENT_MISSION)
     local best, best_rank = nil, nil
     local candidates = {{"saveData.lua", save_data_content}}
-    local f = io.open(SAVE_ROOT .. "/profile_Alpha/undoSave.lua", "r")
-    if f then
-        candidates[2] = {"undoSave.lua", f:read("*a")}
-        f:close()
-    end
+    local undo = read_save_file_cached(SAVE_ROOT .. "/profile_Alpha/undoSave.lua")
+    if undo then candidates[2] = {"undoSave.lua", undo} end
     for i, c in ipairs(candidates) do
-        local s = ITBX.parse_save(c[2])
+        local s = ITBX.parse_save_cached(c[1], c[2])
         s.file = c[1]
         local mission_ok = key == nil or s.mission == nil or s.mission == ("Mission" .. tostring(key))
         local matches = 0
@@ -1638,7 +1800,60 @@ function ITBX.record_turn_start(mission)
             pos[id] = {sp.x, sp.y}
         end
     end
-    _ITB_BRIDGE_TURN_START = {mission = mission, turn = turn, pos = pos}
+    _ITB_BRIDGE_TURN_START = {mission = mission, turn = turn, pos = pos,
+                              buildings = ITBX.grid_buildings()}
+end
+
+-- Populated (grid) buildings: "x,y" -> HP. For grid_lost_this_turn.
+function ITBX.grid_buildings()
+    local out = {}
+    local building = _G.TERRAIN_BUILDING or 1
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local pt = Point(x, y)
+            if Board:GetTerrain(pt) == building and Board:IsPowered(pt) then
+                out[x .. "," .. y] = Board:GetHealth(pt)
+            end
+        end
+    end
+    return out
+end
+
+-- Live grid loss. state.grid_power comes from the save, written at turn
+-- boundaries only, and Game:GetPower() is not safe to call (commit
+-- f73b05a9: crashed the game's Lua). So: the HP the populated buildings
+-- of the player's turn start have lost since (a destroyed building counts
+-- its whole HP), which is the grid lost unless a building was repaired
+-- in between. Exported only when that snapshot is for this mission and
+-- turn (it is taken in Mission:BaseNextTurn with TEAM_PLAYER).
+function ITBX.grid_live(state, mission)
+    local ts = _ITB_BRIDGE_TURN_START
+    if ts == nil or ts.buildings == nil or not rawequal(ts.mission, mission) then return end
+    local turn, team = itbx_turn_team()
+    if ts.turn ~= turn then return end
+    local building = _G.TERRAIN_BUILDING or 1
+    local lost = 0
+    local tiles = {}
+    for key, hp0 in pairs(ts.buildings) do
+        local x, y = string.match(key, "^(%d+),(%d+)$")
+        local pt = Point(tonumber(x), tonumber(y))
+        local hp = 0
+        if Board:GetTerrain(pt) == building then hp = Board:GetHealth(pt) end
+        if type(hp0) == "number" and type(hp) == "number" and hp < hp0 then
+            lost = lost + (hp0 - hp)
+            tiles[#tiles + 1] = {tonumber(x), tonumber(y), hp0, hp}
+        end
+    end
+    state.grid_lost_this_turn = lost
+    state.grid_lost_tiles = tiles
+    state.grid_turn_start_turn = ts.turn
+    -- An estimate only while the save grid is this player turn's start
+    -- value: player phase, and the save's region is at this turn.
+    local save = ITBX._save
+    if type(state.grid_power) == "number" and team == TEAM_PLAYER
+            and save ~= nil and save.turn == turn then
+        state.grid_power_estimate = math.max(0, state.grid_power - lost)
+    end
 end
 
 -- `moved`: the unit left its turn-start tile this turn, or can still undo
@@ -1787,21 +2002,84 @@ function ITBX.zones()
     return out
 end
 
--- Board::GetDropZone (the tiles the squad may deploy on): zone
--- "deployment" filtered to available tiles (or a mech's); if that leaves
--- fewer than 3, or the map has no such zone, the default columns x = 1..3
--- (rows 1..6), then whole columns in the order 1,2,3,4,0,5,6,7 until more
--- than 3. Board::IsAvailable is not bound to Lua: approximated as no item,
--- no pod, not blocked for a ground pawn. (Pilot Deploy_Anywhere ignored.)
+-- Deployment. Board::GetDropZone (Board.c 14585-14830; used by the deploy
+-- UI, BoardPlayer::TouchDeploy / ComputeDeployment) keeps the "deployment"
+-- zone tiles that pass Board::IsAvailable(p, 1, 2) or hold a mech; with 2
+-- or fewer left it uses the default columns x = 1..3 (rows 1..6), then
+-- whole columns in the order 1,2,3,4,0,5,6,7 until more than 3.
+-- IsAvailable (Board.c 14837-15127) is not bound to Lua; it rejects:
+--   item, pod; a block-spawn mark (Board+0x7480, BLOCKED_TEMP or _PERM);
+--   Board::IsDangerous; IsBlocked(p, PATH_MASSIVE) (building, mountain,
+--   chasm, any pawn; water allowed); acid; spikes (not readable); fire;
+--   chasm; a queued Vek emerge point.
+-- The block-spawn map has no Lua getter either. ITBX.reserved_tiles reads
+-- it from the save's blocked_points (the last saved copy, for this mission)
+-- plus the Mission_Final "pylons" zone, which StartMission blocks
+-- (BLOCKED_PERM) and Mission_Final:NextTurn drops buildings on at turn 0.
+-- A mech on such a tile hangs the game for good: BoardSpace::DamageSpace
+-- (BoardSpace.c 19105-19117) loops `while IsPawnSpace(true) do Kill()`
+-- before AddBuilding, and a dead mech stays in the space as a corpse.
+
+local function itbx_key(x, y) return x .. "," .. y end
+
+-- "x,y" -> reason for every tile a mech must not be deployed on.
+function ITBX.reserved_tiles()
+    local out = {}
+    local ok, list = pcall(function() return Board:GetZone("pylons") end)
+    if ok and list ~= nil then
+        for _, p in ipairs(ITBX.point_pairs(list)) do out[itbx_key(p[1], p[2])] = "pylon" end
+    end
+    local ok_s, save = pcall(function()
+        return ITBX.parse_save_cached("saveData.lua", _read_save_data().raw_content)
+    end)
+    if ok_s and type(save) == "table" and save.spawn_blocks then
+        local key = ITBX.mission_key(_ITB_CURRENT_MISSION)
+        if key == nil or save.mission == nil or save.mission == ("Mission" .. tostring(key)) then
+            for _, b in ipairs(save.spawn_blocks) do
+                if b[3] == 1 or b[3] == 2 then
+                    local k = itbx_key(b[1], b[2])
+                    if out[k] == nil then out[k] = "spawn_block" end
+                end
+            end
+        end
+    end
+    return out
+end
+
+-- Board::IsAvailable(p, 1, 2) as far as Lua can see it. `reserved` is
+-- ITBX.reserved_tiles() (passed in to compute it once per zone). A tile
+-- held by a mech fails here (blocked) but GetDropZone keeps it.
+function ITBX.deploy_tile_ok(x, y, reserved)
+    if type(x) ~= "number" or type(y) ~= "number" or x < 0 or x > 7 or y < 0 or y > 7 then
+        return false, "off the board"
+    end
+    reserved = reserved or ITBX.reserved_tiles()
+    local why = reserved[itbx_key(x, y)]
+    if why then return false, why end
+    local pt = Point(x, y)
+    if Board:IsItem(pt) then return false, "item" end
+    if Board:IsPod(pt) then return false, "pod" end
+    if Board:IsDangerous(pt) then return false, "dangerous" end
+    if Board:IsSpawning(pt) then return false, "spawn point" end
+    if Board:GetTerrain(pt) == (_G.TERRAIN_HOLE or 9) then return false, "chasm" end
+    if Board:IsAcid(pt) then return false, "acid" end
+    if Board:IsFire(pt) then return false, "fire" end
+    if Board:IsBlocked(pt, _G.PATH_MASSIVE or 2) then return false, "blocked" end
+    return true
+end
+
 function ITBX.drop_zone()
-    local ground = _G.PATH_GROUND or 0
+    local reserved = ITBX.reserved_tiles()
     local function usable(x, y)
         local pt = Point(x, y)
         if Board:IsPawnSpace(pt) then
             local p = Board:GetPawn(pt)
-            return p ~= nil and p:IsMech()
+            if p ~= nil and p:IsMech() then
+                -- GetDropZone keeps a mech's tile; never a reserved one.
+                return reserved[itbx_key(x, y)] == nil
+            end
         end
-        return not Board:IsItem(pt) and not Board:IsPod(pt) and not Board:IsBlocked(pt, ground)
+        return (ITBX.deploy_tile_ok(x, y, reserved))
     end
     local out, seen = {}, {}
     local function add(x, y)
@@ -1834,6 +2112,92 @@ function ITBX.drop_zone()
         end
     end
     return out, source
+end
+
+-- The old deployment_zone capture: drop the tiles the deploy UI refuses.
+-- Runs even with the extension disabled (it is the hang guard), unguarded
+-- but under pcall by the caller.
+function ITBX.filter_deploy_tiles(tiles)
+    local reserved = ITBX.reserved_tiles()
+    local out = {}
+    for _, p in ipairs(tiles) do
+        local ok_t, ok = pcall(ITBX.deploy_tile_ok, p[1], p[2], reserved)
+        if ok_t and ok then out[#out + 1] = p end
+    end
+    return out
+end
+
+-- DEPLOY uid x y precondition: the tile is in the (approximated) drop zone
+-- or is the mech's own tile, and never a reserved one. Returns ok, reason.
+function ITBX.deploy_check(pawn, x, y)
+    local reserved = {}
+    local ok_r, r = pcall(ITBX.reserved_tiles)
+    if ok_r and type(r) == "table" then reserved = r end
+    if reserved[itbx_key(x, y)] then
+        return false, "reserved tile (" .. reserved[itbx_key(x, y)]
+            .. "): the native deploy UI refuses it"
+    end
+    if x < 0 or x > 7 or y < 0 or y > 7 then return false, "off the board" end
+    local sp = pawn:GetSpace()
+    if sp.x == x and sp.y == y then return true end
+    local other = Board:GetPawn(Point(x, y))
+    if other ~= nil then return false, "occupied by pawn " .. tostring(other:GetId()) end
+    local ok_z, zone = pcall(ITBX.drop_zone)
+    if not ok_z then
+        -- No zone (API failure): fall back to the per-tile test.
+        local ok_t, ok, why = pcall(ITBX.deploy_tile_ok, x, y, reserved)
+        if ok_t and not ok then return false, why end
+        return true
+    end
+    for _, p in ipairs(zone) do
+        if p[1] == x and p[2] == y then return true end
+    end
+    local _, why = ITBX.deploy_tile_ok(x, y, reserved)
+    local list = {}
+    for _, p in ipairs(zone) do list[#list + 1] = p[1] .. "," .. p[2] end
+    return false, "not in the drop zone (" .. tostring(why or "outside the deployment zone")
+        .. "); drop zone: " .. table.concat(list, " ")
+end
+
+-- Last line of defence, from the BaseNextTurn wrap before the enemy turn 0
+-- (when Mission_Final:NextTurn drops its pylons): a player pawn that left
+-- a corpse standing on a "pylons" tile would hang the game (see above), so
+-- move it to a free drop-zone tile first. Returns the moves made.
+function ITBX.evacuate_pylon_tiles()
+    local turn, team = itbx_turn_team()
+    if turn ~= 0 or team ~= TEAM_ENEMY then return {} end
+    local pylons = ITBX.point_pairs(Board:GetZone("pylons"))
+    if #pylons == 0 then return {} end
+    local moves = {}
+    for _, pp in ipairs(pylons) do
+        local p = Board:GetPawn(Point(pp[1], pp[2]))
+        if p ~= nil and p:GetTeam() == TEAM_PLAYER then
+            local dest = nil
+            local ok_z, zone = pcall(ITBX.drop_zone)
+            for _, z in ipairs(ok_z and zone or {}) do
+                if not Board:IsPawnSpace(Point(z[1], z[2])) then dest = z break end
+            end
+            if dest == nil then
+                local reserved = ITBX.reserved_tiles()
+                for x = 0, 7 do
+                    for y = 0, 7 do
+                        if dest == nil and ITBX.deploy_tile_ok(x, y, reserved) then dest = {x, y} end
+                    end
+                end
+            end
+            local id = p:GetId()
+            if dest then
+                p:SetSpace(Point(dest[1], dest[2]))
+                moves[#moves + 1] = {uid = id, from = {pp[1], pp[2]}, to = dest}
+                pcall(log_bridge, "PYLON GUARD: moved pawn " .. id .. " off pylon tile "
+                    .. pp[1] .. "," .. pp[2] .. " to " .. dest[1] .. "," .. dest[2])
+            else
+                pcall(log_bridge, "PYLON GUARD: pawn " .. id .. " is on pylon tile "
+                    .. pp[1] .. "," .. pp[2] .. " and no free tile was found")
+            end
+        end
+    end
+    return moves
 end
 
 ---------------------------------------------------------------- spawns
@@ -2067,6 +2431,7 @@ function ITBX.finish(state, mission)
             state.spawn_blocks = ITBX._save.spawn_blocks
         end
         ITBX.try("objectives_ext", ITBX.objectives_ext, state, mission)
+        ITBX.try("grid_live", ITBX.grid_live, state, mission)
         local log = _ITB_BRIDGE_PHASE_LOG
         if log and rawequal(log.mission, mission) then
             state.env_strike_log = log.env
@@ -3381,6 +3746,7 @@ local function dump_state(out_path, out_tmp)
     -- Bridge extension: mission instance, zones, spawn queue, ledgers.
     ITBX.try("finish", ITBX.finish, state, _ITB_CURRENT_MISSION)
     state.bridge_errors = ITBX.errs or {}
+    if ITBX.disabled then state.bridge_ext_disabled = ITBX.disabled_reason end
 
     write_atomic(out_path or STATE_FILE, out_tmp or STATE_TMP, json_encode(state))
 end
@@ -4574,7 +4940,7 @@ function ITBX.scenario_apply(spec, wait_idle)
     local st = {mission = mission, turn = turn, name = report.name, queued = {},
                 errors = report.errors, created = report.created, spawn_queue = {}}
     step("read save", function()
-        local save = ITBX.parse_save(_read_save_data().raw_content)
+        local save = ITBX.parse_save_cached("saveData.lua", _read_save_data().raw_content)
         local key = ITBX.mission_key(mission)
         if save.spawns and (key == nil or save.mission == ("Mission" .. tostring(key))) then
             for _, s in ipairs(save.spawns) do st.spawn_queue[#st.spawn_queue + 1] = s end
@@ -5242,6 +5608,20 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
+        if not x or not y then
+            write_ack("ERROR: DEPLOY needs uid x y")
+            return
+        end
+        -- Only tiles the native deploy UI accepts (Board::GetDropZone): a
+        -- mech on a Mission_Final pylon tile hangs the game at turn 0.
+        local ok_c, allowed, why = pcall(ITBX.deploy_check, pawn, x, y)
+        if ok_c and not allowed then
+            log_bridge("DEPLOY REFUSED: " .. uid .. " -> " .. x .. "," .. y .. ": " .. tostring(why))
+            write_ack("ERROR: DEPLOY refused: " .. x .. "," .. y .. " " .. tostring(why))
+            return
+        elseif not ok_c then
+            log_bridge("DEPLOY check failed (placing anyway): " .. tostring(allowed))
+        end
         local ok, err = pcall(function() pawn:SetSpace(Point(x, y)) end)
         if not ok then
             write_ack("ERROR: Deploy failed: " .. tostring(err))
@@ -5598,8 +5978,8 @@ Mission.BaseUpdate = function(self)
         pcall(dump_state)
     end
     -- Bridge extension: per-frame phase log (debug flag only).
-    if ITBX.debug_enabled() then
-        pcall(ITBX.poll_frame, self)
+    if not ITBX.disabled and ITBX.debug_enabled() then
+        ITBX.hook_work("poll_frame", ITBX.poll_frame, self)
     end
 end
 
@@ -5824,25 +6204,33 @@ function ITBX.on_plan_environment(mission, dump)
     end
 end
 
+-- The wraps forward every argument and every return value of the
+-- original untouched (the native enemy-phase driver loops on
+-- ApplyEnvironmentEffect / PlanEnvironment returning true), call it exactly
+-- once and outside any pcall (its errors stay the game's), and do their own
+-- work through ITBX.hook_work: guarded, budgeted, not re-entrant, a no-op
+-- once the extension is disabled.
 if _orig_BaseNextTurn then
-    Mission.BaseNextTurn = function(self)
-        pcall(ITBX.on_base_next_turn, self, dump_state)
-        return _orig_BaseNextTurn(self)
+    Mission.BaseNextTurn = function(self, ...)
+        -- Hang guard first: it does not depend on the extension being on.
+        pcall(ITBX.evacuate_pylon_tiles)
+        ITBX.hook_work("on_base_next_turn", ITBX.on_base_next_turn, self, dump_state)
+        return _orig_BaseNextTurn(self, ...)
     end
 end
 
 if _orig_ApplyEnvironmentEffect then
-    Mission.ApplyEnvironmentEffect = function(self)
-        local ret = _orig_ApplyEnvironmentEffect(self)
-        pcall(ITBX.log_env_step, self, ret)
-        return ret
+    Mission.ApplyEnvironmentEffect = function(self, ...)
+        local r = itbx_pack(_orig_ApplyEnvironmentEffect(self, ...))
+        ITBX.hook_work("log_env_step", ITBX.log_env_step, self, r[1])
+        return unpack(r, 1, r.n)
     end
 end
 
 if _orig_PlanEnvironment then
-    Mission.PlanEnvironment = function(self)
-        pcall(ITBX.on_plan_environment, self, dump_state)
-        return _orig_PlanEnvironment(self)
+    Mission.PlanEnvironment = function(self, ...)
+        ITBX.hook_work("on_plan_environment", ITBX.on_plan_environment, self, dump_state)
+        return _orig_PlanEnvironment(self, ...)
     end
 end
 

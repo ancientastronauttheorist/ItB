@@ -14,6 +14,12 @@
 local MODLOADER = HARNESS_MODLOADER or arg[1]
 local MOCK_FILE = HARNESS_MOCK or arg[2]
 local DIR = HARNESS_DIR or arg[3]
+-- Optional: the game's script directory (builds/<build>/scripts or the
+-- build root). With it, the final-mission and environment sections run the
+-- game's own env_volcano.lua, mission_final.lua, mission_lightning.lua and
+-- the Mission / Env_Attack methods from missions.lua / environments.lua.
+local GAME_DIR = HARNESS_GAME_DIR or arg[4]
+if GAME_DIR == "" then GAME_DIR = nil end
 assert(MODLOADER and MOCK_FILE and DIR, "usage: bridge_harness.lua <modloader.lua> <game_mock.lua> <dir>")
 
 local failures = {}
@@ -371,19 +377,20 @@ do
 end
 
 ---------------------------------------------------------------- commands
+local CUR_M = M  -- the mission BaseUpdate runs for (the final section swaps it)
 local function run_command(cmd, max_frames)
     os.remove(DIR .. "/itb_ack.txt")
     write_file(DIR .. "/itb_cmd.txt", "#7 " .. cmd)
     for _ = 1, (max_frames or 200) do
         CLOCK = CLOCK + 1
-        Mission.BaseUpdate(M)
+        Mission.BaseUpdate(CUR_M)
         local ack = read_file(DIR .. "/itb_ack.txt")
         if ack and read_file(DIR .. "/itb_cmd.txt") == nil then
             -- The coroutine may still be running if the ack came early;
             -- run frames until it is done.
             for _ = 1, 20 do
                 CLOCK = CLOCK + 1
-                Mission.BaseUpdate(M)
+                Mission.BaseUpdate(CUR_M)
             end
             return ack
         end
@@ -595,6 +602,399 @@ do
     check(found, "building damage logged per frame")
     os.remove(X.DEBUG_FLAG_FILE)
     X._debug_at = nil
+end
+
+---------------------------------------------------------------- final mission
+-- Live freeze 2026-10-09: DEPLOY (a bare Pawn:SetSpace) put the Combat Mech
+-- on a Mission_Final pylon tile, which the native deploy UI refuses (the
+-- tile is BlockSpawn'd). After CONFIRM, Mission_Final:NextTurn (enemy turn
+-- 0) drops a building on it and BoardSpace::DamageSpace loops forever
+-- (`while IsPawnSpace(true) do Kill() end`, a dead mech stays a corpse).
+-- The mock emulates that loop and records MOCK.native_hang.
+
+local function game_file(rel)
+    if not GAME_DIR then return nil end
+    for _, base in ipairs({GAME_DIR .. "/scripts/", GAME_DIR .. "/"}) do
+        local text = read_file(base .. rel)
+        if text then return text, base .. rel end
+    end
+    return nil
+end
+local function run_game_file(rel)
+    local text, path = game_file(rel)
+    assert(text, "game script not found: " .. rel)
+    assert(loadstring(text, "@" .. path))()
+end
+-- One top-level function of a game script (its `end` is at column 0).
+local function game_function(rel, name)
+    local text = assert(game_file(rel), "game script not found: " .. rel)
+    local src = string.match(text, "\nfunction " .. string.gsub(name, "([%.%:])", "%%%1") .. "%(.-\nend")
+    assert(src, name .. " not found in " .. rel)
+    return src
+end
+
+local REAL = GAME_DIR ~= nil
+HARNESS_REAL_SCRIPTS_RAN = false
+if REAL then
+    -- Helpers from global.lua, then the game's environment and mission
+    -- classes (they replace the mock Environment / Env_Attack).
+    for _, name in ipairs({"random_removal", "random_element", "copy_table"}) do
+        assert(loadstring(game_function("global.lua", name)))()
+    end
+    Mission_Infinite = Mission_Infinite or Mission:new{InfiniteSpawn = true}
+    Mission_Auto = Mission_Auto or Mission:new{}
+    run_game_file("environments.lua")
+    run_game_file("missions/final/env_volcano.lua")
+    run_game_file("missions/final/mission_final.lua")
+    run_game_file("missions/sand/mission_lightning.lua")
+    -- The game's Mission hooks (missions.lua), then a bridge reload that
+    -- wraps them: the reload path keeps _ITB_BRIDGE_ORIGINALS.
+    local real = {}
+    for _, name in ipairs({"ApplyEnvironmentEffect", "BaseNextTurn", "PlanEnvironment", "IsEnvironmentEffect"}) do
+        local holder = {}
+        local fn = assert(loadstring(game_function("missions/missions.lua", "Mission:" .. name)))
+        setfenv(fn, setmetatable({Mission = holder}, {__index = _G}))
+        fn()
+        real[name] = assert(holder[name], name)
+    end
+    _ITB_BRIDGE_ORIGINALS.ApplyEnvironmentEffect = real.ApplyEnvironmentEffect
+    _ITB_BRIDGE_ORIGINALS.BaseNextTurn = real.BaseNextTurn
+    _ITB_BRIDGE_ORIGINALS.PlanEnvironment = real.PlanEnvironment
+    Mission.IsEnvironmentEffect = real.IsEnvironmentEffect
+    chunk()
+    X = _ITB_BRIDGE_EXT
+    eq(#MOCK.mismatches, 0, "strict-call mismatches after the bridge reload")
+    check(Mission.ApplyEnvironmentEffect ~= real.ApplyEnvironmentEffect, "reload wraps the real ApplyEnvironmentEffect")
+end
+
+local PYLONS = {{1, 3}, {1, 4}, {2, 6}, {3, 3}, {3, 6}, {5, 1}, {6, 4}}  -- the live save's
+local DEPLOY_ZONE = {{1, 2}, {1, 3}, {1, 4}, {2, 2}, {2, 3}, {2, 4}, {2, 5}, {3, 2}, {3, 3}, {3, 4}}
+local function is_pylon(x, y)
+    for _, p in ipairs(PYLONS) do
+        if p[1] == x and p[2] == y then return true end
+    end
+    return false
+end
+local function reset_board()
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local t = MOCK.tiles[x][y]
+            t.terrain, t.hp, t.max, t.fire, t.lava, t.acid, t.item, t.dangerous = 0, 0, 0, false, false, false, "", false
+            t.smoke, t.frozen, t.shield, t.targeted, t.env, t.custom, t.populated = false, false, false, false, false, "", false
+        end
+    end
+    MOCK.effects, MOCK.native_hang, MOCK.spawns, MOCK.busy = {}, nil, {}, 0
+end
+local fm = {}
+local function reset_mechs()
+    MOCK.pawns = {}
+    for i = 0, 2 do
+        fm[i] = MOCK.add_pawn{id = i, type = "PunchMech", x = -1, y = -1, team = 1, mech = true, shots = 1}
+    end
+end
+local function final_save(turn)
+    local pts, types = {}, {}
+    for _, p in ipairs(PYLONS) do
+        pts[#pts + 1] = "Point(" .. p[1] .. "," .. p[2] .. "), "
+        types[#types + 1] = "2, "
+    end
+    return 'GameData = {["network"] = 6, ["networkMax"] = 7, ["difficulty"] = 0, ["seed"] = 7, }\n'
+        .. 'RegionData = {\n["final_region"] = {["mission"] = "Mission0", ["player"] = {["iCurrentTurn"] = '
+        .. turn .. ', ["iTeamTurn"] = 1, ["map_data"] = {\n'
+        .. '["blocked_points"] = {' .. table.concat(pts) .. '},\n'
+        .. '["blocked_type"] = {' .. table.concat(types) .. '},\n'
+        .. '}, }, }, \n["iBattleRegion"] = 20, }\n'
+end
+
+reset_board()
+reset_mechs()
+MOCK.zones = {deployment = DEPLOY_ZONE, pylons = PYLONS}
+write_file(save_dir .. "/saveData.lua", final_save(0))
+local FinalClass = REAL and Mission_Final or Mission:new{}
+local MF = FinalClass:new{ID = "Mission_Final"}
+MF.LiveEnvironment = REAL and Env_Volcano:new{} or Env_Null:new{}
+if REAL then MF.LiveEnvironment:Start() end
+GAME.Missions = {[0] = MF}
+_ITB_CURRENT_MISSION = MF
+CUR_M = MF
+MOCK.turn, MOCK.team = 0, 1
+
+-- Reserved tiles and the exported zones.
+do
+    local reserved = X.reserved_tiles()
+    for _, p in ipairs(PYLONS) do
+        eq(reserved[p[1] .. "," .. p[2]], "pylon", "pylon " .. p[1] .. "," .. p[2] .. " reserved")
+    end
+    MOCK.zones.pylons = nil
+    reserved = X.reserved_tiles()
+    eq(reserved["3,3"], "spawn_block", "save blocked_points reserve 3,3 without the zone")
+    MOCK.zones.pylons = PYLONS
+    X._dump_state()
+    st = load_state()
+    eq(st.deploying, true, "final mission deploying")
+    eq(#st.deployment_zone, 7, "deployment_zone: 10 zone tiles minus 3 pylons")
+    eq(#st.drop_zone, 7, "drop_zone: 10 zone tiles minus 3 pylons")
+    for _, p in ipairs(st.deployment_zone) do
+        check(not is_pylon(p[1], p[2]), "deployment_zone excludes pylon " .. p[1] .. "," .. p[2])
+    end
+    for _, p in ipairs(st.drop_zone) do
+        check(not is_pylon(p[1], p[2]), "drop_zone excludes pylon " .. p[1] .. "," .. p[2])
+    end
+end
+
+-- Before the fix: the old DEPLOY was a bare SetSpace, and the opening
+-- enemy phase then hangs in the native building drop.
+if REAL then
+    MOCK.data(fm[0]).x, MOCK.data(fm[0]).y = 3, 3
+    MOCK.team = 6
+    _ITB_BRIDGE_ORIGINALS.BaseNextTurn(MF)  -- unwrapped, as without the guard
+    MOCK.resolve_effects()
+    check(MOCK.native_hang ~= nil, "repro: a mech on a pylon tile hangs the pylon drop")
+    if MOCK.native_hang then
+        eq(MOCK.native_hang.x * 10 + MOCK.native_hang.y, 33, "repro: the hang is on 3,3")
+        eq(MOCK.native_hang.pawn, 0, "repro: the mech under the pylon")
+    end
+    reset_board()
+    reset_mechs()
+    MOCK.team = 1
+end
+
+-- After the fix: DEPLOY refuses what the deploy UI refuses.
+do
+    local ack = run_command("DEPLOY 0 3 3")
+    check(ack and string.find(ack, "ERROR: DEPLOY refused: 3,3 reserved tile (pylon)", 1, true) ~= nil,
+          "DEPLOY onto a pylon refused: " .. tostring(ack))
+    eq(MOCK.data(fm[0]).x, -1, "refused DEPLOY leaves the mech")
+    ack = run_command("DEPLOY 1 1 3")
+    check(ack and string.find(ack, "refused", 1, true) ~= nil, "DEPLOY 1 3 (pylon) refused")
+    ack = run_command("DEPLOY 0 7 7")
+    check(ack and string.find(ack, "not in the drop zone", 1, true) ~= nil, "DEPLOY outside the zone refused: " .. tostring(ack))
+    eq(run_command("DEPLOY 0 3 4"), "#7 OK DEPLOY 0 at 3,4", "DEPLOY 0 3 4")
+    ack = run_command("DEPLOY 1 3 4")
+    check(ack and string.find(ack, "occupied", 1, true) ~= nil, "DEPLOY onto a mech refused")
+    eq(run_command("DEPLOY 1 2 4"), "#7 OK DEPLOY 1 at 2,4", "DEPLOY 1 2 4")
+    eq(run_command("DEPLOY 2 3 2"), "#7 OK DEPLOY 2 at 3,2", "DEPLOY 2 3 2")
+    eq(run_command("DEPLOY 2 3 2"), "#7 OK DEPLOY 2 at 3,2", "re-DEPLOY on its own tile")
+    st = load_state()
+    eq(#st.drop_zone, 7, "drop zone keeps the deployed mechs' tiles")
+end
+
+-- Last line of defence: a mech that still stands on a pylon when the
+-- enemy turn 0 begins is moved off before Mission_Final:NextTurn.
+do
+    MOCK.data(fm[2]).x, MOCK.data(fm[2]).y = 3, 3
+    MOCK.team = 6
+    Mission.BaseNextTurn(MF)
+    local d2 = MOCK.data(fm[2])
+    check(not is_pylon(d2.x, d2.y), "pylon guard moved the mech off 3,3")
+    local in_zone = false
+    for _, p in ipairs(DEPLOY_ZONE) do
+        if p[1] == d2.x and p[2] == d2.y then in_zone = true end
+    end
+    check(in_zone, "pylon guard moved it to a drop-zone tile")
+    check(string.find(read_file(DIR .. "/itb_bridge.log") or "", "PYLON GUARD: moved pawn 2", 1, true) ~= nil,
+          "pylon guard logged")
+    if REAL then
+        MOCK.resolve_effects()
+        eq(MOCK.native_hang, nil, "no native hang after the guard")
+        for _, p in ipairs(PYLONS) do
+            eq(MOCK.tiles[p[1]][p[2]].terrain, TERRAIN_BUILDING, "pylon landed on " .. p[1] .. "," .. p[2])
+        end
+        for i = 0, 2 do
+            check(MOCK.data(fm[i]).hp > 0, "mech " .. i .. " alive after the pylon drop")
+        end
+    end
+end
+
+-- The volcano enemy phase, driven like BoardPlayer (stage 7 spec 1.3-1.8):
+-- state 1: IsEnvironmentEffect once, then ApplyEnvironmentEffect on each
+-- idle board while it returns true; state 2: BaseNextTurn, then
+-- PlanEnvironment polled until false. Every wrapped return is checked
+-- against the Env_Attack contract (return self:IsEffect()).
+local function poll_plan(mission, label)
+    local results = {}
+    for _ = 1, 50 do
+        local r = Mission.PlanEnvironment(mission)
+        results[#results + 1] = r
+        if not r then break end
+    end
+    local n = #results
+    eq(results[n], false, label .. ": PlanEnvironment ends with false")
+    check(n < 50, label .. ": PlanEnvironment poll ends")
+    local env = mission.LiveEnvironment
+    eq(#env.Locations, n - 1, label .. ": one location per true")
+    eq(#env.Planned, n - 1, label .. ": all planned locations placed")
+    return n - 1
+end
+local function apply_env(mission, label, expect_steps)
+    local env = mission.LiveEnvironment
+    local flag = Mission.IsEnvironmentEffect(mission)
+    eq(flag, expect_steps > 0, label .. ": IsEnvironmentEffect")
+    local steps = 0
+    local function env_log()
+        local l = _ITB_BRIDGE_PHASE_LOG
+        if l and rawequal(l.mission, mission) then return l.env end
+        return {}
+    end
+    local log_before = #env_log()
+    while flag do
+        MOCK.resolve_effects()
+        local r = X.pack(Mission.ApplyEnvironmentEffect(mission))
+        steps = steps + 1
+        eq(r.n, 1, label .. ": one return value")
+        eq(r[1], #env.Locations ~= 0, label .. ": step " .. steps .. " returns IsEffect()")
+        flag = r[1]
+        if steps > 50 then break end
+    end
+    MOCK.resolve_effects()
+    eq(steps, expect_steps, label .. ": one step per location")
+    local log = env_log()
+    eq(#log - log_before, steps, label .. ": env steps logged")
+    if #log > 0 then eq(log[#log].returned, false, label .. ": last logged step returned false") end
+end
+if REAL then
+    -- Opening phase (enemy turn 0) continues: PlanEnvironment after the
+    -- pylons (volcano phase 1, lava).
+    local planned = poll_plan(MF, "volcano turn 0")
+    check(planned > 0, "volcano plans at turn 0")
+    for turn = 1, 3 do
+        MOCK.turn, MOCK.team = turn, 1
+        Mission.BaseNextTurn(MF)
+        MOCK.team = 6
+        apply_env(MF, "volcano turn " .. turn .. " mode " .. tostring(MF.LiveEnvironment.Mode), planned)
+        Mission.BaseNextTurn(MF)
+        MOCK.resolve_effects()
+        planned = poll_plan(MF, "volcano plan turn " .. turn)
+    end
+    eq(MOCK.native_hang, nil, "no native hang over three volcano rounds")
+
+    -- Several return values pass through the wrap untouched.
+    local env = MF.LiveEnvironment
+    env.ApplyEffect = function() return true, "extra", nil end
+    local r = X.pack(Mission.ApplyEnvironmentEffect(MF))
+    eq(r.n, 3, "all return values passed through")
+    eq(r[2], "extra", "second return value")
+    env.ApplyEffect = nil
+
+    -- Lightning: an unordered Env_Attack (random strike order).
+    local ML = Mission_Lightning:new{ID = "Mission_Lightning"}
+    ML.LiveEnvironment = Env_Lightning:new{}
+    ML.LiveEnvironment:Start()
+    _ITB_CURRENT_MISSION = ML
+    MOCK.turn, MOCK.team = 1, 6
+    local n = poll_plan(ML, "lightning plan")
+    check(n >= 3, "lightning plans several strikes")
+    apply_env(ML, "lightning", n)
+    _ITB_CURRENT_MISSION = MF
+    HARNESS_REAL_SCRIPTS_RAN = true
+else
+    print("bridge harness: no game dir, final-mission / env script checks skipped")
+end
+MOCK.turn, MOCK.team = 1, 1
+
+-- Save-file cache: no re-read or re-parse while the files are unchanged.
+do
+    X._dump_state()
+    local reads, parses = _SAVE_READ_COUNT, _SAVE_PARSE_COUNT
+    for _ = 1, 5 do X._dump_state() end
+    run_command("DEBUG_STATUS")
+    eq(_SAVE_READ_COUNT, reads, "unchanged save: no full re-read")
+    eq(_SAVE_PARSE_COUNT, parses, "unchanged save: no re-parse")
+    write_file(save_dir .. "/saveData.lua", final_save(1) .. "-- changed\n")
+    X._dump_state()
+    eq(_SAVE_READ_COUNT, reads + 1, "changed save: one re-read")
+    eq(_SAVE_PARSE_COUNT, parses + 1, "changed save: one re-parse")
+end
+
+-- Live grid loss since the player's turn start (the save grid is stale
+-- inside a turn; Game:GetPower is not safe to call).
+do
+    MOCK.turn, MOCK.team = 1, 1
+    local t1, t2 = MOCK.tiles[6][1], MOCK.tiles[7][1]
+    t1.terrain, t1.hp, t1.max, t1.populated = TERRAIN_BUILDING, 2, 2, true
+    t2.terrain, t2.hp, t2.max, t2.populated = TERRAIN_BUILDING, 1, 1, true
+    Mission.BaseNextTurn(MF)  -- player turn start: buildings recorded
+    X._dump_state()
+    st = load_state()
+    eq(st.grid_lost_this_turn, 0, "no grid lost at turn start")
+    t1.hp = 1
+    t2.terrain, t2.hp = TERRAIN_RUBBLE, 0
+    X._dump_state()
+    st = load_state()
+    eq(st.grid_lost_this_turn, 2, "grid lost: 1 damaged + 1 destroyed")
+    eq(#st.grid_lost_tiles, 2, "grid lost tiles")
+    eq(st.grid_power_estimate, st.grid_power - 2, "grid estimate in the player phase")
+    MOCK.team = 6
+    X._dump_state()
+    st = load_state()
+    eq(st.grid_lost_this_turn, 2, "grid lost still counted in the enemy phase")
+    eq(st.grid_power_estimate, nil, "no estimate outside the player phase")
+    MOCK.team = 1
+    t1.terrain, t1.hp, t1.max, t1.populated = 0, 0, 0, false
+    t2.terrain = 0
+end
+
+-- Safety valve.
+do
+    local TM = Mission:new{ID = "Mission_Test"}
+    TM.LiveEnvironment = setmetatable({}, {__index = {ApplyEffect = function() return true, 7 end}})
+    local saved = {log_env_step = X.log_env_step, on_base_next_turn = X.on_base_next_turn}
+
+    -- An error in the bridge's own work changes nothing for the game.
+    X.log_env_step = function() error("boom") end
+    local r = X.pack(Mission.ApplyEnvironmentEffect(TM))
+    eq(r[1], true, "error in hook work: return passed through")
+    eq(r[2], 7, "error in hook work: second return passed through")
+    check(not X.disabled, "an error does not disable the extension")
+
+    -- Re-entrancy: hook work that re-enters the hook runs once.
+    MOCK.hook_calls = {}
+    X.on_base_next_turn = function(m) Mission.BaseNextTurn(m) end
+    Mission.BaseNextTurn(TM)
+    local next_turns = 0
+    for _, h in ipairs(MOCK.hook_calls) do
+        if h == "NextTurn" then next_turns = next_turns + 1 end
+    end
+    eq(next_turns, 2, "re-entrant hook work does not recurse")
+    X.on_base_next_turn = saved.on_base_next_turn
+
+    -- An endless loop in the bridge's work is cut off and the extension
+    -- switched off; the game's call still returns its own values.
+    X.log_env_step = function() while true do CLOCK = CLOCK + 0.001 end end
+    r = X.pack(Mission.ApplyEnvironmentEffect(TM))
+    eq(r[1], true, "endless hook work: return passed through")
+    eq(r[2], 7, "endless hook work: second return passed through")
+    check(X.disabled == true, "endless hook work disables the extension")
+    check(string.find(tostring(X.disabled_reason), "log_env_step", 1, true) ~= nil, "disable reason names the hook")
+    check(string.find(read_file(DIR .. "/itb_bridge.log") or "", "BRIDGE EXT DISABLED", 1, true) ~= nil, "disable logged")
+    check(debug.gethook() == nil, "count hook removed")
+    X.log_env_step = saved.log_env_step
+
+    -- Disabled: the dump keeps the old fields and the deploy guard.
+    _ITB_CURRENT_MISSION = MF
+    MOCK.turn = 0
+    X._dump_state()
+    st = load_state()
+    eq(#st.tiles, 64, "disabled: old fields still dumped")
+    check(st.bridge_ext_disabled ~= nil, "disabled: state says so")
+    eq(st.mission_state, nil, "disabled: extension exports off")
+    for _, p in ipairs(st.deployment_zone or {}) do
+        check(not is_pylon(p[1], p[2]), "disabled: deployment_zone still excludes pylons")
+    end
+    local ack = run_command("DEPLOY 0 3 3")
+    check(ack and string.find(ack, "refused", 1, true) ~= nil, "disabled: DEPLOY guard still on")
+    MOCK.turn = 1
+
+    -- Slow but finite work: three slow calls switch it off.
+    X.disabled, X.disabled_reason, X._strikes = nil, nil, 0
+    X.log_env_step = function() CLOCK = CLOCK + 0.3 end
+    for i = 1, 3 do
+        check(not X.disabled, "slow call " .. i .. " before the limit")
+        Mission.ApplyEnvironmentEffect(TM)
+    end
+    check(X.disabled == true, "three slow calls disable the extension")
+    X.log_env_step = saved.log_env_step
+    X.disabled, X.disabled_reason, X._strikes = nil, nil, 0
 end
 
 eq(#MOCK.mismatches, 0, "strict-call mismatches overall")

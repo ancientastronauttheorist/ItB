@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 
+#include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -58,9 +59,19 @@ TEST_CASE("bridge: harness against the mocked game API") {
   set_global(lua.L, "HARNESS_MODLOADER", kModloader.string());
   set_global(lua.L, "HARNESS_MOCK", kMock.string());
   set_global(lua.L, "HARNESS_DIR", dir.string());
+  // With the game's scripts the harness also runs the final-mission
+  // (Env_Volcano, pylon drop) and Env_Lightning enemy phases.
+  const char* game_dir = std::getenv("ITB_GAME_DIR");
+  const bool with_game = game_dir != nullptr && *game_dir != '\0';
+  if (with_game) set_global(lua.L, "HARNESS_GAME_DIR", game_dir);
   const int rc = luaL_dofile(lua.L, kHarness.string().c_str());
   INFO(lua.error());
   REQUIRE(rc == 0);
+  if (with_game) {
+    lua_getglobal(lua.L, "HARNESS_REAL_SCRIPTS_RAN");
+    CHECK(lua_toboolean(lua.L, -1) == 1);
+    lua_pop(lua.L, 1);
+  }
 
   // The dump the SCENARIO left is the engine's input: it loads with the
   // extension fields.
