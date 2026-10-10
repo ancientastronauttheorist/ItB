@@ -78,3 +78,34 @@ target_compile_definitions(itb_tests PRIVATE
   ITB_REPO_ROOT="${ITB_REPO_ROOT}"
   ITB_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
 add_test(NAME itb_tests COMMAND itb_tests)
+
+# Python bindings (module itb_engine), the live bot's solver. Off by default:
+#   cmake -S engine -B engine/build -G Ninja -DITB_BUILD_PYTHON=ON \
+#     -DPython_EXECUTABLE=$(command -v python3)
+# builds engine/build/python/itb_engine.<abi>.so for that interpreter
+# (README "Python bindings").
+option(ITB_BUILD_PYTHON "Build the itb_engine Python module" OFF)
+if(ITB_BUILD_PYTHON)
+  set_target_properties(itb_engine itb_lua PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+  FetchContent_Declare(pybind11
+    URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz
+    URL_HASH SHA256=e08cb87f4773da97fa7b5f035de8763abc656d87d5773e62f6da0587d1f0ec20
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+  set(PYBIND11_FINDPYTHON ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(pybind11)
+  execute_process(COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY "${ITB_REPO_ROOT}"
+    OUTPUT_VARIABLE ITB_BUILD_GIT OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+  if(NOT ITB_BUILD_GIT)
+    set(ITB_BUILD_GIT "unknown")
+  endif()
+  pybind11_add_module(itb_engine_py MODULE python/itb_engine_py.cpp)
+  set_target_properties(itb_engine_py PROPERTIES
+    OUTPUT_NAME itb_engine
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/python")
+  target_compile_options(itb_engine_py PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_definitions(itb_engine_py PRIVATE ITB_BUILD_GIT="${ITB_BUILD_GIT}")
+  target_link_libraries(itb_engine_py PRIVATE itb_engine nlohmann_json::nlohmann_json)
+endif()

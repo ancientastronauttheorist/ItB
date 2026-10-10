@@ -56,6 +56,51 @@ recorded ones. `--beam W` sets the beam width (0 = off).
 follow to the end, runs the enemy phase and compares with the game's board
 at the start of the next turn (see "Validating the enemy phase").
 
+## Python bindings
+
+The live bot (`src/solver/cpp_solver.py`) uses the engine through the module
+`itb_engine` (`python/itb_engine_py.cpp`, pybind11 2.13.6 fetched by hash),
+built only with `-DITB_BUILD_PYTHON=ON`, for the interpreter CMake finds:
+
+```bash
+cmake -S engine -B engine/build -G Ninja -DITB_BUILD_PYTHON=ON -DPython_EXECUTABLE="$(command -v python3)"
+cmake --build engine/build   # -> engine/build/python/itb_engine.cpython-39-darwin.so
+```
+
+JSON in, JSON out. Every call takes the bridge state as JSON text (what the
+bridge writes; a recording wrapper with `data.bridge_state` works too) and
+loads it with the recording loader, plus pilot abilities and repair skills
+(as `itb_inspect --solve` does) and `can_move: false` (the bot's mark for a
+mech that moved and has not acted: `Pawn::moved`).
+
+```python
+import itb_engine, json
+e = itb_engine.Engine(game_root="", threads=8, difficulty=0)  # "" = ITB_GAME_DIR / build default
+r = json.loads(e.solve(bridge_json, json.dumps({"time_limit": 8.0})))
+r["plan"]            # [{"uid", "move": [x,y]|None, "kind": "none"|"weapon"|"repair",
+                     #   "weapon", "target", "target2", "description"}], Plan::actions
+r["worst_case"]      # tiers by name; "upper_bound", "proven_optimal",
+                     # "proven_components", "chance_exact", "contingent", "stats", "warnings"
+r["simulation"]      # the plan run step by step with every chance node's default outcome:
+                     # steps[i].after_move / after_action, post_player_board,
+                     # final_board (after the enemy phase), enemy_phase, score
+e.simulate(bridge_json, plan_json)   # the same for any plan
+e.evaluate(bridge_json, plan_json)   # evaluate_plan: worst case over every chance outcome
+e.load(bridge_json)                  # the board as loaded, loader warnings
+```
+
+Boards are serialized in the bridge's shape (`terrain` names and
+`terrain_id`, `building_hp`, `fire`/`smoke`/`acid`/`shield`/`pod`; units with
+`x`/`y`/`hp`/statuses/`active`/queued shot; `boosted` includes the Boost
+psion, as `Pawn:IsBoosted()` does), so the bot reads them with
+`Board.from_bridge_data` and diffs them against the live game exactly as it
+did the old solver's predictions. Pawns the engine removed are absent;
+fallen and burrowed pawns are marked `off_board`. `ENGINE_VERSION` names the
+prediction semantics (bump it when the same board predicts differently) and
+`BUILD_GIT` the commit built. Each `Engine` holds one engine and Lua state
+per thread; extra engines load in parallel (about 1.3 s for one, 2.7 s for
+eight).
+
 ## How game data is loaded
 
 `GameData::load` runs the game's scripts in Lua 5.1, in the same
