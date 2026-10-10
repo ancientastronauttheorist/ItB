@@ -24,4 +24,17 @@ struct SolveToolOptions {
 
 int run_solve(const SolveToolOptions& options);
 
+struct DiffWeaponsOptions {
+  std::filesystem::path game;
+  std::filesystem::path recordings;  // recorded boards to fire on ("" = none)
+  int random = 200;                  // random boards
+  uint32_t seed = 1;
+  std::string weapon;                // only this weapon table
+  bool all_tables = false;           // every ported table, not one per behaviour
+  bool ports = false;                // list what runs natively instead
+};
+
+// itb_inspect --diff-weapons (diff_weapons.cpp).
+int run_diff_weapons(const DiffWeaponsOptions& options);
+
 }  // namespace itb::tools

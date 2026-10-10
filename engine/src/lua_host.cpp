@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
@@ -13,6 +14,8 @@
 #include "itb/tile_rules.hpp"
 #include "lua_env.hpp"
 #include "lua_host_internal.hpp"
+#include "lua_native.hpp"
+#include "weapon_ports.hpp"
 
 extern "C" {
 #include "lauxlib.h"
@@ -126,6 +129,10 @@ struct LuaHost::Impl {
   // sScript chunks, compiled once (registry refs): a chunk is a plain
   // function of the globals, so running the cached one is running the code.
   std::unordered_map<std::string, int> chunks;
+  // C++ weapon ports (weapon_ports.hpp), used while native_weapons is on.
+  bool native_weapons = true;
+  lua::WeaponPortTable ports;
+  uint64_t native_calls = 0;  // calls answered by a port
 };
 
 namespace {
@@ -263,11 +270,54 @@ bool take_skill_effect(lua_State* L, LuaSkillEffect& out, LuaCall& call, std::st
   return true;
 }
 
+// The weapon's C++ port for `method`, when one applies to this call: ports
+// on, a board set, and the nesting the Lua call would accept.
+const lua::WeaponPort* port_for(LuaHost::Impl& im, std::string_view weapon) {
+  if (!im.native_weapons || !im.ctx.board || im.ctx.depth > kMaxDepth) return nullptr;
+  return im.ports.find(im.L, weapon);
+}
+
+// Runs a port; on success its console output goes to `call` (as the Lua's
+// would) and the call is counted as native.
+template <class Run>
+bool run_port(LuaHost::Impl& im, const lua::PortSpec& spec, std::string_view weapon, const char* func,
+              LuaCall& call, Run&& run) {
+  if (spec.runs_lua) flush_selected(im);
+  const Board& b = *im.ctx.board;
+  lua::PortContext pc{b, im.ctx.selected >= 0 ? b.find_pawn(im.ctx.selected) : nullptr, im.L, {}};
+  if (!run(pc)) return false;
+  ++im.native_calls;
+  for (std::string& line : pc.console) {
+    if (call.console.size() < kMaxConsoleLines) call.console.push_back(std::move(line));
+  }
+  if (im.count_calls) {
+    std::string key(weapon);
+    key += ':';
+    key += func;
+    key += " @native ";
+    key += spec.file;
+    key += ':';
+    key += std::to_string(spec.line);
+    ++im.call_counts[key];
+  }
+  return true;
+}
+
 std::vector<Point> target_area_impl(LuaHost::Impl& im, std::string_view weapon, Point origin,
                                     LuaCall& call) {
   std::vector<Point> area;
   // Skill::GetTargetArea only asks Lua for an origin on the board.
   if (!origin.valid()) return area;
+  if (const lua::WeaponPort* port = port_for(im, weapon); port && port->area) {
+    const lua::PortSpec& spec = *port->area;
+    if (run_port(im, spec, weapon, "GetTargetArea", call, [&](lua::PortContext& pc) {
+          return spec.area(pc, port->area_fields, origin, area);
+        })) {
+      std::erase_if(area, [](Point p) { return p.x < 0 || p.y < 0; });
+      return area;
+    }
+    area.clear();
+  }
   if (!call_method(im, weapon, "GetTargetArea", call, [&](lua_State* L) {
         lua::push_point(L, origin);
         return 1;
@@ -283,6 +333,15 @@ std::vector<Point> target_area_impl(LuaHost::Impl& im, std::string_view weapon, 
 LuaSkillEffect skill_effect_impl(LuaHost::Impl& im, std::string_view weapon, Point origin,
                                  Point target, LuaCall& call) {
   LuaSkillEffect se;
+  if (const lua::WeaponPort* port = port_for(im, weapon); port && port->effect) {
+    const lua::PortSpec& spec = *port->effect;
+    if (run_port(im, spec, weapon, "GetSkillEffect", call, [&](lua::PortContext& pc) {
+          return spec.effect(pc, port->effect_fields, origin, target, se);
+        })) {
+      return se;
+    }
+    se = LuaSkillEffect{};
+  }
   if (!call_method(im, weapon, "GetSkillEffect", call, [&](lua_State* L) {
         lua::push_point(L, origin);
         lua::push_point(L, target);
@@ -481,6 +540,10 @@ std::unique_ptr<LuaHost> LuaHost::create(const std::filesystem::path& game_root,
   Impl& im = *host->impl_;
   im.ctx.options = options;
   im.ctx.impl = &im;
+  im.native_weapons = options.native_weapons;
+  if (const char* lua_only = std::getenv("ITB_LUA_WEAPONS"); lua_only && *lua_only && *lua_only != '0') {
+    im.native_weapons = false;
+  }
   detail::ScriptRun run;
   im.env = detail::LuaEnv::load_game_scripts(
       game_root, &run, [&im](lua_State* L) { lua::install_host_bindings(L, &im.ctx); });
@@ -731,6 +794,45 @@ LuaCall LuaHost::run_script(const Board& board, std::string_view code, const Paw
 }
 
 void LuaHost::select(const Pawn* pawn) { set_selected(*impl_, pawn); }
+
+void LuaHost::set_native_weapons(bool on) { impl_->native_weapons = on; }
+
+bool LuaHost::native_weapons() const { return impl_->native_weapons; }
+
+std::string LuaHost::native_port(std::string_view weapon, std::string_view method) {
+  const lua::WeaponPort* port = impl_->ports.find(impl_->L, weapon);
+  const lua::PortSpec* spec = !port ? nullptr : method == "GetTargetArea" ? port->area : method == "GetSkillEffect" ? port->effect : nullptr;
+  return spec ? std::string(spec->file) + ":" + std::to_string(spec->line) : std::string();
+}
+
+uint64_t LuaHost::native_calls() const { return impl_->native_calls; }
+
+std::string LuaHost::native_binding(std::string_view weapon) {
+  const lua::WeaponPort* port = impl_->ports.find(impl_->L, weapon);
+  if (!port) return {};
+  std::string out;
+  auto add = [&](const char* what, const lua::PortSpec* spec, const lua::Fields& fields) {
+    if (!spec) return;
+    out += std::string(what) + "=" + spec->file + ":" + std::to_string(spec->line) + "(";
+    for (const lua::FieldValue& f : fields) {
+      out += std::to_string(f.type) + ":" + (f.b ? "t" : "f") + ":" + lua::native::number_string(f.n) + ":" + f.s + ";";
+    }
+    out += ")";
+  };
+  add("area", port->area, port->area_fields);
+  add("effect", port->effect, port->effect_fields);
+  return out;
+}
+
+std::string LuaHost::native_port_status(std::string_view weapon, std::string_view method) {
+  const std::string m(method);
+  const lua::LuaFunctionId id = impl_->ports.function_of(impl_->L, weapon, m.c_str());
+  const std::string why = impl_->ports.why_not(impl_->L, weapon, m.c_str());
+  char hash[32];
+  std::snprintf(hash, sizeof hash, "%016llx", static_cast<unsigned long long>(id.hash));
+  return (id.file.empty() ? std::string("(not a script function)") : id.key() + "-" + std::to_string(id.last_line) + " " + hash) +
+         (why.empty() ? std::string(" ported") : " lua: " + why);
+}
 
 void LuaHost::set_call_counting(bool on) { impl_->count_calls = on; }
 
