@@ -284,6 +284,8 @@ int run_solve(const SolveToolOptions& opt) {
              {"enemy_phase_s", r.stats.enemy_phase_s},
              {"chance_branches", r.stats.chance_branches},
              {"tt_hits", r.stats.tt_hits},
+             {"tt_entries", r.stats.tt_entries},
+             {"leaf_entries", r.stats.leaf_entries},
              {"first_plan_s", r.stats.first_plan_s},
              {"best_plan_s", r.stats.best_plan_s},
              {"ours", r.best.worst_case.v},

@@ -391,6 +391,7 @@ class SharedMap {
     s.map.emplace(k, v);
     size_.fetch_add(1, std::memory_order_relaxed);
   }
+  size_t size() const { return size_.load(std::memory_order_relaxed); }
   // In-progress counts (V = int): boards some thread is searching now.
   void add(const BoardHash& k, int delta) {
     Shard& s = shard(k);
@@ -1058,6 +1059,8 @@ SolveResult solve_turn(Engine& engine, const Board& board, const TurnContext& ct
     if (w->sampled()) sh.chance_exact = false;
   }
   out.stats.time_s = seconds_since(sh.start);
+  out.stats.tt_entries = sh.tt.size();
+  out.stats.leaf_entries = sh.leaf.size();
   out.stats.first_plan_s = sh.first_plan_s;
   out.stats.best_plan_s = sh.best_plan_s;
   out.stats.threads = static_cast<int>(engines.size());

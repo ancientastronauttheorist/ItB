@@ -121,6 +121,8 @@ struct SolveStats {
   uint64_t duplicate_children = 0;  // sub-actions giving a sibling's board
   uint64_t bound_prunes = 0;     // nodes cut by the tier upper bound
   uint64_t chance_cutoffs = 0;   // chance enumerations stopped early
+  uint64_t tt_entries = 0;       // transposition table entries at the end
+  uint64_t leaf_entries = 0;     // end-of-turn memo entries at the end
   double time_s = 0;
   double sub_action_s = 0;  // time inside the engine's sub-actions
   double enemy_phase_s = 0; // time inside Engine::end_turn
