@@ -1,6 +1,6 @@
 # Agent Docs
 
-The top-level `AGENTS.md` is now the compact field guide. These focused files hold the detailed material that used to make `AGENTS.md` too heavy to scan during live play.
+The top-level `CLAUDE.md` is the compact guide (the achievement-era `AGENTS.md` is archived in `docs/archive/achievement-era/`). These focused files hold the detailed live-bot material.
 
 - `live-runbook.md` - phase flow, command reference, UI/click rules, session locking, and live shell/search hygiene.
 - `safety-gates.md` - research gates, diagnosis loop, investigations, dirty-plan consent, post-enemy blocks, and threat audits.
@@ -18,4 +18,4 @@ The top-level `AGENTS.md` is now the compact field guide. These focused files ho
 - `../complete_victory_bombermechs_retrospective.md` - Complete Victory proof,
   final-cave pylon-emergency review, and offline Steam-cache verification notes.
 
-When adding a new guard, update the narrowest focused file first. Touch `AGENTS.md` only when the rule changes the global live-loop contract every agent must load immediately.
+When adding a new guard, update the narrowest focused file first. Touch `CLAUDE.md` only when the rule changes the global contract every agent must load immediately.
