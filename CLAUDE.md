@@ -73,8 +73,11 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
 - **Coordinates:** bridge `(x, y)` is the native board point; visual row
   = 8 − x, column = 'H' − y, so `(3, 5)` is C5. Talk in A1–H8.
 - **UI navigation** (menus, deployment, rewards, shop, island map) is
-  screenshot-driven. In fullscreen at 1360×768, tile `(x, y)` is at screen
-  `(676 + 57·(x−y), 117 + 41·(x+y))` and End Turn is at `(128, 89)`.
+  screenshot-driven. In fullscreen at 1360×768, tile `(x, y)` is at roughly
+  `(676 + 57·(x−y), Y0 + 41·(x+y))`. Y0 varies per map (about 95–127), so
+  calibrate from a unit with known coordinates before clicking tiles, or use
+  the bridge (`live_play.py deploy`) instead of clicks. End Turn is at
+  `(128, 89)`, and a "units can still act" dialog may need YES at `(607, 409)`.
 - **Bridge data:** since the extension (fae1c5ef) it exports exact weapon ids
   (`weapons_exact`, `weapon_slots`), `moved`, the drop zone and mission state;
   `MOVE_NATIVE` moves like a click (`MOVE` teleports with `SetSpace` and skips
