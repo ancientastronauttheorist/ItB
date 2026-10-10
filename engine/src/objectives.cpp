@@ -213,7 +213,7 @@ ObjectiveReport evaluate_objectives(const Board& before, const Board& after, con
     if (a.item != kNoSymbol && symbol_name(a.item) == "Item_Repair_Mine" && b.item != a.item) {
       const Pawn* on = nullptr;
       for (const Pawn& p : after.pawns()) {
-        if (p.pos == pt && alive(&p)) on = &p;
+        if (p.occupies(pt) && alive(&p)) on = &p;
       }
       if (on && on->team == Team::Player) ++r.repairs_used;
     }
@@ -562,7 +562,7 @@ PositionTerms position_terms(const Board& b) {
       const Tile& nt = b.tile(n);
       if (nt.is_building() && nt.hp > 0) t.building_threat += nt.unique_building != kNoSymbol ? 2 : 1;
       for (const Pawn& q : b.pawns()) {
-        if (q.pos == n && alive(&q) && q.team == Team::Player && !q.mech) ++t.unit_threat;
+        if (q.occupies(n) && alive(&q) && q.team == Team::Player && !q.mech) ++t.unit_threat;
       }
     }
   }

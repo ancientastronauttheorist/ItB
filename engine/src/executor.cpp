@@ -691,8 +691,11 @@ void Simulation::update_tiles() {
     bodies = false;
     for (const Pawn& pawn : board_.pawns()) {
       if (pawn.pos.valid()) {
-        occupied |= uint64_t{1} << pawn.pos.index();
-        if (!pawn.fallen && (pawn.mech || pawn.fire)) hot |= uint64_t{1} << pawn.pos.index();
+        // A multi-tile pawn is listed on its extra tile as well.
+        uint64_t bits = uint64_t{1} << pawn.pos.index();
+        if (const Point e = pawn.extra_tile(); e.valid()) bits |= uint64_t{1} << e.index();
+        occupied |= bits;
+        if (!pawn.fallen && (pawn.mech || pawn.fire)) hot |= bits;
       }
       webbed = webbed || pawn.webbed;
       if (!pawn.mech && !pawn.alive()) {
@@ -746,7 +749,7 @@ void Simulation::update_tiles() {
     if (bodies && (occupied >> i & 1)) {
       gone.clear();
       for (const Pawn& pawn : board_.pawns()) {
-        if (pawn.pos != p) continue;
+        if (!pawn.occupies(p)) continue;
         if (const PawnSim* ps = find_state(pawn.uid); ps && removable(pawn, *ps)) gone.push_back(pawn.uid);
       }
       for (int32_t uid : gone) remove(uid);

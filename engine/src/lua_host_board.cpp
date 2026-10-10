@@ -58,7 +58,7 @@ std::vector<const Pawn*> occupants_of(const Board& b, Point p) {
   std::vector<const Pawn*> out;
   if (!p.valid()) return out;
   for (const Pawn& pawn : b.pawns()) {
-    if (pawn.pos == p && !pawn.fallen) out.push_back(&pawn);
+    if (pawn.occupies(p) && !pawn.fallen) out.push_back(&pawn);
   }
   return out;
 }

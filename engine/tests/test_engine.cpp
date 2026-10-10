@@ -449,3 +449,85 @@ TEST_CASE("Engine: a Burrower on a cracked tile takes the laser without diving")
   CHECK(b.tile({1, 4}).is_chasm());
   CHECK(gone(b, bur));
 }
+
+// Multi-tile pawns (Lua ExtraSpaces). Natively the pawn is listed in the
+// BoardSpace of each of its tiles (Pawn::SetSpace 0087dcb0, Board::MovePawn
+// 0093abd0, Board::RemovePawn 0093a980), so the extra tile answers every
+// per-tile query with the pawn.
+namespace {
+
+int32_t place_dam(Board& b) {
+  // missions/grass/mission_dam.lua: the dam and its extra tile stand in water.
+  b.tile({4, 0}).terrain = Terrain::Water;
+  b.tile({5, 0}).terrain = Terrain::Water;
+  return place(b, "Dam_Pawn", {4, 0});
+}
+
+}  // namespace
+
+TEST_CASE("Engine: a dam occupies its extra tile") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t dam = place_dam(b);
+  const Pawn& d = *b.find_pawn(dam);
+  CHECK(d.extra_tile() == Point{5, 0});
+  CHECK(b.pawn_at({5, 0}) == &d);
+  CHECK(tile_occupied(b, {5, 0}));
+  // A mech cannot stop there (live 2026-10-10: the game refused this move).
+  const int32_t mech = place(b, "FlameMech", {5, 2}, true);
+  CHECK(E.move(b, mech, {5, 0}).status == ActionStatus::NotInArea);
+  CHECK(E.move(b, mech, {4, 0}).status == ActionStatus::NotInArea);
+  CHECK(E.move(b, mech, {5, 1}).ok());
+}
+
+TEST_CASE("Engine: a hit on a dam's extra tile damages the dam") {
+  NEED_ENGINE();
+  SUBCASE("a projectile stops at the extra tile") {
+    Board b;
+    const int32_t dam = place_dam(b);
+    const int32_t fly = place(b, "Firefly1", {5, 2});
+    b.find_pawn(fly)->queued = QueuedShot{0, {5, 2}, {5, 1}};
+    REQUIRE(E.fire_queued(b, fly).ok());
+    CHECK(b.find_pawn(dam)->hp == 1);  // one SpaceDamage, one hit
+  }
+  SUBCASE("a pawn pushed into the extra tile bumps the dam") {
+    Board b;
+    const int32_t dam = place_dam(b);
+    const int32_t mech = place(b, "PunchMech", {7, 0}, true);
+    const int32_t v = place(b, "Scorpion1", {6, 0});
+    REQUIRE(E.fire_weapon(b, mech, 0, {6, 0}).ok());
+    CHECK(gone(b, v));  // 2 + the bump
+    CHECK(b.find_pawn(dam)->hp == 1);
+  }
+  SUBCASE("a melee hit on the extra tile") {
+    Board b;
+    const int32_t dam = place_dam(b);
+    const int32_t mech = place(b, "PunchMech", {5, 1}, true);
+    REQUIRE(E.fire_weapon(b, mech, 0, {5, 0}).ok());
+    CHECK(gone(b, dam));
+  }
+}
+
+TEST_CASE("Engine: a train moves with its rear tile and dies to a hit there") {
+  NEED_ENGINE();
+  SUBCASE("Train_Move carries the extra tile") {
+    Board b;
+    const int32_t train = place(b, "Train_Pawn", {4, 6});
+    REQUIRE(b.find_pawn(train)->extra_tile() == Point{4, 7});
+    b.find_pawn(train)->queued = QueuedShot{0, {4, 6}, {4, 5}};
+    REQUIRE(E.fire_queued(b, train).ok());
+    const Pawn& t = *b.find_pawn(train);
+    CHECK(t.pos == Point{4, 4});
+    CHECK(b.pawn_at({4, 5}) == &t);
+    CHECK(b.pawn_at({4, 7}) == nullptr);
+    CHECK(b.pawn_at({4, 6}) == nullptr);
+  }
+  SUBCASE("a shot at the rear tile") {
+    Board b;
+    const int32_t train = place(b, "Train_Pawn", {4, 5});
+    const int32_t fly = place(b, "Firefly1", {1, 6});
+    b.find_pawn(fly)->queued = QueuedShot{0, {1, 6}, {2, 6}};
+    REQUIRE(E.fire_queued(b, fly).ok());
+    CHECK(gone(b, train));
+  }
+}

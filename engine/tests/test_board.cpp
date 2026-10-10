@@ -65,6 +65,34 @@ TEST_CASE("lookup by position and uid") {
   CHECK(b.find_pawn(10) == nullptr);
 }
 
+TEST_CASE("a multi-tile pawn is found on its extra tile too") {
+  Board b;
+  Pawn dam = make(9, Team::None);
+  dam.pos = Point{4, 0};
+  dam.extra_dx = 1;  // Dam_Pawn ExtraSpaces {Point(1,0)}
+  b.add_pawn(dam);
+  Pawn v = make(10, Team::Enemy);
+  v.pos = Point{4, 1};
+  b.add_pawn(v);
+  const Pawn& d = *b.find_pawn(9);
+  CHECK(d.multi_tile());
+  CHECK(d.extra_tile() == Point{5, 0});
+  CHECK(d.occupies(Point{4, 0}));
+  CHECK(d.occupies(Point{5, 0}));
+  CHECK_FALSE(d.occupies(Point{3, 0}));
+  REQUIRE(b.pawn_at(Point{5, 0}) != nullptr);
+  CHECK(b.pawn_at(Point{5, 0})->uid == 9);
+  CHECK(b.pawns_at(Point{5, 0}).size() == 1);
+  CHECK(b.pawn_at(Point{5, 1}) == nullptr);
+  // One-tile pawns and pawns off the board have no extra tile.
+  CHECK_FALSE(b.find_pawn(10)->multi_tile());
+  CHECK(b.find_pawn(10)->extra_tile() == kInvalidPoint);
+  Pawn off = dam;
+  off.pos = kInvalidPoint;
+  CHECK(off.extra_tile() == kInvalidPoint);
+  CHECK_FALSE(off.occupies(Point{0, -1}));
+}
+
 TEST_CASE("tiles default to empty road") {
   Board b;
   const Tile& t = b.tile(Point{0, 0});

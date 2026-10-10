@@ -14,7 +14,7 @@ using detail::emit;
 const Pawn* first_occupant_const(const Board& board, Point p) {
   const Pawn* first = nullptr;
   for (const Pawn& pawn : board.pawns()) {
-    if (pawn.pos == p && !pawn.fallen && (!first || pawn.arrival < first->arrival)) first = &pawn;
+    if (pawn.occupies(p) && !pawn.fallen && (!first || pawn.arrival < first->arrival)) first = &pawn;
   }
   return first;
 }
@@ -62,7 +62,7 @@ bool detail::inert_tile_state(const Tile& t) {
 static bool inert_empty_tile(const Board& board, Point p) {
   if (!detail::inert_tile_state(board.tile(p))) return false;
   for (const Pawn& pawn : board.pawns()) {
-    if (pawn.pos == p) return false;
+    if (pawn.occupies(p)) return false;
     // check_webs: a web whose emitting tile is p (or unknown) may break.
     if (pawn.webbed) return false;
   }
@@ -93,7 +93,7 @@ static bool quiet_occupied_tile(const Board& board, Point p) {
   const bool healing_smoke = t.smoke && board.has_passive(kPassiveHealingSmoke);
   for (const Pawn& pawn : board.pawns()) {
     if (pawn.webbed) return false;
-    if (pawn.pos != p || pawn.fallen) continue;
+    if (!pawn.occupies(p) || pawn.fallen) continue;
     if (healing_smoke && pawn.mech) return false;
     if (pawn.fire && (t.smoke || t.terrain == Terrain::Forest)) return false;
   }
@@ -281,7 +281,7 @@ bool is_turn_shielded(const Board& board, const Pawn& pawn) {
 std::vector<Pawn*> occupants(Board& board, Point p) {
   std::vector<Pawn*> out;
   for (Pawn& pawn : board.pawns()) {
-    if (pawn.pos == p && !pawn.fallen) out.push_back(&pawn);
+    if (pawn.occupies(p) && !pawn.fallen) out.push_back(&pawn);
   }
   if (out.size() > 1) {
     std::stable_sort(out.begin(), out.end(),
@@ -292,7 +292,7 @@ std::vector<Pawn*> occupants(Board& board, Point p) {
 
 bool has_pawn(const Board& board, Point p) {
   return std::any_of(board.pawns().begin(), board.pawns().end(), [&](const Pawn& pawn) {
-    return pawn.pos == p && counts_as_pawn(board, pawn);
+    return pawn.occupies(p) && counts_as_pawn(board, pawn);
   });
 }
 

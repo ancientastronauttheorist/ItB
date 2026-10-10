@@ -184,6 +184,17 @@ struct Pawn {
   int8_t pilot_skill1 = -1;
   int8_t pilot_skill2 = -1;
   int16_t pilot_xp = -1;
+  // Multi-tile pawns (Lua ExtraSpaces: Dam_Pawn, the trains): the offset of
+  // the second tile from `pos`, (0, 0) for a one-tile pawn. Every shipped
+  // definition has at most one extra space. Natively the pawn sits in the
+  // BoardSpace of its tile and of each extra tile: Pawn::SetSpace (0087dcb0)
+  // moves all of them through Board::MovePawn (0093abd0) and
+  // Board::RemovePawn(Pawn*) (0093a980) clears all of them, so every
+  // per-tile query (GetPawn, IsPawnSpace, IsBlocked, damage, pushes, tile
+  // rules) sees the pawn on the extra tile too. `pos` stays the main tile
+  // (Pawn::GetSpace).
+  int8_t extra_dx = 0;
+  int8_t extra_dy = 0;
 
   // Static traits (copied from the pawn definition, overridable per board).
   bool mech = false;
@@ -236,6 +247,17 @@ struct Pawn {
   MoveState movement;
 
   bool alive() const { return hp > 0; }
+  bool multi_tile() const { return (extra_dx | extra_dy) != 0; }
+  // The extra tile (may be off the board); kInvalidPoint for a one-tile pawn
+  // or one that is off the board.
+  Point extra_tile() const {
+    return multi_tile() && pos.valid() ? Point{pos.x + extra_dx, pos.y + extra_dy} : kInvalidPoint;
+  }
+  // Whether the pawn is listed in p's BoardSpace: its own tile or its extra
+  // tile.
+  bool occupies(Point p) const {
+    return pos == p || (multi_tile() && pos.valid() && pos.x + extra_dx == p.x && pos.y + extra_dy == p.y);
+  }
   bool controlled() const { return team == Team::Player && !neutral; }
   bool has_pilot(PilotAbility a) const { return (pilot_abilities & a) != 0; }
   // Pilot::IsAbility for a level-up skill: learned once the level reaches its slot.

@@ -291,6 +291,50 @@ TEST_CASE("live: boards carry each unit's queued shot; smoke clears it (live 202
   fs::remove(fixed);
 }
 
+TEST_CASE("live: the dam's second tile is occupied (live 2026-10-10 m46 turn 1)") {
+  NEED_SESSION();
+  // Mission_Dam: Dam_Pawn#2335 at H4 (4,0) with ExtraSpaces {(1,0)} also
+  // stands on H3 (5,0); the bridge lists that tile as a second entry with
+  // "is_extra_tile". The solver planned InfernoMech#0 onto H3 and the game
+  // refused the move.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_dam_t1_solve_input.json";
+  const GameData data = GameData::load(GameData::default_game_root());
+  std::string error;
+  auto rec = load_recording(start, &data, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Pawn* dam = rec->board.find_pawn(2335);
+  REQUIRE(dam);
+  CHECK(dam->extra_tile() == Point{5, 0});
+  CHECK(rec->board.pawn_at({5, 0}) == dam);
+  for (const std::string& w : rec->warnings) CHECK_MESSAGE(w.find("extra") == std::string::npos, w);
+  int dams = 0;
+  for (const Pawn& p : rec->board.pawns()) dams += p.uid == 2335 ? 1 : 0;
+  CHECK(dams == 1);
+
+  const json bad = json::array({{{"uid", 0}, {"move", {5, 0}}}});
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", bad}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  CHECK(r["refused"] == 0);
+  // The board export lists the dam once.
+  int listed = 0;
+  for (const json& u : r["start"]["units"]) listed += u["uid"] == 2335 ? 1 : 0;
+  CHECK(listed == 1);
+
+  // The plan the engine now finds: from G3 (5,1), flame H3 (5,0), which
+  // hits the dam.
+  const json good = json::array({
+      {{"uid", 0}, {"move", {5, 1}}, {"kind", "weapon"}, {"weapon", "Prime_Flamespreader"}, {"target", {5, 0}}},
+  });
+  const json r2 = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", good}});
+  REQUIRE_MESSAGE(r2["ok"].get<bool>(), r2.dump());
+  CHECK(r2["refused"] == -1);
+  int hp = -1;
+  for (const json& u : r2["after_player"]["units"]) {
+    if (u["uid"] == 2335) hp = u["hp"].get<int>();
+  }
+  CHECK(hp < 2);
+}
+
 TEST_CASE("live: bad requests answer ok=false") {
   NEED_SESSION();
   CHECK(S.handle({{"cmd", "ping"}})["ok"] == true);

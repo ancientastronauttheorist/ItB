@@ -238,6 +238,14 @@ TEST_CASE("loads the bridge extension fields") {
   CHECK(mystery.ignore_smoke);
   CHECK(mystery.burns);
   CHECK(mystery.minor);
+
+  // The train is loaded once, with its rear tile (ExtraSpaces {(0,1)}).
+  int trains = 0;
+  for (const Pawn& p : b.pawns()) trains += p.uid == 60 ? 1 : 0;
+  CHECK(trains == 1);
+  CHECK(b.find_pawn(60)->extra_tile() == Point{4, 7});
+  CHECK(b.pawn_at(Point{4, 7}) == b.find_pawn(60));
+  for (const std::string& w : rec->warnings) CHECK_MESSAGE(w.find("extra") == std::string::npos, w);
   CHECK_FALSE(mystery.health_bonus);
 
   // Every queued shot, any team.

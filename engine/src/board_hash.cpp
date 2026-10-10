@@ -103,6 +103,8 @@ void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
   k.put(u8(p.pilot_skill1), 8);
   k.put(u8(p.pilot_skill2), 8);
   k.put(static_cast<uint16_t>(p.pilot_xp), 16);
+  k.put(u8(p.extra_dx), 8);
+  k.put(u8(p.extra_dy), 8);
   k.put(static_cast<uint32_t>(p.web_source), 32);
   k.put(tile_rank, 16);
   k.put(u8(p.hp), 8);
