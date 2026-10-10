@@ -15,6 +15,8 @@ struct Engine::Impl {
   std::unique_ptr<LuaHost> host;
   // The Lua `Pawn` global: the pawn selected last (sticky, as in game).
   int32_t selected = -1;
+  // Animation timelines for every resolution of this engine.
+  TimelineCache timelines;
 
   // Fills `ctx` for a resolution with the Lua hooks wired (sScripts, death
   // effects and their writes) and the caller's options. Lua diagnostics go to

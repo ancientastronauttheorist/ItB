@@ -28,4 +28,15 @@ inline bool is_lava(const Tile& t) { return t.terrain == Terrain::Water && t.lav
 // Releases the webs held by pawns on p (ClearGrapple on the emitting tile).
 void release_webs(Board& board, Point p);
 
+// The tile-state half of settle_tile_frame's early return: with no pawn on
+// the tile (fallen ones included) and no webbed pawn anywhere, a tile in
+// this state is left exactly as it is.
+bool inert_tile_state(const Tile& t);
+// settle_tile_frame(board, p) would change nothing at all.
+bool settle_tile_noop(const Board& board, Point p);
+// The tile-state half of settle_tile_noop for an occupied tile: with no
+// webbed pawn anywhere and no occupant (not fallen) that is a mech or on
+// fire, a tile in this state is left exactly as it is.
+bool quiet_occupied_tile_state(const Tile& t);
+
 }  // namespace itb::detail

@@ -324,6 +324,7 @@ void Engine::Impl::wire(Engine& engine, ResolveContext& ctx, const ActionOptions
   ctx.data = &data;
   ctx.config = options.config;
   ctx.durations = options.durations;
+  ctx.timelines = &timelines;
   ctx.rules.data = &data;
   ctx.rules.grid_resist = opts.grid_resist;
   ctx.rules.events = opts.events;
@@ -413,10 +414,17 @@ static ActionResult fire_skill(Engine& engine, Engine::Impl& im, Board& board, i
   }
   im.selected = uid;  // the shooter is selected (Lua `Pawn`)
   const Point origin = pawn->pos;
-  LuaCall call;
-  const std::vector<Point> area = host.target_area(board, *pawn, weapon, origin, &call);
-  note_error(out, call);
-  if (opts.check_legal && !contains(area, target)) {
+  std::vector<Point> computed;
+  const std::vector<Point>* area = opts.known_area;
+  if (area) {
+    host.select(pawn);  // as the target-area call would
+  } else {
+    LuaCall call;
+    computed = host.target_area(board, *pawn, weapon, origin, &call);
+    note_error(out, call);
+    area = &computed;
+  }
+  if (opts.check_legal && !contains(*area, target)) {
     out.status = ActionStatus::NotInArea;
     return out;
   }

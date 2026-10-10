@@ -30,6 +30,8 @@ void install_host_bindings(lua_State* L, HostContext* ctx);
 // A fresh, non-owning BoardPawn userdata (nil for null), as luabind pushes
 // every Pawn* result.
 void push_pawn(lua_State* L, const Pawn* p);
+// The same for a uid (-1: nil).
+void push_pawn_uid(lua_State* L, int32_t uid);
 void host_push_board(lua_State* L);
 void host_push_game(lua_State* L);
 

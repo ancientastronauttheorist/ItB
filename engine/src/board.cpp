@@ -1,6 +1,8 @@
 #include "itb/board.hpp"
 
 #include <algorithm>
+#include <cstring>
+#include <type_traits>
 
 namespace itb {
 namespace {
@@ -57,6 +59,19 @@ Pawn* Board::pawn_at(Point p) {
 
 const Pawn* Board::pawn_at(Point p) const {
   return const_cast<Board*>(this)->pawn_at(p);
+}
+
+// memcmp on the tiles equals comparing every field: Tile has unique object
+// representations (no padding, no floating point).
+static_assert(std::has_unique_object_representations_v<Tile>, "Tile must stay free of padding");
+
+bool Board::operator==(const Board& o) const {
+  return std::memcmp(tiles_.data(), o.tiles_.data(), sizeof(tiles_)) == 0 && pawns_ == o.pawns_ &&
+         arrival_clock_ == o.arrival_clock_ && grid_power == o.grid_power && grid_power_max == o.grid_power_max &&
+         grid_defense == o.grid_defense && turn == o.turn && total_turns == o.total_turns &&
+         player_phase == o.player_phase && passives == o.passives && next_uid == o.next_uid && psion == o.psion &&
+         spawn_points == o.spawn_points && teleporters == o.teleporters &&
+         teleporter_occupants == o.teleporter_occupants;
 }
 
 Pawn* Board::find_pawn(int32_t uid) {

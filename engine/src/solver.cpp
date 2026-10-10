@@ -364,7 +364,11 @@ TTEntry merge_entries(const TTEntry& old, const TTEntry& next) {
 }
 
 // A hash map in independently locked shards, shared by the search threads.
-// Entries are only ever sound intervals, so any thread may use any entry.
+// Entries are only ever sound intervals, so any thread may use any entry,
+// and dropping one only loses information. Once `cap` entries are stored, a
+// new entry replaces the deepest of the few entries in the neighbouring
+// buckets of its shard (entries near the root stand for the largest
+// subtrees); below the cap nothing is ever dropped.
 template <class V>
 class SharedMap {
  public:
@@ -374,36 +378,67 @@ class SharedMap {
     std::lock_guard lock(s.mu);
     auto it = s.map.find(k);
     if (it == s.map.end()) return false;
-    out = it->second;
+    out = it->second.v;
     return true;
   }
-  // An existing entry is merged with merge(old, new).
+  // An existing entry is merged with merge(old, new). `depth`: how deep in
+  // the search the entry was computed (the replacement priority).
   template <class Merge>
-  void put(const BoardHash& k, const V& v, Merge&& merge) {
+  void put(const BoardHash& k, const V& v, Merge&& merge, int depth = 0) {
     Shard& s = shard(k);
     std::lock_guard lock(s.mu);
     auto it = s.map.find(k);
     if (it != s.map.end()) {
-      it->second = merge(it->second, v);
+      it->second.v = merge(it->second.v, v);
+      it->second.depth = std::min(it->second.depth, depth);
       return;
     }
-    if (size_.load(std::memory_order_relaxed) >= cap_) return;
-    s.map.emplace(k, v);
-    size_.fetch_add(1, std::memory_order_relaxed);
+    if (size_.load(std::memory_order_relaxed) >= cap_) {
+      if (!evict(s, k)) return;
+    } else {
+      size_.fetch_add(1, std::memory_order_relaxed);
+    }
+    s.map.emplace(k, Slot{v, depth});
   }
+  size_t size() const { return size_.load(std::memory_order_relaxed); }
   // In-progress counts (V = int): boards some thread is searching now.
   void add(const BoardHash& k, int delta) {
     Shard& s = shard(k);
     std::lock_guard lock(s.mu);
-    if ((s.map[k] += delta) == 0) s.map.erase(k);
+    if ((s.map[k].v += delta) == 0) s.map.erase(k);
   }
 
  private:
   static constexpr size_t kShards = 64;
+  static constexpr size_t kProbe = 8;  // buckets looked at for a victim
+  struct Slot {
+    V v{};
+    int depth = 0;
+  };
   struct Shard {
     std::mutex mu;
-    std::unordered_map<BoardHash, V, BoardHashOf> map;
+    std::unordered_map<BoardHash, Slot, BoardHashOf> map;
   };
+  // Removes the deepest entry among those in the buckets after k's own.
+  static bool evict(Shard& s, const BoardHash& k) {
+    const size_t buckets = s.map.bucket_count();
+    if (buckets == 0 || s.map.empty()) return false;
+    const size_t first = s.map.bucket(k);
+    BoardHash victim{};
+    int deepest = -1;
+    for (size_t i = 0; i < kProbe; ++i) {
+      const size_t b = (first + i) % buckets;
+      for (auto it = s.map.begin(b); it != s.map.end(b); ++it) {
+        if (it->second.depth > deepest) {
+          deepest = it->second.depth;
+          victim = it->first;
+        }
+      }
+    }
+    if (deepest < 0) return false;
+    s.map.erase(victim);
+    return true;
+  }
   Shard& shard(const BoardHash& k) { return shards_[k.hi % kShards]; }
   std::array<Shard, kShards> shards_;
   std::atomic<size_t> size_{0};
@@ -600,10 +635,13 @@ class Worker {
   }
 
   // Runs one sub-action from b through every chance outcome. False if the
-  // engine refuses it or nothing happens.
-  bool execute(const Board& b, SubAction& act, std::vector<Outcome>& outs) {
+  // engine refuses it or nothing happens. `area`: the skill's target area on
+  // b, when unit_actions computed it cleanly (ActionOptions::known_area).
+  bool execute(const Board& b, SubAction& act, std::vector<Outcome>& outs,
+               const std::vector<Point>* area = nullptr) {
     outs.clear();
     bool refused = false;
+    aopts_.known_area = area;
     const EnumEnd end = enumerate_chance(driver_, o_.max_chance_leaves, stats_.chance_branches, [&] {
       Board next = b;
       const Clock::time_point t0 = Clock::now();
@@ -623,15 +661,46 @@ class Worker {
       outs.push_back(Outcome{std::move(next), h});
       return true;
     });
+    aopts_.known_area = nullptr;
     if (refused) return false;
     if (end == EnumEnd::Truncated) sh_.chance_exact = false;
     act.chance = outs.size() > 1;
     return true;
   }
 
+  // Sub-actions to try, each with the index of its skill's target area in
+  // `areas` (-1: none known).
+  struct Actions {
+    std::vector<SubAction> acts;
+    std::vector<int32_t> area;
+    std::vector<std::vector<Point>> areas;
+    void clear() {
+      acts.clear();
+      area.clear();
+      areas.clear();
+    }
+    const std::vector<Point>* area_of(size_t i) const {
+      return area[i] >= 0 ? &areas[static_cast<size_t>(area[i])] : nullptr;
+    }
+  };
+
+  // LuaHost::target_area, kept in `out.areas` when the call can stand in for
+  // the engine's own legality check (no Lua error, no random numbers drawn).
+  // Returns the area and its index (-1 if it cannot be reused).
+  std::pair<std::vector<Point>, int32_t> target_area(const Board& b, const Pawn& p, std::string_view skill,
+                                                      Actions& out) {
+    LuaHost& lua = e_.lua();
+    LuaCall call;
+    const uint64_t draws = lua.rand_draws();
+    std::vector<Point> area = lua.target_area(b, p, skill, p.pos, &call);
+    if (!call.ok || lua.rand_draws() != draws) return {std::move(area), -1};
+    out.areas.push_back(area);
+    return {std::move(area), static_cast<int32_t>(out.areas.size() - 1)};
+  }
+
   // The sub-actions unit p may try on b (not yet run): weapons and repair if
   // `acts`, moves if `moves`.
-  void unit_actions(const Board& b, const Pawn& p, bool acts, bool moves, std::vector<SubAction>& out) {
+  void unit_actions(const Board& b, const Pawn& p, bool acts, bool moves, Actions& out) {
     LuaHost& lua = e_.lua();
     const int32_t uid = p.uid;
     const Point at = p.pos;
@@ -640,7 +709,7 @@ class Worker {
         const Symbol w = p.weapons[static_cast<size_t>(slot)];
         if (w == kNoSymbol || passive(w)) continue;
         const std::string name(symbol_name(w));
-        std::vector<Point> targets = lua.target_area(b, p, name, at);
+        auto [targets, area] = target_area(b, p, name, out);
         valid_unique(targets);
         const bool two = two_click(w);
         for (Point t : targets) {
@@ -656,17 +725,19 @@ class Worker {
             valid_unique(second);
             for (Point t2 : second) {
               a.target2 = t2;
-              out.push_back(a);
+              out.acts.push_back(a);
+              out.area.push_back(area);
             }
           } else {
-            out.push_back(a);
+            out.acts.push_back(a);
+            out.area.push_back(area);
           }
         }
       }
       if (p.mech) {
         auto it = repair_.find(uid);
         const Symbol skill = it != repair_.end() ? it->second : default_repair_;
-        std::vector<Point> targets = lua.target_area(b, p, symbol_name(skill), at);
+        auto [targets, area] = target_area(b, p, symbol_name(skill), out);
         valid_unique(targets);
         if (targets.empty()) targets.push_back(at);
         for (Point t : targets) {
@@ -675,12 +746,13 @@ class Worker {
           a.kind = SubAction::Repair;
           a.skill = skill;
           a.target = t;
-          out.push_back(a);
+          out.acts.push_back(a);
+          out.area.push_back(area);
         }
       }
     }
     if (moves && can_move(p)) {
-      std::vector<Point> dests = lua.target_area(b, p, "Move", at);
+      auto [dests, area] = target_area(b, p, "Move", out);
       valid_unique(dests);
       for (Point d : dests) {
         if (d == at) continue;
@@ -689,7 +761,8 @@ class Worker {
         a.kind = SubAction::Move;
         a.skill = move_skill_;
         a.target = d;
-        out.push_back(a);
+        out.acts.push_back(a);
+        out.area.push_back(area);
       }
     }
   }
@@ -700,13 +773,14 @@ class Worker {
     out.clear();
     std::unordered_set<BoardHash, BoardHashOf> seen;
     seen.insert(h);
-    std::vector<SubAction> acts;
+    Actions acts;
     for (const Pawn& p : b.pawns()) {
       if (unit_can_play(p)) unit_actions(b, p, true, true, acts);
     }
-    for (SubAction& act : acts) {
+    for (size_t i = 0; i < acts.acts.size(); ++i) {
+      SubAction& act = acts.acts[i];
       Child c;
-      if (!execute(b, act, c.outcomes)) continue;
+      if (!execute(b, act, c.outcomes, acts.area_of(i))) continue;
       if (c.outcomes.size() == 1 && !seen.insert(c.outcomes[0].hash).second) {
         ++stats_.duplicate_children;
         continue;
@@ -759,10 +833,11 @@ class Worker {
           // Where the unit acts from: here, or after each of its moves.
           std::vector<State> bases;
           bases.push_back(State{st.board, st.line, st.chance_free, played, kLow});
-          std::vector<SubAction> moves;
+          Actions moves;
           unit_actions(st.board, *p, false, true, moves);
-          for (SubAction& m : moves) {
-            if (!execute(st.board, m, outs) || outs.empty()) continue;
+          for (size_t i = 0; i < moves.acts.size(); ++i) {
+            SubAction& m = moves.acts[i];
+            if (!execute(st.board, m, outs, moves.area_of(i)) || outs.empty()) continue;
             std::vector<SubAction> line = st.line;
             line.push_back(m);
             bases.push_back(State{outs[0].board, line, st.chance_free && !m.chance, played, kLow});
@@ -771,11 +846,12 @@ class Worker {
           for (const State& base : bases) {
             const Pawn* q = base.board.find_pawn(units[u]);
             if (!q || !unit_can_play(*q)) continue;
-            std::vector<SubAction> acts;
+            Actions acts;
             unit_actions(base.board, *q, true, false, acts);
-            for (SubAction& a : acts) {
+            for (size_t i = 0; i < acts.acts.size(); ++i) {
+              SubAction& a = acts.acts[i];
               if (budget_exceeded()) return;
-              if (!execute(base.board, a, outs) || outs.empty()) continue;
+              if (!execute(base.board, a, outs, acts.area_of(i)) || outs.empty()) continue;
               std::vector<SubAction> line = base.line;
               line.push_back(a);
               consider(outs[0], std::move(line), base.chance_free && !a.chance, played);
@@ -871,7 +947,7 @@ class Worker {
     const Score ub = sh_.bounds.of(b);
     auto finish = [&](Interval r) {
       if (shared) sh_.busy.add(h, -1);
-      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best}, merge_entries);
+      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best}, merge_entries, depth);
       if (chance_free && r.lo > kLow) improve(r.lo, best_pv);
       if (pv) *pv = best_pv;
       return r;
@@ -1017,6 +1093,8 @@ SolveResult solve_turn(Engine& engine, const Board& board, const TurnContext& ct
     if (w->sampled()) sh.chance_exact = false;
   }
   out.stats.time_s = seconds_since(sh.start);
+  out.stats.tt_entries = sh.tt.size();
+  out.stats.leaf_entries = sh.leaf.size();
   out.stats.first_plan_s = sh.first_plan_s;
   out.stats.best_plan_s = sh.best_plan_s;
   out.stats.threads = static_cast<int>(engines.size());

@@ -42,6 +42,8 @@ engine/build/itb_inspect --solve recordings/<run>/m07_turn_01_solve_input.json -
 engine/build/itb_inspect --solve recordings --sample 60 --time 120 --threads 8 --json out.jsonl
 engine/build/itb_inspect --predict state.json --actions @actions.json --branches   # live validation
 engine/build/itb_live solve state.json --time 10 --threads 8                      # live play (JSON)
+engine/build/itb_inspect --diff-weapons recordings --random 300   # C++ weapon ports vs their Lua
+engine/build/itb_inspect --diff-weapons --ports                   # which weapon methods run natively
 ```
 
 `--solve` runs the perfect-turn search (stage 9) and prints the plan in
@@ -50,7 +52,15 @@ upper bound and how many leading tiers are proven), search statistics, and
 the old bot's recorded plan scored the same way. On a directory it takes
 `--sample N` (evenly spaced boards), `--shard I/N`, `--verbose`, `--json FILE`
 and ends with proof rates, times to prove and how our plans compare with the
-recorded ones. `--beam W` sets the beam width (0 = off).
+recorded ones. `--beam W` sets the beam width (0 = off); `--lua-counts`
+prints every Lua call by weapon table, method and the Lua function that ran
+(`@native` for calls a C++ port answered).
+
+`--diff-weapons` fires every ported weapon table (one per distinct
+behaviour; `--all-tables` for all) from every pawn of every board, at every
+tile, once in Lua and once natively, and compares target areas, every
+SpaceDamage field, Lua errors, writes, console output and random draws
+(exit status 1 on any difference). `--weapon ID` limits it to one table.
 
 `--replay` takes `--show N`, `--weapon ID`, `--trace RUN/MISSION/TURN`
 (boards and effects of one turn), `--json FILE` (every mismatch) and
@@ -259,6 +269,21 @@ Done so far (build order from the decompile):
    - All 559 weapon ids run on the test boards without Lua errors, and
      every mech weapon and queued Vek attack in the recordings runs cleanly:
      `itb_inspect --weapons recordings`.
+   - C++ ports of the hottest weapon scripts (`weapon_ports_list.cpp`; Lua
+     stays the reference): 58 Lua functions (`GetTargetArea` /
+     `GetSkillEffect` of Move, repair, the base tank / artillery / laser
+     classes, 40-odd squad and Vek weapons and a few mission units): 545
+     weapon methods, 99.4% of those calls on the 60-board sample. A port is
+     bound to a weapon table only when the method resolves to the very Lua
+     function it mirrors (source file, line and an FNV-1a hash of its text,
+     likewise for the helpers it stands in for: `GetProjectileEnd`,
+     `Laser_Base:AddLaser`, `CallMethod`, ...) and every table field it
+     reads has the expected type; it uses the same native bindings as the
+     Lua (`lua_native.hpp`) and returns "not handled" wherever the Lua would
+     raise, so that call runs in Lua. `LuaHost::set_native_weapons(false)`
+     (or `ITB_LUA_WEAPONS=1`) runs everything in Lua. Checked by
+     `itb_inspect --diff-weapons` (469 recorded boards and 300 random boards,
+     51 M skill effects: no difference) and a fast subset in the tests.
 
 - **Stage 6 integration: shots end to end** (`engine.hpp`).
    - `Engine::move / fire_weapon / repair / fire_queued` run the game's
@@ -633,24 +658,69 @@ both are proven optimal and at least as good as the recorded plan), 8
 recorded plans refused by the engine (targets outside the Lua target area,
 moves by a unit that cannot move).
 
-**Cost.** One thread: a sub-action ~17 us, an enemy phase ~33 us (after the
-executor speed-ups below; ~33 us and ~70 us before); with 8 threads ~35 us
-and ~90 us of thread time each (shared caches, efficiency cores). Proving the
-3-mech board `20260517_105759_344/m17_turn_04` takes 279 k nodes, 1.1 M
-sub-actions, 206 k enemy phases: 29 s on one thread, 6.1 s on 8. Executor
-hot spots removed without changing any result (`--replay` output is
-byte-identical): PawnSim lookups by uid (a direct index instead of a
-`std::map`), `note_deaths` skipping unchanged passes, an early return for
-empty tiles in `settle_tile_frame`, lazy Lua `srand`. Remaining time: the
-executor's per-frame tile loop and its `Board` copy-and-compare per frame,
-Lua target areas (computed again inside `fire_weapon` for legality), and
-sub-actions that reach a board already in the table (about a third of them:
-interleavings are merged by the table after running, not before).
+**Cost.** One thread: a sub-action ~17 us, an enemy phase ~33 us before the
+speed-ups below. They change no result: `--replay` and `--replay --turns`
+output is byte-identical, the tests pass, and node-budget solves of the
+60-board sample (`--nodes 30000` and `--nodes 150000`, one thread) are
+identical in every counter (nodes, sub-actions, enemy phases, TT hits,
+scores, bounds). Instructions spent in the search at 20 k nodes, one thread
+(`/usr/bin/time -l`, startup subtracted): `m17_turn_04` 33.9 G -> 8.8 G,
+`20260713_052159_731/m07_turn_01` 76.2 G -> 20.9 G, the 5-unit
+`20260508_134925_472/m02_turn_04` 89.7 G -> 21.7 G (3.7-4.1x). Proving
+`m17_turn_04` on one thread: 131 s -> 27 s (back to back, other jobs
+running).
+- Lua: the solver passes the target area it already computed to
+  `fire_weapon` (`ActionOptions::known_area`, only for areas computed without
+  a Lua error or a random draw); the Lua `Pawn` global is assigned lazily;
+  `GetTwoClick` is cached per weapon; the default `Pawn:GetDeathEffect` is
+  skipped; sScript chunks are compiled once; and the hottest weapon scripts
+  run as C++ ports (stage 6 above): 99.4% of the target-area and
+  skill-effect calls on the sample never enter Lua (whose garbage collection
+  alone was 17-21% of the time).
+- Executor: `update_tiles` only visits tiles that may not be quiet (a mask of
+  occupied tiles, webs, non-inert tile states and finished animations, kept
+  up to date after every tile that acted), with exact early returns for
+  quiet occupied tiles and skipped no-op `note_deaths`; the per-frame board
+  snapshot reuses one buffer and compares tiles with `memcmp` (`Tile` has no
+  padding); animation timelines are cached per engine; `PawnSim` lookups use
+  a small open-addressing index; the resolution hooks are moved, not copied.
+- Hashing: tiles are hashed as raw bytes in two multiply-fold lanes.
+- Tables: once `tt_max_entries` entries are stored, a new entry replaces the
+  deepest entry among its shard's neighbouring buckets instead of being
+  dropped (at 120 s with 8 threads, eight sample boards used to sit at the
+  cap and search every transposition again; `m17_turn_04` with the tables
+  capped at 50 k entries: 608 k nodes with replacement, unfinished after
+  14 CPU minutes without). Below the cap nothing changes.
+
+Sample at 8 threads (`--sample 60 --threads 8`, same machine, back to back,
+heavy foreign load: load average 16-20 on 12 cores, 2 of them fast):
+proven within 10 s 11 -> 19 boards (18.3% -> 31.7%), within 120 s 29 -> 45
+(48.3% -> 75.0%; 3-unit boards 23/48 -> 39/48; 4-5 units 0/6 in both, still
+proven in their first 3-5 tiers); thread time per sub-action 260 us -> 89 us
+and per enemy phase 546 us -> 206 us under that load. Every board proven by
+both has the same value; the new plans are better on 2 boards and worse on
+none.
+
+Remaining time and limits: the executor is ~40% (frames of walks, pushes and
+projectiles; one `Simulation` per resolution), the enemy phase ~25-45%, Lua
+~10% (unported weapons, sScripts, `Board:Bounce` scripts), hashing ~5%.
+About half of the sub-actions reach a board already in the table or a
+sibling's board: interleavings of different units' attacks and repairs
+(`m17_turn_04`: weapon after weapon 225 k, repair after weapon 128 k, move
+after weapon 104 k, move after move only 11 k). Merging them before running
+them needs a proof that two shots commute, i.e. the read and write sets of
+the frame-exact executor; moves alone are too small a share to be worth an
+independence rule. The tier bounds stop at ObjectiveProgress (no cap), so
+below the first five tiers the search is exhaustive: the unproven boards are
+proven in their first 3-5 tiers. With 8 threads per-operation costs rise
+2-3x (2 super, 4 performance and 6 efficiency cores, shared caches, foreign
+load).
 
 Limitations: limited-use weapons are assumed available unless the bridge
 recorded their uses (`Pawn::uses`, bridge extension); proofs are relative to the engine's model (`PhaseResult::exact`
 false for EnvInexact missions is reported as a warning); 128-bit hash
-collisions are ignored; tables stop growing at `tt_max_entries`.
+collisions are ignored; past `tt_max_entries` entries the tables replace old
+entries (deepest first).
 
 ### Bridge extension and live validation
 

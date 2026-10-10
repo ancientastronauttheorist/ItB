@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "lua_host_detail.hpp"
+#include "lua_native.hpp"
 
 extern "C" {
 #include "lauxlib.h"
@@ -168,14 +169,7 @@ void push_ref(lua_State* L, Cls cls, void* obj) {
 
 // ---- argument conversion ---------------------------------------------------
 
-int32_t to_int(lua_State* L, int idx) {
-  const double d = lua_tonumber(L, idx);
-  // cvttsd2si to 64 bits returns 0x8000000000000000 for NaN/out of range,
-  // whose low 32 bits are 0.
-  if (!(d > -9223372036854775808.0 && d < 9223372036854775808.0)) return 0;
-  const auto wide = static_cast<int64_t>(d);
-  return static_cast<int32_t>(static_cast<uint32_t>(static_cast<uint64_t>(wide)));
-}
+int32_t to_int(lua_State* L, int idx) { return native::to_int(lua_tonumber(L, idx)); }
 
 std::string to_str(lua_State* L, int idx) {
   size_t len = 0;
@@ -568,10 +562,7 @@ int point_mul(lua_State* L) {
     if (sink_operand(L)) return 1;
     no_overload("void __mul(lua_State*,Point&,int)");
   }
-  const Point p = point_arg(L, 1);
-  const float k = static_cast<float>(to_int(L, 2));
-  push_point(L, Point{static_cast<int>(std::roundf(static_cast<float>(p.x) * k)),
-                      static_cast<int>(std::roundf(static_cast<float>(p.y) * k))});
+  push_point(L, native::mul(point_arg(L, 1), to_int(L, 2)));
   return 1;
 }
 
@@ -619,14 +610,11 @@ int sd_ctor(lua_State* L) {
   } else if (match(L, {A::ClassTable, A::Int})) {
     sd.iDamage = to_int(L, 2);
   } else if (match(L, {A::ClassTable, A::Point})) {
-    sd.loc = point_arg(L, 2);
+    sd = native::space_damage(point_arg(L, 2));
   } else if (match(L, {A::ClassTable, A::Point, A::Int})) {
-    sd.loc = point_arg(L, 2);
-    sd.iDamage = to_int(L, 3);
+    sd = native::space_damage(point_arg(L, 2), to_int(L, 3));
   } else if (match(L, {A::ClassTable, A::Point, A::Int, A::Int})) {
-    sd.loc = point_arg(L, 2);
-    sd.iDamage = to_int(L, 3);
-    sd.iPush = to_int(L, 4);
+    sd = native::space_damage(point_arg(L, 2), to_int(L, 3), to_int(L, 4));
   } else {
     no_overload("SpaceDamage()\nSpaceDamage(int)\nSpaceDamage(Point)\nSpaceDamage(Point,int,int)\n"
                 "SpaceDamage(Point,int)");
@@ -823,14 +811,14 @@ bool contains_laser(const std::string& art) { return art.find("laser") != std::s
 int se_add_damage(lua_State* L) {
   if (!match(L, {A::SE, A::SD})) no_overload("void AddDamage(SkillEffect&,SpaceDamage)");
   SD copy = sd_arg(L, 2);
-  se_self(L).effect.push_back(std::move(copy));
+  native::add_damage(se_self(L), std::move(copy));
   return 0;
 }
 
 int se_add_queued_damage(lua_State* L) {
   if (!match(L, {A::SE, A::SD})) no_overload("void AddQueuedDamage(SkillEffect&,SpaceDamage)");
   SD copy = sd_arg(L, 2);
-  se_self(L).q_effect.push_back(std::move(copy));
+  native::add_queued_damage(se_self(L), std::move(copy));
   return 0;
 }
 
@@ -851,16 +839,7 @@ int se_add_projectile(lua_State* L) {
                 "void AddProjectile(SkillEffect&,Point,SpaceDamage,std::string,float)");
   }
   SD sd = sd_arg(L, first);
-  sd.projectile_art = to_str(L, first + 1);
-  if (contains_laser(sd.projectile_art)) {
-    sd.projectile_kind = 5;
-    sd.fDelay = 0.0f;
-  } else {
-    sd.projectile_kind = 2;
-    sd.fDelay = delay;
-  }
-  sd.projectile_source = source;
-  se_self(L).effect.push_back(std::move(sd));
+  native::add_projectile(se_self(L), source, std::move(sd), to_str(L, first + 1), delay);
   return 0;
 }
 
@@ -873,10 +852,7 @@ int se_add_queued_projectile(lua_State* L) {
                 "void AddQueuedProjectile(SkillEffect&,SpaceDamage,std::string)");
   }
   SD sd = sd_arg(L, 2);
-  sd.projectile_art = to_str(L, 3);
-  sd.projectile_kind = contains_laser(sd.projectile_art) ? 5 : 2;
-  sd.fDelay = delay;
-  se_self(L).q_effect.push_back(std::move(sd));
+  native::add_queued_projectile(se_self(L), std::move(sd), to_str(L, 3), delay);
   return 0;
 }
 
@@ -896,11 +872,7 @@ int se_add_artillery(lua_State* L) {
                 "void AddArtillery(SkillEffect&,SpaceDamage,std::string)");
   }
   SD sd = sd_arg(L, first);
-  sd.projectile_art = to_str(L, first + 1);
-  sd.projectile_kind = 1;
-  sd.fDelay = delay;
-  sd.projectile_source = source;
-  se_self(L).effect.push_back(std::move(sd));
+  native::add_artillery(se_self(L), source, std::move(sd), to_str(L, first + 1), delay);
   return 0;
 }
 
@@ -913,10 +885,7 @@ int se_add_queued_artillery(lua_State* L) {
                 "void AddQueuedArtillery(SkillEffect&,SpaceDamage,std::string)");
   }
   SD sd = sd_arg(L, 2);
-  sd.projectile_art = to_str(L, 3);
-  sd.projectile_kind = 1;
-  sd.fDelay = delay;
-  se_self(L).q_effect.push_back(std::move(sd));
+  native::add_queued_artillery(se_self(L), std::move(sd), to_str(L, 3), delay);
   return 0;
 }
 
@@ -931,33 +900,17 @@ int add_melee(lua_State* L, bool queued) {
                          "void AddMelee(SkillEffect&,Point,SpaceDamage)");
   }
   SD sd = sd_arg(L, 3);
-  sd.move_kind = 3;
-  sd.path.push_back(point_arg(L, 2));
-  sd.fDelay = delay;
-  SE& se = se_self(L);
-  (queued ? se.q_effect : se.effect).push_back(std::move(sd));
+  native::add_melee(se_self(L), queued, point_arg(L, 2), std::move(sd), delay);
   return 0;
 }
 int se_add_melee(lua_State* L) { return add_melee(L, false); }
 int se_add_queued_melee(lua_State* L) { return add_melee(L, true); }
 
-// AddMove: a movement entry, only for paths of two or more points.
-bool append_move(std::vector<SD>& list, const PointList& path, float delay, int kind) {
-  if (path.size() < 2) return false;
-  SD sd = template_sd();
-  sd.path = path;
-  sd.move_kind = kind;
-  sd.fDelay = delay;
-  list.push_back(std::move(sd));
-  return true;
-}
-
 int move_like(lua_State* L, bool queued, int kind, bool returns, const char* sig) {
   if (!match(L, {A::SE, A::PL, A::Num})) no_overload(sig);
   const PointList path = get<PointList>(L, 2, Cls::PointList);
   const float delay = to_float(L, 3);
-  SE& se = se_self(L);
-  const bool ok = append_move(queued ? se.q_effect : se.effect, path, delay, kind);
+  const bool ok = native::add_move(se_self(L), queued, path, delay, kind);
   if (!returns) return 0;
   lua_pushboolean(L, ok);
   return 1;
@@ -978,24 +931,11 @@ int se_add_burrow(lua_State* L) {
   return move_like(L, false, 5, false, "void AddBurrow(SkillEffect&,PointList,float)");
 }
 
-int direction_of(Point v) {
-  if (v.x == 0 && v.y == 0) return 4;
-  if (std::abs(v.x) > std::abs(v.y)) return v.x > 0 ? 1 : 3;
-  return v.y > 0 ? 2 : 0;
-}
-
 int se_add_leap(lua_State* L) {
   if (!match(L, {A::SE, A::PL, A::Num})) no_overload("void AddLeap(SkillEffect&,PointList,float)");
   const PointList path = get<PointList>(L, 2, Cls::PointList);
   if (path.empty()) throw LuaError("AddLeap with an empty path (undefined in game)");
-  const float delay = to_float(L, 3);
-  SE& se = se_self(L);
-  SD mark = template_sd();
-  mark.loc = path.front();
-  mark.sImageMark = "advanced/combat/throw_" +
-                    std::to_string(direction_of(path.back() - path.front())) + ".png";
-  se.effect.push_back(std::move(mark));
-  append_move(se.effect, path, delay, 1);
+  native::add_leap(se_self(L), path, to_float(L, 3));
   return 0;
 }
 
@@ -1003,15 +943,7 @@ int se_add_teleport(lua_State* L) {
   if (!match(L, {A::SE, A::Point, A::Point, A::Num})) {
     no_overload("void AddTeleport(SkillEffect&,Point,Point,float)");
   }
-  const Point a = point_arg(L, 2), b = point_arg(L, 3);
-  SE& se = se_self(L);
-  append_move(se.effect, {a, b}, to_float(L, 4), 4);
-  for (Point p : {a, b}) {
-    SD glow = template_sd();
-    glow.loc = p;
-    glow.sImageMark = "advanced/combat/icons/icon_teleport_glow";
-    se.effect.push_back(std::move(glow));
-  }
+  native::add_teleport(se_self(L), point_arg(L, 2), point_arg(L, 3), to_float(L, 4));
   return 0;
 }
 
@@ -1019,20 +951,11 @@ int se_add_grapple(lua_State* L) {
   if (!match(L, {A::SE, A::Point, A::Point, A::Str})) {
     no_overload("void AddGrapple(SkillEffect&,Point,Point,std::string)");
   }
-  SD sd = template_sd();
-  sd.loc = point_arg(L, 2);
-  sd.grapple_source = point_arg(L, 3);
-  sd.grapple_anim = to_str(L, 4);
-  sd.sAnimation = "dummy";
-  se_self(L).effect.push_back(std::move(sd));
+  native::add_grapple(se_self(L), point_arg(L, 2), point_arg(L, 3), to_str(L, 4));
   return 0;
 }
 
-void add_script(SE& se, std::string script, bool queued) {
-  SD sd = template_sd();
-  sd.sScript = std::move(script);
-  (queued ? se.q_effect : se.effect).push_back(std::move(sd));
-}
+using native::add_script;
 
 int se_add_script(lua_State* L) {
   if (!match(L, {A::SE, A::Str})) no_overload("void AddScript(SkillEffect&,std::string)");
@@ -1048,17 +971,13 @@ int se_add_queued_script(lua_State* L) {
 
 int se_add_bounce(lua_State* L) {
   if (!match(L, {A::SE, A::Point, A::Int})) no_overload("void AddBounce(SkillEffect&,Point,int)");
-  add_script(se_self(L),
-             "Board:Bounce(" + point_string(point_arg(L, 2)) + "," + std::to_string(to_int(L, 3)) + ")",
-             false);
+  native::add_bounce(se_self(L), point_arg(L, 2), to_int(L, 3));
   return 0;
 }
 
 int se_add_board_shake(lua_State* L) {
   if (!match(L, {A::SE, A::Num})) no_overload("void AddBoardShake(SkillEffect&,float)");
-  char buf[64];
-  std::snprintf(buf, sizeof buf, "%f", static_cast<double>(to_float(L, 2)));
-  add_script(se_self(L), std::string("Board:StartShake(") + buf + ")", false);
+  native::add_board_shake(se_self(L), to_float(L, 2));
   return 0;
 }
 
@@ -1075,9 +994,7 @@ int se_add_burst(lua_State* L) {
 
 int se_add_sound(lua_State* L) {
   if (!match(L, {A::SE, A::Str})) no_overload("void AddSound(SkillEffect&,std::string)");
-  SD sd = template_sd();
-  sd.sSound = to_str(L, 2);
-  se_self(L).effect.push_back(std::move(sd));
+  native::add_sound(se_self(L), to_str(L, 2));
   return 0;
 }
 
@@ -1094,13 +1011,7 @@ int add_voice(lua_State* L, bool queued) {
 int se_add_voice(lua_State* L) { return add_voice(L, false); }
 int se_add_queued_voice(lua_State* L) { return add_voice(L, true); }
 
-void add_animation(SE& se, Point p, std::string anim, int flags) {
-  SD sd = template_sd();
-  sd.loc = p;
-  sd.sAnimation = std::move(anim);
-  sd.anim_flags = flags;
-  se.effect.push_back(std::move(sd));
-}
+using native::add_animation;
 
 int se_add_animation(lua_State* L) {
   if (match(L, {A::SE, A::Point, A::Str})) {
@@ -1120,12 +1031,7 @@ int se_add_emitter(lua_State* L) {
   return 0;
 }
 
-void add_delay(SE& se, float f) {
-  SD sd = template_sd();
-  sd.bHide = true;
-  sd.fDelay = f;
-  se.effect.push_back(std::move(sd));
-}
+using native::add_delay;
 
 int se_add_delay(lua_State* L) {
   if (!match(L, {A::SE, A::Num})) no_overload("void AddDelay(SkillEffect&,float)");
@@ -1328,7 +1234,7 @@ const Property kObjectiveProps[] = {ITB_STR(RepObj, text),    ITB_STR(RepObj, pa
 
 int get_direction(lua_State* L) {
   if (!match(L, {A::Point})) no_overload("int GetDirection(Point)");
-  lua_pushinteger(L, direction_of(point_arg(L, 1)));
+  lua_pushinteger(L, native::direction(point_arg(L, 1)));
   return 1;
 }
 
@@ -1396,10 +1302,7 @@ int math_randomseed(lua_State* L) {
 
 int sound_effect(lua_State* L) {
   if (!match(L, {A::Point, A::Str})) no_overload("SpaceDamage SoundEffect(Point,std::string)");
-  SD sd;
-  sd.loc = point_arg(L, 1);
-  sd.sSound = to_str(L, 2);
-  push_owned(L, Cls::SpaceDamage, std::move(sd));
+  push_owned(L, Cls::SpaceDamage, native::sound_effect(point_arg(L, 1), to_str(L, 2)));
   return 1;
 }
 
@@ -1565,5 +1468,192 @@ void install_value_bindings(lua_State* L) {
     throw std::runtime_error("native constants: " + msg);
   }
 }
+
+// ---- native equivalents (lua_native.hpp) ------------------------------------------------
+
+namespace native {
+
+int32_t to_int(double d) {
+  // cvttsd2si to 64 bits returns 0x8000000000000000 for NaN/out of range,
+  // whose low 32 bits are 0.
+  if (!(d > -9223372036854775808.0 && d < 9223372036854775808.0)) return 0;
+  const auto wide = static_cast<int64_t>(d);
+  return static_cast<int32_t>(static_cast<uint32_t>(static_cast<uint64_t>(wide)));
+}
+
+int direction(Point v) {
+  if (v.x == 0 && v.y == 0) return 4;
+  if (std::abs(v.x) > std::abs(v.y)) return v.x > 0 ? 1 : 3;
+  return v.y > 0 ? 2 : 0;
+}
+
+Point mul(Point p, int k) {
+  const float f = static_cast<float>(k);
+  return Point{static_cast<int>(std::roundf(static_cast<float>(p.x) * f)),
+               static_cast<int>(std::roundf(static_cast<float>(p.y) * f))};
+}
+
+std::string number_string(double n) {
+  char buf[64];
+  std::snprintf(buf, sizeof buf, LUA_NUMBER_FMT, n);
+  return buf;
+}
+
+std::string point_string(Point p) { return lua::point_string(p); }
+
+SD space_damage(Point loc) {
+  SD sd;
+  sd.loc = loc;
+  return sd;
+}
+
+SD space_damage(Point loc, int damage) {
+  SD sd;
+  sd.loc = loc;
+  sd.iDamage = damage;
+  return sd;
+}
+
+SD space_damage(Point loc, int damage, int push) {
+  SD sd;
+  sd.loc = loc;
+  sd.iDamage = damage;
+  sd.iPush = push;
+  return sd;
+}
+
+SD sound_effect(Point loc, std::string sound) {
+  SD sd;
+  sd.loc = loc;
+  sd.sSound = std::move(sound);
+  return sd;
+}
+
+void set_global_space_damage(lua_State* L, const char* name, const SD& sd) {
+  push_owned(L, Cls::SpaceDamage, sd);
+  lua_setglobal(L, name);
+}
+
+void add_damage(SE& se, SD sd) { se.effect.push_back(std::move(sd)); }
+
+void add_queued_damage(SE& se, SD sd) { se.q_effect.push_back(std::move(sd)); }
+
+void add_projectile(SE& se, Point source, SD sd, std::string art, float delay) {
+  sd.projectile_art = std::move(art);
+  if (contains_laser(sd.projectile_art)) {
+    sd.projectile_kind = 5;
+    sd.fDelay = 0.0f;
+  } else {
+    sd.projectile_kind = 2;
+    sd.fDelay = delay;
+  }
+  sd.projectile_source = source;
+  se.effect.push_back(std::move(sd));
+}
+
+void add_queued_projectile(SE& se, SD sd, std::string art, float delay) {
+  sd.projectile_art = std::move(art);
+  sd.projectile_kind = contains_laser(sd.projectile_art) ? 5 : 2;
+  sd.fDelay = delay;
+  se.q_effect.push_back(std::move(sd));
+}
+
+void add_artillery(SE& se, Point source, SD sd, std::string art, float delay) {
+  sd.projectile_art = std::move(art);
+  sd.projectile_kind = 1;
+  sd.fDelay = delay;
+  sd.projectile_source = source;
+  se.effect.push_back(std::move(sd));
+}
+
+void add_queued_artillery(SE& se, SD sd, std::string art, float delay) {
+  sd.projectile_art = std::move(art);
+  sd.projectile_kind = 1;
+  sd.fDelay = delay;
+  se.q_effect.push_back(std::move(sd));
+}
+
+void add_melee(SE& se, bool queued, Point from, SD sd, float delay) {
+  sd.move_kind = 3;
+  sd.path.push_back(from);
+  sd.fDelay = delay;
+  (queued ? se.q_effect : se.effect).push_back(std::move(sd));
+}
+
+bool add_move(SE& se, bool queued, const std::vector<Point>& path, float delay, int kind) {
+  if (path.size() < 2) return false;
+  SD sd = template_sd();
+  sd.path = path;
+  sd.move_kind = kind;
+  sd.fDelay = delay;
+  (queued ? se.q_effect : se.effect).push_back(std::move(sd));
+  return true;
+}
+
+void add_leap(SE& se, const std::vector<Point>& path, float delay) {
+  SD mark = template_sd();
+  mark.loc = path.front();
+  mark.sImageMark = "advanced/combat/throw_" + std::to_string(direction(path.back() - path.front())) + ".png";
+  se.effect.push_back(std::move(mark));
+  add_move(se, false, path, delay, 1);
+}
+
+void add_teleport(SE& se, Point a, Point b, float delay) {
+  add_move(se, false, {a, b}, delay, 4);
+  for (Point p : {a, b}) {
+    SD glow = template_sd();
+    glow.loc = p;
+    glow.sImageMark = "advanced/combat/icons/icon_teleport_glow";
+    se.effect.push_back(std::move(glow));
+  }
+}
+
+void add_grapple(SE& se, Point loc, Point source, std::string anim) {
+  SD sd = template_sd();
+  sd.loc = loc;
+  sd.grapple_source = source;
+  sd.grapple_anim = std::move(anim);
+  sd.sAnimation = "dummy";
+  se.effect.push_back(std::move(sd));
+}
+
+void add_script(SE& se, std::string script, bool queued) {
+  SD sd = template_sd();
+  sd.sScript = std::move(script);
+  (queued ? se.q_effect : se.effect).push_back(std::move(sd));
+}
+
+void add_bounce(SE& se, Point p, int amount) {
+  add_script(se, "Board:Bounce(" + point_string(p) + "," + std::to_string(amount) + ")", false);
+}
+
+void add_board_shake(SE& se, float seconds) {
+  char buf[64];
+  std::snprintf(buf, sizeof buf, "%f", static_cast<double>(seconds));
+  add_script(se, std::string("Board:StartShake(") + buf + ")", false);
+}
+
+void add_delay(SE& se, float seconds) {
+  SD sd = template_sd();
+  sd.bHide = true;
+  sd.fDelay = seconds;
+  se.effect.push_back(std::move(sd));
+}
+
+void add_animation(SE& se, Point p, std::string anim, int flags) {
+  SD sd = template_sd();
+  sd.loc = p;
+  sd.sAnimation = std::move(anim);
+  sd.anim_flags = flags;
+  se.effect.push_back(std::move(sd));
+}
+
+void add_sound(SE& se, std::string sound) {
+  SD sd = template_sd();
+  sd.sSound = std::move(sound);
+  se.effect.push_back(std::move(sd));
+}
+
+}  // namespace native
 
 }  // namespace itb::lua

@@ -14,10 +14,14 @@
 //                                               score the recorded plan (tiers, objectives, position)
 //   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
 //               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
+//               [--lua-counts] [--tt ENTRIES]
 //                                               the perfect-turn search vs the recorded plan
 //   itb_inspect [--game DIR] --predict <state.json> [--actions JSON|@FILE] [--no-enemy]
 //               [--branches [N]] [--json FILE]
 //                                               the engine's outcome for a bridge state (live tests)
+//   itb_inspect [--game DIR] --diff-weapons [DIR] [--random N] [--seed S] [--weapon ID] [--all-tables]
+//   itb_inspect [--game DIR] --diff-weapons --ports
+//                                               C++ weapon ports against the Lua they mirror
 
 #include <algorithm>
 #include <cctype>
@@ -50,8 +54,9 @@ namespace {
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
                "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
-               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] | "
-               "--predict <state.json> [--actions JSON|@FILE] [--no-enemy] [--branches [N]] [--json FILE])\n";
+               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] [--lua-counts] [--tt ENTRIES] | "
+               "--predict <state.json> [--actions JSON|@FILE] [--no-enemy] [--branches [N]] [--json FILE] | "
+               "--diff-weapons [DIR] [--random N] [--seed S] [--weapon ID] [--all-tables] [--ports])\n";
   return 2;
 }
 
@@ -389,11 +394,37 @@ int main(int argc, char** argv) {
         o.verbose = true;
       } else if (args[i] == "--json" && i + 1 < args.size()) {
         o.json_out = args[++i];
+      } else if (args[i] == "--lua-counts") {
+        o.lua_counts = true;
+      } else if (args[i] == "--tt" && i + 1 < args.size()) {
+        o.tt_entries = std::stoull(args[++i]);
       } else {
         return usage();
       }
     }
     return tools::run_solve(o);
+  }
+  if (args[0] == "--diff-weapons") {
+    tools::DiffWeaponsOptions o;
+    o.game = game;
+    for (size_t i = 1; i < args.size(); ++i) {
+      if (args[i] == "--random" && i + 1 < args.size()) {
+        o.random = std::stoi(args[++i]);
+      } else if (args[i] == "--seed" && i + 1 < args.size()) {
+        o.seed = static_cast<uint32_t>(std::stoul(args[++i]));
+      } else if (args[i] == "--weapon" && i + 1 < args.size()) {
+        o.weapon = args[++i];
+      } else if (args[i] == "--all-tables") {
+        o.all_tables = true;
+      } else if (args[i] == "--ports") {
+        o.ports = true;
+      } else if (!args[i].starts_with("--") && o.recordings.empty()) {
+        o.recordings = args[i];
+      } else {
+        return usage();
+      }
+    }
+    return tools::run_diff_weapons(o);
   }
   if (args[0] == "--predict") {
     if (args.size() < 2) return usage();

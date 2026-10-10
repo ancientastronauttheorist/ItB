@@ -5,7 +5,9 @@
 #include "itb/executor.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 
 #include "itb/game_data.hpp"
@@ -135,21 +137,34 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
     : owner_(owner), board_(board), ctx_(ctx), rules_(ctx.rules) {
   clock_ = FrameClock::steady(ctx.config.fps, ctx.config.speed_level);
   dur_ = ctx.durations ? *ctx.durations : Durations::from(ctx.data);
-  default_death_ = AnimTimeline(clock_, dur_.default_death_frames, dur_.default_death_time);
+  TimelineCache* shared = ctx.timelines;
+  if (shared && shared->ready && !(shared->data == ctx.data && shared->clock == clock_ && shared->durations == dur_)) {
+    shared = nullptr;  // built for other settings: keep them, use our own
+  }
+  timelines_ = shared ? shared : &own_timelines_;
+  if (!timelines_->ready) {
+    timelines_->ready = true;
+    timelines_->data = ctx.data;
+    timelines_->clock = clock_;
+    timelines_->durations = dur_;
+    timelines_->default_death = AnimTimeline(clock_, dur_.default_death_frames, dur_.default_death_time);
+  }
   if (!rules_.data) rules_.data = ctx.data;
+  // The caller's hooks are moved aside (and back in the destructor); the
+  // replacements reach them through `this`.
   saved_frame_ = rules_.frame;
-  saved_resist_ = rules_.grid_resist;
-  saved_script_ = rules_.run_script;
   rules_.frame = this;
   if (ctx_.run_script) {
+    saved_script_ = std::move(rules_.run_script);
+    script_replaced_ = true;
     rules_.run_script = [this](Board&, const std::string& script, Point loc) {
       ctx_.run_script(owner_, script, loc);
     };
   }
   // Grid Defense rolls are the chance nodes of a resolution: log each one.
-  auto roll = rules_.grid_resist;
-  rules_.grid_resist = [this, roll](Point p, int amount) {
-    const bool resisted = roll ? roll(p, amount) : false;
+  saved_resist_ = std::move(rules_.grid_resist);
+  rules_.grid_resist = [this](Point p, int amount) {
+    const bool resisted = saved_resist_ ? saved_resist_(p, amount) : false;
     if (result_) {
       result_->chances.push_back(
           ChanceRecord{ChanceKind::GridDefense, frame_, p, amount, resisted ? 1 : 0, 2});
@@ -173,7 +188,7 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
 Simulation::~Simulation() {
   rules_.frame = saved_frame_;
   rules_.grid_resist = std::move(saved_resist_);
-  rules_.run_script = std::move(saved_script_);
+  if (script_replaced_) rules_.run_script = std::move(saved_script_);
 }
 
 ResolveResult Simulation::resolve(const SkillEffect& effect, const WeaponInfo& weapon) {
@@ -266,10 +281,10 @@ void Simulation::run(ResolveResult& result) {
       frame_ = f;
       break;
     }
-    const Board before = board_;
+    before_ = board_;  // reuses the buffers of the last frame
     changed_ = false;
     run_frame(f);
-    const bool dirty = changed_ || !(board_ == before);
+    const bool dirty = changed_ || !(board_ == before_);
     // Idle and a whole frame changed nothing: settled. An idle board that
     // still changed (e.g. a walker arriving on a pod, picked up by the next
     // frame's tile rules) runs on, as the game's frames do.
@@ -308,8 +323,10 @@ void Simulation::run_frame(int64_t f) {
   update_tiles();
 
   phase_ = Phase::P3;
-  std::vector<int32_t> order;
-  order.reserve(board_.pawns().size());
+  // run_frame is never re-entered (hooks only queue effects or apply hits),
+  // so one order buffer serves P3 and P5.
+  std::vector<int32_t>& order = order_;
+  order.clear();
   for (const Pawn& p : board_.pawns()) order.push_back(p.uid);
   for (int32_t uid : order) update_pawn(uid);
 
@@ -628,8 +645,79 @@ void Simulation::update_weapon_anims() {
 
 // ---- Tiles (P2) --------------------------------------------------------------------------------
 
-void Simulation::update_tiles() {
+// The 64 tiles in x-major order. Most tiles are quiet: nothing to prune,
+// no body to drop, and settle_tile_frame would change nothing
+// (detail::settle_tile_noop; for a tile with no pawn and no web anywhere,
+// its state alone decides). A quiet tile changes no pawn, so the
+// note_deaths after it is a no-op once one has run since the last change.
+// Tiles that may need work are found with a mask (pawns, webs, tile states,
+// finished animations), recomputed after every tile that changed something,
+// so it always describes the board as it is; the others are skipped.
+// Tiles whose state alone may make settle_tile_frame act
+// (!detail::inert_tile_state), recomputed only when some tile changed since
+// the last call (the tiles are compared bytewise: Tile has no padding).
+uint64_t Simulation::busy_tile_states() {
+  const Tile* tiles = &board_.tile(Point::from_index(0));
+  if (busy_tiles_valid_ && std::memcmp(tiles, busy_tiles_at_.data(), sizeof(busy_tiles_at_)) == 0) {
+    return busy_tiles_mask_;
+  }
+  std::memcpy(busy_tiles_at_.data(), tiles, sizeof(busy_tiles_at_));
+  busy_tiles_valid_ = true;
+  busy_tiles_mask_ = 0;
   for (int i = 0; i < kTileCount; ++i) {
+    if (!detail::inert_tile_state(tiles[i])) busy_tiles_mask_ |= uint64_t{1} << i;
+  }
+  return busy_tiles_mask_;
+}
+
+void Simulation::update_tiles() {
+  uint64_t occupied = 0;  // bit i: some pawn (fallen ones included) is on tile i
+  uint64_t hot = 0;       // bit i: a pawn (not fallen) on tile i is a mech or on fire
+  bool webbed = false;    // some pawn is webbed
+  bool bodies = false;    // some dead non-mech pawn was seen dead (removable needs it)
+  uint64_t work = 0;      // tiles that may not be quiet
+  auto scan = [&] {
+    occupied = 0;
+    hot = 0;
+    webbed = false;
+    bodies = false;
+    for (const Pawn& pawn : board_.pawns()) {
+      if (pawn.pos.valid()) {
+        occupied |= uint64_t{1} << pawn.pos.index();
+        if (!pawn.fallen && (pawn.mech || pawn.fire)) hot |= uint64_t{1} << pawn.pos.index();
+      }
+      webbed = webbed || pawn.webbed;
+      if (!pawn.mech && !pawn.alive()) {
+        const PawnSim* ps = find_state(pawn.uid);
+        bodies = bodies || (ps && ps->dead);
+      }
+    }
+  };
+  auto plan = [&] {
+    work = webbed ? ~uint64_t{0} : occupied | busy_tile_states();
+    for (const TileAnim& a : tile_anims_) {
+      if (a.end_frame <= frame_ && a.point.valid()) work |= uint64_t{1} << a.point.index();
+    }
+    for (const TileAnim& h : holes_) {
+      if (h.end_frame <= frame_ && h.point.valid()) work |= uint64_t{1} << h.point.index();
+    }
+  };
+  scan();
+  plan();
+  bool noted = false;  // note_deaths ran and nothing changed since
+  std::vector<int32_t> gone;
+  for (int i = 0;;) {
+    const uint64_t ahead = i < kTileCount ? work & (~uint64_t{0} << i) : 0;
+    const int next = ahead ? std::countr_zero(ahead) : kTileCount;
+    if (next > i && !noted) {
+      // Tile i is quiet: its note_deaths is the one that counts.
+      note_deaths();
+      noted = true;
+      scan();
+      continue;
+    }
+    if (next >= kTileCount) break;
+    i = next;
     const Point p = Point::from_index(i);
     // A deferred chasm whose bounce was never seen starting (e.g. it was
     // pending when resolution began) starts now.
@@ -646,13 +734,28 @@ void Simulation::update_tiles() {
     }
     // The tile drops bodies that are done (BoardSpace::OnLoop removes them
     // from its occupant list before its pawn rules; the board list follows).
-    std::vector<int32_t> gone;
-    for (const Pawn& pawn : board_.pawns()) {
-      if (pawn.pos != p) continue;
-      if (const PawnSim* ps = find_state(pawn.uid); ps && removable(pawn, *ps)) gone.push_back(pawn.uid);
+    bool acted = false;
+    if (bodies && (occupied >> i & 1)) {
+      gone.clear();
+      for (const Pawn& pawn : board_.pawns()) {
+        if (pawn.pos != p) continue;
+        if (const PawnSim* ps = find_state(pawn.uid); ps && removable(pawn, *ps)) gone.push_back(pawn.uid);
+      }
+      for (int32_t uid : gone) remove(uid);
+      acted = !gone.empty();
     }
-    for (int32_t uid : gone) remove(uid);
-    settle_tile_frame(board_, p, rules_);
+    bool quiet;
+    if (webbed || (hot >> i & 1)) {
+      quiet = detail::settle_tile_noop(board_, p);
+    } else if (occupied >> i & 1) {
+      quiet = detail::quiet_occupied_tile_state(board_.tile(p));
+    } else {
+      quiet = detail::inert_tile_state(board_.tile(p));
+    }
+    if (acted || !quiet) {
+      settle_tile_frame(board_, p, rules_);
+      acted = true;
+    }
     for (size_t k = 0; k < holes_.size();) {
       if (holes_[k].point == p && holes_[k].end_frame <= frame_) {
         holes_.erase(holes_.begin() + static_cast<std::ptrdiff_t>(k));
@@ -661,7 +764,13 @@ void Simulation::update_tiles() {
         ++k;
       }
     }
-    note_deaths();
+    if (acted || !noted) {
+      note_deaths();
+      noted = true;
+      scan();
+      if (acted) plan();
+    }
+    ++i;
   }
 }
 
@@ -961,12 +1070,13 @@ const PawnSim* Simulation::find_state(int32_t uid) const {
 
 const AnimTimeline* Simulation::timeline(Symbol anim) {
   if (anim == kNoSymbol) return nullptr;
-  if (auto it = timelines_.find(anim); it != timelines_.end()) {
+  std::map<Symbol, AnimTimeline>& cache = timelines_->anims;
+  if (auto it = cache.find(anim); it != cache.end()) {
     return it->second.valid() ? &it->second : nullptr;
   }
   const AnimDef* def = ctx_.data ? ctx_.data->animation(anim) : nullptr;
   AnimTimeline t = def ? AnimTimeline(clock_, *def) : AnimTimeline();
-  auto& stored = timelines_.emplace(anim, std::move(t)).first->second;
+  auto& stored = cache.emplace(anim, std::move(t)).first->second;
   return stored.valid() ? &stored : nullptr;
 }
 
@@ -974,13 +1084,14 @@ const AnimTimeline* Simulation::timeline(Symbol anim) {
 // know get the default; known types without one have none.
 const AnimTimeline* Simulation::death_timeline(const Pawn& pawn) {
   const PawnDef* def = ctx_.data ? ctx_.data->pawn(pawn.type) : nullptr;
-  if (!def) return &default_death_;
-  if (auto it = death_timelines_.find(pawn.type); it != death_timelines_.end()) {
+  if (!def) return &timelines_->default_death;
+  std::map<Symbol, AnimTimeline>& cache = timelines_->deaths;
+  if (auto it = cache.find(pawn.type); it != cache.end()) {
     return it->second.valid() ? &it->second : nullptr;
   }
   const AnimDef* anim = ctx_.data->animation(def->image + "d");
   AnimTimeline t = anim ? AnimTimeline(clock_, *anim) : AnimTimeline();
-  auto& stored = death_timelines_.emplace(pawn.type, std::move(t)).first->second;
+  auto& stored = cache.emplace(pawn.type, std::move(t)).first->second;
   return stored.valid() && stored.total_updates() > 0 ? &stored : nullptr;
 }
 

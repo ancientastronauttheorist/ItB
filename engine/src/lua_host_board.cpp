@@ -13,6 +13,7 @@
 #include "itb/movement.hpp"
 #include "itb/tile_rules.hpp"
 #include "lua_host_internal.hpp"
+#include "lua_native.hpp"
 
 extern "C" {
 #include "lauxlib.h"
@@ -105,8 +106,6 @@ bool is_boosted(const Board& b, const Pawn& p) {
 }
 
 Pathing raw_pathing(int pr) { return Pathing{static_cast<PathProfile>(pr & 15), pr >> 4}; }
-
-void push_point_list_mask(lua_State* L, TileMask m) { push_point_list(L, mask_points(m)); }
 
 // Lua pawn-type lookups (LuaData::GetBool/GetInt): CallMethod(type, "Get"..field).
 bool lua_type_value(lua_State* L, const Pawn& p, const char* field) {
@@ -268,14 +267,14 @@ int b_get_size(lua_State* L) {
 
 int b_is_blocked(lua_State* L) {
   if (!match(L, {A::Board, A::Point, A::Int})) no_overload("bool IsBlocked(Board&,Point,int)");
-  lua_pushboolean(L, is_blocked(board_of(L), point_arg(L, 2), raw_pathing(to_int(L, 3))));
+  lua_pushboolean(L, native::is_blocked(board_of(L), point_arg(L, 2), to_int(L, 3)));
   return 1;
 }
 
 int b_is_pawn_space(lua_State* L) {
   const Board& b = board_of(L);
   if (match(L, {A::Board, A::Point})) {
-    lua_pushboolean(L, occupied(b, point_arg(L, 2)));
+    lua_pushboolean(L, native::is_pawn_space(b, point_arg(L, 2)));
   } else if (match(L, {A::Board, A::Point, A::Bool})) {
     const Point p = point_arg(L, 2);
     lua_pushboolean(L, to_bool(L, 3) ? occupied(b, p) : !occupants_of(b, p).empty());
@@ -289,7 +288,7 @@ int b_get_pawn(lua_State* L) {
   const Board& b = board_of(L);
   const Pawn* found = nullptr;
   if (match(L, {A::Board, A::Point})) {
-    found = occ0(b, point_arg(L, 2));
+    found = native::pawn_at(b, point_arg(L, 2));
   } else if (match(L, {A::Board, A::Point, A::Bool})) {
     const Point p = point_arg(L, 2);
     const bool live = to_bool(L, 3);
@@ -330,8 +329,7 @@ int b_get_pawn_team(lua_State* L) {
   } else {
     no_overload("int GetPawnTeam(Board&,Point)\nint GetPawnTeam(Board&,int,int)");
   }
-  const Pawn* pawn = occ0(board_of(L), p);
-  lua_pushinteger(L, pawn ? static_cast<int>(pawn->team) : 2);
+  lua_pushinteger(L, native::pawn_team(board_of(L), p));
   return 1;
 }
 
@@ -347,8 +345,7 @@ int b_is_pawn_team(lua_State* L) {
   } else {
     no_overload("bool IsPawnTeam(Board&,Point,int)\nbool IsPawnTeam(Board&,int,int,int)");
   }
-  const Pawn* pawn = occ0(board_of(L), p);
-  lua_pushboolean(L, pawn ? is_team(L, *pawn, t) : t == 2);
+  lua_pushboolean(L, native::is_pawn_team(L, board_of(L), p, t));
   return 1;
 }
 
@@ -360,13 +357,13 @@ Point point_or_xy(lua_State* L, const char* name) {
 
 int b_get_terrain(lua_State* L) {
   const Point p = point_or_xy(L, "int GetTerrain");
-  lua_pushinteger(L, static_cast<int>(tile_at(board_of(L), p).terrain));
+  lua_pushinteger(L, native::terrain(board_of(L), p));
   return 1;
 }
 
 int b_is_building(lua_State* L) {
   const Point p = point_or_xy(L, "bool IsBuilding");
-  lua_pushboolean(L, tile_at(board_of(L), p).is_building());
+  lua_pushboolean(L, native::is_building(board_of(L), p));
   return 1;
 }
 
@@ -504,7 +501,7 @@ int b_is_deadly(lua_State* L) {
 
 int b_get_path(lua_State* L) {
   if (!match(L, {A::Board, A::Point, A::Point, A::Int})) no_overload("PointList GetPath(Board&,Point,Point,int)");
-  push_point_list(L, find_path(board_of(L), point_arg(L, 2), point_arg(L, 3), raw_pathing(to_int(L, 4))));
+  push_point_list(L, native::path(board_of(L), point_arg(L, 2), point_arg(L, 3), to_int(L, 4)));
   return 1;
 }
 
@@ -543,7 +540,7 @@ std::vector<Point> simple_path(const Board& b, Point from, Point to) {
 
 int b_get_simple_path(lua_State* L) {
   if (!match(L, {A::Board, A::Point, A::Point})) no_overload("PointList GetSimplePath(Board&,Point,Point)");
-  push_point_list(L, simple_path(board_of(L), point_arg(L, 2), point_arg(L, 3)));
+  push_point_list(L, native::simple_path(board_of(L), point_arg(L, 2), point_arg(L, 3)));
   return 1;
 }
 
@@ -598,13 +595,13 @@ int b_get_simple_reachable(lua_State* L) {
   if (!match(L, {A::Board, A::Point, A::Int, A::Bool})) {
     no_overload("PointList GetSimpleReachable(Board&,Point,int,bool)");
   }
-  push_point_list(L, orth_dest_area(board_of(L), point_arg(L, 2), to_int(L, 3), to_bool(L, 4)));
+  push_point_list(L, native::simple_reachable(board_of(L), point_arg(L, 2), to_int(L, 3), to_bool(L, 4)));
   return 1;
 }
 
 int b_get_reachable(lua_State* L) {
   if (!match(L, {A::Board, A::Point, A::Int, A::Int})) no_overload("PointList GetReachable(Board&,Point,int,int)");
-  push_point_list_mask(L, reachable_list(board_of(L), point_arg(L, 2), to_int(L, 3), raw_pathing(to_int(L, 4))));
+  push_point_list(L, native::reachable(board_of(L), point_arg(L, 2), to_int(L, 3), to_int(L, 4)));
   return 1;
 }
 
@@ -630,7 +627,7 @@ std::vector<int> pawn_ids(lua_State* L, const Board& b, int team) {
 
 int b_get_pawns(lua_State* L) {
   if (!match(L, {A::Board, A::Int})) no_overload("IntList GetPawns(Board&,int)");
-  push_int_list(L, pawn_ids(L, board_of(L), to_int(L, 2)));
+  push_int_list(L, native::pawn_ids(L, board_of(L), to_int(L, 2)));
   return 1;
 }
 
@@ -868,13 +865,13 @@ bool pq_selected(lua_State* L, const Board&, const Pawn& p) { return host_contex
 bool pq_mech(lua_State*, const Board&, const Pawn& p) { return p.mech; }
 bool pq_busy(lua_State*, const Board&, const Pawn&) { return false; }
 bool pq_grappled(lua_State*, const Board&, const Pawn& p) { return p.webbed && p.alive(); }
-bool pq_guarding(lua_State*, const Board&, const Pawn& p) { return !p.pushable; }
+bool pq_guarding(lua_State*, const Board&, const Pawn& p) { return native::is_guarding(p); }
 bool pq_undo_possible(lua_State*, const Board&, const Pawn& p) { return p.movement.undo_ready; }
-bool pq_fire(lua_State*, const Board&, const Pawn& p) { return p.fire; }
+bool pq_fire(lua_State*, const Board&, const Pawn& p) { return native::is_fire(p); }
 bool pq_frozen(lua_State*, const Board&, const Pawn& p) { return p.frozen; }
 bool pq_acid(lua_State*, const Board&, const Pawn& p) { return p.acid; }
-bool pq_teleporter(lua_State*, const Board&, const Pawn& p) { return p.teleporter && p.alive(); }
-bool pq_jumper(lua_State*, const Board&, const Pawn& p) { return p.jumper && p.alive(); }
+bool pq_teleporter(lua_State*, const Board&, const Pawn& p) { return native::is_teleporter(p); }
+bool pq_jumper(lua_State*, const Board&, const Pawn& p) { return native::is_jumper(p); }
 bool pq_flying(lua_State*, const Board&, const Pawn& p) { return is_flying(p); }
 bool pq_ranged(lua_State* L, const Board&, const Pawn& p) { return lua_type_int(L, p, "Ranged", 0) == 1; }
 bool pq_infected(lua_State*, const Board&, const Pawn& p) { return p.infected; }
@@ -893,8 +890,8 @@ int pi_danger(lua_State* L, const Board&, const Pawn& p) { return lua_type_int(L
 int pi_armed(lua_State*, const Board&, const Pawn&) { return -1; }
 int pi_id(lua_State*, const Board&, const Pawn& p) { return p.uid; }
 int pi_team(lua_State*, const Board&, const Pawn& p) { return static_cast<int>(p.team); }
-int pi_path_prof(lua_State*, const Board& b, const Pawn& p) { return path_profile(b, p).raw(); }
-int pi_move_speed(lua_State*, const Board& b, const Pawn& p) { return move_speed(b, p); }
+int pi_path_prof(lua_State*, const Board& b, const Pawn& p) { return native::path_prof(b, p); }
+int pi_move_speed(lua_State*, const Board& b, const Pawn& p) { return native::move_speed(b, p); }
 int pi_base_move(lua_State*, const Board& b, const Pawn& p) { return base_move(b, p); }
 int pi_health(lua_State*, const Board&, const Pawn& p) { return p.hp; }
 int pi_turn_count(lua_State*, const Board&, const Pawn& p) { return p.movement.turn_count; }
@@ -921,7 +918,7 @@ int p_get_target(lua_State* L) {
 
 int p_is_ability(lua_State* L) {
   if (!match(L, {A::Pawn, A::Str})) no_overload("bool IsAbility(Pawn&,std::string)");
-  lua_pushboolean(L, has_ability(pawn_ref(L, 1), to_str(L, 2)));
+  lua_pushboolean(L, native::is_ability(pawn_ref(L, 1), to_str(L, 2)));
   return 1;
 }
 
@@ -1123,7 +1120,7 @@ int fn_is_mutation(lua_State* L) {
 
 int fn_is_passive_skill(lua_State* L) {
   if (!match(L, {A::Str})) no_overload("bool IsPassiveSkill(std::string)");
-  lua_pushboolean(L, host_is_passive(L, to_str(L, 1)));
+  lua_pushboolean(L, native::is_passive_skill(L, to_str(L, 1)));
   return 1;
 }
 
@@ -1166,14 +1163,16 @@ HostContext& host_context(lua_State* L) {
   return *ctx;
 }
 
-void push_pawn(lua_State* L, const Pawn* p) {
-  if (!p) {
+void push_pawn(lua_State* L, const Pawn* p) { push_pawn_uid(L, p ? p->uid : -1); }
+
+void push_pawn_uid(lua_State* L, int32_t uid) {
+  if (uid < 0) {
     lua_pushnil(L);
     return;
   }
   auto* in = static_cast<Instance*>(lua_newuserdata(L, sizeof(Instance)));
   *in = Instance{Cls::BoardPawn, Kind::Pawn, nullptr, nullptr,
-                 static_cast<uintptr_t>(static_cast<uint32_t>(p->uid)), nullptr, nullptr};
+                 static_cast<uintptr_t>(static_cast<uint32_t>(uid)), nullptr, nullptr};
   finish_instance(L);
 }
 
@@ -1383,5 +1382,65 @@ void install_host_bindings(lua_State* L, HostContext* ctx) {
 
 void host_push_board(lua_State* L) { push_ref(L, Cls::Board, &host_context(L)); }
 void host_push_game(lua_State* L) { push_ref(L, Cls::GameMap, &host_context(L)); }
+
+// ---- native equivalents (lua_native.hpp) ------------------------------------------------
+
+namespace native {
+
+bool is_blocked(const Board& b, Point p, int prof) { return itb::is_blocked(b, p, raw_pathing(prof)); }
+
+bool is_pawn_space(const Board& b, Point p) { return occupied(b, p); }
+
+const Pawn* pawn_at(const Board& b, Point p) { return occ0(b, p); }
+
+int pawn_team(const Board& b, Point p) {
+  const Pawn* pawn = occ0(b, p);
+  return pawn ? static_cast<int>(pawn->team) : 2;
+}
+
+bool is_pawn_team(lua_State* L, const Board& b, Point p, int team) {
+  const Pawn* pawn = occ0(b, p);
+  return pawn ? is_team(L, *pawn, team) : team == 2;
+}
+
+bool is_building(const Board& b, Point p) { return tile_at(b, p).is_building(); }
+
+bool is_pod(const Board& b, Point p) { return q_pod(b, p); }
+
+int terrain(const Board& b, Point p) { return static_cast<int>(tile_at(b, p).terrain); }
+
+std::vector<Point> simple_path(const Board& b, Point from, Point to) { return lua::simple_path(b, from, to); }
+
+std::vector<Point> simple_reachable(const Board& b, Point p, int len, bool corners) {
+  return orth_dest_area(b, p, len, corners);
+}
+
+std::vector<Point> reachable(const Board& b, Point p, int move, int prof) {
+  return mask_points(reachable_list(b, p, move, raw_pathing(prof)));
+}
+
+std::vector<Point> path(const Board& b, Point from, Point to, int prof) {
+  return find_path(b, from, to, raw_pathing(prof));
+}
+
+std::vector<int> pawn_ids(lua_State* L, const Board& b, int team) { return lua::pawn_ids(L, b, team); }
+
+int path_prof(const Board& b, const Pawn& p) { return path_profile(b, p).raw(); }
+
+int move_speed(const Board& b, const Pawn& p) { return itb::move_speed(b, p); }
+
+bool is_ability(const Pawn& p, std::string_view name) { return has_ability(p, std::string(name)); }
+
+bool is_jumper(const Pawn& p) { return p.jumper && p.alive(); }
+
+bool is_teleporter(const Pawn& p) { return p.teleporter && p.alive(); }
+
+bool is_guarding(const Pawn& p) { return !p.pushable; }
+
+bool is_fire(const Pawn& p) { return p.fire; }
+
+bool is_passive_skill(lua_State* L, const std::string& name) { return host_is_passive(L, name); }
+
+}  // namespace native
 
 }  // namespace itb::lua

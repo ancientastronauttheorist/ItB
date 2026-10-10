@@ -42,6 +42,9 @@ struct Tile {
   PodState pod = PodState::None;
   int8_t conveyor = -1;     // conveyor direction, -1 = none
   uint8_t walls = 0;        // bit d set = wall on the Dir(d) edge
+  // Always 0: fills what would be padding, so a Tile's bytes are its value
+  // (Board compares tiles with memcmp).
+  uint8_t reserved = 0;
   Symbol item = kNoSymbol;  // mine / item name
   Symbol unique_building = kNoSymbol;  // objective building id
   Symbol custom_tile = kNoSymbol;
@@ -234,7 +237,9 @@ class Board {
 
   bool has_passive(Passive p) const { return (passives & p) != 0; }
 
-  bool operator==(const Board&) const = default;
+  // Every field, tiles compared bytewise (Tile has no padding). A new
+  // Board field must be added there.
+  bool operator==(const Board& other) const;
 
   int grid_power = 7;
   int grid_power_max = 7;

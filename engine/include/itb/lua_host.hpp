@@ -27,6 +27,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -140,6 +141,10 @@ struct LuaHostOptions {
   // weapon carried by a mech on the board.
   std::optional<std::vector<std::string>> passives;
   uint32_t seed = 1;           // initial rand() seed (srand)
+  // Run the C++ ports of weapon scripts where one applies (see
+  // LuaHost::set_native_weapons). ITB_LUA_WEAPONS=1 in the environment
+  // turns them off for every host.
+  bool native_weapons = true;
 };
 
 struct LuaHostReport {
@@ -230,6 +235,34 @@ class LuaHost {
   // How many numbers scripts have drawn from the stream so far (seeding
   // does not count): a call that changes it used randomness.
   uint64_t rand_draws() const;
+
+  // Selects `pawn` (the Lua `Pawn` global, null = nil) exactly as the
+  // calls above do before running a skill: for callers that skip a call
+  // whose result they already have.
+  void select(const Pawn* pawn);
+
+  // C++ weapon ports: GetTargetArea / GetSkillEffect of the hottest weapon
+  // scripts reimplemented natively, producing exactly what the Lua does
+  // (src/weapon_ports.hpp has the rules; itb_inspect --diff-weapons checks
+  // them against Lua). Off: every weapon runs in Lua.
+  void set_native_weapons(bool on);
+  bool native_weapons() const;
+  // The ported Lua function ("file:line") that runs natively for `method`
+  // ("GetTargetArea" / "GetSkillEffect") of `weapon`, or "" (Lua).
+  std::string native_port(std::string_view weapon, std::string_view method);
+  // The function `method` of `weapon` resolves to and why it has no port
+  // (for reports).
+  std::string native_port_status(std::string_view weapon, std::string_view method);
+  // What the ports of `weapon` are bound to (ported functions and the field
+  // values they read); "" without a port. Equal strings: equal behaviour.
+  std::string native_binding(std::string_view weapon);
+  // Calls answered by a port so far.
+  uint64_t native_calls() const;
+
+  // Profiling: count every CallMethod(table, method) dispatched to Lua.
+  void set_call_counting(bool on);
+  // "table:method" -> calls since counting was switched on, sorted by key.
+  std::vector<std::pair<std::string, uint64_t>> call_counts() const;
 
   // Every global table derived from the Lua Skill class (all weapons,
   // including upgrade variants), sorted.
