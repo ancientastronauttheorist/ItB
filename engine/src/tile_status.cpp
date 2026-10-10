@@ -48,8 +48,7 @@ bool is_submerged(const Board& board, const Pawn& pawn, const RulesContext& ctx)
 // and has_pawn / tile_frozen read the tile alone), no web hangs from it, and
 // none of the tile rules below applies to its state. Each condition mirrors
 // one branch of settle_tile_frame, in order.
-static bool inert_empty_tile(const Board& board, Point p) {
-  const Tile& t = board.tile(p);
+bool detail::inert_tile_state(const Tile& t) {
   if (t.pending_hole) return false;
   if (t.terrain == Terrain::Hole && t.frozen) return false;
   if (t.lava && t.terrain != Terrain::Water && t.terrain != Terrain::Ice) return false;
@@ -57,6 +56,11 @@ static bool inert_empty_tile(const Board& board, Point p) {
   if ((t.terrain == Terrain::Building || t.terrain == Terrain::Water) && t.cracked) return false;
   if (t.acid && (t.terrain == Terrain::Forest || t.terrain == Terrain::Sand || t.pod == PodState::Present)) return false;
   if (t.on_fire() && (t.terrain == Terrain::Sand || t.item != kNoSymbol)) return false;
+  return true;
+}
+
+static bool inert_empty_tile(const Board& board, Point p) {
+  if (!detail::inert_tile_state(board.tile(p))) return false;
   for (const Pawn& pawn : board.pawns()) {
     if (pawn.pos == p) return false;
     // check_webs: a web whose emitting tile is p (or unknown) may break.
@@ -65,9 +69,42 @@ static bool inert_empty_tile(const Board& board, Point p) {
   return true;
 }
 
+// An occupied tile on which settle_tile_frame provably changes nothing, by
+// the branches below in order:
+//   - frozen chasm, lava flag, deferred chasm, cracks on chasms, mountains,
+//     buildings and water, acid, fire (sand, ACID/fire pickup, items, Heat
+//     Engines): ruled out by the tile's state;
+//   - each occupant (busy or not, to keep it simple): no pod to pick up, no
+//     Nanofilter smoke on a mech, no spikes, no burning pawn in smoke or on
+//     a forest; drowning and falling need water or a chasm, mines an item;
+//   - release_webs and check_webs only touch webbed pawns: there are none.
+static bool quiet_occupied_tile(const Board& board, Point p) {
+  const Tile& t = board.tile(p);
+  if (t.terrain == Terrain::Hole || t.terrain == Terrain::Mountain || t.terrain == Terrain::Building ||
+      t.terrain == Terrain::Water) {
+    return false;
+  }
+  if (t.lava || t.pending_hole || t.acid || t.on_fire() || t.spikes || t.item != kNoSymbol ||
+      t.pod == PodState::Present) {
+    return false;
+  }
+  const bool healing_smoke = t.smoke && board.has_passive(kPassiveHealingSmoke);
+  for (const Pawn& pawn : board.pawns()) {
+    if (pawn.webbed) return false;
+    if (pawn.pos != p || pawn.fallen) continue;
+    if (healing_smoke && pawn.mech) return false;
+    if (pawn.fire && (t.smoke || t.terrain == Terrain::Forest)) return false;
+  }
+  return true;
+}
+
+bool detail::settle_tile_noop(const Board& board, Point p) {
+  return inert_empty_tile(board, p) || quiet_occupied_tile(board, p);
+}
+
 // One frame of BoardSpace::OnLoop, rule effects only.
 void settle_tile_frame(Board& board, Point p, RulesContext& ctx) {
-  if (inert_empty_tile(board, p)) return;
+  if (inert_empty_tile(board, p) || quiet_occupied_tile(board, p)) return;
   Tile& t = board.tile(p);
 
   if (t.terrain == Terrain::Hole && tile_frozen(board, p) && !has_pawn(board, p)) t.frozen = false;

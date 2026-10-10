@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -141,6 +142,21 @@ struct ResolveResult {
 
 // ---- Context -----------------------------------------------------------------
 
+// Animation timelines (tile and death animations) for one game data, frame
+// clock and set of durations, built by the executor on first use. A cache
+// that outlives one resolution (ResolveContext::timelines) saves rebuilding
+// them every time; the executor only uses it when all three match. One user
+// at a time (not thread-safe).
+struct TimelineCache {
+  bool ready = false;
+  const GameData* data = nullptr;
+  FrameClock clock;
+  Durations durations;
+  std::map<Symbol, AnimTimeline> anims;   // by animation name
+  std::map<Symbol, AnimTimeline> deaths;  // by pawn type
+  AnimTimeline default_death;
+};
+
 struct ResolveConfig {
   double fps = 60.0;     // steady frame rate the game runs at
   int speed_level = 0;   // CFPS speed level
@@ -178,6 +194,9 @@ struct ResolveContext {
 
   // Optional log of what happened, frame by frame.
   std::vector<ResolveEvent>* log = nullptr;
+
+  // Optional timeline cache shared by resolutions (see TimelineCache).
+  TimelineCache* timelines = nullptr;
 };
 
 // ---- The executor ---------------------------------------------------------------

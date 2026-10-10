@@ -324,6 +324,7 @@ void Engine::Impl::wire(Engine& engine, ResolveContext& ctx, const ActionOptions
   ctx.data = &data;
   ctx.config = options.config;
   ctx.durations = options.durations;
+  ctx.timelines = &timelines;
   ctx.rules.data = &data;
   ctx.rules.grid_resist = opts.grid_resist;
   ctx.rules.events = opts.events;

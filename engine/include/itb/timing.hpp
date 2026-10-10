@@ -39,6 +39,8 @@ struct FrameClock {
   int delay_updates(float delay) const;
   // How many passes a countdown that has `remaining` left still needs.
   int countdown_updates(float remaining) const { return delay_updates(remaining); }
+
+  bool operator==(const FrameClock&) const = default;
 };
 
 // Animation timing (Animation::Update / GetTotalProgress) for one animation
@@ -113,6 +115,8 @@ struct Durations {
 
   // The defaults with the Values read from the game's scripts.
   static Durations from(const GameData* data);
+
+  bool operator==(const Durations&) const = default;
 };
 
 }  // namespace itb

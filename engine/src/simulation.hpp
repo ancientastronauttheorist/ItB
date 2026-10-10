@@ -14,6 +14,7 @@
 // owner's phase runs, which is how the game's same-frame orderings arise.
 #pragma once
 
+#include <algorithm>
 #include <climits>
 #include <cstdint>
 #include <deque>
@@ -97,37 +98,44 @@ struct PawnSim {
   int64_t xp_gone = -1;           // first frame whose P3 sees no XP popup
 };
 
-// PawnSim by uid: O(1) lookup (uids are small, increasing integers), stable
-// references (deque storage), erase by uid. Iteration order is storage
-// order; every caller treats the entries as an unordered set.
+// PawnSim by uid: O(1) lookup through a small open-addressing index (uids
+// are sparse: recorded boards mix 0..2 with 2600+), stable references
+// (deque storage), erase by uid. Iteration order is storage order; every
+// caller treats the entries as an unordered set.
 class PawnSimTable {
  public:
   PawnSim& get(int32_t uid) {
     if (PawnSim* ps = find(uid)) return *ps;
+    size_t slot;
     if (!free_.empty()) {
-      const size_t slot = free_.back();
+      slot = free_.back();
       free_.pop_back();
       slots_[slot] = PawnSim{};
-      slots_[slot].uid = uid;
-      index(uid) = static_cast<int32_t>(slot) + 1;
-      return slots_[slot];
+    } else {
+      slot = slots_.size();
+      slots_.emplace_back();
     }
-    slots_.emplace_back();
-    slots_.back().uid = uid;
-    index(uid) = static_cast<int32_t>(slots_.size());
-    return slots_.back();
+    slots_[slot].uid = uid;
+    insert(uid, static_cast<int32_t>(slot));
+    return slots_[slot];
   }
   PawnSim* find(int32_t uid) {
     const int32_t i = lookup(uid);
-    return i > 0 ? &slots_[static_cast<size_t>(i - 1)] : nullptr;
+    return i >= 0 ? &slots_[static_cast<size_t>(i)] : nullptr;
   }
   const PawnSim* find(int32_t uid) const { return const_cast<PawnSimTable*>(this)->find(uid); }
   void erase(int32_t uid) {
-    const int32_t i = lookup(uid);
-    if (i <= 0) return;
-    slots_[static_cast<size_t>(i - 1)].uid = kFree;
-    free_.push_back(static_cast<size_t>(i - 1));
-    index(uid) = 0;
+    if (keys_.empty()) return;
+    for (size_t k = home(uid);; k = (k + 1) & mask()) {
+      if (keys_[k] == kEmpty) return;
+      if (keys_[k] == uid && vals_[k] >= 0) {
+        const size_t slot = static_cast<size_t>(vals_[k]);
+        slots_[slot].uid = kFree;
+        free_.push_back(slot);
+        vals_[k] = kTomb;  // keeps later keys of this probe chain reachable
+        return;
+      }
+    }
   }
   template <class F>
   void for_each(F&& f) const {
@@ -137,26 +145,46 @@ class PawnSimTable {
   }
 
  private:
-  static constexpr int32_t kFree = INT32_MIN;
-  static constexpr int32_t kDirect = 1 << 16;  // uids below this index a vector
-  int32_t lookup(int32_t uid) const {
-    if (uid >= 0 && uid < kDirect) {
-      return static_cast<size_t>(uid) < direct_.size() ? direct_[static_cast<size_t>(uid)] : 0;
-    }
-    auto it = other_.find(uid);
-    return it == other_.end() ? 0 : it->second;
+  static constexpr int32_t kFree = INT32_MIN;   // PawnSim::uid of an unused slot
+  static constexpr int32_t kEmpty = INT32_MIN;  // keys_: never used
+  static constexpr int32_t kTomb = -1;          // vals_: erased entry
+  size_t mask() const { return keys_.size() - 1; }
+  size_t home(int32_t uid) const {
+    return (static_cast<uint32_t>(uid) * 0x9E3779B1u >> 7) & mask();
   }
-  int32_t& index(int32_t uid) {
-    if (uid >= 0 && uid < kDirect) {
-      if (static_cast<size_t>(uid) >= direct_.size()) direct_.resize(static_cast<size_t>(uid) + 1, 0);
-      return direct_[static_cast<size_t>(uid)];
+  int32_t lookup(int32_t uid) const {
+    if (keys_.empty()) return -1;
+    for (size_t k = home(uid);; k = (k + 1) & mask()) {
+      if (keys_[k] == kEmpty) return -1;
+      if (keys_[k] == uid && vals_[k] >= 0) return vals_[k];
     }
-    return other_[uid];
+  }
+  void insert(int32_t uid, int32_t slot) {
+    if (keys_.empty() || 2 * (used_ + 1) > keys_.size()) grow();
+    for (size_t k = home(uid);; k = (k + 1) & mask()) {
+      if (keys_[k] == kEmpty) {
+        keys_[k] = uid;
+        vals_[k] = slot;
+        ++used_;
+        return;
+      }
+    }
+  }
+  // Rebuilds the index at twice the size (tombstones dropped).
+  void grow() {
+    std::vector<int32_t> keys = std::move(keys_), vals = std::move(vals_);
+    keys_.assign(std::max<size_t>(64, keys.size() * 2), kEmpty);
+    vals_.assign(keys_.size(), kTomb);
+    used_ = 0;
+    for (size_t k = 0; k < keys.size(); ++k) {
+      if (keys[k] != kEmpty && vals[k] >= 0) insert(keys[k], vals[k]);
+    }
   }
   std::deque<PawnSim> slots_;
   std::vector<size_t> free_;
-  std::vector<int32_t> direct_;
-  std::map<int32_t, int32_t> other_;
+  std::vector<int32_t> keys_;  // uid per index entry (kEmpty: never used)
+  std::vector<int32_t> vals_;  // slot per index entry (kTomb: erased)
+  size_t used_ = 0;            // index entries in use, tombstones included
 };
 
 // A board change the timing analysis looks at.
@@ -268,6 +296,8 @@ class Simulation final : public FrameHooks {
   Phase phase_ = Phase::Input;
   std::vector<int32_t> p3_done_;  // pawns whose P3 update already ran this frame
   bool changed_ = false;           // sim state changed this frame (beyond timers)
+  Board before_;                   // the board at the start of the frame (run)
+  std::vector<int32_t> order_;     // P3 / P5 pawn order (run_frame)
 
   std::vector<StackEntry> stack_;
   std::vector<WeaponAnim> anims_;
@@ -284,9 +314,10 @@ class Simulation final : public FrameHooks {
   bool track_leaders_ = false;  // the board's psion comes from leader pawns on it
   int causes_ = 0;
 
-  std::map<Symbol, AnimTimeline> timelines_;
-  std::map<Symbol, AnimTimeline> death_timelines_;
-  AnimTimeline default_death_;
+  // ctx.timelines when it matches this clock, durations and data, else a
+  // cache of this simulation's own.
+  TimelineCache own_timelines_;
+  TimelineCache* timelines_ = nullptr;
 
   // Timing analysis.
   std::vector<Action> actions_;
