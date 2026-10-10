@@ -1035,7 +1035,11 @@ def end_turn(ctx) -> list:
     after = bridge.settled_state()
     path = run.save_state(after, "after_enemy")
     live = engine.board(path)
-    pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid"))
+    # Acid pools a Vek could pick up moving during AI planning: those before
+    # the enemy phase and those the engine predicts it made (live 2026-10-10:
+    # Centipedes walked onto the pools their own attacks had left).
+    pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid")) | \
+        frozenset(tuple(xy) for xy in pred["after_enemy"].get("acid_tiles", []))
     mines = lambda s: {(t["x"], t["y"]) for t in s.get("tiles", []) if t.get("item") == "Item_Mine"}
     diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
                                mines_gone=frozenset(mines(state) - mines(after)),

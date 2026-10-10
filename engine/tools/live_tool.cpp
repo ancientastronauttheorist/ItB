@@ -332,10 +332,14 @@ std::vector<PlayerAction> parse_plan(const json& j) {
 
 json live_board_json(const Board& b) {
   json buildings = json::array();
+  // Acid pools (tiles with ACID): live_play excuses a Vek that picks one up
+  // while the AI plans its next move, which the engine doesn't model.
+  json acid_tiles = json::array();
   for (int i = 0; i < kTileCount; ++i) {
     const Point p = Point::from_index(i);
     const Tile& t = b.tile(p);
     if (t.is_building()) buildings.push_back(json{{"x", p.x}, {"y", p.y}, {"hp", static_cast<int>(t.hp)}});
+    if (t.acid) acid_tiles.push_back(json::array({p.x, p.y}));
   }
   std::vector<const Pawn*> ps;
   for (const Pawn& p : b.pawns()) {
@@ -368,7 +372,7 @@ json live_board_json(const Board& b) {
                                      : json(nullptr);
     units.push_back(std::move(u));
   }
-  return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units}};
+  return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units}, {"acid_tiles", acid_tiles}};
 }
 
 LiveSession::LiveSession(const fs::path& game, int threads) : game_(game) {
