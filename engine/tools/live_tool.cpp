@@ -372,7 +372,25 @@ json live_board_json(const Board& b) {
                                      : json(nullptr);
     units.push_back(std::move(u));
   }
-  return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units}, {"acid_tiles", acid_tiles}};
+  // Burrowers underground (dove after a hit, until the AI moves them): not on
+  // the board, so not in the bridge's units either; "x"/"y" are the tile they
+  // dove from. A state unit with "underground": true loads as one.
+  json underground = json::array();
+  for (const Pawn& p : b.pawns()) {
+    if (!p.alive() || p.pos.valid() || p.fallen || !p.burrows) continue;
+    underground.push_back(json{{"uid", p.uid},
+                               {"type", std::string(symbol_name(p.type))},
+                               {"x", p.movement.prev_pos.valid() ? p.movement.prev_pos.x : -1},
+                               {"y", p.movement.prev_pos.valid() ? p.movement.prev_pos.y : -1},
+                               {"hp", static_cast<int>(p.hp)},
+                               {"max_hp", static_cast<int>(p.max_hp)},
+                               {"team", static_cast<int>(p.team)},
+                               {"underground", true}});
+  }
+  std::sort(underground.begin(), underground.end(),
+            [](const json& a, const json& c) { return a["uid"].get<int>() < c["uid"].get<int>(); });
+  return json{{"grid_power", b.grid_power}, {"buildings", buildings}, {"units", units},
+              {"underground", underground}, {"acid_tiles", acid_tiles}};
 }
 
 LiveSession::LiveSession(const fs::path& game, int threads) : game_(game) {

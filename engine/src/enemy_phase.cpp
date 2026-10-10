@@ -216,15 +216,26 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
     if (p.queued.active() && p.alive()) queued_at_start.insert(p.uid);
   }
 
-  // Burrowers that dove (stage 2 H4) leave the board until the AI moves them.
+  // Burrowers that dove (stage 2 H4) leave the board until the AI moves them:
+  // the executor takes each off when its dive ends (Resolver: FrameHooks::
+  // start_dive), so after a settle they are underground; this logs them (and
+  // would take off any still on the board).
   auto burrow_away = [&]() {
+    std::vector<int32_t> seen;  // a pawn hit twice dove once
     for (int32_t uid : ctx.rules.burrow_dives) {
+      if (std::find(seen.begin(), seen.end(), uid) != seen.end()) continue;
+      seen.push_back(uid);
       Pawn* p = board.find_pawn(uid);
-      if (!p || !p->alive() || !p->pos.valid()) continue;
+      if (!p || !p->alive()) continue;
+      if (!p->pos.valid()) {
+        out.events.push_back(PhaseEvent{PhaseEventType::Burrowed, p->movement.prev_pos, uid, 0, ""});
+        continue;
+      }
       out.events.push_back(PhaseEvent{PhaseEventType::Burrowed, p->pos, uid, 0, ""});
       p->movement.prev_pos = p->pos;
       p->pos = kInvalidPoint;
       p->queued = QueuedShot{};
+      p->fire = false;
     }
     ctx.rules.burrow_dives.clear();
   };

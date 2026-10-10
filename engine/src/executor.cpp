@@ -864,7 +864,19 @@ void Simulation::update_pawn(int32_t uid) {
 
   if (ps.burrow_phase && ps.burrow_end <= frame_) {
     changed_ = true;
-    if (ps.burrow_phase == 1) {
+    if (ps.burrow_phase == 1 && !ps.burrow_to.valid()) {
+      // A hurt burrower's dive ends: SetSpace(-1, -1). It is underground
+      // until the AI moves it (Pawn::GetMoveOrigin: from prev_pos). A pawn
+      // that died while diving stays where it died [I].
+      ps.burrow_phase = 0;
+      if (p->alive() && p->pos.valid()) {
+        const Point from = p->pos;
+        p->queued = QueuedShot{};
+        p->fire = false;
+        set_space(board_, *p, kInvalidPoint, /*no_injury=*/true, &rules_);
+        log(ResolveEventType::PawnUnderground, from, uid);
+      }
+    } else if (ps.burrow_phase == 1) {
       set_space(board_, *p, ps.burrow_to, /*no_injury=*/true, &rules_);
       ps.burrow_phase = 2;
       ps.burrow_end = frame_ + clock_.tracker_updates(dur_.burrow_emerge);
@@ -953,6 +965,19 @@ void Simulation::start_movement(const SkillEffect& effect, const SpaceDamage& sd
       break;
     }
   }
+}
+
+// Pawn::Burrow(-1, -1, forced) from ModifyHealth (stage 2 H4): the queued
+// shot and the fire are already gone; the dive animation starts and the pawn
+// stays on its tile (hit, blocking, counted) until it ends. A new hit during
+// the dive starts it again. An underground pawn stays underground.
+void Simulation::start_dive(Pawn& pawn) {
+  if (!pawn.pos.valid()) return;
+  PawnSim& ps = state(pawn.uid);
+  ps.burrow_phase = 1;
+  ps.burrow_to = kInvalidPoint;
+  ps.burrow_end = first_pawn_update(pawn.uid) + clock_.tracker_updates(dur_.burrow_dive) - 1;
+  changed_ = true;
 }
 
 // Pawn::UpdatePath / Pawn::Move: one step, then the step timer restarts

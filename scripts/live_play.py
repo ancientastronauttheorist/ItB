@@ -36,6 +36,11 @@ stale (the bridge reads them from the save, written at turn start, so a shot
 the turn cleared or retargeted still shows): each step's predicted shots are
 kept for the units the live board confirmed (the run's manifest carries them
 from `turn` to `end-turn`), and re-solves use them too.
+A Burrower hurt during the turn dives and leaves the board (the bridge then
+omits it) until the AI's move brings it up: the engine's boards list it under
+"underground", and the driver carries it (by uid, from the engine) into
+re-solves and the end-of-turn prediction, so a resurfacing Burrower is
+matched by uid, not reported as a spawn.
 Notes, not differences: a Vek picking up an acid pool while the AI plans; a
 Grid Defense resist the prediction (worst case: no resist) could not know; a
 Soldier Psion / Psion Abomination emerging from a hidden spawn (+1 HP to
@@ -391,6 +396,22 @@ class Run:
                                       "units": {str(uid): shot for uid, shot in sorted(tracked.items())}}
         self.save_meta()
 
+    def engine_underground(self, state: dict) -> dict:
+        """The Burrowers underground by the engine's predictions (see
+        track_underground), kept across commands and turns of this state's
+        mission; {} for another mission. A uid the state lists again has
+        resurfaced and is dropped."""
+        rec = self.meta.get("engine_underground") or {}
+        if rec.get("mission") != self.mission_index(state):
+            return {}
+        listed = {u.get("uid") for u in units(state)}
+        return {int(uid): u for uid, u in (rec.get("units") or {}).items() if int(uid) not in listed}
+
+    def save_engine_underground(self, state: dict, under: dict) -> None:
+        self.meta["engine_underground"] = {"mission": self.mission_index(state),
+                                           "units": {str(uid): u for uid, u in sorted(under.items())}}
+        self.save_meta()
+
     def save_json(self, name: str, obj) -> Path:
         path = self.path / name
         path.write_text(json.dumps(obj, indent=1))
@@ -449,11 +470,16 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
       arrival: +1 HP on a known non-mech unit of the psion's team.
     - `xp_split`: the prediction split squad XP whose remainder (a random
       draw) could level a pilot up; it takes the fewest level-ups, so a mech
-      with exactly 2 HP more (a Health / Skilled level-up) is a note."""
+      with exactly 2 HP more (a Health / Skilled level-up) is a note.
+    - A Burrower the engine has underground (want["underground"]; it dove
+      after a hit) that the game shows again after the enemy phase came up in
+      the AI's move (not modelled): matched by uid on type and HP, a note.
+      Underground on both sides (absent from both unit lists) is a match."""
     diffs, notes = [], []
     fields = ENEMY_FIELDS if enemy_phase else STEP_FIELDS
     w = {u["uid"]: u for u in want["units"]}
     g = {u["uid"]: u for u in got["units"]}
+    under = {u["uid"]: u for u in want.get("underground") or []}
     psion = None
     if enemy_phase and not any(_health_psion(u) for u in want["units"]):
         psion = next((u for u in got["units"] if u["uid"] not in known and _health_psion(u)), None)
@@ -463,6 +489,19 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
     for uid in sorted(known):
         a, b = w.get(uid), g.get(uid)
         if a is None and b is None:
+            continue
+        if a is None and uid in under:
+            d = under[uid]
+            dove = visual(d["x"], d["y"]) if d.get("x", -1) >= 0 else "?"
+            if not enemy_phase:
+                diffs.append(f"{describe_unit(b)}: engine underground (dove at {dove}), game at "
+                             f"{visual(b['x'], b['y'])} hp {b['hp']}")
+            elif d.get("type") != b["type"] or d.get("hp") != b["hp"]:
+                diffs.append(f"{describe_unit(b)}: engine underground {d.get('type')} hp {d.get('hp')}, game "
+                             f"{b['type']} at {visual(b['x'], b['y'])} hp {b['hp']}")
+            else:
+                notes.append(f"{describe_unit(b)} resurfaced at {visual(b['x'], b['y'])} hp {b['hp']} (underground "
+                             f"in the engine since it dove at {dove}: the AI's move brings it up)")
             continue
         if a is None:
             diffs.append(f"{describe_unit(b)}: engine dead, game alive at {visual(b['x'], b['y'])} hp {b['hp']}")
@@ -568,15 +607,18 @@ def load_loadout(path: str | None) -> dict:
 
 
 def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = None,
-                notes: list | None = None) -> tuple[dict, dict]:
+                notes: list | None = None, underground: dict | None = None) -> tuple[dict, dict]:
     """The solver's input: the live state, plus --loadout weapons for units
     the bridge gives no exact ids, plus moved flags the bridge does not
     export, plus the engine's queued shots (`queued`, see track_queued) where
     the bridge's are stale, plus the live grid estimate (the save's
     grid_power is the turn-start value until the turn ends; the bridge
     estimates the grid lost since from building HP: live 2026-10-10, a grid
-    loss during the player's turn left the end-turn prediction one high).
-    Returns (state, patches); queued-shot notes go to `notes`."""
+    loss during the player's turn left the end-turn prediction one high),
+    plus the Burrowers underground (`underground`, see track_underground)
+    that the bridge omits, as units with "underground": true at the tile they
+    dove from. Returns (state, patches); queued-shot and underground notes go
+    to `notes`."""
     out = json.loads(json.dumps(state))
     patches = {}
     est, grid = out.get("grid_power_estimate"), out.get("grid_power")
@@ -598,7 +640,50 @@ def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = No
             patches[f"{uid}.queued"] = value
             if text and notes is not None:
                 notes.append(text)
+    if underground:
+        listed = {u.get("uid") for u in units(out)}
+        for uid, d in sorted(underground.items()):
+            if uid in listed:
+                continue
+            out.setdefault("units", []).append(underground_unit(d))
+            patches[f"{uid}.underground"] = [d.get("x"), d.get("y")]
+            if notes is not None:
+                notes.append(f"{d.get('type')}#{uid} underground (dove at {visual(d['x'], d['y'])}, "
+                             f"hp {d.get('hp')}): the bridge omits it; carried over from the engine")
     return out, patches
+
+
+# ------------------------------------------------------------------ underground
+#
+# A Burrower hurt by anything but a weapon hit on a cracked tile dives
+# (Pawn::Burrow(-1, -1)) and is off the board until the AI's move brings it
+# up: the bridge lists no such pawn, itb_live's boards list it under
+# "underground" (x, y = the tile it dove from). The driver keeps the engine's
+# entries for turn-start units the live board confirms gone, so re-solves and
+# the end-of-turn prediction still have the pawn, and a resurfacing one keeps
+# its uid.
+
+def underground_unit(d: dict) -> dict:
+    """A bridge-state unit for an engine underground entry (itb_live loads
+    it underground)."""
+    u = {"uid": d["uid"], "type": d.get("type"), "x": d.get("x", -1), "y": d.get("y", -1),
+         "hp": d.get("hp"), "team": d.get("team", 6), "underground": True}
+    if d.get("max_hp") is not None:
+        u["max_hp"] = d["max_hp"]
+    return u
+
+
+def track_underground(under: dict, predicted: dict, live: dict, known: set) -> None:
+    """Updates `under` ({uid: the engine's underground entry}) from a
+    predicted board: a known unit the engine has underground and the live
+    board does not list (the bridge omits underground pawns) is tracked; a
+    tracked one the live board lists again has resurfaced."""
+    listed = {u["uid"] for u in live.get("units", [])}
+    for d in predicted.get("underground") or []:
+        if d.get("uid") in known and d["uid"] not in listed:
+            under[d["uid"]] = dict(d)
+    for uid in [uid for uid in under if uid in listed]:
+        del under[uid]
 
 
 # ------------------------------------------------------------------ queued shots
@@ -844,8 +929,12 @@ def play_turn(ctx) -> list:
         raise Refused(f"not in combat (phase {state.get('phase')})")
     state = bridge.settled_state()
     check_loadout(state, ctx.loadout)
-    known = {u["uid"] for u in units(state)}
+    # Burrowers underground (a re-run of `turn` mid-turn, or one that dove in
+    # an earlier turn and is still down): turn-start units too.
+    under = run.engine_underground(state)
+    known = {u["uid"] for u in units(state)} | set(under)
     names = {u["uid"]: u.get("type", "?") for u in units(state)}
+    names.update({uid: d.get("type", "?") for uid, d in under.items()})
     moved: set = set()
     anomalies: list = []
     # The engine's queued shots this turn (a re-run of `turn` mid-turn
@@ -857,7 +946,7 @@ def play_turn(ctx) -> list:
 
     def solve(st: dict, label: str) -> tuple[Path, dict]:
         notes: list = []
-        solver_input, patches = patch_state(st, ctx.loadout, moved, tracked, notes)
+        solver_input, patches = patch_state(st, ctx.loadout, moved, tracked, notes, under)
         for n in notes:
             say(f"  note: {n}")
         path = run.save_state(solver_input, label, {"patches": patches} if patches else None)
@@ -896,6 +985,8 @@ def play_turn(ctx) -> list:
         diffs, _ = diff_boards(step["board"], live, known)
         track_queued(tracked, step["board"], live, known)
         run.save_engine_queued(state, tracked)
+        track_underground(under, step["board"], live, known)
+        run.save_engine_underground(state, under)
         run.event("step", {"step": text, "state": path.name, "diffs": diffs})
         if not diffs:
             say(f"  step {len(executed)} {text}: matches")
@@ -971,9 +1062,11 @@ def end_turn(ctx) -> list:
     state = bridge.settled_state()
     check_loadout(state, ctx.loadout)
     turn = int(state.get("turn") or 0)
-    known = {u["uid"] for u in units(state)}
+    under = run.engine_underground(state)
+    known = {u["uid"] for u in units(state)} | set(under)
     queued_notes: list = []
-    solver_input, patches = patch_state(state, ctx.loadout, set(), run.engine_queued(state), queued_notes)
+    solver_input, patches = patch_state(state, ctx.loadout, set(), run.engine_queued(state), queued_notes,
+                                        under)
     for n in queued_notes:
         say(f"  note: {n}")
     path = run.save_state(solver_input, "end_turn", {"patches": patches} if patches else None)
@@ -1048,6 +1141,10 @@ def end_turn(ctx) -> list:
                                resist=resist_info(pred),
                                xp_split=bool((pred.get("enemy_phase") or {}).get("xp_split")))
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})
+    # Still underground (the engine has it so, the game does not list it) or
+    # resurfaced (listed again: dropped).
+    track_underground(under, pred["after_enemy"], live, known)
+    run.save_engine_underground(after, under)
     spawns = [f"{describe_unit(u)} at {visual(u['x'], u['y'])}" for u in live["units"] if u["uid"] not in known]
     if spawns:
         say("  new units (spawns): " + ", ".join(spawns))

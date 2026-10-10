@@ -86,7 +86,8 @@ struct PawnSim {
   int teleport_phase = 0;
   int64_t teleport_end = 0;
   Point teleport_to = kInvalidPoint;
-  // Burrow: 1 diving, 2 emerging.
+  // Burrow: 1 diving, 2 emerging. A dive with no destination (a hurt
+  // burrower, Burrow(-1, -1)) ends underground, off the board.
   int burrow_phase = 0;
   int64_t burrow_end = 0;
   Point burrow_to = kInvalidPoint;
@@ -228,6 +229,7 @@ class Simulation final : public FrameHooks {
   bool hole_ready(Point p) const override;
   bool start_fall(Pawn& pawn) override;
   void instant_kill(const Pawn& pawn) override;
+  void start_dive(Pawn& pawn) override;
 
  private:
   // ---- frame loop (executor.cpp)

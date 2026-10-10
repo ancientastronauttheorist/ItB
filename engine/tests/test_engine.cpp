@@ -415,3 +415,37 @@ TEST_CASE("Engine: a limited weapon fires while it has uses left") {
   REQUIRE(E.fire_weapon(b, mech, 0, {2, 5}).ok());
   CHECK(b.find_pawn(mech)->uses[0] == -1);
 }
+
+TEST_CASE("Engine: a Burrower hurt by the Laser Mech is underground once the shot settles") {
+  // Live 2026-10-10 (m20 Mission_Reactivation, turn 2): Prime_Lasermech from
+  // F7 at E7, the beam hits the Burrower at D7 for 2 (3 -> 1). It dives
+  // (stage 2 H4) and is off the board in the next snapshot; it stays alive
+  // (no kill) and resurfaces in the AI's move.
+  NEED_ENGINE();
+  Board b;
+  const int32_t mech = place(b, "LaserMech", {1, 2}, true);
+  const int32_t bur = place(b, "Burrower1", {1, 4});
+  const ActionResult r = E.fire_weapon(b, mech, 0, {1, 3});
+  REQUIRE_MESSAGE(r.ok(), to_string(r.status));
+  const Pawn* p = b.find_pawn(bur);
+  REQUIRE(p != nullptr);
+  CHECK(p->hp == 1);
+  CHECK(p->alive());
+  CHECK_FALSE(p->pos.valid());
+  CHECK(p->movement.prev_pos == Point{1, 4});
+  CHECK(at(b, {1, 4}) == nullptr);
+  CHECK(r.resolve.quiescent);
+}
+
+TEST_CASE("Engine: a Burrower on a cracked tile takes the laser without diving") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t mech = place(b, "LaserMech", {1, 2}, true);
+  const int32_t bur = place(b, "Burrower1", {1, 4});
+  b.tile({1, 4}).cracked = true;
+  const ActionResult r = E.fire_weapon(b, mech, 0, {1, 3});
+  REQUIRE_MESSAGE(r.ok(), to_string(r.status));
+  // The tile collapses and the Burrower falls in: no dive.
+  CHECK(b.tile({1, 4}).is_chasm());
+  CHECK(gone(b, bur));
+}

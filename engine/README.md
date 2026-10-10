@@ -134,6 +134,17 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
   of every re-solve and of the end-of-turn prediction (`<uid>.queued` in the
   file's `patches`; the bridge's dump is archived beside it as `..._raw`),
   with a note for each shot cleared or retargeted.
+- **Underground Burrowers** come from the engine too. A hurt Burrower dives
+  off the board until the AI's move brings it up, and the bridge lists no
+  such pawn (live m20 Mission_Reactivation: Burrower1#1683 dove after a
+  laser hit). `itb_live` boards list it under `underground`; the driver
+  keeps the entry for a turn-start unit the live board no longer lists
+  (`engine_underground` in `manifest.json`, the whole mission, dropped once
+  the bridge lists the uid again), adds it to the state of every re-solve
+  and of the end-of-turn prediction (`"underground": true` at the tile it
+  dove from; `<uid>.underground` in `patches`), and counts it as a known
+  unit: one that resurfaces after the enemy phase is matched by uid (type
+  and HP; a note, not a spawn).
 - **deploy** uses the bridge's `drop_zone` (refused tiles are already left
   out, and `DEPLOY` refuses them anyway), checks every mech's tile in the
   state, and leaves Confirm to you.
@@ -582,10 +593,18 @@ Integration notes:
   board-list order.
 - Lua writes are applied when the script returns, so a script does not see
   its own writes (no shipped weapon script reads back what it wrote).
-- Burrowers record their dive (`RulesContext::burrow_dives`) but stay on the
-  board during the player phase; in the enemy phase they leave it
-  (`Pawn::pos` invalid, previous tile in `movement.prev_pos`) until the AI
-  resurfaces them.
+- A hurt burrower dives (stage 2 H4: any HP loss, except a weapon hit on a
+  cracked tile): `RulesContext::burrow_dives` records it and the executor
+  (`FrameHooks::start_dive`) plays the dive (`Durations::burrow_dive`), busy,
+  on its tile: later hits of the same chunk still find it, and a FULL_DELAY
+  chunk waits for it. When the dive ends it leaves the board (`Pawn::pos`
+  invalid, previous tile in `movement.prev_pos`, queued shot and fire gone),
+  in the player's turn as in the enemy phase, so the next action never sees
+  it. It stays alive (no kill credit) until the AI resurfaces it. itb_live
+  lists such pawns under `"underground"` (x, y = the tile they dove from), and
+  a state unit with `"underground": true` loads as one; `live_play.py`
+  carries them over, since the bridge omits them. [I] A burrower killed
+  during its dive stays where it died.
 - `Engine::end_turn` leaves `Board::player_phase` false and does not apply
   the next player turn's start (Zoltan shields, Opener/Closer, last-turn
   spawn clearing): score those as next-turn context.

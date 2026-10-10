@@ -310,3 +310,54 @@ TEST_CASE("live: bad requests answer ok=false") {
   CHECK(refused["refused"] == 0);
   CHECK_FALSE(refused.contains("after_enemy"));
 }
+
+namespace {
+
+const json* underground_unit(const json& board, int uid) {
+  if (!board.contains("underground")) return nullptr;
+  for (const json& u : board["underground"]) {
+    if (u["uid"] == uid) return &u;
+  }
+  return nullptr;
+}
+
+}  // namespace
+
+TEST_CASE("live: a hurt Burrower leaves the board and is exported underground (live 2026-10-10 m20 turn 2)") {
+  NEED_SESSION();
+  // Mission_Reactivation turn 2: LaserMech at F7 fires at E7; the beam hits
+  // Burrower1#1683 at D7 for 2 (3 -> 1). It dives and the bridge's next
+  // snapshot no longer lists it.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_reactivation_t2_step2.json";
+  const json plan = json::array(
+      {{{"uid", 0}, {"kind", "weapon"}, {"weapon", "Prime_Lasermech_A"}, {"target", {1, 3}}}});
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", plan}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  REQUIRE(r["refused"] == -1);
+  REQUIRE(board_unit(r["start"], 1683) != nullptr);
+  CHECK(r["start"]["underground"].empty());
+  const json& after = r["steps"].back()["board"];
+  CHECK(board_unit(after, 1683) == nullptr);
+  const json* dove = underground_unit(after, 1683);
+  REQUIRE(dove);
+  CHECK((*dove)["hp"] == 1);
+  CHECK(((*dove)["x"] == 1 && (*dove)["y"] == 4));
+
+  // The end-turn board as the bridge has it (no Burrower) plus the Burrower
+  // as live_play carries it over: it loads underground, stays alive and
+  // underground through the enemy phase (it resurfaces in the AI's move).
+  std::ifstream in(std::string(ITB_FIXTURE_DIR) + "/live_reactivation_t2_end_turn.json");
+  json wrapped = json::parse(in);
+  json unit = *dove;
+  wrapped["data"]["bridge_state"]["units"].push_back(unit);
+  const fs::path carried = temp_file("itb_live_test_reactivation_underground.json", wrapped);
+  const json e = S.handle({{"cmd", "predict"}, {"state", carried.string()}, {"plan", json::array()}});
+  REQUIRE_MESSAGE(e["ok"].get<bool>(), e.dump());
+  CHECK(board_unit(e["start"], 1683) == nullptr);
+  REQUIRE(underground_unit(e["start"], 1683) != nullptr);
+  CHECK(board_unit(e["after_enemy"], 1683) == nullptr);
+  const json* still = underground_unit(e["after_enemy"], 1683);
+  REQUIRE(still);
+  CHECK((*still)["hp"] == 1);
+  fs::remove(carried);
+}
