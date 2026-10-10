@@ -131,6 +131,8 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.armor = get_or<bool>(u, "armor", p.armor);
   p.minor = get_or<bool>(u, "minor", p.minor);
   p.active = get_or<bool>(u, "active", false);
+  // A unit that already used its move this turn (not exported by older bridges).
+  p.moved = get_or<bool>(u, "moved", false);
   p.fire = get_or<bool>(u, "fire", false);
   p.frozen = get_or<bool>(u, "frozen", false);
   p.acid = get_or<bool>(u, "acid", false);

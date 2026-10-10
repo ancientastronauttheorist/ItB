@@ -107,6 +107,24 @@ TEST_CASE("bridge quirks are corrected on load") {
   CHECK(b.teleporter_occupants == std::vector<int32_t>{-1, -1});
 }
 
+TEST_CASE("a unit's moved flag is loaded when the bridge reports it") {
+  const auto path = std::filesystem::temp_directory_path() / "itb_recording_moved.json";
+  {
+    std::ofstream out(path);
+    out << R"({"tiles": [], "units": [
+        {"uid": 1, "type": "PunchMech", "x": 2, "y": 2, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "active": true, "moved": true},
+        {"uid": 2, "type": "PunchMech", "x": 3, "y": 3, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "active": true}]})";
+  }
+  std::string error;
+  auto rec = load_recording(path, nullptr, &error);
+  std::filesystem::remove(path);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  CHECK(rec->board.find_pawn(1)->moved);
+  CHECK_FALSE(rec->board.find_pawn(2)->moved);
+}
+
 TEST_CASE("rejects files that are not boards") {
   std::string error;
   auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/does_not_exist.json", nullptr, &error);
