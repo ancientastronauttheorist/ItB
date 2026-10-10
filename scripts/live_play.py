@@ -1403,7 +1403,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None, *, bridge=None, engine=None, click=None) -> int:
     args = build_parser().parse_args(argv)
-    run = None if args.command == "status" else Run.open(args.run, args.new_run)
+    # status only reads, except that `status --new-run` starts the new run
+    # directory (recordings/live/<time>) that later commands then use.
+    run = None if args.command == "status" and not args.new_run else Run.open(args.run, args.new_run)
     ctx = Context(args, bridge=bridge, engine=engine, run=run, click=click)
     if ctx.engine is None and args.command in ("turn", "end-turn", "mission"):
         ctx.engine = Engine(args.threads, args.game, run.path / "itb_live.log")
