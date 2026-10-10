@@ -1481,14 +1481,22 @@ function ITBX.weapon_slots(save_weapons, shots_remaining, unlimited_known)
         local def = rawget(_G, id) or rawget(_G, w.base)
         local limited = 0
         local passive = false
+        local power_cost = 0
         if type(def) == "table" then
             limited = tonumber(def.Limited) or 0
             passive = type(def.Passive) == "string" and def.Passive ~= ""
+            power_cost = tonumber(def.PowerCost) or 0
+        end
+        -- Reactor cores in the weapon's own power slots (save *_power).
+        local cores = 0
+        for _, v in ipairs(w.power or {}) do
+            if (tonumber(v) or 0) > 0 then cores = cores + 1 end
         end
         local s = {
             slot = w.slot, base = w.base, id = id, power = w.power,
             mod1 = w.mod1, mod2 = w.mod2, limited = limited, passive = passive,
             uses_saved = w.uses, damaged = w.damaged,
+            power_cost = power_cost, powered = cores >= power_cost,
         }
         if limited > 0 then
             limited_slots[#limited_slots + 1] = s
@@ -1569,14 +1577,90 @@ end
 -- Adds the extension fields to each main unit entry; runs before the old
 -- attack_order pass so scenario-queued shots are part of it.
 function ITBX.after_units(state, save_data)
-    local save = ITBX.parse_save(save_data and save_data.raw_content)
+    local save = ITBX.best_save(save_data and save_data.raw_content, state.units)
     ITBX._save = save
+    if save.file then state.save_source = save.file end
     local scenario = ITBX.active_scenario()
     for _, u in ipairs(state.units or {}) do
         if not u.is_extra_tile then
             ITBX.try("unit_ext", ITBX.unit_ext, u, save, scenario)
+            ITBX.try("unit_moved", ITBX.unit_moved, u)
         end
     end
+end
+
+-- saveData.lua and undoSave.lua can hold different moments (and an old
+-- run's mission under the same key): keep the active region whose pawns
+-- match the live board best, then the later turn; undoSave on a tie.
+function ITBX.best_save(save_data_content, units)
+    local live = {}
+    for _, u in ipairs(units or {}) do live[u.uid] = u.type end
+    local key = ITBX.mission_key(_ITB_CURRENT_MISSION)
+    local best, best_rank = nil, nil
+    local candidates = {{"saveData.lua", save_data_content}}
+    local f = io.open(SAVE_ROOT .. "/profile_Alpha/undoSave.lua", "r")
+    if f then
+        candidates[2] = {"undoSave.lua", f:read("*a")}
+        f:close()
+    end
+    for i, c in ipairs(candidates) do
+        local s = ITBX.parse_save(c[2])
+        s.file = c[1]
+        local mission_ok = key == nil or s.mission == nil or s.mission == ("Mission" .. tostring(key))
+        local matches = 0
+        for id, rec in pairs(s.pawns) do
+            if live[id] ~= nil and live[id] == rec.type then matches = matches + 1 end
+        end
+        local rank = {mission_ok and 1 or 0, matches, s.turn or -1, i}
+        local better = best_rank == nil
+        if not better then
+            for k = 1, 4 do
+                if rank[k] ~= best_rank[k] then
+                    better = rank[k] > best_rank[k]
+                    break
+                end
+            end
+        end
+        if better then best, best_rank = s, rank end
+    end
+    return best or {pawns = {}}
+end
+
+-- Player-team positions when the player's turn began (Mission:BaseNextTurn
+-- with TEAM_PLAYER), for the `moved` flag.
+function ITBX.record_turn_start(mission)
+    local turn = itbx_turn_team()
+    local pos = {}
+    for _, id in ipairs(extract_table(Board:GetPawns(TEAM_PLAYER))) do
+        local p = Board:GetPawn(id)
+        if p then
+            local sp = p:GetSpace()
+            pos[id] = {sp.x, sp.y}
+        end
+    end
+    _ITB_BRIDGE_TURN_START = {mission = mission, turn = turn, pos = pos}
+end
+
+-- `moved`: the unit left its turn-start tile this turn, or can still undo
+-- a move (Pawn:IsUndoPossible). `moved_source` says what was known.
+function ITBX.unit_moved(u)
+    if u.team ~= 1 then return end
+    local p = Board:GetPawn(u.uid)
+    if p == nil then return end
+    local moved = false
+    local source = "undo"
+    local ok_u, undo = pcall(function() return p:IsUndoPossible() end)
+    if ok_u and undo == true then moved = true end
+    local ts = _ITB_BRIDGE_TURN_START
+    local turn, team = itbx_turn_team()
+    if ts and rawequal(ts.mission, _ITB_CURRENT_MISSION) and ts.turn == turn then
+        source = "turn_start"
+        local start = ts.pos[u.uid]
+        if start and (start[1] ~= u.x or start[2] ~= u.y) then moved = true end
+    end
+    if team ~= TEAM_PLAYER then moved = false end
+    u.moved = moved
+    u.moved_source = source
 end
 
 function ITBX.unit_ext(u, save, scenario)
@@ -1701,6 +1785,55 @@ function ITBX.zones()
         end
     end
     return out
+end
+
+-- Board::GetDropZone (the tiles the squad may deploy on): zone
+-- "deployment" filtered to available tiles (or a mech's); if that leaves
+-- fewer than 3, or the map has no such zone, the default columns x = 1..3
+-- (rows 1..6), then whole columns in the order 1,2,3,4,0,5,6,7 until more
+-- than 3. Board::IsAvailable is not bound to Lua: approximated as no item,
+-- no pod, not blocked for a ground pawn. (Pilot Deploy_Anywhere ignored.)
+function ITBX.drop_zone()
+    local ground = _G.PATH_GROUND or 0
+    local function usable(x, y)
+        local pt = Point(x, y)
+        if Board:IsPawnSpace(pt) then
+            local p = Board:GetPawn(pt)
+            return p ~= nil and p:IsMech()
+        end
+        return not Board:IsItem(pt) and not Board:IsPod(pt) and not Board:IsBlocked(pt, ground)
+    end
+    local out, seen = {}, {}
+    local function add(x, y)
+        local k = x .. "," .. y
+        if not seen[k] then
+            seen[k] = true
+            out[#out + 1] = {x, y}
+        end
+    end
+    local zone = ITBX.point_pairs(Board:GetZone("deployment"))
+    local source = "zone"
+    for _, p in ipairs(zone) do
+        if usable(p[1], p[2]) then add(p[1], p[2]) end
+    end
+    if #zone == 0 then
+        source = "default"
+        for x = 1, 3 do
+            for y = 1, 6 do
+                if usable(x, y) then add(x, y) end
+            end
+        end
+    end
+    if #out <= 2 then
+        source = source .. "+columns"
+        for _, x in ipairs({1, 2, 3, 4, 0, 5, 6, 7}) do
+            for y = 0, 7 do
+                if usable(x, y) then add(x, y) end
+            end
+            if #out > 3 then break end
+        end
+    end
+    return out, source
 end
 
 ---------------------------------------------------------------- spawns
@@ -1854,6 +1987,23 @@ function ITBX.poll_frame(mission)
             log.track[id] = nil
         end
     end
+    -- Terrain and structure HP (building damage shows when grid is lost).
+    log.tiles = log.tiles or {}
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local pt = Point(x, y)
+            local terrain = Board:GetTerrain(pt)
+            local hp = Board:GetHealth(pt)
+            local key = x * 8 + y
+            local prev = log.tiles[key]
+            if prev and (prev[1] ~= terrain or prev[2] ~= hp) and log.initialized then
+                ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                    {kind = "tile", turn = turn, team = team, x = x, y = y,
+                     from = {prev[1], prev[2]}, to = {terrain, hp}})
+            end
+            log.tiles[key] = {terrain, hp}
+        end
+    end
     log.initialized = true
 end
 
@@ -1887,7 +2037,30 @@ function ITBX.finish(state, mission)
     state.bridge_debug = debug
     if mission ~= nil then
         state.mission_state = ITBX.try("mission_state", ITBX.mission_state, mission)
+        -- The LiveEnvironment's class (Env_Null for missions without one),
+        -- beside the old env_type heuristic.
+        if state.mission_state and state.mission_state.env_class_chain then
+            state.env_class = state.mission_state.env_class_chain[1]
+        end
         ITBX.try("tiles_ext", ITBX.tiles_ext, state)
+        ITBX.try("drop_zone", function()
+            local zone, source = ITBX.drop_zone()
+            state.drop_zone = zone
+            state.drop_zone_source = source
+            local turn = itbx_turn_team()
+            if turn == 0 then
+                state.deploying = true
+                -- The old field, when the old capture found nothing: the
+                -- free tiles of the drop zone.
+                if state.deployment_zone == nil or #state.deployment_zone == 0 then
+                    local free = {}
+                    for _, p in ipairs(zone) do
+                        if not Board:IsPawnSpace(Point(p[1], p[2])) then free[#free + 1] = p end
+                    end
+                    if #free > 0 then state.deployment_zone = free end
+                end
+            end
+        end)
         state.zones = ITBX.try("zones", ITBX.zones)
         ITBX.try("spawn_queue", ITBX.spawn_queue, state, mission, ITBX._save, scenario)
         if ITBX._save and ITBX._save.spawn_blocks then
@@ -4356,6 +4529,14 @@ function ITBX.scenario_pawn_status(p, ps, report)
     if type(ps.hp) == "number" then step("hp", function() p:SetHealth(ps.hp) end) end
     if type(ps.move) == "number" then step("move", function() p:SetMoveSpeed(ps.move) end) end
     if type(ps.acid) == "boolean" then step("acid", function() p:SetAcid(ps.acid) end) end
+    if ps.injured == true then
+        -- AE Injured: a 0-damage SpaceDamage with iInjure (as weapons set it).
+        step("injured", function()
+            local sd = SpaceDamage(p:GetSpace(), 0)
+            sd.iInjure = _G.EFFECT_CREATE or 1
+            Board:DamageSpace(sd)
+        end)
+    end
     if type(ps.boosted) == "boolean" then step("boosted", function() p:SetBoosted(ps.boosted) end) end
     if type(ps.infected) == "boolean" then step("infected", function() p:SetInfected(ps.infected) end) end
     if type(ps.neutral) == "boolean" then step("neutral", function() p:SetNeutral(ps.neutral) end) end
@@ -4496,17 +4677,30 @@ function ITBX.scenario_apply(spec, wait_idle)
             local pt = nil
             if type(ps.x) == "number" and type(ps.y) == "number" then pt = Point(ps.x, ps.y) end
             local p = nil
-            if type(ps.uid) == "number" then
-                p = Board:GetPawn(ps.uid)
-                if p == nil then error("no pawn " .. ps.uid) end
-                if pt then
-                    local sp = p:GetSpace()
-                    if sp.x ~= ps.x or sp.y ~= ps.y then
-                        if Board:IsPawnSpace(pt) then error("tile occupied") end
-                        p:SetSpace(pt)
-                    end
+            if type(ps.uid) == "number" or type(ps.ref) == "number" then
+                if type(ps.ref) == "number" then
+                    -- An entry earlier in this list (1-based).
+                    p = placed[ps.ref]
+                    if p == nil then error("ref " .. ps.ref .. " is not placed (yet)") end
+                else
+                    p = Board:GetPawn(ps.uid)
+                    if p == nil then error("no pawn " .. ps.uid) end
                 end
-                if not p:IsMech() and ps.queue == nil and ps.clear_queue ~= false then
+                local sp = p:GetSpace()
+                if ps.readd then
+                    -- Off the board and back: Board::AddPawn appends it to
+                    -- its list group (the order re-added Vek attack in).
+                    if p:IsMech() then error("refusing to re-add a mech") end
+                    local dest = pt or Point(sp.x, sp.y)
+                    Board:RemovePawn(p)
+                    if Board:IsPawnSpace(dest) then error("tile occupied") end
+                    Board:AddPawn(p, dest)
+                elseif pt and (sp.x ~= ps.x or sp.y ~= ps.y) then
+                    if Board:IsPawnSpace(pt) then error("tile occupied") end
+                    p:SetSpace(pt)
+                end
+                if type(ps.uid) == "number" and not p:IsMech() and ps.queue == nil
+                        and ps.clear_queue ~= false then
                     p:ClearQueued()
                     st.queued[ps.uid] = false
                 end
@@ -4520,6 +4714,10 @@ function ITBX.scenario_apply(spec, wait_idle)
                     p = PAWN_FACTORY:CreatePawn(ps.type)
                 end
                 if p == nil then error("CreatePawn returned nil") end
+                -- Extra weapons (SkillManager::AddWeapon: native slots after
+                -- the type's own; Move is slot 0). New pawns only: a squad
+                -- mech would keep the weapon for the rest of the run.
+                for _, w in ipairs(ps.weapons_add or {}) do p:AddWeapon(w) end
                 Board:AddPawn(p, pt)
                 report.created[#report.created + 1] = {index = i, uid = p:GetId(), type = ps.type}
             end
@@ -4586,7 +4784,13 @@ function ITBX.scenario_apply(spec, wait_idle)
         end
     end
 
-    -- 7. Spawns in (appended to the queue, as Board::QueuePawn does).
+    -- 7. Tiles changed under the pawns already standing there.
+    for _, t in ipairs(spec.tiles_after or {}) do
+        step("tile_after " .. tostring(t.x) .. "," .. tostring(t.y), function() ITBX.scenario_tile(t) end)
+    end
+    wait()
+
+    -- 8. Spawns in (appended to the queue, as Board::QueuePawn does).
     for i, s in ipairs(spec.spawns or {}) do
         step("spawn " .. i, function()
             local id = Board:SpawnPawn(s.type, Point(s.x, s.y))
@@ -4598,6 +4802,25 @@ function ITBX.scenario_apply(spec, wait_idle)
     _ITB_BRIDGE_SCENARIO = st
     pcall(ITBX.mark, mission, "scenario", {name = report.name, errors = #report.errors})
     return report
+end
+
+-- A player-style move: the Move skill (slot 0) through Pawn:FireWeapon,
+-- else Pawn:Move (ManualMove), else Pawn:SetSpace. Returns the method and
+-- a note on why earlier methods were skipped.
+function ITBX.native_move(pawn, pt)
+    local notes = {}
+    local ok, ret = pcall(function() return pawn:FireWeapon(pt, 0) end)
+    if ok and ret ~= 0 and ret ~= false and ret ~= nil then
+        return "FireWeapon[0]", nil
+    end
+    notes[#notes + 1] = "FireWeapon[0]: " .. (ok and ("returned " .. tostring(ret)) or ITBX.str(ret))
+    ok, ret = pcall(function() return pawn:Move(pt) end)
+    if ok and ret ~= false then return "Move", table.concat(notes, "; ") end
+    notes[#notes + 1] = "Move: " .. (ok and "returned false" or ITBX.str(ret))
+    ok, ret = pcall(function() pawn:SetSpace(pt) end)
+    if ok then return "SetSpace", table.concat(notes, "; ") end
+    notes[#notes + 1] = "SetSpace: " .. ITBX.str(ret)
+    return "none", table.concat(notes, "; ")
 end
 
 -- The SCENARIO payload: inline JSON, or "@path" to a JSON file.
@@ -5125,6 +5348,47 @@ local function execute_command(cmd_str)
         write_ack(ok and ("OK LUA: " .. tostring(result))
                       or ("ERROR LUA: " .. tostring(result)))
 
+    elseif cmd == "MOVE_NATIVE" then
+        -- MOVE_NATIVE uid x y: move the way a player click does, the Move
+        -- skill through Pawn:FireWeapon(target, 0) (walk, arrival effects,
+        -- moved bookkeeping); falls back to Pawn:Move, then SetSpace. The
+        -- ack names the method used. Does not end the unit's turn.
+        local uid = tonumber(parts[2])
+        local x, y = tonumber(parts[3]), tonumber(parts[4])
+        local pawn = uid and Board:GetPawn(uid)
+        if not pawn or not x or not y then
+            write_ack("ERROR: MOVE_NATIVE needs a pawn uid and x y")
+            return
+        end
+        local method, detail = ITBX.native_move(pawn, Point(x, y))
+        wait_until_coro(function() return not Board:IsBusy() end, 20)
+        local sp = pawn:GetSpace()
+        write_ack("OK MOVE_NATIVE " .. uid .. " to " .. x .. "," .. y .. " [" .. method .. "] at "
+                  .. sp.x .. "," .. sp.y .. (detail and (" (" .. detail .. ")") or ""))
+
+    elseif cmd == "FIRE" then
+        -- FIRE uid native_slot x y: Pawn:FireWeapon(target, slot) with the
+        -- game's own slot numbering (0 = Move, 1 = first weapon, weapons
+        -- added by SCENARIO weapons_add after the type's own). Debug only.
+        if not ITBX.debug_enabled() then
+            write_ack("ERROR: FIRE disabled (create " .. ITBX.DEBUG_FLAG_FILE .. ")")
+            return
+        end
+        local uid, slot = tonumber(parts[2]), tonumber(parts[3])
+        local x, y = tonumber(parts[4]), tonumber(parts[5])
+        local pawn = uid and Board:GetPawn(uid)
+        if not pawn or not slot or not x or not y then
+            write_ack("ERROR: FIRE needs uid slot x y")
+            return
+        end
+        local ok, ret = pcall(function() return pawn:FireWeapon(Point(x, y), slot) end)
+        if not ok then
+            write_ack("ERROR: FIRE failed: " .. tostring(ret))
+            return
+        end
+        wait_until_coro(function() return not Board:IsBusy() end, 20)
+        write_ack("OK FIRE " .. uid .. " slot=" .. slot .. " at " .. x .. "," .. y .. " ret=" .. tostring(ret))
+
     elseif cmd == "SNAPSHOT" then
         -- SNAPSHOT [label]: dump the state now, and a copy to
         -- itb_snapshot_<label>.json that later dumps do not overwrite.
@@ -5537,6 +5801,9 @@ local _orig_PlanEnvironment = _ITB_BRIDGE_ORIGINALS.PlanEnvironment
 function ITBX.on_base_next_turn(mission, dump)
     local turn, team = itbx_turn_team()
     ITBX.mark(mission, "base_next_turn", {})
+    if team == TEAM_PLAYER then
+        ITBX.record_turn_start(mission)
+    end
     if team == TEAM_ENEMY then
         ITBX.pending_post_spawn = {mission = mission, turn = turn}
         if ITBX.debug_enabled() then

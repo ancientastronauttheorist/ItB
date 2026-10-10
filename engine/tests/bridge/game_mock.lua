@@ -16,6 +16,7 @@
 
 MOCK = {
     mismatches = {},  -- strict-call failures
+    fired = {},       -- Pawn:FireWeapon calls
     calls = {},       -- "Class:method" in call order (mutators only)
     busy = 0,         -- Board:IsBusy() returns true while > 0 (counts down)
     busy_after_mutation = 2,
@@ -195,6 +196,7 @@ DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, DIR_NONE, DIR_FLIP = 0, 1, 2, 3, 4, 5
 DIR_START, DIR_END = 0, 3
 DIR_VECTORS = {[0] = P(0, -1), [1] = P(1, 0), [2] = P(0, 1), [3] = P(-1, 0)}
 BLOCKED_NONE, BLOCKED_TEMP, BLOCKED_PERM = 0, 1, 2
+PATH_GROUND, PATH_FLYER, PATH_PROJECTILE = 0, 1, 3
 
 ---------------------------------------------------------------- board state
 local TILES = {}
@@ -349,6 +351,14 @@ pawn_methods.ClearQueued = bind("Pawn", "ClearQueued", {{}}, function(self)
 end, true)
 pawn_methods.FireWeapon = bind("Pawn", "FireWeapon", {{"Point", "int"}}, function(self, p, slot)
     local d = DATA[self]
+    MOCK.fired[#MOCK.fired + 1] = {id = d.id, slot = slot, x = p.x, y = p.y}
+    if slot == 0 then
+        if not d.active then return 0 end
+        d.x, d.y = p.x, p.y
+        d.undo = true
+        if tile(p).fire then d.fire = true end
+        return 1
+    end
     if d.team == TEAM_ENEMY then
         d.queued = {x = p.x, y = p.y, slot = slot}
         tile(p).targeted = true
@@ -358,6 +368,14 @@ pawn_methods.FireWeapon = bind("Pawn", "FireWeapon", {{"Point", "int"}}, functio
     d.active = false
     return 1
 end, true)
+pawn_methods.AddWeapon = bind("Pawn", "AddWeapon", {{"string"}}, function(self, w)
+    local d = DATA[self]
+    d.added = d.added or {}
+    d.added[#d.added + 1] = w
+end, true)
+pawn_methods.IsUndoPossible = bind("Pawn", "IsUndoPossible", {{}}, function(self)
+    return DATA[self].undo == true
+end)
 pawn_methods.Kill = bind("Pawn", "Kill", {{"bool"}}, function(self) DATA[self].hp = 0 end, true)
 
 ---------------------------------------------------------------- Board
@@ -400,6 +418,14 @@ board_methods.IsTerrain = bind("Board", "IsTerrain", {{"Point", "int"}}, functio
     local tl = tile(p)
     if t == TERRAIN_LAVA then return tl.terrain == TERRAIN_WATER and tl.lava end
     return tl.terrain == t
+end)
+board_methods.IsBlocked = bind("Board", "IsBlocked", {{"Point", "int"}}, function(self, p)
+    if not valid(p) then return true end
+    local t = tile(p).terrain
+    if t == TERRAIN_BUILDING or t == TERRAIN_MOUNTAIN or t == TERRAIN_WATER or t == TERRAIN_HOLE then
+        return true
+    end
+    return pawn_at(p) ~= nil
 end)
 board_methods.IsPawnSpace = bind("Board", "IsPawnSpace", {{"Point"}, {"Point", "bool"}}, function(self, p)
     return valid(p) and pawn_at(p) ~= nil
@@ -485,6 +511,7 @@ board_methods.DamageSpace = bind("Board", "DamageSpace", {{"SpaceDamage"}, {"Poi
     local p = sd.loc
     if not valid(p) then return end
     local u = pawn_at(p)
+    if u and sd.iInjure == EFFECT_CREATE then DATA[u].injured = true end
     if sd.iFire == EFFECT_CREATE then
         tile(p).fire = true
         if u then DATA[u].fire = true end

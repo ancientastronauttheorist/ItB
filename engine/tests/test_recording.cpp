@@ -293,6 +293,28 @@ TEST_CASE("a spawn queue that disagrees with the markers only gives types by til
                   "spawn_queue does not match the spawn markers (types by tile only)") != rec->warnings.end());
 }
 
+TEST_CASE("unpowered weapons cannot fire and unpowered passives do nothing") {
+  std::string error;
+  auto rec = load_text("itb_recording_powered.json", R"({
+      "tiles": [], "units": [
+        {"uid": 0, "type": "PunchMech", "x": 1, "y": 1, "hp": 3, "max_hp": 3, "team": 1, "mech": true, "moved": true,
+         "weapons_exact": ["Prime_Punchmech", "Passive_ForceAmp"],
+         "weapon_slots": [{"id": "Prime_Punchmech", "limited": 0, "powered": false},
+                          {"id": "Passive_ForceAmp", "limited": 0, "powered": false}]},
+        {"uid": 1, "type": "PunchMech", "x": 2, "y": 1, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "weapons_exact": ["Prime_Punchmech", "Passive_FlameImmune"],
+         "weapon_slots": [{"id": "Prime_Punchmech", "limited": 0, "powered": true},
+                          {"id": "Passive_FlameImmune", "limited": 0, "powered": true}]}]})",
+                       &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  CHECK(b.find_pawn(0)->uses[0] == 0);
+  CHECK(b.find_pawn(0)->moved);
+  CHECK(b.find_pawn(1)->uses[0] == -1);
+  CHECK_FALSE(b.has_passive(kPassiveForceAmp));
+  CHECK(b.has_passive(kPassiveFlameImmune));
+}
+
 TEST_CASE("boards without the extension fields load as before") {
   std::string error;
   auto rec = load_recording(kFixture, nullptr, &error);

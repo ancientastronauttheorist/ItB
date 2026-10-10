@@ -169,7 +169,14 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   if (auto it = u.find("weapon_slots"); it != u.end() && it->is_array()) {
     for (size_t i = 0; i < it->size() && i < p.uses.size(); ++i) {
       const json& ws = (*it)[i];
-      if (!ws.is_object() || get_or<int>(ws, "limited", 0) <= 0) continue;
+      if (!ws.is_object()) continue;
+      // A weapon without its reactor cores cannot fire (and an unpowered
+      // passive does nothing): no uses.
+      if (!get_or<bool>(ws, "powered", true)) {
+        p.uses[i] = 0;
+        continue;
+      }
+      if (get_or<int>(ws, "limited", 0) <= 0) continue;
       int uses = get_or<int>(ws, "uses", -1);
       if (uses < 0) uses = get_or<int>(ws, "uses_saved", -1);
       if (uses >= 0) p.uses[i] = static_cast<int8_t>(std::min(uses, 100));
@@ -550,8 +557,10 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   }
   for (const Pawn& p : b.pawns()) {
     if (p.mech && p.team == Team::Player) {
-      for (Symbol w : p.weapons) {
-        if (w != kNoSymbol) b.passives |= passive_of(symbol_name(w));
+      for (size_t i = 0; i < p.weapons.size(); ++i) {
+        const Symbol w = p.weapons[i];
+        // uses 0 here = recorded unpowered (a passive has no uses otherwise).
+        if (w != kNoSymbol && p.uses[i] != 0) b.passives |= passive_of(symbol_name(w));
       }
     }
   }

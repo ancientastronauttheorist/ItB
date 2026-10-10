@@ -502,6 +502,101 @@ do
     os.remove(X.DEBUG_FLAG_FILE)
 end
 
+---------------------------------------------------------------- live findings
+-- moved flag, MOVE_NATIVE, FIRE, re-added pawns, weapons_add, injured,
+-- tiles_after, the drop zone, saveData vs undoSave, powered weapons, tile
+-- changes in the phase log.
+do
+    write_file(X.DEBUG_FLAG_FILE, "1")
+    X._debug_at = nil
+    MOCK.team = 1
+    MOCK.data(mech0).active = true
+    MOCK.data(mech1).active = true
+    Mission.BaseNextTurn(M)  -- the player's turn begins: positions recorded
+    local ack = run_command("MOVE_NATIVE 0 4 3")
+    check(ack and string.find(ack, "[FireWeapon[0]] at 4,3", 1, true) ~= nil, "MOVE_NATIVE through the Move skill: " .. tostring(ack))
+    eq(MOCK.fired[#MOCK.fired].slot, 0, "MOVE_NATIVE fires slot 0")
+    MOCK.data(mech1).active = false
+    ack = run_command("MOVE_NATIVE 1 3 4")
+    check(ack and string.find(ack, "[Move] at 3,4", 1, true) ~= nil, "MOVE_NATIVE falls back to Pawn:Move: " .. tostring(ack))
+    st = load_state()
+    eq(unit(st, 0).moved, true, "moved after MOVE_NATIVE")
+    eq(unit(st, 0).moved_source, "turn_start", "moved from the turn-start positions")
+    eq(unit(st, 1).moved, true, "moved by position")
+    MOCK.data(mech1).x, MOCK.data(mech1).y = 3, 3
+    st = load_state((function() X._dump_state() return nil end)())
+    eq(unit(st, 1).moved, false, "back on its turn-start tile and no undo: not moved")
+
+    ack = run_command("FIRE 1 1 3 5")
+    check(ack and string.find(ack, "OK FIRE 1 slot=1 at 3,5 ret=1", 1, true) ~= nil, "FIRE: " .. tostring(ack))
+
+    local spec = [[{"name": "readd", "clear_pawns": "all",
+      "pawns": [
+        {"type": "Firefly1", "team": 6, "x": 6, "y": 1, "queue": {"x": 6, "y": 2}},
+        {"type": "Scorpion1", "team": 6, "x": 6, "y": 4, "queue": {"x": 6, "y": 5}},
+        {"ref": 1, "readd": true},
+        {"type": "PunchMech", "team": 1, "x": 0, "y": 5, "weapons_add": ["Ranged_Limited"], "injured": true}],
+      "tiles_after": [{"x": 0, "y": 5, "fire": true}]}]]
+    ack = run_command("SCENARIO " .. spec, 400) or ""
+    check(string.find(ack, "OK SCENARIO", 1, true) ~= nil, "SCENARIO readd: " .. ack)
+    local report = X.json_decode(string.sub(ack, string.len("#7 OK SCENARIO ") + 1))
+    eq(#report.errors, 0, "readd scenario errors (" .. tostring(report.errors[1]) .. ")")
+    st = load_state()
+    eq(st.attack_order[1], report.created[2].uid, "re-added pawn attacks last (1)")
+    eq(st.attack_order[2], report.created[1].uid, "re-added pawn attacks last (2)")
+    local helper = MOCK.find_pawn(report.created[3].uid)
+    eq(MOCK.data(helper).added[1], "Ranged_Limited", "weapons_add")
+    eq(MOCK.data(helper).injured, true, "injured via iInjure")
+    eq(MOCK.tiles[0][5].fire, true, "tiles_after")
+
+    -- Drop zone during deployment (turn 0).
+    MOCK.turn = 0
+    X._dump_state()
+    st = load_state()
+    eq(st.deploying, true, "deploying at turn 0")
+    eq(st.drop_zone_source, "zone+columns", "two zone tiles: whole columns added")
+    check(#st.drop_zone > 3, "drop zone has more than 3 tiles")
+    MOCK.zones.deployment = {}
+    X._dump_state()
+    st = load_state()
+    eq(st.drop_zone_source, "default", "no zone: default columns 1-3")
+    check(st.deployment_zone ~= nil and #st.deployment_zone > 0, "deployment_zone filled from the drop zone")
+    for _, p in ipairs(st.drop_zone) do
+        check(p[1] >= 1 and p[1] <= 3 and p[2] >= 1 and p[2] <= 6, "default drop zone tile in x 1-3, y 1-6")
+    end
+    MOCK.turn = 1
+
+    -- undoSave.lua holding a later turn wins; powered weapons.
+    Prime_Punchmech_A = {Damage = 2}
+    Passive_Electric.PowerCost = 1
+    Ranged_Limited.PowerCost = 1
+    local undo = read_file(save_dir .. "/saveData.lua")
+    undo = string.gsub(undo, '%["iCurrentTurn"%] = 1', '["iCurrentTurn"] = 2', 1)
+    undo = string.gsub(undo, '%["primary_mod1"%] = {0, 0, }, %["primary_mod2"%] = {1, 1, 1, }',
+                       '["primary_mod1"] = {1, 1, }, ["primary_mod2"] = {0, 0, 0, }', 1)
+    write_file(save_dir .. "/undoSave.lua", undo)
+    X._dump_state()
+    st = load_state()
+    eq(st.save_source, "undoSave.lua", "the later save is used")
+    eq(unit(st, 0).weapons_exact[1], "Prime_Punchmech_A", "upgrade from undoSave")
+    eq(unit(st, 0).weapon_slots[2].powered, true, "powered passive (1 core, cost 1)")
+    eq(unit(st, 1).weapon_slots[1].powered, false, "unpowered weapon (0 cores, cost 1)")
+    os.remove(save_dir .. "/undoSave.lua")
+
+    -- Tile changes in the phase log.
+    Mission.BaseUpdate(M)
+    MOCK.tiles[0][0].hp = 0
+    MOCK.tiles[0][0].terrain = TERRAIN_RUBBLE
+    Mission.BaseUpdate(M)
+    local found = false
+    for _, e in ipairs(_ITB_BRIDGE_PHASE_LOG.entries) do
+        if e.kind == "tile" and e.x == 0 and e.y == 0 then found = true end
+    end
+    check(found, "building damage logged per frame")
+    os.remove(X.DEBUG_FLAG_FILE)
+    X._debug_at = nil
+end
+
 eq(#MOCK.mismatches, 0, "strict-call mismatches overall")
 
 if #failures > 0 then
