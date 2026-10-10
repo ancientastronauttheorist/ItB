@@ -128,6 +128,8 @@ function Point(...)
     error(msg, 2)
 end
 
+point_methods.GetString = function(self) return "Point(" .. self.x .. "," .. self.y .. ")" end
+
 local function P(x, y) return Point(x, y) end
 local function valid(p) return p.x >= 0 and p.x < 8 and p.y >= 0 and p.y < 8 end
 
@@ -154,7 +156,7 @@ local SD_FIELDS = {
     iFire = true, bKO_Effect = true, iFrozen = true, iSmoke = true, sSound = true, sPawn = true,
     iPawnTeam = true, bHide = true, bHideIcon = true, bHidePath = true, iAcid = true,
     fDelay = true, iTerrain = true, bEvacuate = true, sImageMark = true, sScript = true,
-    bSimpleMark = true, sItem = true,
+    bSimpleMark = true, sItem = true, sAnimation = true,
 }
 local new_sd = new_class("SpaceDamage", function(u, k)
     if not SD_FIELDS[k] then return nil end
@@ -196,7 +198,8 @@ DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT, DIR_NONE, DIR_FLIP = 0, 1, 2, 3, 4, 5
 DIR_START, DIR_END = 0, 3
 DIR_VECTORS = {[0] = P(0, -1), [1] = P(1, 0), [2] = P(0, 1), [3] = P(-1, 0)}
 BLOCKED_NONE, BLOCKED_TEMP, BLOCKED_PERM = 0, 1, 2
-PATH_GROUND, PATH_FLYER, PATH_PROJECTILE = 0, 1, 3
+PATH_GROUND, PATH_FLYER, PATH_MASSIVE, PATH_PROJECTILE = 0, 1, 2, 3
+DAMAGE_DEATH, ENV_EFFECT, RAIN_NORMAL, EFFECT_DEADLY = 1000, -10, 0, true
 
 ---------------------------------------------------------------- board state
 local TILES = {}
@@ -564,6 +567,175 @@ board_methods.SpawnPawn = bind("Board", "SpawnPawn",
         return id
     end, true)
 
+board_methods.IsValid = bind("Board", "IsValid", {{"Point"}, {"int", "int"}}, function(self, a, b)
+    if type(a) == "number" then return valid({x = a, y = b}) end
+    return valid(a)
+end)
+board_methods.IsBuilding = bind("Board", "IsBuilding", {{"Point"}, {"int", "int"}}, function(self, a, b)
+    local p = type(a) == "number" and {x = a, y = b} or a
+    return valid(p) and tile(p).terrain == TERRAIN_BUILDING
+end)
+board_methods.IsDamaged = bind("Board", "IsDamaged", {{"Point"}}, function(self, p)
+    return valid(p) and tile(p).hp < tile(p).max
+end)
+board_methods.MarkSpaceImage = bind("Board", "MarkSpaceImage", {{"Point", "string", "GL_Color"}}, function() end)
+board_methods.MarkSpaceDesc = bind("Board", "MarkSpaceDesc", {{"Point", "string"}, {"Point", "string", "bool"}}, function() end)
+-- The block-spawn map (Board+0x7480): written by BlockSpawn, read only by
+-- native code (Board::IsAvailable); Lua cannot see it.
+MOCK.spawn_blocks = {}
+board_methods.BlockSpawn = bind("Board", "BlockSpawn", {{"Point", "int"}}, function(self, p, n)
+    MOCK.spawn_blocks[p.x .. "," .. p.y] = n
+end, true)
+
+-- GL_Color (display only).
+local new_color = new_class("GL_Color", function() return nil end)
+function GL_Color(...)
+    local n = select("#", ...)
+    if n == 3 or n == 4 then return new_color({...}) end
+    local msg = "No matching overload found, candidates: GL_Color(" .. describe({...}, n) .. ")"
+    MOCK.mismatches[#MOCK.mismatches + 1] = msg
+    error(msg, 2)
+end
+
+-- random_int: deterministic LCG, [0, n).
+MOCK.rng = 12345
+function random_int(a, b)
+    if type(a) ~= "number" or (b ~= nil and type(b) ~= "number") then
+        local msg = "No matching overload found, candidates: random_int"
+        MOCK.mismatches[#MOCK.mismatches + 1] = msg
+        error(msg, 2)
+    end
+    MOCK.rng = (MOCK.rng * 1103515245 + 12345) % 2147483648
+    local lo, hi = 0, a
+    if b ~= nil then lo, hi = a, b end
+    if hi - lo <= 0 then return lo end
+    return lo + math.floor(MOCK.rng / 65536) % (hi - lo)
+end
+
+---------------------------------------------------------------- SkillEffect
+-- Records its entries; Board:AddEffect queues it; MOCK.resolve_effects()
+-- applies the queue (the native effect stack) when the harness lets the
+-- board go idle. SpaceDamage arguments are copied (C++ takes them by value).
+local SE_FIELDS = {piOrigin = true, iOwner = true, impact_sound = true}
+local se_methods = {}
+local new_se = new_class("SkillEffect", function(u, k)
+    if SE_FIELDS[k] then return DATA[u][k] end
+    return se_methods[k]
+end, {
+    __newindex = function(u, k, v)
+        if not SE_FIELDS[k] then error("luabind: no writable member " .. tostring(k), 2) end
+        DATA[u][k] = v
+    end,
+})
+function SkillEffect(...)
+    if select("#", ...) ~= 0 then error("No matching overload found, candidates: SkillEffect()", 2) end
+    return new_se({entries = {}, iOwner = 0})
+end
+local function copy_sd(sd)
+    local f = {}
+    for k, v in pairs(DATA[sd]) do f[k] = v end
+    f.loc = P(sd.loc.x, sd.loc.y)
+    return f
+end
+local function se_add(name, sigs, kind_name, sd_index)
+    se_methods[name] = bind("SkillEffect", name, sigs, function(self, ...)
+        local args = {...}
+        local e = {kind = kind_name}
+        if sd_index then e.sd = copy_sd(args[sd_index]) end
+        local d = DATA[self].entries
+        d[#d + 1] = e
+    end)
+end
+se_add("AddDelay", {{"float"}}, "delay")
+se_add("AddSound", {{"string"}}, "sound")
+se_add("AddScript", {{"string"}}, "script")
+se_add("AddVoice", {{"string", "int"}}, "voice")
+se_add("AddDamage", {{"SpaceDamage"}}, "damage", 1)
+se_add("AddDropper", {{"SpaceDamage", "string"}}, "dropper", 1)
+se_methods.AddArtillery = bind("SkillEffect", "AddArtillery",
+    {{"SpaceDamage", "string"}, {"SpaceDamage", "string", "float"}, {"Point", "SpaceDamage", "string", "float"}},
+    function(self, a, b)
+        local sd = kind(a) == "SpaceDamage" and a or b
+        local d = DATA[self].entries
+        d[#d + 1] = {kind = "artillery", sd = copy_sd(sd)}
+    end)
+
+MOCK.effects = {}
+board_methods.AddEffect = bind("Board", "AddEffect", {{"SkillEffect"}, {"SpaceDamage"}}, function(self, e)
+    if kind(e) == "SpaceDamage" then
+        MOCK.effects[#MOCK.effects + 1] = {{kind = "damage", sd = copy_sd(e)}}
+    else
+        MOCK.effects[#MOCK.effects + 1] = DATA[e].entries
+    end
+end, true)
+
+-- Is the space "occupied" for BoardSpace::IsPawnSpace(true) (BoardSpace.c
+-- 2078-2105): a living pawn, or a corpse (mech, Corpse pawn) dead or alive.
+local function pawn_space_true(p)
+    for _, u in ipairs(MOCK.pawns) do
+        local d = DATA[u]
+        if d.x == p.x and d.y == p.y then
+            local def = _G[d.type] or {}
+            if d.hp > 0 or d.mech or def.Corpse == true then return u end
+        end
+    end
+    return nil
+end
+
+-- BoardSpace::DamageSpace for one SpaceDamage, as far as the tests need:
+-- terrain (lava / building), damage, fire. A building lands as the native
+-- code does it (BoardSpace.c 19105-19117): `while IsPawnSpace(true) do
+-- Kill(first pawn) end; AddBuilding()`. A dead mech stays as a corpse, so
+-- the native loop never ends; here it stops after MOCK.native_loop_cap
+-- turns and records MOCK.native_hang.
+MOCK.native_loop_cap = 10000
+local function apply_sd(sd)
+    local p = sd.loc
+    if not valid(p) then return end
+    local tl = tile(p)
+    if sd.iTerrain == TERRAIN_BUILDING then
+        local n = 0
+        local u = pawn_space_true(p)
+        while u do
+            DATA[u].hp = 0  -- Pawn::Kill; the pawn stays in the space
+            n = n + 1
+            if n >= MOCK.native_loop_cap then
+                MOCK.native_hang = {x = p.x, y = p.y, pawn = DATA[u].id, iterations = n}
+                return
+            end
+            u = pawn_space_true(p)
+        end
+        tl.terrain, tl.hp, tl.max = TERRAIN_BUILDING, 1, 1
+        return
+    end
+    if sd.iTerrain == TERRAIN_LAVA then
+        tl.terrain, tl.lava, tl.fire = TERRAIN_WATER, true, false
+    elseif sd.iTerrain ~= nil and sd.iTerrain >= 0 then
+        tl.terrain = sd.iTerrain
+    end
+    local u = pawn_at(p)
+    if u and (sd.iDamage or 0) > 0 then DATA[u].hp = math.max(0, DATA[u].hp - sd.iDamage) end
+    if sd.iFire == EFFECT_CREATE then
+        tl.fire = true
+        if u then DATA[u].fire = true end
+    end
+end
+MOCK.apply_sd = apply_sd
+
+function MOCK.resolve_effects()
+    local n = 0
+    while #MOCK.effects > 0 do
+        local entries = table.remove(MOCK.effects, 1)
+        for _, e in ipairs(entries) do
+            if e.sd then apply_sd(e.sd) end
+            if MOCK.native_hang then return n end
+        end
+        n = n + 1
+    end
+    MOCK.busy = 0
+    return n
+end
+
 ---------------------------------------------------------------- Game, factory
 local game_methods = {}
 local new_game = new_class("GameMap", function(u, k) return game_methods[k] end)
@@ -571,6 +743,7 @@ Game = new_game({})
 game_methods.GetTurnCount = bind("GameMap", "GetTurnCount", {{}}, function() return MOCK.turn end)
 game_methods.GetTeamTurn = bind("GameMap", "GetTeamTurn", {{}}, function() return MOCK.team end)
 game_methods.GetSector = bind("GameMap", "GetSector", {{}}, function() return 2 end)
+game_methods.TriggerSound = bind("GameMap", "TriggerSound", {{"string"}}, function() end)
 
 local factory_methods = {}
 local new_factory = new_class("PawnFactory", function(u, k) return factory_methods[k] end)
@@ -589,6 +762,7 @@ factory_methods.CreatePawn = bind("PawnFactory", "CreatePawn", {{"string"}, {"st
     end)
 
 function GetDifficulty() return 1 end
+function IsRelease() return true end
 function IsNewEnemies() return true end
 function IsPassiveSkill() return false end
 function ConsolePrint() end

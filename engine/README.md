@@ -584,6 +584,19 @@ spawn types and queue order are hidden information, so only
 `Visibility::Player`. `itb_tests` compiles the bridge in Lua 5.1 and runs it
 against a strict mock of every binding it calls (`tests/bridge`).
 
+Safety (after the 2026-10-09 freeze): `DEPLOY` refuses tiles the native
+deploy UI refuses (`Board::GetDropZone` / `IsAvailable`: Mission_Final
+pylons, save `blocked_points`, items, pods, danger, spawn points, ...), and
+`deployment_zone` / `drop_zone` leave them out. A mech on a pylon tile hangs
+the game when the turn-0 pylon drop lands (`BoardSpace::DamageSpace` loops
+on the mech's corpse); the BaseNextTurn wrap also moves such a mech off
+before the drop. All extension work runs under a CPU budget (`ITBX.guard`):
+a call over 1 s (aborted by a count hook when `debug` is available), or 3
+calls over 0.25 s, turn the extension off (`bridge_ext_disabled`) while the
+old fields keep coming. Save files are parsed once per version, not per
+dump. `grid_lost_this_turn` / `grid_power_estimate` track grid loss inside
+a turn from building HP (the save grid only changes at turn boundaries).
+
 `itb_inspect --predict <state> [--actions ...] [--branches]` prints the
 engine's outcomes for a bridge state; `scripts/live_validate.py` runs a
 scenario end to end against the game. See `LIVE_TEST_PLAN.md`.
