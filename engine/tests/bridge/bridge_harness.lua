@@ -79,6 +79,41 @@ FireflyAtk1 = {Damage = 1}
 ScorpionAtk1 = {Damage = 1}
 Train_Move = {Damage = 0}
 
+-- Leap weapons with the game's target-area rule (Brute_Jetmech in
+-- weapons_brute.lua, Leap_Attack in weapons_base.lua): cardinal tiles
+-- MinMove..Range away that are not blocked for the path profile of the
+-- global `Pawn`, the last selected pawn. MockLeap: the mock moves the
+-- shooter to the target. The bridge must leave these functions alone.
+local function cardinal_area(point, min_k, max_k)
+    local ret = PointList()
+    for i = DIR_START, DIR_END do
+        for k = min_k, max_k do
+            local d = DIR_VECTORS[i]
+            local curr = Point(point.x + d.x * k, point.y + d.y * k)
+            if not Board:IsBlocked(curr, Pawn:GetPathProf()) then ret:push_back(curr) end
+        end
+    end
+    return ret
+end
+JetMech = {Health = 2, MoveSpeed = 4, SkillList = {"Brute_Jetmech"}, Flying = true, Corpse = true,
+           DefaultTeam = 1}
+Brute_Jetmech = {MinMove = 2, Range = 2, Damage = 1, Smoke = 1, MockLeap = true}
+function Brute_Jetmech:GetTargetArea(point) return cardinal_area(point, self.MinMove, self.Range) end
+Brute_Bombrun = {MinMove = 2, Range = 8, Damage = 1, Smoke = 0, MockLeap = true,
+                 GetTargetArea = Brute_Jetmech.GetTargetArea}
+Support_Smoke = {MinMove = 2, Range = 2, Damage = 0, Smoke = 1, MockLeap = true,
+                 GetTargetArea = Brute_Jetmech.GetTargetArea}
+Prime_Leap = {Range = 7, Damage = 1, MockLeap = true}
+function Prime_Leap:GetTargetArea(point) return cardinal_area(point, 1, self.Range) end
+Support_Boosters = {Range = 2, Damage = 0, MockLeap = true, GetTargetArea = Prime_Leap.GetTargetArea}
+-- A two-click weapon (first click: a target; second: where to).
+Science_TC_SwapOther = {TwoClick = true}
+SwapMech = {Health = 3, MoveSpeed = 3, SkillList = {"Science_TC_SwapOther"}, Corpse = true, DefaultTeam = 1}
+local ORIGINAL_TARGET_AREAS = {}
+for _, name in ipairs({"Brute_Jetmech", "Brute_Bombrun", "Support_Smoke", "Prime_Leap", "Support_Boosters"}) do
+    ORIGINAL_TARGET_AREAS[name] = _G[name].GetTargetArea
+end
+
 -- Board: mechs 0 and 1, a train (main tile (4,4), extra (4,5)), two Vek, a
 -- psion; buildings, ice, lava, a custom tile; a lightning mission.
 local mech0 = MOCK.add_pawn{id = 0, type = "PunchMech", x = 2, y = 2, team = 1, mech = true, shots = 1}
@@ -162,6 +197,13 @@ local X = _ITB_BRIDGE_EXT
 assert(type(X) == "table", "bridge extension table missing")
 
 eq(#MOCK.mismatches, 0, "strict-call mismatches while loading")
+-- The bridge observes and commands; it never rewrites the game's scripts.
+for name, fn in pairs(ORIGINAL_TARGET_AREAS) do
+    check(rawequal(_G[name].GetTargetArea, fn), name .. ".GetTargetArea untouched by the bridge")
+end
+eq(_ITB_BRIDGE_SAFE_JET_TARGET_AREA, nil, "no target-area patch installed")
+eq(_ITB_BRIDGE_SAFE_LEAP_TARGET_AREA, nil, "no leap target-area patch installed")
+eq(X.exec_mode, "native", "native execution by default")
 check(Mission.BaseUpdate ~= nil and Mission.BaseNextTurn ~= nil, "Mission hooks present")
 check(_ITB_BRIDGE_ORIGINALS.BaseNextTurn ~= Mission.BaseNextTurn, "BaseNextTurn wrapped")
 check(_ITB_BRIDGE_ORIGINALS.ApplyEnvironmentEffect ~= Mission.ApplyEnvironmentEffect, "ApplyEnvironmentEffect wrapped")
@@ -265,7 +307,8 @@ do
     eq(#st.spawning_tiles, 2, "spawning tiles")
     -- New fields.
     eq(#st.bridge_errors, 0, "bridge_errors empty (" .. (st.bridge_errors[1] and st.bridge_errors[1].where .. ": " .. st.bridge_errors[1].error or "") .. ")")
-    eq(st.bridge_ext_version, 1, "ext version")
+    eq(st.bridge_ext_version, 2, "ext version")
+    eq(st.exec_mode, "native", "exec mode in the state")
     eq(st.bridge_debug, false, "debug off")
     local ms = st.mission_state
     check(ms ~= nil, "mission_state present")
@@ -532,9 +575,22 @@ do
     local ack = run_command("MOVE_NATIVE 0 4 3")
     check(ack and string.find(ack, "[FireWeapon[0]] at 4,3", 1, true) ~= nil, "MOVE_NATIVE through the Move skill: " .. tostring(ack))
     eq(MOCK.fired[#MOCK.fired].slot, 0, "MOVE_NATIVE fires slot 0")
+    eq(MOCK.fired[#MOCK.fired].selected, 0, "MOVE_NATIVE selects the pawn (global Pawn) first")
     MOCK.data(mech1).active = false
+    -- Native mode: the game refused the move, so the bridge refuses too.
+    local before1 = {x = MOCK.data(mech1).x, y = MOCK.data(mech1).y}
     ack = run_command("MOVE_NATIVE 1 3 4")
-    check(ack and string.find(ack, "[Move] at 3,4", 1, true) ~= nil, "MOVE_NATIVE falls back to Pawn:Move: " .. tostring(ack))
+    check(ack and string.find(ack, "ERROR: MOVE_NATIVE FireWeapon[0] returned 0", 1, true) ~= nil,
+          "MOVE_NATIVE refused by the game: error, no fallback: " .. tostring(ack))
+    check(MOCK.data(mech1).x == before1.x and MOCK.data(mech1).y == before1.y, "refused MOVE_NATIVE: the pawn did not move")
+    -- Legacy mode (the old bot's opt-in) keeps the Pawn:Move fallback.
+    eq(run_command("EXEC_MODE legacy"), "#7 OK EXEC_MODE legacy", "EXEC_MODE legacy")
+    eq(load_state().exec_mode, "legacy", "state reports the exec mode")
+    ack = run_command("MOVE_NATIVE 1 3 4")
+    check(ack and string.find(ack, "[Move] at 3,4", 1, true) ~= nil, "legacy MOVE_NATIVE falls back to Pawn:Move: " .. tostring(ack))
+    eq(run_command("EXEC_MODE native"), "#7 OK EXEC_MODE native", "EXEC_MODE native")
+    eq(run_command("EXEC_MODE"), "#7 OK EXEC_MODE native", "EXEC_MODE query")
+    check(string.find(run_command("EXEC_MODE fast") or "", "ERROR", 1, true) ~= nil, "EXEC_MODE rejects unknown modes")
     st = load_state()
     eq(unit(st, 0).moved, true, "moved after MOVE_NATIVE")
     eq(unit(st, 0).moved_source, "turn_start", "moved from the turn-start positions")
@@ -673,12 +729,13 @@ do
     eq(st.stable, true, "post-ATTACK dump is stable")
     eq(st.command_waiting, false, "post-ATTACK dump: no command waiting")
 
-    -- An effect longer than the 15 s budget: acked anyway, the dump says
-    -- it is not settled, and a settled dump follows when the board idles.
+    -- An effect longer than the 15 s budget: an error ack (never "OK"
+    -- before the game is idle), the dump says it is not settled, and a
+    -- settled dump follows when the board idles.
     MOCK.data(mech0).active = true
     MOCK.fire_busy = 1000
     ack, n = attack("ATTACK 0 0 2 3", 40)
-    check(ack ~= nil and string.find(ack, "OK ATTACK 0", 1, true) ~= nil, "slow ATTACK acked: " .. tostring(ack))
+    check(ack ~= nil and string.find(ack, "ERROR: TIMEOUT: ATTACK was sent", 1, true) ~= nil, "slow ATTACK: timeout error: " .. tostring(ack))
     check(n >= 15 and n < 40, "slow ATTACK acked at the 15 s budget (frame " .. n .. ")")
     st = load_state()
     eq(st.stable, false, "dump after a timed-out wait is not stable")
@@ -706,6 +763,169 @@ do
     eq(load_state().stable, true, "final dump stable")
 
     MOCK.fire_busy = nil
+    MOCK.busy, MOCK.busy_after_mutation = 0, 2
+    os.time = real_time
+end
+
+---------------------------------------------------------------- native execution
+-- Live 2026-10-09, Mission_Barrels turn 4: MOVE_NATIVE, then ATTACK with
+-- Aerial Bombs (4,4) -> water (2,4). The bridge never selected the Jet, so
+-- the global `Pawn` was the last pawn the game selected (a ground Vek the
+-- AI planned); the game's Brute_Jetmech:GetTargetArea dropped the water
+-- tile for that path profile, Pawn:FireWeapon returned 0 and the Jet
+-- stayed, yet the bridge acked OK (it only rejected `false`) after smoking
+-- the transit tile itself (its TRANSIT emulation). Native mode: the actor
+-- is selected first, FireWeapon must return 1, nothing is emulated, actions
+-- are refused while the game is busy, and acks wait for the board and the
+-- actor to be idle.
+do
+    local real_time = os.time
+    local WALL = 200000
+    os.time = function() return WALL end
+    local function frame()
+        WALL = WALL + 1
+        CLOCK = CLOCK + 0.25
+        Mission.BaseUpdate(CUR_M)
+    end
+    local function cmd(text, max_frames)
+        os.remove(DIR .. "/itb_ack.txt")
+        write_file(DIR .. "/itb_cmd.txt", "#7 " .. text)
+        for i = 1, max_frames or 40 do
+            frame()
+            local ack = read_file(DIR .. "/itb_ack.txt")
+            if ack then
+                for _ = 1, 3 do frame() end  -- let the command coroutine finish
+                return ack, i
+            end
+        end
+        return nil, max_frames or 40
+    end
+    local function only_fire_calls(what)
+        for _, c in ipairs(MOCK.calls) do
+            check(c == "Pawn:FireWeapon", what .. ": the bridge changed the game itself (" .. c .. ")")
+        end
+        MOCK.calls = {}
+    end
+    MOCK.busy, MOCK.busy_after_mutation = 0, 0
+    MOCK.team = 1
+    for _, t in ipairs({{0, 6}, {0, 4}, {1, 4}, {2, 4}, {2, 6}, {0, 1}, {1, 1}, {2, 1}}) do
+        check(MOCK.pawn_at(Point(t[1], t[2])) == nil, "native section: tile " .. t[1] .. "," .. t[2] .. " free")
+    end
+    local jet = MOCK.add_pawn{id = 7, type = "JetMech", x = 0, y = 6, team = 1, mech = true}
+    local fly = MOCK.add_pawn{id = 81, type = "Firefly1", x = 1, y = 4, team = 6, hp = 2}
+    MOCK.tiles[2][4].terrain = TERRAIN_WATER
+    SetPawn(fly)  -- the AI's last selection
+
+    local ack = cmd("MOVE_NATIVE 7 0 4")
+    check(ack and string.find(ack, "OK MOVE_NATIVE 7 to 0,4 [FireWeapon[0]] at 0,4", 1, true) ~= nil,
+          "jet MOVE_NATIVE: " .. tostring(ack))
+    eq(MOCK.fired[#MOCK.fired].selected, 7, "MOVE_NATIVE fired with the jet selected")
+
+    -- The live failure, in the mock: the jet fired without being selected.
+    SetPawn(fly)
+    eq(MOCK.find_pawn(7):FireWeapon(Point(2, 4), 1), 0,
+       "unselected jet: water landing outside the target area (live 2026-10-09)")
+    eq(MOCK.data(jet).x, 0, "unselected jet did not leap")
+    MOCK.calls = {}
+
+    -- ATTACK selects the jet, fires natively, waits for the leap.
+    MOCK.pawn_busy_after_fire = 4
+    local n
+    ack, n = cmd("ATTACK 7 0 2 4")
+    MOCK.pawn_busy_after_fire = nil
+    eq(ack, "#7 OK ATTACK 7 slot=0 at 2,4 [FireWeapon[1](Brute_Jetmech)]", "jet ATTACK onto water")
+    local f = MOCK.fired[#MOCK.fired]
+    check(f.slot == 1 and f.selected == 7 and f.ret == 1, "ATTACK: FireWeapon slot 1 with the jet selected, returned 1")
+    check(MOCK.data(jet).x == 2 and MOCK.data(jet).y == 4, "the jet leapt to 2,4")
+    check(n >= 5, "ATTACK acked once the jet was idle (frame " .. n .. ")")
+    only_fire_calls("native ATTACK")
+    eq(MOCK.tiles[1][4].smoke, false, "no bridge smoke on the transit tile")
+    eq(MOCK.data(fly).hp, 2, "no bridge damage on the transit tile")
+    check(string.find(read_file(DIR .. "/itb_bridge.log") or "", "TRANSIT", 1, true) == nil, "no TRANSIT emulation")
+    eq(load_state().stable, true, "post-ATTACK dump stable")
+
+    -- The game refuses (FireWeapon 0): an error ack, never OK.
+    MOCK.data(jet).active = true
+    ack = cmd("ATTACK 7 0 2 3")  -- 1 tile: under MinMove
+    check(ack and string.find(ack, "ERROR: FireWeapon[1](Brute_Jetmech) returned 0", 1, true) ~= nil,
+          "target outside the area: error ack: " .. tostring(ack))
+    MOCK.data(jet).frozen = true
+    ack = cmd("ATTACK 7 0 2 6")
+    check(ack and string.find(ack, "returned 0", 1, true) ~= nil, "frozen: error ack: " .. tostring(ack))
+    MOCK.data(jet).frozen = false
+    MOCK.calls = {}
+
+    -- Busy: refused before anything is sent; a short tail is waited out.
+    local fired_before = #MOCK.fired
+    MOCK.data(jet).busy = true
+    ack = cmd("ATTACK 7 0 2 6")
+    check(ack and string.find(ack, "ERROR: ATTACK BUSY: board busy_state=0, pawn busy=true", 1, true) ~= nil,
+          "busy pawn: ATTACK refused: " .. tostring(ack))
+    ack = cmd("MOVE_NATIVE 7 2 5")
+    check(ack and string.find(ack, "ERROR: MOVE_NATIVE BUSY", 1, true) ~= nil, "busy pawn: MOVE_NATIVE refused: " .. tostring(ack))
+    ack = cmd("REPAIR 7")
+    check(ack and string.find(ack, "ERROR: REPAIR BUSY", 1, true) ~= nil, "busy pawn: REPAIR refused: " .. tostring(ack))
+    MOCK.data(jet).busy = nil
+    MOCK.busy = 1000
+    ack = cmd("ATTACK 7 0 2 6")
+    check(ack and string.find(ack, "ERROR: ATTACK BUSY: board busy_state=6", 1, true) ~= nil, "busy board: ATTACK refused: " .. tostring(ack))
+    MOCK.busy = 0
+    eq(#MOCK.fired, fired_before, "nothing fired while busy")
+    MOCK.data(jet).busy_polls = 1
+    ack = cmd("ATTACK 7 0 2 6")
+    eq(ack, "#7 OK ATTACK 7 slot=0 at 2,6 [FireWeapon[1](Brute_Jetmech)]", "a busy tail is waited out")
+    MOCK.calls = {}
+
+    -- REPAIR: the pawn's repair skill (native slot 50), no HP edits.
+    MOCK.data(jet).active = true
+    ack = cmd("REPAIR 7")
+    eq(ack, "#7 OK REPAIR 7 [FireWeapon[50]]", "native REPAIR")
+    f = MOCK.fired[#MOCK.fired]
+    check(f.slot == 50 and f.selected == 7, "REPAIR: FireWeapon slot 50 with the pawn selected")
+    only_fire_calls("native REPAIR")
+
+    -- Two-click weapons: two FireWeapon calls on the same slot (2, then 1).
+    local swap = MOCK.add_pawn{id = 8, type = "SwapMech", x = 0, y = 1, team = 1, mech = true}
+    fired_before = #MOCK.fired
+    ack = cmd("ATTACK 8 0 1 1")
+    check(ack and string.find(ack, "use TWO_CLICK_ATTACK; nothing fired", 1, true) ~= nil, "ATTACK with a two-click weapon refused: " .. tostring(ack))
+    ack = cmd("TWO_CLICK_ATTACK 7 0 2 4 2 3")
+    check(ack and string.find(ack, "use ATTACK; nothing fired", 1, true) ~= nil, "TWO_CLICK_ATTACK with a one-click weapon refused: " .. tostring(ack))
+    eq(#MOCK.fired, fired_before, "refused shots fired nothing")
+    ack = cmd("TWO_CLICK_ATTACK 8 0 1 1 2 1")
+    eq(ack, "#7 OK TWO_CLICK_ATTACK 8 slot=0 at 1,1 and 2,1 [FireWeapon[1](Science_TC_SwapOther) x2]", "native two-click")
+    local f1, f2 = MOCK.fired[#MOCK.fired - 1], MOCK.fired[#MOCK.fired]
+    check(f1.slot == 1 and f1.ret == 2 and f1.x == 1 and f1.y == 1, "first click: slot 1 returned 2")
+    check(f2.slot == 1 and f2.ret == 1 and f2.x == 2 and f2.y == 1 and f2.selected == 8, "second click: slot 1 returned 1")
+    only_fire_calls("native TWO_CLICK_ATTACK")
+
+    -- Turn start: no bridge re-activation in native mode (the game does it).
+    MOCK.data(jet).active = false
+    Mission.NextTurn(CUR_M)
+    eq(MOCK.data(jet).active, false, "native: NextTurn leaves activation to the game")
+
+    -- The old emulations exist only behind EXEC_MODE legacy.
+    eq(cmd("EXEC_MODE legacy"), "#7 OK EXEC_MODE legacy", "legacy on")
+    Mission.NextTurn(CUR_M)
+    eq(MOCK.data(jet).active, true, "legacy: NextTurn re-activates")
+    MOCK.data(jet).x, MOCK.data(jet).y = 0, 4
+    MOCK.calls = {}
+    ack = cmd("ATTACK 7 0 2 4")
+    check(ack and string.find(ack, "OK ATTACK 7", 1, true) ~= nil, "legacy ATTACK: " .. tostring(ack))
+    check(string.find(read_file(DIR .. "/itb_bridge.log") or "", "TRANSIT: Brute_Jetmech", 1, true) ~= nil,
+          "legacy keeps its TRANSIT emulation")
+    local emulated = false
+    for _, c in ipairs(MOCK.calls) do
+        if c == "Board:DamageSpace" then emulated = true end
+    end
+    check(emulated, "legacy ATTACK applied its own transit damage")
+    eq(cmd("EXEC_MODE native"), "#7 OK EXEC_MODE native", "native again")
+
+    for _, u in ipairs({jet, fly, swap}) do Board:RemovePawn(u) end
+    MOCK.tiles[2][4].terrain = TERRAIN_ROAD
+    MOCK.tiles[1][4].smoke = false
+    MOCK.calls = {}
+    SetPawn(nil)
     MOCK.busy, MOCK.busy_after_mutation = 0, 2
     os.time = real_time
 end

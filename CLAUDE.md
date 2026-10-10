@@ -58,6 +58,11 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
   the game afterwards. The bridge writes `/tmp/itb_state.json` and takes
   commands through `/tmp/itb_cmd.txt` (`src/bridge/protocol.py`,
   `writer.py`: MOVE / ATTACK / REPAIR / SKIP / END_TURN / DEPLOY).
+  Actions are native only by default (`EXEC_MODE native`: the game's own
+  `Pawn:FireWeapon` with the mech selected; no emulated transit damage,
+  Seismic flip, direct repair, scripted two-click weapons, SetSpace moves or
+  patched weapon scripts). The old bot's emulations are opt-in:
+  `ITB_BRIDGE_EXEC_MODE=legacy` (sent by `writer.py`).
 - **Engine live play:** `python3 scripts/live_play.py status | deploy | turn |
   end-turn | mission` (engine/README.md "Live play"). Solves with the C++
   engine (`engine/build/itb_live`), executes each sub-action through the

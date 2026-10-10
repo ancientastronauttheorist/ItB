@@ -1010,7 +1010,11 @@ end
 -- (engine/tests/bridge/bridge_harness.lua) can test the pure helpers.
 --------------------------------------------------------------------
 local ITBX = {
-    VERSION = 1,
+    -- 2: native-only player actions (EXEC_MODE), idle waits on the actor.
+    VERSION = 2,
+    -- "native" (default): every player action is the game's own
+    -- Pawn:FireWeapon. "legacy": the old bot's emulations (EXEC_MODE).
+    exec_mode = "native",
     DEBUG_FLAG_FILE = BRIDGE_DIR .. "/itb_bridge_debug",
     PRE_SPAWN_FILE = BRIDGE_DIR .. "/itb_state_enemy_prespawn.json",
     POST_SPAWN_FILE = BRIDGE_DIR .. "/itb_state_enemy_postspawn.json",
@@ -2443,6 +2447,7 @@ function ITBX.finish(state, mission)
     local debug = ITBX.debug_enabled()
     state.bridge_ext_version = ITBX.VERSION
     state.bridge_debug = debug
+    state.exec_mode = ITBX.exec_mode
     if mission ~= nil then
         state.mission_state = ITBX.try("mission_state", ITBX.mission_state, mission)
         -- The LiveEnvironment's class (Env_Null for missions without one),
@@ -3871,12 +3876,9 @@ end
 -- resolved. The 2 s fast-mode cap (os.time ticks, so 1-2 s) cut off
 -- Ranged_Ignite's side pushes (artillery flight, then 0.4 s pushes) in the
 -- 2026-10-09 live session: the dump showed the target tile burning but the
--- pushed Vek on their old tiles.
-local function wait_for_effects_coro(max_wait)
-    return wait_until_coro(function()
-        return not Board:IsBusy()
-    end, max_wait or 15)
-end
+-- pushed Vek on their old tiles. ITBX.settle_coro (below) does this for
+-- every action, on the board and the acting pawn, and acks an error when
+-- the budget runs out.
 
 local function move_pawn_for_bridge(pawn, point)
     if bridge_fast_mode() then
@@ -3966,112 +3968,32 @@ local function tile_damage_changed(before, pt)
     return false
 end
 
-local function path_profile_for_target_area(point, fallback)
-    if Pawn ~= nil then
-        local ok, prof = pcall(function() return Pawn:GetPathProf() end)
-        if ok and prof ~= nil then return prof end
-    end
-    if Board ~= nil and point ~= nil then
-        local ok_pawn, source_pawn = pcall(function()
-            return Board:GetPawn(point)
-        end)
-        if ok_pawn and source_pawn ~= nil then
-            local ok_prof, prof = pcall(function()
-                return source_pawn:GetPathProf()
-            end)
-            if ok_prof and prof ~= nil then return prof end
-        end
-    end
-    return fallback or PATH_FLYER or PATH_PROJECTILE
+-- The bridge used to replace GetTargetArea of the Aerial Bombs (Brute_Jetmech,
+-- Brute_Bombrun, Support_Smoke) and Leap_Attack (Prime_Leap,
+-- Support_Boosters, Prime_SpikeLeap) families with nil-safe copies
+-- (6e7db627, 7c43c2fd): the game's versions read the global `Pawn`, which
+-- the bridge never set, so after a bridge FireWeapon it could be nil or a
+-- dead Vek and the UI refresh raised in Brute_Jetmech::GetTargetArea. The
+-- copies still read the same stale `Pawn` whenever it was set. The bridge
+-- now selects the acting pawn the way a click does (ITBX.select_pawn) and
+-- leaves the game's scripts alone. A Lua state patched by an older bridge
+-- keeps the copies until the game restarts.
+if _ITB_BRIDGE_SAFE_JET_TARGET_AREA or _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA then
+    log_bridge("WARN: an older bridge patched GetTargetArea in this Lua state; "
+               .. "restart the game to run the original weapon scripts")
 end
 
-local function bridge_safe_jet_target_area(self, point)
-    local ret = PointList()
-    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
-    for i = DIR_START, DIR_END do
-        for k = self.MinMove, self.Range do
-            local curr = DIR_VECTORS[i] * k + point
-            if not Board:IsBlocked(curr, path_prof) then
-                ret:push_back(curr)
-            end
-        end
-    end
-    return ret
-end
-
-local function bridge_safe_leap_target_area(self, point)
-    local ret = PointList()
-    local path_prof = path_profile_for_target_area(point, PATH_FLYER)
-    local range = self.Range or 1
-    for i = DIR_START, DIR_END do
-        for k = 1, range do
-            local curr = DIR_VECTORS[i] * k + point
-            if Board:IsValid(curr) and not Board:IsBlocked(curr, path_prof) then
-                ret:push_back(curr)
-            end
-        end
-    end
-    return ret
-end
-
-local function install_safe_jet_target_area()
-    if _ITB_BRIDGE_SAFE_JET_TARGET_AREA then return end
-    local names = {
-        "Brute_Jetmech",
-        "Brute_Jetmech_A",
-        "Brute_Jetmech_B",
-        "Brute_Jetmech_AB",
-        "Brute_Bombrun",
-        "Brute_Bombrun_A",
-        "Brute_Bombrun_B",
-        "Brute_Bombrun_AB",
-        "Support_Smoke",
-        "Support_Smoke_A",
-        "Support_Smoke_B",
-        "Support_Smoke_AB",
-    }
-    local installed = 0
-    for _, name in ipairs(names) do
-        local skill = _G[name]
-        if skill ~= nil then
-            skill.GetTargetArea = bridge_safe_jet_target_area
-            installed = installed + 1
-        end
-    end
-    _ITB_BRIDGE_SAFE_JET_TARGET_AREA = true
-    log_bridge("SAFE TARGET AREA: patched Aerial Bombs family entries=" ..
-               installed)
-end
-
-local function install_safe_leap_target_area()
-    if _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA then return end
-    local names = {
-        "Prime_Leap",
-        "Prime_Leap_A",
-        "Prime_Leap_B",
-        "Prime_Leap_AB",
-        "Support_Boosters",
-        "Support_Boosters_A",
-        "Support_Boosters_B",
-        "Support_Boosters_AB",
-        "Prime_SpikeLeap",
-        "Prime_SpikeLeap_A",
-        "Prime_SpikeLeap_B",
-        "Prime_SpikeLeap_AB",
-    }
-    local installed = 0
-    for _, name in ipairs(names) do
-        local skill = _G[name]
-        if skill ~= nil then
-            skill.GetTargetArea = bridge_safe_leap_target_area
-            installed = installed + 1
-        end
-    end
-    _ITB_BRIDGE_SAFE_LEAP_TARGET_AREA = true
-    log_bridge("SAFE TARGET AREA: patched Leap_Attack family entries=" ..
-               installed)
-end
-
+--------------------------------------------------------------------
+-- Legacy execution: EXEC_MODE legacy only (the old Python bot's opt-in;
+-- never live_play). From here to execute_weapon_by_slot the bridge plays
+-- weapons itself instead of the game: Prime_TC_Punt and most two-click
+-- weapons through Board:AddEffect(GetFinalEffect) or hand-built
+-- SpaceDamage with Boost mirrored by hand, the Seismic DIR_FLIP fallback,
+-- the Aerial Bombs TRANSIT damage/smoke emulation (the game's own
+-- GetSkillEffect already does that through FireWeapon: double damage /
+-- smoke), and a temporary SkillList swap. REPAIR's legacy path edits HP
+-- and statuses directly.
+--------------------------------------------------------------------
 local function execute_prime_tc_punt(pawn, wname, tx, ty)
     local skill = _G[wname]
     if not skill then
@@ -4681,10 +4603,10 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
                    " (" .. wname .. "): " .. tostring(fired_or_err))
         return false, "FireWeapon failed: " .. tostring(fired_or_err)
     end
-    if fired_or_err == false then
-        log_bridge("WARN: FireWeapon returned false for slot " .. slot ..
+    if fired_or_err == false or fired_or_err == 0 then
+        log_bridge("WARN: FireWeapon returned " .. tostring(fired_or_err) .. " for slot " .. slot ..
                    " (" .. wname .. ")")
-        return false, "FireWeapon returned false for slot " .. tostring(slot) ..
+        return false, "FireWeapon returned " .. tostring(fired_or_err) .. " for slot " .. tostring(slot) ..
                " (" .. tostring(wname) .. ")"
     end
     log_bridge("FIRE: " .. wname .. " slot=" .. slot .. " " ..
@@ -4835,6 +4757,193 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     end
 
     return true, "FireWeapon[" .. slot .. "](" .. wname .. ")"
+end
+
+--------------------------------------------------------------------
+-- Native execution (EXEC_MODE native, the default; live_play uses it)
+--------------------------------------------------------------------
+-- Every player action is Pawn:FireWeapon(target, slot), the call a click
+-- makes (SkillManager::FireWeapon @008512a0: ArmWeapon, SetTarget, which
+-- runs the weapon's Lua GetTargetArea and GetSkillEffect, then FireInstant
+-- applies the whole effect; Pawn::FireWeapon @0087a250 then does the
+-- bookkeeping: moved, active, Boost, Shifty / Double_Shot / Post_Move).
+-- Native slots: 0 Move, 1.. the weapons (the callers' 0-based slot + 1),
+-- 50 the repair skill. It returns 1 fired, 2 first click of a two-click
+-- weapon taken, 3 two-click with no valid second target, 0 nothing fired
+-- (frozen, the target is not in the weapon's target area, not ready).
+--
+-- Selection: a click selects the pawn first (Pawn::SetSelected -> the Lua
+-- SetPawn of global.lua), and weapon scripts read the global `Pawn`: the
+-- Move skill (move speed, path profile), Brute_Jetmech / Leap_Attack
+-- GetTargetArea (Pawn:GetPathProf()), Science_KO_Crack (Board:IsDeadly(_,
+-- Pawn)). The bridge does not click, so without ITBX.select_pawn `Pawn` is
+-- whatever was selected last, usually the last Vek the AI planned. Live
+-- 2026-10-09, Mission_Barrels turn 4: Aerial Bombs (4,4) -> water (2,4)
+-- with `Pawn` a ground Vek: IsBlocked(water, PATH_GROUND) dropped (2,4)
+-- from the target area, FireWeapon returned 0, the Jet stayed, and the old
+-- path (which only rejected `false`) acked OK after its TRANSIT emulation
+-- smoked (3,4).
+--
+-- No emulation here: no synthetic damage, smoke, flips, HP or Boost edits.
+
+function ITBX.select_pawn(pawn)
+    if type(SetPawn) == "function" then
+        SetPawn(pawn)
+    else
+        Pawn = pawn
+    end
+end
+
+function ITBX.pawn_busy(pawn)
+    if pawn == nil then return false end
+    local ok, busy = pcall(function() return pawn:IsBusy() end)
+    return ok and busy == true
+end
+
+-- What is busy, for error acks.
+function ITBX.busy_text(pawn)
+    local s = ITBX.busy_state()
+    return "board busy_state=" .. tostring(s) .. ", pawn busy=" .. tostring(ITBX.pawn_busy(pawn))
+end
+
+-- Waits (yielding frames) until the board and `pawn` (optional) are idle on
+-- two polls in a row. `settle_frames` frames are yielded first, so an effect
+-- the action just queued has started. Returns true, or false on timeout.
+function ITBX.wait_idle_coro(pawn, max_wait, settle_frames)
+    for _ = 1, (settle_frames or 0) do
+        ITBX.cmd_waiting = true
+        coroutine.yield()
+    end
+    local idle_polls = 0
+    return wait_until_coro(function()
+        if Board:IsBusy() or ITBX.pawn_busy(pawn) then
+            idle_polls = 0
+            return false
+        end
+        idle_polls = idle_polls + 1
+        return idle_polls >= 2
+    end, max_wait or 15)
+end
+
+-- Before an action: the board and the actor must be idle (a short grace
+-- for the tail of the previous action). Returns true, or false + reason.
+function ITBX.require_idle_coro(pawn, grace)
+    if ITBX.wait_idle_coro(pawn, grace or 3, 0) then return true end
+    return false, "BUSY: " .. ITBX.busy_text(pawn) .. "; nothing sent to the game"
+end
+
+-- After an action: wait for its effects. Returns true, or false + reason.
+function ITBX.settle_coro(pawn, what, max_wait)
+    if ITBX.wait_idle_coro(pawn, max_wait or 15, 1) then return true end
+    return false, "TIMEOUT: " .. what .. " was sent but the game is still busy after "
+        .. tostring(max_wait or 15) .. "s (" .. ITBX.busy_text(pawn) .. ")"
+end
+
+local NATIVE_RET = {
+    [0] = "0: nothing fired (frozen, target outside the weapon's target area, or not ready)",
+    [2] = "2: first click taken, waiting for a second click",
+    [3] = "3: two-click weapon with no valid second target",
+}
+
+-- Pawn:FireWeapon with the actor selected. Returns the int result, or nil
+-- and the error.
+function ITBX.native_fire(pawn, native_slot, pt)
+    ITBX.select_pawn(pawn)
+    local ok, ret = pcall(function() return pawn:FireWeapon(pt, native_slot) end)
+    if not ok then return nil, ITBX.str(ret) end
+    return ret
+end
+
+local function native_ret_text(ret)
+    return NATIVE_RET[ret] or tostring(ret)
+end
+
+-- The weapon in 0-based slot `weapon_slot` (name for logs and the two-click
+-- check only; FireWeapon fires the pawn's own native skill).
+local function native_weapon(pawn, weapon_slot)
+    local ok, wname = pcall(effective_weapon_name_by_slot, pawn, weapon_slot)
+    if ok and type(wname) == "string" then return wname, rawget(_G, wname) or _G[wname] end
+    return "slot" .. tostring(weapon_slot), nil
+end
+
+-- true when the game would take (source -> target) as the first click of a
+-- two-click shot (Skill::NeedsSecondClick: TwoClick and not an exception).
+local function needs_second_click(skill, source, target)
+    if type(skill) ~= "table" or skill.TwoClick ~= true then return false end
+    local ok, exc = pcall(function()
+        if type(skill.IsTwoClickException) ~= "function" then return false end
+        return skill:IsTwoClickException(source, target)
+    end)
+    return not (ok and exc == true)
+end
+
+-- MOVE: the Move skill only (no Pawn:Move / SetSpace fallback).
+function ITBX.native_move_strict(pawn, pt)
+    local ret, err = ITBX.native_fire(pawn, 0, pt)
+    if ret == nil then return false, "FireWeapon[0] failed: " .. tostring(err) end
+    if ret ~= 1 then
+        return false, "FireWeapon[0] returned " .. native_ret_text(ret)
+            .. " (the tile is not a legal move for this pawn now)"
+    end
+    return true, "FireWeapon[0]"
+end
+
+function ITBX.native_attack(pawn, weapon_slot, tx, ty)
+    local slot = weapon_slot + 1
+    local wname, skill = native_weapon(pawn, weapon_slot)
+    local target = Point(tx, ty)
+    if needs_second_click(skill, pawn:GetSpace(), target) then
+        return false, wname .. " is a two-click weapon: use TWO_CLICK_ATTACK; nothing fired"
+    end
+    local ret, err = ITBX.native_fire(pawn, slot, target)
+    if ret == nil then
+        log_bridge("WARN: FireWeapon failed for slot " .. slot .. " (" .. wname .. "): " .. tostring(err))
+        return false, "FireWeapon[" .. slot .. "](" .. wname .. ") failed: " .. tostring(err)
+    end
+    if ret ~= 1 then
+        log_bridge("WARN: FireWeapon[" .. slot .. "](" .. wname .. ") returned " .. tostring(ret))
+        return false, "FireWeapon[" .. slot .. "](" .. wname .. ") returned " .. native_ret_text(ret)
+    end
+    log_bridge("FIRE: " .. wname .. " native slot=" .. slot .. " -> " .. tx .. "," .. ty)
+    return true, "FireWeapon[" .. slot .. "](" .. wname .. ")"
+end
+
+function ITBX.native_two_click(pawn, weapon_slot, tx1, ty1, tx2, ty2)
+    local slot = weapon_slot + 1
+    local wname, skill = native_weapon(pawn, weapon_slot)
+    local first, second = Point(tx1, ty1), Point(tx2, ty2)
+    if not needs_second_click(skill, pawn:GetSpace(), first) then
+        return false, wname .. " takes this shot in one click: use ATTACK; nothing fired"
+    end
+    local ret, err = ITBX.native_fire(pawn, slot, first)
+    if ret == nil then return false, "FireWeapon[" .. slot .. "](" .. wname .. ") first click failed: " .. tostring(err) end
+    if ret ~= 2 then
+        return false, "FireWeapon[" .. slot .. "](" .. wname .. ") first click returned " .. native_ret_text(ret)
+            .. (ret == 1 and " (it fired)" or "")
+    end
+    -- Same slot: ArmWeapon keeps the armed weapon and its first click.
+    ret, err = ITBX.native_fire(pawn, slot, second)
+    if ret == nil then return false, "FireWeapon[" .. slot .. "](" .. wname .. ") second click failed: " .. tostring(err) end
+    if ret ~= 1 then
+        return false, "FireWeapon[" .. slot .. "](" .. wname .. ") second click returned " .. native_ret_text(ret)
+            .. " (the first click stays armed in the game)"
+    end
+    log_bridge("FIRE: " .. wname .. " native two_click slot=" .. slot .. " -> "
+        .. tx1 .. "," .. ty1 .. " -> " .. tx2 .. "," .. ty2)
+    return true, "FireWeapon[" .. slot .. "](" .. wname .. ") x2"
+end
+
+-- REPAIR: the pawn's repair skill (native slot 50; pilot and passive
+-- variants such as Mass_Repair are the game's).
+function ITBX.native_repair(pawn)
+    local ret, err = ITBX.native_fire(pawn, 50, pawn:GetSpace())
+    if ret == nil then return false, "FireWeapon[50] failed: " .. tostring(err) end
+    if ret ~= 1 then return false, "FireWeapon[50] (repair) returned " .. native_ret_text(ret) end
+    return true, "FireWeapon[50]"
+end
+
+function ITBX.legacy_mode()
+    return ITBX.exec_mode == "legacy"
 end
 
 --------------------------------------------------------------------
@@ -5478,19 +5587,35 @@ local function execute_command(cmd_str)
 
     if cmd == "MOVE" then
         -- MOVE uid x y (does NOT deactivate — follow with ATTACK/REPAIR/SKIP)
+        -- Native mode: the Move skill, like MOVE_NATIVE. Legacy mode:
+        -- Pawn:SetSpace (fast) or Pawn:Move (visual).
         local uid = tonumber(parts[2])
         local x, y = tonumber(parts[3]), tonumber(parts[4])
-        local pawn = Board:GetPawn(uid)
-        if not pawn then
-            write_ack("ERROR: pawn " .. uid .. " not found")
+        local pawn = uid and Board:GetPawn(uid)
+        if not pawn or not x or not y then
+            write_ack("ERROR: pawn " .. tostring(parts[2]) .. " not found or no x y")
             return
         end
-        local ok, err = move_pawn_for_bridge(pawn, Point(x, y))
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: MOVE " .. why)
+            return
+        end
+        local ok, err
+        if ITBX.legacy_mode() then
+            ok, err = move_pawn_for_bridge(pawn, Point(x, y))
+        else
+            ok, err = ITBX.native_move_strict(pawn, Point(x, y))
+        end
         if not ok then
             write_ack("ERROR: Move failed: " .. tostring(err))
             return
         end
-        wait_for_board_coro()
+        local settled, terr = ITBX.settle_coro(pawn, "MOVE")
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         write_ack("OK MOVE " .. uid .. " to " .. x .. "," .. y .. " [" .. err .. "]")
 
     elseif cmd == "ATTACK" then
@@ -5504,17 +5629,32 @@ local function execute_command(cmd_str)
             write_ack("ERROR: pawn " .. uid .. " not found")
             return
         end
-        if weapon_slot == nil then
-            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "'")
+        if weapon_slot == nil or tx == nil or ty == nil then
+            write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "' or target")
             return
         end
-        local ok, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: ATTACK " .. why)
+            return
+        end
+        local ok, method
+        if ITBX.legacy_mode() then
+            ITBX.select_pawn(pawn)
+            ok, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+        else
+            ok, method = ITBX.native_attack(pawn, weapon_slot, tx, ty)
+        end
         if not ok then
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_effects_coro()
-        pawn:SetActive(false)
+        local settled, terr = ITBX.settle_coro(pawn, "ATTACK")
+        if ITBX.legacy_mode() then pawn:SetActive(false) end
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         write_ack("OK ATTACK " .. uid .. " slot=" .. weapon_slot .. " at " ..
                   tx .. "," .. ty .. " [" .. method .. "]")
 
@@ -5534,15 +5674,34 @@ local function execute_command(cmd_str)
             write_ack("ERROR: invalid weapon slot '" .. tostring(parts[3]) .. "'")
             return
         end
-        local ok, method = execute_two_click_by_slot(
-            pawn, weapon_slot, tx1, ty1, tx2, ty2
-        )
+        if not (tx1 and ty1 and tx2 and ty2) then
+            write_ack("ERROR: TWO_CLICK_ATTACK needs uid slot x1 y1 x2 y2")
+            return
+        end
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: TWO_CLICK_ATTACK " .. why)
+            return
+        end
+        local ok, method
+        if ITBX.legacy_mode() then
+            ITBX.select_pawn(pawn)
+            ok, method = execute_two_click_by_slot(
+                pawn, weapon_slot, tx1, ty1, tx2, ty2
+            )
+        else
+            ok, method = ITBX.native_two_click(pawn, weapon_slot, tx1, ty1, tx2, ty2)
+        end
         if not ok then
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_effects_coro()
-        pawn:SetActive(false)
+        local settled, terr = ITBX.settle_coro(pawn, "TWO_CLICK_ATTACK")
+        if ITBX.legacy_mode() then pawn:SetActive(false) end
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         write_ack("OK TWO_CLICK_ATTACK " .. uid .. " slot=" .. weapon_slot ..
                   " at " .. tx1 .. "," .. ty1 .. " and " ..
                   tx2 .. "," .. ty2 .. " [" .. method .. "]")
@@ -5563,19 +5722,44 @@ local function execute_command(cmd_str)
             write_ack("ERROR: invalid weapon slot '" .. tostring(parts[5]) .. "'")
             return
         end
-        local ok1, err1 = move_pawn_for_bridge(pawn, Point(mx, my))
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: MOVE_ATTACK " .. why)
+            return
+        end
+        local legacy = ITBX.legacy_mode()
+        local ok1, err1
+        if legacy then
+            ok1, err1 = move_pawn_for_bridge(pawn, Point(mx, my))
+        else
+            ok1, err1 = ITBX.native_move_strict(pawn, Point(mx, my))
+        end
         if not ok1 then
             write_ack("ERROR: Move failed: " .. tostring(err1))
             return
         end
-        wait_for_board_coro()
-        local ok2, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+        local moved_ok, merr = ITBX.settle_coro(pawn, "MOVE_ATTACK move")
+        if not moved_ok then
+            write_ack("ERROR: " .. merr .. "; weapon not fired")
+            return
+        end
+        local ok2, method
+        if legacy then
+            ITBX.select_pawn(pawn)
+            ok2, method = execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
+        else
+            ok2, method = ITBX.native_attack(pawn, weapon_slot, tx, ty)
+        end
         if not ok2 then
             write_ack("ERROR: " .. method)
             return
         end
-        wait_for_effects_coro()
-        pawn:SetActive(false)
+        local settled, terr = ITBX.settle_coro(pawn, "MOVE_ATTACK")
+        if legacy then pawn:SetActive(false) end
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         write_ack("OK MOVE_ATTACK " .. uid .. " [" .. method .. "]")
 
     elseif cmd == "SKIP" then
@@ -5599,7 +5783,19 @@ local function execute_command(cmd_str)
         end
         local pos = pawn:GetSpace()
         local method = "unknown"
-        local ok, err = pcall(function()
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: REPAIR " .. why)
+            return
+        end
+        local ok, err
+        if not ITBX.legacy_mode() then
+            -- Native: the pawn's repair skill through FireWeapon.
+            ok, method = ITBX.native_repair(pawn)
+            err = method
+        else
+        -- Legacy (EXEC_MODE legacy): HP and statuses edited directly.
+        ok, err = pcall(function()
             local effect_remove = _G["EFFECT_REMOVE"] or 2
             local boosted = false
             local ok_bo, bo = pcall(function() return pawn:IsBoosted() end)
@@ -5668,12 +5864,17 @@ local function execute_command(cmd_str)
             method = boosted and "direct_repair_boosted" or "direct_repair"
             if mass_repair then method = method .. "_mass" end
         end)
+        end
         if not ok then
             write_ack("ERROR: Repair failed: " .. tostring(err))
             return
         end
-        wait_for_effects_coro()
-        pawn:SetActive(false)
+        local settled, terr = ITBX.settle_coro(pawn, "REPAIR")
+        if ITBX.legacy_mode() then pawn:SetActive(false) end
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         write_ack("OK REPAIR " .. uid .. " [" .. method .. "]")
 
     elseif cmd == "DEPLOY" then
@@ -5771,6 +5972,23 @@ local function execute_command(cmd_str)
         end
         write_ack("OK END_TURN phase=" .. phase .. " method=" .. method)
 
+    elseif cmd == "EXEC_MODE" then
+        -- EXEC_MODE [native|legacy]: how player actions run. native (the
+        -- default, every load): Pawn:FireWeapon only. legacy: the old bot's
+        -- emulations (transit damage, Seismic flip, direct repair, scripted
+        -- two-click weapons, SetSpace moves); opt-in only.
+        local mode = parts[2]
+        if mode == nil then
+            write_ack("OK EXEC_MODE " .. ITBX.exec_mode)
+        elseif mode == "native" or mode == "legacy" then
+            if mode ~= ITBX.exec_mode then log_bridge("EXEC_MODE " .. mode) end
+            ITBX.exec_mode = mode
+            write_ack("OK EXEC_MODE " .. mode)
+        else
+            write_ack("ERROR: invalid exec mode: " .. tostring(mode) .. " (use native or legacy)")
+            return
+        end
+
     elseif cmd == "SET_SPEED" then
         -- SET_SPEED fast|visual
         local mode = parts[2] or "fast"
@@ -5808,8 +6026,10 @@ local function execute_command(cmd_str)
     elseif cmd == "MOVE_NATIVE" then
         -- MOVE_NATIVE uid x y: move the way a player click does, the Move
         -- skill through Pawn:FireWeapon(target, 0) (walk, arrival effects,
-        -- moved bookkeeping); falls back to Pawn:Move, then SetSpace. The
-        -- ack names the method used. Does not end the unit's turn.
+        -- moved bookkeeping), with the pawn selected. An error ack if the
+        -- game refuses the move. Legacy mode only: falls back to Pawn:Move,
+        -- then SetSpace. The ack names the method used and comes once the
+        -- board and the pawn are idle. Does not end the unit's turn.
         local uid = tonumber(parts[2])
         local x, y = tonumber(parts[3]), tonumber(parts[4])
         local pawn = uid and Board:GetPawn(uid)
@@ -5817,8 +6037,28 @@ local function execute_command(cmd_str)
             write_ack("ERROR: MOVE_NATIVE needs a pawn uid and x y")
             return
         end
-        local method, detail = ITBX.native_move(pawn, Point(x, y))
-        wait_until_coro(function() return not Board:IsBusy() end, 20)
+        local ready, why = ITBX.require_idle_coro(pawn)
+        if not ready then
+            write_ack("ERROR: MOVE_NATIVE " .. why)
+            return
+        end
+        local method, detail
+        if ITBX.legacy_mode() then
+            ITBX.select_pawn(pawn)
+            method, detail = ITBX.native_move(pawn, Point(x, y))
+        else
+            local ok, m = ITBX.native_move_strict(pawn, Point(x, y))
+            if not ok then
+                write_ack("ERROR: MOVE_NATIVE " .. m)
+                return
+            end
+            method = m
+        end
+        local settled, terr = ITBX.settle_coro(pawn, "MOVE_NATIVE", 20)
+        if not settled then
+            write_ack("ERROR: " .. terr)
+            return
+        end
         local sp = pawn:GetSpace()
         write_ack("OK MOVE_NATIVE " .. uid .. " to " .. x .. "," .. y .. " [" .. method .. "] at "
                   .. sp.x .. "," .. sp.y .. (detail and (" (" .. detail .. ")") or ""))
@@ -6066,18 +6306,17 @@ end
 
 -- NextTurn: dump state on each turn change.
 --
--- Defensive re-activation: when our bridge END_TURN took the SetActive(false)
--- fallback path (Game:EndTurn() unavailable), the engine's turn-start lifecycle
--- may not re-activate pawns on the next player phase because our manual
--- SetActive(false) was out of band. Without this, auto_turn's poller sees
--- phase=combat_player + active_mechs=0 forever and the whole player turn is
--- skipped, bleeding grid power.
+-- Legacy mode only (EXEC_MODE legacy): re-activate every player-team pawn
+-- (2b9d3bb1, for the old bot's poller after its END_TURN SetActive(false)).
+-- Natively, the player turn start (BoardPlayer state 0, after BaseNextTurn)
+-- activates the player's non-neutral pawns itself; this ran before that and
+-- also activated neutral ones, so it is off in native mode.
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
     clear_stale_teleporter_pairs_for(self)
     pcall(function()
-        if Game and Game:GetTeamTurn() == TEAM_PLAYER then
+        if ITBX.legacy_mode() and Game and Game:GetTeamTurn() == TEAM_PLAYER then
             local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
             for _, mid in ipairs(mech_ids) do
                 local m = Board:GetPawn(mid)
@@ -6322,8 +6561,6 @@ end
 pcall(function() os.remove(STATE_FILE) end)
 pcall(function() os.remove(CMD_FILE) end)
 pcall(function() os.remove(ACK_FILE) end)
-install_safe_jet_target_area()
-install_safe_leap_target_area()
 
 local _reload_count = (_ITB_BRIDGE_LOAD_COUNT or 0) + 1
 _ITB_BRIDGE_LOAD_COUNT = _reload_count

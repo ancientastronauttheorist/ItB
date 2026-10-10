@@ -251,7 +251,12 @@ def bridge_commands(scn: dict, spec: dict, created: dict) -> list:
         uid = pawn_uid(a["pawn"], spec, created)
         if "move" in a:
             x, y = a["move"]
-            cmds.append(f"MOVE_NATIVE {uid} {x} {y}" if a.get("native") else f"MOVE {uid} {x} {y}")
+            if a.get("native"):
+                cmds.append(f"MOVE_NATIVE {uid} {x} {y}")
+            else:
+                # The old SetSpace move exists only in the bridge's legacy
+                # mode (in native mode MOVE is the Move skill too).
+                cmds += ["EXEC_MODE legacy", f"MOVE {uid} {x} {y}", "EXEC_MODE native"]
         if "native_slot" in a:
             tx, ty = a["target"]
             cmds.append(f"FIRE {uid} {a['native_slot']} {tx} {ty}")
