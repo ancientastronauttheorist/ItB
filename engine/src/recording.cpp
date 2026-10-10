@@ -179,7 +179,6 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.infected = get_or<bool>(u, "infected", false);
   // AE Injured has no Lua getter; live tooling sets it (engine_overrides).
   p.injured = get_or<bool>(u, "injured", false);
-  p.web_source = get_or<int>(u, "web_source_uid", -1);
 
   // The exact weapon tables (upgrade suffix included) when the bridge
   // exports them (weapons_exact), else the type's SkillList as recorded;
@@ -552,6 +551,84 @@ void load_objectives(const json& s, Recording& rec) {
   }
 }
 
+// Weapons whose queued attack webs its target tile from the attacker's:
+// ScorpionAtk1:GetSkillEffect adds AddGrapple(p1, p2) when Web == 1
+// (weapons_enemy.lua: ScorpionAtk1/2, ScorpionAtk_Acid and LeaperAtk1/2
+// inherit it), MosquitoAtk1 when Webbing (MosquitoAtkB).
+bool webs_its_target(std::string_view w) {
+  return w == "ScorpionAtk1" || w == "ScorpionAtk2" || w == "ScorpionAtk_Acid" || w == "LeaperAtk1" ||
+         w == "LeaperAtk2" || w == "MosquitoAtkB";
+}
+
+// Whether the pawn on `from` webs tile `to` (a neighbour) by what the board
+// shows: a queued webbing attack on `to`, the Scorpion Leader's queued
+// ScorpionAtkB (webs every neighbour), or a spider egg (SpiderAtk webs the
+// egg tile's neighbours when it lands).
+bool shows_web(const Pawn& src, Point from, Point to) {
+  if (src.team != Team::Enemy) return false;  // the web check breaks it at once
+  if (symbol_name(src.type).find("WebbEgg") != std::string_view::npos) return true;
+  if (!src.queued.active() || src.queued.weapon >= static_cast<int>(src.weapons.size())) return false;
+  if (src.queued.origin.valid() && src.queued.origin != from) return false;
+  const std::string_view w = symbol_name(src.weapons[static_cast<size_t>(src.queued.weapon)]);
+  if (w == "ScorpionAtkB") return true;
+  return webs_its_target(w) && src.queued.target == to;
+}
+
+// Webs are tile state (Tile::web_out / web_in), made when the webber acts:
+// a Vek's queued attack runs its AddGrapple at once. The bridge reports only
+// whether a pawn is webbed (IsGrappled) and at most one source, which it
+// guesses (the nearest webber). Every neighbour of a webbed pawn's tiles
+// (its extra tile too) whose pawn shows a web onto it is a source; when none
+// does, the reported source if it stands next to the pawn; else the pawn
+// keeps the flag alone (no tile to release it).
+void rebuild_webs(Board& b, const std::vector<std::pair<int32_t, int32_t>>& reported,
+                  std::vector<std::string>& warnings) {
+  auto add = [&](Point from, Point to) {
+    const Point d = to - from;
+    const int dir = d.y < 0 ? 0 : d.x > 0 ? 1 : d.y > 0 ? 2 : 3;
+    Tile& t = b.tile(from);
+    if (t.web_out >> dir & 1) return;
+    t.web_out = static_cast<uint8_t>(t.web_out | (1u << dir));
+    ++b.tile(to).web_in;
+  };
+  for (Pawn& w : b.pawns()) {
+    if (!w.webbed || !w.pos.valid()) continue;
+    std::vector<Point> tiles{w.pos};
+    if (const Point e = w.extra_tile(); e.valid()) tiles.push_back(e);
+    bool found = false;
+    for (Point to : tiles) {
+      for (int d = 0; d < 4; ++d) {
+        const Point from = step(to, static_cast<Dir>(d));
+        if (!from.valid() || w.occupies(from) || !has_pawn(b, from)) continue;
+        if (shows_web(*first_occupant(b, from), from, to)) {
+          add(from, to);
+          found = true;
+        }
+      }
+    }
+    if (found) continue;
+    int32_t hint = -1;
+    for (const auto& [uid, src] : reported) {
+      if (uid == w.uid) hint = src;
+    }
+    const Pawn* src = hint >= 0 ? b.find_pawn(hint) : nullptr;
+    for (Point to : tiles) {
+      if (!src || found) break;
+      for (int d = 0; d < 4 && !found; ++d) {
+        const Point from = step(to, static_cast<Dir>(d));
+        if (from.valid() && !w.occupies(from) && src->occupies(from)) {
+          add(from, to);
+          found = true;
+        }
+      }
+    }
+    if (!found) {
+      warnings.push_back("webbed " + std::string(symbol_name(w.type)) + "#" + std::to_string(w.uid) +
+                         " has no web source next to it (flag only)");
+    }
+  }
+}
+
 }  // namespace
 
 std::optional<Recording> load_recording(const std::filesystem::path& path,
@@ -604,6 +681,7 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   for (const json& t : s["tiles"]) load_tile(t, b, rec.warnings);
   std::vector<std::pair<int32_t, int>> mutations;  // uid -> recorded mutation
   std::vector<std::pair<int32_t, Point>> extra_entries;  // uid -> reported extra tile
+  std::vector<std::pair<int32_t, int32_t>> web_reported;  // webbed uid -> reported source uid
   for (const json& u : s["units"]) {
     // Multi-tile pawns are reported once more per extra tile (same uid,
     // "is_extra_tile"); the main entry carries the pawn, the extra tile
@@ -613,6 +691,7 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
       continue;
     }
     const Pawn& p = b.add_pawn(load_unit(u, data, rec.warnings));
+    if (get_or<bool>(u, "web", false)) web_reported.emplace_back(p.uid, get_or<int>(u, "web_source_uid", -1));
     std::string pilot = get_or<std::string>(u, "pilot_id", "");
     if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
       Recording::PilotInfo info;
@@ -630,11 +709,7 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
       mutations.emplace_back(p.uid, it->get<int>());
     }
   }
-  // Webs come from the tile their source stands on.
-  for (Pawn& p : b.pawns()) {
-    if (!p.webbed) continue;
-    if (const Pawn* src = b.find_pawn(p.web_source)) p.web_tile = src->pos;
-  }
+  rebuild_webs(b, web_reported, rec.warnings);
   for (const Pawn& p : b.pawns()) {
     if (p.mech && p.team == Team::Player) {
       for (size_t i = 0; i < p.weapons.size(); ++i) {

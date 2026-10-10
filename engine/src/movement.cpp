@@ -476,10 +476,9 @@ void set_space(Board& b, Pawn& p, Point to, bool no_injury, RulesContext* ctx) {
   // (Board::MovePawn per tile); here they follow `pos` (Pawn::extra_tile).
   const Point from = p.pos;
   if (p.pos.valid()) p.movement.prev_pos = p.pos;
-  // Any relocation frees a webbed pawn.
+  // Any relocation frees a webbed pawn (the flag only: the webs stay on the
+  // tiles until the emitters' web check sees the held tile empty).
   p.webbed = false;
-  p.web_source = -1;
-  p.web_tile = kInvalidPoint;
   p.pos = to;
   if (to != from) b.stamp_arrival(p);
   // AE Injured: 1 HP per tile change while not busy. Whether every step of a

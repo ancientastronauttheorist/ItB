@@ -655,8 +655,8 @@ void Simulation::update_weapon_anims() {
 
 // The 64 tiles in x-major order. Most tiles are quiet: nothing to prune,
 // no body to drop, and settle_tile_frame would change nothing
-// (detail::settle_tile_noop; for a tile with no pawn and no web anywhere,
-// its state alone decides). A quiet tile changes no pawn, so the
+// (detail::settle_tile_noop; for a tile with no pawn its state alone
+// decides, webs included). A quiet tile changes no pawn, so the
 // note_deaths after it is a no-op once one has run since the last change.
 // Tiles that may need work are found with a mask (pawns, webs, tile states,
 // finished animations), recomputed after every tile that changed something,
@@ -681,13 +681,11 @@ uint64_t Simulation::busy_tile_states() {
 void Simulation::update_tiles() {
   uint64_t occupied = 0;  // bit i: some pawn (fallen ones included) is on tile i
   uint64_t hot = 0;       // bit i: a pawn (not fallen) on tile i is a mech or on fire
-  bool webbed = false;    // some pawn is webbed
   bool bodies = false;    // some dead non-mech pawn was seen dead (removable needs it)
   uint64_t work = 0;      // tiles that may not be quiet
   auto scan = [&] {
     occupied = 0;
     hot = 0;
-    webbed = false;
     bodies = false;
     for (const Pawn& pawn : board_.pawns()) {
       if (pawn.pos.valid()) {
@@ -697,7 +695,6 @@ void Simulation::update_tiles() {
         occupied |= bits;
         if (!pawn.fallen && (pawn.mech || pawn.fire)) hot |= bits;
       }
-      webbed = webbed || pawn.webbed;
       if (!pawn.mech && !pawn.alive()) {
         const PawnSim* ps = find_state(pawn.uid);
         bodies = bodies || (ps && ps->dead);
@@ -705,7 +702,7 @@ void Simulation::update_tiles() {
     }
   };
   auto plan = [&] {
-    work = webbed ? ~uint64_t{0} : occupied | busy_tile_states();
+    work = occupied | busy_tile_states();
     for (const TileAnim& a : tile_anims_) {
       if (a.end_frame <= frame_ && a.point.valid()) work |= uint64_t{1} << a.point.index();
     }
@@ -756,7 +753,7 @@ void Simulation::update_tiles() {
       acted = !gone.empty();
     }
     bool quiet;
-    if (webbed || (hot >> i & 1)) {
+    if (hot >> i & 1) {
       quiet = detail::settle_tile_noop(board_, p);
     } else if (occupied >> i & 1) {
       quiet = detail::quiet_occupied_tile_state(board_.tile(p));

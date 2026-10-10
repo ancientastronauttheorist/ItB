@@ -243,8 +243,26 @@ void check_acid_fire(Board& board, Point p, Pawn& pawn, RulesContext& ctx);
 // CheckTerrainDangers: drowning, falling, Fire Boost, item pickup.
 void check_terrain_dangers(Board& board, Point p, RulesContext& ctx);
 
-// BoardSpace::OnLoop's web check for the webs tile p emits (part of
-// settle_tile_frame): breaks webs whose emitter or target no longer holds.
+// ---- Webs ----------------------------------------------------------------------
+// Natively a web is tile state: the emitting tile lists the directions it
+// webs (Tile::web_out), the held tile counts its webs (Tile::web_in). A pawn
+// is webbed by several tiles at once and stays webbed until the last of
+// them lets go. Pawn::webbed is the flag the pawn reads (IsGrappled, moves).
+
+// BoardSpace::SetGrappled(d) (@0091b300) on `from`: if its Dir(d) neighbour
+// is grappleable (a building, or a living pawn or corpse), d joins from's
+// web_out, the neighbour holds one web more (SetGrappled(5)) and its first
+// occupant is webbed. A direction the tile already webs is not added twice.
+void add_web(Board& board, Point from, Dir d);
+// The tiles webbing p: bit d set = p's Dir(d) neighbour lists the web.
+uint8_t web_sources(const Board& board, Point p);
+// Board::NextTurn(6): every tile's ClearGrapple(0, true): no web anywhere
+// and no pawn webbed. Returns the number of pawns that were webbed.
+int clear_all_webs(Board& board);
+
+// BoardSpace::OnLoop's web part (part of settle_tile_frame): breaks the webs
+// tile p emits whose emitter or target no longer holds, then webs p's first
+// occupant if p still holds a web and that pawn is not busy.
 void check_webs(Board& board, Point p, RulesContext& ctx);
 
 // One frame of BoardSpace::OnLoop's rules on p: deferred chasms, tile

@@ -42,6 +42,14 @@ struct Tile {
   PodState pod = PodState::None;
   int8_t conveyor = -1;     // conveyor direction, -1 = none
   uint8_t walls = 0;        // bit d set = wall on the Dir(d) edge
+  // Webs belong to tiles (BoardSpace +0x2758 / +0x2750). web_out: bit d set
+  // = this tile webs its Dir(d) neighbour (natively a list of directions;
+  // BoardSpace::SetGrappled(d)). web_in: how many webs hold this tile
+  // (SetGrappled(5) adds one, SetGrappled(4) takes one off). A pawn's
+  // Pawn::webbed flag follows them (tile_rules: set_grappled, release_webs,
+  // check_webs).
+  uint8_t web_out = 0;
+  uint8_t web_in = 0;
   // Always 0: fills what would be padding, so a Tile's bytes are its value
   // (Board compares tiles with memcmp).
   uint8_t reserved = 0;
@@ -226,6 +234,9 @@ struct Pawn {
   bool acid = false;
   bool shield = false;
   bool boosted = false;
+  // Pawn +0xFB1 (Pawn::SetGrappled). Natively the web itself is tile state
+  // (Tile::web_out / web_in); this flag is what IsGrappled and the move
+  // rules read.
   bool webbed = false;
   bool infected = false;
   bool injured = false;  // loses 1 HP whenever it changes tile
@@ -235,10 +246,6 @@ struct Pawn {
   // a psion of another type, which does not affect it, is the board psion.
   bool health_bonus = false;
   bool fallen = false;   // fell into a chasm: off the board, never a corpse
-  int32_t web_source = -1;  // uid of the webbing pawn
-  // The tile the web comes from (natively webs belong to tiles: the emitting
-  // tile keeps a list of directions it webs).
-  Point web_tile = kInvalidPoint;
   // When the pawn entered its tile (Board::stamp_arrival). Natively each tile
   // keeps its occupants in arrival order; pawns that share a stamp (0 for
   // boards loaded without that history) fall back to board-list order.

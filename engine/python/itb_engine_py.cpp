@@ -181,7 +181,22 @@ json unit_json(const Board& b, const Pawn& p) {
          {"move", base_move(b, p)},
          {"base_move", static_cast<int>(p.move)},
          {"has_queued_attack", p.queued.active()}};
-  if (p.webbed && p.web_source >= 0) j["web_source_uid"] = p.web_source;
+  if (p.webbed) {
+    // The pawns on the tiles webbing it (webs are tile state); the first
+    // also as web_source_uid, the field the bridge reports.
+    json sources = json::array();
+    for (Point t : {p.pos, p.extra_tile()}) {
+      const uint8_t from = web_sources(b, t);
+      for (int d = 0; d < 4; ++d) {
+        if (!(from >> d & 1)) continue;
+        if (const Pawn* src = b.pawn_at(step(t, static_cast<Dir>(d)))) sources.push_back(src->uid);
+      }
+    }
+    if (!sources.empty()) {
+      j["web_source_uid"] = sources[0];
+      j["web_source_uids"] = sources;
+    }
+  }
   if (p.queued.active()) {
     j["queued_target"] = point_json(p.queued.target);
     if (p.queued.origin.valid()) j["queued_origin"] = point_json(p.queued.origin);

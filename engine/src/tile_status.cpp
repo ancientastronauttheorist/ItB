@@ -56,6 +56,8 @@ bool detail::inert_tile_state(const Tile& t) {
   if ((t.terrain == Terrain::Building || t.terrain == Terrain::Water) && t.cracked) return false;
   if (t.acid && (t.terrain == Terrain::Forest || t.terrain == Terrain::Sand || t.pod == PodState::Present)) return false;
   if (t.on_fire() && (t.terrain == Terrain::Sand || t.item != kNoSymbol)) return false;
+  // check_webs: a web this tile emits breaks (nothing holds it).
+  if (t.web_out != 0) return false;
   return true;
 }
 
@@ -63,8 +65,6 @@ static bool inert_empty_tile(const Board& board, Point p) {
   if (!detail::inert_tile_state(board.tile(p))) return false;
   for (const Pawn& pawn : board.pawns()) {
     if (pawn.occupies(p)) return false;
-    // check_webs: a web whose emitting tile is p (or unknown) may break.
-    if (pawn.webbed) return false;
   }
   return true;
 }
@@ -77,14 +77,14 @@ static bool inert_empty_tile(const Board& board, Point p) {
 //   - each occupant (busy or not, to keep it simple): no pod to pick up, no
 //     Nanofilter smoke on a mech, no spikes, no burning pawn in smoke or on
 //     a forest; drowning and falling need water or a chasm, mines an item;
-//   - release_webs and check_webs only touch webbed pawns: there are none.
+//   - release_webs and check_webs need a web from or onto the tile.
 bool detail::quiet_occupied_tile_state(const Tile& t) {
   if (t.terrain == Terrain::Hole || t.terrain == Terrain::Mountain || t.terrain == Terrain::Building ||
       t.terrain == Terrain::Water) {
     return false;
   }
   return !(t.lava || t.pending_hole || t.acid || t.on_fire() || t.spikes || t.item != kNoSymbol ||
-           t.pod == PodState::Present);
+           t.pod == PodState::Present || t.web_out != 0 || t.web_in != 0);
 }
 
 static bool quiet_occupied_tile(const Board& board, Point p) {
@@ -92,7 +92,6 @@ static bool quiet_occupied_tile(const Board& board, Point p) {
   if (!detail::quiet_occupied_tile_state(t)) return false;
   const bool healing_smoke = t.smoke && board.has_passive(kPassiveHealingSmoke);
   for (const Pawn& pawn : board.pawns()) {
-    if (pawn.webbed) return false;
     if (!pawn.occupies(p) || pawn.fallen) continue;
     if (healing_smoke && pawn.mech) return false;
     if (pawn.fire && (t.smoke || t.terrain == Terrain::Forest)) return false;
@@ -162,30 +161,92 @@ void settle_tile_frame(Board& board, Point p, RulesContext& ctx) {
   check_webs(board, p, ctx);
 }
 
-// BoardSpace::OnLoop's web check for the webs `p` emits: a web breaks once
-// the emitting tile no longer holds a living pawn or corpse, or its first
-// occupant is not on the enemy team (Pawn::IsEnemy), or the webbed tile is
-// no longer grappleable (a building, or a living pawn / corpse on it), or the
-// webbed pawn is immune (Disable_Immunity) and not busy.
+// SetGrappled(4) on p (@0091b300): p lets go of one web; with none left
+// its first occupant is no longer webbed.
+static void let_go_web(Board& board, Point p) {
+  if (!p.valid()) return;
+  Tile& t = board.tile(p);
+  if (t.web_in > 1) {
+    --t.web_in;
+    return;
+  }
+  t.web_in = 0;
+  if (has_pawn(board, p)) first_occupant(board, p)->webbed = false;
+}
+
+void add_web(Board& board, Point from, Dir d) {
+  const Point to = step(from, d);
+  if (!from.valid() || !to.valid()) return;
+  // BoardSpace::IsGrappleable: a building, or a pawn (IsPawnSpace).
+  if (!board.tile(to).is_building() && !has_pawn(board, to)) return;
+  Tile& t = board.tile(from);
+  const uint8_t bit = static_cast<uint8_t>(1u << static_cast<int>(d));
+  // Natively a second SetGrappled(d) lists d twice and counts the web twice;
+  // both entries always break together, so one bit stands for them.
+  if (!(t.web_out & bit)) {
+    t.web_out |= bit;
+    Tile& held = board.tile(to);
+    if (held.web_in < 255) ++held.web_in;
+  }
+  if (has_pawn(board, to)) first_occupant(board, to)->webbed = true;
+}
+
+uint8_t web_sources(const Board& board, Point p) {
+  uint8_t out = 0;
+  if (!p.valid()) return out;
+  for (int d = 0; d < 4; ++d) {
+    const Point n = step(p, static_cast<Dir>(d));
+    if (n.valid() && (board.tile(n).web_out >> static_cast<int>(opposite(static_cast<Dir>(d)))) & 1) {
+      out |= static_cast<uint8_t>(1u << d);
+    }
+  }
+  return out;
+}
+
+int clear_all_webs(Board& board) {
+  int webbed = 0;
+  for (Pawn& p : board.pawns()) {
+    webbed += p.webbed ? 1 : 0;
+    p.webbed = false;
+  }
+  for (int i = 0; i < kTileCount; ++i) {
+    Tile& t = board.tile(Point::from_index(i));
+    t.web_out = 0;
+    t.web_in = 0;
+  }
+  return webbed;
+}
+
+// BoardSpace::OnLoop's web part (after CheckTerrainDangers and the frozen
+// release). Each web p emits breaks once p no longer holds a living pawn or
+// corpse, or its first occupant is not on the enemy team (Pawn::IsEnemy), or
+// the webbed tile is no longer grappleable (a building, or a living pawn /
+// corpse on it), or the webbed tile's pawn is immune (IsGrappleImmunity:
+// Disable_Immunity) and not busy. Then, while p holds a web, its first
+// occupant is webbed once it is not busy (a pawn that arrives on a held tile
+// is caught too).
 void check_webs(Board& board, Point p, RulesContext& ctx) {
-  const bool emitter_ok = has_pawn(board, p) && first_occupant(board, p)->team == Team::Enemy;
-  for (Pawn& pawn : board.pawns()) {
-    if (!pawn.webbed) continue;
-    Point from = pawn.web_tile;
-    if (!from.valid()) {
-      // A web loaded without its tile: the source's tile.
-      const Pawn* src = board.find_pawn(pawn.web_source);
-      if (!src) continue;
-      from = src->pos;
+  Tile& t = board.tile(p);
+  if (t.web_out != 0) {
+    const bool emitter_ok = has_pawn(board, p) && first_occupant(board, p)->team == Team::Enemy;
+    for (int d = 0; d < 4; ++d) {
+      const uint8_t bit = static_cast<uint8_t>(1u << d);
+      if (!(t.web_out & bit)) continue;
+      const Point to = step(p, static_cast<Dir>(d));
+      bool holds = emitter_ok && to.valid() && (board.tile(to).is_building() || has_pawn(board, to));
+      if (holds && has_pawn(board, to)) {
+        const Pawn& held = *first_occupant(board, to);
+        if (held.has_pilot(kPilotDisableImmunity) && !busy(ctx, held)) holds = false;
+      }
+      if (!holds) {
+        let_go_web(board, to);
+        t.web_out &= static_cast<uint8_t>(~bit);
+      }
     }
-    if (from != p) continue;
-    const bool grappleable = pawn.pos.valid() && (board.tile(pawn.pos).is_building() || has_pawn(board, pawn.pos));
-    const bool immune = pawn.has_pilot(kPilotDisableImmunity) && !busy(ctx, pawn);
-    if (!emitter_ok || !grappleable || immune) {
-      pawn.webbed = false;
-      pawn.web_source = -1;
-      pawn.web_tile = kInvalidPoint;
-    }
+  }
+  if (t.web_in > 0 && has_pawn(board, p)) {
+    Pawn& pawn = *first_occupant(board, p);
+    if (!busy(ctx, pawn)) pawn.webbed = true;
   }
 }
 
@@ -205,14 +266,12 @@ void settle_pawn_frame(Board& board, Pawn& pawn, RulesContext& ctx) {
 namespace detail {
 
 void release_webs(Board& board, Point p) {
-  for (const Pawn* holder : occupants(board, p)) {
-    for (Pawn& pawn : board.pawns()) {
-      if (pawn.webbed && pawn.web_source == holder->uid) {
-        pawn.webbed = false;
-        pawn.web_source = -1;
-        pawn.web_tile = kInvalidPoint;
-      }
-    }
+  if (!p.valid()) return;
+  Tile& t = board.tile(p);
+  const uint8_t out = t.web_out;
+  t.web_out = 0;
+  for (int d = 0; d < 4; ++d) {
+    if (out >> d & 1) let_go_web(board, step(p, static_cast<Dir>(d)));
   }
 }
 

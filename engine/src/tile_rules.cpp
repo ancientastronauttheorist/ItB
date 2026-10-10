@@ -310,18 +310,13 @@ void damage_tile(Board& board, Point p, SpaceDamage sd, DamageMode mode, RulesCo
   // D16: BoardSpace::SetGrappled(dir toward the grapple point). This tile
   // (the webber's, Lua AddGrapple's first point) emits a web to its
   // neighbour in that direction; if the neighbour is grappleable (a building,
-  // or a living pawn or corpse) its first occupant is held.
+  // or a living pawn or corpse) it holds one web more and its first occupant
+  // is webbed (add_web).
   if (sd.grapple_source.x >= 0 && has_pawn(board, p)) {
     const Point d = sd.grapple_source - p;
     const Dir dir = std::abs(d.x) > std::abs(d.y) ? (d.x > 0 ? Dir::Right : Dir::Left)
                                                   : (d.y > 0 ? Dir::Down : Dir::Up);
-    const Point to = step(p, dir);
-    if (to.valid() && has_pawn(board, to)) {
-      Pawn* held = first_occupant(board, to);
-      held->webbed = true;
-      held->web_source = first_occupant(board, p)->uid;
-      held->web_tile = p;
-    }
+    add_web(board, p, dir);
   }
 
   // D17

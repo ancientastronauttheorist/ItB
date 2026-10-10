@@ -677,10 +677,12 @@ TEST_CASE("A3 any relocation frees a webbed pawn") {
   Board b;
   Pawn& p = vek(b, {3, 3});
   p.webbed = true;
-  p.web_source = 7;
+  b.tile({3, 3}).web_in = 1;
   teleport(b, p, {6, 6});
   CHECK_FALSE(p.webbed);
-  CHECK(p.web_source == -1);
+  // Only the pawn's flag: the web stays on the tile until the emitter's web
+  // check sees it empty.
+  CHECK(b.tile({3, 3}).web_in == 1);
   p.webbed = true;
   set_space(b, p, {6, 5});  // e.g. a push
   CHECK_FALSE(p.webbed);
