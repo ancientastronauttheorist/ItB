@@ -34,7 +34,7 @@ bool retreated(const Pawn& p, const Pawn* q) { return q && !p.minor && q->minor 
 
 std::string Score::describe() const {
   static constexpr const char* kNames[kScoreKeys] = {
-      "grid", "bldg_hp", "mechs", "mech_hp", "obj_fail", "obj", "kills", "vek_hp", "position"};
+      "grid", "bldg_hp", "mechs", "obj_fail", "mech_hp", "obj", "kills", "vek_hp", "position"};
   std::ostringstream out;
   for (int i = 0; i < kScoreKeys; ++i) out << (i ? " " : "") << kNames[i] << "=" << v[i];
   return out.str();

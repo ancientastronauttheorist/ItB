@@ -46,7 +46,7 @@ namespace {
 // it follows the plan's default outcome exactly.
 constexpr uint32_t kLuaSeed = 1;
 
-const char* kTierNames[kScoreKeys] = {"grid",       "building_hp", "mechs",  "mech_hp", "objectives_failed",
+const char* kTierNames[kScoreKeys] = {"grid",       "building_hp", "mechs",  "objectives_failed", "mech_hp",
                                       "objectives", "kills",       "vek_hp", "position"};
 
 json score_json(const Score& s) {

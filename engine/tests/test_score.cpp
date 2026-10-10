@@ -173,6 +173,17 @@ TEST_CASE("score: tiers compare lexicographically") {
   lose_mech_hp.find_pawn(0)->hp = 2;
   kill(lose_mech_hp, 10);
   CHECK(m.score(lose_mech_hp) < m.score(m.before));  // mech HP outranks a kill
+
+  // A star outranks mech HP (lost for good vs repaired after the mission),
+  // but a mech's life outranks a star.
+  Board save_tank_hurt = m.before;
+  save_tank_hurt.find_pawn(0)->hp = 1;
+  Board lose_tank_unhurt = m.before;
+  kill(lose_tank_unhurt, 5);
+  CHECK(m.score(save_tank_hurt) > m.score(lose_tank_unhurt));
+  Board save_tank_lose_mech = m.before;
+  kill(save_tank_lose_mech, 0);
+  CHECK(m.score(save_tank_lose_mech) < m.score(lose_tank_unhurt));
 }
 
 // ---- Objectives: shared ---------------------------------------------------------------

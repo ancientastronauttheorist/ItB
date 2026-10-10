@@ -54,7 +54,7 @@ NO_TARGET = (255, 255)
 MOVE_ONLY_WEAPON = "None"
 REPAIR_WEAPON = "_REPAIR"
 SCORE_TIERS = (
-    "grid", "building_hp", "mechs", "mech_hp", "objectives_failed",
+    "grid", "building_hp", "mechs", "objectives_failed", "mech_hp",
     "objectives", "kills", "vek_hp", "position",
 )
 # Tier weights for the single float ``Solution.score`` the bot prints and

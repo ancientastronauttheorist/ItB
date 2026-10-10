@@ -31,7 +31,7 @@ using nlohmann::json;
 namespace itb::tools {
 namespace {
 
-const char* kTierNames[kScoreKeys] = {"grid",     "building_hp", "mechs", "mech_hp", "objectives_failed",
+const char* kTierNames[kScoreKeys] = {"grid",     "building_hp", "mechs", "objectives_failed", "mech_hp",
                                       "objectives", "kills",     "vek_hp", "position"};
 
 Point json_point(const json& j) {

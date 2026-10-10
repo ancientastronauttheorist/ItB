@@ -98,6 +98,8 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
 - Shop: buy Grid Power until it's full, then spend on what helps the run.
   Don't leave reputation unspent.
 - The solver ranks turns by strict tiers, in this order: grid, buildings, mech
-  losses, mech HP, objectives, kills, position. Chance (Grid Defense, Lightning
-  order, death splits) is taken worst case. Don't override its plan by hand;
+  losses, objective stars failed, mech HP, objective progress, kills,
+  position. (Stars above mech HP since 2026-10-10: on 540 recorded turns it
+  saved 9 stars for 11 mech HP and cost nothing higher.) Chance (Grid
+  Defense, Lightning order, death splits) is taken worst case. Don't override its plan by hand;
   if it looks wrong, that's an engine bug to investigate.

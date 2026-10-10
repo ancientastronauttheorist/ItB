@@ -103,7 +103,7 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
   compared. A mismatch re-solves from the live board (`--max-resolves`),
   with the same budget. The budget is adaptive: `--time` (default 10 s) is
   the base, kept when the plan is proven in its first `--min-tiers` tiers
-  (default 5: grid, buildings, mechs lost, mech HP, objectives failed);
+  (default 5: grid, buildings, mechs lost, objectives failed, mech HP);
   otherwise the search goes on, proving only those tiers, up to
   `--max-time` (default 120 s). `--min-tiers 0` always stops at `--time`.
 - **end-turn** predicts the enemy phase from the board as left, sends
@@ -478,11 +478,15 @@ over chance outcomes, the score judges one concrete outcome.
    destroyed building (rubble, or water for a building on water) has left
    the sum with all its HP. A grid gain counts for the player (none happens
    mid-turn in the shipped missions).
-2. **Mechs.** Mechs alive, then mech HP, over the mechs on the board at the
+2. **Mechs and stars.** Mechs alive, then objective stars failed this turn
+   (`objectives.hpp`), then mech HP, over the mechs on the board at the
    start, both net: a repair offsets damage and a revived corpse counts +1
    (the game's own `Board:GetMechDamage`, which BONUS_MECHS reads, is max HP
-   minus current HP). A mech fallen into a chasm is lost with its HP.
-3. **Objectives** (`objectives.hpp`): stars failed this turn, then progress.
+   minus current HP). A mech fallen into a chasm is lost with its HP. Stars
+   rank above mech HP because a lost star is gone for good while mech HP is
+   restored after every mission (on the 540 recorded turns: 9 stars saved
+   for 11 mech HP, nothing lost in a higher tier).
+3. **Objective progress** (`objectives.hpp`).
 4. **Kills.** Enemies killed, then enemy HP removed (net, so psion
    regeneration counts against the player). Enemies are team-6 pawns that
    are not neutral: Vek and enemy bots alike (both threaten buildings the

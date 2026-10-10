@@ -732,7 +732,7 @@ def plan_summary(pred: dict) -> str:
     if not pred.get("searched", True):
         return "no active unit (nothing to solve)"
     wc = pred.get("worst_case") or {}
-    tiers = " ".join(f"{k}={wc[k]}" for k in ("grid", "building_hp", "mechs", "mech_hp", "objectives_failed",
+    tiers = " ".join(f"{k}={wc[k]}" for k in ("grid", "building_hp", "mechs", "objectives_failed", "mech_hp",
                                                  "objectives", "kills", "vek_hp", "position") if k in wc)
     proof = "proven optimal" if pred.get("proven_optimal") else \
         f"best found, optimal in the first {pred.get('proven_components', 0)} tiers"
