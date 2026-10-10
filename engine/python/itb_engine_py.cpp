@@ -566,6 +566,7 @@ class PyEngine {
     out["proven_components"] = r.proven_components;
     out["chance_exact"] = r.chance_exact;
     out["timed_out"] = r.timed_out;
+    out["extended"] = r.extended;
     out["warnings"] = r.warnings;
     out["stats"] = stats_json(r.stats);
     if (opt.value("simulate", true)) out["simulation"] = simulate(*main_, l, r.best.actions);
@@ -579,6 +580,8 @@ class PyEngine {
     SolveOptions so;
     so.time_limit_s = opt.value("time_limit", so.time_limit_s);
     so.node_limit = opt.value("node_limit", so.node_limit);
+    so.max_time_s = opt.value("max_time", so.max_time_s);
+    so.min_proven_tiers = opt.value("min_tiers", so.min_proven_tiers);
     so.beam_width = opt.value("beam_width", so.beam_width);
     so.extra_death_seeds = opt.value("extra_death_seeds", so.extra_death_seeds);
     so.max_chance_leaves = opt.value("max_chance_leaves", so.max_chance_leaves);
@@ -621,7 +624,7 @@ PYBIND11_MODULE(itb_engine, m) {
       .def("load", &PyEngine::load, py::arg("bridge_json"),
            "Load a bridge state (JSON text): the board as the engine sees it, plus loader warnings.")
       .def("solve", &PyEngine::solve, py::arg("bridge_json"), py::arg("options_json") = "{}",
-           "Perfect-turn search. Options: time_limit, node_limit, threads, beam_width, "
+           "Perfect-turn search. Options: time_limit, max_time, min_tiers, node_limit, threads, beam_width, "
            "extra_death_seeds, max_chance_leaves, tt_max_entries, simulate (default true).")
       .def("simulate", &PyEngine::simulate_plan, py::arg("bridge_json"), py::arg("plan_json"),
            py::call_guard<py::gil_scoped_release>(),

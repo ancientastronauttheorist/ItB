@@ -516,47 +516,52 @@ TEST_CASE("solver: anytime budget returns a plan and a sound bound") {
 
 // ---- Brute force cross-check -------------------------------------------------------
 
-TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
-  NEED_ENGINE();
-  // A 4x4 corner of the board (the rest is mountains): 1-2 mechs of mixed
-  // types with move 1-2, 1-2 Vek with an adjacent queued target, two
-  // buildings (Grid Defense rolls happen), sometimes water.
+// A 4x4 corner of the board (the rest is mountains): 1-2 mechs of mixed
+// types with move 1-2, 1-2 Vek with an adjacent queued target, two
+// buildings (Grid Defense rolls happen), sometimes water.
+static Board tiny_board(std::mt19937& rng) {
   static const char* kMechs[] = {"PunchMech", "TankMech", "ArtiMech", "LaserMech", "JudoMech", "ChargeMech"};
   static const char* kVek[] = {"Hornet1", "Scorpion1", "Firefly1"};
-  std::mt19937 rng(20261009);
   auto pick = [&](int n) { return static_cast<int>(rng() % static_cast<unsigned>(n)); };
+  Board b;
+  for (int i = 0; i < kTileCount; ++i) {
+    const Point p = Point::from_index(i);
+    if (p.x >= 4 || p.y >= 4) set_mountain(b, p);
+  }
+  std::vector<Point> free;
+  for (int x = 0; x < 4; ++x) {
+    for (int y = 0; y < 4; ++y) free.push_back({x, y});
+  }
+  std::shuffle(free.begin(), free.end(), rng);
+  size_t k = 0;
+  set_building(b, free[k++]);
+  set_building(b, free[k++]);
+  if (pick(3) == 0) b.tile(free[k++]).terrain = Terrain::Water;
+  const int mechs = 1 + pick(2);
+  for (int i = 0; i < mechs; ++i) {
+    const int32_t m = place(b, kMechs[pick(6)], free[k++], true);
+    P(b, m).move = static_cast<int8_t>(1 + pick(2));
+  }
+  const int vek = 1 + pick(2);
+  for (int i = 0; i < vek; ++i) {
+    const Point at = free[k++];
+    const int32_t h = place(b, kVek[pick(3)], at);
+    std::vector<Point> adj;
+    for (Point d : kDirVectors) {
+      if ((at + d).valid()) adj.push_back(at + d);
+    }
+    queue(b, h, adj[static_cast<size_t>(pick(static_cast<int>(adj.size())))]);
+  }
+  return b;
+}
+
+TEST_CASE("solver: tiny boards match a naive exhaustive enumeration") {
+  NEED_ENGINE();
+  std::mt19937 rng(20261009);
   int checked = 0, with_chance = 0;
   constexpr int kTrials = 30;
   for (int trial = 0; trial < kTrials; ++trial) {
-    Board b;
-    for (int i = 0; i < kTileCount; ++i) {
-      const Point p = Point::from_index(i);
-      if (p.x >= 4 || p.y >= 4) set_mountain(b, p);
-    }
-    std::vector<Point> free;
-    for (int x = 0; x < 4; ++x) {
-      for (int y = 0; y < 4; ++y) free.push_back({x, y});
-    }
-    std::shuffle(free.begin(), free.end(), rng);
-    size_t k = 0;
-    set_building(b, free[k++]);
-    set_building(b, free[k++]);
-    if (pick(3) == 0) b.tile(free[k++]).terrain = Terrain::Water;
-    const int mechs = 1 + pick(2);
-    for (int i = 0; i < mechs; ++i) {
-      const int32_t m = place(b, kMechs[pick(6)], free[k++], true);
-      P(b, m).move = static_cast<int8_t>(1 + pick(2));
-    }
-    const int vek = 1 + pick(2);
-    for (int i = 0; i < vek; ++i) {
-      const Point at = free[k++];
-      const int32_t h = place(b, kVek[pick(3)], at);
-      std::vector<Point> adj;
-      for (Point d : kDirVectors) {
-        if ((at + d).valid()) adj.push_back(at + d);
-      }
-      queue(b, h, adj[static_cast<size_t>(pick(static_cast<int>(adj.size())))]);
-    }
+    const Board b = tiny_board(rng);
     const TurnContext ctx = context();
     Naive naive{E, b, ctx};
     const Score want = naive.value(b);
@@ -650,4 +655,149 @@ TEST_CASE("solver: a recorded board, anytime and threaded, stays consistent") {
     CHECK(*again == r.best.worst_case);
   }
   for (const std::string& w : r.warnings) CHECK_MESSAGE(w.rfind("re-running", 0) != 0, w);
+}
+
+// ---- Adaptive budget (SolveOptions::min_proven_tiers, max_time_s) ------------------
+
+namespace {
+
+bool same_tiers(const Score& a, const Score& b, int tiers) {
+  for (int i = 0; i < tiers; ++i) {
+    if (a.v[static_cast<size_t>(i)] != b.v[static_cast<size_t>(i)]) return false;
+  }
+  return true;
+}
+
+SolveOptions recorded_options(const Recording& rec, Board& board) {
+  SolveOptions o;
+  for (const auto& [uid, pilot] : rec.pilots) {
+    if (Pawn* p = board.find_pawn(uid)) {
+      p->pilot_abilities |= engine()->pilot_ability(pilot);
+      o.repair_skills.emplace_back(uid, engine()->repair_skill(pilot));
+    }
+  }
+  return o;
+}
+
+}  // namespace
+
+TEST_CASE("solver: adaptive budget, unproven at the base time, proves the first tiers") {
+  NEED_ENGINE();
+  // A base time that runs out at once: the tier target is never met then (no
+  // plan yet), so the search goes on proving only the first k tiers. It must
+  // complete, be proven in k tiers, and agree with the full search there.
+  std::mt19937 rng(20261010);
+  int extended = 0, short_of_full = 0;
+  for (int trial = 0; trial < 12; ++trial) {
+    const Board b = tiny_board(rng);
+    const TurnContext ctx = context();
+    const SolveResult full = solve_turn(E, b, ctx, quick(120));
+    REQUIRE(full.proven_optimal);
+    for (int k : {1, 2, 4, 5}) {
+      SolveOptions o = quick(1e-9);
+      o.min_proven_tiers = k;
+      o.max_time_s = 120;
+      const SolveResult r = solve_turn(E, b, ctx, o);
+      INFO("trial " << trial << " k " << k << " full " << full.best.worst_case.describe() << " adaptive "
+                    << r.best.worst_case.describe());
+      CHECK(r.extended);
+      CHECK(r.proven_components >= k);
+      REQUIRE(r.upper_bound);
+      CHECK(*r.upper_bound >= r.best.worst_case);
+      CHECK(*r.upper_bound >= full.best.worst_case);  // sound
+      CHECK(same_tiers(r.best.worst_case, full.best.worst_case, k));
+      CHECK(r.best.worst_case <= full.best.worst_case);
+      if (r.proven_optimal) CHECK(r.best.worst_case == full.best.worst_case);
+      if (!r.best.contingent) {
+        const auto again = evaluate_plan(E, b, ctx, r.best.actions);
+        REQUIRE(again);
+        CHECK(*again == r.best.worst_case);
+      }
+      if (r.extended) ++extended;
+      if (r.best.worst_case < full.best.worst_case) ++short_of_full;
+    }
+  }
+  MESSAGE("adaptive tiny boards: " << extended << " extended, " << short_of_full
+                                   << " plans below the full optimum after the first tiers");
+}
+
+TEST_CASE("solver: adaptive budget stops at the base time once the tiers are proven") {
+  NEED_ENGINE();
+  // Nothing threatens a building: ending the turn at once already keeps the
+  // grid, so the grid tier is proven from the first plan, and the search
+  // stops at the base time even though it is far from complete.
+  Board b;
+  place(b, "PunchMech", {3, 6}, true);
+  place(b, "PunchMech", {4, 6}, true);
+  place(b, "PunchMech", {5, 6}, true);
+  const int32_t h = place(b, "Hornet1", {3, 3});
+  queue(b, h, {3, 2});
+  set_building(b, {6, 1});
+  SolveOptions o = quick(0.3);
+  o.max_time_s = 60;
+  o.min_proven_tiers = 1;
+  const SolveResult r = solve_turn(E, b, context(), o);
+  MESSAGE("base-time stop: " << r.stats.time_s << " s, " << r.best.worst_case.describe() << ", proven in "
+                             << r.proven_components << " tiers");
+  CHECK_FALSE(r.extended);
+  CHECK(r.proven_components >= 1);
+  if (!r.proven_optimal) {
+    CHECK(r.timed_out);
+    CHECK(r.stats.time_s >= 0.3);
+    CHECK(r.stats.time_s < 10);  // stopped near the base time, not the cap
+  }
+}
+
+TEST_CASE("solver: adaptive budget stops once a later plan meets the tier target") {
+  NEED_ENGINE();
+  // On this recorded board the first plans lose grid; the one that keeps it
+  // takes a while to find. Past the base time the search goes on until it
+  // has it (the grid tier is then proven), well before the cap.
+  std::string error;
+  auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/board_m07_turn01.json", &E.data(), &error);
+  REQUIRE_MESSAGE(rec, error);
+  Board board = rec->board;
+  SolveOptions o = recorded_options(*rec, board);
+  TurnContext ctx;
+  ctx.mission = rec->mission;
+  o.time_limit_s = 0.05;
+  o.max_time_s = 60;
+  o.min_proven_tiers = 1;
+  const SolveResult r = solve_turn(E, board, ctx, o);
+  MESSAGE("target stop: " << r.stats.time_s << " s, best plan at " << r.stats.best_plan_s << " s, "
+                          << r.best.worst_case.describe() << ", proven in " << r.proven_components << " tiers");
+  CHECK(r.proven_components >= 1);
+  CHECK(r.stats.time_s < 30);
+  if (r.extended) CHECK(r.stats.time_s >= 0.05);
+}
+
+TEST_CASE("solver: adaptive budget runs to the cap while the tiers are unproven") {
+  NEED_ENGINE();
+  // Every tier (Position has no cap, so only a completed search proves it):
+  // the search runs past the base time to the cap, then stops.
+  std::string error;
+  auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/board_m07_turn01.json", &E.data(), &error);
+  REQUIRE_MESSAGE(rec, error);
+  Board board = rec->board;
+  SolveOptions o = recorded_options(*rec, board);
+  TurnContext ctx;
+  ctx.mission = rec->mission;
+  o.time_limit_s = 0.2;
+  o.max_time_s = 0.8;
+  o.min_proven_tiers = kScoreKeys;
+  const SolveResult r = solve_turn(E, board, ctx, o);
+  MESSAGE("cap stop: " << r.stats.time_s << " s, proven " << r.proven_optimal << ", in "
+                       << r.proven_components << " tiers");
+  CHECK(r.extended);
+  if (!r.proven_optimal) {
+    CHECK(r.timed_out);
+    CHECK(r.stats.time_s >= 0.8);
+  }
+  REQUIRE(r.upper_bound);
+  CHECK(*r.upper_bound >= r.best.worst_case);
+  // Without the adaptive options the same base time stops at once.
+  o.min_proven_tiers = 0;
+  const SolveResult base = solve_turn(E, board, ctx, o);
+  CHECK_FALSE(base.extended);
+  if (!base.proven_optimal) CHECK(base.stats.time_s < 0.8);
 }

@@ -203,6 +203,8 @@ int run_solve(const SolveToolOptions& opt) {
     SolveOptions so;
     so.time_limit_s = opt.time_limit;
     so.node_limit = opt.node_limit;
+    so.max_time_s = opt.max_time;
+    so.min_proven_tiers = opt.min_tiers;
     so.helper_engines = helper_ptrs;
     if (opt.beam >= 0) so.beam_width = opt.beam;
     if (opt.tt_entries > 0) so.tt_max_entries = opt.tt_entries;
@@ -242,8 +244,9 @@ int run_solve(const SolveToolOptions& opt) {
     if (single || opt.verbose) {
       std::printf("%s m%02d turn %d %s\n", rec->run_id.c_str(), rec->mission_index, rec->turn, rec->mission_id.c_str());
       if (single) std::fputs(render_board(board).c_str(), stdout);
-      std::printf("plan (%s%s, %.2fs):\n", r.proven_optimal ? "proven optimal" : "best found",
-                  r.best.contingent ? ", contingent on a chance node" : "", r.stats.time_s);
+      std::printf("plan (%s%s%s, %.2fs):\n", r.proven_optimal ? "proven optimal" : "best found",
+                  r.best.contingent ? ", contingent on a chance node" : "",
+                  r.extended ? ", extended past the base time" : "", r.stats.time_s);
       Board cur = board;
       int i = 0;
       for (const PlayerAction& a : r.best.actions) std::printf("  %d. %s\n", ++i, describe_action(cur, a).c_str());
@@ -293,6 +296,7 @@ int run_solve(const SolveToolOptions& opt) {
              {"contingent", r.best.contingent},
              {"proven_components", r.proven_components},
              {"chance_exact", r.chance_exact},
+             {"extended", r.extended},
              {"warnings", r.warnings}};
       if (r.upper_bound) j["upper"] = r.upper_bound->v;
       if (row.recorded) {

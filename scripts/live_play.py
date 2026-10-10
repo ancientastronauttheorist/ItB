@@ -7,7 +7,7 @@ otherwise.
 
     python3 scripts/live_play.py status
     python3 scripts/live_play.py deploy [--tiles C5,D6,E5] [--dry-run]
-    python3 scripts/live_play.py turn [--time 10] [--threads 8] [--dry-run]
+    python3 scripts/live_play.py turn [--time 10] [--max-time 120] [--min-tiers 5] [--threads 8] [--dry-run]
     python3 scripts/live_play.py end-turn
     python3 scripts/live_play.py mission [--max-turns 8]
 
@@ -15,9 +15,12 @@ turn: solve the live board, then execute the plan one sub-action at a time
 (MOVE_NATIVE; ATTACK / TWO_CLICK_ATTACK with the weapon's slot; REPAIR) and
 after each one compare the live board with the engine's prediction (units by
 uid: type, tile, HP, statuses; building HP; never the save-based grid_power,
-which is stale mid-turn). A mismatch re-solves from the live board. Does not
-end the turn. Execution is native only: the bridge is put in EXEC_MODE native
-(every action is the game's own Pawn:FireWeapon with the mech selected, no
+which is stale mid-turn). A mismatch re-solves from the live board, with the
+same budget. Does not end the turn. The solve budget is adaptive: --time is
+the base, kept when the plan is proven optimal in its first --min-tiers score
+tiers (5: grid, buildings, mechs lost, mech HP, objectives failed); otherwise
+the search goes on, proving only those tiers, up to --max-time. Execution is
+native only: the bridge is put in EXEC_MODE native (every action is the game's own Pawn:FireWeapon with the mech selected, no
 emulated damage, moves or repairs) and a bridge without it is refused; an
 action the game refuses, or one sent while the game is busy, is an error ack
 and stops the turn (no fallback to SetSpace moves).
@@ -28,6 +31,10 @@ clicks End Turn only if the bridge cannot end the turn itself, checks the
 phase really changed, waits for the next player turn and compares grid, HP,
 statuses, survivors and mech tiles with the prediction (Vek tiles are not
 compared: the Vek move while the AI plans). New units are reported as spawns.
+Notes, not differences: a Vek picking up an acid pool while the AI plans; a
+Grid Defense resist the prediction (worst case: no resist) could not know; a
+Soldier Psion / Psion Abomination emerging from a hidden spawn (+1 HP to
+every Vek).
 
 mission: turn + end-turn until the mission ends; stops at the first anomaly
 (a step mismatch, a bridge error, an enemy-phase difference, a refused plan)
@@ -79,6 +86,18 @@ POLL = 0.5
 # Seconds to wait for the phase to change after each End Turn click.
 CLICK_WAIT = 8
 ACTION_TIMEOUT = 60.0
+
+# The adaptive solve budget's default tier target: the score tiers through
+# objectives failed (engine score.hpp ScoreKey: GridLost, BuildingHpLost,
+# MechsLost, MechHpLost, ObjectivesFailed), what the solver reports as
+# "optimal in the first 5 tiers".
+MIN_TIERS = 5
+
+# Psions whose mutation gives every Vek +1 HP (and max HP) the moment they
+# arrive (engine Leader 1 Soldier Psion, 7 Psion Abomination): a hidden spawn
+# that emerges as one changes HP the engine cannot predict.
+HEALTH_LEADERS = (1, 7)
+HEALTH_PSIONS = ("Jelly_Health1", "Jelly_Boss")
 
 STEP_FIELDS = ("fire", "acid", "frozen", "shield", "web")
 # Webs are released at End Turn and re-applied while the AI plans, after the
@@ -244,9 +263,14 @@ class Engine:
             raise Anomaly(f"itb_live {req.get('cmd')}: {reply.get('error')}")
         return reply
 
-    def solve(self, path: Path, time_limit: float) -> dict:
-        return self.request({"cmd": "solve", "state": str(path), "time_limit": time_limit,
-                             "threads": self.threads})
+    def solve(self, path: Path, time_limit: float, max_time: float = 0, min_tiers: int = 0) -> dict:
+        """max_time / min_tiers: the adaptive budget (SolveOptions::max_time_s,
+        min_proven_tiers): past time_limit, keep searching until the first
+        min_tiers score tiers are proven, up to max_time."""
+        req = {"cmd": "solve", "state": str(path), "time_limit": time_limit, "threads": self.threads}
+        if min_tiers > 0 and max_time > time_limit:
+            req.update(max_time=max_time, min_tiers=min_tiers)
+        return self.request(req)
 
     def predict(self, path: Path, plan: list) -> dict:
         return self.request({"cmd": "predict", "state": str(path), "plan": plan})
@@ -368,20 +392,39 @@ def describe_unit(u: dict) -> str:
     return f"{u['type']}#{u['uid']}"
 
 
+def _health_psion(u: dict) -> bool:
+    return u.get("leader") in HEALTH_LEADERS or u.get("type") in HEALTH_PSIONS
+
+
 def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
-                acid_pools: frozenset = frozenset()) -> tuple[list, list]:
+                acid_pools: frozenset = frozenset(), resist: dict | None = None) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
     numbers the units it creates itself). After the enemy phase only mech
     tiles are compared, and new units are notes (spawns), not differences.
-    `acid_pools` are the pool tiles before the enemy phase: a Vek that moves
-    onto one while planning next turn (the AI move the engine doesn't model)
-    picks up ACID, which is a note, not a difference."""
+
+    Expected differences after the enemy phase, reported as notes:
+    - `acid_pools` are the pool tiles before the enemy phase: a Vek that moves
+      onto one while planning next turn (the AI move the engine doesn't
+      model) picks up ACID.
+    - `resist` (only when the prediction had chance nodes): {"before": the
+      board before the enemy phase, "tiles": the Grid Defense roll tiles, or
+      None if the prediction does not list them}. The engine predicts every
+      roll as not resisted (the worst case); a building the prediction
+      damaged that the game shows with more HP (at most its HP before), with
+      the grid higher by exactly the HP the buildings kept, was resisted.
+    - A Soldier Psion / Psion Abomination that emerged from a hidden spawn
+      (new in the game, absent from the prediction) gives every Vek +1 HP on
+      arrival: +1 HP on a known non-mech unit of the psion's team."""
     diffs, notes = [], []
     fields = ENEMY_FIELDS if enemy_phase else STEP_FIELDS
     w = {u["uid"]: u for u in want["units"]}
     g = {u["uid"]: u for u in got["units"]}
+    psion = None
+    if enemy_phase and not any(_health_psion(u) for u in want["units"]):
+        psion = next((u for u in got["units"] if u["uid"] not in known and _health_psion(u)), None)
+    buffed = []
     for uid in sorted(known):
         a, b = w.get(uid), g.get(uid)
         if a is None and b is None:
@@ -398,7 +441,11 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
         if (a["x"], a["y"]) != (b["x"], b["y"]) and (not enemy_phase or a.get("mech")):
             diffs.append(f"{who}: engine at {visual(a['x'], a['y'])}, game at {visual(b['x'], b['y'])}")
         if a["hp"] != b["hp"]:
-            diffs.append(f"{who} hp: engine {a['hp']}, game {b['hp']}")
+            if (psion is not None and b["hp"] == a["hp"] + 1 and not a.get("mech")
+                    and a.get("team") == psion.get("team") and not _health_psion(a)):
+                buffed.append(who)
+            else:
+                diffs.append(f"{who} hp: engine {a['hp']}, game {b['hp']}")
         for f in fields:
             if bool(a.get(f)) != bool(b.get(f)):
                 moved = (a["x"], a["y"]) != (b["x"], b["y"])
@@ -408,6 +455,9 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                                  "moving during AI planning")
                     continue
                 diffs.append(f"{who} {f}: engine {bool(a.get(f))}, game {bool(b.get(f))}")
+    if buffed:
+        notes.append(f"{describe_unit(psion)} emerged at {visual(psion['x'], psion['y'])}: +1 HP to every Vek "
+                     f"({', '.join(buffed)})")
     key = (lambda u: (u["type"], u["hp"])) if enemy_phase else \
         (lambda u: (u["type"], u["x"], u["y"], u["hp"]) + tuple(bool(u.get(f)) for f in fields))
     new_w = Counter(key(u) for u in want["units"] if u["uid"] not in known)
@@ -420,11 +470,31 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
         (notes if enemy_phase else diffs).append(line)
     wb = {(b["x"], b["y"]): b["hp"] for b in want["buildings"]}
     gb = {(b["x"], b["y"]): b["hp"] for b in got["buildings"]}
+    before = {(b["x"], b["y"]): b["hp"] for b in (resist or {}).get("before", {}).get("buildings", [])}
+    tiles = (resist or {}).get("tiles")
+    resisted, kept = [], 0
     for xy in sorted(set(wb) | set(gb)):
-        if wb.get(xy) != gb.get(xy):
-            diffs.append(f"building {visual(*xy)} hp: engine {wb.get(xy, 'gone')}, game {gb.get(xy, 'gone')}")
-    if enemy_phase and want.get("grid_power") != got.get("grid_power"):
-        diffs.append(f"grid: engine {want.get('grid_power')}, game {got.get('grid_power')}")
+        if wb.get(xy) == gb.get(xy):
+            continue
+        engine_hp, game_hp = wb.get(xy, 0), gb.get(xy)
+        if (enemy_phase and resist is not None and game_hp is not None and xy in before
+                and engine_hp < game_hp <= before[xy] and (tiles is None or xy in tiles)):
+            resisted.append((xy, wb.get(xy, "gone"), game_hp))
+            kept += game_hp - engine_hp
+            continue
+        diffs.append(f"building {visual(*xy)} hp: engine {wb.get(xy, 'gone')}, game {gb.get(xy, 'gone')}")
+    grid_w, grid_g = want.get("grid_power"), got.get("grid_power")
+    if resisted:
+        if enemy_phase and isinstance(grid_w, int) and isinstance(grid_g, int) and grid_g - grid_w == kept:
+            for xy, e, gm in resisted:
+                notes.append(f"Grid Defense resisted at {visual(*xy)} (building hp: engine {e}, game {gm})")
+            notes.append(f"grid: engine {grid_w}, game {grid_g} (Grid Defense)")
+            grid_w = grid_g
+        else:
+            for xy, e, gm in resisted:
+                diffs.append(f"building {visual(*xy)} hp: engine {e}, game {gm}")
+    if enemy_phase and grid_w != grid_g:
+        diffs.append(f"grid: engine {grid_w}, game {grid_g}")
     return diffs, notes
 
 
@@ -538,6 +608,8 @@ def plan_summary(pred: dict) -> str:
                                                  "objectives", "kills", "vek_hp", "position") if k in wc)
     proof = "proven optimal" if pred.get("proven_optimal") else \
         f"best found, optimal in the first {pred.get('proven_components', 0)} tiers"
+    if pred.get("extended"):
+        proof += ", extended past the base time"
     secs = (pred.get("stats") or {}).get("time_s", 0)
     return f"{proof} ({secs:.1f}s); worst case {tiers}"
 
@@ -611,16 +683,20 @@ def play_turn(ctx) -> list:
     names = {u["uid"]: u.get("type", "?") for u in units(state)}
     moved: set = set()
     anomalies: list = []
-    say(f"== {state.get('mission_id')} turn {state.get('turn')}: solving ({args.time:g}s, {args.threads} threads)")
+    budget = f"{args.time:g}s" + (f", up to {args.max_time:g}s until {args.min_tiers} tiers are proven"
+                                  if args.min_tiers > 0 and args.max_time > args.time else "")
+    say(f"== {state.get('mission_id')} turn {state.get('turn')}: solving ({budget}, {args.threads} threads)")
 
     def solve(st: dict, label: str) -> tuple[Path, dict]:
         solver_input, patches = patch_state(st, ctx.loadout, moved)
         path = run.save_state(solver_input, label, {"patches": patches} if patches else None)
         if patches:
             run.save_state(st, label + "_raw")
-        pred = engine.solve(path, args.time)
+        pred = engine.solve(path, args.time, max_time=args.max_time, min_tiers=args.min_tiers)
         run.save_json(prediction_path(path).name, pred)
-        run.event("solve", {"state": path.name, "plan": pred.get("plan"), "proven": pred.get("proven_optimal")})
+        run.event("solve", {"state": path.name, "plan": pred.get("plan"), "proven": pred.get("proven_optimal"),
+                            "proven_components": pred.get("proven_components"),
+                            "time_s": (pred.get("stats") or {}).get("time_s")})
         return path, pred
 
     start = state
@@ -702,6 +778,17 @@ def phase_left(bridge: Bridge, turn: int, timeout: float) -> bool:
     return False
 
 
+def resist_info(pred: dict) -> dict | None:
+    """diff_boards' `resist` for an enemy-phase prediction: None unless the
+    prediction had chance nodes (Grid Defense rolls among them)."""
+    phase = pred.get("enemy_phase") or {}
+    if not phase.get("chance_nodes"):
+        return None
+    rolls = phase.get("grid_defense")
+    tiles = None if rolls is None else {tuple(r["point"]) for r in rolls if r.get("point")}
+    return {"before": pred.get("after_player") or pred.get("start") or {}, "tiles": tiles}
+
+
 def end_turn(ctx) -> list:
     """End Turn, wait for the next player turn, compare with the engine."""
     bridge, engine, run, args = ctx.bridge, ctx.engine, ctx.run, ctx.args
@@ -769,7 +856,8 @@ def end_turn(ctx) -> list:
     path = run.save_state(after, "after_enemy")
     live = engine.board(path)
     pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid"))
-    diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools)
+    diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
+                               resist=resist_info(pred))
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})
     spawns = [f"{describe_unit(u)} at {visual(u['x'], u['y'])}" for u in live["units"] if u["uid"] not in known]
     if spawns:
@@ -1000,7 +1088,13 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--max-heartbeat-age", type=float, default=10.0, help="refuse if the heartbeat is older (s)")
     common.add_argument("--loadout", help="JSON {mech type: [weapon ids]} for bridges without weapons_exact")
     engine = argparse.ArgumentParser(add_help=False)
-    engine.add_argument("--time", type=float, default=10.0, help="solver time limit per solve (s)")
+    engine.add_argument("--time", type=float, default=10.0,
+                        help="base solver time per solve (s): the search stops here once --min-tiers are proven")
+    engine.add_argument("--max-time", type=float, default=120.0,
+                        help="hard cap per solve (s) while the first --min-tiers tiers are unproven")
+    engine.add_argument("--min-tiers", type=int, default=MIN_TIERS,
+                        help="score tiers to prove before stopping at --time (5: grid, buildings, mechs lost, "
+                             "mech HP, objectives failed; 0: always stop at --time)")
     engine.add_argument("--threads", type=int, default=8)
     engine.add_argument("--game", help="game install for the engine (default: ITB_GAME_DIR / build default)")
     engine.add_argument("--max-resolves", type=int, default=3, help="re-solves per turn before giving up")

@@ -54,7 +54,9 @@ the old bot's recorded plan scored the same way. On a directory it takes
 and ends with proof rates, times to prove and how our plans compare with the
 recorded ones. `--beam W` sets the beam width (0 = off); `--lua-counts`
 prints every Lua call by weapon table, method and the Lua function that ran
-(`@native` for calls a C++ port answered).
+(`@native` for calls a C++ port answered). `--max-time S --min-tiers K`
+turns on the adaptive budget ("Perfect-turn search", Anytime): `--time` is
+then the base time, kept only if the first K tiers are proven by then.
 
 `--diff-weapons` fires every ported weapon table (one per distinct
 behaviour; `--all-tables` for all) from every pawn of every board, at every
@@ -77,7 +79,7 @@ is stale or `bridge_ext_disabled` is set, and every command takes `--dry-run`.
 ```bash
 python3 scripts/live_play.py status                 # bridge + board summary
 python3 scripts/live_play.py deploy [--tiles C5,D6,E5]
-python3 scripts/live_play.py turn --time 10 --threads 8
+python3 scripts/live_play.py turn --time 30 --max-time 120 --min-tiers 5 --threads 8
 python3 scripts/live_play.py end-turn
 python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at the first anomaly
 ```
@@ -98,7 +100,12 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
   compares it with the predicted board: units by uid (type, tile, HP, fire,
   acid, frozen, shield, web), units the engine created by type/tile/HP, and
   building HP. The save-based `grid_power` is stale mid-turn and is not
-  compared. A mismatch re-solves from the live board (`--max-resolves`).
+  compared. A mismatch re-solves from the live board (`--max-resolves`),
+  with the same budget. The budget is adaptive: `--time` (default 10 s) is
+  the base, kept when the plan is proven in its first `--min-tiers` tiers
+  (default 5: grid, buildings, mechs lost, mech HP, objectives failed);
+  otherwise the search goes on, proving only those tiers, up to
+  `--max-time` (default 120 s). `--min-tiers 0` always stops at `--time`.
 - **end-turn** predicts the enemy phase from the board as left, sends
   `END_TURN` (it deactivates the mechs, so the "units can still act" dialog
   never appears; on this build the bridge cannot end the turn itself and
@@ -107,7 +114,14 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
   changed, waits for the next player turn and compares grid, HP, statuses,
   survivors and mech tiles. Vek tiles and webs are not compared (the AI
   moves and webs after the point the engine stops); new units are reported
-  as spawns.
+  as spawns. Outcomes the engine cannot know are notes, not anomalies: a
+  Vek that picks up an acid pool moving while the AI plans; Grid Defense
+  (the prediction takes every roll as not resisted, its worst case: with
+  chance nodes in the prediction, a building it damaged that the game shows
+  with more HP, at most its HP before the phase and on a tile with a roll,
+  with the grid higher by exactly the HP kept); a Soldier Psion or Psion
+  Abomination emerging from a hidden spawn (every Vek of its team +1 HP at
+  once). Anything else stops `mission`.
 - **deploy** uses the bridge's `drop_zone` (refused tiles are already left
   out, and `DEPLOY` refuses them anyway), checks every mech's tile in the
   state, and leaves Confirm to you.
@@ -129,7 +143,7 @@ loads every state under `recordings/live/`.
 The engine side is `itb_live` (`tools/live_tool.hpp`), JSON in and out:
 
 ```bash
-engine/build/itb_live solve state.json --time 10 --threads 8 [--out FILE] [--pretty]
+engine/build/itb_live solve state.json --time 10 [--max-time 120 --min-tiers 5] --threads 8 [--out FILE] [--pretty]
 engine/build/itb_live predict state.json --plan @plan.json
 engine/build/itb_live board state.json
 engine/build/itb_live serve --threads 8   # one JSON request per stdin line (what live_play.py uses)
@@ -139,13 +153,18 @@ engine/build/itb_live serve --threads 8   # one JSON request per stdin line (wha
 or repair, each with the predicted `board` after it, its status, chance
 nodes and timing flags; `weapon_index` is the slot in the unit's weapons),
 `start` / `after_player` / `after_enemy` boards, `enemy_phase` (events,
-`emerged_unknown`, `mission_ended`, exactness), `worst_case` and
+`emerged_unknown`, `mission_ended`, exactness, `chance_nodes` and the
+`grid_defense` rolls with their tile and grid at stake), `worst_case` and
 `upper_bound` by tier, `proven_optimal`, `proven_components`,
-`chance_exact`, `timed_out`, `contingent`, `stats` and `warnings`. The
+`chance_exact`, `timed_out`, `extended` (the adaptive budget ran past the
+base time), `contingent`, `stats` and `warnings`. Requests take
+`time_limit`, `node_limit`, `beam_width`, `threads`, and for the adaptive
+budget `max_time` and `min_tiers`. The
 simulation follows the plan's default chance outcome (no Grid Defense
 resist, first branch), reseeding Lua as the solver does. Boards are compact:
 `grid_power`, `buildings` (x, y, hp) and living on-board `units` sorted by
-uid (uid, type, x, y, hp, team, mech, fire, acid, frozen, shield, web).
+uid (uid, type, x, y, hp, team, mech, fire, acid, frozen, shield, web;
+`leader` for a psion: its mutation number).
 
 ## Python bindings
 
@@ -624,6 +643,36 @@ because every interval is) and `proven_components`: the number of leading
 tiers in which the plan is proven optimal (no plan has a better prefix).
 `proven_optimal` is only set when a search ran to its end with every chance
 node enumerated.
+
+**Adaptive budget.** `SolveOptions::min_proven_tiers` (k) and `max_time_s`
+(both set, `max_time_s > time_limit_s > 0`): at `time_limit_s` the search
+stops only if the best plan is proven in its first k tiers; otherwise it
+keeps going until it is, or until `max_time_s` (`SolveResult::extended`).
+Before the search completes the root's bound is the root's tier bound
+(unsearched children may still reach it), so "proven in k tiers" means the
+plan's first k components equal that bound's, a check `improve` makes for
+each new incumbent (an atomic flag; the stop check reads it). Past the base
+time every alpha is the incumbent with tiers k.. raised to `INT32_MAX`: a
+node or chance outcome that cannot beat the plan's first k tiers is cut,
+including everything that would only improve later tiers, so the proof of
+the first k tiers no longer waits for the rest. Raising alpha only adds
+cutoffs, and every cut reports a sound interval, so bounds stay sound; a
+search completed this way proves the first k tiers (and is
+`proven_optimal` only if its bound meets the plan in every tier). Later
+tiers keep the plan found by then. Without both options nothing changes.
+`test_solver.cpp` checks it on tiny boards against the full search (the
+first k tiers agree, k = 1, 2, 4, 5) and the stop at the base time and at
+the cap.
+
+Four hard live boards (`recordings/live/20261009_233724/`, 3 units, 8
+threads, other jobs running; live play had stopped them at 30 s unproven in
+the first 0, 0, 0 and 4 tiers), `--time 30 --max-time 120 --min-tiers 5`:
+`m22_turn_04` proven optimal at 38 s (a plain 120 s search: 44 s),
+`m20_turn_02` at 79 s (84 s), `m12_turn_03` and `m10_turn_02` still short at
+120 s (as is a plain 120 s search); with a 300 s cap they reach the target at
+127 s (5 tiers) and 252 s (proven optimal). Every plan's value equals the
+30 s plan's: on these boards the extra time buys the proof, not a better
+plan.
 
 **Validation.** `test_solver.cpp`: hand-built boards with known optima
 (save a building, the greedy kill that loses a building, two threats and two
