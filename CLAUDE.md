@@ -87,7 +87,9 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
 
 ## Play preferences
 
-- New runs: Easy, Advanced Edition on, Balanced Roll squad.
+- New runs: **Hard**, Advanced Edition on, Balanced Roll squad. The goal is
+  to perfect Hard, then move to Unfair. (Easy was the achievement era's
+  setting.)
 - Shop: buy Grid Power until it's full, then spend on what helps the run.
   Don't leave reputation unspent.
 - The solver ranks turns by strict tiers, in this order: grid, buildings, mech
