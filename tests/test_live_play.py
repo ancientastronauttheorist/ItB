@@ -415,6 +415,27 @@ class LivePlayTest(unittest.TestCase):
         self.assertEqual(self.fb.state["turn"], 2)
         self.assertTrue(list(self.run_dir().glob("m00_turn_02_after_enemy_*.json")))
 
+    def test_end_turn_waits_for_a_late_click_instead_of_stopping(self):
+        self.bridge()
+        old = lp.CLICK_WAIT
+        lp.CLICK_WAIT = 0.2
+        self.addCleanup(setattr, lp, "CLICK_WAIT", old)
+
+        def late_click(xy):
+            # Only the third click registers, after its own wait has run out.
+            self.clicks.append(xy)
+            if len(self.clicks) == 3:
+                def later():
+                    time.sleep(0.6)
+                    self.fb.advance()
+                threading.Thread(target=later, daemon=True).start()
+            return True
+
+        rc = lp.main(["end-turn", "--new-run"], engine=FakeEngine(), click=late_click)
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(self.clicks), 3)
+        self.assertEqual(self.fb.state["turn"], 2)
+
     def test_end_turn_without_a_click_when_the_bridge_ends_it(self):
         self.bridge()
         self.fb.end_turn_ack = "OK END_TURN phase=combat_player method=EndTurn"

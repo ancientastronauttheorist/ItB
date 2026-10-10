@@ -76,6 +76,8 @@ HEARTBEAT = lv.BRIDGE / "itb_bridge_heartbeat"
 SETTLE_INTERVAL = 0.4
 SETTLE_TRIES = 8
 POLL = 0.5
+# Seconds to wait for the phase to change after each End Turn click.
+CLICK_WAIT = 8
 ACTION_TIMEOUT = 60.0
 
 STEP_FIELDS = ("fire", "acid", "frozen", "shield", "web")
@@ -739,10 +741,17 @@ def end_turn(ctx) -> list:
                 left = phase_left(bridge, turn, args.timeout)
                 break
             run.event("click", {"end_turn": list(args.end_turn_xy), "attempt": attempt + 1})
-            left = phase_left(bridge, turn, 8)
+            left = phase_left(bridge, turn, CLICK_WAIT)
             if left:
                 break
-            say(f"  End Turn click {attempt + 1} did not register; retrying")
+            if attempt < 2:
+                say(f"  End Turn click {attempt + 1} did not register; retrying")
+        if not left and not args.no_click:
+            # A click can register after its wait ran out (live 2026-10-10:
+            # the third click's enemy phase began just past the 8 s), so wait
+            # the full timeout before giving up rather than click again.
+            say("  End Turn click 3 did not register yet; waiting")
+            left = phase_left(bridge, turn, args.timeout)
     if not left:
         raise Anomaly("the turn did not end (phase still combat_player)")
 
