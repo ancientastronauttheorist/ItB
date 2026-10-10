@@ -668,6 +668,19 @@ old fields keep coming. Save files are parsed once per version, not per
 dump. `grid_lost_this_turn` / `grid_power_estimate` track grid loss inside
 a turn from building HP (the save grid only changes at turn boundaries).
 
+Settled states (after the 2026-10-09 cave turns 1 and 6, where a dump read
+mid-animation showed Ranged_Ignite's pushed Vek on their old tiles): every
+dump carries `busy_state` (`Board:GetBusyState()`, 0 = idle), `board_busy`,
+`command_waiting` (a command still waits for its effects), `stable` (neither)
+and `dump_seq`. ATTACK, TWO_CLICK_ATTACK, MOVE_ATTACK and REPAIR wait until
+the board is idle (15 s budget) in every speed mode; only SetSpace moves keep
+the 2 s fast-mode cap. When a dump is not stable, the bridge dumps again on
+the first idle frame. Readers should diff only `stable` states; the loader
+warns on the others (`Recording::board_busy`, `board_busy` in
+`Engine.load`). Unit `max_hp` falls back to the save's `max_health`
+(`Pawn:GetMaxHealth` is not bound), so Networked Armor and pilot bonuses
+count and a Regen pilot's turn-start heal is predicted.
+
 `itb_inspect --predict <state> [--actions ...] [--branches]` prints the
 engine's outcomes for a bridge state; `scripts/live_validate.py` runs a
 scenario end to end against the game. See `LIVE_TEST_PLAN.md`.

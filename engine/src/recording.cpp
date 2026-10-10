@@ -524,6 +524,15 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
 
   rec.mission_id = get_or<std::string>(s, "mission_id", "");
   rec.phase = get_or<std::string>(s, "phase", "");
+  // A dump taken while effects were still resolving (bridge `stable`
+  // false): pushes in flight have not moved their pawns yet, deaths may
+  // be pending. Loaded as is, flagged for the caller.
+  rec.board_busy = get_or<bool>(s, "board_busy", false) || get_or<bool>(s, "command_waiting", false);
+  if (rec.board_busy) {
+    rec.warnings.push_back("state dumped while the board was busy (busy_state " +
+                           std::to_string(get_or<int>(s, "busy_state", -1)) +
+                           "): positions and HP may be mid-animation");
+  }
   Board& b = rec.board;
   b.grid_power = get_or<int>(s, "grid_power", b.grid_power);
   b.grid_power_max = get_or<int>(s, "grid_power_max", b.grid_power_max);

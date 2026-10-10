@@ -328,4 +328,36 @@ TEST_CASE("boards without the extension fields load as before") {
   for (const Pawn& p : rec->board.pawns()) {
     for (int8_t u : p.uses) CHECK(u == -1);
   }
+  CHECK_FALSE(rec->board_busy);
+}
+
+TEST_CASE("a state dumped while the board was busy is flagged") {
+  const auto path = std::filesystem::temp_directory_path() / "itb_recording_busy.json";
+  auto load = [&](const std::string& extra) {
+    {
+      std::ofstream out(path);
+      out << R"({"tiles": [], "units": [{"uid": 1, "type": "PunchMech", "x": 2, "y": 2, "hp": 3,
+                 "max_hp": 3, "team": 1, "mech": true, "active": true}])"
+          << extra << "}";
+    }
+    std::string error;
+    auto rec = load_recording(path, nullptr, &error);
+    std::filesystem::remove(path);
+    REQUIRE_MESSAGE(rec.has_value(), error);
+    return *rec;
+  };
+  auto mentions_busy = [](const Recording& r) {
+    return std::any_of(r.warnings.begin(), r.warnings.end(),
+                       [](const std::string& w) { return w.find("board was busy") != std::string::npos; });
+  };
+  // Mid-animation (live 2026-10-09): Ranged_Ignite's side pushes still running.
+  const Recording busy = load(R"(, "board_busy": true, "busy_state": 1, "stable": false)");
+  CHECK(busy.board_busy);
+  CHECK(mentions_busy(busy));
+  // A bridge command still waiting for its effects.
+  CHECK(load(R"(, "board_busy": false, "busy_state": 0, "command_waiting": true, "stable": false)").board_busy);
+  // Settled.
+  const Recording settled = load(R"(, "board_busy": false, "busy_state": 0, "command_waiting": false, "stable": true)");
+  CHECK_FALSE(settled.board_busy);
+  CHECK_FALSE(mentions_busy(settled));
 }
