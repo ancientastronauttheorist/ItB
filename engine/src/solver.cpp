@@ -469,7 +469,19 @@ class Worker {
   // Beam pre-pass (thread 0), then the full search. Returns the root's
   // interval; complete() says whether the search ran to its end.
   Interval run() {
-    if (index_ == 0 && o_.beam_width > 0) beam();
+    if (index_ == 0 && o_.beam_width > 0) {
+      // With helper threads searching meanwhile, thread 0 widens the beam
+      // (x3 per round) for up to 40% of the time limit: wider beams find
+      // plans whose first unit turns look bad on their own.
+      size_t width = static_cast<size_t>(o_.beam_width);
+      const double until = o_.time_limit_s > 0 ? 0.4 * o_.time_limit_s : 0;
+      beam(width, until);
+      while (sh_.threads > 1 && until > 0 && width < 1000 && !budget_exceeded() &&
+             seconds_since(sh_.start) < until) {
+        width *= 3;
+        beam(width, until);
+      }
+    }
     const BoardHash h = hash_board(sh_.root, HashMode::Search);
     std::vector<SubAction> pv;
     const Interval r = search(sh_.root, h, kLow, kHigh, true, &pv, 0);
@@ -707,7 +719,7 @@ class Worker {
   // keep plans whose value needs the other units' turns, the beam keeps the
   // best `beam_width` states for every set of units that have played. It
   // only finds incumbents; the search proper proves them.
-  void beam() {
+  void beam(size_t width, double until) {
     struct State {
       Board board;
       std::vector<SubAction> line;
@@ -737,7 +749,10 @@ class Worker {
           if (st.played & (1u << u)) continue;
           const Pawn* p = st.board.find_pawn(units[u]);
           if (!p || !unit_can_play(*p)) continue;
-          if (budget_exceeded()) return;
+          if (budget_exceeded() || (until > 0 && width > static_cast<size_t>(o_.beam_width) &&
+                                    seconds_since(sh_.start) >= until)) {
+            return;
+          }
           const uint32_t played = st.played | (1u << u);
           // Where the unit acts from: here, or after each of its moves.
           std::vector<State> bases;
@@ -772,7 +787,7 @@ class Worker {
       std::vector<State> kept;
       for (size_t i = 0, run = 0; i < next.size(); ++i) {
         run = (i > 0 && next[i].played == next[i - 1].played) ? run + 1 : 0;
-        if (run < static_cast<size_t>(o_.beam_width)) kept.push_back(std::move(next[i]));
+        if (run < width) kept.push_back(std::move(next[i]));
       }
       beam = std::move(kept);
     }

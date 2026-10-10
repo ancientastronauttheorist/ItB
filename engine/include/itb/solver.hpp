@@ -85,8 +85,9 @@ struct SolveOptions {
   bool order_children = true;
   // Entries per table (transposition table, end-of-turn memo).
   size_t tt_max_entries = size_t{1} << 21;
-  // Beam pre-pass for a quick first plan: this many states kept per unit
-  // turn (0 = off).
+  // Beam pre-pass for a quick first plan: this many states kept per set of
+  // units that have played (0 = off). With helper threads and a time limit,
+  // thread 0 then widens it (x3 per round) for up to 40% of the time.
   int beam_width = 6;
   // More engines to search with, one thread each (with `engine`, threads =
   // 1 + helper_engines.size()). Each must be loaded from the same game
