@@ -158,6 +158,7 @@ class FakeBridge:
         self.commands = []
         self.damage = 1
         self.refuse_native = False
+        self.exec_mode = True  # False: a bridge from before EXEC_MODE
         self.end_turn_ack = "NEEDS_MCP_CLICK END_TURN method=SetActive"
         self.refused_deploy = set()
         self.export_moved = True
@@ -204,9 +205,13 @@ class FakeBridge:
             return f"OK SNAPSHOT {path}"
         if name == "LUA":
             return "OK LUA: refresh"
+        if name == "EXEC_MODE":
+            if not self.exec_mode:
+                return "ERROR: unknown command: EXEC_MODE"
+            return f"OK EXEC_MODE {args[0]}"
         if name in ("MOVE_NATIVE", "MOVE"):
             if name == "MOVE_NATIVE" and self.refuse_native:
-                return "ERROR: unknown command: MOVE_NATIVE"
+                return "ERROR: MOVE_NATIVE FireWeapon[0] returned 0: nothing fired"
             uid, x, y = (int(v) for v in args)
             apply(self.state, {"sub": "move", "uid": uid, "to": [x, y]})
             return f"OK {name} {uid} to {x},{y} [FireWeapon[0]] at {x},{y}"
@@ -285,7 +290,7 @@ class LivePlayTest(unittest.TestCase):
         return Path(json.loads(lp.CURRENT.read_text())["run"])
 
     def acting(self):
-        return [c for c in self.fb.commands if c.split()[0] not in ("SNAPSHOT", "LUA")]
+        return [c for c in self.fb.commands if c.split()[0] not in ("SNAPSHOT", "LUA", "EXEC_MODE")]
 
     # ---------------------------------------------------------------- safety
 
@@ -370,11 +375,24 @@ class LivePlayTest(unittest.TestCase):
         solve = json.loads((self.run_dir() / "m00_turn_01_solve.json").read_text())
         self.assertTrue(solve["data"]["partial_re_solve"])
 
-    def test_move_native_falls_back_to_move(self):
+    def test_native_only_execution(self):
+        self.bridge()
+        self.assertEqual(self.run_cmd(["turn"]), 0)
+        self.assertEqual(self.fb.commands.count("EXEC_MODE native"), 1)
+        first_action = next(i for i, c in enumerate(self.fb.commands) if c.startswith("MOVE_NATIVE"))
+        self.assertLess(self.fb.commands.index("EXEC_MODE native"), first_action)
+
+    def test_a_refused_move_stops_without_a_fallback(self):
         self.bridge()
         self.fb.refuse_native = True
-        self.assertEqual(self.run_cmd(["turn"]), 0)
-        self.assertEqual(self.acting()[:2], ["MOVE_NATIVE 0 3 4", "MOVE 0 3 4"])
+        self.assertEqual(self.run_cmd(["turn"]), 1)
+        self.assertEqual(self.acting(), ["MOVE_NATIVE 0 3 4"])
+
+    def test_refuses_a_bridge_without_native_execution(self):
+        self.bridge()
+        self.fb.exec_mode = False
+        self.assertEqual(self.run_cmd(["turn"]), 2)
+        self.assertEqual(self.acting(), [])
 
     def test_old_bridge_moved_flags_are_tracked(self):
         self.bridge()

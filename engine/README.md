@@ -73,9 +73,18 @@ python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at
 ```
 
 - **turn** solves the live board (`Visibility::Player`), then executes the
-  plan one sub-action at a time (`MOVE_NATIVE`, else `MOVE`; `ATTACK` /
+  plan one sub-action at a time (`MOVE_NATIVE`; `ATTACK` /
   `TWO_CLICK_ATTACK` with the slot of the exact weapon id from
-  `weapon_slots`; `REPAIR`). After each, it takes a settled bridge dump and
+  `weapon_slots`; `REPAIR`). Execution is native only: it sends
+  `EXEC_MODE native` first (an older bridge is refused), and the bridge
+  then plays every action as the game's own `Pawn:FireWeapon` with the mech
+  selected (`SetPawn`, as a click does; weapon scripts read the global
+  `Pawn`), refuses it while the board or the mech is busy, acks an error
+  when the game does not fire (`FireWeapon` returned 0/2/3), and acks only
+  once the board and the mech are idle. No fallback to `MOVE`/SetSpace, no
+  emulated transit damage, flips or repairs (those exist only behind
+  `EXEC_MODE legacy`, the old Python bot's opt-in via
+  `ITB_BRIDGE_EXEC_MODE=legacy`). After each, it takes a settled bridge dump and
   compares it with the predicted board: units by uid (type, tile, HP, fire,
   acid, frozen, shield, web), units the engine created by type/tile/HP, and
   building HP. The save-based `grid_power` is stale mid-turn and is not

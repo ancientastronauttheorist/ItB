@@ -321,8 +321,60 @@ returns `ret=0`.
 From the first session: the old `MOVE` (SetSpace in fast mode) skips
 arrival effects. In every run above, compare the ack of `MOVE_NATIVE`
 (method `FireWeapon[0]` expected) and the unit's `moved` flag in the next
-dump (`True`, `moved_source turn_start`). If `MOVE_NATIVE` falls back to
-`Move` or `SetSpace`, its ack says why.
+dump (`True`, `moved_source turn_start`). Since bridge ext 2 `MOVE_NATIVE`
+selects the mech first and never falls back: a move the game refuses is
+`ERROR: MOVE_NATIVE FireWeapon[0] returned 0`. In the 2026-10-09 session
+every move after the first turn of a mission acked `[Move] (FireWeapon[0]:
+returned 0)`, i.e. the Move skill refused it (the global `Pawn` was a Vek);
+with the selection fix they must ack `[FireWeapon[0]]`. Scenario actions
+without `"native"` still use the old SetSpace `MOVE`, wrapped in
+`EXEC_MODE legacy` / `EXEC_MODE native` by `live_validate.py`.
+
+## 12. Leap weapons and the removed bridge patches (bridge ext 2)
+
+The 2026-10-09 Hard run (Mission_Barrels turn 4,
+`recordings/live/20261009_233724/`): Aerial Bombs from (4,4) to the
+**water** tile (2,4) over a Jelly on (3,4). The bridge had not selected the
+Jet, so the game's `Brute_Jetmech:GetTargetArea` used the path profile of
+the last selected pawn (a ground Vek), for which water is blocked;
+`FireWeapon` returned 0, the Jet stayed, and the old bridge acked OK after
+smoking (3,4) itself. Bridge ext 2 selects the actor, requires
+`FireWeapon == 1`, waits for the board and the mech to be idle, no longer
+emulates transit damage/smoke (the game's own `GetSkillEffect` does it), no
+longer replaces `GetTargetArea` of the Aerial Bombs / Bombing Run / Smoke
+Drop and Leap families, no longer re-activates mechs in `NextTurn`, and
+runs `REPAIR` / two-click weapons through `FireWeapon` (slot 50 / two
+clicks on the weapon's slot). Check, with `python3 scripts/live_play.py
+turn` (state in `exec_mode`, `bridge_ext_version` 2; the bridge log has no
+`TRANSIT:` or `SAFE TARGET AREA` lines and says `FIRE: ... native`):
+
+1. **Jet onto water / chasm.** A Jet Mech turn where the engine plans
+   Aerial Bombs landing on water or a chasm (or set it up with `SCENARIO`
+   and `ATTACK uid 0 x y`): ack `OK ATTACK ... [FireWeapon[1](Brute_Jetmech)]`,
+   the Jet on the landing tile, the transit unit hit **once** (Jelly 2 -> 1
+   for Damage 1) and smoked, step diff empty.
+2. **Jet over an empty tile and over a building.** Transit damage applied
+   once: forest catches fire once, a building loses 1 HP (not 2).
+3. **Hydraulic Legs / Rocket boosters** (`Prime_Leap`, `Support_Boosters`):
+   a leap onto water and onto a plain tile; ack OK, landing damage once.
+4. **No crash after a leap that kills.** Aerial Bombs killing the transit
+   Vek, then select another mech by hand: no `Brute_Jetmech::GetTargetArea`
+   error screen (the crash the removed patch worked around, 2026-05-13).
+5. **Refusals.** `ATTACK` at a tile outside the weapon's area (e.g. a Jet
+   target 1 tile away): `ERROR: FireWeapon[1](Brute_Jetmech) returned 0`,
+   nothing changes. While a unit is still walking (send `ATTACK` right
+   after a `MOVE_NATIVE` by hand without waiting): the ack is `ERROR: ...
+   BUSY ...` or comes only after the walk ends, never a half action.
+6. **REPAIR** on a damaged, burning mech: `OK REPAIR uid [FireWeapon[50]]`,
+   +1 HP, fire cleared, the mech inactive; with Mass Repair / a Repairman
+   pilot the game's own effect (all mechs healed / adjacent pushes).
+7. **Two-click** (if the squad has one, e.g. Force Swap, Control Shot,
+   Vice Fist `Prime_TC_Punt`): `TWO_CLICK_ATTACK` acks `[... x2]` and the
+   board matches the engine; `ATTACK` with such a weapon is refused.
+8. **Seismic Capacitor** on a Vek with a queued shot: the shot is flipped
+   once (no bridge `SEISMIC_FLIP_FALLBACK` line).
+9. **Turn start**: after End Turn, mechs are active again without the
+   bridge (`TURN n team=1` and `active` true in the next dump).
 
 ## What to bring back
 
@@ -344,6 +396,13 @@ log (`/tmp/itb_bridge.log`) says around the run.
 - `FireWeapon` on a scenario-created Vek must accept the target (it must be
   in the weapon's target area); the report lists `FireWeapon returned 0`
   otherwise.
+- Bridge ext 2 is offline-checked only: `FireWeapon(space, 50)` for
+  REPAIR and the two-call two-click path follow the decompile
+  (SkillManager::FireWeapon / ArmWeapon) but were never run in game. If one
+  fails live, `live_play` stops on the error ack; `EXEC_MODE legacy` brings
+  back the old emulation for the Python bot only.
+- If `Pawn:IsBusy()` stays true for an idle mech in some state, every
+  action on it is refused with `BUSY ... pawn busy=true`; report the state.
 - `grid_power` in captures and after SCENARIO is the save's turn-start
   value: compare building HP mid-turn and grid at the next player turn.
 - Scenario-created pawns get the current psion's mutation; give explicit

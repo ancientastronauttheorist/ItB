@@ -12,11 +12,15 @@ otherwise.
     python3 scripts/live_play.py mission [--max-turns 8]
 
 turn: solve the live board, then execute the plan one sub-action at a time
-(MOVE_NATIVE, falling back to MOVE; ATTACK / TWO_CLICK_ATTACK with the
-weapon's slot; REPAIR) and after each one compare the live board with the
-engine's prediction (units by uid: type, tile, HP, statuses; building HP;
-never the save-based grid_power, which is stale mid-turn). A mismatch
-re-solves from the live board. Does not end the turn.
+(MOVE_NATIVE; ATTACK / TWO_CLICK_ATTACK with the weapon's slot; REPAIR) and
+after each one compare the live board with the engine's prediction (units by
+uid: type, tile, HP, statuses; building HP; never the save-based grid_power,
+which is stale mid-turn). A mismatch re-solves from the live board. Does not
+end the turn. Execution is native only: the bridge is put in EXEC_MODE native
+(every action is the game's own Pawn:FireWeapon with the mech selected, no
+emulated damage, moves or repairs) and a bridge without it is refused; an
+action the game refuses, or one sent while the game is busy, is an error ack
+and stops the turn (no fallback to SetSpace moves).
 
 end-turn: predicts the enemy phase from the board as it is, sends the bridge
 END_TURN (it deactivates every mech, so no "units can still act" dialog),
@@ -491,16 +495,24 @@ def step_text(step: dict, names: dict) -> str:
     return text
 
 
+def ensure_native(ctx) -> None:
+    """Puts the bridge in native-only execution (EXEC_MODE native) once per
+    run of this script; refuses a bridge that predates it (it emulates
+    weapons and falls back to SetSpace moves)."""
+    if getattr(ctx, "native_checked", False):
+        return
+    ack = ctx.bridge.send("EXEC_MODE native", 15)
+    if not ack.startswith("OK EXEC_MODE native"):
+        raise Refused(f"the bridge cannot run native-only actions ({ack}): reinstall it "
+                      "(scripts/install_modloader.sh) and restart the game")
+    ctx.native_checked = True
+
+
 def execute_step(bridge: Bridge, step: dict, state: dict, loadout: dict) -> str:
     uid = step["uid"]
     if step["sub"] == "move":
         x, y = step["to"]
         ack = bridge.send(f"MOVE_NATIVE {uid} {x} {y}")
-        if not ack.startswith("OK"):
-            say(f"    MOVE_NATIVE failed ({ack}); using MOVE")
-            ack = bridge.send(f"MOVE {uid} {x} {y}")
-        elif "[SetSpace]" in ack:
-            say("    note: MOVE_NATIVE fell back to SetSpace (arrival effects skipped)")
     elif step["sub"] == "weapon":
         slot = weapon_slot(state, uid, step["weapon"], loadout)
         tx, ty = step["target"]
@@ -618,6 +630,7 @@ def play_turn(ctx) -> list:
         return anomalies
     if pred.get("refused", -1) >= 0:
         raise Anomaly(f"the engine refused its own plan: {pred.get('refused_reason')}")
+    ensure_native(ctx)
 
     executed, plan_id, resolves, i = [], 0, 0, 0
     steps = pred["steps"]
