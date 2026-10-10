@@ -207,6 +207,7 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
   Resolver r(board, ctx);
   Host host(r, ctx.rules, impl_->data, tc, out);
   ctx.frame_hook = [&env, &host](Resolver&) { env->update(host); };
+  env->bind(board);
   env->begin(host);
 
   std::set<int32_t> queued_at_start;
@@ -403,12 +404,7 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
 
 TurnResult Engine::play_turn(Board& board, const std::vector<PlayerAction>& actions, const TurnContext& ctx) {
   TurnResult out;
-  ActionOptions opts;
-  opts.grid_resist = ctx.grid_resist;
-  opts.death_seed = ctx.death_seed;
-  opts.spider_egg = ctx.spider_egg;
-  opts.events = ctx.events;
-  opts.log = ctx.log;
+  const ActionOptions opts = action_options(ctx);
   auto refused = [](const ActionResult& a) { return !a.ok() && a.status != ActionStatus::NoEffect; };
   for (size_t i = 0; i < actions.size(); ++i) {
     const PlayerAction& a = actions[i];

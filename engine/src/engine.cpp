@@ -205,7 +205,61 @@ bool apply_game_write(Board& b, const LuaWrite& w, int difficulty) {
   return true;
 }
 
+// The environment's window on a player action (Engine::resolve with
+// ActionOptions::mission): the per-frame hook sees the board at the frame it
+// runs, appends effects to the action's stack, and its hidden choices are
+// chance nodes of the action.
+class ActionEnvHost final : public EnvHost {
+ public:
+  ActionEnvHost(Board& board, RulesContext& rules, const GameData& data, const ActionOptions& opts,
+                ActionResult& out)
+      : board_(board), rules_(rules), data_(data), opts_(opts), out_(out) {}
+
+  void attach(Resolver& r) { r_ = &r; }
+
+  Board& board() override { return r_ ? r_->board() : board_; }
+  const GameData& data() const override { return data_; }
+  RulesContext& rules() override { return rules_; }
+  void add_effect(SkillEffect effect) override {
+    if (r_) r_->add_effect(std::move(effect));
+  }
+  int choose(ChanceKind kind, int options, Point where, int amount) override {
+    if (options <= 1) return 0;
+    ChanceRecord node{kind, r_ ? r_->frame() : 0, where, amount, 0, options};
+    const int pick = opts_.choose ? opts_.choose(node) : 0;
+    node.outcome = std::clamp(pick, 0, options - 1);
+    if (r_) r_->add_chance(node);
+    return node.outcome;
+  }
+  void note(PhaseEventType type, std::string detail, Point where, int32_t uid, int amount) override {
+    out_.mission_events.push_back(PhaseEvent{type, where, uid, amount, std::move(detail)});
+  }
+  int32_t new_uid() override { return board().next_uid++; }
+  bool busy() const override { return r_ && r_->busy(); }
+  int turn() const override { return board_.turn; }
+
+ private:
+  Board& board_;
+  Resolver* r_ = nullptr;
+  RulesContext& rules_;
+  const GameData& data_;
+  const ActionOptions& opts_;
+  ActionResult& out_;
+};
+
 }  // namespace
+
+ActionOptions action_options(const TurnContext& ctx) {
+  ActionOptions o;
+  o.grid_resist = ctx.grid_resist;
+  o.death_seed = ctx.death_seed;
+  o.spider_egg = ctx.spider_egg;
+  o.choose = ctx.choose;
+  o.mission = &ctx.mission;
+  o.events = ctx.events;
+  o.log = ctx.log;
+  return o;
+}
 
 Engine::Engine() = default;
 Engine::~Engine() = default;
@@ -311,6 +365,18 @@ ResolveResult Engine::resolve(Board& board, const SkillEffect& effect, const Wea
   ActionResult& diag = out ? *out : local;
   ResolveContext ctx;
   impl_->wire(*this, ctx, opts, diag);
+  // The mission's per-frame hook (Mission:BaseUpdate), as in the enemy
+  // phase; missions without one take no hook at all.
+  if (!opts.mission || !native_environment_has_update(*opts.mission)) {
+    return resolve_effect(board, effect, weapon, ctx);
+  }
+  std::unique_ptr<Environment> env = make_native_environment(*opts.mission);
+  env->bind(board);
+  ActionEnvHost host(board, ctx.rules, impl_->data, opts, diag);
+  ctx.frame_hook = [&env, &host](Resolver& r) {
+    host.attach(r);
+    env->update(host);
+  };
   return resolve_effect(board, effect, weapon, ctx);
 }
 

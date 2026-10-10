@@ -725,6 +725,9 @@ int run_replay(const ReplayOptions& opt) {
     for (const auto& [uid, pilot] : rec->pilots) {
       if (Pawn* p = board.find_pawn(uid)) p->pilot_abilities |= engine->pilot_ability(pilot);
     }
+    // Every action runs the mission's per-frame hooks, as in game.
+    ActionOptions base_opts;
+    base_opts.mission = &rec->mission;
     const int last = first ? first->action : static_cast<int>(actions.size()) - 1;
     std::set<std::string> skipped;  // "#uid" of mechs whose step was move-only
     bool turn_real = false;  // some step had a real mismatch
@@ -829,7 +832,7 @@ int run_replay(const ReplayOptions& opt) {
         resisted = false;
         if (trace) std::printf("==== %s\n---- before:\n%s", head.c_str(), render_board(board).c_str());
         Board trial = board;
-        ActionResult r = act(trial, ActionOptions{});
+        ActionResult r = act(trial, base_opts);
         std::vector<Mismatch> mm = compare(trial, gt, pred, data);
         std::set<int> resist;
         for (const ChanceRecord& c : r.resolve.chances) {
@@ -842,7 +845,7 @@ int run_replay(const ReplayOptions& opt) {
         }
         if (!resist.empty()) {
           Board again = board;
-          ActionOptions o;
+          ActionOptions o = base_opts;
           o.grid_resist = [&](Point p, int) { return resist.count(p.index()) > 0; };
           ActionResult r2 = act(again, o);
           std::vector<Mismatch> mm2 = compare(again, gt, pred, data);
@@ -966,7 +969,7 @@ int run_replay(const ReplayOptions& opt) {
           const std::string variant = weapon + suffix;
           if (!engine->lua().lua_string(variant, "Name")) continue;
           Board vb = before_attack;
-          ActionOptions o;
+          ActionOptions o = base_opts;
           o.check_legal = false;
           engine->fire_weapon(vb, uid, variant, target, std::nullopt, o);
           if (Pawn* p = vb.find_pawn(uid)) p->active = false;

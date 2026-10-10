@@ -194,7 +194,7 @@ int weapon_index(const Pawn* p, const std::string& weapon) {
 void simulate(Engine& engine, const Loaded& l, const std::vector<PlayerAction>& plan, json& out,
               std::vector<std::string>& warnings) {
   Board b = l.board;
-  ActionOptions opts;
+  ActionOptions opts = action_options(l.ctx);  // the mission's per-frame hooks
   opts.check_legal = true;
   json plan_json = json::array();
   json steps = json::array();
@@ -206,6 +206,14 @@ void simulate(Engine& engine, const Loaded& l, const std::vector<PlayerAction>& 
     step["timing_sensitive"] = r.resolve.timing_sensitive();
     step["lua_errors"] = r.lua_errors;
     step["unapplied_lua_writes"] = r.unapplied.size();
+    if (!r.mission_events.empty()) {
+      json hooks = json::array();
+      for (const PhaseEvent& e : r.mission_events) {
+        hooks.push_back(json{{"type", to_string(e.type)}, {"point", point_json(e.point)}, {"uid", e.uid},
+                             {"detail", e.detail}});
+      }
+      step["mission_hooks"] = std::move(hooks);
+    }
     if (!r.resolve.chances.empty()) {
       warnings.push_back(what + ": a chance node (the plan follows its default outcome; re-solve after another)");
     }

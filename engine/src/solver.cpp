@@ -114,6 +114,7 @@ class ChanceDriver {
 
   void bind(ActionOptions& o) {
     o.grid_resist = [this](Point, int) { return next(Hook::Resist, resist_ ? 2 : 1) == 1; };
+    o.choose = [this](const ChanceRecord& node) { return next(Hook::Choose, std::max(1, node.options)); };
     o.death_seed = [this](const Pawn& p) { return seed_for(p); };
     o.spider_egg = [this](Resolver&, const Pawn&, const std::vector<Point>& tiles) {
       return next(Hook::Egg, static_cast<int>(tiles.size()));
@@ -459,6 +460,7 @@ class Worker {
       : e_(engine), sh_(shared), o_(shared.o), index_(index), driver_(shared.root.grid_defense, shared.o.extra_death_seeds) {
     tc_ = shared.base;
     driver_.bind(tc_);
+    aopts_ = action_options(tc_);  // the mission's per-frame hooks (points into tc_)
     driver_.bind(aopts_);
     aopts_.check_legal = true;
     for (const auto& [uid, skill] : o_.repair_skills) repair_[uid] = intern(skill);
@@ -1064,7 +1066,7 @@ std::optional<Score> evaluate_plan(Engine& engine, const Board& board, const Tur
   tc.events = nullptr;
   tc.log = nullptr;
   d.bind(tc);
-  ActionOptions ao;
+  ActionOptions ao = action_options(tc);
   d.bind(ao);
   Score worst = kHigh;
   bool bad = false;

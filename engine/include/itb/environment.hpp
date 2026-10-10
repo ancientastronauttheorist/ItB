@@ -170,14 +170,28 @@ class EnvHost {
   virtual int turn() const = 0;
 };
 
+// The game calls Mission:BaseUpdate() from BoardPlayer::OnLoop (0x008c9760)
+// on every frame of the mission, the player's turn included, so the per-frame
+// hooks (update) run during the player's actions too: Engine::move /
+// fire_weapon / repair run them when ActionOptions::mission is set. An
+// Environment lives for one resolution (one player action, or the enemy
+// phase) and rebuilds what the Lua instance remembers from the board (bind),
+// which is exact because the hooks also ran on every frame before it.
 class Environment {
  public:
   virtual ~Environment() = default;
   // The Lua class (and mission) this implements, e.g. "Env_Tides".
   virtual std::string name() const = 0;
-  // Once, at End Turn, before anything resolves: recorded state the bridge
-  // leaves implicit (e.g. the train's queued move) is filled in here.
+  // The instance state the per-frame hook reads (the pawns it watches), from
+  // the board before anything resolves. Read-only; called once, before
+  // begin() in the enemy phase and before a player action's frames.
+  virtual void bind(const Board&) {}
+  // Once, at End Turn, after bind and before anything resolves: recorded
+  // state the bridge leaves implicit (e.g. the train's queued move) is
+  // filled in here. Never called for player actions.
   virtual void begin(EnvHost&) {}
+  // update() can change something (else player actions skip the hook).
+  virtual bool has_update() const { return false; }
   // Mission:IsEnvironmentEffect(), read once at the start of the enemy phase.
   virtual bool is_effect(EnvHost&) { return false; }
   // Mission:ApplyEnvironmentEffect(): queue this step's effects (add_effect);
@@ -194,5 +208,8 @@ class Environment {
 // The native implementation for a recorded mission (dispatch on mission_id;
 // see the README's environment table for what is exact).
 std::unique_ptr<Environment> make_native_environment(const MissionData& mission);
+// make_native_environment(mission)->has_update(), without building it (the
+// fast path of every player action on a mission without a per-frame hook).
+bool native_environment_has_update(const MissionData& mission);
 
 }  // namespace itb

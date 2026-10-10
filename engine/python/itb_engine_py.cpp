@@ -62,7 +62,8 @@ namespace {
 // Bump when the engine's predictions change for the same board in a way the
 // bot's records should distinguish (the C++ counterpart of the Rust
 // SIMULATOR_VERSION; the bot stamps it as engine_version).
-constexpr const char* kEngineVersion = "cpp-engine-1";
+// 2: player actions run the mission's per-frame hooks (acid storm, dam, ...).
+constexpr const char* kEngineVersion = "cpp-engine-2";
 
 #ifndef ITB_BUILD_GIT
 #define ITB_BUILD_GIT "unknown"
@@ -319,8 +320,10 @@ Loaded load_state(Engine& engine, const std::string& text) {
   return out;
 }
 
-ActionOptions sim_options() {
-  ActionOptions o;
+// The mission's per-frame hooks run in every action (`ctx` must outlive the
+// options).
+ActionOptions sim_options(const TurnContext& ctx) {
+  ActionOptions o = action_options(ctx);
   o.check_legal = true;
   return o;
 }
@@ -356,7 +359,7 @@ json phase_json(const PhaseResult& pr) {
 // and every action, after the player's turn and after the enemy phase.
 json simulate(Engine& engine, const Loaded& l, const std::vector<PlayerAction>& plan) {
   Board b = l.board;
-  const ActionOptions opts = sim_options();
+  const ActionOptions opts = sim_options(l.ctx);
   json steps = json::array();
   int refused_at = -1;
   std::string refused_why;
