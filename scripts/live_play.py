@@ -144,12 +144,17 @@ class Bridge:
         return lv.fresh_state(t0)
 
     def settled_state(self) -> dict:
-        """Fresh dumps until two in a row agree (reads taken mid-animation
-        have flip-flopped unit tiles)."""
+        """A dump taken while the board is idle. Bridges that report
+        `stable` say so directly; for older ones, wait until two dumps in a
+        row agree (reads taken mid-animation showed stale unit tiles)."""
         prev = self.fresh_state()
+        if prev.get("stable") is True:
+            return prev
         for _ in range(SETTLE_TRIES):
             time.sleep(SETTLE_INTERVAL)
             cur = self.fresh_state()
+            if cur.get("stable") is True:
+                return cur
             if signature(cur) == signature(prev):
                 return cur
             prev = cur
