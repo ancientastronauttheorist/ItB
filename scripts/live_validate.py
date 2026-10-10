@@ -397,10 +397,10 @@ def compare(engine_board: dict, game: dict) -> list:
         g = game_units.get(e["uid"])
         label = f"{e['type']}#{e['uid']}"
         if not e["alive"]:
-            if g is not None and g.get("hp", 0) > 0:
+            if g is not None and g.get("hp", 1) > 0:
                 diffs.append(f"{label}: engine dead, game alive at {xy((g['x'], g['y']))} hp {g['hp']}")
             continue
-        if g is None or g.get("hp", 0) <= 0:
+        if g is None or g.get("hp", 1) <= 0:
             diffs.append(f"{label}: engine alive at {xy((e['x'], e['y']))} hp {e['hp']}, game dead/gone")
             continue
         for f in UNIT_FIELDS:
@@ -411,7 +411,7 @@ def compare(engine_board: dict, game: dict) -> list:
                 diffs.append(f"{label} {f}: engine {ev}, game {gv}")
     engine_uids = {e["uid"] for e in engine_board["units"]}
     for uid, g in game_units.items():
-        if uid not in engine_uids and g.get("hp", 0) > 0:
+        if uid not in engine_uids and g.get("hp", 1) > 0:
             match = [e for e in engine_board["units"] if e["alive"] and (e["x"], e["y"]) == (g["x"], g["y"])
                      and e["type"] == g["type"]]
             if not match:
