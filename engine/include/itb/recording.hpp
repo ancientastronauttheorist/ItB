@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "itb/board.hpp"
+#include "itb/enemy_phase.hpp"
 #include "itb/environment.hpp"
 
 namespace itb {
@@ -35,7 +36,41 @@ struct Recording {
   // The mission and environment data stage 7 needs (TurnContext::mission).
   MissionData mission;
   std::vector<std::string> warnings;  // fields the loader could not map
+
+  // Bridge extension fields (bridge_ext_version >= 1; empty otherwise).
+  int bridge_ext_version = 0;
+  std::vector<std::string> bridge_errors;  // exports the bridge failed ("where: error")
+  // Every unit with a queued shot, any team, in pawn-list order.
+  std::vector<int32_t> attack_order_all;
+  // Hidden information (not on screen): the queued spawns' pawn types for
+  // Board::spawn_points (same order, "" = unknown), and whether
+  // spawn_points are in the game's queue order (else scan order).
+  std::vector<std::string> spawn_types;
+  bool spawn_order_known = false;
+  struct PilotInfo {
+    int32_t uid = -1;
+    std::string id;
+    int level = -1, xp = -1, skill1 = -1, skill2 = -1;
+  };
+  std::vector<PilotInfo> pilot_info;
+  // The environment steps the bridge saw (env_strike_log; validation data
+  // for the enemy phase that already happened): turn and struck tiles.
+  struct EnvStrike {
+    int turn = -1;
+    std::vector<Point> tiles;
+  };
+  std::vector<EnvStrike> env_strikes;
 };
+
+// What a TurnContext may contain from a recording.
+enum class Visibility : uint8_t {
+  Player,  // what the player sees: hidden spawn types and queue order left out
+  Full,    // everything recorded, for validating the engine against the game
+};
+
+// The TurnContext for a recorded board (mission data; with Visibility::Full
+// also the spawn types and queue order).
+TurnContext turn_context(const Recording& rec, Visibility visibility = Visibility::Player);
 
 // Parses a recording file (the wrapper with a "data.bridge_state" object, or a
 // bare bridge_state). Unit types missing from `data` are kept with their

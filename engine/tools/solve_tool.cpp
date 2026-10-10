@@ -192,8 +192,7 @@ int run_solve(const SolveToolOptions& opt) {
       ++skipped["no active unit"];
       continue;
     }
-    TurnContext ctx;
-    ctx.mission = rec->mission;
+    const TurnContext ctx = turn_context(*rec);
 
     const SolveResult r = solve_turn(*engine, board, ctx, so);
     Row row;

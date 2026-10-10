@@ -395,3 +395,23 @@ TEST_CASE("Engine: refuses what the game refuses") {
   o.check_legal = false;
   CHECK(E.fire_weapon(b, mech, 0, {3, 3}, std::nullopt, o).ok());
 }
+
+TEST_CASE("Engine: a limited weapon fires while it has uses left") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t mech = place(b, "PunchMech", {2, 2}, true);
+  const int32_t vek = place(b, "Scorpion1", {2, 5});
+  Pawn& m = *b.find_pawn(mech);
+  m.weapons[0] = intern("Brute_Heavyrocket");
+  m.uses[0] = 1;
+  m.active = true;
+  REQUIRE(E.fire_weapon(b, mech, 0, {2, 5}).ok());
+  CHECK(b.find_pawn(mech)->uses[0] == 0);
+  CHECK(gone(b, vek));  // 3 damage
+  b.find_pawn(mech)->active = true;
+  CHECK(E.fire_weapon(b, mech, 0, {2, 5}).status == ActionStatus::NoUses);
+  // Unlimited (-1) weapons are never counted down.
+  b.find_pawn(mech)->uses[0] = -1;
+  REQUIRE(E.fire_weapon(b, mech, 0, {2, 5}).ok());
+  CHECK(b.find_pawn(mech)->uses[0] == -1);
+}

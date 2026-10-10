@@ -7,6 +7,9 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
+
+#include "itb/recording.hpp"
 
 extern "C" {
 #include <lauxlib.h>
@@ -57,6 +60,32 @@ TEST_CASE("bridge: harness against the mocked game API") {
   set_global(lua.L, "HARNESS_DIR", dir.string());
   const int rc = luaL_dofile(lua.L, kHarness.string().c_str());
   INFO(lua.error());
-  CHECK(rc == 0);
+  REQUIRE(rc == 0);
+
+  // The dump the SCENARIO left is the engine's input: it loads with the
+  // extension fields.
+  std::string error;
+  auto rec = itb::load_recording(dir / "itb_snapshot_scenario_vek_order.json", nullptr, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  CHECK(rec->bridge_ext_version == 1);
+  CHECK(rec->bridge_errors.empty());
+  CHECK(rec->mission.mission_key == 3);
+  CHECK(rec->mission.env_classes.front() == "Env_Lightning");
+  CHECK(rec->spawn_order_known);
+  CHECK(rec->spawn_types == std::vector<std::string>{"Scorpion1"});
+  CHECK(rec->board.spawn_points == std::vector<itb::Point>{{6, 6}});
+  REQUIRE(rec->attack_order.size() == 2);
+  CHECK(rec->attack_order_all == rec->attack_order);
+  const itb::Pawn* first = rec->board.find_pawn(rec->attack_order[0]);
+  REQUIRE(first != nullptr);
+  CHECK(first->pos == itb::Point{4, 5});
+  CHECK(first->fire);
+  CHECK(first->queued.target == itb::Point{4, 4});
+  const itb::Pawn* mech = rec->board.find_pawn(0);
+  REQUIRE(mech != nullptr);
+  CHECK(itb::symbol_name(mech->weapons[0]) == "Prime_Punchmech_B");
+  CHECK(mech->shield);
+  CHECK(rec->board.tile({2, 6}).fire == itb::FireState::Burning);
+  CHECK(rec->board.tile({5, 6}).hp == 1);
   fs::remove_all(dir);
 }

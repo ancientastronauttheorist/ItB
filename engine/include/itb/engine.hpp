@@ -76,6 +76,7 @@ enum class ActionStatus : uint8_t {
   NotInArea,        // the target is not in the (second) target area
   NeedsSecondClick, // a two-click weapon fired without its second target
   NoEffect,         // the skill produced nothing to apply (nothing happened)
+  NoUses,           // a limited weapon with no uses left (Pawn::uses)
 };
 
 const char* to_string(ActionStatus s);

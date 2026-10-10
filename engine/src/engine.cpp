@@ -21,6 +21,7 @@ const char* to_string(ActionStatus s) {
     case ActionStatus::NotInArea: return "target not in area";
     case ActionStatus::NeedsSecondClick: return "needs a second click";
     case ActionStatus::NoEffect: return "no effect";
+    case ActionStatus::NoUses: return "no uses left";
   }
   return "?";
 }
@@ -339,6 +340,10 @@ static ActionResult fire_skill(Engine& engine, Engine::Impl& im, Board& board, i
       out.status = ActionStatus::CannotAct;
       return out;
     }
+    if (!move_skill && slot >= 0 && slot < kMaxWeapons && pawn->uses[static_cast<size_t>(slot)] == 0) {
+      out.status = ActionStatus::NoUses;
+      return out;
+    }
   }
   im.selected = uid;  // the shooter is selected (Lua `Pawn`)
   const Point origin = pawn->pos;
@@ -409,6 +414,10 @@ static ActionResult fire_skill(Engine& engine, Engine::Impl& im, Board& board, i
   if (!fx.effect.empty()) out.resolve = engine.resolve(board, fx, info, opts, &out);
   if (Pawn* p = board.find_pawn(uid)) {
     on_skill_fired(board, *p, move_skill);
+    // Skill::FireInstant uses a limited charge.
+    if (!move_skill && slot >= 0 && slot < kMaxWeapons && p->uses[static_cast<size_t>(slot)] > 0) {
+      --p->uses[static_cast<size_t>(slot)];
+    }
     out.end = p->pos;
   } else {
     out.end = kInvalidPoint;

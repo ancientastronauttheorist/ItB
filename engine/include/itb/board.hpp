@@ -143,6 +143,9 @@ struct Pawn {
   Faction faction = Faction::Default;
   Leader leader = Leader::None;  // own psion/boss leader type
   std::array<Symbol, kMaxWeapons> weapons{};
+  // Uses left of a limited weapon (Lua Limited > 0), per weapon slot; -1 =
+  // unlimited or not recorded. A weapon at 0 cannot fire.
+  std::array<int8_t, kMaxWeapons> uses{-1, -1, -1, -1};
   uint32_t pilot_abilities = kPilotNone;
 
   // Static traits (copied from the pawn definition, overridable per board).
