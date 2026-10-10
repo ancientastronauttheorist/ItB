@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <bit>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 
 #include "itb/game_data.hpp"
@@ -650,6 +651,23 @@ void Simulation::update_weapon_anims() {
 // Tiles that may need work are found with a mask (pawns, webs, tile states,
 // finished animations), recomputed after every tile that changed something,
 // so it always describes the board as it is; the others are skipped.
+// Tiles whose state alone may make settle_tile_frame act
+// (!detail::inert_tile_state), recomputed only when some tile changed since
+// the last call (the tiles are compared bytewise: Tile has no padding).
+uint64_t Simulation::busy_tile_states() {
+  const Tile* tiles = &board_.tile(Point::from_index(0));
+  if (busy_tiles_valid_ && std::memcmp(tiles, busy_tiles_at_.data(), sizeof(busy_tiles_at_)) == 0) {
+    return busy_tiles_mask_;
+  }
+  std::memcpy(busy_tiles_at_.data(), tiles, sizeof(busy_tiles_at_));
+  busy_tiles_valid_ = true;
+  busy_tiles_mask_ = 0;
+  for (int i = 0; i < kTileCount; ++i) {
+    if (!detail::inert_tile_state(tiles[i])) busy_tiles_mask_ |= uint64_t{1} << i;
+  }
+  return busy_tiles_mask_;
+}
+
 void Simulation::update_tiles() {
   uint64_t occupied = 0;  // bit i: some pawn (fallen ones included) is on tile i
   bool webbed = false;    // some pawn is webbed
@@ -669,12 +687,7 @@ void Simulation::update_tiles() {
     }
   };
   auto plan = [&] {
-    work = webbed ? ~uint64_t{0} : occupied;
-    if (!webbed) {
-      for (int i = 0; i < kTileCount; ++i) {
-        if (!detail::inert_tile_state(board_.tile(Point::from_index(i)))) work |= uint64_t{1} << i;
-      }
-    }
+    work = webbed ? ~uint64_t{0} : occupied | busy_tile_states();
     for (const TileAnim& a : tile_anims_) {
       if (a.end_frame <= frame_ && a.point.valid()) work |= uint64_t{1} << a.point.index();
     }

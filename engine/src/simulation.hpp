@@ -15,6 +15,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstdint>
 #include <deque>
@@ -251,6 +252,7 @@ class Simulation final : public FrameHooks {
   void update_stack();
   void update_weapon_anims();
   void update_tiles();
+  uint64_t busy_tile_states();
   void update_pawn(int32_t uid);
   void walk_step(Pawn& pawn, PawnSim& ps);
   void register_tile_anim(const SpaceDamage& sd);
@@ -298,6 +300,10 @@ class Simulation final : public FrameHooks {
   bool changed_ = false;           // sim state changed this frame (beyond timers)
   Board before_;                   // the board at the start of the frame (run)
   std::vector<int32_t> order_;     // P3 / P5 pawn order (run_frame)
+  // busy_tile_states: the tiles it was computed for, and its result.
+  std::array<Tile, kTileCount> busy_tiles_at_{};
+  uint64_t busy_tiles_mask_ = 0;
+  bool busy_tiles_valid_ = false;
 
   std::vector<StackEntry> stack_;
   std::vector<WeaponAnim> anims_;

@@ -1,12 +1,14 @@
 #include "itb/board_hash.hpp"
 
 #include <array>
+#include <cstring>
+#include <type_traits>
 
 namespace itb {
 namespace {
 
-// Every Tile and Pawn field is hashed below. If one of these fails, a field
-// was added: hash it, then update the size.
+// Every Tile (as raw bytes) and Pawn field is hashed below. If one of these
+// fails, a field was added: hash it, then update the size.
 static_assert(sizeof(Tile) == 28, "Tile changed: update hash_board");
 static_assert(sizeof(Pawn) == 124, "Pawn changed: update hash_board");
 static_assert(sizeof(MoveState) == 16, "MoveState changed: update hash_board");
@@ -56,31 +58,31 @@ struct Hasher {
 inline uint64_t u8(int v) { return static_cast<uint8_t>(v); }
 inline uint64_t pt(Point p) { return (static_cast<uint64_t>(static_cast<uint32_t>(p.x)) << 32) | static_cast<uint32_t>(p.y); }
 
-void hash_tile(Hasher& h, const Tile& t) {
-  Hasher::Packer k{h};
-  k.put(u8(static_cast<int>(t.terrain)), 8);
-  k.put(u8(t.hp), 8);
-  k.put(u8(t.max_hp), 8);
-  k.put(u8(static_cast<int>(t.fire)), 8);
-  k.put(u8(static_cast<int>(t.pod)), 8);
-  k.put(u8(t.conveyor), 8);
-  k.put(t.walls, 8);
-  k.put(t.populated, 1);
-  k.put(t.shield, 1);
-  k.put(t.frozen, 1);
-  k.put(t.lava, 1);
-  k.put(t.smoke, 1);
-  k.put(t.acid, 1);
-  k.put(t.cracked, 1);
-  k.put(t.pending_hole, 1);
-  k.put(t.vines, 1);
-  k.put(t.spikes, 1);
-  k.put(t.building_on_water, 1);
-  k.put(t.teleporter, 1);
-  k.put(t.item, 16);
-  k.put(t.unique_building, 16);
-  k.put(t.custom_tile, 16);
-  k.put(t.special_tag, 16);
+// The 64 tiles as raw bytes, 16 at a time, in two independent lanes of
+// wyhash-style multiply-fold mixing (a 64x64 -> 128-bit product folded to 64
+// bits). Tile has no padding (Board compares tiles with memcmp), so its bytes
+// are exactly its fields.
+static_assert(std::has_unique_object_representations_v<Tile>, "tiles are hashed as raw bytes");
+
+inline uint64_t mum(uint64_t a, uint64_t b) {
+  const unsigned __int128 r = static_cast<unsigned __int128>(a) * b;
+  return static_cast<uint64_t>(r) ^ static_cast<uint64_t>(r >> 64);
+}
+
+void hash_tiles(Hasher& h, const Board& b) {
+  constexpr size_t kBytes = sizeof(Tile) * kTileCount;
+  static_assert(kBytes % 16 == 0);
+  const auto* bytes = reinterpret_cast<const unsigned char*>(&b.tile(Point::from_index(0)));
+  uint64_t a = 0xA0761D6478BD642Full, c = 0xE7037ED1A0B428DBull;
+  for (size_t i = 0; i < kBytes; i += 16) {
+    uint64_t w0, w1;
+    std::memcpy(&w0, bytes + i, 8);
+    std::memcpy(&w1, bytes + i + 8, 8);
+    a = mum(w0 ^ 0x8EBC6AF09C88C6E3ull, w1 ^ a);
+    c = mum(w1 ^ 0x589965CC75374CC3ull, w0 ^ c ^ 0x1D8E4E27C47D124Full);
+  }
+  h.word(a);
+  h.word(c);
 }
 
 void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
@@ -152,7 +154,7 @@ void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
 
 BoardHash hash_board(const Board& b, HashMode mode) {
   Hasher h;
-  for (int i = 0; i < kTileCount; ++i) hash_tile(h, b.tile(Point::from_index(i)));
+  hash_tiles(h, b);
   {
     Hasher::Packer k{h};
     k.put(static_cast<uint32_t>(b.grid_power), 32);
