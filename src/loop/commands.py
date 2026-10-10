@@ -4421,6 +4421,87 @@ def _rust_result_to_solution(rust_result: dict | None,
     )
 
 
+def _solver_record_fields(
+    cpp_meta: dict | None,
+    solver_used: str,
+    fallback_reason: str | None = None,
+) -> dict:
+    """Solve-record fields naming the solver that produced the predictions.
+
+    ``simulator_version`` keeps meaning the Rust simulator's semantic version
+    (record-shape gates read it); ``solver`` / ``engine_version`` say whether
+    the C++ engine made this turn's predictions (src/solver/cpp_solver.py).
+    """
+    fields: dict = {"solver": solver_used}
+    if solver_used == "cpp" and isinstance(cpp_meta, dict):
+        fields["solver_version"] = (
+            f"{cpp_meta.get('engine_version', 'cpp')}-"
+            f"{cpp_meta.get('engine_build', 'unknown')}"
+        )
+        fields["engine_version"] = cpp_meta.get("engine_version")
+    else:
+        fields["solver_version"] = _get_solver_version()
+    if isinstance(cpp_meta, dict):
+        fields["cpp_solve"] = cpp_meta
+    if fallback_reason:
+        fields["solver_fallback"] = fallback_reason
+    return fields
+
+
+def _prediction_source(session: RunSession, turn: int | None = None) -> dict:
+    """``{solver, solver_version, engine_version}`` of the turn's solve record."""
+    try:
+        solved_turn = turn
+        if solved_turn is None and session.active_solution is not None:
+            solved_turn = session.active_solution.turn
+        path = (_recording_dir(session)
+                / f"m{session.mission_index:02d}_turn_{int(solved_turn):02d}_solve.json")
+        data = (json.loads(path.read_text()).get("data") or {})
+    except Exception:
+        data = {}
+    solver = data.get("solver") or "rust"
+    out = {"solver": solver,
+           "solver_version": data.get("solver_version") or _get_solver_version()}
+    if data.get("engine_version"):
+        out["engine_version"] = data["engine_version"]
+    return out
+
+
+def _cpp_partial_solve(bridge_data: dict, board: Board, time_limit: float,
+                       weight_overlays: list[str], breakdown_weights):
+    """The C++ solver for a mid-turn re-solve; None when the Rust path applies."""
+    from src.solver import cpp_solver as _cpp
+
+    if _cpp.requested_solver() != "cpp":
+        return None
+    blocked = _cpp.overlay_blocks_cpp(weight_overlays)
+    if blocked and _rust_solver_importable():
+        print(f"  Re-solve: Rust solver (achievement overlays {blocked} need it)")
+        return None
+    active = [u for u in board.mechs() if u.active and u.hp > 0]
+    outcome = _cpp.solve(
+        bridge_data, time_limit,
+        spawns=[tuple(s) for s in bridge_data.get("spawning_tiles", [])],
+        current_turn=bridge_data.get("turn", 0),
+        total_turns=bridge_data.get("total_turns", 5),
+        remaining_spawns=bridge_data.get("remaining_spawns", 2**31 - 1),
+        weights=breakdown_weights,
+        active_mech_count=len(active),
+    )
+    if not outcome.ok:
+        print(f"  Re-solve: C++ solver unavailable ({outcome.reason}); "
+              "falling back to Rust")
+    return outcome
+
+
+def _rust_solver_importable() -> bool:
+    try:
+        import itb_solver  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def _solver_actions_from_solution(solution: Solution) -> list[SolverAction]:
     """Convert a solver solution to the session's serializable action shape."""
     return [
@@ -4518,15 +4599,21 @@ def _evaluate_solution_safety(board: Board,
                               weights=None,
                               *,
                               block_mech_hp_loss: bool = False,
-                              block_mech_status_loss: bool = False) -> dict:
-    """Replay a candidate solution and audit irreversible-loss safety."""
-    enriched = replay_solution(
-        bridge_data, solution, spawns,
-        current_turn=current_turn,
-        total_turns=total_turns,
-        remaining_spawns=remaining_spawns,
-        weights=weights,
-    )
+                              block_mech_status_loss: bool = False,
+                              enriched: dict | None = None) -> dict:
+    """Replay a candidate solution and audit irreversible-loss safety.
+
+    ``enriched``: replay data the solver already produced (the C++ engine's
+    simulation, src/solver/cpp_solver.py); default: the Rust replay.
+    """
+    if enriched is None:
+        enriched = replay_solution(
+            bridge_data, solution, spawns,
+            current_turn=current_turn,
+            total_turns=total_turns,
+            remaining_spawns=remaining_spawns,
+            weights=weights,
+        )
     current_outcome = _capture_board_summary(board, bridge_data)
     predicted_outcome = enriched["predicted_outcome"]
     predicted_board_summary = dict(predicted_outcome)
@@ -8305,7 +8392,7 @@ def _record_post_enemy(session: RunSession, board: Board,
                 "grid_power": actual.get("grid_power"),
                 "solver_timed_out": solve_data.get("search_stats", {}).get("timed_out", False),
                 "weight_version": solve_data.get("weight_version", "unknown"),
-                "solver_version": _get_solver_version(),
+                **_prediction_source(session, solved_turn),
                 "simulator_version": _get_simulator_version(),
                 "tags": list(session.tags),
             },
@@ -10019,8 +10106,15 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
               beam: int = 0, candidate_rank: int | None = None,
               destroy_time_pods: bool = False,
               frontier_diagnostics: bool = True,
-              lightning_speed_loss_policy: bool = False) -> dict:
+              lightning_speed_loss_policy: bool = False,
+              solver: str | None = None) -> dict:
     """Run solver on current board, store solution in session.
+
+    solver: "cpp" (the C++ perfect-turn engine, src/solver/cpp_solver.py) or
+          "rust" (itb_solver). Default: ITB_SOLVER, else "cpp". The C++ path
+          falls back to Rust on any error, an empty plan, a plan the bridge
+          cannot execute, the Rust-only options (beam, candidate_rank) or an
+          achievement weight overlay the engine's fixed tiers cannot honour.
 
     Args:
         beam: 0 (default) uses `itb_solver.solve` — the current top-1 path.
@@ -10047,8 +10141,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         return {"error": f"invalid beam value {beam!r}; must be 0, 1, or 2"}
     if candidate_rank is not None and candidate_rank < 0:
         return {"error": "invalid candidate_rank; must be non-negative"}
+    from src.solver import cpp_solver as _cpp
+    solver_choice = _cpp.requested_solver(solver)
     # Refuse to solve against a stale wheel after a Rust rebuild.
-    wheel_err = _check_wheel_sim_version()
+    wheel_err = _check_wheel_sim_version() if solver_choice == "rust" else None
     if wheel_err is not None:
         _print_result(wheel_err)
         return wheel_err
@@ -10223,6 +10319,9 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     selected_candidate_source = None
     candidate_count = 0
     beam_chain_score = None
+    cpp_meta: dict | None = None
+    solver_used = "rust"
+    solver_fallback: str | None = None
 
     # Load evaluation weights from active weight file
     weight_version = "default"
@@ -10276,7 +10375,12 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
     # Try Rust solver if bridge data available
     if bridge_data is not None:
         try:
-            import itb_solver as _rust
+            try:
+                import itb_solver as _rust
+            except ImportError:
+                if solver_choice != "cpp":
+                    raise
+                _rust = None  # C++ solver only; a fallback raises ImportError below
             import json as _json
             import time as _time
             # Augment unit data with pawn_stats info (ranged flag) for Rust solver
@@ -10365,7 +10469,59 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
 
             rust_start = _time.time()
             candidate_specs = []
-            if candidate_rank is not None:
+            if solver_choice == "cpp":
+                cpp_blockers = []
+                if candidate_rank is not None or beam != 0:
+                    cpp_blockers.append("beam/candidate_rank are Rust-only options")
+                overlay_block = _cpp.overlay_blocks_cpp(achievement_weight_overlays)
+                if overlay_block and _rust is not None:
+                    cpp_blockers.append(
+                        "achievement overlays need the Rust weights: "
+                        + ", ".join(overlay_block)
+                    )
+                if cpp_blockers:
+                    solver_fallback = "; ".join(cpp_blockers)
+                else:
+                    cpp_outcome = _cpp.solve(
+                        bridge_data, time_limit,
+                        spawns=spawns,
+                        current_turn=current_turn,
+                        total_turns=(
+                            board.total_turns if hasattr(board, "total_turns") else 5
+                        ),
+                        remaining_spawns=bridge_data.get(
+                            "remaining_spawns", 2**31 - 1
+                        ),
+                        weights=breakdown_weights,
+                        active_mech_count=len(active_mechs),
+                    )
+                    cpp_meta = cpp_outcome.meta
+                    if cpp_outcome.ok:
+                        solver_used = "cpp"
+                        candidate_specs.append({
+                            "rank": 0,
+                            "source": "cpp",
+                            "solution": cpp_outcome.solution,
+                            "enriched": cpp_outcome.enriched,
+                        })
+                        print(
+                            "  C++ solver: "
+                            f"{'proven optimal' if cpp_meta.get('proven_optimal') else 'best found'}"
+                            f", worst case {cpp_meta.get('worst_case')}"
+                        )
+                    else:
+                        solver_fallback = cpp_outcome.reason
+                if solver_fallback:
+                    print(f"  C++ solver not used: {solver_fallback} -- "
+                          "falling back to Rust")
+                    if _rust is None:
+                        raise ImportError(
+                            "itb_solver not installed (Rust fallback for: "
+                            f"{solver_fallback})"
+                        )
+            if candidate_specs:
+                pass
+            elif candidate_rank is not None:
                 top_k = max(candidate_rank + 1, 1)
                 env_top_k = os.environ.get("ITB_SOLVE_CANDIDATE_TOP_K_MIN")
                 if env_top_k:
@@ -10434,7 +10590,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             candidate_evals = []
             frontier_candidate_evals = []
             for spec in candidate_specs:
-                candidate_solution = _rust_result_to_solution(
+                candidate_solution = spec.get("solution") or _rust_result_to_solution(
                     spec.get("rust_result"), rust_elapsed, len(active_mechs)
                 )
                 if candidate_solution is None:
@@ -10453,6 +10609,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                     weights=breakdown_weights,
                     block_mech_hp_loss=block_mech_hp_loss,
                     block_mech_status_loss=block_mech_status_loss,
+                    enriched=spec.get("enriched"),
                 ))
                 candidate_evals.append(candidate_eval)
 
@@ -10484,6 +10641,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 )
             if (candidate_rank is None
                     and beam == 0
+                    and solver_used != "cpp"
                     and selected_candidate_eval is not None
                     and plan_requires_safety_block(
                         selected_candidate_eval.get("plan_safety"),
@@ -10619,6 +10777,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
             if (
                 selected_candidate_eval is not None
                 and frontier_diagnostics
+                and solver_used != "cpp"
                 and plan_requires_safety_block(
                     selected_candidate_eval.get("plan_safety"),
                     allow_pod_destroy_dirty=destroy_time_pods_active,
@@ -10653,9 +10812,14 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                 selected_candidate_rank = selected_candidate_eval.get("rank")
                 selected_candidate_source = selected_candidate_eval.get("source")
                 beam_chain_score = selected_candidate_eval.get("chain_score")
-                print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
-                      f"{solution.permutations_tried}/{solution.total_permutations} permutations"
-                      f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
+                if solver_used == "cpp":
+                    print(f"  C++ solver: {rust_elapsed:.2f}s, "
+                          f"{solution.permutations_tried} nodes"
+                          f"{' (not proven optimal)' if solution.timed_out else ' (proven optimal)'}")
+                else:
+                    print(f"  Rust solver: {rust_elapsed:.2f}s, score={solution.score:.0f}, "
+                          f"{solution.permutations_tried}/{solution.total_permutations} permutations"
+                          f"{' (some timed out)' if solution.timed_out else ' (all complete)'}")
                 selected_candidate_blocked = plan_requires_safety_block(
                     selected_candidate_eval.get("plan_safety"),
                     allow_pod_destroy_dirty=destroy_time_pods_active,
@@ -10689,9 +10853,10 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
                         f"selected_blocks={selected_blocks}, "
                         f"max_clean_blocks={max_blocks}"
                     )
-        except ImportError:
-            print("  ERROR: Rust solver not available (itb_solver module not found)")
-            print("  Build with: cd rust_solver && maturin develop --release")
+        except ImportError as e:
+            print(f"  ERROR: solver module not available: {e}")
+            print("  Build with: cd rust_solver && maturin develop --release "
+                  "(Rust) or see CLAUDE.md 'Rebuild the solver' (C++)")
         except Exception as e:
             print(f"  Rust solver error: {e}")
 
@@ -10729,7 +10894,16 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "score": solution.score,
         "num_actions": len(solution.actions),
         "actions": [],
+        "solver": solver_used,
     }
+    if solver_fallback:
+        result["solver_fallback"] = solver_fallback
+    if solver_used == "cpp" and isinstance(cpp_meta, dict):
+        result["cpp_solve"] = {
+            k: cpp_meta.get(k)
+            for k in ("worst_case", "upper_bound", "proven_optimal",
+                      "proven_components", "interleaved", "warnings")
+        }
     for i, a in enumerate(solution.actions):
         result["actions"].append({
             "index": i,
@@ -10900,6 +11074,7 @@ def cmd_solve(profile: str = "Alpha", time_limit: float = 10.0,
         "plan_safety": plan_safety,
         "score_breakdown": enriched["score_breakdown"],
     }
+    solve_data.update(_solver_record_fields(cpp_meta, solver_used, solver_fallback))
     _record_turn_state(session, "solve", solve_data)
 
     if _active_player_action_count(board) > 0:
@@ -11574,7 +11749,7 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
             "island": session.current_island,
             "model_gap": classification.get("model_gap", False),
             "weight_version": _get_weight_version(),
-            "solver_version": _get_solver_version(),
+            **_prediction_source(session, solved_turn),
             "simulator_version": _get_simulator_version(),
             "tags": list(session.tags),
         },
@@ -11612,7 +11787,13 @@ def cmd_verify_action(action_index: int, auto_diagnose: bool = False) -> dict:
     ))
 
     enqueued = False
-    if auto_diagnose or os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
+    if (
+        (auto_diagnose or os.environ.get("ITB_AUTO_DIAGNOSE") == "1")
+        and _prediction_source(session, solved_turn)["solver"] == "cpp"
+    ):
+        print("  [auto-diagnose] skipped: C++ solver prediction "
+              "(the diagnosis loop targets rust_solver)")
+    elif auto_diagnose or os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
         enqueued = _enqueue_diagnosis(
             session,
             failure_id=failure_id,
@@ -54080,6 +54261,7 @@ def _re_solve_partial(
     session: RunSession,
     allow_dirty_plan: bool = False,
     destroy_time_pods: bool = False,
+    moved_uids: set[int] | None = None,
 ) -> tuple[list, list, float, dict | None, dict | None]:
     """Re-solve from actual board state with partial mech states.
 
@@ -54118,7 +54300,9 @@ def _re_solve_partial(
                     u[k] = 255
             if uid in done_uids:
                 u["active"] = False
-            elif uid == mid_action_uid:
+            elif uid == mid_action_uid or uid in (moved_uids or ()):
+                # Moved this turn but not yet acted (the mid-action mech,
+                # or an interleaved plan's earlier move-only entry).
                 u["active"] = True
                 u["can_move"] = False
             # All others keep their current active/can_move state
@@ -54210,15 +54394,25 @@ def _re_solve_partial(
     _inject_unit_obj(bridge_data)
 
     try:
-        import itb_solver as _rust
-        t0 = _time.time()
-        rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
-        rust_result = _json.loads(rust_json)
-        elapsed = _time.time() - t0
+        rust_result: dict = {}
+        actions = []
+        cpp_outcome = _cpp_partial_solve(
+            bridge_data, board, time_limit, _weight_overlays, breakdown_weights,
+        )
+        if cpp_outcome is not None and cpp_outcome.ok:
+            actions = list(cpp_outcome.solution.actions)
+            score = cpp_outcome.solution.score
+            solution = cpp_outcome.solution
+            elapsed = cpp_outcome.solution.elapsed_seconds
+        else:
+            import itb_solver as _rust
+            t0 = _time.time()
+            rust_json = _rust.solve(_json.dumps(bridge_data), time_limit)
+            rust_result = _json.loads(rust_json)
+            elapsed = _time.time() - t0
 
-        if rust_result.get("actions"):
+        if rust_result.get("actions") and not actions:
             from src.model.weapons import weapon_name_to_id
-            actions = []
             for ra in rust_result["actions"]:
                 w_id = ra.get("weapon_id", "")
                 if not w_id:
@@ -54244,15 +54438,23 @@ def _re_solve_partial(
                 active_mech_count=len(actions),
             )
 
+        if actions:
             spawns = [tuple(s) for s in bridge_data.get("spawning_tiles", [])]
             current_turn = bridge_data.get("turn", 0)
             total_turns = bridge_data.get("total_turns", 5)
             remaining_spawns = bridge_data.get("remaining_spawns", 2**31 - 1)
-            enriched = _replay(bridge_data, solution, spawns,
-                               current_turn=current_turn,
-                               total_turns=total_turns,
-                               remaining_spawns=remaining_spawns,
-                               weights=breakdown_weights)
+            if cpp_outcome is not None and cpp_outcome.ok:
+                enriched = cpp_outcome.enriched
+                from src.solver.threat_audit import capture_building_threats
+                rust_result = {
+                    "initial_building_threats": capture_building_threats(board),
+                }
+            else:
+                enriched = _replay(bridge_data, solution, spawns,
+                                   current_turn=current_turn,
+                                   total_turns=total_turns,
+                                   remaining_spawns=remaining_spawns,
+                                   weights=breakdown_weights)
             current_outcome = _capture_board_summary(board, bridge_data)
             predicted_board_summary = dict(enriched.get("predicted_outcome") or {})
             initial_building_threats = rust_result.get(
@@ -54388,8 +54590,14 @@ def _re_solve_partial(
                 "partial_re_solve": {
                     "done_uids": sorted(done_uids),
                     "mid_action_uid": mid_action_uid,
+                    "moved_uids": sorted(moved_uids or ()),
                 },
             }
+            solve_data.update(_solver_record_fields(
+                cpp_outcome.meta if cpp_outcome is not None else None,
+                "cpp" if cpp_outcome is not None and cpp_outcome.ok else "rust",
+                None if cpp_outcome is None or cpp_outcome.ok else cpp_outcome.reason,
+            ))
             return (
                 actions,
                 enriched.get("predicted_states", []),
@@ -54979,12 +55187,18 @@ def _log_sub_action_desync(
             "island": session.current_island,
             "model_gap": classification.get("model_gap", False),
             "weight_version": _get_weight_version(),
-            "solver_version": _get_solver_version(),
+            **_prediction_source(session, solved_turn),
             "simulator_version": _get_simulator_version(),
             "tags": list(session.tags),
         },
     )
-    if os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
+    if (
+        os.environ.get("ITB_AUTO_DIAGNOSE") == "1"
+        and _prediction_source(session, solved_turn)["solver"] == "cpp"
+    ):
+        print("  [auto-diagnose] skipped: C++ solver prediction "
+              "(the diagnosis loop targets rust_solver)")
+    elif os.environ.get("ITB_AUTO_DIAGNOSE") == "1":
         enqueued = _enqueue_diagnosis(
             session,
             failure_id=failure_id,
@@ -55067,8 +55281,14 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                   resume_fast_guard_seconds: float = 0.0,
                   pause_between_actions: bool = False,
                   frontier_diagnostics: bool = True,
-                  quiet: bool = False) -> dict:
+                  quiet: bool = False,
+                  solver: str | None = None) -> dict:
     """Execute a combat turn via bridge with per-sub-action verification.
+
+    ``solver``: "cpp" | "rust" (cmd_solve; default ITB_SOLVER, else "cpp").
+    The C++ solver may interleave units (A moves, B acts, A fires): a
+    move-only entry whose unit acts later in the plan is not ended with SKIP,
+    and that unit is re-solved as moved-but-not-acted after a desync.
 
     For each mech action, executes MOVE and ATTACK as separate sub-actions,
     reads actual board state after each, and diffs against the solver's
@@ -55417,6 +55637,17 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             return True
         return rr["active_mechs"] > 0
 
+    # Load the C++ engine (game scripts, one Lua state per search thread)
+    # while the enemy phase plays out, so the solve finds it ready.
+    try:
+        from src.solver import cpp_solver as _cpp_prewarm
+        _cpp_prewarm.prewarm(
+            difficulty=int(getattr(_load_session(), "difficulty", 0) or 0),
+            solver=solver,
+        )
+    except Exception:
+        pass
+
     if wait_for_turn:
         import time as _t
         poll_start = _t.time()
@@ -55658,6 +55889,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
         destroy_time_pods=destroy_time_pods,
         frontier_diagnostics=frontier_diagnostics,
         lightning_speed_loss_policy=lightning_speed_loss_policy,
+        solver=solver,
     )
     if "error" in solve_result:
         # Preserve hard-gate metadata (requires_research, non_overridable,
@@ -55912,6 +56144,23 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             time.sleep(0.12)
 
     done_uids: set[int] = set()
+    # Units that moved this turn and still act later in the (interleaved)
+    # plan: re-solves treat them as moved-but-not-acted (can_move=False).
+    moved_uids: set[int] = set()
+    moved_this_turn: set[int] = set()
+
+    def _unit_acts_later(uid: int) -> bool:
+        return any(a.mech_uid == uid for a in actions[action_idx + 1:])
+
+    def _finish_entry(uid: int) -> None:
+        """Mark the unit done, unless a later plan entry still drives it."""
+        if _unit_acts_later(uid):
+            if uid in moved_this_turn:
+                moved_uids.add(uid)
+            return
+        done_uids.add(uid)
+        moved_uids.discard(uid)
+
     re_solve_count = 0
     detected_desync_count = 0
     terminal_desync: dict | None = None
@@ -56061,6 +56310,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             try:
                 ack = move_mech(mech_uid, action.move_to[0], action.move_to[1])
                 print(f"  MOVE: {ack}")
+                moved_this_turn.add(mech_uid)
                 _mark_dirty_consent_progress()
             except (TimeoutError, BridgeError) as e:
                 print(f"  MOVE ERROR: {e}")
@@ -56203,6 +56453,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                                 time_limit=time_limit, session=session,
                                 allow_dirty_plan=allow_dirty_plan,
                                 destroy_time_pods=destroy_time_pods_active,
+                                moved_uids=moved_uids,
                             )
                             # A top-level dirty-plan acceptance applies only
                             # to the exact plan the operator reviewed. After a
@@ -56395,6 +56646,11 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                           "turn": turn, "actions_completed": actions_completed}
                 _print_result(result)
                 return result
+        elif _unit_acts_later(mech_uid):
+            # Interleaved plan (C++ solver): the unit acts later this turn,
+            # so it must stay active (no SKIP).
+            print("  MOVE-ONLY (unit acts later in the plan; no SKIP)"
+                  if has_move else "  NO-OP (unit acts later in the plan)")
         elif not has_move:
             try:
                 pause_detail = _resume_combat_timer_pause("before_skip")
@@ -56588,13 +56844,13 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                     if spawn_new_only and is_last_action:
                         print(f"  DESYNC action {actions_completed} {final_phase}: "
                               f"{diff.total_count()} diffs [spawn-only on last action, skipping re-solve]")
-                        done_uids.add(mech_uid)
+                        _finish_entry(mech_uid)
                         actions_completed += 1
                         action_idx += 1
                         continue
 
                     # Re-solve for remaining mechs
-                    done_uids.add(mech_uid)
+                    _finish_entry(mech_uid)
                     remaining = len(actions) - action_idx - 1
                     if remaining > 0 and actual_data:
                         counter_ledger_prefix_complete = False
@@ -56611,6 +56867,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
                             time_limit=time_limit, session=session,
                             allow_dirty_plan=allow_dirty_plan,
                             destroy_time_pods=destroy_time_pods_active,
+                            moved_uids=moved_uids,
                         )
                         # A top-level dirty-plan acceptance applies only to
                         # the exact plan the operator reviewed. After a
@@ -56729,7 +56986,7 @@ def cmd_auto_turn(profile: str = "Alpha", time_limit: float = 10.0,
             and terminal_desync.get("action_index") == actions_completed
         ):
             counter_ledger_prefix_complete = False
-        done_uids.add(mech_uid)
+        _finish_entry(mech_uid)
         actions_completed += 1
         action_idx += 1
 
@@ -58685,7 +58942,10 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     # gate fires naturally when SIMULATOR_VERSION bumps to 2+ without
     # archival.
     current_sim = _get_simulator_version()
-    all_rows_unfiltered = load_failure_db()
+    all_rows_unfiltered = [
+        r for r in load_failure_db()
+        if (r.get("context") or {}).get("solver", "rust") != "cpp"
+    ]
     versions_in_corpus = {r.get("simulator_version", 1) for r in all_rows_unfiltered}
     mixed = versions_in_corpus and versions_in_corpus != {current_sim}
     if mixed and not accept_version_change:
@@ -58714,6 +58974,10 @@ def cmd_tune(iterations: int = 100, min_boards: int = 50,
     else:
         cutoff_applied = load_failure_cutoff()
         all_rows = filter_by_timestamp(load_failure_db())
+    all_rows = [
+        r for r in all_rows
+        if (r.get("context") or {}).get("solver", "rust") != "cpp"
+    ]
     raw_corpus = [r for r in all_rows if is_auto_fixable_by_tuning(r)]
     seen = set()
     deduped = []
