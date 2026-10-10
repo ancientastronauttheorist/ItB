@@ -80,7 +80,7 @@ TEST_CASE("bridge: harness against the mocked game API") {
   std::string error;
   auto rec = itb::load_recording(dir / "itb_snapshot_scenario_vek_order.json", nullptr, &error);
   REQUIRE_MESSAGE(rec.has_value(), error);
-  CHECK(rec->bridge_ext_version == 1);
+  CHECK(rec->bridge_ext_version == 2);
   CHECK(rec->bridge_errors.empty());
   CHECK(rec->mission.mission_key == 3);
   CHECK(rec->mission.env_classes.front() == "Env_Lightning");

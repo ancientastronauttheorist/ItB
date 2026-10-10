@@ -14,6 +14,30 @@ from src.model.board import Board
 from src.bridge.protocol import BridgeError, write_command, wait_for_ack
 
 
+_EXEC_MODE_SENT: str | None = None
+
+
+def _apply_exec_mode_opt_in() -> None:
+    """Explicit opt-in to the bridge's legacy execution.
+
+    The bridge runs every player action natively by default (the game's own
+    ``Pawn:FireWeapon`` with the mech selected; no emulated transit damage,
+    Seismic flip, direct repair, scripted two-click weapons or SetSpace
+    moves). ``ITB_BRIDGE_EXEC_MODE=legacy`` puts it back in the old
+    emulation mode this bot was tuned against; ``native`` forces native.
+    Unset: nothing is sent and the bridge's default (native) applies.
+    """
+    global _EXEC_MODE_SENT
+    mode = os.environ.get("ITB_BRIDGE_EXEC_MODE", "").strip().lower()
+    if mode not in ("legacy", "native") or mode == _EXEC_MODE_SENT:
+        return
+    write_command(f"EXEC_MODE {mode}")
+    ack = wait_for_ack(timeout=5.0)
+    if not ack.startswith(f"OK EXEC_MODE {mode}"):
+        raise BridgeError(f"bridge refused EXEC_MODE {mode}: {ack}")
+    _EXEC_MODE_SENT = mode
+
+
 def _action_timeout() -> float:
     try:
         return max(1.0, float(os.environ.get("ITB_BRIDGE_ACTION_TIMEOUT", "60.0")))
@@ -85,6 +109,7 @@ def execute_bridge_action(action: MechAction, board: Board) -> str:
       - Move only     → MOVE then SKIP (MOVE doesn't deactivate, SKIP does)
       - Nothing       → SKIP (deactivates)
     """
+    _apply_exec_mode_opt_in()
     has_move = action.move_to and action.move_to != (-1, -1)
     is_repair = is_repair_action(action)
     has_attack = action_has_attack(action)
@@ -180,6 +205,7 @@ def move_mech(uid: int, x: int, y: int) -> str:
     settle, but does NOT call SetActive(false). The mech remains active
     for a subsequent attack_mech or skip_mech call.
     """
+    _apply_exec_mode_opt_in()
     write_command(f"MOVE {uid} {x} {y}")
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
@@ -190,6 +216,7 @@ def attack_mech(uid: int, weapon_slot: int, target_x: int, target_y: int) -> str
     weapon_slot is 0-based (0=primary, 1=secondary).
     The Lua ATTACK handler fires and calls SetActive(false).
     """
+    _apply_exec_mode_opt_in()
     write_command(f"ATTACK {uid} {weapon_slot} {target_x} {target_y}")
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 
@@ -203,6 +230,7 @@ def attack_mech_two(
     target2_y: int,
 ) -> str:
     """Fire a two-click weapon, then deactivate."""
+    _apply_exec_mode_opt_in()
     write_command(
         f"TWO_CLICK_ATTACK {uid} {weapon_slot} "
         f"{target_x} {target_y} {target2_x} {target2_y}"
@@ -218,6 +246,7 @@ def skip_mech(uid: int) -> str:
 
 def repair_mech(uid: int) -> str:
     """Repair a mech at its current position and deactivate."""
+    _apply_exec_mode_opt_in()
     write_command(f"REPAIR {uid}")
     return wait_for_ack(timeout=_ACTION_TIMEOUT)
 

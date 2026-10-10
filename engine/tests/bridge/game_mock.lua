@@ -21,6 +21,7 @@ MOCK = {
     busy = 0,         -- Board:IsBusy() returns true while > 0 (counts down)
     busy_after_mutation = 2,
     fire_busy = nil,  -- if set: a mech's Pawn:FireWeapon keeps the board busy this long (effects)
+    pawn_busy_after_fire = nil,  -- if set: the firing mech's Pawn:IsBusy() stays true this many polls
     turn = 1,
     team = 1,
     pawn_ids = 100,
@@ -141,10 +142,18 @@ local function list_class(name)
     local make = new_class(name, function(u, k) return methods[k] end)
     methods.size = bind(name, "size", {{}}, function(self) return #DATA[self].items end)
     methods.index = bind(name, "index", {{"int"}}, function(self, i) return DATA[self].items[i] end)
+    local item = name == "PointList" and "Point" or "int"
+    methods.push_back = bind(name, "push_back", {{item}}, function(self, v)
+        local items = DATA[self].items
+        items[#items + 1] = v
+    end)
     return function(items) return make({items = items}) end
 end
 local new_point_list = list_class("PointList")
 local new_int_list = list_class("IntList")
+
+-- PointList(): an empty list (weapon scripts build target areas with it).
+function PointList() return new_point_list({}) end
 
 function extract_table(list)
     local out = {}
@@ -322,6 +331,24 @@ pawn_methods.GetShotsRemaining = bind("Pawn", "GetShotsRemaining", {{}}, functio
     return DATA[self].shots or 1
 end)
 pawn_methods.IsAbility = bind("Pawn", "IsAbility", {{"string"}}, function() return false end)
+-- Pawn::IsBusy: walking, leaping, being pushed. `busy = true` stays busy;
+-- `busy_polls = n` is busy for the next n polls.
+pawn_methods.IsBusy = bind("Pawn", "IsBusy", {{}}, function(self)
+    local d = DATA[self]
+    if d.busy then return true end
+    if (d.busy_polls or 0) > 0 then
+        d.busy_polls = d.busy_polls - 1
+        return true
+    end
+    return false
+end)
+-- Pawn::GetPathingProfile without the team bits: flyer 1, massive 2, ground 0.
+pawn_methods.GetPathProf = bind("Pawn", "GetPathProf", {{}}, function(self)
+    local def = _G[DATA[self].type] or {}
+    if def.Flying then return PATH_FLYER end
+    if def.Massive then return PATH_MASSIVE end
+    return PATH_GROUND
+end)
 
 local function setter(name, field, t)
     pawn_methods[name] = bind("Pawn", name, {{t}}, function(self, v) DATA[self][field] = v end, true)
@@ -354,14 +381,32 @@ end, true)
 pawn_methods.ClearQueued = bind("Pawn", "ClearQueued", {{}}, function(self)
     DATA[self].queued = nil
 end, true)
+-- The native rules the bridge relies on (SkillManager::FireWeapon): frozen
+-- -> 0; a weapon whose Lua table has GetTargetArea fires only at a tile of
+-- that area, computed with the global `Pawn` as the game does -> else 0; a
+-- TwoClick weapon takes a first click (2) then fires on the second (1);
+-- slot 50 is the repair skill. A weapon table with MockLeap moves the
+-- shooter to the target (stand-in for AddLeap). `selected` records the
+-- global Pawn's id at the call.
+local function weapon_name(d, slot)
+    local def = _G[d.type] or {}
+    local list = def.SkillList or {}
+    if slot <= #list then return list[slot] end
+    return (d.added or {})[slot - #list]
+end
 pawn_methods.FireWeapon = bind("Pawn", "FireWeapon", {{"Point", "int"}}, function(self, p, slot)
     local d = DATA[self]
-    MOCK.fired[#MOCK.fired + 1] = {id = d.id, slot = slot, x = p.x, y = p.y}
+    local sel = (kind(Pawn) == "Pawn") and DATA[Pawn].id or nil
+    local rec = {id = d.id, slot = slot, x = p.x, y = p.y, selected = sel}
+    MOCK.fired[#MOCK.fired + 1] = rec
+    if d.frozen and slot ~= 50 then rec.ret = 0 return 0 end
     if slot == 0 then
-        if not d.active then return 0 end
+        if not d.active then rec.ret = 0 return 0 end
         d.x, d.y = p.x, p.y
         d.undo = true
         if tile(p).fire then d.fire = true end
+        if MOCK.pawn_busy_after_fire then d.busy_polls = MOCK.pawn_busy_after_fire end
+        rec.ret = 1
         return 1
     end
     if d.team == TEAM_ENEMY then
@@ -370,8 +415,29 @@ pawn_methods.FireWeapon = bind("Pawn", "FireWeapon", {{"Point", "int"}}, functio
         d.selected_weapon = slot
         return 1
     end
+    if slot ~= 50 then
+        local skill = _G[weapon_name(d, slot) or ""]
+        if type(skill) == "table" and type(skill.GetTargetArea) == "function" and not d.first_click then
+            local area = skill:GetTargetArea(P(d.x, d.y))
+            local inside = false
+            for i = 1, area:size() do
+                local q = area:index(i)
+                if q.x == p.x and q.y == p.y then inside = true end
+            end
+            if not inside then rec.ret = 0 return 0 end
+        end
+        if type(skill) == "table" and skill.TwoClick and not d.first_click then
+            d.first_click = {x = p.x, y = p.y, slot = slot}
+            rec.ret = 2
+            return 2
+        end
+        d.first_click = nil
+        if type(skill) == "table" and skill.MockLeap then d.x, d.y = p.x, p.y end
+    end
     d.active = false
     if MOCK.fire_busy then MOCK.busy = MOCK.fire_busy end
+    if MOCK.pawn_busy_after_fire then d.busy_polls = MOCK.pawn_busy_after_fire end
+    rec.ret = 1
     return 1
 end, true)
 pawn_methods.AddWeapon = bind("Pawn", "AddWeapon", {{"string"}}, function(self, w)
@@ -425,9 +491,13 @@ board_methods.IsTerrain = bind("Board", "IsTerrain", {{"Point", "int"}}, functio
     if t == TERRAIN_LAVA then return tl.terrain == TERRAIN_WATER and tl.lava end
     return tl.terrain == t
 end)
-board_methods.IsBlocked = bind("Board", "IsBlocked", {{"Point", "int"}}, function(self, p)
+board_methods.IsBlocked = bind("Board", "IsBlocked", {{"Point", "int"}}, function(self, p, prof)
     if not valid(p) then return true end
     local t = tile(p).terrain
+    -- Flyers may end on water and chasms (Board::IsBlocked, stage 5 3.4).
+    if prof == PATH_FLYER and (t == TERRAIN_WATER or t == TERRAIN_HOLE) then
+        return pawn_at(p) ~= nil
+    end
     if t == TERRAIN_BUILDING or t == TERRAIN_MOUNTAIN or t == TERRAIN_WATER or t == TERRAIN_HOLE then
         return true
     end
@@ -763,6 +833,9 @@ factory_methods.CreatePawn = bind("PawnFactory", "CreatePawn", {{"string"}, {"st
         })
         return u
     end)
+
+-- global.lua: the native selection sets the `Pawn` global through this.
+function SetPawn(pawn) Pawn = pawn end
 
 function GetDifficulty() return 1 end
 function IsRelease() return true end
