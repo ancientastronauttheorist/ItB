@@ -148,14 +148,17 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.boosted = get_or<bool>(u, "boosted", false);
   p.webbed = get_or<bool>(u, "web", false);
   p.infected = get_or<bool>(u, "infected", false);
+  // AE Injured has no Lua getter; live tooling sets it (engine_overrides).
+  p.injured = get_or<bool>(u, "injured", false);
   p.web_source = get_or<int>(u, "web_source_uid", -1);
 
-  p.weapons = {};
   // The exact weapon tables (upgrade suffix included) when the bridge
-  // exports them (weapons_exact), else the type's SkillList.
+  // exports them (weapons_exact), else the type's SkillList as recorded;
+  // a unit without either keeps its definition's (hand-written boards).
   auto weapons = u.find("weapons_exact");
   if (weapons == u.end() || !weapons->is_array() || weapons->empty()) weapons = u.find("weapons");
   if (weapons != u.end() && weapons->is_array()) {
+    p.weapons = {};
     size_t i = 0;
     for (const json& w : *weapons) {
       if (i >= p.weapons.size()) {

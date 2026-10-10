@@ -1,0 +1,33 @@
+{
+  "name": "fire_under_mech",
+  "question": "When does a mech on a burning tile catch fire? (Mission_BurnbugBoss recordings: mechs on burning tiles stayed unburnt.)",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "fire_under_mech",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "tiles": [
+      {"x": 5, "y": 3, "fire": true},
+      {"x": 1, "y": 3, "fire": true}
+    ],
+    "pawns": [
+      {"uid": 0, "x": 3, "y": 3},
+      {"uid": 1, "x": 5, "y": 3},
+      {"uid": 2, "x": 1, "y": 5}
+    ],
+    "tiles_after": [
+      {"x": 3, "y": 3, "fire": true}
+    ]
+  },
+  "actions": [
+    {"pawn": "uid:2", "move": [1, 3], "native": true}
+  ],
+  "end_turn": true,
+  "observe": [
+    "After SCENARIO: mech 0 at (3,3) stood still while its tile caught fire (Board:SetTerrain TERRAIN_FIRE): on fire or not?",
+    "Mech 1 was put on the already burning (5,3) with SetSpace: on fire or not?",
+    "Mech 2 walks (1,5) -> (1,3) onto fire with MOVE_NATIVE (the Move skill): on fire on arrival?",
+    "After End Turn: each burning mech loses 1 HP in the fire tick; compare with the engine."
+  ]
+}

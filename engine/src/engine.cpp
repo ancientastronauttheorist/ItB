@@ -483,6 +483,9 @@ ActionResult Engine::Impl::queued_effect(Board& board, int32_t uid, WeaponInfo& 
   const QueuedShot shot = pawn->queued;
   if (!shot.active() || shot.weapon >= kMaxWeapons ||
       pawn->weapons[static_cast<size_t>(shot.weapon)] == kNoSymbol) {
+    // Nothing can fire it; the shot is used up all the same (else the enemy
+    // phase would pick this shooter again and again).
+    pawn->queued = QueuedShot{};
     out.status = ActionStatus::NoWeapon;
     return out;
   }

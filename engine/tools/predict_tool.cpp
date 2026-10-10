@@ -300,7 +300,8 @@ int run_predict(const PredictOptions& opt) {
                              : engine->fire_weapon(out.board, a.uid, a.slot, a.target, a.target2);
         out.action_status.push_back("#" + std::to_string(a.uid) + " " + r.weapon + " at " + where(a.target) +
                                     (a.target2 ? " then " + where(*a.target2) : "") + ": " +
-                                    to_string(r.status));
+                                    to_string(r.status) +
+                                    (r.resolve.timing_sensitive() ? " (timing-sensitive)" : ""));
         if (!r.ok()) refused = true;
       }
     }

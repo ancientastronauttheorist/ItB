@@ -1,0 +1,30 @@
+{
+  "name": "lightning_order",
+  "question": "Lightning strikes in a hidden random order (random_removal): an explosive psion struck before or after the Vek next to a mech decides whether the Vek explodes (stage 7 vector 29).",
+  "mission": "Mission_Lightning (sand island, 'Lightning Storm'), a player turn with at least two lightning marks",
+  "scenario": {
+    "name": "lightning_order",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"type": "Jelly_Explode1", "team": 6, "at": "danger:0"},
+      {"type": "Scorpion1", "team": 6, "at": "danger:1"},
+      {"uid": 0, "at": "near:danger:1"},
+      {"uid": 1, "at": "free"},
+      {"uid": 2, "at": "free"}
+    ]
+  },
+  "end_turn": true,
+  "repeat": "Repeat on several turns or missions: each run shows one of the two orders.",
+  "observe": [
+    "env_strike_log (or the phase log's env_step entries) gives the order the strikes hit.",
+    "Psion struck first: the Scorpion dies without exploding and mech 0 keeps its HP.",
+    "Scorpion struck first: it explodes (psion alive) and mech 0 loses 1 HP.",
+    "The engine prints one outcome per order (--branches); the matching one must be the order the game logged."
+  ],
+  "synth": {
+    "mission_id": "Mission_Lightning",
+    "environment_danger_v2": [[2, 2, 1, 1, 0], [5, 2, 1, 1, 0], [2, 5, 1, 1, 0], [6, 6, 1, 1, 0]]
+  }
+}

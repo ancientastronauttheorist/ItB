@@ -1,0 +1,27 @@
+{
+  "name": "psion_idle_frame",
+  "question": "Stage 7 O1: a Vek killed by Pawn::SetMutation when its Soldier psion dies: does the board look idle for one frame (letting the next shot start) before its death animation makes the board busy?",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn (debug flag on: the phase log is per frame)",
+  "scenario": {
+    "name": "psion_idle_frame",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 4, "y": 3},
+      {"uid": 1, "x": 7, "y": 7},
+      {"uid": 2, "x": 0, "y": 7},
+      {"type": "Firefly1", "team": 6, "x": 0, "y": 2, "hp": 4, "queue": {"x": 1, "y": 2}},
+      {"type": "Jelly_Health1", "team": 6, "x": 2, "y": 2, "hp": 1},
+      {"type": "Scorpion1", "team": 6, "x": 4, "y": 2, "hp": 1, "queue": {"x": 4, "y": 3}},
+      {"type": "Firefly1", "team": 6, "x": 6, "y": 2, "hp": 4, "queue": {"x": 5, "y": 2}}
+    ]
+  },
+  "end_turn": true,
+  "observe": [
+    "The first Firefly (0,2) kills the psion (2,2); the Scorpion (4,2), at 1 HP of a psion-raised 4, dies with it (SetMutation).",
+    "The Scorpion's sting on mech 0 (4,3) never fires: mech 0 keeps its HP.",
+    "The second Firefly (6,2) shoots left: if the Scorpion's dying body still blocks, the shot hits (4,2); otherwise it flies on to the first Firefly at (0,2). (Both Fireflies are set to 4 HP under the psion and drop to 3 when it dies.)",
+    "Phase log: frames of the psion's death, the Scorpion's hp 1 -> 0, busy-state changes, and the next 'selected' shooter. A busy 0 frame between the psion death and the Scorpion's death answers O1."
+  ]
+}

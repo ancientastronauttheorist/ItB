@@ -1,0 +1,24 @@
+{
+  "name": "vek_order_readd",
+  "question": "A re-added pawn (Board:RemovePawn + AddPawn) moves to the end of its list group, so it attacks last.",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "vek_order_readd",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 3, "y": 4},
+      {"uid": 1, "x": 0, "y": 7},
+      {"uid": 2, "x": 7, "y": 7},
+      {"type": "Firefly1", "team": 6, "x": 1, "y": 3, "queue": {"x": 2, "y": 3}},
+      {"type": "Hornet1", "team": 6, "x": 3, "y": 3, "hp": 1, "queue": {"x": 3, "y": 4}},
+      {"ref": 4, "readd": true}
+    ]
+  },
+  "end_turn": true,
+  "observe": [
+    "attack_order in the snapshot lists the Hornet before the Firefly.",
+    "As in vek_order_reversed: mech 0 loses 1 HP, then the Hornet dies."
+  ]
+}

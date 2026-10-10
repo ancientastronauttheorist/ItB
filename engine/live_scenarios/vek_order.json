@@ -1,0 +1,23 @@
+{
+  "name": "vek_order",
+  "question": "Vek attack order is board-list (insertion) order: a Vek that kills another first cancels its attack.",
+  "mission": "any mission without an environment (env_class Env_Null), player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "vek_order",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 3, "y": 4},
+      {"uid": 1, "x": 0, "y": 7},
+      {"uid": 2, "x": 7, "y": 7},
+      {"type": "Firefly1", "team": 6, "x": 1, "y": 3, "queue": {"x": 2, "y": 3}},
+      {"type": "Hornet1", "team": 6, "x": 3, "y": 3, "hp": 1, "queue": {"x": 3, "y": 4}}
+    ]
+  },
+  "end_turn": true,
+  "observe": [
+    "The Firefly at (1,3), listed first, shoots right and kills the Hornet at (3,3) before the Hornet attacks.",
+    "Mech 0 at (3,4) keeps full HP; the phase log's 'selected' entries show only the Firefly firing."
+  ]
+}

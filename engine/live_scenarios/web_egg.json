@@ -1,0 +1,26 @@
+{
+  "name": "web_egg",
+  "question": "Does a spider egg (WebbEgg1) web a mech that moves next to it, or one placed next to it? (Recordings: mechs that moved next to an egg were webbed.)",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "web_egg",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 1, "y": 3},
+      {"uid": 1, "x": 3, "y": 4},
+      {"uid": 2, "x": 7, "y": 7},
+      {"type": "WebbEgg1", "team": 6, "x": 3, "y": 3, "queue": {"x": 3, "y": 3}}
+    ]
+  },
+  "actions": [
+    {"pawn": "uid:0", "move": [2, 3], "native": true}
+  ],
+  "end_turn": true,
+  "observe": [
+    "After SCENARIO: mech 1 at (3,4), placed next to the egg, webbed (unit.web / grappled)?",
+    "After the move: mech 0 at (2,3), next to the egg, webbed?",
+    "After End Turn: webs are released first; the egg hatches a Spiderling at (3,3) only when its queued hatch fires."
+  ]
+}

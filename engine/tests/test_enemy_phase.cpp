@@ -788,6 +788,19 @@ TEST_CASE("V38 the train fires after every Vek and stops on a blocker") {
   CHECK(fired(r).count(train) == 1);
 }
 
+TEST_CASE("a queued shot with no weapon behind it is used up, not retried") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t v = place(b, "Scorpion1", {3, 3});
+  P(b, v).weapons = {};
+  P(b, v).queued = QueuedShot{0, {3, 3}, {3, 4}};
+  const PhaseResult r = E.end_turn(b, context());
+  int fizzles = 0;
+  for (const PhaseEvent& e : r.events) fizzles += e.type == PhaseEventType::ShotFizzled ? 1 : 0;
+  CHECK(fizzles == 1);
+  CHECK_FALSE(P(b, v).queued.active());
+}
+
 TEST_CASE("a train the bridge exported without a queued shot stays put") {
   NEED_ENGINE();
   Board b;
