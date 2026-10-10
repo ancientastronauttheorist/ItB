@@ -14,7 +14,7 @@
 //                                               score the recorded plan (tiers, objectives, position)
 //   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
 //               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
-//               [--lua-counts]
+//               [--lua-counts] [--tt ENTRIES]
 //                                               the perfect-turn search vs the recorded plan
 //   itb_inspect [--game DIR] --predict <state.json> [--actions JSON|@FILE] [--no-enemy]
 //               [--branches [N]] [--json FILE]
@@ -54,7 +54,7 @@ namespace {
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
                "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
-               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] [--lua-counts] | "
+               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] [--lua-counts] [--tt ENTRIES] | "
                "--predict <state.json> [--actions JSON|@FILE] [--no-enemy] [--branches [N]] [--json FILE] | "
                "--diff-weapons [DIR] [--random N] [--seed S] [--weapon ID] [--all-tables] [--ports])\n";
   return 2;
@@ -396,6 +396,8 @@ int main(int argc, char** argv) {
         o.json_out = args[++i];
       } else if (args[i] == "--lua-counts") {
         o.lua_counts = true;
+      } else if (args[i] == "--tt" && i + 1 < args.size()) {
+        o.tt_entries = std::stoull(args[++i]);
       } else {
         return usage();
       }

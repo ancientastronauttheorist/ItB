@@ -20,6 +20,7 @@ struct SolveToolOptions {
   bool verbose = false;            // directory: print every plan
   std::filesystem::path json_out;  // one JSON line per board
   bool lua_counts = false;         // print Lua calls by table and method at the end
+  uint64_t tt_entries = 0;         // SolveOptions::tt_max_entries (0: the default)
 };
 
 int run_solve(const SolveToolOptions& options);

@@ -364,7 +364,11 @@ TTEntry merge_entries(const TTEntry& old, const TTEntry& next) {
 }
 
 // A hash map in independently locked shards, shared by the search threads.
-// Entries are only ever sound intervals, so any thread may use any entry.
+// Entries are only ever sound intervals, so any thread may use any entry,
+// and dropping one only loses information. Once `cap` entries are stored, a
+// new entry replaces the deepest of the few entries in the neighbouring
+// buckets of its shard (entries near the root stand for the largest
+// subtrees); below the cap nothing is ever dropped.
 template <class V>
 class SharedMap {
  public:
@@ -374,37 +378,67 @@ class SharedMap {
     std::lock_guard lock(s.mu);
     auto it = s.map.find(k);
     if (it == s.map.end()) return false;
-    out = it->second;
+    out = it->second.v;
     return true;
   }
-  // An existing entry is merged with merge(old, new).
+  // An existing entry is merged with merge(old, new). `depth`: how deep in
+  // the search the entry was computed (the replacement priority).
   template <class Merge>
-  void put(const BoardHash& k, const V& v, Merge&& merge) {
+  void put(const BoardHash& k, const V& v, Merge&& merge, int depth = 0) {
     Shard& s = shard(k);
     std::lock_guard lock(s.mu);
     auto it = s.map.find(k);
     if (it != s.map.end()) {
-      it->second = merge(it->second, v);
+      it->second.v = merge(it->second.v, v);
+      it->second.depth = std::min(it->second.depth, depth);
       return;
     }
-    if (size_.load(std::memory_order_relaxed) >= cap_) return;
-    s.map.emplace(k, v);
-    size_.fetch_add(1, std::memory_order_relaxed);
+    if (size_.load(std::memory_order_relaxed) >= cap_) {
+      if (!evict(s, k)) return;
+    } else {
+      size_.fetch_add(1, std::memory_order_relaxed);
+    }
+    s.map.emplace(k, Slot{v, depth});
   }
   size_t size() const { return size_.load(std::memory_order_relaxed); }
   // In-progress counts (V = int): boards some thread is searching now.
   void add(const BoardHash& k, int delta) {
     Shard& s = shard(k);
     std::lock_guard lock(s.mu);
-    if ((s.map[k] += delta) == 0) s.map.erase(k);
+    if ((s.map[k].v += delta) == 0) s.map.erase(k);
   }
 
  private:
   static constexpr size_t kShards = 64;
+  static constexpr size_t kProbe = 8;  // buckets looked at for a victim
+  struct Slot {
+    V v{};
+    int depth = 0;
+  };
   struct Shard {
     std::mutex mu;
-    std::unordered_map<BoardHash, V, BoardHashOf> map;
+    std::unordered_map<BoardHash, Slot, BoardHashOf> map;
   };
+  // Removes the deepest entry among those in the buckets after k's own.
+  static bool evict(Shard& s, const BoardHash& k) {
+    const size_t buckets = s.map.bucket_count();
+    if (buckets == 0 || s.map.empty()) return false;
+    const size_t first = s.map.bucket(k);
+    BoardHash victim{};
+    int deepest = -1;
+    for (size_t i = 0; i < kProbe; ++i) {
+      const size_t b = (first + i) % buckets;
+      for (auto it = s.map.begin(b); it != s.map.end(b); ++it) {
+        if (it->second.depth > deepest) {
+          deepest = it->second.depth;
+          victim = it->first;
+        }
+      }
+    }
+    if (deepest < 0) return false;
+    s.map.erase(victim);
+    return true;
+  }
   Shard& shard(const BoardHash& k) { return shards_[k.hi % kShards]; }
   std::array<Shard, kShards> shards_;
   std::atomic<size_t> size_{0};
@@ -913,7 +947,7 @@ class Worker {
     const Score ub = sh_.bounds.of(b);
     auto finish = [&](Interval r) {
       if (shared) sh_.busy.add(h, -1);
-      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best}, merge_entries);
+      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best}, merge_entries, depth);
       if (chance_free && r.lo > kLow) improve(r.lo, best_pv);
       if (pv) *pv = best_pv;
       return r;

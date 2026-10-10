@@ -205,6 +205,7 @@ int run_solve(const SolveToolOptions& opt) {
     so.node_limit = opt.node_limit;
     so.helper_engines = helper_ptrs;
     if (opt.beam >= 0) so.beam_width = opt.beam;
+    if (opt.tt_entries > 0) so.tt_max_entries = opt.tt_entries;
     for (const auto& [uid, pilot] : rec->pilots) {
       if (Pawn* p = board.find_pawn(uid)) {
         p->pilot_abilities |= engine->pilot_ability(pilot);
