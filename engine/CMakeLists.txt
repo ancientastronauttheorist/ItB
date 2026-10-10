@@ -57,6 +57,17 @@ add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_rep
 target_compile_options(itb_inspect PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(itb_inspect PRIVATE itb_engine nlohmann_json::nlohmann_json)
 
+# The game's Lua (5.1.5) as a command-line interpreter: runs the bridge
+# script harness (tests/bridge) outside the game.
+add_executable(itb_lua51 "${lua51_SOURCE_DIR}/src/lua.c")
+target_link_libraries(itb_lua51 PRIVATE itb_lua)
+target_compile_options(itb_lua51 PRIVATE -w)
+# luac -p -l lists a script's global reads and writes (GETGLOBAL/SETGLOBAL).
+add_executable(itb_luac51 "${lua51_SOURCE_DIR}/src/luac.c" "${lua51_SOURCE_DIR}/src/print.c")
+target_link_libraries(itb_luac51 PRIVATE itb_lua)
+target_include_directories(itb_luac51 PRIVATE "${lua51_SOURCE_DIR}/src")
+target_compile_options(itb_luac51 PRIVATE -w)
+
 enable_testing()
 add_executable(itb_tests
   tests/test_main.cpp
@@ -72,8 +83,9 @@ add_executable(itb_tests
   tests/test_enemy_phase.cpp
   tests/test_score.cpp
   tests/test_solver.cpp
+  tests/test_bridge.cpp
 )
-target_link_libraries(itb_tests PRIVATE itb_engine doctest::doctest)
+target_link_libraries(itb_tests PRIVATE itb_engine itb_lua doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE
   ITB_REPO_ROOT="${ITB_REPO_ROOT}"
   ITB_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
