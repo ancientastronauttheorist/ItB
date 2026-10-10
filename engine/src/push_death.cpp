@@ -3,10 +3,12 @@
 // psion leaders, removal of bodies).
 
 #include <algorithm>
+#include <bit>
 #include <string>
 
 #include "itb/game_data.hpp"
 #include "itb/movement.hpp"
+#include "itb/pilot_xp.hpp"
 #include "rules_detail.hpp"
 #include "simulation.hpp"
 
@@ -214,6 +216,7 @@ void Simulation::process_death(Pawn& pawn, PawnSim& ps) {
   if (pawn.team == Team::Enemy && !pawn.mech && !pawn.minor) {
     ps.xp_gone = frame_ + clock_.tracker_updates(dur_.xp_popup);
   }
+  credit_kill(pawn);
   changed_ = true;
   log(ResolveEventType::DeathProcessed, pawn.pos, pawn.uid);
 }
@@ -430,6 +433,141 @@ void Simulation::remove(int32_t uid) {
   board_.remove_pawn(uid);
   pawns_.erase(uid);
   changed_ = true;
+}
+
+// ---- Kill credit and pilot experience (itb/pilot_xp.hpp) ----------------------------
+
+// Pawn::ProcessDeath @00886a80: a non-mech enemy-team pawn's death counts as a
+// kill of the last shooter; unless it is Minor it gives XP equal to its max
+// HP, to the shooter if its id is 0-2, else to the squad.
+void Simulation::credit_kill(const Pawn& victim) {
+  if (victim.team != Team::Enemy || victim.mech) return;
+  const int32_t shooter = last_owner_;
+  auto credit = [&](int32_t uid) -> KillCredit& {
+    for (KillCredit& c : credits_) {
+      if (c.uid == uid) return c;
+    }
+    credits_.push_back(KillCredit{uid});
+    return credits_.back();
+  };
+  // "any_kill_<id>": only a mech's own entry is ever read.
+  if (shooter >= 0) ++credit(shooter).any_kills;
+  if (victim.minor) return;
+  const int xp = std::max<int>(victim.max_hp, 0);
+  if (shooter >= 0 && shooter < 3) {
+    KillCredit& c = credit(shooter);
+    c.xp += xp;
+    ++c.kills;
+  } else {
+    env_xp_ += xp;
+  }
+}
+
+// Pawn::UpdateKills @008816c0 (P5, no effect active, list order).
+void Simulation::update_kills(Pawn& pawn) {
+  if (credits_.empty()) return;
+  auto it = std::find_if(credits_.begin(), credits_.end(),
+                         [&](const KillCredit& c) { return c.uid == pawn.uid; });
+  if (it == credits_.end()) return;
+  const KillCredit c = *it;
+  credits_.erase(it);
+  // Pawn::IncreasePilotXp; Experienced pilots (Extra_XP) get 2 more per kill.
+  const int xp = c.xp + (pawn.has_pilot(kPilotExtraXp) ? 2 * c.kills : 0);
+  if (increase_pilot_xp(board_, pawn, xp)) {
+    log(ResolveEventType::PilotLevelUp, pawn.pos, pawn.uid, pawn.pilot_level);
+  }
+  if (c.any_kills <= 0 || !pawn.mech) return;
+  // The battle's kill count (+0x9e4), which Adrenaline adds to the move.
+  if (pawn.has_level_skill(LevelSkill::Adrenaline)) {
+    pawn.movement.pilot_bonus = static_cast<int8_t>(std::min(100, pawn.movement.pilot_bonus + c.any_kills));
+  }
+  // Viscera Nanobots: heal 1 (2 upgraded) per kill.
+  if (board_.has_passive(kPassiveLeechKill)) {
+    const int heal = board_.has_passive(kPassiveLeechKillA) ? 2 : 1;
+    modify_health(board_, pawn, heal * c.any_kills, DamageMode::Weapon, rules_);
+    state(pawn.uid).detonate_pending = false;
+    note_deaths();
+  }
+  if (pawn.has_pilot(kPilotKoBoost)) pawn.boosted = true;
+}
+
+// BoardPlayer::UpdateXP @008a6a90: the squad's XP is split among the living
+// mechs with a pilot, in list order: env_xp / n each, and the remainder +1
+// each to a random subset. The subset is a chance node only when it decides a
+// level-up; otherwise pilots whose XP no longer matters (top level or not
+// recorded) take the +1s first, then list order.
+void Simulation::update_xp() {
+  if (env_xp_ <= 0) return;
+  const int total = env_xp_;
+  env_xp_ = 0;
+  std::vector<Pawn*> mechs;
+  for (Pawn& p : board_.pawns()) {
+    if (p.mech && p.alive() && has_pilot_record(p)) mechs.push_back(&p);
+  }
+  if (mechs.empty()) return;
+  const int n = static_cast<int>(mechs.size());
+  const int share = total / n;
+  int rest = total % n;
+  std::vector<int> extra(mechs.size(), 0);
+  if (rest > 0) {
+    std::vector<size_t> decisive, plain;
+    for (size_t i = 0; i < mechs.size(); ++i) {
+      const Pawn& m = *mechs[i];
+      (pilot_levels_up(m, share + 1) && !pilot_levels_up(m, share) ? decisive : plain).push_back(i);
+    }
+    std::stable_sort(plain.begin(), plain.end(),
+                     [&](size_t a, size_t b) { return !tracks_pilot_xp(*mechs[a]) && tracks_pilot_xp(*mechs[b]); });
+    if (!decisive.empty()) {
+      // Distinct outcomes: which decisive mechs get a +1 (the rest go to the
+      // plain ones), fewest level-ups first.
+      const int nd = static_cast<int>(decisive.size());
+      const int lo = std::max(0, rest - static_cast<int>(plain.size()));
+      const int hi = std::min(rest, nd);
+      std::vector<uint32_t> subsets;
+      for (int k = lo; k <= hi; ++k) {
+        for (uint32_t mask = 0; mask < (1u << nd); ++mask) {
+          if (std::popcount(mask) == k) subsets.push_back(mask);
+        }
+      }
+      int pick = 0;
+      if (subsets.size() > 1) {
+        ChanceRecord node{ChanceKind::XpSplit, frame_, mechs[decisive.front()]->pos, total, 0,
+                          static_cast<int>(subsets.size())};
+        pick = ctx_.choose ? ctx_.choose(node) : 0;
+        pick = std::clamp(pick, 0, static_cast<int>(subsets.size()) - 1);
+        node.outcome = pick;
+        if (result_) result_->chances.push_back(node);
+      }
+      const uint32_t mask = subsets[static_cast<size_t>(pick)];
+      for (int j = 0; j < nd; ++j) {
+        if (mask & (1u << j)) {
+          extra[decisive[static_cast<size_t>(j)]] = 1;
+          --rest;
+        }
+      }
+    }
+    for (size_t i : plain) {
+      if (rest <= 0) break;
+      extra[i] = 1;
+      --rest;
+    }
+  }
+  for (size_t i = 0; i < mechs.size(); ++i) {
+    Pawn& m = *mechs[i];
+    if (increase_pilot_xp(board_, m, share + extra[i])) {
+      log(ResolveEventType::PilotLevelUp, m.pos, m.uid, m.pilot_level);
+    }
+  }
+}
+
+// EventSystem::ClearLastEffect (LastShot::Clear): owner -1, no team, no shot.
+// Board::OnLoop calls it only while a shooter is recorded.
+void Simulation::clear_last_shot() {
+  if (last_owner_ == -1) return;
+  last_owner_ = -1;
+  last_team_ = Team::None;
+  last_shot_ = kNoSymbol;
+  rules_.current_shot = kNoSymbol;
 }
 
 }  // namespace itb::detail

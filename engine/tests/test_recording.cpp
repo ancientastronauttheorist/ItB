@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "itb/movement.hpp"
 #include "itb/recording.hpp"
 
 using namespace itb;
@@ -55,9 +56,11 @@ TEST_CASE("recorded units keep their live stats and queued attacks") {
   CHECK(punch->mech);
   CHECK(punch->massive);
   CHECK(punch->team == Team::Player);
-  // Recorded base move 3, effective move 5.
+  // Recorded base move 3, effective move 5: Skilled (level 2) +1 is read
+  // live (level_skill_move), the other +1 stands.
   CHECK(punch->move == 3);
-  CHECK(punch->movement.pilot_bonus == 2);
+  CHECK(punch->movement.pilot_bonus == 1);
+  CHECK(base_move(b, *punch) == 5);
 
   const Pawn* digger = b.find_pawn(969);
   REQUIRE(digger != nullptr);

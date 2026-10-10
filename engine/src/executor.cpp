@@ -316,6 +316,9 @@ void Simulation::run_frame(int64_t f) {
   frame_ = f;
   p3_done_.clear();
 
+  // BoardPlayer::OnLoop starts with UpdateXP, before Board::OnLoop.
+  update_xp();
+
   phase_ = Phase::P1;
   update_weapon_anims();
 
@@ -339,9 +342,12 @@ void Simulation::run_frame(int64_t f) {
     order.clear();
     for (const Pawn& p : board_.pawns()) order.push_back(p.uid);
     for (int32_t uid : order) {
+      if (Pawn* p = board_.find_pawn(uid)) update_kills(*p);
       if (Pawn* p = board_.find_pawn(uid)) detonate_corpse(*p, state(uid));
     }
     update_teleporters();
+    // Board::OnLoop ends the last shot once nothing is active any more.
+    if (!effect_active()) clear_last_shot();
   }
 
   // The mission's per-frame Lua (BaseUpdate), with the frame's board.
@@ -486,8 +492,10 @@ bool Simulation::effect_active() const {
 // ---- Board::ApplyEffect -------------------------------------------------------------------
 
 void Simulation::apply_effect(const SkillEffect& effect, Symbol shot, int cause, ActionKind kind) {
-  // The last-shot record, unless this is a death/explosion follow-up.
-  if (!effect.follow_up) {
+  // The last-shot record, unless this is a death/explosion follow-up
+  // (EventSystem::SetLastEffect @00708240: an effect without an owner, -1,
+  // leaves a recorded shooter in place).
+  if (!effect.follow_up && !(effect.owner == -1 && last_owner_ != -1)) {
     last_owner_ = effect.owner;
     last_team_ = effect.team;
     last_shot_ = shot;

@@ -364,6 +364,20 @@ Done so far (build order from the decompile):
      affect keep a stale one. The Psion Tyrant reaches every player-team pawn.
    - Recordings: the mission data stage 7 reads (`Recording::mission`) and
      AE pilot level-up skills (Thick Skin, Technician).
+   - Pilot experience (`itb/pilot_xp.hpp`, bridge `pilot.xp`): a non-mech
+     enemy-team death counts for the last shooter (`EventSystem` LastShot,
+     cleared at the first frame without an active effect; an effect without
+     an owner keeps it). Unless the victim is Minor it gives XP equal to its
+     max HP: to the shooter if its id is 0-2, otherwise split over the living
+     mechs with a pilot (the remainder is random: `ChanceKind::XpSplit`, a
+     node only when it decides a level-up). XP applies at the quiescent frame
+     (`Pawn::UpdateKills`), 25 XP to level 1, 50 to level 2, excess lost.
+     The new skill applies at once: Health / Skilled +2 max HP and +2 HP,
+     Opener (first turn) / Closer (last turn) Boost, Conservative +1 use,
+     Thick Skin, Technician; Move, Skilled, Opener, Closer and Pain move is
+     read live by `base_move`. Kills also feed Experienced (+2 XP), Adrenaline,
+     Viscera Nanobots (`Passive_Leech`, heal; `Passive_Psions` is Psion
+     Leech) and KO_Boost.
 
 - **Stage 8: the turn score** (`score.hpp`, `objectives.hpp`).
    - Strict tiers: grid and buildings, mechs, mission objectives, kills,
@@ -855,8 +869,14 @@ Each has a scenario in `LIVE_TEST_PLAN.md`.
   then BONUS_BLOCK, BONUS_GRID after turn 1, Terraform and Missiles are
   approximate. That a pod still intact at mission end is recovered is
   assumed, not checked against the game.
-- **Pilot level-ups.** A kill can level a pilot up mid-mission (+2 HP seen
-  in the recordings); pilot XP is not in the bridge data.
+- **Pilot level-ups.** Modelled (below). Unconfirmed in game: a dead mech's
+  pilot gaining XP (the engine gives it none), an AI pilot record, and the
+  Grid skill's +3 Grid Defense taking effect mid-turn (not modelled; only
+  chance odds). The bridge's level, XP and max HP are the save's, written at
+  turn start; the loader applies a Health / Skilled level-up that HP above
+  the saved maximum shows, but a Move / Opener / ... level-up earlier in the
+  same turn is invisible to a re-solve. Adrenaline counts only kills the
+  engine saw (the battle's earlier kills are not exported).
 - **Enemy phase (stage 7).**
    - Spawn types and queue order are hidden; the bridge could forward the
      save's `spawns` / `spawn_ids` / `spawn_points`.

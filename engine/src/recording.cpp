@@ -6,6 +6,8 @@
 #include <nlohmann/json.hpp>
 
 #include "itb/game_data.hpp"
+#include "itb/movement.hpp"
+#include "itb/pilot_xp.hpp"
 #include "itb/tile_rules.hpp"
 
 namespace itb {
@@ -116,21 +118,34 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   // Recorded values win over definition defaults (pilots, upgrades, statuses).
   p.hp = static_cast<int8_t>(get_or<int>(u, "hp", p.hp));
   p.max_hp = static_cast<int8_t>(get_or<int>(u, "max_hp", p.max_hp));
+  const int recorded_max = p.max_hp;
   if (p.hp > p.max_hp) {
     // Older bridges reported the type's base Health as max_hp, without the
     // pilot and upgrade bonuses that the live HP includes.
     warnings.push_back("hp above the recorded max_hp (max_hp raised)");
     p.max_hp = p.hp;
   }
-  // The bridge reports the Lua MoveSpeed (base_move) and the current
-  // effective speed (move). Pilots and upgrades aren't recorded separately, so
-  // the whole difference is kept as a standing bonus.
+  // The bridge reports the current effective speed (move, Pawn:GetMoveSpeed)
+  // and a base: the Lua MoveSpeed in bridges before 2026-08, since then
+  // Pawn:GetBaseMove() (every pilot and upgrade bonus, not the web). A base
+  // other than the definition's MoveSpeed is the latter. Pilots and upgrades
+  // aren't recorded separately, so the difference is kept as a standing
+  // bonus; load_recording takes out the part base_move computes live
+  // (live_move_modifiers) once the board's turn is known. Until then
+  // pilot_bonus holds the raw difference.
   const int effective_move = get_or<int>(u, "move", p.move);
-  p.move = static_cast<int8_t>(get_or<int>(u, "base_move", effective_move));
+  const int recorded_base = get_or<int>(u, "base_move", effective_move);
+  int full_move = effective_move;
+  if (def && recorded_base != def->move_speed) {
+    full_move = recorded_base;  // Pawn:GetBaseMove()
+    p.move = static_cast<int8_t>(def->move_speed);
+  } else {
+    p.move = static_cast<int8_t>(recorded_base);
+  }
   // A speed below the base is Pawn:GetMoveSpeed() reading 0 for a webbed (or
   // otherwise held) pawn at that moment, not a lasting penalty.
-  if (effective_move < p.move) warnings.push_back("effective move below base move (ignored)");
-  p.movement.pilot_bonus = static_cast<int8_t>(std::max(0, effective_move - p.move));
+  if (effective_move < recorded_base) warnings.push_back("effective move below base move (ignored)");
+  p.movement.pilot_bonus = static_cast<int8_t>(std::clamp(full_move - p.move, -100, 100));
   p.team = static_cast<Team>(get_or<int>(u, "team", static_cast<int>(p.team)));
   p.mech = get_or<bool>(u, "mech", p.mech);
   p.flying = get_or<bool>(u, "flying", p.flying);
@@ -210,13 +225,17 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   // Adrenaline, Pain, Regen, Conservative), active from levels 1 and 2. Only
   // the ones that change rules map to abilities: Thick Skin (no fire, no
   // ACID) and Technician (Regen).
+  // The ids and level are also kept on the pawn (Pawn::pilot_level...) for
+  // level-ups during the turn (itb/pilot_xp.hpp).
   auto level_skill = [&](int slot, int level, int id) {
+    (slot == 1 ? p.pilot_skill1 : p.pilot_skill2) = static_cast<int8_t>(std::clamp(id, -1, 127));
     if (level < slot) return;
     if (id == 7) p.pilot_abilities |= kPilotThick;
     if (id == 12) p.pilot_abilities |= kPilotRegen;
   };
   if (auto it = u.find("pilot_skills"); it != u.end() && it->is_array()) {
     const int level = get_or<int>(u, "pilot_level", 0);
+    p.pilot_level = static_cast<int8_t>(std::clamp(level, 0, kPilotMaxLevel));
     for (const json& sk : *it) {
       if (!sk.is_string()) continue;
       const std::string text = sk.get<std::string>();
@@ -232,11 +251,28 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
       level_skill(slot, level, id);
     }
   }
-  // The bridge extension's pilot record also carries skill id 0.
+  // The bridge extension's pilot record also carries skill id 0 and the
+  // save's XP ("exp": progress toward the next level).
   if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
     const int level = get_or<int>(*it, "level", 0);
+    p.pilot_level = static_cast<int8_t>(std::clamp(level, 0, kPilotMaxLevel));
     level_skill(1, level, get_or<int>(*it, "skill1", -1));
     level_skill(2, level, get_or<int>(*it, "skill2", -1));
+    const int xp = get_or<int>(*it, "xp", -1);
+    p.pilot_xp = static_cast<int16_t>(xp < 0 ? -1 : std::min(xp, 1000));
+  }
+  // Level, XP and max HP come from the save, written at the start of the
+  // turn; HP is live. A mech above its saved max HP leveled up since (only a
+  // Health or Skilled level-up raises a mech's maximum during a turn): apply
+  // that level-up, its XP starting again at 0.
+  if (p.mech && p.hp > recorded_max && tracks_pilot_xp(p)) {
+    const int next = p.pilot_level == 0 ? p.pilot_skill1 : p.pilot_skill2;
+    if (next == static_cast<int>(LevelSkill::Health) || next == static_cast<int>(LevelSkill::Skilled)) {
+      ++p.pilot_level;
+      p.pilot_xp = 0;
+      p.max_hp = static_cast<int8_t>(std::max<int>(p.hp, recorded_max + 2));
+      warnings.push_back("saved pilot level behind the live HP (level-up this turn applied)");
+    }
   }
 
   if (get_or<bool>(u, "has_queued_attack", false)) {
@@ -275,7 +311,9 @@ uint32_t passive_of(std::string_view weapon) {
       {"Passive_FireBoost", kPassiveFireBoost},
       {"Passive_HealingSmoke", kPassiveHealingSmoke},
       {"Passive_PlayerTurnShield", kPassivePlayerTurnShield},
-      {"Passive_Leech", kPassivePsionLeech},
+      {"Passive_Psions", kPassivePsionLeech},
+      {"Passive_Leech_A", kPassiveLeechKill | kPassiveLeechKillA},
+      {"Passive_Leech", kPassiveLeechKill},
       {"Passive_Electric_A", kPassiveElectricSmoke | kPassiveElectricSmokeA},
       {"Passive_Electric", kPassiveElectricSmoke},
       {"Passive_Burrows", kPassiveBurrows},
@@ -579,6 +617,14 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   // Board::UpdateLeaders: the last living leader in list order.
   for (const Pawn& p : b.pawns()) {
     if (p.alive() && p.leader != Leader::None) b.psion = p.leader;
+  }
+  // Pawn turn count (Pawn::StartTurn, once per player turn): a mech has had
+  // one per turn so far. Then the standing move bonus: the recorded speed
+  // minus what base_move computes live.
+  for (Pawn& p : b.pawns()) {
+    if (p.mech && p.team == Team::Player) p.movement.turn_count = static_cast<int8_t>(std::clamp(b.turn, 0, 100));
+    p.movement.pilot_bonus =
+        static_cast<int8_t>(std::max(0, p.movement.pilot_bonus - live_move_modifiers(b, p)));
   }
   // Recorded HP already includes the Soldier psion's or the Abomination's +1.
   for (Pawn& p : b.pawns()) {

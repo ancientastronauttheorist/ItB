@@ -214,7 +214,9 @@ std::vector<Diff> compare_next(const Board& e, const PhaseResult& pr, const Boar
     if (!ea) continue;
     if (p->hp != q.hp) {
       std::string why;
-      if (p->mech && q.hp > p->hp && q.max_hp > p->max_hp) why = "pilot level-up (no pilot XP in the bridge)";
+      if (p->mech && q.hp > p->hp && q.max_hp > p->max_hp && p->pilot_xp < 0) {
+        why = "pilot level-up (no pilot XP in the bridge)";
+      }
       if (!p->mech && q.pos != p->pos && q.pos.valid() && e.tile(q.pos).item != kNoSymbol &&
           next.tile(q.pos).item == kNoSymbol) {
         why = "stepped on an item in AI movement";

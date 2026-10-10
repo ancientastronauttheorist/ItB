@@ -59,6 +59,11 @@ Pathing path_profile(const Board& b, const Pawn& p);
 // turn-dependent pilot terms (Youth_Move, Reset_Bonus, Arrogant_Boost),
 // clamped at 0.
 int base_move(const Board& b, const Pawn& p);
+// The part of base_move that follows the board as it changes (Pawn::GetBaseMove
+// reads it live): Youth_Move, the level-up skills' move (Move, Skilled,
+// Opener, Closer, Pain) and Arrogant_Boost. A recorded move speed minus this
+// is the standing MoveState::pilot_bonus.
+int live_move_modifiers(const Board& b, const Pawn& p);
 // Pawn::GetMoveSpeed: 0 when dead, webbed or unpowered; a pending bonus shift
 // replaces the base move.
 int move_speed(const Board& b, const Pawn& p);

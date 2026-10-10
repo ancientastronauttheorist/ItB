@@ -2,13 +2,15 @@
 // engine; the public face is itb/executor.hpp.
 //
 // Frames are numbered from 0. Within a frame the game runs, in order:
-//   input  player fire / the enemy driver (Board::ApplyEffect)
+//   input  player fire / the enemy driver (Board::ApplyEffect); the squad's
+//          share of XP (BoardPlayer::UpdateXP) at the frame's start
 //   P1     weapon animations: flights advance, impacts apply their hit
 //   P2     tiles in x-major order: tile animations, deferred chasms, rules
 //   P3     pawns in board-list order: removal, status rules, push/lunge
 //          trackers, falls, deaths, walks, flights, queued-shot cancelling
 //   P4     the stacked-effect queue (at most one chunk)
-//   P5     only when no effect is active: psion leaders, corpse explosions
+//   P5     only when no effect is active: psion leaders, kill credit and
+//          corpse explosions, teleporters, then the last shot is cleared
 //   P6     render: death animations and XP popups advance
 // A timer started in some phase gets its first update the next time its
 // owner's phase runs, which is how the game's same-frame orderings arise.
@@ -273,6 +275,11 @@ class Simulation final : public FrameHooks {
   void detonate_corpse(Pawn& pawn, PawnSim& ps);
   void update_leaders();
   void update_teleporters();
+  // ---- kill credit and pilot experience (push_death.cpp, itb/pilot_xp.hpp)
+  void credit_kill(const Pawn& victim);
+  void update_kills(Pawn& pawn);
+  void update_xp();
+  void clear_last_shot();
   bool removable(const Pawn& pawn, const PawnSim& ps) const;
   void remove(int32_t uid);
   void cancel_queued_shot(Pawn& pawn);
@@ -316,6 +323,17 @@ class Simulation final : public FrameHooks {
   int32_t last_owner_ = -1;
   Team last_team_ = Team::None;
   Symbol last_shot_ = kNoSymbol;
+  // EventSystem data a death leaves for Pawn::UpdateKills, per shooter uid:
+  // XP ("xp_<id>"), XP-giving kills ("kill_<id>") and every enemy kill
+  // ("any_kill_<id>"); and XP for the whole squad ("env_xp").
+  struct KillCredit {
+    int32_t uid = -1;
+    int xp = 0;
+    int kills = 0;
+    int any_kills = 0;
+  };
+  std::vector<KillCredit> credits_;
+  int env_xp_ = 0;
 
   bool track_leaders_ = false;  // the board's psion comes from leader pawns on it
   int causes_ = 0;
