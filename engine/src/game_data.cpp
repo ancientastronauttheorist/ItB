@@ -374,6 +374,12 @@ Pawn GameData::make_pawn(const PawnDef& def, int32_t uid, Point pos) const {
   p.non_grid = def.non_grid;
   p.leader = def.leader;
   p.mission_critical = def.mission;
+  // ExtraSpaces: every shipped definition has at most one (Dam_Pawn (1,0),
+  // the trains (0,1)); a second one would not be modelled.
+  if (!def.extra_spaces.empty()) {
+    p.extra_dx = static_cast<int8_t>(def.extra_spaces.front().x);
+    p.extra_dy = static_cast<int8_t>(def.extra_spaces.front().y);
+  }
   p.active = true;
   return p;
 }

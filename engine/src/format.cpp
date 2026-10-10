@@ -85,7 +85,7 @@ std::string render_board(const Board& b) {
       const Tile& t = b.tile(p);
       char mark = ' ';
       for (size_t i = 0; i < b.pawns().size(); ++i) {
-        if (b.pawns()[i].pos == p) mark = pawn_label(i);
+        if (b.pawns()[i].occupies(p)) mark = pawn_label(i);
       }
       char status = ' ';
       if (t.on_fire()) status = '^';

@@ -602,23 +602,6 @@ int report_turns(Engine& engine, const std::vector<TurnStart>& turns, const Repl
       }
     }
 
-    // Multi-tile pawns (trains, dams) occupy only their main tile in the
-    // engine: a shot at the other tile misses there.
-    bool extra_hit = false;
-    for (const Pawn& m : t.board.pawns()) {
-      const PawnDef* def = data.pawn(m.type);
-      if (!def || def->extra_spaces.empty() || !m.alive()) continue;
-      for (Point x : def->extra_spaces) {
-        for (const Pawn& q : t.board.pawns()) {
-          extra_hit = extra_hit || (q.queued.active() && q.queued.target == m.pos + x);
-        }
-      }
-    }
-    if (extra_hit) {
-      for (Diff& x : d) {
-        if (x.why.empty()) x.why = "a shot at a multi-tile pawn's second tile (engine: main tile only)";
-      }
-    }
     for (const PhaseEvent& ev : pr.events) {
       ++events[to_string(ev.type)];
       if (ev.type == PhaseEventType::EnvInexact || ev.type == PhaseEventType::EnvUnsupported) {

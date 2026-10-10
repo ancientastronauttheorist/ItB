@@ -20,7 +20,7 @@ namespace {
 const Pawn* first_listed(const Board& board, Point p) {
   const Pawn* first = nullptr;
   for (const Pawn& pawn : board.pawns()) {
-    if (pawn.pos == p && (!first || pawn.arrival < first->arrival)) first = &pawn;
+    if (pawn.occupies(p) && (!first || pawn.arrival < first->arrival)) first = &pawn;
   }
   return first;
 }

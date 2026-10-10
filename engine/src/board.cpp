@@ -42,7 +42,7 @@ void Board::remove_pawn(int32_t uid) {
 std::vector<Pawn*> Board::pawns_at(Point p) {
   std::vector<Pawn*> out;
   for (Pawn& pawn : pawns_) {
-    if (pawn.pos == p) out.push_back(&pawn);
+    if (pawn.occupies(p)) out.push_back(&pawn);
   }
   std::stable_sort(out.begin(), out.end(),
                    [](const Pawn* a, const Pawn* b) { return a->arrival < b->arrival; });
@@ -52,7 +52,7 @@ std::vector<Pawn*> Board::pawns_at(Point p) {
 Pawn* Board::pawn_at(Point p) {
   Pawn* first = nullptr;
   for (Pawn& pawn : pawns_) {
-    if (pawn.pos == p && (!first || pawn.arrival < first->arrival)) first = &pawn;
+    if (pawn.occupies(p) && (!first || pawn.arrival < first->arrival)) first = &pawn;
   }
   return first;
 }

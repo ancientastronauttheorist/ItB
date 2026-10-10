@@ -50,7 +50,7 @@ void note_pawn(const Board& b, const Pawn& p, Occupant& o) {
 Occupant occupant_at(const Board& b, Point at) {
   Occupant o;
   for (const Pawn& p : b.pawns()) {
-    if (p.pos == at) note_pawn(b, p, o);
+    if (p.occupies(at)) note_pawn(b, p, o);
   }
   return o;
 }
@@ -61,6 +61,7 @@ Occupancy occupancy(const Board& b) {
   Occupancy occ{};
   for (const Pawn& p : b.pawns()) {
     if (p.pos.valid()) note_pawn(b, p, occ[p.pos.index()]);
+    if (const Point e = p.extra_tile(); e.valid()) note_pawn(b, p, occ[e.index()]);
   }
   return occ;
 }
@@ -471,8 +472,8 @@ void shift_queued_shot(Pawn& p, Point delta) {
 }
 
 void set_space(Board& b, Pawn& p, Point to, bool no_injury, RulesContext* ctx) {
-  // (Board::MovePawn also moves ExtraSpaces tiles; multi-tile pawns are not
-  // modelled.)
+  // Pawn::SetSpace (0087dcb0) moves the ExtraSpaces tiles with the main one
+  // (Board::MovePawn per tile); here they follow `pos` (Pawn::extra_tile).
   const Point from = p.pos;
   if (p.pos.valid()) p.movement.prev_pos = p.pos;
   // Any relocation frees a webbed pawn.

@@ -151,6 +151,20 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.flying = get_or<bool>(u, "flying", p.flying);
   p.massive = get_or<bool>(u, "massive", p.massive);
   p.pushable = get_or<bool>(u, "pushable", p.pushable);
+  // ExtraSpaces as the bridge reads them from the type (Lua _G[type]); the
+  // definition's when not exported.
+  if (auto it = u.find("extra_spaces"); it != u.end() && it->is_array()) {
+    Point offset{0, 0};
+    if (!it->empty() && (*it)[0].is_array() && (*it)[0].size() >= 2) {
+      offset = Point{(*it)[0][0].get<int>(), (*it)[0][1].get<int>()};
+    }
+    if (it->size() > 1) warnings.push_back("pawn '" + type + "' has more than one extra space (first kept)");
+    if (def && (offset.x != p.extra_dx || offset.y != p.extra_dy)) {
+      warnings.push_back("pawn '" + type + "' extra_spaces differ from its definition (recorded kept)");
+    }
+    p.extra_dx = static_cast<int8_t>(offset.x);
+    p.extra_dy = static_cast<int8_t>(offset.y);
+  }
   p.armor = get_or<bool>(u, "armor", p.armor);
   p.minor = get_or<bool>(u, "minor", p.minor);
   p.active = get_or<bool>(u, "active", false);
@@ -589,9 +603,15 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
 
   for (const json& t : s["tiles"]) load_tile(t, b, rec.warnings);
   std::vector<std::pair<int32_t, int>> mutations;  // uid -> recorded mutation
+  std::vector<std::pair<int32_t, Point>> extra_entries;  // uid -> reported extra tile
   for (const json& u : s["units"]) {
-    // Multi-tile pawns are reported once per extra tile; keep the main entry.
-    if (get_or<bool>(u, "is_extra_tile", false)) continue;
+    // Multi-tile pawns are reported once more per extra tile (same uid,
+    // "is_extra_tile"); the main entry carries the pawn, the extra tile
+    // follows from its ExtraSpaces (checked below).
+    if (get_or<bool>(u, "is_extra_tile", false)) {
+      extra_entries.emplace_back(get_or<int>(u, "uid", -1), Point{get_or<int>(u, "x", -1), get_or<int>(u, "y", -1)});
+      continue;
+    }
     const Pawn& p = b.add_pawn(load_unit(u, data, rec.warnings));
     std::string pilot = get_or<std::string>(u, "pilot_id", "");
     if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
@@ -657,6 +677,16 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   if (auto it = s.find("spawning_tiles"); it != s.end() && it->is_array()) {
     for (const json& p : *it) {
       if (p.is_array() && p.size() >= 2) b.spawn_points.emplace_back(p[0].get<int>(), p[1].get<int>());
+    }
+  }
+  for (const auto& [uid, at] : extra_entries) {
+    const Pawn* p = b.find_pawn(uid);
+    if (!p) {
+      rec.warnings.push_back("extra tile of unknown pawn " + std::to_string(uid));
+    } else if (p->extra_tile() != at) {
+      rec.warnings.push_back("extra tile of " + std::string(symbol_name(p->type)) + "#" + std::to_string(uid) +
+                             " reported at (" + std::to_string(at.x) + "," + std::to_string(at.y) +
+                             "), not at its ExtraSpaces offset");
     }
   }
   // Teleporter pads: [x1, y1, x2, y2] per pair. Whoever stands on a pad

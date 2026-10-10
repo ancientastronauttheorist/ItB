@@ -440,7 +440,7 @@ used when present.
 | Mission_Shields | new pawns shielded; generator death drops every shield | assumes every recorded pawn already had its shield (`ShieldedUnits` not recorded) |
 | Mission_Hacking | facility death turns the bot into Snowtank1_Player | exact with ids; old recordings infer the bot (EnvInexact if several) |
 | Mission_Dam | dam death floods two columns, 0.3 s per row | exact |
-| Mission_Train / Armored_Train | train fires after every Vek; wreck replaces a dead train | queued move inferred (bridge omits team-1 shots); the rear tile is not modelled |
+| Mission_Train / Armored_Train | train fires after every Vek; wreck replaces a dead train | queued move inferred (bridge omits team-1 shots) |
 | Mission_Satellite | queued launch: DAMAGE_DEATH around, rocket flies away; NextTurn powering | exact with `queued_launch` |
 | Mission_Volatile | last enemy retreats | exact with `is_infinite_spawn` |
 | Mission_Reactivation | NextTurn thaws 2 random frozen enemies | chance node `MissionRandom` over the pairs |
@@ -608,8 +608,21 @@ Integration notes:
 - `Engine::end_turn` leaves `Board::player_phase` false and does not apply
   the next player turn's start (Zoltan shields, Opener/Closer, last-turn
   spawn clearing): score those as next-turn context.
-- Multi-tile pawns (trains, dams) occupy only their main tile here. In game
-  a Vek attack on a train's rear tile kills it (seen in the recordings).
+- Multi-tile pawns (Lua `ExtraSpaces`: Dam_Pawn (1,0), the trains and their
+  wrecks (0,1)) stand on both tiles, as natively: the pawn is listed in the
+  BoardSpace of its tile and of each extra tile (`Pawn::SetSpace` 0x0087dcb0
+  moves them all through `Board::MovePawn` 0x0093abd0; `Board::RemovePawn`
+  0x0093a980 clears them all). `Pawn::pos` stays the main tile
+  (`Pawn:GetSpace`); `Pawn::extra_dx/extra_dy` hold the offset (from the
+  definition, or the bridge's `extra_spaces`) and `Pawn::occupies` /
+  `extra_tile` answer per tile. So the extra tile blocks moves, spawns and
+  projectiles, `GetPawn` / `IsPawnSpace` find the pawn there, and each
+  SpaceDamage on it hits the pawn (two SpaceDamages, one per tile, hit it
+  twice); a push into it bumps the pawn, and the tile rules (water, chasm,
+  pods, ACID) see it there. The bridge's `"is_extra_tile"` entries are
+  checked against the offset on load. Every shipped definition has at most
+  one extra space and is `Pushable = false`; pushing a multi-tile pawn is not
+  modelled beyond that.
 
 ### Perfect-turn search (stage 9)
 
