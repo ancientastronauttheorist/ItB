@@ -34,5 +34,9 @@ void release_webs(Board& board, Point p);
 bool inert_tile_state(const Tile& t);
 // settle_tile_frame(board, p) would change nothing at all.
 bool settle_tile_noop(const Board& board, Point p);
+// The tile-state half of settle_tile_noop for an occupied tile: with no
+// webbed pawn anywhere and no occupant (not fallen) that is a mech or on
+// fire, a tile in this state is left exactly as it is.
+bool quiet_occupied_tile_state(const Tile& t);
 
 }  // namespace itb::detail

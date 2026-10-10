@@ -78,16 +78,18 @@ static bool inert_empty_tile(const Board& board, Point p) {
 //     Nanofilter smoke on a mech, no spikes, no burning pawn in smoke or on
 //     a forest; drowning and falling need water or a chasm, mines an item;
 //   - release_webs and check_webs only touch webbed pawns: there are none.
-static bool quiet_occupied_tile(const Board& board, Point p) {
-  const Tile& t = board.tile(p);
+bool detail::quiet_occupied_tile_state(const Tile& t) {
   if (t.terrain == Terrain::Hole || t.terrain == Terrain::Mountain || t.terrain == Terrain::Building ||
       t.terrain == Terrain::Water) {
     return false;
   }
-  if (t.lava || t.pending_hole || t.acid || t.on_fire() || t.spikes || t.item != kNoSymbol ||
-      t.pod == PodState::Present) {
-    return false;
-  }
+  return !(t.lava || t.pending_hole || t.acid || t.on_fire() || t.spikes || t.item != kNoSymbol ||
+           t.pod == PodState::Present);
+}
+
+static bool quiet_occupied_tile(const Board& board, Point p) {
+  const Tile& t = board.tile(p);
+  if (!detail::quiet_occupied_tile_state(t)) return false;
   const bool healing_smoke = t.smoke && board.has_passive(kPassiveHealingSmoke);
   for (const Pawn& pawn : board.pawns()) {
     if (pawn.webbed) return false;

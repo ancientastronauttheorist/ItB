@@ -150,19 +150,21 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
     timelines_->default_death = AnimTimeline(clock_, dur_.default_death_frames, dur_.default_death_time);
   }
   if (!rules_.data) rules_.data = ctx.data;
+  // The caller's hooks are moved aside (and back in the destructor); the
+  // replacements reach them through `this`.
   saved_frame_ = rules_.frame;
-  saved_resist_ = rules_.grid_resist;
-  saved_script_ = rules_.run_script;
   rules_.frame = this;
   if (ctx_.run_script) {
+    saved_script_ = std::move(rules_.run_script);
+    script_replaced_ = true;
     rules_.run_script = [this](Board&, const std::string& script, Point loc) {
       ctx_.run_script(owner_, script, loc);
     };
   }
   // Grid Defense rolls are the chance nodes of a resolution: log each one.
-  auto roll = rules_.grid_resist;
-  rules_.grid_resist = [this, roll](Point p, int amount) {
-    const bool resisted = roll ? roll(p, amount) : false;
+  saved_resist_ = std::move(rules_.grid_resist);
+  rules_.grid_resist = [this](Point p, int amount) {
+    const bool resisted = saved_resist_ ? saved_resist_(p, amount) : false;
     if (result_) {
       result_->chances.push_back(
           ChanceRecord{ChanceKind::GridDefense, frame_, p, amount, resisted ? 1 : 0, 2});
@@ -186,7 +188,7 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
 Simulation::~Simulation() {
   rules_.frame = saved_frame_;
   rules_.grid_resist = std::move(saved_resist_);
-  rules_.run_script = std::move(saved_script_);
+  if (script_replaced_) rules_.run_script = std::move(saved_script_);
 }
 
 ResolveResult Simulation::resolve(const SkillEffect& effect, const WeaponInfo& weapon) {
@@ -670,15 +672,20 @@ uint64_t Simulation::busy_tile_states() {
 
 void Simulation::update_tiles() {
   uint64_t occupied = 0;  // bit i: some pawn (fallen ones included) is on tile i
+  uint64_t hot = 0;       // bit i: a pawn (not fallen) on tile i is a mech or on fire
   bool webbed = false;    // some pawn is webbed
   bool bodies = false;    // some dead non-mech pawn was seen dead (removable needs it)
   uint64_t work = 0;      // tiles that may not be quiet
   auto scan = [&] {
     occupied = 0;
+    hot = 0;
     webbed = false;
     bodies = false;
     for (const Pawn& pawn : board_.pawns()) {
-      if (pawn.pos.valid()) occupied |= uint64_t{1} << pawn.pos.index();
+      if (pawn.pos.valid()) {
+        occupied |= uint64_t{1} << pawn.pos.index();
+        if (!pawn.fallen && (pawn.mech || pawn.fire)) hot |= uint64_t{1} << pawn.pos.index();
+      }
       webbed = webbed || pawn.webbed;
       if (!pawn.mech && !pawn.alive()) {
         const PawnSim* ps = find_state(pawn.uid);
@@ -737,8 +744,14 @@ void Simulation::update_tiles() {
       for (int32_t uid : gone) remove(uid);
       acted = !gone.empty();
     }
-    const bool quiet = !(occupied >> i & 1) && !webbed ? detail::inert_tile_state(board_.tile(p))
-                                                         : detail::settle_tile_noop(board_, p);
+    bool quiet;
+    if (webbed || (hot >> i & 1)) {
+      quiet = detail::settle_tile_noop(board_, p);
+    } else if (occupied >> i & 1) {
+      quiet = detail::quiet_occupied_tile_state(board_.tile(p));
+    } else {
+      quiet = detail::inert_tile_state(board_.tile(p));
+    }
     if (acted || !quiet) {
       settle_tile_frame(board_, p, rules_);
       acted = true;

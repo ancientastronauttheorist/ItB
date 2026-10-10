@@ -334,6 +334,7 @@ class Simulation final : public FrameHooks {
   FrameHooks* saved_frame_ = nullptr;
   std::function<bool(Point, int)> saved_resist_;
   std::function<void(Board&, const std::string&, Point)> saved_script_;
+  bool script_replaced_ = false;
 };
 
 }  // namespace itb::detail
