@@ -330,11 +330,13 @@ void Simulation::detonate_corpse(Pawn& pawn, PawnSim& ps) {
 // Board::UpdateLeaders: the board psion is the leader type of the last
 // living leader in list order (stage 7 spec 1.4). Every living pawn the psion
 // affects gets Pawn::SetMutation (mutation 0, no psion left, reaches
-// everyone); the rest keep their old mutation. Only the Soldier psion changes
-// HP: SetMutation recomputes the maximum (ComputeHealthTotal: +1 under it)
-// and moves current HP by the same amount, so a pawn that only lived on the
-// bonus dies. The bonus is tracked per pawn (Pawn::health_bonus), which also
-// gives it to pawns that appear while the Soldier psion lives.
+// everyone); the rest keep their old mutation. Only the Soldier psion and the
+// Psion Abomination change HP: SetMutation recomputes the maximum
+// (ComputeHealthTotal @00878f30: +1 under mutation 1 or 7) and moves current
+// HP by the same amount, so a pawn that only lived on the bonus dies, and the
+// Abomination's death takes 1 HP from every Vek it buffed. The bonus is
+// tracked per pawn (Pawn::health_bonus), which also gives it to pawns that
+// appear while such a psion lives; a switch between the two keeps it.
 void Simulation::update_leaders() {
   if (!track_leaders_) {
     // A psion that appears (a spawn, an emerging Vek) starts the tracking.
@@ -348,7 +350,7 @@ void Simulation::update_leaders() {
   }
   if (board_.psion != leader) changed_ = true;
   board_.psion = leader;
-  const bool bonus = leader == Leader::Health;
+  const bool bonus = mutation_adds_health(leader);
   std::vector<int32_t> dying;
   for (Pawn& p : board_.pawns()) {
     if (!p.alive() || p.health_bonus == bonus) continue;

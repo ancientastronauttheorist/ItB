@@ -580,13 +580,17 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   for (const Pawn& p : b.pawns()) {
     if (p.alive() && p.leader != Leader::None) b.psion = p.leader;
   }
-  // Recorded HP already includes the Soldier psion's +1.
+  // Recorded HP already includes the Soldier psion's or the Abomination's +1.
   for (Pawn& p : b.pawns()) {
-    if (p.alive() && mutation_affects(b, p, Leader::Health)) p.health_bonus = true;
+    if (p.alive() && mutation_adds_health(b.psion) && mutation_affects(b, p, b.psion)) p.health_bonus = true;
   }
   // The save's per-pawn mutation (turn start) settles it, stale ones included.
+  // A psion carries its own mutation but never gets its effect.
   for (const auto& [uid, mutation] : mutations) {
-    if (Pawn* p = b.find_pawn(uid)) p->health_bonus = mutation == static_cast<int>(Leader::Health);
+    if (Pawn* p = b.find_pawn(uid)) {
+      const Leader m = static_cast<Leader>(mutation);
+      p->health_bonus = mutation_adds_health(m) && p->leader != m;
+    }
   }
   // The bridge's `boosted` is Pawn:IsBoosted(), which includes the Boost
   // psion: only a boost the psion does not explain is the pawn's status.

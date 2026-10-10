@@ -1451,3 +1451,90 @@ TEST_CASE("every mission id in the recordings maps to a native environment") {
   CHECK(seen["Mission_BeltRandom"] == "Env_BeltRandom");
   CHECK(seen["Mission_AcidStorm"] == "Mission_AcidStorm");
 }
+
+// ---- The Psion Abomination's +1 HP -------------------------------------------------
+//
+// Pawn::ComputeHealthTotal (0x00878f30) adds +1 max HP under mutation 1
+// (Soldier psion) or 7 (Psion Abomination). When the Abomination dies,
+// UpdateLeaders gives every Vek SetMutation(0), which lowers max and current
+// HP by 1 (SetMutation 0x00879350); the regeneration tick earlier in the
+// phase still healed while it lived.
+
+TEST_CASE("live: the Psion Abomination's death takes its +1 HP from every Vek (2026-10-10)") {
+  NEED_ENGINE();
+  // Mission_JellyBoss turn 2, End Turn: Jelly_Boss#319 3/5 at (4,5); Burnbug1
+  // #320 4/4, Scorpion2 #321 5/6 (queued on the boss's tile), Burnbug1 #323
+  // 3/4. Enemy phase: regen #321 6/6 and #323 4/4; the Scorpion's sting (3)
+  // kills the boss -> every Vek -1 (3/3, 5/5, 3/3); the blocked emerge under
+  // #321 deals 1 -> 4/5. The game's turn 3 board: 3/3, 4/5, 3/3.
+  const Recording before = live_fixture("live_jellyboss_t2_end_turn.json");
+  const Recording after = live_fixture("live_jellyboss_t3_start.json");
+  REQUIRE(before.mission.mission_id == "Mission_JellyBoss");
+  REQUIRE(before.board.psion == Leader::Boss);
+  const int32_t boss = 319;
+  REQUIRE(before.board.find_pawn(boss) != nullptr);
+  CHECK_FALSE(before.board.find_pawn(boss)->health_bonus);
+  for (int32_t uid : {320, 321, 323}) {
+    REQUIRE(before.board.find_pawn(uid) != nullptr);
+    CHECK(before.board.find_pawn(uid)->health_bonus);
+  }
+
+  Board b = before.board;
+  E.end_turn(b, turn_context(before, Visibility::Full));
+  CHECK(dead(b, boss));
+  CHECK(b.psion == Leader::None);
+  for (int32_t uid : {320, 321, 323}) {
+    CAPTURE(uid);
+    const Pawn* game = after.board.find_pawn(uid);
+    REQUIRE(game != nullptr);
+    CHECK(hp_of(b, uid) == game->hp);
+    CHECK(P(b, uid).max_hp == game->max_hp);
+    CHECK_FALSE(P(b, uid).health_bonus);
+  }
+  CHECK(hp_of(b, 320) == 3);
+  CHECK(hp_of(b, 321) == 4);
+  CHECK(hp_of(b, 323) == 3);
+}
+
+TEST_CASE("the Psion Abomination: +1 HP while it lives, gone when it dies, a Soldier psion keeps it") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t boss = place(b, "Jelly_Boss", {5, 5});
+  const int32_t v = place(b, "Scorpion1", {1, 6});
+  hp(b, v, 1, 4);
+  set_psion(b);
+  // The regeneration tick runs first (1/4 -> 2/4); lightning then kills the
+  // Abomination and its +1 goes: 1/3.
+  TurnContext ctx = context("Mission_Lightning");
+  danger(ctx, {{5, 5}});
+  E.end_turn(b, ctx);
+  CHECK(dead(b, boss));
+  CHECK(hp_of(b, v) == 1);
+  CHECK(P(b, v).max_hp == 3);
+
+  // Killed in the player's turn (no regeneration first): a Vek that only
+  // lived on the +1 dies with it.
+  Board d;
+  const int32_t boss3 = place(d, "Jelly_Boss", {3, 3});
+  hp(d, boss3, 1);
+  const int32_t x = place(d, "Scorpion1", {1, 6});
+  hp(d, x, 1, 4);
+  const int32_t m = mech(d, {3, 2});
+  set_psion(d);
+  REQUIRE(E.fire_weapon(d, m, "Prime_Punchmech", {3, 3}, std::nullopt, action_options(context())).ok());
+  CHECK(dead(d, boss3));
+  CHECK(dead(d, x));
+
+  // A Soldier psion listed later takes over: the +1 stays.
+  Board c;
+  const int32_t boss2 = place(c, "Jelly_Boss", {5, 5});
+  const int32_t w = place(c, "Scorpion1", {1, 6});
+  hp(c, w, 1, 4);
+  place(c, "Jelly_Health1", {6, 1});
+  set_psion(c);
+  REQUIRE(c.psion == Leader::Health);
+  E.end_turn(c, ctx);
+  CHECK(dead(c, boss2));
+  CHECK(hp_of(c, w) == 1);
+  CHECK(P(c, w).max_hp == 4);
+}

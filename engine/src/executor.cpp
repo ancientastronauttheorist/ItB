@@ -162,9 +162,11 @@ Simulation::Simulation(Resolver& owner, Board& board, ResolveContext& ctx)
     // Bodies already on the board: their death was handled long ago.
     if (!p.alive()) ps.dead = true;
   }
-  // Pawns the Soldier psion affects already carry its +1.
+  // Pawns the Soldier psion or the Abomination affects already carry its +1.
   for (Pawn& p : board_.pawns()) {
-    if (p.alive() && mutation_affects(board_, p, Leader::Health)) p.health_bonus = true;
+    if (p.alive() && mutation_adds_health(board_.psion) && mutation_affects(board_, p, board_.psion)) {
+      p.health_bonus = true;
+    }
   }
 }
 
