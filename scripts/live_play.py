@@ -818,6 +818,14 @@ def deploy(ctx) -> list:
         raise Refused("the bridge exports no drop zone (drop_zone / deployment_zone)")
     mechs = sorted((u for u in units(state) if u.get("team") == 1 and u.get("mech") and (u.get("hp") or 0) > 0),
                    key=lambda u: u["uid"])
+    if not mechs and args.uids:
+        # Mechs not yet placed aren't on the board, so the state can't list
+        # them; the caller names their uids (a fresh run's squad is 0, 1, 2).
+        mechs = [{"uid": int(u), "type": "mech", "team": 1, "mech": True, "hp": 1}
+                 for u in args.uids.split(",") if u.strip()]
+    if not mechs:
+        raise Refused("no mechs found on the board (unplaced mechs aren't in the state); "
+                      "pass --uids, e.g. --uids 0,1,2")
     run.save_state(state, "deploy")
     source = state.get("drop_zone_source") or ("deployment_zone" if not state.get("drop_zone") else "?")
     say(f"== deployment: {len(mechs)} mech(s), drop zone ({source}): " + " ".join(visual(*p) for p in zone))
@@ -976,6 +984,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-turns", type=int, default=10)
     p = sub.add_parser("deploy", parents=[common], help="place the mechs in the drop zone")
     p.add_argument("--tiles", help="tiles in mech uid order: C5,D6,E5 or 3,5;2,4;4,4")
+    p.add_argument("--uids", help="mech uids when they aren't on the board yet, e.g. 0,1,2")
     return ap
 
 
