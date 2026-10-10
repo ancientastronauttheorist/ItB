@@ -57,6 +57,16 @@ add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_rep
 target_compile_options(itb_inspect PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(itb_inspect PRIVATE itb_engine nlohmann_json::nlohmann_json)
 
+# The live driver's engine tool (scripts/live_play.py): JSON solve / predict /
+# board, one-shot or as a long-running `serve` process.
+add_library(itb_live_lib STATIC tools/live_tool.cpp)
+target_include_directories(itb_live_lib PUBLIC tools)
+target_compile_options(itb_live_lib PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(itb_live_lib PUBLIC itb_engine nlohmann_json::nlohmann_json)
+add_executable(itb_live tools/itb_live.cpp)
+target_compile_options(itb_live PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(itb_live PRIVATE itb_live_lib)
+
 # The game's Lua (5.1.5) as a command-line interpreter: runs the bridge
 # script harness (tests/bridge) outside the game.
 add_executable(itb_lua51 "${lua51_SOURCE_DIR}/src/lua.c")
@@ -84,8 +94,9 @@ add_executable(itb_tests
   tests/test_score.cpp
   tests/test_solver.cpp
   tests/test_bridge.cpp
+  tests/test_live.cpp
 )
-target_link_libraries(itb_tests PRIVATE itb_engine itb_lua doctest::doctest)
+target_link_libraries(itb_tests PRIVATE itb_live_lib itb_engine itb_lua doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE
   ITB_REPO_ROOT="${ITB_REPO_ROOT}"
   ITB_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
