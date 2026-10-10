@@ -58,7 +58,13 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
   the game afterwards. The bridge writes `/tmp/itb_state.json` and takes
   commands through `/tmp/itb_cmd.txt` (`src/bridge/protocol.py`,
   `writer.py`: MOVE / ATTACK / REPAIR / SKIP / END_TURN / DEPLOY).
-- **Combat:** `python3 game_loop.py auto_turn --time-limit N` reads the board,
+- **Engine live play:** `python3 scripts/live_play.py status | deploy | turn |
+  end-turn | mission` (engine/README.md "Live play"). Solves with the C++
+  engine (`engine/build/itb_live`), executes each sub-action through the
+  bridge, checks it against the prediction, re-solves on a mismatch; `mission`
+  stops at the first anomaly. `--dry-run` never acts. Runs are archived in
+  `recordings/live/<time>/`.
+- **Old bot combat:** `python3 game_loop.py auto_turn --time-limit N` reads the board,
   solves with the C++ engine (`ITB_SOLVER=cpp`, the default; `rust` is the
   fallback), executes each sub-action, verifies it against the prediction and
   re-solves on a desync. Then end the turn. Full protocol and gates (research
@@ -69,11 +75,12 @@ Rust fallback, after editing `rust_solver/src/*.rs`:
 - **UI navigation** (menus, deployment, rewards, shop, island map) is
   screenshot-driven. In fullscreen at 1360×768, tile `(x, y)` is at screen
   `(676 + 57·(x−y), 117 + 41·(x+y))` and End Turn is at `(128, 89)`.
-- **Known bridge gaps** (being fixed): weapon upgrade suffixes, secondary
-  weapons and passives, the per-unit moved flag, drop-zone tiles, and mission
-  environment state are not exported. MOVE teleports with `SetSpace`, which skips
-  native arrival effects. Until those land, verify the loadout from the save
-  (`profile_<name>/undoSave.lua`: `primary`/`secondary` plus `*_mod1/mod2`).
+- **Bridge data:** since the extension (fae1c5ef) it exports exact weapon ids
+  (`weapons_exact`, `weapon_slots`), `moved`, the drop zone and mission state;
+  `MOVE_NATIVE` moves like a click (`MOVE` teleports with `SetSpace` and skips
+  arrival effects); `END_TURN` deactivates the mechs (no confirm dialog), but
+  End Turn still needs a click on this build. Older bridges: give
+  `live_play.py --loadout` (the save's `primary`/`secondary` plus `*_mod1/mod2`).
 
 ## Play preferences
 
