@@ -8,7 +8,7 @@ namespace {
 // Every Tile and Pawn field is hashed below. If one of these fails, a field
 // was added: hash it, then update the size.
 static_assert(sizeof(Tile) == 28, "Tile changed: update hash_board");
-static_assert(sizeof(Pawn) == 120, "Pawn changed: update hash_board");
+static_assert(sizeof(Pawn) == 124, "Pawn changed: update hash_board");
 static_assert(sizeof(MoveState) == 16, "MoveState changed: update hash_board");
 static_assert(sizeof(QueuedShot) == 20, "QueuedShot changed: update hash_board");
 
@@ -95,6 +95,7 @@ void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
   Hasher::Packer k{h};
   k.put(p.type, 16);
   for (Symbol w : p.weapons) k.put(w, 16);
+  for (int8_t u : p.uses) k.put(u8(u), 8);
   k.put(p.pilot_abilities, 32);
   k.put(static_cast<uint32_t>(p.web_source), 32);
   k.put(tile_rank, 16);

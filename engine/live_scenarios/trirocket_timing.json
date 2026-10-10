@@ -1,0 +1,29 @@
+{
+  "name": "trirocket_timing",
+  "question": "Tri-Rocket (Ranged_Crack) knife-edge: the middle Vek's push lands ~0.55 s after the far Vek died, against a ~0.56 s 'dying body still blocks' threshold (stage 3-4 spec D.6.1). Blocked (HP 1, stays) or through (HP 2, moves)?",
+  "mission": "any mission without an environment, player turn 1-3. Uses a temporary player-team shooter (a new PunchMech pawn, not a squad mech) given Ranged_Crack.",
+  "scenario": {
+    "name": "trirocket_timing",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 7, "y": 0},
+      {"uid": 1, "x": 7, "y": 3},
+      {"uid": 2, "x": 7, "y": 7},
+      {"type": "Scorpion1", "team": 6, "x": 2, "y": 0, "hp": 1},
+      {"type": "Scorpion1", "team": 6, "x": 2, "y": 1},
+      {"type": "PunchMech", "team": 1, "x": 2, "y": 5, "weapons_add": ["Ranged_Crack"]}
+    ]
+  },
+  "actions": [
+    {"pawn": "pawn:6", "weapon": "Ranged_Crack", "native_slot": 2, "target": [2, 1]}
+  ],
+  "end_turn": false,
+  "repeat": "Run 3 times (fresh SCENARIO each time); also once with the game's speed setting changed, if any.",
+  "observe": [
+    "Far Scorpion (2,0) dies to its rocket.",
+    "Middle Scorpion (2,1): blocked by the dying body -> stays at (2,1) with 1 HP; not blocked -> pushed to (2,0) with 2 HP.",
+    "The engine says which at 60 fps and flags the outcome as timing-sensitive if it is within a frame."
+  ]
+}

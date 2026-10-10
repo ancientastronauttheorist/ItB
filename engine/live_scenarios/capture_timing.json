@@ -1,0 +1,28 @@
+{
+  "name": "capture_timing",
+  "question": "When is each enemy-phase capture taken, and what does its grid_power say? (Nine recorded post_enemy summaries disagree with the next turn's grid.)",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "capture_timing",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "tiles": [
+      {"x": 3, "y": 2, "terrain": "building", "hp": 1, "populated": true}
+    ],
+    "pawns": [
+      {"uid": 0, "x": 0, "y": 7},
+      {"uid": 1, "x": 7, "y": 7},
+      {"uid": 2, "x": 7, "y": 0},
+      {"type": "Firefly1", "team": 6, "x": 3, "y": 5, "queue": {"x": 3, "y": 4}}
+    ],
+    "spawns": [{"type": "Scorpion1", "x": 5, "y": 5}]
+  },
+  "end_turn": true,
+  "observe": [
+    "The Firefly destroys the building at (3,2) (unless Grid Defense resists): grid -1.",
+    "itb_state_enemy_prespawn.json (Mission:BaseNextTurn, team 6) and ..._postspawn.json (first Mission:PlanEnvironment): building already rubble; grid_power still the turn-start value (it is read from the save).",
+    "The next player turn's state: grid_power drops once the save is rewritten.",
+    "If you also run the old bot's read (game_loop.py read) during the enemy phase, note which value its post_enemy summary shows."
+  ]
+}

@@ -88,6 +88,14 @@ void load_tile(const json& t, Board& board, std::vector<std::string>& warnings) 
   } else if (get_or<bool>(t, "unique_building", false)) {
     tile.unique_building = intern("unique_building");
   }
+  // Bridge extension: live structure state the old fields leave implicit.
+  if (tile.terrain == Terrain::Ice) {
+    if (auto it = t.find("ice_hp"); it != t.end() && it->is_number_integer()) {
+      tile.hp = static_cast<int8_t>(std::clamp(it->get<int>(), 1, 2));
+    }
+  }
+  if (tile.is_building()) tile.populated = get_or<bool>(t, "populated", tile.populated);
+  if (auto custom = get_or<std::string>(t, "custom_tile", ""); !custom.empty()) tile.custom_tile = intern(custom);
 }
 
 Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& warnings) {
@@ -140,17 +148,60 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.boosted = get_or<bool>(u, "boosted", false);
   p.webbed = get_or<bool>(u, "web", false);
   p.infected = get_or<bool>(u, "infected", false);
+  // AE Injured has no Lua getter; live tooling sets it (engine_overrides).
+  p.injured = get_or<bool>(u, "injured", false);
   p.web_source = get_or<int>(u, "web_source_uid", -1);
 
-  p.weapons = {};
-  if (auto it = u.find("weapons"); it != u.end() && it->is_array()) {
+  // The exact weapon tables (upgrade suffix included) when the bridge
+  // exports them (weapons_exact), else the type's SkillList as recorded;
+  // a unit without either keeps its definition's (hand-written boards).
+  auto weapons = u.find("weapons_exact");
+  if (weapons == u.end() || !weapons->is_array() || weapons->empty()) weapons = u.find("weapons");
+  if (weapons != u.end() && weapons->is_array()) {
+    p.weapons = {};
     size_t i = 0;
-    for (const json& w : *it) {
+    for (const json& w : *weapons) {
       if (i >= p.weapons.size()) {
         warnings.push_back(type + " has more than " + std::to_string(kMaxWeapons) + " weapons");
         break;
       }
       if (w.is_string()) p.weapons[i++] = intern(w.get<std::string>());
+    }
+  }
+  // Uses left of limited weapons, by position in weapons_exact.
+  if (auto it = u.find("weapon_slots"); it != u.end() && it->is_array()) {
+    for (size_t i = 0; i < it->size() && i < p.uses.size(); ++i) {
+      const json& ws = (*it)[i];
+      if (!ws.is_object()) continue;
+      // A weapon without its reactor cores cannot fire (and an unpowered
+      // passive does nothing): no uses.
+      if (!get_or<bool>(ws, "powered", true)) {
+        p.uses[i] = 0;
+        continue;
+      }
+      if (get_or<int>(ws, "limited", 0) <= 0) continue;
+      int uses = get_or<int>(ws, "uses", -1);
+      if (uses < 0) uses = get_or<int>(ws, "uses_saved", -1);
+      if (uses >= 0) p.uses[i] = static_cast<int8_t>(std::min(uses, 100));
+    }
+  }
+  // Lua traits for types the game data does not know.
+  if (!def) {
+    if (auto it = u.find("traits"); it != u.end() && it->is_object()) {
+      const json& t = *it;
+      p.leader = static_cast<Leader>(get_or<int>(t, "leader", 0));
+      p.minor = get_or<bool>(t, "minor", p.minor);
+      p.explodes = get_or<bool>(t, "explodes", p.explodes);
+      p.ignore_smoke = get_or<bool>(t, "ignore_smoke", p.ignore_smoke);
+      p.ignore_fire = get_or<bool>(t, "ignore_fire", p.ignore_fire);
+      p.burns = get_or<bool>(t, "burns", p.burns);
+      p.corpse = get_or<bool>(t, "corpse", p.corpse);
+      p.jumper = get_or<bool>(t, "jumper", p.jumper);
+      p.teleporter = get_or<bool>(t, "teleporter", p.teleporter);
+      p.burrows = get_or<bool>(t, "burrows", p.burrows);
+      p.neutral = get_or<bool>(t, "neutral", p.neutral);
+      p.ignore_flip = get_or<bool>(t, "ignore_flip", p.ignore_flip);
+      p.non_grid = get_or<bool>(t, "non_grid", p.non_grid);
     }
   }
 
@@ -159,6 +210,11 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   // Adrenaline, Pain, Regen, Conservative), active from levels 1 and 2. Only
   // the ones that change rules map to abilities: Thick Skin (no fire, no
   // ACID) and Technician (Regen).
+  auto level_skill = [&](int slot, int level, int id) {
+    if (level < slot) return;
+    if (id == 7) p.pilot_abilities |= kPilotThick;
+    if (id == 12) p.pilot_abilities |= kPilotRegen;
+  };
   if (auto it = u.find("pilot_skills"); it != u.end() && it->is_array()) {
     const int level = get_or<int>(u, "pilot_level", 0);
     for (const json& sk : *it) {
@@ -167,16 +223,20 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
       const size_t eq = text.find('=');
       if (eq == std::string::npos) continue;
       const int slot = text.rfind("skill2", 0) == 0 ? 2 : 1;
-      if (level < slot) continue;
       int id = -1;
       try {
         id = std::stoi(text.substr(eq + 1));
       } catch (const std::exception&) {
         continue;
       }
-      if (id == 7) p.pilot_abilities |= kPilotThick;
-      if (id == 12) p.pilot_abilities |= kPilotRegen;
+      level_skill(slot, level, id);
     }
+  }
+  // The bridge extension's pilot record also carries skill id 0.
+  if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
+    const int level = get_or<int>(*it, "level", 0);
+    level_skill(1, level, get_or<int>(*it, "skill1", -1));
+    level_skill(2, level, get_or<int>(*it, "skill2", -1));
   }
 
   if (get_or<bool>(u, "has_queued_attack", false)) {
@@ -184,6 +244,16 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
     p.queued.weapon = 0;
     p.queued.origin = get_point(u, "queued_origin");
     p.queued.target = get_point(u, "queued_target");
+  } else if (auto it = u.find("queued_any"); it != u.end() && it->is_object()) {
+    // Queued shots of non-enemy units (trains, rockets): the skill index
+    // counts Move as 0.
+    const int skill = get_or<int>(*it, "skill", -1);
+    const Point target = get_point(*it, "target");
+    if (skill >= 1 && skill <= kMaxWeapons && target.valid()) {
+      p.queued.weapon = static_cast<int8_t>(skill - 1);
+      p.queued.origin = get_point(*it, "origin");
+      p.queued.target = target;
+    }
   }
   return p;
 }
@@ -242,6 +312,7 @@ std::optional<FinalEnvState> final_env(const json& s, const char* key) {
 }
 
 void load_objectives(const json& s, Recording& rec);
+void load_mission_ext(const json& s, Recording& rec);
 
 // Stage 7 mission data: environment marks and the env/mission fields newer
 // bridges export (stage 7 spec section 2.4).
@@ -280,6 +351,114 @@ void load_mission(const json& s, Recording& rec) {
     }
   }
   load_objectives(s, rec);
+  load_mission_ext(s, rec);
+}
+
+std::vector<Point> xy_points(const json& j) {
+  std::vector<Point> out;
+  if (!j.is_array()) return out;
+  for (const json& p : j) {
+    if (p.is_object() && p.contains("x") && p.contains("y") && p["x"].is_number() && p["y"].is_number()) {
+      out.emplace_back(p["x"].get<int>(), p["y"].get<int>());
+    }
+  }
+  return out;
+}
+
+std::vector<std::string> strings(const json& j) {
+  std::vector<std::string> out;
+  if (!j.is_array()) return out;
+  for (const json& v : j) {
+    if (v.is_string()) out.push_back(v.get<std::string>());
+  }
+  return out;
+}
+
+// Bridge extension (stage 7 spec section 4): mission identity, instance
+// dumps, zones, the environment's ordered locations and strike log, and
+// whether every queued shot was exported.
+void load_mission_ext(const json& s, Recording& rec) {
+  MissionData& m = rec.mission;
+  rec.bridge_ext_version = get_or<int>(s, "bridge_ext_version", 0);
+  if (auto it = s.find("bridge_errors"); it != s.end() && it->is_array()) {
+    for (const json& e : *it) {
+      if (e.is_object()) {
+        rec.bridge_errors.push_back(get_or<std::string>(e, "where", "?") + ": " + get_or<std::string>(e, "error", ""));
+      }
+    }
+  }
+  if (auto it = s.find("mission_state"); it != s.end() && it->is_object()) {
+    const json& ms = *it;
+    m.mission_key = get_or<int>(ms, "key", -1);
+    m.turn_limit = get_or<int>(ms, "turn_limit", -1);
+    if (auto c = ms.find("class_chain"); c != ms.end()) m.mission_classes = strings(*c);
+    if (auto c = ms.find("env_class_chain"); c != ms.end()) m.env_classes = strings(*c);
+    if (auto i = ms.find("instance"); i != ms.end()) m.mission_instance_json = i->dump();
+    if (auto e = ms.find("env_instance"); e != ms.end() && e->is_object()) {
+      m.env_instance_json = e->dump();
+      // Env_Attack's planned Locations, in the order Ordered environments
+      // strike them (Env_Seismic).
+      if (auto l = e->find("Locations"); l != e->end() && m.ordered_locations.empty()) {
+        m.ordered_locations = xy_points(*l);
+      }
+    }
+  }
+  if (auto it = s.find("zones"); it != s.end() && it->is_object()) {
+    for (const auto& [name, pts] : it->items()) m.zones[name] = point_list(pts);
+  }
+  if (auto it = s.find("attack_order_all"); it != s.end() && it->is_array()) {
+    m.all_queued_known = true;
+    for (const json& uid : *it) {
+      if (uid.is_number_integer()) rec.attack_order_all.push_back(uid.get<int32_t>());
+    }
+  }
+  if (auto it = s.find("env_strike_log"); it != s.end() && it->is_array()) {
+    for (const json& e : *it) {
+      if (!e.is_object()) continue;
+      Recording::EnvStrike strike;
+      strike.turn = get_or<int>(e, "turn", -1);
+      if (auto a = e.find("current_attack"); a != e.end()) {
+        strike.tiles = a->is_object() ? xy_points(json::array({*a})) : xy_points(*a);
+      }
+      rec.env_strikes.push_back(std::move(strike));
+    }
+  }
+}
+
+// The queued spawns' types and queue order (bridge spawn_queue). When the
+// queue matches the markers, Board::spawn_points take the queue order;
+// otherwise each marker gets the type queued on its tile, if unambiguous.
+void load_spawn_queue(const json& s, Recording& rec) {
+  Board& b = rec.board;
+  auto it = s.find("spawn_queue");
+  if (it == s.end() || !it->is_array()) return;
+  std::vector<std::pair<Point, std::string>> queue;
+  for (const json& e : *it) {
+    if (!e.is_object()) continue;
+    queue.emplace_back(Point{get_or<int>(e, "x", -1), get_or<int>(e, "y", -1)}, get_or<std::string>(e, "type", ""));
+  }
+  if (get_or<bool>(s, "spawn_queue_matches_markers", false)) {
+    b.spawn_points.clear();
+    rec.spawn_types.clear();
+    for (const auto& [p, type] : queue) {
+      b.spawn_points.push_back(p);
+      rec.spawn_types.push_back(type);
+    }
+    rec.spawn_order_known = true;
+    return;
+  }
+  rec.warnings.push_back("spawn_queue does not match the spawn markers (types by tile only)");
+  rec.spawn_types.assign(b.spawn_points.size(), "");
+  for (size_t i = 0; i < b.spawn_points.size(); ++i) {
+    std::string type;
+    bool unique = true;
+    for (const auto& [p, t] : queue) {
+      if (p != b.spawn_points[i]) continue;
+      if (!type.empty() && type != t) unique = false;
+      type = t;
+    }
+    if (unique) rec.spawn_types[i] = type;
+  }
 }
 
 // Stage 8: the mission's objective bookkeeping (environment.hpp ObjectiveData).
@@ -352,12 +531,26 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   b.total_turns = get_or<int>(s, "total_turns", b.total_turns);
 
   for (const json& t : s["tiles"]) load_tile(t, b, rec.warnings);
+  std::vector<std::pair<int32_t, int>> mutations;  // uid -> recorded mutation
   for (const json& u : s["units"]) {
     // Multi-tile pawns are reported once per extra tile; keep the main entry.
     if (get_or<bool>(u, "is_extra_tile", false)) continue;
     const Pawn& p = b.add_pawn(load_unit(u, data, rec.warnings));
-    if (auto pilot = get_or<std::string>(u, "pilot_id", ""); !pilot.empty()) {
-      rec.pilots.emplace_back(p.uid, pilot);
+    std::string pilot = get_or<std::string>(u, "pilot_id", "");
+    if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
+      Recording::PilotInfo info;
+      info.uid = p.uid;
+      info.id = get_or<std::string>(*it, "id", "");
+      info.level = get_or<int>(*it, "level", -1);
+      info.xp = get_or<int>(*it, "xp", -1);
+      info.skill1 = get_or<int>(*it, "skill1", -1);
+      info.skill2 = get_or<int>(*it, "skill2", -1);
+      if (pilot.empty()) pilot = info.id;
+      rec.pilot_info.push_back(std::move(info));
+    }
+    if (!pilot.empty()) rec.pilots.emplace_back(p.uid, pilot);
+    if (auto it = u.find("mutation"); it != u.end() && it->is_number_integer()) {
+      mutations.emplace_back(p.uid, it->get<int>());
     }
   }
   // Webs come from the tile their source stands on.
@@ -367,8 +560,10 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   }
   for (const Pawn& p : b.pawns()) {
     if (p.mech && p.team == Team::Player) {
-      for (Symbol w : p.weapons) {
-        if (w != kNoSymbol) b.passives |= passive_of(symbol_name(w));
+      for (size_t i = 0; i < p.weapons.size(); ++i) {
+        const Symbol w = p.weapons[i];
+        // uses 0 here = recorded unpowered (a passive has no uses otherwise).
+        if (w != kNoSymbol && p.uses[i] != 0) b.passives |= passive_of(symbol_name(w));
       }
     }
   }
@@ -379,6 +574,10 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
   // Recorded HP already includes the Soldier psion's +1.
   for (Pawn& p : b.pawns()) {
     if (p.alive() && mutation_affects(b, p, Leader::Health)) p.health_bonus = true;
+  }
+  // The save's per-pawn mutation (turn start) settles it, stale ones included.
+  for (const auto& [uid, mutation] : mutations) {
+    if (Pawn* p = b.find_pawn(uid)) p->health_bonus = mutation == static_cast<int>(Leader::Health);
   }
   // The bridge's `boosted` is Pawn:IsBoosted(), which includes the Boost
   // psion: only a boost the psion does not explain is the pawn's status.
@@ -407,12 +606,23 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
     }
   }
   load_mission(s, rec);
+  load_spawn_queue(s, rec);
   if (auto it = s.find("attack_order"); it != s.end() && it->is_array()) {
     for (const json& uid : *it) {
       if (uid.is_number_integer()) rec.attack_order.push_back(uid.get<int32_t>());
     }
   }
   return rec;
+}
+
+TurnContext turn_context(const Recording& rec, Visibility visibility) {
+  TurnContext ctx;
+  ctx.mission = rec.mission;
+  if (visibility == Visibility::Full) {
+    ctx.spawn_types = rec.spawn_types;
+    ctx.spawn_order_known = rec.spawn_order_known;
+  }
+  return ctx;
 }
 
 }  // namespace itb

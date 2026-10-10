@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -95,6 +96,20 @@ struct MissionData {
   std::vector<int32_t> launching;  // satellite rockets with a queued launch
   int difficulty = -1;
   ObjectiveData objectives;  // stage 8
+
+  // Bridge extension (bridge_ext_version >= 1, stage 7 spec section 4).
+  int mission_key = -1;  // the mission's key in GAME.Missions ("Mission<key>")
+  int turn_limit = -1;   // the instance's TurnLimit
+  // Lua classes of the mission and its LiveEnvironment, most derived first.
+  std::vector<std::string> mission_classes, env_classes;
+  // Board:GetZone(name) for the zones combat hooks read (empty ones absent).
+  std::map<std::string, std::vector<Point>> zones;
+  // Raw instance dumps (JSON text) of the mission and its LiveEnvironment,
+  // for a Lua-backed Environment.
+  std::string mission_instance_json, env_instance_json;
+  // The bridge exported every unit's queued shot (attack_order_all), so a
+  // unit without one has none (e.g. a stopped train).
+  bool all_queued_known = false;
 };
 
 // ---- Events ----------------------------------------------------------------------

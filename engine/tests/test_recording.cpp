@@ -1,7 +1,9 @@
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -130,4 +132,200 @@ TEST_CASE("rejects files that are not boards") {
   auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/does_not_exist.json", nullptr, &error);
   CHECK_FALSE(rec.has_value());
   CHECK(error.find("cannot open") != std::string::npos);
+}
+
+namespace {
+
+std::optional<Recording> load_text(const std::string& name, const std::string& text, std::string* error) {
+  const auto path = std::filesystem::temp_directory_path() / name;
+  {
+    std::ofstream out(path);
+    out << text;
+  }
+  auto rec = load_recording(path, nullptr, error);
+  std::filesystem::remove(path);
+  return rec;
+}
+
+// A board in the bridge extension's format (bridge_ext_version 1).
+const char* kExtBoard = R"({
+  "turn": 2, "total_turns": 5, "grid_power": 6, "mission_id": "Mission_Crack", "phase": "combat_player",
+  "bridge_ext_version": 1,
+  "bridge_errors": [{"where": "tile.IsDangerous", "error": "boom"}],
+  "tiles": [
+    {"x": 0, "y": 0, "terrain": "building", "terrain_id": 1, "building_hp": 1, "populated": false},
+    {"x": 1, "y": 0, "terrain": "building", "terrain_id": 1, "building_hp": 2},
+    {"x": 2, "y": 0, "terrain": "ice", "terrain_id": 5, "ice_hp": 1},
+    {"x": 3, "y": 0, "terrain": "ground", "terrain_id": 0, "custom_tile": "conveyor2.png"}],
+  "units": [
+    {"uid": 0, "type": "PunchMech", "x": 3, "y": 3, "hp": 3, "max_hp": 3, "team": 1, "mech": true, "active": true,
+     "weapons": ["Prime_Punchmech", "Brute_Heavyrocket"],
+     "weapons_exact": ["Prime_Punchmech_B", "Brute_Heavyrocket_A"],
+     "weapon_slots": [{"slot": 0, "id": "Prime_Punchmech_B", "limited": 0, "uses_saved": 1},
+                      {"slot": 1, "id": "Brute_Heavyrocket_A", "limited": 1, "uses": 0, "uses_saved": 1}],
+     "pilot_id": "Pilot_Original", "pilot_level": 1, "pilot_skills": [],
+     "pilot": {"id": "Pilot_Original", "level": 2, "xp": 31, "skill1": 0, "skill2": 7}},
+    {"uid": 1, "type": "LimitMech", "x": 4, "y": 3, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+     "weapons_exact": ["Ranged_Limited"],
+     "weapon_slots": [{"slot": 0, "id": "Ranged_Limited", "limited": 2, "uses_ambiguous": true, "uses_saved": 2}],
+     "pilot": {"id": "Pilot_Rock", "level": 0, "xp": 3, "skill1": 12, "skill2": 12}},
+    {"uid": 50, "type": "Firefly1", "x": 5, "y": 5, "hp": 3, "max_hp": 3, "team": 6, "mutation": 1,
+     "has_queued_attack": true, "queued_target": [5, 4], "queued_origin": [5, 5]},
+    {"uid": 51, "type": "MysteryVek", "x": 6, "y": 5, "hp": 2, "max_hp": 2, "team": 6, "mutation": 0,
+     "traits": {"leader": 1, "explodes": true, "ignore_smoke": true, "burns": true, "minor": true}},
+    {"uid": 60, "type": "Train_Pawn", "x": 4, "y": 6, "hp": 1, "max_hp": 1, "team": 1, "weapons": ["Train_Move"],
+     "extra_spaces": [[0, 1]],
+     "queued_any": {"skill": 1, "target": [4, 5], "origin": [4, 6], "source": "save"}},
+    {"uid": 60, "type": "Train_Pawn", "x": 4, "y": 7, "hp": 1, "max_hp": 1, "team": 1, "is_extra_tile": true}],
+  "attack_order": [50],
+  "attack_order_all": [50, 60],
+  "spawning_tiles": [[1, 6], [6, 3]],
+  "spawn_queue": [{"type": "Scorpion1", "x": 6, "y": 3, "uid": 70}, {"type": "Firefly2", "x": 1, "y": 6, "uid": 71}],
+  "spawn_queue_source": "save",
+  "spawn_queue_matches_markers": true,
+  "mission_power_start": 7,
+  "mission_blocked_spawns": 2,
+  "bonus_objective_ids": [5],
+  "zones": {"enemy": [[6, 0], [7, 1]], "deployment": [[1, 3]]},
+  "mission_state": {"key": 3, "native_key": "Mission3", "id": "Mission_Crack", "turn": 2, "turn_limit": 5,
+    "class_chain": ["Mission_Crack", "Mission"], "env_class_chain": ["Env_Seismic", "Env_Attack", "Environment"],
+    "instance": {"ID": "Mission_Crack", "BlockedSpawns": 2},
+    "env_instance": {"Locations": [{"x": 2, "y": 4}, {"x": 3, "y": 4}, {"x": 4, "y": 4}],
+                     "Planned": [{"x": 2, "y": 4}, {"x": 3, "y": 4}, {"x": 4, "y": 4}]}},
+  "env_strike_log": [{"kind": "env_step", "turn": 1, "current_attack": {"x": 1, "y": 4}},
+                     {"kind": "env_step", "turn": 1, "current_attack": [{"x": 2, "y": 2}, {"x": 2, "y": 3}]}]
+})";
+
+}  // namespace
+
+TEST_CASE("loads the bridge extension fields") {
+  std::string error;
+  auto rec = load_text("itb_recording_ext.json", kExtBoard, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  CHECK(rec->bridge_ext_version == 1);
+  CHECK(rec->bridge_errors == std::vector<std::string>{"tile.IsDangerous: boom"});
+
+  // Tiles.
+  CHECK_FALSE(b.tile({0, 0}).populated);
+  CHECK(b.tile({1, 0}).populated);
+  CHECK(b.tile({2, 0}).hp == 1);
+  CHECK(symbol_name(b.tile({3, 0}).custom_tile) == "conveyor2.png");
+
+  // Weapons, uses, pilots.
+  const Pawn& m0 = *b.find_pawn(0);
+  CHECK(symbol_name(m0.weapons[0]) == "Prime_Punchmech_B");
+  CHECK(symbol_name(m0.weapons[1]) == "Brute_Heavyrocket_A");
+  CHECK(m0.uses[0] == -1);
+  CHECK(m0.uses[1] == 0);
+  CHECK(m0.has_pilot(kPilotThick));  // skill2 = 7 at level 2
+  const Pawn& m1 = *b.find_pawn(1);
+  CHECK(m1.uses[0] == 2);                  // ambiguous live count: the saved one
+  CHECK_FALSE(m1.has_pilot(kPilotRegen));  // level 0: no skill yet
+  REQUIRE(rec->pilot_info.size() == 2);
+  CHECK(rec->pilot_info[0].xp == 31);
+  CHECK(rec->pilot_info[1].id == "Pilot_Rock");
+  CHECK(rec->pilots.size() == 2);
+
+  // Mutation and traits.
+  CHECK(b.find_pawn(50)->health_bonus);
+  const Pawn& mystery = *b.find_pawn(51);
+  CHECK(mystery.leader == Leader::Health);
+  CHECK(mystery.explodes);
+  CHECK(mystery.ignore_smoke);
+  CHECK(mystery.burns);
+  CHECK(mystery.minor);
+  CHECK_FALSE(mystery.health_bonus);
+
+  // Every queued shot, any team.
+  const Pawn& train = *b.find_pawn(60);
+  CHECK(train.pos == Point{4, 6});
+  CHECK(train.queued.active());
+  CHECK(train.queued.weapon == 0);
+  CHECK(train.queued.target == Point{4, 5});
+  CHECK(rec->attack_order_all == std::vector<int32_t>{50, 60});
+  CHECK(rec->mission.all_queued_known);
+
+  // Spawns in queue order; their types stay out of the player's context.
+  CHECK(b.spawn_points == std::vector<Point>{{6, 3}, {1, 6}});
+  CHECK(rec->spawn_types == std::vector<std::string>{"Scorpion1", "Firefly2"});
+  CHECK(rec->spawn_order_known);
+  const TurnContext player = turn_context(*rec);
+  CHECK(player.spawn_types.empty());
+  CHECK_FALSE(player.spawn_order_known);
+  CHECK(player.mission.mission_key == 3);
+  const TurnContext full = turn_context(*rec, Visibility::Full);
+  CHECK(full.spawn_types == rec->spawn_types);
+  CHECK(full.spawn_order_known);
+
+  // Mission.
+  const MissionData& m = rec->mission;
+  CHECK(m.turn_limit == 5);
+  CHECK(m.mission_classes.front() == "Mission_Crack");
+  CHECK(m.env_classes.front() == "Env_Seismic");
+  CHECK(m.ordered_locations == std::vector<Point>{{2, 4}, {3, 4}, {4, 4}});
+  CHECK(m.mission_instance_json.find("BlockedSpawns") != std::string::npos);
+  CHECK(m.env_instance_json.find("Planned") != std::string::npos);
+  REQUIRE(m.zones.count("enemy") == 1);
+  CHECK(m.zones.at("enemy") == std::vector<Point>{{6, 0}, {7, 1}});
+  CHECK(m.objectives.power_start == 7);
+  CHECK(m.objectives.blocked_spawns == 2);
+  CHECK(m.objectives.bonus == std::vector<int>{5});
+  REQUIRE(rec->env_strikes.size() == 2);
+  CHECK(rec->env_strikes[0].tiles == std::vector<Point>{{1, 4}});
+  CHECK(rec->env_strikes[1].tiles.size() == 2);
+}
+
+TEST_CASE("a spawn queue that disagrees with the markers only gives types by tile") {
+  std::string error;
+  auto rec = load_text("itb_recording_stale_queue.json", R"({
+      "tiles": [], "units": [],
+      "spawning_tiles": [[1, 6], [6, 3], [2, 2]],
+      "spawn_queue": [{"type": "Scorpion1", "x": 6, "y": 3}, {"type": "Firefly2", "x": 1, "y": 6},
+                      {"type": "Hornet1", "x": 0, "y": 0}],
+      "spawn_queue_matches_markers": false})",
+                       &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  CHECK(rec->board.spawn_points == std::vector<Point>{{1, 6}, {6, 3}, {2, 2}});
+  CHECK(rec->spawn_types == std::vector<std::string>{"Firefly2", "Scorpion1", ""});
+  CHECK_FALSE(rec->spawn_order_known);
+  CHECK(std::find(rec->warnings.begin(), rec->warnings.end(),
+                  "spawn_queue does not match the spawn markers (types by tile only)") != rec->warnings.end());
+}
+
+TEST_CASE("unpowered weapons cannot fire and unpowered passives do nothing") {
+  std::string error;
+  auto rec = load_text("itb_recording_powered.json", R"({
+      "tiles": [], "units": [
+        {"uid": 0, "type": "PunchMech", "x": 1, "y": 1, "hp": 3, "max_hp": 3, "team": 1, "mech": true, "moved": true,
+         "weapons_exact": ["Prime_Punchmech", "Passive_ForceAmp"],
+         "weapon_slots": [{"id": "Prime_Punchmech", "limited": 0, "powered": false},
+                          {"id": "Passive_ForceAmp", "limited": 0, "powered": false}]},
+        {"uid": 1, "type": "PunchMech", "x": 2, "y": 1, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "weapons_exact": ["Prime_Punchmech", "Passive_FlameImmune"],
+         "weapon_slots": [{"id": "Prime_Punchmech", "limited": 0, "powered": true},
+                          {"id": "Passive_FlameImmune", "limited": 0, "powered": true}]}]})",
+                       &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  CHECK(b.find_pawn(0)->uses[0] == 0);
+  CHECK(b.find_pawn(0)->moved);
+  CHECK(b.find_pawn(1)->uses[0] == -1);
+  CHECK_FALSE(b.has_passive(kPassiveForceAmp));
+  CHECK(b.has_passive(kPassiveFlameImmune));
+}
+
+TEST_CASE("boards without the extension fields load as before") {
+  std::string error;
+  auto rec = load_recording(kFixture, nullptr, &error);
+  REQUIRE(rec.has_value());
+  CHECK(rec->bridge_ext_version == 0);
+  CHECK(rec->attack_order_all.empty());
+  CHECK_FALSE(rec->mission.all_queued_known);
+  CHECK(rec->spawn_types.empty());
+  CHECK_FALSE(rec->spawn_order_known);
+  CHECK(rec->mission.ordered_locations.empty());
+  for (const Pawn& p : rec->board.pawns()) {
+    for (int8_t u : p.uses) CHECK(u == -1);
+  }
 }

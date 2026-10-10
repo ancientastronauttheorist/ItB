@@ -1,0 +1,28 @@
+{
+  "name": "limited_uses",
+  "question": "Pawn:GetShotsRemaining (shots_remaining) counts limited uses plus 1 per unlimited skill, and drops when a limited weapon fires; a spent weapon cannot fire.",
+  "mission": "any mission without an environment, player turn 1-3. Uses a temporary player-team PunchMech pawn given Brute_Heavyrocket (Limited = 1).",
+  "scenario": {
+    "name": "limited_uses",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 0, "y": 7},
+      {"uid": 1, "x": 7, "y": 7},
+      {"uid": 2, "x": 7, "y": 0},
+      {"type": "PunchMech", "team": 1, "x": 2, "y": 2, "weapons_add": ["Brute_Heavyrocket"]},
+      {"type": "Scorpion1", "team": 6, "x": 2, "y": 5}
+    ]
+  },
+  "actions": [
+    {"pawn": "pawn:4", "weapon": "Brute_Heavyrocket", "native_slot": 2, "target": [2, 5]}
+  ],
+  "end_turn": false,
+  "observe": [
+    "Before: the helper pawn's shots_remaining is 2 (Prime_Punchmech + 1 rocket use).",
+    "After the shot: shots_remaining 1; the Scorpion at (2,5) takes 3 and dies.",
+    "Then send FIRE <uid> 2 2 5 by hand: ret should be 0 (no uses left).",
+    "Squad check (no scenario needed): if a squad mech has a limited weapon, fire it and see weapon_slots[].uses drop by 1 (uses_basis 'calibrated')."
+  ]
+}

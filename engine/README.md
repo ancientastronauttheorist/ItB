@@ -40,6 +40,7 @@ engine/build/itb_inspect --replay recordings --turns                    # whole 
 engine/build/itb_inspect --score recordings/<run>/m07_turn_01_solve_input.json  # score a recorded plan
 engine/build/itb_inspect --solve recordings/<run>/m07_turn_01_solve_input.json --time 10 --threads 8
 engine/build/itb_inspect --solve recordings --sample 60 --time 120 --threads 8 --json out.jsonl
+engine/build/itb_inspect --predict state.json --actions @actions.json --branches   # live validation
 ```
 
 `--solve` runs the perfect-turn search (stage 9) and prints the plan in
@@ -554,12 +555,42 @@ Lua target areas (computed again inside `fire_weapon` for legality), and
 sub-actions that reach a board already in the table (about a third of them:
 interleavings are merged by the table after running, not before).
 
-Limitations: limited-use weapons are assumed available (uses are not
-recorded); proofs are relative to the engine's model (`PhaseResult::exact`
+Limitations: limited-use weapons are assumed available unless the bridge
+recorded their uses (`Pawn::uses`, bridge extension); proofs are relative to the engine's model (`PhaseResult::exact`
 false for EnvInexact missions is reported as a warning); 128-bit hash
 collisions are ignored; tables stop growing at `tt_max_entries`.
 
+### Bridge extension and live validation
+
+The Lua bridge (`src/bridge/modloader.lua`, `ITBX`) adds to every state
+dump, each under pcall with failures listed in `bridge_errors`: the
+mission's key, class chain and raw instance dumps of the mission and its
+LiveEnvironment (`mission_state`, stage 7 spec section 4), zones, the
+spawn queue with types in queue order (from whichever save matches the
+board), per-unit Lua traits, every equipped weapon with its exact upgraded
+id, power and limited uses (`weapons_exact`, `weapon_slots`), pilot level,
+XP and skills, `moved`, queued shots of non-enemy units and
+`attack_order_all`, PowerStart, BlockedSpawns, the drop zone, ice HP,
+building population, custom tiles and an environment strike log. With the
+debug flag file it also takes a per-frame phase log and captures the enemy
+phase before and after the spawns, and accepts `SCENARIO` (build a test
+board with the game's bindings) and `FIRE`; `SNAPSHOT` and `MOVE_NATIVE`
+(a player-style move) are always available.
+
+`load_recording` reads all of it when present (469/469 old recordings load
+as before). `turn_context(rec, visibility)` builds the TurnContext; the
+spawn types and queue order are hidden information, so only
+`Visibility::Full` (validation) passes them on, never the solver's
+`Visibility::Player`. `itb_tests` compiles the bridge in Lua 5.1 and runs it
+against a strict mock of every binding it calls (`tests/bridge`).
+
+`itb_inspect --predict <state> [--actions ...] [--branches]` prints the
+engine's outcomes for a bridge state; `scripts/live_validate.py` runs a
+scenario end to end against the game. See `LIVE_TEST_PLAN.md`.
+
 ### Open questions for live-game testing
+
+Each has a scenario in `LIVE_TEST_PLAN.md`.
 
 - **Vek attack order.** The decompile says board-list order, which is
   insertion order within the player and non-player groups. Recordings made

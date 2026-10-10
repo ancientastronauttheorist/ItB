@@ -124,8 +124,7 @@ int run_score(const fs::path& input, const fs::path& game) {
     plan.push_back(act);
   }
 
-  TurnContext ctx;
-  ctx.mission = rec->mission;
+  TurnContext ctx = turn_context(*rec);
   Board after = before;
   TurnResult tr = engine->play_turn(after, plan, ctx);
   std::printf("%s m%02d turn %d %s: %zu actions%s\n", rec->run_id.c_str(), rec->mission_index, rec->turn,

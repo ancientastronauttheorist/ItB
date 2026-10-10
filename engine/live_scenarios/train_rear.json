@@ -1,0 +1,28 @@
+{
+  "name": "train_rear",
+  "question": "A Vek attack on the train's rear tile (its ExtraSpaces tile) kills the train in game; the engine places multi-tile pawns on their main tile only.",
+  "mission": "Mission_Train or Mission_Armored_Train, a player turn with the train still running",
+  "scenario": {
+    "name": "train_rear",
+    "clear_pawns": "enemies",
+    "clear_spawns": true,
+    "pawns": [
+      {"type": "Hornet1", "team": 6, "at": "type:Train_Pawn:extra", "dx": -1,
+       "queue": {"at": "type:Train_Pawn:extra"}}
+    ]
+  },
+  "end_turn": true,
+  "observe": [
+    "The Hornet stands left of the train's rear tile and stings it.",
+    "Game: does the train take the hit (and die at 1 HP)? Engine: the rear tile is empty, so nothing happens there.",
+    "If the tile left of the rear is blocked, edit dx/dy (e.g. dx 1) and rerun."
+  ],
+  "synth": {
+    "mission_id": "Mission_Train",
+    "units": [
+      {"uid": 60, "type": "Train_Pawn", "x": 4, "y": 4, "hp": 1, "max_hp": 1, "team": 1,
+       "weapons": ["Train_Move"], "queued_any": {"skill": 1, "target": [4, 3], "origin": [4, 4]}},
+      {"uid": 60, "type": "Train_Pawn", "x": 4, "y": 5, "hp": 1, "max_hp": 1, "team": 1, "is_extra_tile": true}
+    ]
+  }
+}

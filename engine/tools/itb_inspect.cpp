@@ -15,8 +15,12 @@
 //   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
 //               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
 //                                               the perfect-turn search vs the recorded plan
+//   itb_inspect [--game DIR] --predict <state.json> [--actions JSON|@FILE] [--no-enemy]
+//               [--branches [N]] [--json FILE]
+//                                               the engine's outcome for a bridge state (live tests)
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
@@ -34,6 +38,7 @@
 #include "itb/lua_host.hpp"
 #include "itb/movement.hpp"
 #include "itb/recording.hpp"
+#include "predict_tool.hpp"
 #include "replay.hpp"
 #include "solve_tool.hpp"
 
@@ -45,7 +50,8 @@ namespace {
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
                "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
-               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE])\n";
+               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE] | "
+               "--predict <state.json> [--actions JSON|@FILE] [--no-enemy] [--branches [N]] [--json FILE])\n";
   return 2;
 }
 
@@ -388,6 +394,29 @@ int main(int argc, char** argv) {
       }
     }
     return tools::run_solve(o);
+  }
+  if (args[0] == "--predict") {
+    if (args.size() < 2) return usage();
+    tools::PredictOptions o;
+    o.state = args[1];
+    o.game = game;
+    for (size_t i = 2; i < args.size(); ++i) {
+      if (args[i] == "--actions" && i + 1 < args.size()) {
+        o.actions = args[++i];
+      } else if (args[i] == "--no-enemy") {
+        o.enemy = false;
+      } else if (args[i] == "--branches") {
+        o.branches = true;
+        if (i + 1 < args.size() && !args[i + 1].empty() && std::isdigit(static_cast<unsigned char>(args[i + 1][0]))) {
+          o.max_branches = std::max(1, std::stoi(args[++i]));
+        }
+      } else if (args[i] == "--json" && i + 1 < args.size()) {
+        o.json_out = args[++i];
+      } else {
+        return usage();
+      }
+    }
+    return tools::run_predict(o);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();

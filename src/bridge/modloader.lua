@@ -349,6 +349,8 @@ local function _read_save_data()
         end
     end
 
+    -- The raw text, for the bridge extension's active-region parse.
+    result.raw_content = content
     return result
 end
 
@@ -923,10 +925,1212 @@ local function mission_bridge_id(mission)
     return mission_id
 end
 
-local function dump_state()
+--------------------------------------------------------------------
+-- Bridge extension (live validation, 2026-10): engine-facing exports,
+-- scenario tooling and enemy-phase ledgers.
+--
+-- Everything in ITBX is additive. Each export runs under pcall and reports
+-- a failure in state.bridge_errors instead of breaking the dump, and none of
+-- it writes into Lua mission or environment instances (the game saves those).
+-- Only Lua API calls listed in the game's binding table are used; calls that
+-- may not exist in a build are probed with pcall. The table is also reachable
+-- as the global _ITB_BRIDGE_EXT so the offline harness
+-- (engine/tests/bridge/bridge_harness.lua) can test the pure helpers.
+--------------------------------------------------------------------
+local ITBX = {
+    VERSION = 1,
+    DEBUG_FLAG_FILE = BRIDGE_DIR .. "/itb_bridge_debug",
+    PRE_SPAWN_FILE = BRIDGE_DIR .. "/itb_state_enemy_prespawn.json",
+    POST_SPAWN_FILE = BRIDGE_DIR .. "/itb_state_enemy_postspawn.json",
+    SNAPSHOT_PREFIX = BRIDGE_DIR .. "/itb_snapshot_",
+    PHASE_LOG_FILE = BRIDGE_DIR .. "/itb_phase_log.json",
+    PHASE_LOG_MAX = 4000,
+    ENV_LOG_MAX = 64,
+    DUMP_NODE_BUDGET = 3000,
+    DUMP_MAX_DEPTH = 4,
+    -- Board:GetZone names read by shipped combat hooks (stage 7 spec 4.3).
+    ZONES = {
+        "dam", "satellite", "pylons", "falling", "mountain", "deployment",
+        "enemy", "hornets", "grass", "terraformer", "filler", "disposal",
+        "lasers", "pistons", "flooding",
+    },
+    JSON_NULL = setmetatable({}, {__tostring = function() return "null" end}),
+}
+_ITB_BRIDGE_EXT = ITBX
+
+-- The debug flag file enables the scenario command and the per-frame phase
+-- log. Checked at most once per wall-clock second.
+function ITBX.debug_enabled()
+    local now = os.time()
+    if ITBX._debug_at == now and ITBX._debug_on ~= nil then
+        return ITBX._debug_on
+    end
+    local f = io.open(ITBX.DEBUG_FLAG_FILE, "r")
+    local on = f ~= nil
+    if f then f:close() end
+    ITBX._debug_on = on
+    ITBX._debug_at = now
+    return on
+end
+
+local function itbx_turn_team()
+    local turn, team = nil, nil
+    pcall(function() turn = Game:GetTurnCount() end)
+    pcall(function() team = Game:GetTeamTurn() end)
+    return turn, team
+end
+
+---------------------------------------------------------------- errors
+function ITBX.begin_dump()
+    ITBX.errs = {}
+    ITBX.err_seen = {}
+end
+
+function ITBX.str(s)
+    s = tostring(s)
+    if string.len(s) > 400 then s = string.sub(s, 1, 400) .. "..." end
+    return (string.gsub(s, "%c", " "))
+end
+
+-- Records one failure per `where` per dump (a failing per-tile probe would
+-- otherwise repeat 64 times).
+function ITBX.note_error(where, err)
+    ITBX.errs = ITBX.errs or {}
+    ITBX.err_seen = ITBX.err_seen or {}
+    if ITBX.err_seen[where] then return end
+    ITBX.err_seen[where] = true
+    if #ITBX.errs < 64 then
+        ITBX.errs[#ITBX.errs + 1] = {where = where, error = ITBX.str(err)}
+    end
+end
+
+-- pcall(fn, ...) that records the failure; returns fn's first result or nil.
+function ITBX.try(where, fn, ...)
+    local ok, res = pcall(fn, ...)
+    if not ok then
+        ITBX.note_error(where, res)
+        return nil
+    end
+    return res
+end
+
+---------------------------------------------------------------- values
+function ITBX.num(v)
+    if v ~= v or v == math.huge or v == -math.huge then return tostring(v) end
+    return v
+end
+
+-- A Point (userdata, or a table with numeric x/y) -> x, y; else nil.
+function ITBX.point_xy(v)
+    local tv = type(v)
+    if tv ~= "userdata" and tv ~= "table" then return nil end
+    local ok, x, y = pcall(function() return v.x, v.y end)
+    if ok and type(x) == "number" and type(y) == "number" then return x, y end
+    return nil
+end
+
+-- PointList / IntList userdata -> plain array ({x=,y=} or numbers); nil if
+-- `v` is not a list.
+function ITBX.list_of_ud(v)
+    if type(v) ~= "userdata" then return nil end
+    local ok_n, n = pcall(function() return v:size() end)
+    if not ok_n or type(n) ~= "number" or n < 0 or n > 4096 then return nil end
+    local out = {}
+    for i = 1, n do
+        local ok_e, e = pcall(function() return v:index(i) end)
+        if not ok_e then return nil end
+        local x, y = ITBX.point_xy(e)
+        if x then
+            out[#out + 1] = {x = x, y = y}
+        elseif type(e) == "number" then
+            out[#out + 1] = ITBX.num(e)
+        else
+            out[#out + 1] = "<ud>"
+        end
+    end
+    return out
+end
+
+-- Points of a PointList / Lua array of Points as [[x, y], ...].
+function ITBX.point_pairs(v)
+    local out = {}
+    if type(v) == "userdata" then
+        local list = ITBX.list_of_ud(v) or {}
+        for _, p in ipairs(list) do
+            if type(p) == "table" then out[#out + 1] = {p.x, p.y} end
+        end
+    elseif type(v) == "table" then
+        for _, p in ipairs(v) do
+            local x, y = ITBX.point_xy(p)
+            if x then out[#out + 1] = {x, y} end
+        end
+    end
+    return out
+end
+
+local function itbx_key_string(k)
+    local tk = type(k)
+    if tk == "string" then return k end
+    if tk == "number" then return tostring(ITBX.num(k)) end
+    if tk == "boolean" then return tostring(k) end
+    local x, y = ITBX.point_xy(k)
+    if x then return "Point(" .. x .. "," .. y .. ")" end
+    return "<" .. tk .. ">"
+end
+
+-- Plain-data copy of a Lua value for the JSON export (stage 7 spec 4.2):
+-- instance fields only (raw pairs, no metatable lookups), functions
+-- skipped, Points -> {x=,y=}, PointList/IntList -> arrays, other userdata
+-- -> "<ud>" (counted), nested tables up to ctx.max_depth, at most
+-- ctx.budget table/userdata nodes. Arrays are tables whose keys are exactly
+-- 1..n; anything else becomes an object with string keys.
+function ITBX.dump_value(v, depth, ctx, exclude)
+    local tv = type(v)
+    if tv == "nil" then return nil end
+    if tv == "boolean" then return v end
+    if tv == "number" then return ITBX.num(v) end
+    if tv == "string" then return ITBX.str(v) end
+    if tv ~= "table" and tv ~= "userdata" then return nil end
+    if rawequal(v, ITBX.JSON_NULL) then return nil end
+    ctx.nodes = ctx.nodes + 1
+    if ctx.nodes > ctx.budget then
+        ctx.truncated = true
+        return "<budget>"
+    end
+    if tv == "userdata" then
+        local x, y = ITBX.point_xy(v)
+        if x then return {x = ITBX.num(x), y = ITBX.num(y)} end
+        local list = ITBX.list_of_ud(v)
+        if list then return list end
+        ctx.userdata = ctx.userdata + 1
+        return "<ud>"
+    end
+    if ctx.seen[v] then return "<cycle>" end
+    if depth >= ctx.max_depth then
+        ctx.truncated = true
+        return "<depth>"
+    end
+    ctx.seen[v] = true
+    local count = 0
+    for _ in pairs(v) do count = count + 1 end
+    local is_array = count > 0
+    for i = 1, count do
+        if rawget(v, i) == nil then
+            is_array = false
+            break
+        end
+    end
+    local out = {}
+    if is_array then
+        for i = 1, count do
+            local e = ITBX.dump_value(rawget(v, i), depth + 1, ctx)
+            if e == nil then e = "<fn>" end
+            out[i] = e
+        end
+    else
+        for k, val in pairs(v) do
+            local key = itbx_key_string(k)
+            if not (exclude and exclude[key]) and type(val) ~= "function" then
+                local e = ITBX.dump_value(val, depth + 1, ctx)
+                if e ~= nil then out[key] = e end
+            end
+        end
+    end
+    ctx.seen[v] = nil
+    return out
+end
+
+function ITBX.new_dump_ctx()
+    return {
+        nodes = 0, budget = ITBX.DUMP_NODE_BUDGET, max_depth = ITBX.DUMP_MAX_DEPTH,
+        seen = {}, userdata = 0, truncated = false,
+    }
+end
+
+---------------------------------------------------------------- JSON in
+-- Minimal JSON decoder for the SCENARIO payload. null decodes to
+-- ITBX.JSON_NULL (kept in arrays, dropped from objects).
+function ITBX.json_decode(s)
+    if type(s) ~= "string" then error("json: not a string", 0) end
+    local pos = 1
+    local len = string.len(s)
+    local function fail(msg)
+        error("json: " .. msg .. " at byte " .. pos, 0)
+    end
+    local function skip_ws()
+        local p = string.find(s, "[^ \t\r\n]", pos)
+        pos = p or (len + 1)
+    end
+    local escapes = {
+        ['"'] = '"', ["\\"] = "\\", ["/"] = "/",
+        b = "\b", f = "\f", n = "\n", r = "\r", t = "\t",
+    }
+    local function parse_string()
+        pos = pos + 1  -- opening quote
+        local buf = {}
+        while true do
+            local p = string.find(s, '["\\]', pos)
+            if not p then fail("unterminated string") end
+            buf[#buf + 1] = string.sub(s, pos, p - 1)
+            local c = string.sub(s, p, p)
+            if c == '"' then
+                pos = p + 1
+                break
+            end
+            local e = string.sub(s, p + 1, p + 1)
+            if escapes[e] then
+                buf[#buf + 1] = escapes[e]
+                pos = p + 2
+            elseif e == "u" then
+                local code = tonumber(string.sub(s, p + 2, p + 5), 16)
+                if not code then fail("bad \\u escape") end
+                buf[#buf + 1] = code < 128 and string.char(code) or "?"
+                pos = p + 6
+            else
+                fail("bad escape")
+            end
+        end
+        return table.concat(buf)
+    end
+    local parse_value
+    local function parse_array()
+        pos = pos + 1
+        local out = {}
+        skip_ws()
+        if string.sub(s, pos, pos) == "]" then
+            pos = pos + 1
+            return out
+        end
+        while true do
+            out[#out + 1] = parse_value()
+            skip_ws()
+            local c = string.sub(s, pos, pos)
+            pos = pos + 1
+            if c == "]" then return out end
+            if c ~= "," then fail("expected , or ]") end
+        end
+    end
+    local function parse_object()
+        pos = pos + 1
+        local out = {}
+        skip_ws()
+        if string.sub(s, pos, pos) == "}" then
+            pos = pos + 1
+            return out
+        end
+        while true do
+            skip_ws()
+            if string.sub(s, pos, pos) ~= '"' then fail("expected key") end
+            local key = parse_string()
+            skip_ws()
+            if string.sub(s, pos, pos) ~= ":" then fail("expected :") end
+            pos = pos + 1
+            local v = parse_value()
+            if not rawequal(v, ITBX.JSON_NULL) then out[key] = v end
+            skip_ws()
+            local c = string.sub(s, pos, pos)
+            pos = pos + 1
+            if c == "}" then return out end
+            if c ~= "," then fail("expected , or }") end
+        end
+    end
+    parse_value = function()
+        skip_ws()
+        local c = string.sub(s, pos, pos)
+        if c == "{" then return parse_object() end
+        if c == "[" then return parse_array() end
+        if c == '"' then return parse_string() end
+        if string.sub(s, pos, pos + 3) == "true" then pos = pos + 4; return true end
+        if string.sub(s, pos, pos + 4) == "false" then pos = pos + 5; return false end
+        if string.sub(s, pos, pos + 3) == "null" then pos = pos + 4; return ITBX.JSON_NULL end
+        local numtext = string.match(s, "^-?%d+%.?%d*[eE]?[-+]?%d*", pos)
+        if numtext and numtext ~= "" and numtext ~= "-" then
+            local n = tonumber(numtext)
+            if n == nil then fail("bad number") end
+            pos = pos + string.len(numtext)
+            return n
+        end
+        fail("unexpected character '" .. c .. "'")
+    end
+    local v = parse_value()
+    skip_ws()
+    if pos <= len then fail("trailing data") end
+    return v
+end
+
+---------------------------------------------------------------- classes
+-- Reverse lookup table -> global name for mission and environment classes.
+function ITBX.class_names(rebuild)
+    if ITBX._class_names and not rebuild then return ITBX._class_names end
+    local names = {}
+    for k, v in pairs(_G) do
+        if type(k) == "string" and type(v) == "table"
+                and (string.find(k, "^Env_") or string.find(k, "^Mission")
+                     or k == "Environment") then
+            if names[v] == nil or string.len(k) < string.len(names[v]) then
+                names[v] = k
+            end
+        end
+    end
+    ITBX._class_names = names
+    return names
+end
+
+-- Class names from the instance's metatable up (CreateClass sets an
+-- instance's metatable to its class, and a class's to its parent).
+function ITBX.class_chain(obj)
+    local chain = {}
+    if type(obj) ~= "table" then return chain end
+    local names = ITBX.class_names()
+    local first = getmetatable(obj)
+    if type(first) == "table" and names[first] == nil then
+        names = ITBX.class_names(true)
+    end
+    local mt = first
+    local guard = 0
+    while type(mt) == "table" and guard < 16 do
+        chain[#chain + 1] = names[mt] or "?"
+        mt = getmetatable(mt)
+        guard = guard + 1
+    end
+    return chain
+end
+
+---------------------------------------------------------------- mission
+function ITBX.mission_key(mission)
+    local game = rawget(_G, "GAME")
+    if type(game) ~= "table" or type(game.Missions) ~= "table" then return nil end
+    for k, m in pairs(game.Missions) do
+        if rawequal(m, mission) then return k end
+    end
+    return nil
+end
+
+-- Stage 7 spec 4.1 / 4.2: identity plus raw instance dumps of the mission
+-- and its LiveEnvironment.
+function ITBX.mission_state(mission)
+    local ms = {}
+    local key = ITBX.mission_key(mission)
+    if key ~= nil then
+        ms.key = key
+        ms.native_key = "Mission" .. tostring(key)
+    end
+    if type(mission.ID) == "string" then ms.id = mission.ID end
+    ms.turn = ITBX.try("mission_state.turn", function() return Game:GetTurnCount() end)
+    ms.team_turn = ITBX.try("mission_state.team_turn", function() return Game:GetTeamTurn() end)
+    ms.sector = ITBX.try("mission_state.sector", function() return Game:GetSector() end)
+    ms.difficulty = ITBX.try("mission_state.difficulty", function() return GetDifficulty() end)
+    ms.new_enemies = ITBX.try("mission_state.new_enemies", function() return IsNewEnemies() end)
+    if type(mission.TurnLimit) == "number" then ms.turn_limit = mission.TurnLimit end
+    if type(mission.Environment) == "string" then ms.environment = mission.Environment end
+    ms.class_chain = ITBX.class_chain(mission)
+    local ctx = ITBX.new_dump_ctx()
+    ms.instance = ITBX.dump_value(mission, 0, ctx, {LiveEnvironment = true})
+    local le = rawget(mission, "LiveEnvironment")
+    ms.env_is_instance = le ~= nil
+    if le == nil then le = mission.LiveEnvironment end
+    if type(le) == "table" then
+        ms.env_class_chain = ITBX.class_chain(le)
+        if rawget(le, "ApplyEffect") ~= nil then ms.env_instance_overrides_apply = true end
+        ms.env_instance = ITBX.dump_value(le, 0, ctx)
+    end
+    ms.dump_truncated = ctx.truncated
+    ms.dump_userdata = ctx.userdata
+    return ms
+end
+
+---------------------------------------------------------------- save file
+local function itbx_int_list(blob)
+    local out = {}
+    if not blob then return out end
+    for n in string.gmatch(blob, "%-?%d+") do out[#out + 1] = tonumber(n) end
+    return out
+end
+
+local function itbx_save_point(block, key)
+    local x, y = string.match(block,
+        '%["' .. key .. '"%]%s*=%s*Point%s*%(%s*(%-?%d+)%s*,%s*(%-?%d+)%s*%)')
+    if x then return {tonumber(x), tonumber(y)} end
+    return nil
+end
+
+-- The active battle region of the save (iBattleRegion): its mission, turn,
+-- spawn queue in queue order (Board::SaveScript `spawns` / `spawn_ids` /
+-- `spawn_points`), spawn blocks, and per-pawn weapons, pilots, mutation and
+-- queued shots. The save is written at turn boundaries only.
+function ITBX.parse_save(content)
+    local out = {pawns = {}}
+    if type(content) ~= "string" then return out end
+    local br = string.match(content, '%["iBattleRegion"%]%s*=%s*(%-?%d+)')
+    if not br then return out end
+    out.battle_region = tonumber(br)
+    local key = out.battle_region == 20 and "final_region" or ("region" .. br)
+    local block = string.match(content, '%["' .. key .. '"%]%s*=%s*(%b{})')
+    if not block then return out end
+    out.region_key = key
+    out.mission = string.match(block, '%["mission"%]%s*=%s*"([^"]*)"')
+    out.turn = tonumber(string.match(block, '%["iCurrentTurn"%]%s*=%s*(%-?%d+)') or "")
+    out.team_turn = tonumber(string.match(block, '%["iTeamTurn"%]%s*=%s*(%-?%d+)') or "")
+    local types_blob = string.match(block, '%["spawns"%]%s*=%s*(%b{})')
+    local points_blob = string.match(block, '%["spawn_points"%]%s*=%s*(%b{})')
+    if types_blob and points_blob then
+        local types, pts = {}, {}
+        for t in string.gmatch(types_blob, '"([^"]*)"') do types[#types + 1] = t end
+        for x, y in string.gmatch(points_blob, "Point%s*%(%s*(%-?%d+)%s*,%s*(%-?%d+)%s*%)") do
+            pts[#pts + 1] = {tonumber(x), tonumber(y)}
+        end
+        local ids = itbx_int_list(string.match(block, '%["spawn_ids"%]%s*=%s*(%b{})'))
+        out.spawns = {}
+        for i = 1, math.max(#types, #pts) do
+            out.spawns[i] = {
+                type = types[i] or "",
+                uid = ids[i] or -1,
+                x = pts[i] and pts[i][1] or -1,
+                y = pts[i] and pts[i][2] or -1,
+            }
+        end
+    end
+    local bp = string.match(block, '%["blocked_points"%]%s*=%s*(%b{})')
+    if bp then
+        local bt = itbx_int_list(string.match(block, '%["blocked_type"%]%s*=%s*(%b{})'))
+        out.spawn_blocks = {}
+        local i = 0
+        for x, y in string.gmatch(bp, "Point%s*%(%s*(%-?%d+)%s*,%s*(%-?%d+)%s*%)") do
+            i = i + 1
+            out.spawn_blocks[i] = {tonumber(x), tonumber(y), bt[i] or -1}
+        end
+    end
+    for pb in string.gmatch(block, '%["pawn%d+"%]%s*=%s*(%b{})') do
+        local id = tonumber(string.match(pb, '%["id"%]%s*=%s*(%-?%d+)') or "")
+        if id then
+            local rec = {id = id}
+            rec.type = string.match(pb, '%["type"%]%s*=%s*"([^"]*)"')
+            rec.mutation = tonumber(string.match(pb, '%["iMutation"%]%s*=%s*(%-?%d+)') or "")
+            rec.queued_skill = tonumber(string.match(pb, '%["iQueuedSkill"%]%s*=%s*(%-?%d+)') or "")
+            rec.queued_shot = itbx_save_point(pb, "piQueuedShot")
+            rec.queued_origin = itbx_save_point(pb, "piOrigin")
+            rec.queued_target = itbx_save_point(pb, "piTarget")
+            rec.weapons = {}
+            for slot_index, slot in ipairs({"primary", "secondary"}) do
+                local base = string.match(pb, '%["' .. slot .. '"%]%s*=%s*"([^"]*)"')
+                if base and base ~= "" then
+                    rec.weapons[#rec.weapons + 1] = {
+                        slot = slot_index - 1,
+                        base = base,
+                        power = itbx_int_list(string.match(pb, '%["' .. slot .. '_power"%]%s*=%s*(%b{})')),
+                        mod1 = itbx_int_list(string.match(pb, '%["' .. slot .. '_mod1"%]%s*=%s*(%b{})')),
+                        mod2 = itbx_int_list(string.match(pb, '%["' .. slot .. '_mod2"%]%s*=%s*(%b{})')),
+                        uses = tonumber(string.match(pb, '%["' .. slot .. '_uses"%]%s*=%s*(%-?%d+)') or ""),
+                        damaged = string.match(pb, '%["' .. slot .. '_damaged"%]%s*=%s*(%a+)') == "true",
+                    }
+                end
+            end
+            local pilot = string.match(pb, '%["pilot"%]%s*=%s*(%b{})')
+            if pilot then
+                rec.pilot = {
+                    id = string.match(pilot, '%["id"%]%s*=%s*"([^"]*)"'),
+                    level = tonumber(string.match(pilot, '%["level"%]%s*=%s*(%-?%d+)') or ""),
+                    xp = tonumber(string.match(pilot, '%["exp"%]%s*=%s*(%-?%d+)') or ""),
+                    skill1 = tonumber(string.match(pilot, '%["skill1"%]%s*=%s*(%-?%d+)') or ""),
+                    skill2 = tonumber(string.match(pilot, '%["skill2"%]%s*=%s*(%-?%d+)') or ""),
+                }
+            end
+            out.pawns[id] = rec
+        end
+    end
+    return out
+end
+
+---------------------------------------------------------------- weapons
+local function itbx_all_positive(list)
+    if type(list) ~= "table" or #list == 0 then return false end
+    for _, v in ipairs(list) do
+        if (tonumber(v) or 0) <= 0 then return false end
+    end
+    return true
+end
+
+-- The weapon table actually fired: base + _A / _B / _AB when every power
+-- point of that upgrade is filled (the same rule as the old save overlay).
+function ITBX.exact_weapon_id(w)
+    local base = w.base
+    local a = itbx_all_positive(w.mod1)
+    local b = itbx_all_positive(w.mod2)
+    local candidates = {}
+    if a and b then candidates[#candidates + 1] = base .. "_AB" end
+    if a then candidates[#candidates + 1] = base .. "_A" end
+    if b then candidates[#candidates + 1] = base .. "_B" end
+    for _, c in ipairs(candidates) do
+        if rawget(_G, c) ~= nil then return c end
+    end
+    return base
+end
+
+-- Per-slot weapon facts. `uses` is the live count of a limited weapon
+-- derived from Pawn:GetShotsRemaining() (sum over non-Move skills: uses for
+-- limited ones, +1 for each unlimited one); `uses_saved` is the save's
+-- value at the last turn boundary. Returns the slots and the saved total
+-- of limited uses.
+function ITBX.weapon_slots(save_weapons, shots_remaining, unlimited_known)
+    local slots = {}
+    local limited_total_saved = 0
+    local unlimited_all, unlimited_active = 0, 0
+    local limited_slots = {}
+    for _, w in ipairs(save_weapons or {}) do
+        local id = ITBX.exact_weapon_id(w)
+        local def = rawget(_G, id) or rawget(_G, w.base)
+        local limited = 0
+        local passive = false
+        local power_cost = 0
+        if type(def) == "table" then
+            limited = tonumber(def.Limited) or 0
+            passive = type(def.Passive) == "string" and def.Passive ~= ""
+            power_cost = tonumber(def.PowerCost) or 0
+        end
+        -- Reactor cores in the weapon's own power slots (save *_power).
+        local cores = 0
+        for _, v in ipairs(w.power or {}) do
+            if (tonumber(v) or 0) > 0 then cores = cores + 1 end
+        end
+        local s = {
+            slot = w.slot, base = w.base, id = id, power = w.power,
+            mod1 = w.mod1, mod2 = w.mod2, limited = limited, passive = passive,
+            uses_saved = w.uses, damaged = w.damaged,
+            power_cost = power_cost, powered = cores >= power_cost,
+        }
+        if limited > 0 then
+            limited_slots[#limited_slots + 1] = s
+            limited_total_saved = limited_total_saved + (w.uses or limited)
+            s.uses = w.uses
+        else
+            unlimited_all = unlimited_all + 1
+            if not passive then unlimited_active = unlimited_active + 1 end
+        end
+        slots[#slots + 1] = s
+    end
+    if type(shots_remaining) == "number" and #limited_slots > 0 then
+        -- How many unlimited skills GetShotsRemaining counts: calibrated
+        -- (see ITBX.unit_ext) when known; otherwise passive weapons may or
+        -- may not be skills, so keep the readings that land in
+        -- [0, saved uses] and give up if they disagree.
+        local candidates = {}
+        if type(unlimited_known) == "number" then
+            candidates[1] = {"calibrated", shots_remaining - unlimited_known}
+        else
+            for _, basis in ipairs({{"all", unlimited_all}, {"non_passive", unlimited_active}}) do
+                local live = shots_remaining - basis[2]
+                if live >= 0 and live <= limited_total_saved then
+                    candidates[#candidates + 1] = {basis[1], live}
+                end
+            end
+        end
+        if #candidates >= 1 and (#candidates == 1 or candidates[1][2] == candidates[2][2]) then
+            local live = math.max(0, candidates[1][2])
+            if #limited_slots == 1 then
+                limited_slots[1].uses = live
+                limited_slots[1].uses_basis = candidates[1][1]
+            elseif live == limited_total_saved then
+                for _, s in ipairs(limited_slots) do s.uses_basis = candidates[1][1] end
+            else
+                for _, s in ipairs(limited_slots) do s.uses_ambiguous = true end
+            end
+        else
+            for _, s in ipairs(limited_slots) do s.uses_ambiguous = true end
+        end
+    end
+    return slots, limited_total_saved
+end
+
+-- Per-mission uid -> number of unlimited skills GetShotsRemaining counts.
+function ITBX.uses_calibration()
+    local c = _ITB_BRIDGE_USES_CALIB
+    if c == nil or not rawequal(c.mission, _ITB_CURRENT_MISSION) then
+        c = {mission = _ITB_CURRENT_MISSION, by_uid = {}}
+        _ITB_BRIDGE_USES_CALIB = c
+    end
+    return c.by_uid
+end
+
+---------------------------------------------------------------- units
+-- Static Lua traits of a pawn type (read through the class chain, as the
+-- native LuaData getters do).
+function ITBX.traits(def)
+    if type(def) ~= "table" then return nil end
+    local function b(v) return v == true end
+    local t = {
+        minor = b(def.Minor), explodes = b(def.Explodes),
+        ignore_smoke = b(def.IgnoreSmoke), ignore_fire = b(def.IgnoreFire),
+        burns = b(def.Burns), corpse = b(def.Corpse), armor = b(def.Armor),
+        massive = b(def.Massive), flying = b(def.Flying), jumper = b(def.Jumper),
+        teleporter = b(def.Teleporter), burrows = b(def.Burrows),
+        neutral = b(def.Neutral), pushable = def.Pushable ~= false,
+        ignore_flip = b(def.IgnoreFlip), non_grid = b(def.NonGrid),
+        spawn_limit = def.SpawnLimit ~= false,
+    }
+    if type(def.Leader) == "number" then t.leader = def.Leader end
+    if type(def.DefaultFaction) == "number" then t.faction = def.DefaultFaction end
+    if type(def.Health) == "number" then t.health = def.Health end
+    if type(def.MoveSpeed) == "number" then t.move_speed = def.MoveSpeed end
+    return t
+end
+
+-- Adds the extension fields to each main unit entry; runs before the old
+-- attack_order pass so scenario-queued shots are part of it.
+function ITBX.after_units(state, save_data)
+    local save = ITBX.best_save(save_data and save_data.raw_content, state.units)
+    ITBX._save = save
+    if save.file then state.save_source = save.file end
+    local scenario = ITBX.active_scenario()
+    for _, u in ipairs(state.units or {}) do
+        if not u.is_extra_tile then
+            ITBX.try("unit_ext", ITBX.unit_ext, u, save, scenario)
+            ITBX.try("unit_moved", ITBX.unit_moved, u)
+        end
+    end
+end
+
+-- saveData.lua and undoSave.lua can hold different moments (and an old
+-- run's mission under the same key): keep the active region whose pawns
+-- match the live board best, then the later turn; undoSave on a tie.
+function ITBX.best_save(save_data_content, units)
+    local live = {}
+    for _, u in ipairs(units or {}) do live[u.uid] = u.type end
+    local key = ITBX.mission_key(_ITB_CURRENT_MISSION)
+    local best, best_rank = nil, nil
+    local candidates = {{"saveData.lua", save_data_content}}
+    local f = io.open(SAVE_ROOT .. "/profile_Alpha/undoSave.lua", "r")
+    if f then
+        candidates[2] = {"undoSave.lua", f:read("*a")}
+        f:close()
+    end
+    for i, c in ipairs(candidates) do
+        local s = ITBX.parse_save(c[2])
+        s.file = c[1]
+        local mission_ok = key == nil or s.mission == nil or s.mission == ("Mission" .. tostring(key))
+        local matches = 0
+        for id, rec in pairs(s.pawns) do
+            if live[id] ~= nil and live[id] == rec.type then matches = matches + 1 end
+        end
+        local rank = {mission_ok and 1 or 0, matches, s.turn or -1, i}
+        local better = best_rank == nil
+        if not better then
+            for k = 1, 4 do
+                if rank[k] ~= best_rank[k] then
+                    better = rank[k] > best_rank[k]
+                    break
+                end
+            end
+        end
+        if better then best, best_rank = s, rank end
+    end
+    return best or {pawns = {}}
+end
+
+-- Player-team positions when the player's turn began (Mission:BaseNextTurn
+-- with TEAM_PLAYER), for the `moved` flag.
+function ITBX.record_turn_start(mission)
+    local turn = itbx_turn_team()
+    local pos = {}
+    for _, id in ipairs(extract_table(Board:GetPawns(TEAM_PLAYER))) do
+        local p = Board:GetPawn(id)
+        if p then
+            local sp = p:GetSpace()
+            pos[id] = {sp.x, sp.y}
+        end
+    end
+    _ITB_BRIDGE_TURN_START = {mission = mission, turn = turn, pos = pos}
+end
+
+-- `moved`: the unit left its turn-start tile this turn, or can still undo
+-- a move (Pawn:IsUndoPossible). `moved_source` says what was known.
+function ITBX.unit_moved(u)
+    if u.team ~= 1 then return end
+    local p = Board:GetPawn(u.uid)
+    if p == nil then return end
+    local moved = false
+    local source = "undo"
+    local ok_u, undo = pcall(function() return p:IsUndoPossible() end)
+    if ok_u and undo == true then moved = true end
+    local ts = _ITB_BRIDGE_TURN_START
+    local turn, team = itbx_turn_team()
+    if ts and rawequal(ts.mission, _ITB_CURRENT_MISSION) and ts.turn == turn then
+        source = "turn_start"
+        local start = ts.pos[u.uid]
+        if start and (start[1] ~= u.x or start[2] ~= u.y) then moved = true end
+    end
+    if team ~= TEAM_PLAYER then moved = false end
+    u.moved = moved
+    u.moved_source = source
+end
+
+function ITBX.unit_ext(u, save, scenario)
+    local def = rawget(_G, u.type) or _G[u.type]
+    u.traits = ITBX.traits(def)
+    if type(def) == "table" and type(def.ExtraSpaces) == "table" and #def.ExtraSpaces > 0 then
+        u.extra_spaces = ITBX.point_pairs(def.ExtraSpaces)
+    end
+    local p = Board:GetPawn(u.uid)
+    local shots = nil
+    if p then
+        local ok_s, s = pcall(function() return p:GetShotsRemaining() end)
+        if ok_s and type(s) == "number" then
+            shots = s
+            u.shots_remaining = s
+        end
+    end
+    local rec = save and save.pawns and save.pawns[u.uid]
+    if rec and (rec.type == nil or rec.type == u.type) then
+        if rec.mutation then u.mutation = rec.mutation end
+        if rec.pilot and rec.pilot.id then u.pilot = rec.pilot end
+        if #rec.weapons > 0 then
+            -- Calibrate GetShotsRemaining: while the pawn has not acted in
+            -- the turn the save was written, its live uses equal the saved
+            -- ones, so the rest of the count is its unlimited skills.
+            local calib = ITBX.uses_calibration()
+            local slots, saved_total = ITBX.weapon_slots(rec.weapons, shots, calib[u.uid])
+            local turn, team = itbx_turn_team()
+            if shots and u.active == true and save.turn == turn and team == TEAM_PLAYER then
+                calib[u.uid] = shots - saved_total
+                slots = ITBX.weapon_slots(rec.weapons, shots, calib[u.uid])
+            end
+            u.weapon_slots = slots
+            u.weapons_exact = {}
+            for _, s in ipairs(u.weapon_slots) do
+                u.weapons_exact[#u.weapons_exact + 1] = s.id
+            end
+        end
+        -- Queued shots of non-enemy units (trains, satellite rockets, bots
+        -- on the player team): the old fields cover team 6 only.
+        if u.team ~= 6 and rec.queued_skill and rec.queued_skill >= 0 then
+            local target = rec.queued_shot
+            if not target or target[1] < 0 then target = rec.queued_target end
+            u.queued_any = {
+                skill = rec.queued_skill,
+                target = target,
+                origin = rec.queued_origin,
+                source = "save",
+            }
+        end
+    end
+    -- Scenario-queued attacks replace the (stale) save for this turn.
+    if scenario and scenario.queued then
+        local q = scenario.queued[u.uid]
+        if q == false then
+            u.has_queued_attack = false
+            u.queued_target = nil
+            u.queued_target_raw = nil
+            u.queued_any = nil
+            u.queued_source = "scenario"
+        elseif type(q) == "table" then
+            if u.team == 6 then
+                u.has_queued_attack = true
+                u.queued_target = {q.target[1], q.target[2]}
+                u.queued_origin = {q.origin[1], q.origin[2]}
+                u.queued_target_raw = nil
+                u.queued_target_normalized = nil
+            else
+                u.queued_any = {skill = q.slot, target = q.target, origin = q.origin, source = "scenario"}
+            end
+            u.queued_source = "scenario"
+        end
+    end
+end
+
+---------------------------------------------------------------- tiles
+function ITBX.tiles_ext(state)
+    local ice_id = _G.TERRAIN_ICE or 5
+    local building_id = _G.TERRAIN_BUILDING or 1
+    for _, tile in ipairs(state.tiles or {}) do
+        local pt = Point(tile.x, tile.y)
+        local ok_c, custom = pcall(function() return Board:GetCustomTile(pt) end)
+        if ok_c then
+            if type(custom) == "string" and custom ~= "" then tile.custom_tile = custom end
+        else
+            ITBX.note_error("tile.GetCustomTile", custom)
+        end
+        local ok_d, dangerous = pcall(function() return Board:IsDangerous(pt) end)
+        if ok_d then
+            if dangerous == true then tile.dangerous = true end
+        else
+            ITBX.note_error("tile.IsDangerous", dangerous)
+        end
+        if tile.item then
+            local ok_i, armed = pcall(function() return Board:IsDangerousItem(pt) end)
+            if ok_i then tile.item_armed = armed == true
+            else ITBX.note_error("tile.IsDangerousItem", armed) end
+        end
+        if tile.terrain_id == ice_id then
+            local ok_h, hp = pcall(function() return Board:GetHealth(pt) end)
+            if ok_h and type(hp) == "number" then tile.ice_hp = hp
+            else ITBX.note_error("tile.ice_hp", hp) end
+        elseif tile.terrain_id == building_id then
+            local ok_p, powered = pcall(function() return Board:IsPowered(pt) end)
+            if ok_p and type(powered) == "boolean" then tile.populated = powered
+            else ITBX.note_error("tile.IsPowered", powered) end
+            local ok_u, unique = pcall(function() return Board:IsUniqueBuilding(pt) end)
+            if ok_u and unique == true then tile.unique_building_live = true end
+        end
+    end
+end
+
+function ITBX.zones()
+    local out = {}
+    for _, z in ipairs(ITBX.ZONES) do
+        local ok, list = pcall(function() return Board:GetZone(z) end)
+        if ok and list ~= nil then
+            local pts = ITBX.point_pairs(list)
+            if #pts > 0 then out[z] = pts end
+        elseif not ok then
+            ITBX.note_error("zones." .. z, list)
+        end
+    end
+    return out
+end
+
+-- Board::GetDropZone (the tiles the squad may deploy on): zone
+-- "deployment" filtered to available tiles (or a mech's); if that leaves
+-- fewer than 3, or the map has no such zone, the default columns x = 1..3
+-- (rows 1..6), then whole columns in the order 1,2,3,4,0,5,6,7 until more
+-- than 3. Board::IsAvailable is not bound to Lua: approximated as no item,
+-- no pod, not blocked for a ground pawn. (Pilot Deploy_Anywhere ignored.)
+function ITBX.drop_zone()
+    local ground = _G.PATH_GROUND or 0
+    local function usable(x, y)
+        local pt = Point(x, y)
+        if Board:IsPawnSpace(pt) then
+            local p = Board:GetPawn(pt)
+            return p ~= nil and p:IsMech()
+        end
+        return not Board:IsItem(pt) and not Board:IsPod(pt) and not Board:IsBlocked(pt, ground)
+    end
+    local out, seen = {}, {}
+    local function add(x, y)
+        local k = x .. "," .. y
+        if not seen[k] then
+            seen[k] = true
+            out[#out + 1] = {x, y}
+        end
+    end
+    local zone = ITBX.point_pairs(Board:GetZone("deployment"))
+    local source = "zone"
+    for _, p in ipairs(zone) do
+        if usable(p[1], p[2]) then add(p[1], p[2]) end
+    end
+    if #zone == 0 then
+        source = "default"
+        for x = 1, 3 do
+            for y = 1, 6 do
+                if usable(x, y) then add(x, y) end
+            end
+        end
+    end
+    if #out <= 2 then
+        source = source .. "+columns"
+        for _, x in ipairs({1, 2, 3, 4, 0, 5, 6, 7}) do
+            for y = 0, 7 do
+                if usable(x, y) then add(x, y) end
+            end
+            if #out > 3 then break end
+        end
+    end
+    return out, source
+end
+
+---------------------------------------------------------------- spawns
+-- Queued spawns in queue order. Source: the scenario ledger when a
+-- scenario edited this turn's queue, else the save (turn-boundary data).
+function ITBX.spawn_queue(state, mission, save, scenario)
+    local queue, source = nil, nil
+    if scenario and scenario.spawn_queue then
+        queue, source = scenario.spawn_queue, "scenario"
+    elseif save and save.spawns then
+        local key = ITBX.mission_key(mission)
+        if key ~= nil and save.mission ~= nil and save.mission ~= ("Mission" .. tostring(key)) then
+            state.spawn_queue_mismatch = "save region " .. tostring(save.mission)
+                .. " is not Mission" .. tostring(key)
+            return
+        end
+        queue, source = save.spawns, "save"
+    end
+    if not queue then return end
+    state.spawn_queue = queue
+    state.spawn_queue_source = source
+    if save and save.turn then state.spawn_queue_save_turn = save.turn end
+    -- Do the queue points equal the live markers (as multisets)?
+    local markers = {}
+    for _, p in ipairs(state.spawning_tiles or {}) do
+        local k = p[1] .. "," .. p[2]
+        markers[k] = (markers[k] or 0) + 1
+    end
+    local match = true
+    for _, s in ipairs(queue) do
+        local k = tostring(s.x) .. "," .. tostring(s.y)
+        if (markers[k] or 0) <= 0 then
+            match = false
+        else
+            markers[k] = markers[k] - 1
+        end
+    end
+    for _, n in pairs(markers) do
+        if n ~= 0 then match = false end
+    end
+    state.spawn_queue_matches_markers = match
+end
+
+---------------------------------------------------------------- ledgers
+-- Per-mission logs: env steps (always) and, with the debug flag, a
+-- per-frame record of HP/position/selection/busy changes during play.
+function ITBX.log_for(mission)
+    local log = _ITB_BRIDGE_PHASE_LOG
+    if log == nil or not rawequal(log.mission, mission) then
+        log = {mission = mission, entries = {}, env = {}, track = {}, seq = 0,
+               frame = 0, initialized = false}
+        _ITB_BRIDGE_PHASE_LOG = log
+    end
+    return log
+end
+
+function ITBX.append(log, list, max, entry)
+    log.seq = log.seq + 1
+    entry.seq = log.seq
+    entry.frame = log.frame
+    entry.clock = os.clock()
+    list[#list + 1] = entry
+    if #list > max then
+        local keep = {}
+        for i = #list - math.floor(max / 2) + 1, #list do keep[#keep + 1] = list[i] end
+        for i = #list, 1, -1 do list[i] = nil end
+        for i, e in ipairs(keep) do list[i] = e end
+    end
+end
+
+-- Mission:ApplyEnvironmentEffect wrap: one entry per environment step
+-- (stage 7 spec 4.4: the realised strike order, e.g. Lightning).
+function ITBX.log_env_step(mission, returned)
+    local log = ITBX.log_for(mission)
+    local le = mission.LiveEnvironment
+    local turn, team = itbx_turn_team()
+    local ctx = ITBX.new_dump_ctx()
+    local entry = {kind = "env_step", turn = turn, team = team, returned = returned == true}
+    if type(le) == "table" then
+        entry.current_attack = ITBX.dump_value(rawget(le, "CurrentAttack"), 0, ctx)
+        entry.remaining = ITBX.dump_value(rawget(le, "Locations"), 0, ctx)
+        if type(le.Mode) == "number" then entry.mode = le.Mode end
+        if type(le.Phase) == "number" then entry.phase = le.Phase end
+        if type(le.Index) == "number" then entry.index = le.Index end
+    end
+    ITBX.append(log, log.env, ITBX.ENV_LOG_MAX, entry)
+    if ITBX.debug_enabled() then
+        local copy = {}
+        for k, v in pairs(entry) do copy[k] = v end
+        ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX, copy)
+    end
+end
+
+function ITBX.poll_frame(mission)
+    local log = ITBX.log_for(mission)
+    log.frame = log.frame + 1
+    local turn, team = itbx_turn_team()
+    local ok_b, busy = pcall(function() return Board:GetBusyState() end)
+    if ok_b and busy ~= log.busy then
+        if log.initialized then
+            ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                {kind = "busy", turn = turn, team = team, from = log.busy, to = busy})
+        end
+        log.busy = busy
+    end
+    local ids = extract_table(Board:GetPawns(TEAM_ANY))
+    local seen = {}
+    for _, id in ipairs(ids) do
+        local p = Board:GetPawn(id)
+        if p then
+            seen[id] = true
+            local hp = p:GetHealth()
+            local sp = p:GetSpace()
+            local sel = false
+            local ok_s, s = pcall(function() return p:IsSelected() end)
+            if ok_s then sel = s == true end
+            local prev = log.track[id]
+            if prev == nil then
+                if log.initialized then
+                    ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                        {kind = "appeared", turn = turn, team = team, uid = id,
+                         type = p:GetType(), x = sp.x, y = sp.y, hp = hp})
+                end
+                log.track[id] = {hp = hp, x = sp.x, y = sp.y, sel = sel}
+            else
+                if prev.hp ~= hp then
+                    ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                        {kind = "hp", turn = turn, team = team, uid = id,
+                         from = prev.hp, to = hp, x = sp.x, y = sp.y})
+                    prev.hp = hp
+                end
+                if prev.x ~= sp.x or prev.y ~= sp.y then
+                    ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                        {kind = "pos", turn = turn, team = team, uid = id,
+                         from = {prev.x, prev.y}, to = {sp.x, sp.y}})
+                    prev.x, prev.y = sp.x, sp.y
+                end
+                if sel and not prev.sel then
+                    ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                        {kind = "selected", turn = turn, team = team, uid = id,
+                         type = p:GetType(), pawn_team = p:GetTeam()})
+                end
+                prev.sel = sel
+            end
+        end
+    end
+    for id, _ in pairs(log.track) do
+        if not seen[id] then
+            ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                {kind = "gone", turn = turn, team = team, uid = id})
+            log.track[id] = nil
+        end
+    end
+    -- Terrain and structure HP (building damage shows when grid is lost).
+    log.tiles = log.tiles or {}
+    for x = 0, 7 do
+        for y = 0, 7 do
+            local pt = Point(x, y)
+            local terrain = Board:GetTerrain(pt)
+            local hp = Board:GetHealth(pt)
+            local key = x * 8 + y
+            local prev = log.tiles[key]
+            if prev and (prev[1] ~= terrain or prev[2] ~= hp) and log.initialized then
+                ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX,
+                    {kind = "tile", turn = turn, team = team, x = x, y = y,
+                     from = {prev[1], prev[2]}, to = {terrain, hp}})
+            end
+            log.tiles[key] = {terrain, hp}
+        end
+    end
+    log.initialized = true
+end
+
+function ITBX.mark(mission, kind, extra)
+    local log = ITBX.log_for(mission)
+    local turn, team = itbx_turn_team()
+    local entry = {kind = kind, turn = turn, team = team}
+    for k, v in pairs(extra or {}) do entry[k] = v end
+    ITBX.append(log, log.entries, ITBX.PHASE_LOG_MAX, entry)
+end
+
+---------------------------------------------------------------- scenario
+-- The ledger a SCENARIO command leaves for the rest of its turn: the
+-- attacks it queued (the save would still show the old ones) and the spawn
+-- queue it built.
+function ITBX.active_scenario()
+    local st = _ITB_BRIDGE_SCENARIO
+    if st == nil or not rawequal(st.mission, _ITB_CURRENT_MISSION) then return nil end
+    local turn, team = itbx_turn_team()
+    if turn ~= st.turn or team ~= TEAM_PLAYER then return nil end
+    return st
+end
+
+---------------------------------------------------------------- finish
+-- Everything that needs the finished unit list; runs just before the
+-- state is written.
+function ITBX.finish(state, mission)
+    local scenario = ITBX.active_scenario()
+    local debug = ITBX.debug_enabled()
+    state.bridge_ext_version = ITBX.VERSION
+    state.bridge_debug = debug
+    if mission ~= nil then
+        state.mission_state = ITBX.try("mission_state", ITBX.mission_state, mission)
+        -- The LiveEnvironment's class (Env_Null for missions without one),
+        -- beside the old env_type heuristic.
+        if state.mission_state and state.mission_state.env_class_chain then
+            state.env_class = state.mission_state.env_class_chain[1]
+        end
+        ITBX.try("tiles_ext", ITBX.tiles_ext, state)
+        ITBX.try("drop_zone", function()
+            local zone, source = ITBX.drop_zone()
+            state.drop_zone = zone
+            state.drop_zone_source = source
+            local turn = itbx_turn_team()
+            if turn == 0 then
+                state.deploying = true
+                -- The old field, when the old capture found nothing: the
+                -- free tiles of the drop zone.
+                if state.deployment_zone == nil or #state.deployment_zone == 0 then
+                    local free = {}
+                    for _, p in ipairs(zone) do
+                        if not Board:IsPawnSpace(Point(p[1], p[2])) then free[#free + 1] = p end
+                    end
+                    if #free > 0 then state.deployment_zone = free end
+                end
+            end
+        end)
+        state.zones = ITBX.try("zones", ITBX.zones)
+        ITBX.try("spawn_queue", ITBX.spawn_queue, state, mission, ITBX._save, scenario)
+        if ITBX._save and ITBX._save.spawn_blocks then
+            state.spawn_blocks = ITBX._save.spawn_blocks
+        end
+        ITBX.try("objectives_ext", ITBX.objectives_ext, state, mission)
+        local log = _ITB_BRIDGE_PHASE_LOG
+        if log and rawequal(log.mission, mission) then
+            state.env_strike_log = log.env
+            if debug then
+                state.phase_log = {frame = log.frame, entries = log.entries}
+            end
+        end
+        if scenario then
+            state.scenario = {
+                name = scenario.name, turn = scenario.turn,
+                errors = scenario.errors, created = scenario.created,
+            }
+        end
+    end
+    -- Every unit with a queued shot, any team, in pawn-list order (the
+    -- native shooter order, stage 7 spec 1.6; trains and rockets come after
+    -- every Vek because AddPawn groups them last).
+    local order = {}
+    for _, u in ipairs(state.units or {}) do
+        if not u.is_extra_tile then
+            local queued = (u.team == 6 and u.has_queued_attack)
+                or (u.queued_any ~= nil) or u.queued_launch == true
+            if queued then order[#order + 1] = u.uid end
+        end
+    end
+    state.attack_order_all = order
+    state.bridge_errors = ITBX.errs or {}
+end
+
+function ITBX.objectives_ext(state, mission)
+    if type(mission.PowerStart) == "number" then
+        state.mission_power_start = mission.PowerStart
+    end
+    if type(mission.BonusObjs) == "table" then
+        local ids = {}
+        local block = false
+        for _, b in ipairs(mission.BonusObjs) do
+            if type(b) == "number" then
+                ids[#ids + 1] = b
+                if b == 5 then block = true end
+            end
+        end
+        if state.bonus_objective_ids == nil then state.bonus_objective_ids = ids end
+        -- Mission.BlockedSpawns only counts while BONUS_BLOCK is active
+        -- (Mission:BaseUpdate).
+        if block and type(mission.BlockedSpawns) == "number" then
+            state.mission_blocked_spawns = mission.BlockedSpawns
+        end
+    end
+    if mission.ID == "Mission_Missiles" then
+        state.mission_missiles = {
+            shots_used = mission.ShotsUsed,
+            disposal_id = mission.DisposalId,
+        }
+    end
+end
+
+-- out_path / out_tmp: optional destination (default STATE_FILE); the
+-- debug captures and SNAPSHOT write the same payload elsewhere.
+local function dump_state(out_path, out_tmp)
     if not Board then return end
 
     local state = {}
+    ITBX.begin_dump()
 
     local mission_id = mission_bridge_id(_ITB_CURRENT_MISSION)
 
@@ -1512,6 +2716,10 @@ local function dump_state()
             end
         end
     end
+
+    -- Bridge extension: per-unit traits, weapons, pilots, non-enemy queued
+    -- shots and scenario-queued attacks (before attack_order reads them).
+    ITBX.try("after_units", ITBX.after_units, state, save_data)
 
     -- Attack order: enemies with queued attacks in live unit-list order.
     -- Do not sort by UID; Mission_Factory captures showed Pinnacle bots can
@@ -2170,8 +3378,13 @@ local function dump_state()
         state.island_map_debug = "pcall error: " .. tostring(err_island_map)
     end
 
-    write_atomic(STATE_FILE, STATE_TMP, json_encode(state))
+    -- Bridge extension: mission instance, zones, spawn queue, ledgers.
+    ITBX.try("finish", ITBX.finish, state, _ITB_CURRENT_MISSION)
+    state.bridge_errors = ITBX.errs or {}
+
+    write_atomic(out_path or STATE_FILE, out_tmp or STATE_TMP, json_encode(state))
 end
+ITBX._dump_state = dump_state  -- for the offline harness
 
 --------------------------------------------------------------------
 -- Bridge configuration
@@ -3184,6 +4397,454 @@ end
 --------------------------------------------------------------------
 -- Command executor
 --------------------------------------------------------------------
+--------------------------------------------------------------------
+-- Bridge extension: SCENARIO (debug only)
+--------------------------------------------------------------------
+-- Builds a test board during the player's turn with the game's own Lua
+-- bindings; the state dump that follows is the engine's input. Spec (JSON,
+-- bridge coordinates, x/y in 0..7):
+--   name           label for logs and snapshot files
+--   clear_pawns    "all" (default: every non-mech pawn), "enemies" (team 6
+--                  only) or false
+--   remove         [uid, ...] extra pawns to remove (mechs refused)
+--   clear_spawns   true: drop every queued spawn (ClearSpace on its tile,
+--                  which also resets that tile to ground)
+--   clear_tiles    true: every tile not listed in `tiles` becomes plain
+--                  ground (no fire, smoke, acid or crack; items stay)
+--   tiles          [{x, y, terrain, hp, max_hp, populated, fire, smoke,
+--                  acid, cracked, frozen, shield, item, custom}]
+--                  terrain: ground|building|rubble|water|mountain|ice|
+--                  forest|sand|chasm|lava or a terrain id
+--   pawns          [{uid | type, team, x, y, hp, move, fire, acid, shield,
+--                  frozen, boosted, infected, powered, neutral, active,
+--                  mutation, queue: {x, y, slot}, clear_queue}]
+--                  `uid` moves an existing pawn (mechs included); `type`
+--                  creates one (PAWN_FACTORY:CreatePawn + Board:AddPawn) in
+--                  list order, which is the order Vek attack in. `queue`
+--                  fires weapon `slot` (default 1, the first weapon) at the
+--                  tile with Pawn:FireWeapon, the call the AI makes: the
+--                  attack is queued and its instant part, if any, applied.
+--   spawns         [{type, x, y}] queued emerging Vek (Board:SpawnPawn)
+-- Fire on a pawn is set with a 0-damage SpaceDamage (iFire); if its tile
+-- must not burn, the pawn steps to a free tile while the tile fire is put
+-- out, then steps back.
+
+local function itbx_terrain_id(name)
+    if type(name) == "number" then return name end
+    local map = {
+        ground = _G.TERRAIN_ROAD or 0, road = _G.TERRAIN_ROAD or 0,
+        building = _G.TERRAIN_BUILDING or 1, rubble = _G.TERRAIN_RUBBLE or 2,
+        water = _G.TERRAIN_WATER or 3, mountain = _G.TERRAIN_MOUNTAIN or 4,
+        ice = _G.TERRAIN_ICE or 5, forest = _G.TERRAIN_FOREST or 6,
+        sand = _G.TERRAIN_SAND or 7, chasm = _G.TERRAIN_HOLE or 9,
+        hole = _G.TERRAIN_HOLE or 9,
+    }
+    return map[name]
+end
+
+local function itbx_space_fire(pt, create)
+    local sd = SpaceDamage(pt, 0)
+    sd.iFire = create and (_G.EFFECT_CREATE or 1) or (_G.EFFECT_REMOVE or 2)
+    Board:DamageSpace(sd)
+end
+
+function ITBX.scenario_tile(t)
+    local pt = Point(t.x, t.y)
+    if t.terrain ~= nil then
+        if t.terrain == "lava" then
+            Board:SetLava(pt, true)
+        else
+            local id = itbx_terrain_id(t.terrain)
+            if id == nil then error("unknown terrain " .. tostring(t.terrain)) end
+            Board:SetTerrain(pt, id)
+        end
+    end
+    if type(t.hp) == "number" then
+        local max = t.max_hp
+        if type(max) ~= "number" then
+            local terr = Board:GetTerrain(pt)
+            if terr == (_G.TERRAIN_MOUNTAIN or 4) or terr == (_G.TERRAIN_ICE or 5) then
+                max = 2
+            else
+                max = math.max(t.hp, 1)
+            end
+        end
+        Board:SetHealth(pt, t.hp, max)
+    end
+    if type(t.populated) == "boolean" then Board:SetPopulated(t.populated, pt) end
+    if type(t.cracked) == "boolean" then Board:SetCracked(pt, t.cracked) end
+    if type(t.acid) == "boolean" then Board:SetAcid(pt, t.acid) end
+    if type(t.smoke) == "boolean" then Board:SetSmoke(pt, t.smoke, true) end
+    if t.fire == true then
+        Board:SetTerrain(pt, _G.TERRAIN_FIRE or 11)
+    elseif t.fire == false and Board:IsFire(pt) then
+        itbx_space_fire(pt, false)
+    end
+    if type(t.frozen) == "boolean" then Board:SetFrozen(pt, t.frozen) end
+    if t.shield == true then
+        Board:AddShield(pt)
+    elseif t.shield == false then
+        Board:RemoveShield(pt)
+    end
+    if type(t.item) == "string" then Board:SetItem(pt, t.item) end
+    if type(t.custom) == "string" then Board:SetCustomTile(pt, t.custom) end
+end
+
+function ITBX.scenario_reset_tile(pt)
+    Board:SetTerrain(pt, _G.TERRAIN_ROAD or 0)
+    if Board:IsFire(pt) then itbx_space_fire(pt, false) end
+    if Board:IsSmoke(pt) then Board:SetSmoke(pt, false, true) end
+    if Board:IsAcid(pt) then Board:SetAcid(pt, false) end
+    if Board:IsCracked(pt) then Board:SetCracked(pt, false) end
+end
+
+-- A free plain tile to park a pawn on for a moment.
+local function itbx_staging_tile(avoid)
+    for y = 0, 7 do
+        for x = 0, 7 do
+            local pt = Point(x, y)
+            if not (avoid and avoid[x .. "," .. y])
+                    and Board:GetTerrain(pt) == (_G.TERRAIN_ROAD or 0)
+                    and not Board:IsPawnSpace(pt)
+                    and not Board:IsFire(pt) and not Board:IsSpawning(pt)
+                    and not Board:IsItem(pt) and not Board:IsPod(pt)
+                    and not Board:IsAcid(pt) then
+                return pt
+            end
+        end
+    end
+    return nil
+end
+
+-- Statuses other than fire (scenario_apply sets fire first: it needs
+-- waits, and a coroutine cannot yield across pcall).
+function ITBX.scenario_pawn_status(p, ps, report)
+    local where = "pawn " .. tostring(ps.uid or ps.type)
+    local function step(label, fn)
+        local ok, err = pcall(fn)
+        if not ok then
+            report.errors[#report.errors + 1] = where .. " " .. label .. ": " .. ITBX.str(err)
+        end
+    end
+    if type(ps.hp) == "number" then step("hp", function() p:SetHealth(ps.hp) end) end
+    if type(ps.move) == "number" then step("move", function() p:SetMoveSpeed(ps.move) end) end
+    if type(ps.acid) == "boolean" then step("acid", function() p:SetAcid(ps.acid) end) end
+    if ps.injured == true then
+        -- AE Injured: a 0-damage SpaceDamage with iInjure (as weapons set it).
+        step("injured", function()
+            local sd = SpaceDamage(p:GetSpace(), 0)
+            sd.iInjure = _G.EFFECT_CREATE or 1
+            Board:DamageSpace(sd)
+        end)
+    end
+    if type(ps.boosted) == "boolean" then step("boosted", function() p:SetBoosted(ps.boosted) end) end
+    if type(ps.infected) == "boolean" then step("infected", function() p:SetInfected(ps.infected) end) end
+    if type(ps.neutral) == "boolean" then step("neutral", function() p:SetNeutral(ps.neutral) end) end
+    if type(ps.mutation) == "number" then step("mutation", function() p:SetMutation(ps.mutation) end) end
+    if type(ps.shield) == "boolean" then step("shield", function() p:SetShield(ps.shield) end) end
+    if type(ps.frozen) == "boolean" then step("frozen", function() p:SetFrozen(ps.frozen) end) end
+    if type(ps.powered) == "boolean" then step("powered", function() p:SetPowered(ps.powered) end) end
+    if type(ps.active) == "boolean" then step("active", function() p:SetActive(ps.active) end) end
+end
+
+-- Runs inside the command coroutine and waits for an idle board between
+-- stages, so it must be called directly (never under pcall). Every board
+-- call sits in its own pcall'd step. Returns the report, or nil and an
+-- error message when the preconditions fail.
+function ITBX.scenario_apply(spec, wait_idle)
+    if type(spec) ~= "table" then return nil, "scenario must be a JSON object" end
+    local mission = _ITB_CURRENT_MISSION
+    if not Board or mission == nil then return nil, "no active mission" end
+    local turn, team = itbx_turn_team()
+    if team ~= TEAM_PLAYER then
+        return nil, "not the player turn (team " .. tostring(team) .. ")"
+    end
+    local function wait() wait_idle(5) end
+    wait()
+
+    local report = {name = spec.name or "scenario", errors = {}, created = {},
+                    removed = {}, queued = {}}
+    local function step(label, fn)
+        local ok, err = pcall(fn)
+        if not ok then
+            report.errors[#report.errors + 1] = label .. ": " .. ITBX.str(err)
+        end
+        return ok
+    end
+    local st = {mission = mission, turn = turn, name = report.name, queued = {},
+                errors = report.errors, created = report.created, spawn_queue = {}}
+    step("read save", function()
+        local save = ITBX.parse_save(_read_save_data().raw_content)
+        local key = ITBX.mission_key(mission)
+        if save.spawns and (key == nil or save.mission == ("Mission" .. tostring(key))) then
+            for _, s in ipairs(save.spawns) do st.spawn_queue[#st.spawn_queue + 1] = s end
+        end
+    end)
+
+    -- 1. Pawns out.
+    local clear = spec.clear_pawns
+    if clear == nil then clear = "all" end
+    step("clear_pawns", function()
+        if clear == false then return end
+        local ids = extract_table(Board:GetPawns(TEAM_ANY))
+        for _, id in ipairs(ids) do
+            local p = Board:GetPawn(id)
+            if p and not p:IsMech() then
+                local remove = clear == "all" or clear == true
+                    or (clear == "enemies" and p:GetTeam() == TEAM_ENEMY)
+                if remove and step("remove " .. id, function() Board:RemovePawn(p) end) then
+                    report.removed[#report.removed + 1] = id
+                end
+            end
+        end
+    end)
+    for _, id in ipairs(spec.remove or {}) do
+        step("remove " .. tostring(id), function()
+            local p = Board:GetPawn(id)
+            if p == nil then error("no such pawn") end
+            if p:IsMech() then error("refusing to remove a mech") end
+            Board:RemovePawn(p)
+            report.removed[#report.removed + 1] = id
+        end)
+    end
+    wait()
+
+    -- 2. Spawns out.
+    if spec.clear_spawns then
+        local kept = {}
+        step("clear_spawns", function()
+            for y = 0, 7 do
+                for x = 0, 7 do
+                    local pt = Point(x, y)
+                    if Board:IsSpawning(pt) then
+                        if Board:IsPawnSpace(pt) then
+                            report.errors[#report.errors + 1] =
+                                "clear_spawns: (" .. x .. "," .. y .. ") is occupied, kept"
+                            kept[x .. "," .. y] = true
+                        else
+                            step("clear_spawn " .. x .. "," .. y, function() Board:ClearSpace(pt) end)
+                        end
+                    end
+                end
+            end
+        end)
+        local queue = {}
+        for _, s in ipairs(st.spawn_queue) do
+            if kept[tostring(s.x) .. "," .. tostring(s.y)] then queue[#queue + 1] = s end
+        end
+        st.spawn_queue = queue
+        wait()
+    end
+
+    -- 3. Tiles.
+    local listed, tile_fire = {}, {}
+    for _, t in ipairs(spec.tiles or {}) do
+        if type(t.x) == "number" and type(t.y) == "number" then
+            listed[t.x .. "," .. t.y] = true
+            if t.fire == true then tile_fire[t.x .. "," .. t.y] = true end
+        end
+    end
+    if spec.clear_tiles then
+        for y = 0, 7 do
+            for x = 0, 7 do
+                if not listed[x .. "," .. y] then
+                    step("reset_tile " .. x .. "," .. y, function()
+                        ITBX.scenario_reset_tile(Point(x, y))
+                    end)
+                end
+            end
+        end
+    else
+        step("scan fire", function()
+            for y = 0, 7 do
+                for x = 0, 7 do
+                    if not listed[x .. "," .. y] and Board:IsFire(Point(x, y)) then
+                        tile_fire[x .. "," .. y] = true
+                    end
+                end
+            end
+        end)
+    end
+    for _, t in ipairs(spec.tiles or {}) do
+        step("tile " .. tostring(t.x) .. "," .. tostring(t.y), function() ITBX.scenario_tile(t) end)
+    end
+    wait()
+
+    -- 4. Pawns in (new pawns in list order = board-list order).
+    local placed = {}
+    for i, ps in ipairs(spec.pawns or {}) do
+        step("pawn " .. i, function()
+            local pt = nil
+            if type(ps.x) == "number" and type(ps.y) == "number" then pt = Point(ps.x, ps.y) end
+            local p = nil
+            if type(ps.uid) == "number" or type(ps.ref) == "number" then
+                if type(ps.ref) == "number" then
+                    -- An entry earlier in this list (1-based).
+                    p = placed[ps.ref]
+                    if p == nil then error("ref " .. ps.ref .. " is not placed (yet)") end
+                else
+                    p = Board:GetPawn(ps.uid)
+                    if p == nil then error("no pawn " .. ps.uid) end
+                end
+                local sp = p:GetSpace()
+                if ps.readd then
+                    -- Off the board and back: Board::AddPawn appends it to
+                    -- its list group (the order re-added Vek attack in).
+                    if p:IsMech() then error("refusing to re-add a mech") end
+                    local dest = pt or Point(sp.x, sp.y)
+                    Board:RemovePawn(p)
+                    if Board:IsPawnSpace(dest) then error("tile occupied") end
+                    Board:AddPawn(p, dest)
+                elseif pt and (sp.x ~= ps.x or sp.y ~= ps.y) then
+                    if Board:IsPawnSpace(pt) then error("tile occupied") end
+                    p:SetSpace(pt)
+                end
+                if type(ps.uid) == "number" and not p:IsMech() and ps.queue == nil
+                        and ps.clear_queue ~= false then
+                    p:ClearQueued()
+                    st.queued[ps.uid] = false
+                end
+            else
+                if type(ps.type) ~= "string" then error("needs uid or type") end
+                if pt == nil then error("new pawn needs x, y") end
+                if Board:IsPawnSpace(pt) then error("tile occupied") end
+                if type(ps.team) == "number" and ps.team ~= (_G.TEAM_NONE or 2) then
+                    p = PAWN_FACTORY:CreatePawn(ps.type, ps.team)
+                else
+                    p = PAWN_FACTORY:CreatePawn(ps.type)
+                end
+                if p == nil then error("CreatePawn returned nil") end
+                -- Extra weapons (SkillManager::AddWeapon: native slots after
+                -- the type's own; Move is slot 0). New pawns only: a squad
+                -- mech would keep the weapon for the rest of the run.
+                for _, w in ipairs(ps.weapons_add or {}) do p:AddWeapon(w) end
+                Board:AddPawn(p, pt)
+                report.created[#report.created + 1] = {index = i, uid = p:GetId(), type = ps.type}
+            end
+            placed[i] = p
+        end)
+    end
+    wait()
+
+    -- 5. Fire on pawns, then every other status.
+    local unburn = {}
+    for i, ps in ipairs(spec.pawns or {}) do
+        local p = placed[i]
+        if p and ps.fire ~= nil then
+            step("pawn " .. i .. " fire", function()
+                local pos = p:GetSpace()
+                itbx_space_fire(pos, ps.fire == true)
+                if ps.fire == true and not tile_fire[pos.x .. "," .. pos.y] then
+                    unburn[#unburn + 1] = {p = p, x = pos.x, y = pos.y, i = i}
+                end
+            end)
+        end
+    end
+    wait()
+    for _, u in ipairs(unburn) do
+        local moved = step("pawn " .. u.i .. " step aside", function()
+            local stage = itbx_staging_tile({[u.x .. "," .. u.y] = true})
+            if stage == nil then error("no free tile to step aside to") end
+            u.p:SetSpace(stage)
+            itbx_space_fire(Point(u.x, u.y), false)
+        end)
+        wait()
+        if moved then
+            step("pawn " .. u.i .. " step back", function() u.p:SetSpace(Point(u.x, u.y)) end)
+            wait()
+        end
+    end
+    for i, ps in ipairs(spec.pawns or {}) do
+        local p = placed[i]
+        if p then ITBX.scenario_pawn_status(p, ps, report) end
+    end
+    wait()
+
+    -- 6. Queued attacks.
+    for i, ps in ipairs(spec.pawns or {}) do
+        local p = placed[i]
+        if p and type(ps.queue) == "table" then
+            step("queue " .. i, function()
+                local slot = ps.queue.slot or 1
+                local origin = p:GetSpace()
+                pcall(function() p:SetActive(true) end)
+                local ret = p:FireWeapon(Point(ps.queue.x, ps.queue.y), slot)
+                local id = p:GetId()
+                report.queued[#report.queued + 1] = {uid = id, ret = ret}
+                if ret == 0 or ret == false then error("FireWeapon returned " .. tostring(ret)) end
+                st.queued[id] = {target = {ps.queue.x, ps.queue.y},
+                                 origin = {origin.x, origin.y}, slot = slot}
+            end)
+            wait()
+        elseif p and ps.clear_queue == true then
+            step("clear_queue " .. i, function()
+                p:ClearQueued()
+                st.queued[p:GetId()] = false
+            end)
+        end
+    end
+
+    -- 7. Tiles changed under the pawns already standing there.
+    for _, t in ipairs(spec.tiles_after or {}) do
+        step("tile_after " .. tostring(t.x) .. "," .. tostring(t.y), function() ITBX.scenario_tile(t) end)
+    end
+    wait()
+
+    -- 8. Spawns in (appended to the queue, as Board::QueuePawn does).
+    for i, s in ipairs(spec.spawns or {}) do
+        step("spawn " .. i, function()
+            local id = Board:SpawnPawn(s.type, Point(s.x, s.y))
+            st.spawn_queue[#st.spawn_queue + 1] = {type = s.type, uid = id or -1, x = s.x, y = s.y}
+        end)
+    end
+    wait()
+
+    _ITB_BRIDGE_SCENARIO = st
+    pcall(ITBX.mark, mission, "scenario", {name = report.name, errors = #report.errors})
+    return report
+end
+
+-- A player-style move: the Move skill (slot 0) through Pawn:FireWeapon,
+-- else Pawn:Move (ManualMove), else Pawn:SetSpace. Returns the method and
+-- a note on why earlier methods were skipped.
+function ITBX.native_move(pawn, pt)
+    local notes = {}
+    local ok, ret = pcall(function() return pawn:FireWeapon(pt, 0) end)
+    if ok and ret ~= 0 and ret ~= false and ret ~= nil then
+        return "FireWeapon[0]", nil
+    end
+    notes[#notes + 1] = "FireWeapon[0]: " .. (ok and ("returned " .. tostring(ret)) or ITBX.str(ret))
+    ok, ret = pcall(function() return pawn:Move(pt) end)
+    if ok and ret ~= false then return "Move", table.concat(notes, "; ") end
+    notes[#notes + 1] = "Move: " .. (ok and "returned false" or ITBX.str(ret))
+    ok, ret = pcall(function() pawn:SetSpace(pt) end)
+    if ok then return "SetSpace", table.concat(notes, "; ") end
+    notes[#notes + 1] = "SetSpace: " .. ITBX.str(ret)
+    return "none", table.concat(notes, "; ")
+end
+
+-- The SCENARIO payload: inline JSON, or "@path" to a JSON file.
+function ITBX.scenario_payload(text)
+    if type(text) ~= "string" or text == "" then return nil, "empty payload" end
+    if string.sub(text, 1, 1) == "@" then
+        local path = string.match(string.sub(text, 2), "^%s*(.-)%s*$")
+        local f = io.open(path, "r")
+        if not f then return nil, "cannot open " .. path end
+        text = f:read("*a")
+        f:close()
+    end
+    local ok, spec = pcall(ITBX.json_decode, text)
+    if not ok then return nil, tostring(spec) end
+    return spec
+end
+
+function ITBX.safe_label(label)
+    label = tostring(label or "snapshot")
+    label = string.gsub(label, "[^%w_%-]", "_")
+    if label == "" then label = "snapshot" end
+    return string.sub(label, 1, 64)
+end
+
 local _cmd_seq = nil
 
 local function write_ack(msg)
@@ -3687,6 +5348,113 @@ local function execute_command(cmd_str)
         write_ack(ok and ("OK LUA: " .. tostring(result))
                       or ("ERROR LUA: " .. tostring(result)))
 
+    elseif cmd == "MOVE_NATIVE" then
+        -- MOVE_NATIVE uid x y: move the way a player click does, the Move
+        -- skill through Pawn:FireWeapon(target, 0) (walk, arrival effects,
+        -- moved bookkeeping); falls back to Pawn:Move, then SetSpace. The
+        -- ack names the method used. Does not end the unit's turn.
+        local uid = tonumber(parts[2])
+        local x, y = tonumber(parts[3]), tonumber(parts[4])
+        local pawn = uid and Board:GetPawn(uid)
+        if not pawn or not x or not y then
+            write_ack("ERROR: MOVE_NATIVE needs a pawn uid and x y")
+            return
+        end
+        local method, detail = ITBX.native_move(pawn, Point(x, y))
+        wait_until_coro(function() return not Board:IsBusy() end, 20)
+        local sp = pawn:GetSpace()
+        write_ack("OK MOVE_NATIVE " .. uid .. " to " .. x .. "," .. y .. " [" .. method .. "] at "
+                  .. sp.x .. "," .. sp.y .. (detail and (" (" .. detail .. ")") or ""))
+
+    elseif cmd == "FIRE" then
+        -- FIRE uid native_slot x y: Pawn:FireWeapon(target, slot) with the
+        -- game's own slot numbering (0 = Move, 1 = first weapon, weapons
+        -- added by SCENARIO weapons_add after the type's own). Debug only.
+        if not ITBX.debug_enabled() then
+            write_ack("ERROR: FIRE disabled (create " .. ITBX.DEBUG_FLAG_FILE .. ")")
+            return
+        end
+        local uid, slot = tonumber(parts[2]), tonumber(parts[3])
+        local x, y = tonumber(parts[4]), tonumber(parts[5])
+        local pawn = uid and Board:GetPawn(uid)
+        if not pawn or not slot or not x or not y then
+            write_ack("ERROR: FIRE needs uid slot x y")
+            return
+        end
+        local ok, ret = pcall(function() return pawn:FireWeapon(Point(x, y), slot) end)
+        if not ok then
+            write_ack("ERROR: FIRE failed: " .. tostring(ret))
+            return
+        end
+        wait_until_coro(function() return not Board:IsBusy() end, 20)
+        write_ack("OK FIRE " .. uid .. " slot=" .. slot .. " at " .. x .. "," .. y .. " ret=" .. tostring(ret))
+
+    elseif cmd == "SNAPSHOT" then
+        -- SNAPSHOT [label]: dump the state now, and a copy to
+        -- itb_snapshot_<label>.json that later dumps do not overwrite.
+        local path = ITBX.SNAPSHOT_PREFIX .. ITBX.safe_label(parts[2]) .. ".json"
+        local ok, err = pcall(dump_state, path, path .. ".tmp")
+        if not ok then
+            write_ack("ERROR: SNAPSHOT failed: " .. tostring(err))
+            return
+        end
+        write_ack("OK SNAPSHOT " .. path)
+
+    elseif cmd == "SCENARIO" then
+        -- SCENARIO <json> | SCENARIO @<file>: build a test board (debug
+        -- flag file required; see ITBX.scenario_apply for the format).
+        if not ITBX.debug_enabled() then
+            write_ack("ERROR: SCENARIO disabled (create " .. ITBX.DEBUG_FLAG_FILE .. ")")
+            return
+        end
+        local spec, perr = ITBX.scenario_payload(string.match(cmd_str, "SCENARIO%s+(.*)$"))
+        if not spec then
+            write_ack("ERROR: SCENARIO payload: " .. tostring(perr))
+            return
+        end
+        -- Not under pcall: scenario_apply waits (yields) between stages.
+        local report, aerr = ITBX.scenario_apply(spec, wait_for_board_coro)
+        if not report then
+            write_ack("ERROR: SCENARIO " .. tostring(aerr))
+            return
+        end
+        local path = ITBX.SNAPSHOT_PREFIX .. ITBX.safe_label("scenario_" .. tostring(report.name)) .. ".json"
+        pcall(dump_state, path, path .. ".tmp")
+        report.snapshot = path
+        write_ack("OK SCENARIO " .. json_encode(report))
+
+    elseif cmd == "SCENARIO_RESET" then
+        -- Forget the scenario ledger (queued attacks, spawn queue).
+        _ITB_BRIDGE_SCENARIO = nil
+        write_ack("OK SCENARIO_RESET")
+
+    elseif cmd == "PHASE_LOG" then
+        -- PHASE_LOG [clear]: write the per-mission phase log to a file.
+        if parts[2] == "clear" then
+            _ITB_BRIDGE_PHASE_LOG = nil
+            write_ack("OK PHASE_LOG cleared")
+            return
+        end
+        local log = _ITB_BRIDGE_PHASE_LOG
+        local payload = {
+            debug = ITBX.debug_enabled(),
+            frame = log and log.frame or 0,
+            entries = log and log.entries or {},
+            env = log and log.env or {},
+        }
+        write_atomic(ITBX.PHASE_LOG_FILE, ITBX.PHASE_LOG_FILE .. ".tmp", json_encode(payload))
+        write_ack("OK PHASE_LOG " .. ITBX.PHASE_LOG_FILE .. " entries=" .. #payload.entries)
+        return
+
+    elseif cmd == "DEBUG_STATUS" then
+        write_ack("OK DEBUG_STATUS " .. json_encode({
+            debug = ITBX.debug_enabled(),
+            flag_file = ITBX.DEBUG_FLAG_FILE,
+            ext_version = ITBX.VERSION,
+            scenario = _ITB_BRIDGE_SCENARIO and _ITB_BRIDGE_SCENARIO.name or nil,
+        }))
+        return
+
     else
         write_ack("ERROR: unknown command: " .. cmd)
     end
@@ -3828,6 +5596,10 @@ Mission.BaseUpdate = function(self)
     if now - _last_state_dump >= _state_dump_interval then
         _last_state_dump = now
         pcall(dump_state)
+    end
+    -- Bridge extension: per-frame phase log (debug flag only).
+    if ITBX.debug_enabled() then
+        pcall(ITBX.poll_frame, self)
     end
 end
 
@@ -3998,6 +5770,79 @@ if Mission_Teleporter and _orig_TeleporterStartMission then
 
         log_bridge("TELEPORT PAD: StartMission complete, "
             .. #_ITB_TELEPORT_PAIRS .. " pair(s) captured")
+    end
+end
+
+--------------------------------------------------------------------
+-- Bridge extension hooks
+--------------------------------------------------------------------
+-- Mission:BaseNextTurn, ApplyEnvironmentEffect and PlanEnvironment are
+-- defined once, on Mission (no shipped subclass overrides them), so these
+-- class-level wraps see every mission without touching instances. Each
+-- wrap calls the original exactly once, outside pcall, and returns its
+-- result unchanged; the bridge's own work is pcall'd.
+--   BaseNextTurn (team 6)    after the Vek attacks and environment, before
+--                            the spawns: debug capture PRE_SPAWN_FILE
+--   ApplyEnvironmentEffect   one env_strike_log entry per step
+--   PlanEnvironment (1st, team 6)  after the spawns, before the AI moves
+--                            (stage 7 spec 1.9 "this turn's result"):
+--                            debug capture POST_SPAWN_FILE
+_ITB_BRIDGE_ORIGINALS.BaseNextTurn =
+    _ITB_BRIDGE_ORIGINALS.BaseNextTurn or Mission.BaseNextTurn
+_ITB_BRIDGE_ORIGINALS.ApplyEnvironmentEffect =
+    _ITB_BRIDGE_ORIGINALS.ApplyEnvironmentEffect or Mission.ApplyEnvironmentEffect
+_ITB_BRIDGE_ORIGINALS.PlanEnvironment =
+    _ITB_BRIDGE_ORIGINALS.PlanEnvironment or Mission.PlanEnvironment
+
+local _orig_BaseNextTurn = _ITB_BRIDGE_ORIGINALS.BaseNextTurn
+local _orig_ApplyEnvironmentEffect = _ITB_BRIDGE_ORIGINALS.ApplyEnvironmentEffect
+local _orig_PlanEnvironment = _ITB_BRIDGE_ORIGINALS.PlanEnvironment
+
+function ITBX.on_base_next_turn(mission, dump)
+    local turn, team = itbx_turn_team()
+    ITBX.mark(mission, "base_next_turn", {})
+    if team == TEAM_PLAYER then
+        ITBX.record_turn_start(mission)
+    end
+    if team == TEAM_ENEMY then
+        ITBX.pending_post_spawn = {mission = mission, turn = turn}
+        if ITBX.debug_enabled() then
+            dump(ITBX.PRE_SPAWN_FILE, ITBX.PRE_SPAWN_FILE .. ".tmp")
+        end
+    end
+end
+
+function ITBX.on_plan_environment(mission, dump)
+    local pending = ITBX.pending_post_spawn
+    if pending == nil or not rawequal(pending.mission, mission) then return end
+    local _, team = itbx_turn_team()
+    if team ~= TEAM_ENEMY then return end
+    ITBX.pending_post_spawn = nil
+    ITBX.mark(mission, "plan_environment", {})
+    if ITBX.debug_enabled() then
+        dump(ITBX.POST_SPAWN_FILE, ITBX.POST_SPAWN_FILE .. ".tmp")
+    end
+end
+
+if _orig_BaseNextTurn then
+    Mission.BaseNextTurn = function(self)
+        pcall(ITBX.on_base_next_turn, self, dump_state)
+        return _orig_BaseNextTurn(self)
+    end
+end
+
+if _orig_ApplyEnvironmentEffect then
+    Mission.ApplyEnvironmentEffect = function(self)
+        local ret = _orig_ApplyEnvironmentEffect(self)
+        pcall(ITBX.log_env_step, self, ret)
+        return ret
+    end
+end
+
+if _orig_PlanEnvironment then
+    Mission.PlanEnvironment = function(self)
+        pcall(ITBX.on_plan_environment, self, dump_state)
+        return _orig_PlanEnvironment(self)
     end
 end
 

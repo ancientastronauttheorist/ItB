@@ -788,6 +788,36 @@ TEST_CASE("V38 the train fires after every Vek and stops on a blocker") {
   CHECK(fired(r).count(train) == 1);
 }
 
+TEST_CASE("a queued shot with no weapon behind it is used up, not retried") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t v = place(b, "Scorpion1", {3, 3});
+  P(b, v).weapons = {};
+  P(b, v).queued = QueuedShot{0, {3, 3}, {3, 4}};
+  const PhaseResult r = E.end_turn(b, context());
+  int fizzles = 0;
+  for (const PhaseEvent& e : r.events) fizzles += e.type == PhaseEventType::ShotFizzled ? 1 : 0;
+  CHECK(fizzles == 1);
+  CHECK_FALSE(P(b, v).queued.active());
+}
+
+TEST_CASE("a train the bridge exported without a queued shot stays put") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t train = place(b, "Train_Pawn", {4, 6});
+  TurnContext ctx = context("Mission_Train");
+  ctx.mission.all_queued_known = true;  // attack_order_all: the train has no shot
+  const PhaseResult r = E.end_turn(b, ctx);
+  CHECK(fired(r).count(train) == 0);
+  REQUIRE(b.find_pawn(train) != nullptr);
+  CHECK(b.find_pawn(train)->pos == Point{4, 6});
+  // Old recordings: the move is inferred.
+  Board old;
+  const int32_t moving = place(old, "Train_Pawn", {4, 6});
+  const PhaseResult r2 = E.end_turn(old, context("Mission_Train"));
+  CHECK(fired(r2).count(moving) == 1);
+}
+
 TEST_CASE("V39 a satellite launch kills its neighbours and flies away") {
   NEED_ENGINE();
   Board b;

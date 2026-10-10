@@ -802,12 +802,12 @@ class DamMission final : public Environment {
 
 // Mission_Train / Mission_Armored_Train (missions/mission_train.lua,
 // advanced/missions/grass/mission_armored_train.lua). The train queues its
-// move up every turn (the bridge does not export team-1 queued shots), fires
-// after every Vek, and once dead is replaced by its wreck at the tile it last
-// stood on.
+// move up every turn (bridges before attack_order_all did not export team-1
+// queued shots, so it is inferred for them), fires after every Vek, and once
+// dead is replaced by its wreck at the tile it last stood on.
 class TrainMission final : public Environment {
  public:
-  explicit TrainMission(bool armored) : armored_(armored) {}
+  TrainMission(bool armored, bool queued_known) : armored_(armored), queued_known_(queued_known) {}
   std::string name() const override { return armored_ ? "Mission_Armored_Train" : "Mission_Train"; }
   void begin(EnvHost& host) override {
     Board& b = host.board();
@@ -815,7 +815,7 @@ class TrainMission final : public Environment {
     stopped_ = train_ < 0;
     if (Pawn* t = b.find_pawn(train_)) {
       loc_ = t->pos;
-      if (t->alive() && !t->queued.active() && t->weapons[0] != kNoSymbol && t->pos.valid()) {
+      if (!queued_known_ && t->alive() && !t->queued.active() && t->weapons[0] != kNoSymbol && t->pos.valid()) {
         t->queued = QueuedShot{0, t->pos, step(t->pos, Dir::Up)};
       }
     }
@@ -842,6 +842,7 @@ class TrainMission final : public Environment {
 
  private:
   bool armored_ = false;
+  bool queued_known_ = false;
   int32_t train_ = -1;
   Point loc_ = kInvalidPoint;
   bool stopped_ = true;
@@ -1065,8 +1066,8 @@ std::unique_ptr<Environment> make_native_environment(const MissionData& m) {
   if (id == "Mission_Final") return std::make_unique<VolcanoEnv>(m);
   if (id == "Mission_Final_Cave") return std::make_unique<FinalCaveEnv>(m);
   if (id == "Mission_Dam") return std::make_unique<DamMission>();
-  if (id == "Mission_Train") return std::make_unique<TrainMission>(false);
-  if (id == "Mission_Armored_Train") return std::make_unique<TrainMission>(true);
+  if (id == "Mission_Train") return std::make_unique<TrainMission>(false, m.all_queued_known);
+  if (id == "Mission_Armored_Train") return std::make_unique<TrainMission>(true, m.all_queued_known);
   if (id == "Mission_Satellite") return std::make_unique<SatelliteMission>(m);
   if (id == "Mission_Volatile") return std::make_unique<VolatileMission>(m);
   if (id == "Mission_AcidStorm") return std::make_unique<AcidStormMission>();

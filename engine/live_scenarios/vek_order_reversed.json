@@ -1,0 +1,22 @@
+{
+  "name": "vek_order_reversed",
+  "question": "Same board, the Hornet created first: it attacks before the Firefly kills it.",
+  "mission": "any mission without an environment, player turn 1-3, not the last turn",
+  "scenario": {
+    "name": "vek_order_reversed",
+    "clear_pawns": "all",
+    "clear_spawns": true,
+    "clear_tiles": true,
+    "pawns": [
+      {"uid": 0, "x": 3, "y": 4},
+      {"uid": 1, "x": 0, "y": 7},
+      {"uid": 2, "x": 7, "y": 7},
+      {"type": "Hornet1", "team": 6, "x": 3, "y": 3, "hp": 1, "queue": {"x": 3, "y": 4}},
+      {"type": "Firefly1", "team": 6, "x": 1, "y": 3, "queue": {"x": 2, "y": 3}}
+    ]
+  },
+  "end_turn": true,
+  "observe": [
+    "The Hornet at (3,3) hits mech 0 at (3,4) for 1, then the Firefly kills the Hornet."
+  ]
+}
