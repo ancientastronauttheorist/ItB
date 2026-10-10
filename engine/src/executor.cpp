@@ -371,7 +371,7 @@ int64_t Simulation::next_event(int64_t f) const {
       consider(f + 1);
     }
   }
-  for (const auto& [uid, ps] : pawns_) {
+  pawns_.for_each([&](const PawnSim& ps) {
     if (ps.tracker.running) consider(ps.tracker.end_frame);
     if (ps.walking) consider(ps.walk_next);
     if (ps.flying) consider(ps.flight_end);
@@ -382,7 +382,7 @@ int64_t Simulation::next_event(int64_t f) const {
       consider(ps.death_frame + ps.death_anim->total_updates());
     }
     if (ps.xp_gone >= 0) consider(ps.xp_gone);
-  }
+  });
   return best == std::numeric_limits<int64_t>::max() ? -1 : best;
 }
 
@@ -450,9 +450,11 @@ int Simulation::busy_state() const {
   for (const Pawn& p : board_.pawns()) {
     if (pawn_busy(p, false)) return 1;
   }
-  for (const auto& [uid, ps] : pawns_) {
-    if (ps.death_fx_pending && board_.find_pawn(uid)) return 9;
-  }
+  bool fx_pending = false;
+  pawns_.for_each([&](const PawnSim& ps) {
+    if (ps.death_fx_pending && board_.find_pawn(ps.uid)) fx_pending = true;
+  });
+  if (fx_pending) return 9;
   if (!stack_.empty()) return 6;
   return 0;
 }
@@ -948,14 +950,11 @@ void Simulation::update_stack() {
 // ---- Helpers --------------------------------------------------------------------------------
 
 PawnSim& Simulation::state(int32_t uid) {
-  auto [it, inserted] = pawns_.try_emplace(uid);
-  if (inserted) it->second.uid = uid;
-  return it->second;
+  return pawns_.get(uid);
 }
 
 const PawnSim* Simulation::find_state(int32_t uid) const {
-  auto it = pawns_.find(uid);
-  return it == pawns_.end() ? nullptr : &it->second;
+  return pawns_.find(uid);
 }
 
 const AnimTimeline* Simulation::timeline(Symbol anim) {

@@ -7,8 +7,8 @@
 
 namespace itb {
 
-// 0 is reserved for "none". Interning is process-wide and append-only; it is
-// not synchronized, so intern everything before searching on multiple threads.
+// 0 is reserved for "none". Interning is process-wide and append-only, and
+// safe to use from several threads at once.
 using Symbol = uint16_t;
 inline constexpr Symbol kNoSymbol = 0;
 

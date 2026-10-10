@@ -14,7 +14,9 @@
 // owner's phase runs, which is how the game's same-frame orderings arise.
 #pragma once
 
+#include <climits>
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <map>
 #include <string>
@@ -93,6 +95,68 @@ struct PawnSim {
   int frozen_updates = -1;        // KillInstant: the animation stopped after this many updates
   const AnimTimeline* death_anim = nullptr;  // null: no death animation
   int64_t xp_gone = -1;           // first frame whose P3 sees no XP popup
+};
+
+// PawnSim by uid: O(1) lookup (uids are small, increasing integers), stable
+// references (deque storage), erase by uid. Iteration order is storage
+// order; every caller treats the entries as an unordered set.
+class PawnSimTable {
+ public:
+  PawnSim& get(int32_t uid) {
+    if (PawnSim* ps = find(uid)) return *ps;
+    if (!free_.empty()) {
+      const size_t slot = free_.back();
+      free_.pop_back();
+      slots_[slot] = PawnSim{};
+      slots_[slot].uid = uid;
+      index(uid) = static_cast<int32_t>(slot) + 1;
+      return slots_[slot];
+    }
+    slots_.emplace_back();
+    slots_.back().uid = uid;
+    index(uid) = static_cast<int32_t>(slots_.size());
+    return slots_.back();
+  }
+  PawnSim* find(int32_t uid) {
+    const int32_t i = lookup(uid);
+    return i > 0 ? &slots_[static_cast<size_t>(i - 1)] : nullptr;
+  }
+  const PawnSim* find(int32_t uid) const { return const_cast<PawnSimTable*>(this)->find(uid); }
+  void erase(int32_t uid) {
+    const int32_t i = lookup(uid);
+    if (i <= 0) return;
+    slots_[static_cast<size_t>(i - 1)].uid = kFree;
+    free_.push_back(static_cast<size_t>(i - 1));
+    index(uid) = 0;
+  }
+  template <class F>
+  void for_each(F&& f) const {
+    for (const PawnSim& ps : slots_) {
+      if (ps.uid != kFree) f(ps);
+    }
+  }
+
+ private:
+  static constexpr int32_t kFree = INT32_MIN;
+  static constexpr int32_t kDirect = 1 << 16;  // uids below this index a vector
+  int32_t lookup(int32_t uid) const {
+    if (uid >= 0 && uid < kDirect) {
+      return static_cast<size_t>(uid) < direct_.size() ? direct_[static_cast<size_t>(uid)] : 0;
+    }
+    auto it = other_.find(uid);
+    return it == other_.end() ? 0 : it->second;
+  }
+  int32_t& index(int32_t uid) {
+    if (uid >= 0 && uid < kDirect) {
+      if (static_cast<size_t>(uid) >= direct_.size()) direct_.resize(static_cast<size_t>(uid) + 1, 0);
+      return direct_[static_cast<size_t>(uid)];
+    }
+    return other_[uid];
+  }
+  std::deque<PawnSim> slots_;
+  std::vector<size_t> free_;
+  std::vector<int32_t> direct_;
+  std::map<int32_t, int32_t> other_;
 };
 
 // A board change the timing analysis looks at.
@@ -209,7 +273,8 @@ class Simulation final : public FrameHooks {
   std::vector<WeaponAnim> anims_;
   std::vector<TileAnim> tile_anims_;
   std::vector<TileAnim> holes_;  // deferred chasm bounces
-  std::map<int32_t, PawnSim> pawns_;
+  PawnSimTable pawns_;
+  std::vector<std::pair<int32_t, bool>> noted_;  // the list at the last note_deaths pass
 
   // Last shot (EventSystem): owner, team and name of the effect last fired.
   int32_t last_owner_ = -1;

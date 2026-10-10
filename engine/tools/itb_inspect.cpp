@@ -12,6 +12,9 @@
 //                                               replay whole turns through the enemy phase
 //   itb_inspect [--game DIR] --score <recording.json>
 //                                               score the recorded plan (tiers, objectives, position)
+//   itb_inspect [--game DIR] --solve (<recording.json> | DIR) [--time S] [--nodes N]
+//               [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE]
+//                                               the perfect-turn search vs the recorded plan
 
 #include <algorithm>
 #include <cstdio>
@@ -32,6 +35,7 @@
 #include "itb/movement.hpp"
 #include "itb/recording.hpp"
 #include "replay.hpp"
+#include "solve_tool.hpp"
 
 namespace fs = std::filesystem;
 using namespace itb;
@@ -40,7 +44,8 @@ namespace {
 
 int usage() {
   std::cerr << "usage: itb_inspect [--game DIR] (<recording.json> | --pawns | --scripts | --corpus DIR | "
-               "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE)\n";
+               "--moves DIR | --weapons DIR | --replay DIR [--turns] [--show N] [--no-sync] [--weapon ID] [--trace RUN/M/T] [--json FILE] | --score FILE | "
+               "--solve (<recording.json> | DIR) [--time S] [--nodes N] [--threads N] [--beam W] [--sample N] [--shard I/N] [--verbose] [--json FILE])\n";
   return 2;
 }
 
@@ -351,6 +356,38 @@ int main(int argc, char** argv) {
   if (args[0] == "--score") {
     if (args.size() < 2) return usage();
     return tools::run_score(args[1], game);
+  }
+  if (args[0] == "--solve") {
+    if (args.size() < 2) return usage();
+    tools::SolveToolOptions o;
+    o.target = args[1];
+    o.game = game;
+    for (size_t i = 2; i < args.size(); ++i) {
+      if (args[i] == "--time" && i + 1 < args.size()) {
+        o.time_limit = std::stod(args[++i]);
+      } else if (args[i] == "--nodes" && i + 1 < args.size()) {
+        o.node_limit = std::stoull(args[++i]);
+      } else if (args[i] == "--beam" && i + 1 < args.size()) {
+        o.beam = std::stoi(args[++i]);
+      } else if (args[i] == "--threads" && i + 1 < args.size()) {
+        o.threads = std::max(1, std::stoi(args[++i]));
+      } else if (args[i] == "--sample" && i + 1 < args.size()) {
+        o.sample = std::stoi(args[++i]);
+      } else if (args[i] == "--shard" && i + 1 < args.size()) {
+        const std::string v = args[++i];
+        const size_t slash = v.find('/');
+        if (slash == std::string::npos) return usage();
+        o.shard = std::stoi(v.substr(0, slash));
+        o.shards = std::stoi(v.substr(slash + 1));
+      } else if (args[i] == "--verbose") {
+        o.verbose = true;
+      } else if (args[i] == "--json" && i + 1 < args.size()) {
+        o.json_out = args[++i];
+      } else {
+        return usage();
+      }
+    }
+    return tools::run_solve(o);
   }
   if (args[0] == "--corpus") {
     if (args.size() < 2) return usage();

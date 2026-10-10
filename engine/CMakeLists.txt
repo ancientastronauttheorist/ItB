@@ -41,6 +41,8 @@ add_library(itb_engine
   src/environments.cpp
   src/score.cpp
   src/objectives.cpp
+  src/board_hash.cpp
+  src/solver.cpp
 )
 target_include_directories(itb_engine PUBLIC include PRIVATE src)
 target_link_libraries(itb_engine PRIVATE itb_lua nlohmann_json::nlohmann_json)
@@ -50,7 +52,8 @@ target_compile_definitions(itb_engine PRIVATE
 # rounding (movement.cpp).
 target_compile_options(itb_engine PRIVATE -Wall -Wextra -Wpedantic -ffp-contract=off)
 
-add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_replay.cpp tools/score_tool.cpp)
+add_executable(itb_inspect tools/itb_inspect.cpp tools/replay.cpp tools/turn_replay.cpp tools/score_tool.cpp
+  tools/solve_tool.cpp)
 target_compile_options(itb_inspect PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(itb_inspect PRIVATE itb_engine nlohmann_json::nlohmann_json)
 
@@ -68,6 +71,7 @@ add_executable(itb_tests
   tests/test_engine.cpp
   tests/test_enemy_phase.cpp
   tests/test_score.cpp
+  tests/test_solver.cpp
 )
 target_link_libraries(itb_tests PRIVATE itb_engine doctest::doctest)
 target_compile_definitions(itb_tests PRIVATE

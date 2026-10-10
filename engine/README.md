@@ -38,7 +38,17 @@ engine/build/itb_inspect --weapons recordings                           # run we
 engine/build/itb_inspect --replay recordings                            # replay recorded actions vs the game
 engine/build/itb_inspect --replay recordings --turns                    # whole turns, through the enemy phase
 engine/build/itb_inspect --score recordings/<run>/m07_turn_01_solve_input.json  # score a recorded plan
+engine/build/itb_inspect --solve recordings/<run>/m07_turn_01_solve_input.json --time 10 --threads 8
+engine/build/itb_inspect --solve recordings --sample 60 --time 120 --threads 8 --json out.jsonl
 ```
+
+`--solve` runs the perfect-turn search (stage 9) and prints the plan in
+A1-H8 notation, its worst-case score, whether it is proven optimal (else the
+upper bound and how many leading tiers are proven), search statistics, and
+the old bot's recorded plan scored the same way. On a directory it takes
+`--sample N` (evenly spaced boards), `--shard I/N`, `--verbose`, `--json FILE`
+and ends with proof rates, times to prove and how our plans compare with the
+recorded ones. `--beam W` sets the beam width (0 = off).
 
 `--replay` takes `--show N`, `--weapon ID`, `--trace RUN/MISSION/TURN`
 (boards and effects of one turn), `--json FILE` (every mismatch) and
@@ -181,6 +191,11 @@ Done so far (build order from the decompile):
      (`MissionData::objectives`).
    - `itb_inspect --score` scores a recorded plan; `--replay --turns` checks
      the objective counters against the game.
+- **Stage 9: the perfect-turn search** (`solver.hpp`, `board_hash.hpp`).
+   - The best worst-case plan through the enemy phase, over interleaved
+     sub-actions of every unit, chance adversarial and enumerated; anytime
+     with sound upper bounds, proven optimal when the search completes.
+   - `itb_inspect --solve`: plans on recorded boards against the old bot's.
 
 ### Environments and mission hooks
 
@@ -364,6 +379,140 @@ Integration notes:
   spawn clearing): score those as next-turn context.
 - Multi-tile pawns (trains, dams) occupy only their main tile here. In game
   a Vek attack on a train's rear tile kills it (seen in the recordings).
+
+### Perfect-turn search (stage 9)
+
+`solve_turn(engine, board, ctx, options)` (`solver.hpp`) returns the plan
+with the best worst-case `score_turn`, evaluated through the end of the
+enemy phase, from what the player can see (unknown spawn types emerge as
+unknown).
+
+**Values.** A node is a board during the player's turn. Its value is
+`V(B) = max(E(B), max_a min_o V(B·a·o))`: end the turn now (`E`, the minimum
+of `score_turn` over every chance outcome of the enemy phase), or give a
+unit a sub-action `a` whose chance outcomes `o` the adversary picks. Since
+"end the turn now" is an option at every node, every prefix of a plan is a
+plan. Chance during the player's own actions branches the plan: the player
+sees the outcome before choosing the next action (`Plan::contingent`: the
+returned actions follow the default outcome; re-solve after any other).
+
+**Action model.** At any point any controllable unit (`Pawn::controlled()`,
+alive) may: move to a tile of its Lua `Move` target area if `can_move`
+(not moved, or a Shifty / Post_Move bonus move); fire any non-passive
+weapon at any tile of its target area (two-click weapons: every tile of the
+second target area, unless `IsTwoClickException`); repair (mechs; the
+pilot's repair skill, over its target area). Sub-actions of different units
+interleave freely; the engine's `Pawn::FireWeapon` bookkeeping decides what
+a unit may still do (Double_Shot, Shifty, Post_Move) and `check_legal` is
+the ground truth: refused sub-actions and ones with no effect are dropped.
+Move undo is not modelled (an undone move equals not moving).
+
+**Chance.** Every hook the engine exposes (Grid Defense, `choose` for
+environment orders/choices and mission picks, spider eggs, death-effect
+seeds) goes through one driver that numbers the calls of a run. The default
+outcome (no resist, branch 0, the pawn's own seed) runs first; then each
+recorded call's other options, depth-first, by re-running with the earlier
+choices forced. Every leaf of the chance tree is reached once, so resists
+are enumerated, not assumed bad (`test_solver.cpp` has a board where a
+resist is the worst case). An evaluation stops as soon as its minimum falls
+to the incumbent (it can no longer matter). Death-effect seeds are hidden:
+a death effect that draws random numbers (only the Goo bosses in the
+shipped scripts) is tried with a sample of seeds and the result is never
+claimed proven. The Lua stream is reseeded before every engine run, so a
+run is a function of the board and the choices.
+
+**Search.** Depth-first alpha-beta over these max (player) and min
+(chance) nodes; results are intervals `[lo, hi]` that hold the value
+(exact when equal). The incumbent (best value already guaranteed from the
+root) raises every alpha.
+- Transposition table on a 128-bit content hash of the board
+  (`board_hash.hpp`: every field; arrival stamps as ranks among the pawns
+  sharing a tile, which is all the engine compares; move-undo flags left
+  out, as nothing the search does reads them). Orders of sub-actions that
+  reach the same board are one subproblem.
+- End-of-turn values memoized on the End Turn hash (the search hash minus
+  the player-turn flags `Engine::end_turn` resets first: player units'
+  `active`, bonus move, Kickoff bonus).
+- Children (deduplicated by board) are ordered by the value of ending the
+  turn right after them; boards that threaten buildings get fixed first.
+- A beam pre-pass over whole unit turns (optional move, then optional
+  action) keeps the best states for every set of units that have played
+  and seeds the incumbent; plans whose value appears only once every unit
+  has played survive it.
+- Threads (`SolveOptions::helper_engines`, one engine and Lua state per
+  thread) share the table, the memo and the incumbent; a child another
+  thread is searching waits for a second pass.
+
+**Bounds.** `ub(B)` is componentwise at least the score of any plan from
+B, hence a lexicographic upper bound; a node or child with `ub <= alpha` is
+cut. Per tier (each argued in `solver.cpp`): grid power never rises
+(`Game:ModifyPowerGrid` gains come only from Support_KO_GridCharger, which
+disables this bound), building HP never rises (no weapon, death or native
+environment script builds a building), mechs revived <= mechs dead at the
+start, net mech HP <= the HP missing at the start (+1 per mech with Psion
+Leech), objective stars lost <= 0, kills and HP removed <= the enemies and
+their HP at the start. Objective progress and position have no derived cap
+(`SolveOptions::tier_caps` can supply them). Grid and building losses are
+therefore committed once a player action causes them.
+
+**Anytime.** With a time or node budget the result is the best plan found,
+`proven_optimal = false`, an `upper_bound` (the root's interval, sound
+because every interval is) and `proven_components`: the number of leading
+tiers in which the plan is proven optimal (no plan has a better prefix).
+`proven_optimal` is only set when a search ran to its end with every chance
+node enumerated.
+
+**Validation.** `test_solver.cpp`: hand-built boards with known optima
+(save a building, the greedy kill that loses a building, two threats and two
+mechs), chance nodes whose worst case is not the default outcome (lightning
+order, a resisted building that causes a bump), anytime bounds, threads
+against one thread, and a brute-force cross-check: 30 random tiny boards
+(mixed mechs and Vek, buildings, water; 26 of them with chance branches)
+against a naive exhaustive enumeration written independently of the
+solver, with and without table, bounds, ordering and beam: identical values.
+
+**Recorded boards** (`itb_inspect --solve recordings --sample 60 --time 120
+--threads 8`, Apple M6, 12 cores, other jobs running): 46 of 60
+boards (76.7%) proven optimal within 120 s; 36.7% within 10 s, 13.3% within
+1 s; median time to prove 13.3 s, p95 57 s (median 0.46 M nodes). By active
+units: every 1- and 2-unit board, 39/48 with 3 units, 1/4 with 4, 0/2 with 5.
+The unproven 14 are still proven optimal in their first 2-5 tiers (5: grid,
+buildings, mechs, mech HP, stars). Against the old bot's executed plan,
+scored the same way (worst case over every chance outcome): ours better on
+45 boards (grid 13, mech HP 25, kills 5, objectives 1, position 1), equal
+on 13, worse on none; one recorded plan is refused by the engine (a move
+outside the Lua move area). The first plan is found at once (beam), the
+returned one after a median 0.17 s (p95 12.6 s).
+
+Whole corpus at 10 s (`--solve recordings --time 10 --threads 8`, 469
+boards): 158 proven (33.7%; 12.2% within 1 s; median 2.2 s, p95 8.0 s);
+every 1- and 2-unit board, 117/389 with 3 units, none of the 39 with 4-5.
+Unproven boards: 239 proven in their first 5 tiers, 14 in none. Against the
+recorded plans: ours better on 362 (mech HP 218, grid 43, kills 34,
+objectives 29+6, vek HP 14, position 9, mechs 7, buildings 2), equal on 95,
+worse on 2 (neither proven: the search had not reached them yet; at 120 s
+both are proven optimal and at least as good as the recorded plan), 8
+recorded plans refused by the engine (targets outside the Lua target area,
+moves by a unit that cannot move).
+
+**Cost.** One thread: a sub-action ~17 us, an enemy phase ~33 us (after the
+executor speed-ups below; ~33 us and ~70 us before); with 8 threads ~35 us
+and ~90 us of thread time each (shared caches, efficiency cores). Proving the
+3-mech board `20260517_105759_344/m17_turn_04` takes 279 k nodes, 1.1 M
+sub-actions, 206 k enemy phases: 29 s on one thread, 6.1 s on 8. Executor
+hot spots removed without changing any result (`--replay` output is
+byte-identical): PawnSim lookups by uid (a direct index instead of a
+`std::map`), `note_deaths` skipping unchanged passes, an early return for
+empty tiles in `settle_tile_frame`, lazy Lua `srand`. Remaining time: the
+executor's per-frame tile loop and its `Board` copy-and-compare per frame,
+Lua target areas (computed again inside `fire_weapon` for legality), and
+sub-actions that reach a board already in the table (about a third of them:
+interleavings are merged by the table after running, not before).
+
+Limitations: limited-use weapons are assumed available (uses are not
+recorded); proofs are relative to the engine's model (`PhaseResult::exact`
+false for EnvInexact missions is reported as a warning); 128-bit hash
+collisions are ignored; tables stop growing at `tt_max_entries`.
 
 ### Open questions for live-game testing
 

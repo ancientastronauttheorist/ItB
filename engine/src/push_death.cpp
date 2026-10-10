@@ -146,7 +146,19 @@ void Simulation::finish_push(Pawn& pawn, PawnSim& ps) {
 // ---- Deaths ---------------------------------------------------------------------------
 
 void Simulation::note_deaths() {
-  for (const Pawn& p : board_.pawns()) {
+  // After a pass every pawn has an entry with dead == !alive, and nothing
+  // else changes `dead` or drops an entry without the pawn leaving the list.
+  // So while the list (uids, alive) is the one of the last pass, a pass is a
+  // no-op.
+  const std::vector<Pawn>& list = board_.pawns();
+  if (noted_.size() == list.size()) {
+    bool same = true;
+    for (size_t i = 0; i < list.size() && same; ++i) {
+      same = noted_[i].first == list[i].uid && noted_[i].second == list[i].alive();
+    }
+    if (same) return;
+  }
+  for (const Pawn& p : list) {
     PawnSim& ps = state(p.uid);
     if (!ps.dead && !p.alive()) {
       note_death(p, ps);
@@ -159,6 +171,8 @@ void Simulation::note_deaths() {
       changed_ = true;
     }
   }
+  noted_.clear();
+  for (const Pawn& p : board_.pawns()) noted_.emplace_back(p.uid, p.alive());
 }
 
 void Simulation::note_death(const Pawn& pawn, PawnSim& ps) {
