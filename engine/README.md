@@ -41,6 +41,7 @@ engine/build/itb_inspect --score recordings/<run>/m07_turn_01_solve_input.json  
 engine/build/itb_inspect --solve recordings/<run>/m07_turn_01_solve_input.json --time 10 --threads 8
 engine/build/itb_inspect --solve recordings --sample 60 --time 120 --threads 8 --json out.jsonl
 engine/build/itb_inspect --predict state.json --actions @actions.json --branches   # live validation
+engine/build/itb_live solve state.json --time 10 --threads 8                      # live play (JSON)
 ```
 
 `--solve` runs the perfect-turn search (stage 9) and prints the plan in
@@ -56,6 +57,76 @@ recorded ones. `--beam W` sets the beam width (0 = off).
 `--no-sync`. With `--turns` it replays each recorded turn whose plan it can
 follow to the end, runs the enemy phase and compares with the game's board
 at the start of the next turn (see "Validating the enemy phase").
+
+## Live play
+
+`scripts/live_play.py` plays the running game with this engine, through the
+Lua bridge. It never acts on import, refuses to act when the bridge heartbeat
+is stale or `bridge_ext_disabled` is set, and every command takes `--dry-run`.
+
+```bash
+python3 scripts/live_play.py status                 # bridge + board summary
+python3 scripts/live_play.py deploy [--tiles C5,D6,E5]
+python3 scripts/live_play.py turn --time 10 --threads 8
+python3 scripts/live_play.py end-turn
+python3 scripts/live_play.py mission --max-turns 10  # turn + end-turn, stops at the first anomaly
+```
+
+- **turn** solves the live board (`Visibility::Player`), then executes the
+  plan one sub-action at a time (`MOVE_NATIVE`, else `MOVE`; `ATTACK` /
+  `TWO_CLICK_ATTACK` with the slot of the exact weapon id from
+  `weapon_slots`; `REPAIR`). After each, it takes a settled bridge dump and
+  compares it with the predicted board: units by uid (type, tile, HP, fire,
+  acid, frozen, shield, web), units the engine created by type/tile/HP, and
+  building HP. The save-based `grid_power` is stale mid-turn and is not
+  compared. A mismatch re-solves from the live board (`--max-resolves`).
+- **end-turn** predicts the enemy phase from the board as left, sends
+  `END_TURN` (it deactivates the mechs, so the "units can still act" dialog
+  never appears; on this build the bridge cannot end the turn itself and
+  answers `NEEDS_MCP_CLICK`), clicks End Turn (`--end-turn-xy`, default
+  fullscreen 1360x768 `128,89`; `--no-click` asks you to), checks the phase
+  changed, waits for the next player turn and compares grid, HP, statuses,
+  survivors and mech tiles. Vek tiles and webs are not compared (the AI
+  moves and webs after the point the engine stops); new units are reported
+  as spawns.
+- **deploy** uses the bridge's `drop_zone` (refused tiles are already left
+  out, and `DEPLOY` refuses them anyway), checks every mech's tile in the
+  state, and leaves Confirm to you.
+- Bridges without `weapons_exact` (before the extension) need
+  `--loadout FILE` (`{"PunchMech": ["Prime_Punchmech_B", ...]}`); without
+  `moved` the driver marks the units it moved.
+
+Every state and prediction lands in `recordings/live/<YYYYMMDD_HHMMSS>/`
+(git-ignored; force-add a run to keep it): `m<MM>_turn_<TT>_solve_input.json`
+(turn start, the old recordings' wrapper) and `..._solve.json` (the executed
+plan in the old format), so `itb_inspect --corpus/--solve/--moves` read them;
+`--replay` skips them (no per-step predictions in the old simulator's
+format). Other states are `m<MM>_turn_<TT>_<label>_<NN>.json`, each
+prediction is beside its input as `..._prediction.json`, and `events.jsonl`
+logs every command and ack. `recordings/live/2026-10-09/` holds the first
+live session's bridge states (old bridge: base weapon ids); `itb_tests`
+loads every state under `recordings/live/`.
+
+The engine side is `itb_live` (`tools/live_tool.hpp`), JSON in and out:
+
+```bash
+engine/build/itb_live solve state.json --time 10 --threads 8 [--out FILE] [--pretty]
+engine/build/itb_live predict state.json --plan @plan.json
+engine/build/itb_live board state.json
+engine/build/itb_live serve --threads 8   # one JSON request per stdin line (what live_play.py uses)
+```
+
+`solve` returns the plan (`Plan::actions`), `steps` (one per move, weapon
+or repair, each with the predicted `board` after it, its status, chance
+nodes and timing flags; `weapon_index` is the slot in the unit's weapons),
+`start` / `after_player` / `after_enemy` boards, `enemy_phase` (events,
+`emerged_unknown`, `mission_ended`, exactness), `worst_case` and
+`upper_bound` by tier, `proven_optimal`, `proven_components`,
+`chance_exact`, `timed_out`, `contingent`, `stats` and `warnings`. The
+simulation follows the plan's default chance outcome (no Grid Defense
+resist, first branch), reseeding Lua as the solver does. Boards are compact:
+`grid_power`, `buildings` (x, y, hp) and living on-board `units` sorted by
+uid (uid, type, x, y, hp, team, mech, fire, acid, frozen, shield, web).
 
 ## Python bindings
 
