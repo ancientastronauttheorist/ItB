@@ -860,6 +860,146 @@ TEST_CASE("V40 hacking: the facility dies and the bot changes sides") {
   CHECK(b.tile({5, 2}).hp == 1);
 }
 
+// ---- Mission hooks during the player's turn ------------------------------------------
+//
+// BoardPlayer::OnLoop (0x008c9760) calls Mission:BaseUpdate on every frame of
+// every state but the finished one, the player's turn included, so player
+// actions run the same per-frame hooks (ActionOptions::mission).
+
+namespace {
+
+Recording live_fixture(const char* name) {
+  std::string error;
+  auto rec = load_recording(std::string(ITB_FIXTURE_DIR) + "/" + name, &engine()->data(), &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  for (const auto& [uid, pilot] : rec->pilots) {
+    if (Pawn* p = rec->board.find_pawn(uid)) p->pilot_abilities |= engine()->pilot_ability(pilot);
+  }
+  return *rec;
+}
+
+}  // namespace
+
+TEST_CASE("player turn: the acid storm re-applies ACID right after a repair (live 2026-10-10)") {
+  NEED_ENGINE();
+  // Mission_AcidStorm turn 1: JetMech#0 (moved, full HP, ACID) repairs.
+  // Skill_Repair clears ACID, the next frame's UpdateMission sets it again
+  // while the Storm Generator lives: the game's step 4 still shows ACID.
+  const Recording before = live_fixture("live_acidstorm_t1_step3.json");
+  const Recording after = live_fixture("live_acidstorm_t1_step4.json");
+  REQUIRE(before.mission.mission_id == "Mission_AcidStorm");
+  const TurnContext ctx = turn_context(before, Visibility::Player);
+  const int32_t jet = 0;
+  REQUIRE(before.board.find_pawn(jet) != nullptr);
+  REQUIRE(before.board.find_pawn(jet)->acid);
+  REQUIRE(after.board.find_pawn(jet)->acid);
+
+  Board b = before.board;
+  const ActionResult r = E.repair(b, jet, kInvalidPoint, "Skill_Repair", action_options(ctx));
+  REQUIRE(r.ok());
+  CHECK(P(b, jet).acid);
+  CHECK(P(b, jet).hp == after.board.find_pawn(jet)->hp);
+  CHECK_FALSE(P(b, jet).active);
+  for (const Pawn& p : after.board.pawns()) {
+    const Pawn* q = b.find_pawn(p.uid);
+    REQUIRE(q != nullptr);
+    CHECK(q->acid == p.acid);
+    CHECK(q->hp == p.hp);
+  }
+
+  // Without the mission's hooks (a bare rules call) the repair clears it.
+  Board bare = before.board;
+  REQUIRE(E.repair(bare, jet).ok());
+  CHECK_FALSE(P(bare, jet).acid);
+
+  // With the generator dead the storm is over: the repair clears ACID.
+  Board calm = before.board;
+  int32_t gen = -1;
+  for (const Pawn& p : calm.pawns()) {
+    if (symbol_name(p.type) == "Storm_Generator") gen = p.uid;
+  }
+  REQUIRE(gen >= 0);
+  calm.remove_pawn(gen);
+  REQUIRE(E.repair(calm, jet, kInvalidPoint, "Skill_Repair", action_options(ctx)).ok());
+  CHECK_FALSE(P(calm, jet).acid);
+}
+
+TEST_CASE("player turn: under the acid storm a popped shield lets ACID in before the next shot") {
+  NEED_ENGINE();
+  Board b;
+  place(b, "Storm_Generator", {0, 0});
+  const int32_t v = place(b, "Scorpion1", {3, 3});
+  hp(b, v, 3, 3);
+  P(b, v).shield = true;
+  const int32_t m = place(b, "ArtiMech", {3, 6}, true);
+  const TurnContext ctx = context("Mission_AcidStorm");
+  ActionOptions o = action_options(ctx);
+  o.check_legal = false;  // the same mech fires twice
+  // First shot: the shield absorbs it; the hook sets ACID on the next frame.
+  REQUIRE(E.fire_weapon(b, m, "Ranged_Artillerymech", {3, 3}, std::nullopt, o).ok());
+  CHECK_FALSE(P(b, v).shield);
+  CHECK(P(b, v).acid);
+  CHECK(hp_of(b, v) == 3);
+  // Second shot: 1 damage, doubled by ACID.
+  REQUIRE(E.fire_weapon(b, m, "Ranged_Artillerymech", {3, 3}, std::nullopt, o).ok());
+  CHECK(hp_of(b, v) == 1);
+}
+
+TEST_CASE("player turn: the dam floods as soon as the player destroys it") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t dam = place(b, "Dam_Pawn", {3, 0});
+  hp(b, dam, 1);
+  const int32_t c = place(b, "Scarab1", {3, 3});
+  const int32_t m = place(b, "PunchMech", {2, 0}, true);
+  const TurnContext ctx = context("Mission_Dam");
+  const ActionResult r = E.fire_weapon(b, m, "Prime_Punchmech", {3, 0}, std::nullopt, action_options(ctx));
+  REQUIRE(r.ok());
+  CHECK(dead(b, dam));
+  CHECK(b.tile({3, 3}).terrain == Terrain::Water);
+  CHECK(b.tile({4, 7}).terrain == Terrain::Water);
+  CHECK(dead(b, c));
+  REQUIRE(r.mission_events.size() == 1);
+  CHECK(r.mission_events[0].type == PhaseEventType::MissionHook);
+  // The enemy phase does not flood a second time.
+  const PhaseResult pr = E.end_turn(b, ctx);
+  CHECK(pr.count(PhaseEventType::MissionHook) == 0);
+}
+
+TEST_CASE("player turn: the shield generator's death drops the shields at once") {
+  NEED_ENGINE();
+  Board b;
+  const int32_t gen = place(b, "Shield_Building", {3, 3});
+  const int32_t v = place(b, "Scorpion1", {5, 5});
+  P(b, v).shield = true;
+  set_building(b, {6, 6});
+  b.tile({6, 6}).shield = true;
+  const int32_t m = place(b, "PunchMech", {2, 3}, true);
+  const TurnContext ctx = context("Mission_Shields");
+  REQUIRE(E.fire_weapon(b, m, "Prime_Punchmech", {3, 3}, std::nullopt, action_options(ctx)).ok());
+  CHECK(dead(b, gen));
+  CHECK_FALSE(P(b, v).shield);
+  CHECK_FALSE(b.tile({6, 6}).shield);
+  // A new shield given later in the turn stays (the drop happens once).
+  P(b, v).shield = true;
+  const int32_t m2 = place(b, "PunchMech", {0, 7}, true);
+  REQUIRE(E.move(b, m2, {1, 7}, action_options(ctx)).ok());
+  CHECK(P(b, v).shield);
+}
+
+TEST_CASE("player turn: the native environments with a per-frame hook are the ones flagged") {
+  for (const char* id : {"Mission_Airstrike", "Mission_Lightning", "Mission_Crack", "Mission_Cataclysm",
+                         "Mission_Tides", "Mission_Terratide", "Mission_SnowStorm", "Mission_Wind", "Mission_Belt",
+                         "Mission_BeltRandom", "Mission_Final", "Mission_Final_Cave", "Mission_Dam", "Mission_Train",
+                         "Mission_Armored_Train", "Mission_Satellite", "Mission_Volatile", "Mission_AcidStorm",
+                         "Mission_Shields", "Mission_Hacking", "Mission_Reactivation", "Mission_Survive", ""}) {
+    MissionData m;
+    m.mission_id = id;
+    CAPTURE(id);
+    CHECK(make_native_environment(m)->has_update() == native_environment_has_update(m));
+  }
+}
+
 // ---- 3 spawning ------------------------------------------------------------------------
 
 TEST_CASE("V41 a spawn blocked by a mech: 1 damage, the spawn waits") {

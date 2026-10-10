@@ -362,6 +362,7 @@ class VolcanoEnv final : public AttackEnv {
   void begin(EnvHost& host) override {
     if (ambiguous_) host.note(PhaseEventType::EnvInexact, "volcano mode unknown for a single marked tile (rocks used)");
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     // Mission_Final:UpdateMission: damaged super-volcano tiles become
     // mountains again; empty ones lose ice and shields.
@@ -421,10 +422,12 @@ class FinalCaveEnv final : public AttackEnv {
     inferred_ = !locations_.empty();
   }
   std::string name() const override { return "Env_Final"; }
-  void begin(EnvHost& host) override {
-    for (const Pawn& p : host.board().pawns()) {
+  void bind(const Board& b) override {
+    for (const Pawn& p : b.pawns()) {
       if (detail::type_is(p, "BigBomb")) had_bomb_ = true;
     }
+  }
+  void begin(EnvHost& host) override {
     if (!inferred_) return;
     // The phase advances once per turn from turn 1: rocks, mech tiles
     // (tentacles), instant rocks, instant tentacle path.
@@ -445,6 +448,7 @@ class FinalCaveEnv final : public AttackEnv {
     host.note(PhaseEventType::EnvInexact,
               "final cave phase " + std::to_string(phase_) + " inferred from the turn (no mission_final_cave)");
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     // Mission_Final_Cave:UpdateMission, on an idle board only.
     if (host.busy()) return;
@@ -767,16 +771,19 @@ bool listed(const Board& b, const Pawn& p) { return p.alive() || is_corpse(b, p)
 class DamMission final : public Environment {
  public:
   std::string name() const override { return "Mission_Dam"; }
-  void begin(EnvHost& host) override {
-    dam_ = find_type(host.board(), "Dam_Pawn");
-    if (const Pawn* d = host.board().find_pawn(dam_)) {
+  void bind(const Board& b) override {
+    dam_ = find_type(b, "Dam_Pawn");
+    if (const Pawn* d = b.find_pawn(dam_)) {
       pos_ = d->pos;
-      // A dam that died before (Flooded) left water below it; one the
-      // player just destroyed (Engine::play_turn) floods now.
+      // A dam that died before (Flooded) left water below it (ice once
+      // frozen); one that died without its hook running (an action run
+      // without ActionOptions::mission) floods now.
       const Point below = pos_ + Point{0, 1};
-      flooded_ = !d->alive() && below.valid() && host.board().tile(below).is_liquid();
+      const Tile* t = below.valid() ? &b.tile(below) : nullptr;
+      flooded_ = !d->alive() && t && (t->is_liquid() || t->terrain == Terrain::Ice);
     }
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     if (flooded_ || dam_ < 0 || pawn_alive(host.board(), dam_)) return;
     SkillEffect fx = env_effect();
@@ -809,17 +816,18 @@ class TrainMission final : public Environment {
  public:
   TrainMission(bool armored, bool queued_known) : armored_(armored), queued_known_(queued_known) {}
   std::string name() const override { return armored_ ? "Mission_Armored_Train" : "Mission_Train"; }
-  void begin(EnvHost& host) override {
-    Board& b = host.board();
+  void bind(const Board& b) override {
     train_ = find_type(b, armored_ ? "Train_Armored" : "Train_Pawn");
     stopped_ = train_ < 0;
-    if (Pawn* t = b.find_pawn(train_)) {
-      loc_ = t->pos;
-      if (!queued_known_ && t->alive() && !t->queued.active() && t->weapons[0] != kNoSymbol && t->pos.valid()) {
-        t->queued = QueuedShot{0, t->pos, step(t->pos, Dir::Up)};
-      }
+    if (const Pawn* t = b.find_pawn(train_)) loc_ = t->pos;
+  }
+  void begin(EnvHost& host) override {
+    Pawn* t = host.board().find_pawn(train_);
+    if (t && !queued_known_ && t->alive() && !t->queued.active() && t->weapons[0] != kNoSymbol && t->pos.valid()) {
+      t->queued = QueuedShot{0, t->pos, step(t->pos, Dir::Up)};
     }
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     if (stopped_) return;
     Board& b = host.board();
@@ -883,10 +891,11 @@ class VolatileMission final : public Environment {
   explicit VolatileMission(const MissionData& m)
       : infinite_(m.infinite_spawn.value_or(false)), infinite_known_(m.infinite_spawn.has_value()) {}
   std::string name() const override { return "Mission_Volatile"; }
+  void bind(const Board& b) override { target_ = find_type(b, "GlowingScorpion"); }
   void begin(EnvHost& host) override {
-    target_ = find_type(host.board(), "GlowingScorpion");
     if (!infinite_known_) host.note(PhaseEventType::EnvInexact, "Mission_Volatile: InfiniteSpawn not recorded");
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     Board& b = host.board();
     if (target_ < 0 || left_) return;
@@ -919,7 +928,8 @@ class VolatileMission final : public Environment {
 class AcidStormMission final : public Environment {
  public:
   std::string name() const override { return "Mission_AcidStorm"; }
-  void begin(EnvHost& host) override { gen_ = find_type(host.board(), "Storm_Generator"); }
+  void bind(const Board& b) override { gen_ = find_type(b, "Storm_Generator"); }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     Board& b = host.board();
     if (!pawn_alive(b, gen_)) return;
@@ -939,10 +949,11 @@ class AcidStormMission final : public Environment {
 class ShieldsMission final : public Environment {
  public:
   std::string name() const override { return "Mission_Shields"; }
-  void begin(EnvHost& host) override {
-    gen_ = find_type(host.board(), "Shield_Building");
-    for (const Pawn& p : host.board().pawns()) shielded_.insert(p.uid);
+  void bind(const Board& b) override {
+    gen_ = find_type(b, "Shield_Building");
+    for (const Pawn& p : b.pawns()) shielded_.insert(p.uid);
   }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     Board& b = host.board();
     if (gen_ < 0) return;
@@ -976,8 +987,7 @@ class HackingMission final : public Environment {
  public:
   explicit HackingMission(const MissionData& m) : bot_(m.hacking_bot), hack_(m.hacking_building) {}
   std::string name() const override { return "Mission_Hacking"; }
-  void begin(EnvHost& host) override {
-    const Board& b = host.board();
+  void bind(const Board& b) override {
     if (hack_ < 0) hack_ = find_type(b, "Hacked_Building");
     if (bot_ < 0) {
       // Old bridges: the bot is the mission's shielded Snowtank1.
@@ -992,10 +1002,14 @@ class HackingMission final : public Environment {
           if (b.find_pawn(uid)->shield) bot_ = uid;
         }
         if (bot_ < 0) bot_ = tanks[0];
-        host.note(PhaseEventType::EnvInexact, "Mission_Hacking: bot id not recorded, several Cannon Bots");
+        bot_inferred_ = true;
       }
     }
   }
+  void begin(EnvHost& host) override {
+    if (bot_inferred_) host.note(PhaseEventType::EnvInexact, "Mission_Hacking: bot id not recorded, several Cannon Bots");
+  }
+  bool has_update() const override { return true; }
   void update(EnvHost& host) override {
     Board& b = host.board();
     if (hack_ < 0 || pawn_alive(b, hack_)) return;
@@ -1017,6 +1031,7 @@ class HackingMission final : public Environment {
  private:
   int32_t bot_ = -1;
   int32_t hack_ = -1;
+  bool bot_inferred_ = false;
 };
 
 // Mission_Reactivation (missions/snow/mission_reactivation.lua): NextTurn with
@@ -1076,6 +1091,13 @@ std::unique_ptr<Environment> make_native_environment(const MissionData& m) {
   if (id == "Mission_Reactivation") return std::make_unique<ReactivationMission>();
   if (!m.danger.empty() || !m.freeze.empty()) return std::make_unique<UnsupportedEnv>(m);
   return std::make_unique<NullEnv>(id.empty() ? "Env_Null" : id);
+}
+
+bool native_environment_has_update(const MissionData& m) {
+  const std::string& id = m.mission_id;
+  return id == "Mission_Final" || id == "Mission_Final_Cave" || id == "Mission_Dam" || id == "Mission_Train" ||
+         id == "Mission_Armored_Train" || id == "Mission_Volatile" || id == "Mission_AcidStorm" ||
+         id == "Mission_Shields" || id == "Mission_Hacking";
 }
 
 }  // namespace itb

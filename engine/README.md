@@ -303,6 +303,18 @@ Done so far (build order from the decompile):
      plus its combat hooks), dispatched on `mission_id`; a Lua-backed
      implementation can replace the native ones once the bridge exports the
      mission instance (spec stage 7 section 4). Table below.
+   - The per-frame hooks run in the player's turn too: the game calls
+     `Mission:BaseUpdate` from `BoardPlayer::OnLoop` (0x008c9760) on every
+     frame of every state but the finished one. With `ActionOptions::mission`
+     set, `Engine::move / fire_weapon / repair` run the environment's
+     `update` on every frame of the action (the environment re-reads the
+     pawns it watches from the board first, `Environment::bind`). A repair
+     under a living Storm Generator keeps ACID; a dam the player destroys
+     floods at once; a dead shield generator drops every shield before the
+     next action. `action_options(TurnContext)` builds these options:
+     `play_turn`, the solver, `itb_live`, the Python module, `--predict` and
+     `--replay` all play actions with them. Missions without a per-frame
+     hook take no hook at all (`native_environment_has_update`).
    - The Soldier psion's +1 is tracked per pawn (`Pawn::health_bonus`):
      pawns that appear while it lives get it, pawns another psion does not
      affect keep a stale one. The Psion Tyrant reaches every player-team pawn.

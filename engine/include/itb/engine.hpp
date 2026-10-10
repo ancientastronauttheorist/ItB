@@ -64,6 +64,16 @@ struct ActionOptions {
   std::function<uint32_t(const Pawn& dying)> death_seed;
   // A spider psion egg landing (see ResolveContext::spider_egg).
   std::function<int(Resolver&, const Pawn& pawn, const std::vector<Point>& tiles)> spider_egg;
+  // The mission the action is played in. The game runs the mission's
+  // per-frame hook (Mission:BaseUpdate, from BoardPlayer::OnLoop) on every
+  // frame of the player's turn too: set, every frame of the action runs the
+  // native environment's update (environment.hpp), e.g. the acid storm
+  // re-applying ACID right after a repair cleared it. Null: no mission hooks
+  // (a bare rules test). Must outlive the call.
+  const MissionData* mission = nullptr;
+  // Hidden choices of a mission hook (MissionRandom; see TurnContext::choose).
+  // Empty = branch 0. Logged as chance nodes in ActionResult::resolve.
+  std::function<int(const ChanceRecord& node)> choose;
   std::vector<RulesEvent>* events = nullptr;
   std::vector<ResolveEvent>* log = nullptr;
 };
@@ -92,9 +102,17 @@ struct ActionResult {
   std::vector<std::string> lua_errors;
   // Lua writes from scripts and death effects the engine does not model.
   std::vector<LuaWrite> unapplied;
+  // What the mission's per-frame hook did during the action (MissionHook
+  // events, ActionOptions::mission).
+  std::vector<PhaseEvent> mission_events;
 
   bool ok() const { return status == ActionStatus::Ok; }
 };
+
+// The options for the player's actions of the turn `ctx` describes: its
+// chance hooks, logs and mission (`ctx` must outlive them). Engine::play_turn,
+// the solver and the live tools all play actions with these.
+ActionOptions action_options(const TurnContext& ctx);
 
 // Engine::play_turn: the player's actions, then the enemy phase.
 struct TurnResult {

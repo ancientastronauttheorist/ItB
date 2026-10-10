@@ -281,9 +281,10 @@ int run_predict(const PredictOptions& opt) {
       return pick;
     };
     bool refused = false;
+    const ActionOptions ao = action_options(ctx);  // the mission's per-frame hooks, ctx.choose
     for (const Action& a : actions) {
       if (a.move.valid()) {
-        const ActionResult r = engine->move(out.board, a.uid, a.move);
+        const ActionResult r = engine->move(out.board, a.uid, a.move, ao);
         out.action_status.push_back("#" + std::to_string(a.uid) + " move " + where(a.move) + ": " +
                                     to_string(r.status));
         if (!r.ok()) refused = true;
@@ -291,13 +292,13 @@ int run_predict(const PredictOptions& opt) {
       if (a.repair) {
         auto it = repair_skill.find(a.uid);
         const ActionResult r =
-            engine->repair(out.board, a.uid, kInvalidPoint, it != repair_skill.end() ? it->second : "Skill_Repair");
+            engine->repair(out.board, a.uid, kInvalidPoint, it != repair_skill.end() ? it->second : "Skill_Repair", ao);
         out.action_status.push_back("#" + std::to_string(a.uid) + " repair: " + std::string(to_string(r.status)));
         if (!r.ok()) refused = true;
       } else if (!a.weapon.empty() || a.slot >= 0) {
         ActionResult r = !a.weapon.empty()
-                             ? engine->fire_weapon(out.board, a.uid, a.weapon, a.target, a.target2)
-                             : engine->fire_weapon(out.board, a.uid, a.slot, a.target, a.target2);
+                             ? engine->fire_weapon(out.board, a.uid, a.weapon, a.target, a.target2, ao)
+                             : engine->fire_weapon(out.board, a.uid, a.slot, a.target, a.target2, ao);
         out.action_status.push_back("#" + std::to_string(a.uid) + " " + r.weapon + " at " + where(a.target) +
                                     (a.target2 ? " then " + where(*a.target2) : "") + ": " +
                                     to_string(r.status) +
