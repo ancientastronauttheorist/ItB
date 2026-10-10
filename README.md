@@ -1,265 +1,114 @@
-# Into the Breach Achievement Bot
+# Into the Breach solver
 
-An autonomous bot that plays [Into the Breach](https://subsetgames.com/itb.html) on macOS and Windows. It has now earned all 70 Steam achievements. Codex-style agents are the live control loop; Python + Rust handle state extraction, combat planning, and click synthesis; a Lua mod-loader bridge wires everything into the running game.
+A rules engine for [Into the Breach](https://subsetgames.com/itb.html),
+and a solver built on it that **proves** it has found the best possible turn.
 
-Status: **70 / 70 Steam/client-cache confirmed — every achievement complete as of 2026-07-09**. **Feed the Flame**, **Complete Victory**, **Lightning War**, and **Spider Breeding** reconciled in the Steam/API checklist by 2026-06-29. **Let's Walk** unlocked locally/offline on 2026-06-29 in Mist Eaters run `20260629_073305_098`: the in-game squad achievement panel showed the lit Let's Walk icon after a visible Control Shot moved a Scarab from E2 to H3, and Into the Breach logged `Set Steam Achievement Ach_Squad_Mist_2`. **Hold the Door** Steam-confirmed from Bombermechs run `20260630_084844_192` with an unlock time of 2026-06-30 08:31 CDT; later local profile evidence (`Squad_Bomber_1 = 1`, with installed localization mapping `Ach_Squad_Bomber_1` to Hold the Door) corroborates the unlock but is not the popup time. **Core of the Earth** unlocked locally on restart on 2026-06-30 after Cataclysm run `20260630_143648_199` secured the R.S.T. island pit-kill route. **No Survivors** surfaced on restart on 2026-07-01; durable proof found `Set Steam Achievement Ach_Squad_Bomber_2` in `log.txt` and the Steam client cache marked No Survivors achieved with unlock time 2026-07-01 10:20:44 CDT, while the profile flag still lagged at `Squad_Bomber_2 = 0` during proof. **Working Together** unlocked locally/offline on 2026-07-01 in Arachnophiles run `20260701_103831_478`: Cold Storage `Mission_SnowBattle` turn 2 put Slide at E2 with Bulk F2, Scorpio E3, Arachnoid D2, and Snowlaser E1 around it, then fired Area Shift at E3; the pause-menu squad-achievement panel showed the lit middle icon, Into the Breach logged `Set Steam Achievement Ach_Squad_Spiders_2`, and the Steam client cache marked it achieved with unlock time 2026-07-01 11:31:47 CDT. **Efficient Explosives** unlocked locally/offline on 2026-07-03 in Arachnophiles run `20260703_110318_646`: Reclamation Zone `Mission_AcidStorm` turn 1 used a visible/native Ricochet Rocket shot after Scorpio/Fourway setup; Bulk moved to F4 and fired at E4/E2, Rust replay emitted `achievement_efficient_explosives:kills:3`, `achievement_proof "Efficient Explosives"` found `Squad_Spiders_3 = 1` in the local profile, and the pause-menu squad panel showed the colorful right icon. **Boosted** unlocked locally/offline on 2026-07-03 in Heat Sinkers run `20260703_125151_272`: R.S.T. Doomsday Point `Mission_Solar` turn 4 completed the fire/repair/reboost loop, `achievement_proof "Boosted"` found `Set Steam Achievement Ach_Squad_Heat_1` in `log.txt`, and the Steam client cache marked `Ach_Squad_Heat_1` achieved with unlock time 2026-07-03 14:28:28 CDT while the profile progress field still lagged at `Squad_Heat_1 = 5`. **Maximum Firepower** unlocked locally/offline on 2026-07-05 in Heat Sinkers run `20260705_021942_077` after a visible native Quick-Fire Rockets activation dealt 5 actual HP to an A.C.I.D. Centipede and 3 HP to a Moth; the popup appeared only on the native two-target UI path, not the bridge's synthetic board-equivalent executor. **Miner Inconvenience** completed the set on 2026-07-09 in Cataclysm run `20260709_134054_884`: the run tracker reached 20 after a deliberate mountain-damage route, the popup appeared after Pinnacle, `log.txt` recorded `Set Steam Achievement Ach_Squad_Cataclysm_3`, and the Steam client cache plus `achievements --sync` confirmed 70/70 with zero remaining even though the profile achievement flag still lagged at `Squad_Cataclysm_3 = 0`. Steam offline mode or missing sync credentials can delay local checklist reconciliation, so report each source precisely.
+The project began as an autonomous achievement bot, which earned all 70 Steam
+achievements by July 2026. It then went further: it reconstructed the game's
+exact rules by reading the game itself, then built a search that returns the
+optimal plan for a turn, or says how far from optimal its best plan might be.
+The same solver now drives the live bot.
 
-Recent highlight: the merged line now carries the Lightning War speed infrastructure from `codex`, the Feed the Flame / Heat Sinkers simulator work, the Bombermechs Complete Victory final-cave proof, the Spider Breeding Arachnophiles proof, the Mist Eaters Let's Walk visible-Control-Shot proof, the Bombermechs Hold the Door spawn-blocking proof, the Cataclysm Core of the Earth pit-kill proof, the Bombermechs No Survivors restart/cache proof, the Arachnophiles Working Together pause-menu proof, the Arachnophiles Efficient Explosives visible-Ricochet proof, the Heat Sinkers Boosted fire-cycle proof, the native Quick-Fire Maximum Firepower proof, and the Cataclysm Miner Inconvenience mountain route. Lightning War was won by treating UI traversal as a timer-safe speedrun graph: pause before reasoning, read timer truth from screenshots, use deterministic deployment/reward/shop scripts, and keep combat boring and reliable through the Rust solver. Let's Walk closed after the solver and execution path learned to prefer calibrated visible `Science_TC_Control` clicks instead of raw bridge effects, with progress verified through the pause-menu achievement tooltip. Hold the Door closed once the Bombermechs route leaned into the current AE target of 15 blocked Emerging Vek by the end of Island 2, using Walking Bombs, body blocks, and Force Swap positioning while keeping the critical-grid Archive run alive. Core of the Earth closed after the Cataclysm route biased combat toward chasm drops, avoided low-payoff trap routing, and fixed Tri-Rocket edge-push simulation before the restart surfaced the achievement popup. No Survivors closed with a delayed restart popup and proof from both the Into the Breach log and Steam's local achievement cache. Working Together closed after the simulator began emitting an Area Shift four-unit event and the achievement overlay learned to score both the final shift and the surrounding setup geometry. Efficient Explosives closed after the solver found a true `achievement_efficient_explosives:kills:3` Ricochet action and the live loop executed the shot through the native two-target UI path rather than a raw bridge effect. Boosted closed after the Heat Sinkers weighting prioritized Boost setup and reboost loops strongly enough to spend a dirty objective line for the eighth in-mission Boost application. Maximum Firepower closed only after replaying the solver's 8-damage line through the game's visible two-click weapon UI so the engine saw one native activation. Miner Inconvenience closed after the solver began valuing every point of mountain HP removed, then carried a mountain-dense Cataclysm run through Archive and Pinnacle to the twentieth mountain and the project's 70/70 finish.
+## Results
 
-Recent unlocks: **Miner Inconvenience** is confirmed from Cataclysm run `20260709_134054_884` by the visible popup, `Set Steam Achievement Ach_Squad_Cataclysm_3` in the game log, and the Steam client cache reaching 70/70. **Maximum Firepower** is confirmed from Heat Sinkers run `20260705_021942_077` by the visible native Quick-Fire popup and the later completed Steam cache. **Boosted** is proven from Heat Sinkers run `20260703_125151_272`: `achievement_proof "Boosted"` found `Set Steam Achievement Ach_Squad_Heat_1` in the Into the Breach log and Steam client cache achieved state after the Doomsday Point fire-cycle line, even though `Squad_Heat_1` still lagged at 5/8 in `profile.lua`. **Efficient Explosives** is proven from Arachnophiles run `20260703_110318_646`: `achievement_proof "Efficient Explosives"` found `Squad_Spiders_3 = 1` in the local profile after Bulk's visible Ricochet Rocket at E4/E2 killed three enemies from one action. **Working Together** is proven from Arachnophiles run `20260701_103831_478`: `achievement_proof "Working Together"` found `Ach_Squad_Spiders_2` in the game log and Steam client cache, and the pause-menu squad panel showed the colorful middle icon immediately after the four-unit Area Shift. **No Survivors** is proven from the 2026-07-01 restart popup path: `achievement_proof "No Survivors"` found `Ach_Squad_Bomber_2` in the game log and Steam client cache. **Core of the Earth** is locally proven from the 2026-06-30 restart popup after Cataclysm run `20260630_143648_199`, and the 2026-07-01 achievement sync marks it complete. **Hold the Door** is Steam-confirmed from the Bombermechs run with an unlock time of 2026-06-30 08:31 CDT. **Let's Walk** is locally proven from visible Control Shot movement crossing the 120-space threshold on Archive island. **Spider Breeding** is confirmed from Arachnoid Injector kill credit reaching 15 spawns on one Corporate Island. **Feed the Flame**, **Complete Victory**, and **Lightning War** are Steam-cache confirmed as of 2026-06-26. **Stay With Me!** unlocked and Steam-cache synced on 2026-06-17 in Mist Eaters Easy R.S.T. play; **Lucky Start** reconciled before that run. Earlier major milestones include **On the Backburner**, **Chronophobia**, **Powered Blast**, **Trick Shot**, **Immortal**, **Loot Boxes!**, **Engineering Dropout**, **Class Specialist**, **Change the Odds**, **Mech Specialist**, **Flight Specialist**, **Distant Friends**, **Hold the Line**, **Healing**, **Overkill**, **Untouchable**, **Unstable Ground**, **This is Fine**, **Quantum Entanglement**, **Adaptable Victory**, **There is No Try**, **Perfect Strategy**, **Ramming Speed**, **Chain Attack**, **Squads Victory**, **Stormy Weather**, and **Hard Victory**. See `TODO.md` for the checklist.
+Measured on 2026-10-09 against the bot's recorded games (469 boards) and live
+play:
 
-Current milestone: **70/70 proven and Steam-client-cache confirmed. The achievement hunt is complete.** Future work can focus on maintenance, regressions, and making the live bot more robust rather than chasing another unlock.
-
-The Engine Observatory / full-decompile / solver-first research that ran from July to October 2026 has been archived on the `archive/codex-decompile` branch and removed from `main`.
-
-### Lightning War retrospective
-
-**Lightning War** took roughly three weeks because it attacked the weakest part of the original architecture: the bot was strong at solving turns, but the achievement measured every second spent outside pause. The winning direction was to treat UI navigation as part of the speedrun, not as a wrapper around combat. The loop evolved toward a strict primitive: capture a visible screenshot, immediately pause with `Esc`, verify the pause menu visually, and only then let the LLM reason.
-
-The turning point was a human calibration Q&A before the long successful run. The user's answers redirected the work toward a timer-first machine: the solver was already strong enough, mission shopping was usually wasted timer, the highlighted 8x8 preview board was the fastest route target, deployment should use the fast helper, shop policy should be deterministic, Advanced Edition could stay off, and screenshot/timing collection was worth it if bounded. The detailed sprint plan lives in [docs/agent/lightning-war-proof-gated-sprint.html](docs/agent/lightning-war-proof-gated-sprint.html).
-
----
+| | |
+|---|---|
+| Recorded attacks, where the old simulator was right | **98.3%** match the game (91.9% exactly, the rest are labelled recording artefacts) |
+| Recorded moves | **98.8%** match (92.6% exactly) |
+| Full turns (player actions and the whole enemy phase) | **99.5%** accounted for (68% exact; the rest explained, mostly by Vek movement after their turn) |
+| Steps where the old simulator **failed** | the engine reproduces the game **66.9%** of the time |
+| Optimality proofs | **76.7%** of sampled boards proven optimal within 2 minutes on 8 threads (median 13 s); every 1–2-unit board |
+| Against the old bot's plans | never worse wherever the search finished; strictly better on 362 of 469 boards |
+| Live, two missions incl. a boss | every player action matched the engine's prediction once the loadout was known |
 
 ## How it works
 
-The game runs natively. State flows out through a Lua mod hook that writes `itb_state.json`; commands flow back through `itb_cmd.txt`, ACKed via `itb_ack.txt`, with a heartbeat file to detect a hung bridge. The bridge directory is platform-specific: `/tmp` on macOS and `Documents/My Games/Into The Breach/itb_bridge` on Windows, unless `ITB_BRIDGE_DIR` overrides it. For UI screens the bridge can't drive (deployment, menus, shop, rewards, island map), the bot emits pixel-coordinate click plans and dispatches them via the `computer-use` MCP.
-
-### Five-layer architecture
-
-| Layer | Code | Role |
-|---|---|---|
-| 0 — Game loop | `game_loop.py` + `src/loop/` | Stateless CLI. Every invocation: load session -> compute -> save. The agent is the orchestrator. |
-| 1 — State extraction | `src/bridge/` (primary), `src/capture/` (fallback save-file parser) | Bridge gives per-sub-action updates, targeted tiles, env hazards with kill flag, deployment zone. Save file only updates at turn boundaries. |
-| 2 — Game state | `src/model/` | `Board`, `Unit`, `WeaponDef` - the solver's single source of truth. |
-| 3 — Solver 2.0 | `rust_solver/` (`itb_solver` PyO3 extension) + thin Python wrappers in `src/solver/` | Rust is the only simulator and search engine. Python handles wrapping, audit breakdowns, verification, tuning, and research feedback. |
-| 4 — Strategist | `src/strategy/`, `src/loop/commands.py`, `weights/active.json`, achievement metadata in `data/` | Picks run setup, mission priority, shop behavior, and `EvalWeights` for achievement hunting. Current default: Easy + Advanced Edition + achievement-aware named squad; Balanced Roll is reserved for solver-eval and random-squad targets. |
-
-### Solver 2.0
-
-Solver 2.0 is built around a stricter goal than "highest score this turn": avoid irreversible loss first, then optimize threats, kills, spawns, XP, and achievement shaping.
-
-- **Rust is authoritative.** `rust_solver/` owns search, enemy simulation, player-weapon simulation, projection, scoring, and replay. `src/solver/simulate.py` has been deleted; `src/solver/solver.py` is a small dataclass/wrapper layer around `itb_solver`.
-- **Candidate search is wider.** The loop asks Rust for top-K one-turn candidates and depth-2 beam chains (`solve_top_k`, `solve_beam`, `project_plan`) instead of trusting only the top raw-score plan.
-- **Plan safety gates bad wins.** Every candidate is replayed and checked for irreversible losses: grid power, building HP, objective buildings, pods, mech deaths, and unsafe self-damage. The first clean candidate wins, even if it scored slightly lower.
-- **Execution is closed-loop.** `auto_turn` executes move -> verify -> attack/repair -> verify through the bridge, re-solves after desyncs, and withholds End Turn on unexplained predicted-vs-actual grid drops.
-- **Upgrades are first-class.** Achievement-critical variants such as `Science_Swap_AB` are represented in the save overlay, Rust weapon IDs, target enumeration, and bridge firing path, so the solver can see and execute upgraded weapon behavior rather than silently falling back to base loadouts.
-- **Unknowns stop the bot.** The research gate blocks solving past uncatalogued pawns, terrain, weapons, and screens. Recent live-loop catalog work includes Digger, Wall, Centipede, Wind Torrent, AE psion/boss behavior, and Bombermechs Walking Bomb deployables.
-- **Failures feed the next version.** `recordings/failure_db.jsonl`, the fuzzy detector, the diagnosis queue, weapon override staging, regression boards, and `EvalWeights` tuning turn live mistakes into repeatable fixes.
-
-### Self-healing research loop
-
-When `read` encounters an unknown pawn type, terrain, weapon, or UI screen, it returns `RESEARCH_REQUIRED`. The loop then:
-
-1. `research_next` emits an MCP capture plan (crop regions + Vision prompts).
-2. The agent dispatches the plan, runs Vision on each crop, submits JSON via `research_submit`.
-3. If confidence is low, community notes (Steam / Reddit) are fetched and attached via `research_attach_community`.
-4. Results land in `data/known_types.json`, `data/weapon_overrides_staged.jsonl`, and `data/weapon_penalty_log.json`.
-
-See `docs/self_healing_loop_design.md` for the four-phase design (Instrumentation → Passive Response → Research Pipeline → Active Response).
-
-### Failure database and auto-tuning
-
-Every desync between predicted and actual board writes a record to `recordings/failure_db.jsonl`. Four commands consume it:
-
-- `analyze` — pattern breakdowns by trigger, tier, severity, squad, island.
-- `tune` — random search + coordinate refinement on `EvalWeights`; objective is `mean_fixed_score − 100 × failure_count`.
-- `validate` — replays all recorded boards under two weight versions; gates deployment on ≤20% regression rate and zero critical building-loss regressions.
-- `diagnose_next` — drains one queued desync investigation, producing a rule match or an agent prompt for Rust-side simulator fixes.
-
-Tuned weights land in `weights/v{NNN}_{date}.json`; the deployed copy is `weights/active.json`.
-
----
-
-## Setup
-
-### Prerequisites
-
-- macOS or Windows. macOS uses Quartz and `/tmp`; Windows uses Win32 window detection, PIL `ImageGrab`, and the profile-local `itb_bridge` directory.
-- Python 3.9+
-- Rust toolchain
-- `maturin` (`pip install maturin`)
-- Into the Breach on Steam (App ID `590380`), with [ITB-ModLoader](https://github.com/itb-community/ITB-ModLoader) installed
-
-### Install the Lua bridge
-
-```bash
-bash scripts/install_modloader.sh   # macOS: copies src/bridge/modloader.lua into the Steam app bundle
-# then restart Into the Breach
+```
+game ──Lua bridge──▶ board state ──▶ engine ──▶ solver ──▶ plan ──bridge──▶ game
+                                       │
+             the game's own weapon Lua ┘  (run in an embedded Lua 5.1)
 ```
 
-Re-run after any edit to `src/bridge/modloader.lua`. On Windows, install the same Lua file into the ITB-ModLoader location used by the game, then restart Into the Breach. Set `ITB_SAVE_DIR` or `ITB_BRIDGE_DIR` only when using nonstandard save or bridge locations.
+- **Rules from the game itself.** The behaviour was read from the unstripped
+  Linux build (14,800 named C++ functions in Ghidra) and the shipped Lua.
+  The engine reimplements it in original C++.
+- **The real weapon scripts.** An embedded Lua 5.1 host runs the game's own
+  `GetTargetArea` and `GetSkillEffect` for every weapon (559 ids, Advanced
+  Edition included) against the engine's board. It reproduces the scripting
+  library's quirks, down to a byte-exact clone of the game's random number
+  generator.
+- **Frame-exact resolution.** Pushes, projectiles, death animations and
+  delays gate each other in real time in the game. The engine replays the
+  game's frame clock with its float32 arithmetic, skips empty frames, and
+  flags outcomes that depend on frame rate.
+- **The whole enemy phase:** status ticks, environments (air strikes, tides,
+  cataclysm, volcano and the rest), telegraphed Vek attacks re-aimed after
+  pushes, and emerging spawns.
+- **Strict scoring.** A turn is ranked lexicographically: grid power,
+  buildings, mechs lost, mech HP, mission objectives (weighted by the game's
+  own reward values), kills, position.
+- **Proof-carrying search.** Every interleaving of moves and attacks is
+  covered (a mech can move, let another act, then fire). A transposition
+  table merges identical boards, chance (Grid Defense, Lightning order, death
+  splits) is taken worst case, and pruning uses only bounds argued sound. The
+  result is proven optimal when the search completes, or best-so-far with an
+  honest gap. It is cross-checked against brute force on small boards.
 
-### Build the Rust solver
-
-```bash
-cd rust_solver
-maturin build --release
-pip3 install --user --force-reinstall target/wheels/itb_solver-0.1.0-cp39-cp39-macosx_11_0_arm64.whl
-```
-
-Re-run after any edit to `rust_solver/src/*.rs`. The wheel filename is
-platform- and Python-version-specific; use the wheel produced under
-`rust_solver/target/wheels/` on Windows.
-
-### Git hooks
-
-```bash
-bash scripts/install-hooks.sh
-```
-
-### Secrets
-
-`.env` (gitignored) holds `STEAM_API_KEY` and `STEAM_ID` for achievement queries and local checklist sync.
-
----
+Details, specs and open questions: [`engine/README.md`](engine/README.md).
 
 ## Quick start
 
-On Windows PowerShell, prefer `python -X utf8 game_loop.py ...` for the same
-commands shown below.
+Requirements: macOS (the only platform tested so far), CMake ≥ 3.24, Ninja, a C++20 compiler, and
+your own copy of the game. The engine reads the game's scripts from your
+install, via `ITB_GAME_DIR` or the Steam default.
 
 ```bash
-# Start a new run
-python3 game_loop.py achievements --sync
-python3 game_loop.py recommend_squad --tags achievement
-python3 game_loop.py new_run auto --difficulty 0 --tags achievement
-# On the new-game screen: Easy, Advanced Edition ON, select the recommended squad, then Start
-#
-# Solver stress-test / random-squad mode:
-python3 game_loop.py new_run auto --mode solver_eval --difficulty 1 --tags solver_eval
-# On the new-game screen: click Balanced Roll, then Start
+cmake -S engine -B engine/build -G Ninja -DITB_BUILD_PYTHON=ON -DPython_EXECUTABLE="$(command -v python3)"
+cmake --build engine/build
+engine/build/itb_tests
 
-# Typical combat turn (fully automated)
-python3 game_loop.py auto_turn --time-limit 10
-# → returns an MCP click plan for End Turn
-python3 game_loop.py click_end_turn
-# → loop until mission_end
+# Solve a recorded board and show the plan, its score and proof status
+engine/build/itb_inspect --solve recordings/20260713_052159_731/m07_turn_01_solve_input.json --time 30
 
-# Chronophobia / pod-destruction combat turns
-python3 game_loop.py auto_turn --time-limit 10 --destroy-time-pods
-
-# Inspect the failure corpus
-python3 game_loop.py analyze --min-samples 30
-
-# Tune weights and validate
-python3 game_loop.py tune --iterations 100 --min-boards 50
+# Check the engine against what really happened in recorded games
+engine/build/itb_inspect --replay recordings --turns
 ```
 
-Manual-play fallback (when the bridge is unavailable):
-
-```bash
-python3 game_loop.py read
-python3 game_loop.py solve --time-limit 10
-python3 game_loop.py click_action 0   # → dispatch via computer_batch, then:
-python3 game_loop.py verify_action 0
-# ... repeat per action, then click_end_turn
-```
-
----
-
-## CLI reference (`game_loop.py`)
-
-All subcommands are stateless; session state lives in `sessions/active_session.json`.
-
-**State** — `read`, `status`, `verify_action <i>`, `verify [i]`
-**Solving & recording** — `solve`, `replay <run_id> <turn>`
-**Combat execution** — `auto_turn`, `auto_mission`, `click_action <i>`, `click_end_turn`, `click_balanced_roll`, `execute <i>`, `end_turn`
-**Research gate** — `research_next`, `research_submit <id> <json>`, `research_attach_community <id> <notes_json>`, `research_probe_mech <tile> [slot]`
-**Analysis & tuning** — `analyze`, `validate <old> <new>`, `tune`, `review_overrides`, `mine_overrides`
-**Run management** — `recommend_squad [squad]`, `new_run [squad|auto]`, `snapshot <label>`, `log <msg>`, `mission_end {win|loss}`, `annotate <run_id> <turn> <notes>`
-**Utilities** — `calibrate`, `achievements [--sync]`
-
-Standalone scripts:
-
-- `python3 tile_hover.py <A1-H8>` — prints MCP pixel coords for a tile
-- `python3 island_select.py [--all]` — random or full-list island picker
-- `python3 scrape_wiki.py` — refresh `data/wiki_raw/`
-
----
+Live play: install the bridge with `scripts/install_modloader.sh`, restart
+the game, and run `python3 game_loop.py auto_turn` each turn. See
+[`CLAUDE.md`](CLAUDE.md) and [`docs/agent/live-runbook.md`](docs/agent/live-runbook.md).
 
 ## Repository layout
 
-```
-game_loop.py                 Primary CLI (dispatches to src/loop/commands.py)
-tile_hover.py                Tile → MCP coord utility
-island_select.py             Island picker for island-select screen
-scrape_wiki.py               Wiki scraper (Playwright + Cloudflare bypass)
-CLAUDE.md                    Agent operational rules, protocols, phase playbook
-AGENTS.md                    Codex-compatible operational rules adapted from CLAUDE.md
-TODO.md                      Achievement checklist (70 total, tier-grouped)
-README.md                    This file
+| Path | What |
+|---|---|
+| `engine/` | C++ rules engine, Lua weapon host, frame-exact executor, enemy phase, scoring, solver, tools and tests |
+| `engine/python/` | Python bindings used by the live bot |
+| `src/`, `game_loop.py` | The live bot: Lua bridge IPC, game loop, per-action verification, strategy |
+| `src/bridge/modloader.lua` | The in-game bridge |
+| `rust_solver/` | The original Rust solver, now the fallback |
+| `recordings/` | Boards, plans and outcomes from past runs (the validation corpus) |
+| `docs/agent/` | Live-bot manuals |
+| `docs/archive/` | Achievement-era documents |
 
-src/
-  loop/        Session, logger, commands (the stateless CLI backing game_loop.py)
-  bridge/      Lua ↔ Python IPC (protocol, reader, writer, modloader.lua)
-  model/       Board, Unit, WeaponDef, PawnStats (60+ mechs, 50+ Vek, 100+ weapons)
-  solver/      Python wrapper, evaluator, verifier, tuner, analysis, research gate
-  control/     MCP click planners (grid_to_mcp, End Turn, weapon icons)
-  capture/     Save-file fallback parser + window/grid detection
-  strategy/    (placeholder — strategist logic currently lives in loop/commands.py)
+## Clean room
 
-rust_solver/   PyO3 extension `itb_solver` (~8k LOC across simulate, enemy, weapons, solver, evaluate, board, movement)
-  src/         Rust solver source
-  tests/       regression.rs — runs solver against all recorded boards
+This repository contains no game files and no decompiled code. The engine is
+original code written from behavioural specs; game data (unit definitions,
+weapon scripts) is read at runtime from a local install. Decompiler
+workspaces stay in a git-ignored folder.
 
-data/
-  ref_*.md                   Hand-authored game mechanics, squads, Vek, pilots, achievements
-  known_types.json           Catalog of recognized pawn types / terrain / weapons / screens
-  weapon_overrides_staged.jsonl  Weapon-def patch candidates awaiting review
-  weapon_penalty_log.json    Desync signature frequency map
-  achievements_detailed.json Steam achievement catalog (70 entries)
-  squads.json, vek.json, pilots.json, islands.json, mechanics.json
-  wiki_raw/                  Scraped wiki pages (source material)
+## History
 
-weights/       active.json + v{NNN}_{date}.json history
-recordings/    Per-run, per-turn board/solve/verify JSON + failure_db.jsonl
-logs/          Per-run decision log (markdown)
-sessions/      active_session.json (current run state)
-snapshots/     Labeled regression fixtures
-tests/         pytest suite (64 files); use `-m regression` for the slow corpus
-scripts/       install_modloader.sh, install-hooks.sh, regression.sh, migrate_failure_db.py, regenerate_known_types.py, replay_fuzzy_detector.py, probe_deploy_zone.py
-docs/          retrospectives, self_healing_loop_design.md, reference.md, lua_bridge_architecture.md, env_hazards_by_island.md, self_improvement_plan.md
-assets/        Game UI screenshots used for calibration
-prompts/       Vision prompt templates for the research loop
-```
-
----
-
-## Coordinate conventions
-
-- **Bridge `(x, y)` → visual:** `Row = 8 - x`, `Col = chr(72 - y)`. Example: bridge `(3, 5)` = `C5`. **All communication uses A1–H8 visual notation.**
-- **MCP pixel coords:** `grid_to_mcp(x, y)` in `src/control/executor.py` auto-detects the game window via Quartz on macOS or Win32 APIs on Windows, then uses the shared grid calibration. Never hardcode pixel coords - the window moves.
-- **UI anchors** (scaled to window size from a 1280×748 reference): End Turn `(95, 78)`, Repair `(105, 553)`, weapon slots `(181, 553)` / `(245, 553)`, Balanced Roll `(791, 530)`.
-
----
-
-## Testing
-
-```bash
-# Python — fast unit tests
-pytest -m "not regression"
-
-# Python — slow replay corpus (re-solves ~100 historical failures)
-pytest -m regression
-
-# Rust regression (no solver crashes, no empty solutions on active boards)
-cd rust_solver && cargo test --test regression --no-default-features
-
-# Everything at once
-bash scripts/regression.sh
-```
-
-Acceptable failures are tracked in `tests/known_issues.json` (scoped by `"python"`, `"rust"`, or `"both"`).
-
----
-
-## Key design choices
-
-- **Trust the solver.** Manual overrides suppress the failure-db signal the tuner needs. The only exception is an empty solve result (timeout).
-- **Conveyors are tile-driven.** If the bridge exposes `conveyor` on any live tile, enemy-phase belts apply before Vek attacks even outside `Mission_Belt`.
-- **Mouse clicks only for UI.** No keyboard shortcuts, no portrait clicks, no Tab — just tile centers and the End Turn button.
-- **Click tile centers, not sprites.** Sprites render 100–170 px above tile center; `grid_to_mcp` already handles this.
-- **Save file only updates at turn boundaries.** The bridge has no such limit; `verify_action` always re-reads fresh bridge state.
-- **Every process error becomes a permanent fix.** Mistakes update `AGENTS.md` / `CLAUDE.md` with a guard so they don't recur.
-
-See `AGENTS.md` for the current Codex operational rule set and `CLAUDE.md` for the original source instructions.
+- **April–July 2026: achievement bot.** A Lua bridge, an empirically tuned
+  Rust simulator and agent-driven UI play earned all 70 achievements (the
+  last on 2026-07-09). Its story, including the Lightning War speedrun, is in
+  [`docs/archive/achievement-era/`](docs/archive/achievement-era/).
+- **July–October 2026: first decompile attempt.** An earlier agent-driven
+  reverse-engineering effort on the Windows build is archived on the
+  `archive/codex-decompile` branch.
+- **October 2026: the engine.** A clean restart on the unstripped Linux
+  build, from first spec to a proven-optimal solver driving the live bot.
