@@ -417,7 +417,7 @@ def _health_psion(u: dict) -> bool:
 
 def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                 acid_pools: frozenset = frozenset(), resist: dict | None = None,
-                xp_split: bool = False) -> tuple[list, list]:
+                xp_split: bool = False, mines_gone: frozenset = frozenset()) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
@@ -428,6 +428,10 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
     - `acid_pools` are the pool tiles before the enemy phase: a Vek that moves
       onto one while planning next turn (the AI move the engine doesn't
       model) picks up ACID.
+    - `mines_gone` are the mine tiles (Item_Mine) before the enemy phase that
+      the game no longer has after it: a Vek that walks onto one while
+      planning next turn dies there. A non-mech the engine has alive and the
+      game has dead is a note while there are tripped mines to account for it.
     - `resist` (only when the prediction had chance nodes): {"before": the
       board before the enemy phase, "tiles": the Grid Defense roll tiles, or
       None if the prediction does not list them}. The engine predicts every
@@ -448,6 +452,7 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
     if enemy_phase and not any(_health_psion(u) for u in want["units"]):
         psion = next((u for u in got["units"] if u["uid"] not in known and _health_psion(u)), None)
     buffed = []
+    mines_left = len(mines_gone)
     for uid in sorted(known):
         a, b = w.get(uid), g.get(uid)
         if a is None and b is None:
@@ -456,6 +461,12 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
             diffs.append(f"{describe_unit(b)}: engine dead, game alive at {visual(b['x'], b['y'])} hp {b['hp']}")
             continue
         if b is None:
+            if enemy_phase and not a.get("mech") and mines_left > 0:
+                mines_left -= 1
+                notes.append(f"{describe_unit(a)} (engine alive at {visual(a['x'], a['y'])} hp {a['hp']}) died on "
+                             f"a mine moving during AI planning (mines tripped: "
+                             f"{', '.join(visual(*xy) for xy in sorted(mines_gone))})")
+                continue
             diffs.append(f"{describe_unit(a)}: engine alive at {visual(a['x'], a['y'])} hp {a['hp']}, game dead")
             continue
         who = describe_unit(a)
@@ -999,7 +1010,9 @@ def end_turn(ctx) -> list:
     path = run.save_state(after, "after_enemy")
     live = engine.board(path)
     pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid"))
+    mines = lambda s: {(t["x"], t["y"]) for t in s.get("tiles", []) if t.get("item") == "Item_Mine"}
     diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
+                               mines_gone=frozenset(mines(state) - mines(after)),
                                resist=resist_info(pred),
                                xp_split=bool((pred.get("enemy_phase") or {}).get("xp_split")))
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})

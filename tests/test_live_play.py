@@ -827,6 +827,23 @@ class DiffBoardsTest(unittest.TestCase):
         diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True, acid_pools=frozenset())
         self.assertEqual(len(diffs), 1)
 
+    def test_vek_dead_on_a_tripped_mine_is_a_note(self):
+        # Live 2026-10-10 (Mission_Mines): Firefly1 walked onto the F4 mine
+        # while the Vek planned their next turn and died there.
+        want = self.board([self.vek(5, 2)])
+        got = self.board([])
+        diffs, notes = lp.diff_boards(want, got, {97}, enemy_phase=True, mines_gone=frozenset({(4, 2)}))
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("mine" in n for n in notes))
+
+    def test_vek_death_without_a_tripped_mine_is_still_a_difference(self):
+        want = self.board([self.vek(5, 2)])
+        got = self.board([])
+        diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True, mines_gone=frozenset())
+        self.assertEqual(len(diffs), 1)
+        diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=False, mines_gone=frozenset({(4, 2)}))
+        self.assertEqual(len(diffs), 1)
+
     # Grid Defense: the engine predicts every roll as not resisted (worst case).
     # Live 2026-10-09 m22 turn 3: G6 predicted 1 HP, game 2; grid 4, game 5.
 
