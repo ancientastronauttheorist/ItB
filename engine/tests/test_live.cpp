@@ -56,6 +56,17 @@ bool is_state_file(const fs::path& p) {
   return true;
 }
 
+// A dump taken after a mission ended (live_play records the state it sees
+// once the enemy phase finishes the mission): no combat board to check.
+bool mission_over_dump(const fs::path& p) {
+  const json j = json::parse(std::ifstream(p), nullptr, false);
+  if (j.is_discarded()) return false;
+  const json* s = &j;
+  if (s->contains("data")) s = &(*s)["data"];
+  if (s->contains("bridge_state")) s = &(*s)["bridge_state"];
+  return s->value("in_active_mission", true) == false;
+}
+
 std::set<int> uids(const json& board) {
   std::set<int> out;
   for (const json& u : board["units"]) out.insert(u["uid"].get<int>());
@@ -77,6 +88,7 @@ TEST_CASE("live: every archived live-session bridge state loads") {
   int loaded = 0, session_2026_10_09 = 0;
   for (const auto& e : fs::recursive_directory_iterator(kLiveDir)) {
     if (!e.is_regular_file() || !is_state_file(e.path())) continue;
+    if (mission_over_dump(e.path())) continue;
     std::string error;
     const auto rec = load_recording(e.path(), data.get(), &error);
     CHECK_MESSAGE(rec.has_value(), e.path().string() << ": " << error);
