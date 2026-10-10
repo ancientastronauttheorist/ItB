@@ -63,9 +63,13 @@ def base_state() -> dict:
 
 def compact(state: dict) -> dict:
     """What itb_live's live_board_json gives for these simple boards."""
-    us = []
+    us, under = [], []
     for u in state["units"]:
         if u.get("is_extra_tile") or u.get("hp", 0) <= 0:
+            continue
+        if u.get("underground"):
+            under.append({"uid": u["uid"], "type": u["type"], "x": u["x"], "y": u["y"], "hp": u["hp"],
+                          "max_hp": u.get("max_hp"), "team": u["team"], "underground": True})
             continue
         us.append({"uid": u["uid"], "type": u["type"], "x": u["x"], "y": u["y"], "hp": u["hp"],
                    "team": u["team"], "mech": u.get("mech", False),
@@ -73,7 +77,10 @@ def compact(state: dict) -> dict:
     us.sort(key=lambda u: u["uid"])
     bs = [{"x": t["x"], "y": t["y"], "hp": t["building_hp"]} for t in state["tiles"]
           if t["terrain"] == "building"]
-    return {"grid_power": state["grid_power"], "buildings": bs, "units": us}
+    out = {"grid_power": state["grid_power"], "buildings": bs, "units": us}
+    if under:
+        out["underground"] = sorted(under, key=lambda u: u["uid"])
+    return out
 
 
 def unit(state, uid):
@@ -89,8 +96,11 @@ def apply(state: dict, step: dict, damage: int = 1) -> None:
     elif step["sub"] == "weapon":
         tx, ty = step["target"]
         for v in state["units"]:
-            if (v["x"], v["y"]) == (tx, ty):
+            if (v["x"], v["y"]) == (tx, ty) and not v.get("underground"):
                 v["hp"] -= damage
+                # A hurt Burrower dives: underground (the bridge omits it).
+                if v["type"] == "Burrower1" and v["hp"] > 0:
+                    v["underground"] = True
         u["active"] = False
     else:
         u["hp"] = min(u["max_hp"], u["hp"] + 1)
@@ -193,6 +203,7 @@ class FakeBridge:
         path = path or lv.STATE
         tmp = Path(str(path) + ".tmp")
         st = copy.deepcopy(self.state)
+        st["units"] = [u for u in st["units"] if not u.get("underground")]
         if not self.export_moved:
             for u in st["units"]:
                 u.pop("moved", None)
@@ -608,6 +619,42 @@ class LivePlayTest(unittest.TestCase):
         self.assertIn("Firefly1#101", text)
         self.assertNotIn("Scorpion1#100: engine at", text)
 
+    def test_a_dived_burrower_is_carried_over_and_resurfaces_by_uid(self):
+        # Live 2026-10-10 m20 (Mission_Reactivation) turn 2: the Laser hurt
+        # Burrower1#1683, which dove; the bridge no longer listed it, the
+        # end-of-turn prediction did not have it and its resurfacing in the
+        # AI's move was reported as a spawn.
+        st = base_state()
+        unit(st, 100).update(type="Burrower1", has_queued_attack=False)
+        unit(st, 100).pop("queued_target")
+        self.bridge(st)
+
+        def next_turn(s):
+            s = FakeBridge.default_next(s)
+            b = unit(s, 100)
+            b.pop("underground")
+            b["x"], b["y"] = 4, 4  # the AI's move brings it up elsewhere
+            return s
+
+        self.fb.next_turn = next_turn
+        code, text = self.quiet(["turn"], FakeEngine())
+        self.assertEqual(code, 0, text)
+        self.assertNotIn(100, [u["uid"] for u in lv.read_json(lv.STATE)["units"]])  # the bridge omits it
+        manifest = json.loads((self.run_dir() / "manifest.json").read_text())
+        self.assertEqual(manifest["engine_underground"]["units"]["100"]["hp"], 2)
+
+        eng = FakeEngine()
+        code, text = self.quiet(["end-turn", "--run", str(self.run_dir())], eng)
+        self.assertEqual(code, 0, text)
+        carried = unit(eng.predict_states[0], 100)
+        self.assertTrue(carried["underground"])
+        self.assertEqual((carried["x"], carried["y"], carried["hp"]), (3, 3, 2))
+        self.assertIn("note: Burrower1#100 underground (dove at E5, hp 2)", text)
+        self.assertIn("note: Burrower1#100 resurfaced at D4 hp 2", text)
+        self.assertNotIn("new units", text)
+        manifest = json.loads((self.run_dir() / "manifest.json").read_text())
+        self.assertEqual(manifest["engine_underground"]["units"], {})
+
     @staticmethod
     def building_not_resisted(st):
         """The engine's worst case: the building at (2, 2) (F6) does not resist."""
@@ -860,6 +907,47 @@ class DiffBoardsTest(unittest.TestCase):
         got2 = self.board([dict(a, frozen=False), dict(b, frozen=False)])
         diffs, _ = lp.diff_boards(want, got2, {1, 2}, enemy_phase=True, random_thaw=True)
         self.assertEqual(len(diffs), 1)
+
+    @staticmethod
+    def burrower(x, y, hp=1):
+        return {"uid": 1683, "type": "Burrower1", "x": x, "y": y, "hp": hp, "team": 6}
+
+    def test_underground_burrower_matches_by_uid(self):
+        # Underground on both sides: the engine lists it under "underground",
+        # the bridge not at all.
+        want = dict(self.board([]), underground=[dict(self.burrower(1, 4), underground=True)])
+        self.assertEqual(lp.diff_boards(want, self.board([]), {1683}), ([], []))
+        # After the enemy phase the AI's move brought it up elsewhere: a note
+        # (not a spawn), with the HP still compared.
+        got = self.board([self.burrower(1, 5)])
+        diffs, notes = lp.diff_boards(want, got, {1683}, enemy_phase=True)
+        self.assertEqual(diffs, [])
+        self.assertEqual(len(notes), 1)
+        self.assertIn("Burrower1#1683 resurfaced at C7 hp 1", notes[0])
+        diffs, _ = lp.diff_boards(want, self.board([self.burrower(1, 5, hp=3)]), {1683}, enemy_phase=True)
+        self.assertEqual(len(diffs), 1)
+        # During the player's turn the game showing it is a difference.
+        diffs, _ = lp.diff_boards(want, got, {1683})
+        self.assertEqual(diffs, ["Burrower1#1683: engine underground (dove at D7), game at C7 hp 1"])
+
+    def test_track_underground(self):
+        entry = dict(self.burrower(1, 4), underground=True)
+        pred = dict(self.board([]), underground=[entry])
+        under = {}
+        lp.track_underground(under, pred, self.board([]), {1683})
+        self.assertEqual(under, {1683: entry})
+        lp.track_underground(under, self.board([]), self.board([self.burrower(1, 5)]), {1683})
+        self.assertEqual(under, {})  # resurfaced
+        lp.track_underground(under, pred, self.board([]), set())  # not a turn-start unit
+        self.assertEqual(under, {})
+        state, patches = lp.patch_state({"units": []}, {}, set(), underground={1683: entry})
+        self.assertEqual(state["units"], [{"uid": 1683, "type": "Burrower1", "x": 1, "y": 4, "hp": 1, "team": 6,
+                                           "underground": True}])
+        self.assertEqual(patches, {"1683.underground": [1, 4]})
+        # Listed by the bridge again: not added twice.
+        state, patches = lp.patch_state({"units": [self.burrower(1, 5)]}, {}, set(), underground={1683: entry})
+        self.assertEqual(len(state["units"]), 1)
+        self.assertEqual(patches, {})
 
     def test_vek_dead_on_a_tripped_mine_is_a_note(self):
         # Live 2026-10-10 (Mission_Mines): Firefly1 walked onto the F4 mine

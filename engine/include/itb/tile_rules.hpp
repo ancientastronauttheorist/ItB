@@ -45,7 +45,7 @@ enum class RulesEventType : uint8_t {
   PawnKilled,         // pawn `uid` died (death pending)
   PawnRevived,        // a mech corpse was healed back to life
   PawnFell,           // pawn `uid` fell into a chasm
-  PawnBurrowed,       // burrower dove underground (stage 3/7 removes it)
+  PawnBurrowed,       // burrower started its dive (it leaves the board when the dive ends)
   PawnSpawned,        // sPawn created pawn `uid`
   ItemTriggered,      // `symbol` = the item that went off
   PodDestroyed,
@@ -91,6 +91,9 @@ class FrameHooks {
   virtual bool start_fall(Pawn& pawn) = 0;
   // KillInstant on `pawn`: its death animation stops where it is.
   virtual void instant_kill(const Pawn& pawn) = 0;
+  // Pawn::Burrow(-1, -1) of a hurt burrower (stage 2 H4): the executor plays
+  // the dive and takes the pawn off the board when it ends.
+  virtual void start_dive(Pawn& pawn) = 0;
 };
 
 struct RulesContext {
@@ -115,14 +118,16 @@ struct RulesContext {
   // Preview / event-freeze mode: populated buildings lose HP but no grid.
   bool freeze_events = false;
 
-  // Frame-exact executor hooks (busy pawns, deferred chasms, falls).
+  // Frame-exact executor hooks (busy pawns, deferred chasms, falls, dives).
   FrameHooks* frame = nullptr;
 
   // Outputs, in the order they happened.
   std::vector<PendingPush> pushes;
   std::vector<SpawnRequest> spawns;
   std::vector<std::string> scripts;   // sScripts seen while run_script was empty
-  std::vector<int32_t> burrow_dives;  // uids that dove (Pawn::Burrow)
+  // Uids that dove (Pawn::Burrow). With `frame` the executor also takes them
+  // off the board when the dive ends; without it the caller does.
+  std::vector<int32_t> burrow_dives;
 };
 
 // ---- Damage pipeline -------------------------------------------------------

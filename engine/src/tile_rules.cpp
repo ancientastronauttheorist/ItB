@@ -86,7 +86,7 @@ void retreat(Board& board, Pawn& pawn, RulesContext& ctx) {
   // Flyers fly off: over a chasm or water natively that is a fall-state
   // animation; over ground only an animation plays. Not modelled further.
   if (is_flying(pawn)) return;
-  if (board.tile(pawn.pos).terrain == Terrain::Water) {
+  if (pawn.pos.valid() && board.tile(pawn.pos).terrain == Terrain::Water) {
     kill_pawn_instant(board, pawn, ctx);
   } else {
     pawn.hp = 0;  // burrows out: gone without a death
@@ -98,6 +98,8 @@ void burrow_dive(Board& board, Pawn& pawn, RulesContext& ctx) {
   set_pawn_fire(board, pawn, false);
   ctx.burrow_dives.push_back(pawn.uid);
   emit(ctx, RulesEventType::PawnBurrowed, pawn.pos, pawn.uid);
+  // The dive animation; SetSpace(-1, -1) when it ends.
+  if (ctx.frame) ctx.frame->start_dive(pawn);
 }
 
 int32_t next_uid(Board& board) { return board.next_uid++; }

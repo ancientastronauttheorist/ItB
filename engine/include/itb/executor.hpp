@@ -92,6 +92,7 @@ enum class ResolveEventType : uint8_t {
   PawnRemoved,       // pawn `uid` left the board
   TimingSensitive,   // see ResolveResult::timing
   PilotLevelUp,      // pawn `uid`'s pilot reached level `amount` (itb/pilot_xp.hpp)
+  PawnUnderground,   // burrower `uid` finished its dive from `point` (off the board)
 };
 
 struct ResolveEvent {

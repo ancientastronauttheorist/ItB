@@ -1471,3 +1471,102 @@ TEST_CASE("a pawn arriving on a teleporter pad swaps with the partner pad") {
   // Both now stand where they arrived: nobody bounces back.
   CHECK(w.board.teleporter_occupants == std::vector<int32_t>{2, 1});
 }
+
+// ---- Burrower dives (stage 2 H4, Pawn::Burrow(-1, -1)) -----------------------------
+// A hurt burrower dives: it stays on its tile while the dive animation plays
+// and leaves the board (SetSpace(-1, -1)) when it ends, within the action.
+
+namespace {
+
+Pawn burrower(int32_t uid, Point pos) {
+  Pawn p = vek(uid, pos);
+  p.burrows = true;
+  p.pushable = false;
+  return p;
+}
+
+}  // namespace
+
+TEST_CASE("a burrower hurt by a weapon dives off the board before the action settles") {
+  World w;
+  w.add(mech(10, {0, 4}));
+  Pawn b = burrower(1, {2, 4});
+  b.queued = QueuedShot{0, {2, 4}, {2, 5}};
+  w.add(b);
+  w.fire(laser({0, 4}, Dir::Right, 3));  // {1, 4} 3, {2, 4} 2
+  const Pawn* p = w.pawn(1);
+  REQUIRE(p != nullptr);
+  CHECK(p->hp == 1);
+  CHECK(p->alive());
+  CHECK_FALSE(p->pos.valid());
+  CHECK(p->movement.prev_pos == Point{2, 4});
+  CHECK_FALSE(p->queued.active());
+  CHECK_FALSE(p->fire);
+  CHECK_FALSE(w.removed(1));
+  CHECK(board_pawn(w.board, {2, 4}) == nullptr);
+  // Underground when the dive animation ends.
+  CHECK(w.frame_of(ResolveEventType::PawnUnderground, 1) ==
+        FrameClock::steady(60.0).tracker_updates(Durations{}.burrow_dive) - 1);
+  CHECK(w.count(RulesEventType::PawnBurrowed) == 1);
+  CHECK(w.last.quiescent);
+}
+
+TEST_CASE("a diving burrower is still on its tile for the rest of the chunk") {
+  World w;
+  w.add(mech(10, A));
+  w.add(burrower(1, R));
+  SkillEffect se = effect_from(A);
+  se.add_damage(space_damage(R, 1));
+  se.add_damage(space_damage(R, 1));  // same chunk: the dive has just started
+  w.fire(se);
+  CHECK(w.pawn(1)->hp == 1);
+  CHECK_FALSE(w.pawn(1)->pos.valid());
+  CHECK(w.count(RulesEventType::PawnBurrowed) == 2);
+  CHECK(w.frames(ResolveEventType::PawnUnderground, 1).size() == 1);
+}
+
+TEST_CASE("a FULL_DELAY chunk after the dive finds the tile empty") {
+  World w;
+  w.add(mech(10, A));
+  w.add(burrower(1, R));
+  SkillEffect se = effect_from(A);
+  se.add_damage(space_damage(R, 1));
+  se.add_delay(kFullDelay);  // waits for the dive (the pawn is busy)
+  se.add_damage(space_damage(R, 1));
+  w.fire(se);
+  CHECK(w.pawn(1)->hp == 2);
+  CHECK_FALSE(w.pawn(1)->pos.valid());
+}
+
+TEST_CASE("a burrower hit by a weapon on a cracked tile does not dive") {
+  World w;
+  w.add(mech(10, A));
+  w.tile(R).cracked = true;
+  w.add(burrower(1, R));
+  SkillEffect se = effect_from(A);
+  se.add_damage(space_damage(R, 1));
+  w.fire(se);
+  CHECK(w.count(RulesEventType::PawnBurrowed) == 0);
+  CHECK(w.frames(ResolveEventType::PawnUnderground, 1).empty());
+  // The tile collapses under it: it falls instead.
+  CHECK(w.tile(R).is_chasm());
+  const Pawn* fell = w.pawn(1);
+  CHECK((fell == nullptr || !fell->alive()));
+}
+
+TEST_CASE("a bump always makes a burrower dive, on a cracked tile too") {
+  World w;
+  w.add(mech(10, A));
+  w.tile(R).cracked = true;
+  w.add(burrower(1, R));
+  w.add(vek(2, {4, 2}));
+  SkillEffect se = effect_from(A);
+  se.add_damage(push_sd({4, 2}, Dir::Left));  // vek 2 bumps into the burrower
+  w.fire(se);
+  CHECK(w.pawn(2)->hp == 2);
+  CHECK(w.pawn(2)->pos == Point{4, 2});
+  CHECK(w.pawn(1)->hp == 2);
+  CHECK(w.pawn(1)->alive());
+  CHECK_FALSE(w.pawn(1)->pos.valid());
+  CHECK(w.pawn(1)->movement.prev_pos == R);
+}

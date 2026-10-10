@@ -275,6 +275,16 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
     }
   }
 
+  // A burrower underground (dove after a hit: Pawn::Burrow(-1, -1)). The
+  // bridge omits these; live tooling carries them over from the engine's
+  // prediction with x, y = the tile it dove from (Pawn::GetMoveOrigin).
+  if (get_or<bool>(u, "underground", false)) {
+    p.movement.prev_pos = p.pos;
+    p.pos = kInvalidPoint;
+    p.queued = QueuedShot{};
+    return p;
+  }
+
   if (get_or<bool>(u, "has_queued_attack", false)) {
     // The bridge does not report which weapon is queued; Vek carry one.
     p.queued.weapon = 0;
