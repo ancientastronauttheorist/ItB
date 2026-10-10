@@ -844,6 +844,23 @@ class DiffBoardsTest(unittest.TestCase):
         diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True, acid_pools=frozenset())
         self.assertEqual(len(diffs), 1)
 
+    def test_a_different_random_thaw_is_a_note(self):
+        # Live 2026-10-10 (Mission_Reactivation): the engine thawed Snowart2,
+        # the game thawed Burrower1 instead.
+        a = {"uid": 1, "type": "Snowart2", "x": 5, "y": 1, "hp": 3, "team": 6}
+        b = {"uid": 2, "type": "Burrower1", "x": 3, "y": 3, "hp": 3, "team": 6}
+        want = self.board([dict(a, frozen=False), dict(b, frozen=True)])
+        got = self.board([dict(a, frozen=True), dict(b, frozen=False)])
+        diffs, notes = lp.diff_boards(want, got, {1, 2}, enemy_phase=True, random_thaw=True)
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("random thaw" in n for n in notes))
+        diffs, _ = lp.diff_boards(want, got, {1, 2}, enemy_phase=True, random_thaw=False)
+        self.assertEqual(len(diffs), 2)
+        # An unbalanced difference (one more thawed than predicted) is real.
+        got2 = self.board([dict(a, frozen=False), dict(b, frozen=False)])
+        diffs, _ = lp.diff_boards(want, got2, {1, 2}, enemy_phase=True, random_thaw=True)
+        self.assertEqual(len(diffs), 1)
+
     def test_vek_dead_on_a_tripped_mine_is_a_note(self):
         # Live 2026-10-10 (Mission_Mines): Firefly1 walked onto the F4 mine
         # while the Vek planned their next turn and died there.

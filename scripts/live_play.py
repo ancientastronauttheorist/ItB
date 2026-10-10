@@ -417,7 +417,8 @@ def _health_psion(u: dict) -> bool:
 
 def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                 acid_pools: frozenset = frozenset(), resist: dict | None = None,
-                xp_split: bool = False, mines_gone: frozenset = frozenset()) -> tuple[list, list]:
+                xp_split: bool = False, mines_gone: frozenset = frozenset(),
+                random_thaw: bool = False) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
@@ -432,6 +433,11 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
       the game no longer has after it: a Vek that walks onto one while
       planning next turn dies there. A non-mech the engine has alive and the
       game has dead is a note while there are tripped mines to account for it.
+    - `random_thaw` (the prediction thawed frozen enemies at random:
+      Mission_Reactivation thaws 2 random frozen Vek each enemy turn, a chance
+      node the prediction takes one outcome of): enemies whose frozen flag
+      differs are a note when as many stayed frozen as the engine thawed
+      (the game picked other ones).
     - `resist` (only when the prediction had chance nodes): {"before": the
       board before the enemy phase, "tiles": the Grid Defense roll tiles, or
       None if the prediction does not list them}. The engine predicts every
@@ -452,6 +458,7 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
     if enemy_phase and not any(_health_psion(u) for u in want["units"]):
         psion = next((u for u in got["units"] if u["uid"] not in known and _health_psion(u)), None)
     buffed = []
+    thaw_swaps = []
     mines_left = len(mines_gone)
     for uid in sorted(known):
         a, b = w.get(uid), g.get(uid)
@@ -491,7 +498,19 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                     notes.append(f"{who} picked up the acid pool at {visual(b['x'], b['y'])} "
                                  "moving during AI planning")
                     continue
+                if enemy_phase and random_thaw and f == "frozen" and not a.get("mech") and a.get("team") == 6:
+                    thaw_swaps.append((who, bool(a.get(f)), bool(b.get(f))))
+                    continue
                 diffs.append(f"{who} {f}: engine {bool(a.get(f))}, game {bool(b.get(f))}")
+    if thaw_swaps:
+        engine_thawed = [w for w, e, g in thaw_swaps if not e and g]   # engine thawed, game kept frozen
+        game_thawed = [w for w, e, g in thaw_swaps if e and not g]
+        if len(engine_thawed) == len(game_thawed):
+            notes.append(f"random thaw: the game thawed {', '.join(game_thawed)} instead of "
+                         f"{', '.join(engine_thawed)} (chance node; the plan covered every outcome)")
+        else:
+            for w, e, g in thaw_swaps:
+                diffs.append(f"{w} frozen: engine {e}, game {g}")
     if buffed:
         notes.append(f"{describe_unit(psion)} emerged at {visual(psion['x'], psion['y'])}: +1 HP to every Vek "
                      f"({', '.join(buffed)})")
@@ -1020,6 +1039,8 @@ def end_turn(ctx) -> list:
     mines = lambda s: {(t["x"], t["y"]) for t in s.get("tiles", []) if t.get("item") == "Item_Mine"}
     diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
                                mines_gone=frozenset(mines(state) - mines(after)),
+                               random_thaw=any(e.get("type") == "thawed"
+                                               for e in (pred.get("enemy_phase") or {}).get("events", [])),
                                resist=resist_info(pred),
                                xp_split=bool((pred.get("enemy_phase") or {}).get("xp_split")))
     run.event("enemy_phase", {"state": path.name, "diffs": diffs, "notes": notes})
