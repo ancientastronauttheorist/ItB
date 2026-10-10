@@ -351,6 +351,17 @@ struct TTEntry {
   bool has_best = false;
 };
 
+// Two sound intervals for one value: their intersection is sound too.
+Interval intersect(const Interval& a, const Interval& b) {
+  const Interval r{std::max(a.lo, b.lo), std::min(a.hi, b.hi)};
+  return r.lo <= r.hi ? r : b;  // only a truncated chance tree can disagree
+}
+TTEntry merge_entries(const TTEntry& old, const TTEntry& next) {
+  TTEntry out = next.v.lo >= old.v.lo ? next : old;
+  out.v = intersect(old.v, next.v);
+  return out;
+}
+
 // A hash map in independently locked shards, shared by the search threads.
 // Entries are only ever sound intervals, so any thread may use any entry.
 template <class V>
@@ -365,12 +376,14 @@ class SharedMap {
     out = it->second;
     return true;
   }
-  void put(const BoardHash& k, const V& v) {
+  // An existing entry is merged with merge(old, new).
+  template <class Merge>
+  void put(const BoardHash& k, const V& v, Merge&& merge) {
     Shard& s = shard(k);
     std::lock_guard lock(s.mu);
     auto it = s.map.find(k);
     if (it != s.map.end()) {
-      it->second = v;
+      it->second = merge(it->second, v);
       return;
     }
     if (size_.load(std::memory_order_relaxed) >= cap_) return;
@@ -425,6 +438,9 @@ struct Shared {
   double first_plan_s = 0, best_plan_s = 0;
   std::vector<std::string> warnings;
 
+  // Bumped (under `mu`) whenever the incumbent improves, so threads can keep
+  // a copy and only lock when it changed.
+  std::atomic<uint64_t> version{0};
   bool incumbent_value(Score& out) {
     std::lock_guard lock(mu);
     out = incumbent;
@@ -487,11 +503,23 @@ class Worker {
     sh_.best_line = path_;
     sh_.best_line.insert(sh_.best_line.end(), tail.begin(), tail.end());
     sh_.best_plan_s = seconds_since(sh_.start);
+    sh_.version.fetch_add(1, std::memory_order_release);
+  }
+
+  // The incumbent, from this thread's copy unless it changed.
+  bool incumbent(Score& out) {
+    const uint64_t v = sh_.version.load(std::memory_order_acquire);
+    if (v != seen_version_) {
+      has_incumbent_ = sh_.incumbent_value(incumbent_);
+      seen_version_ = v;
+    }
+    out = incumbent_;
+    return has_incumbent_;
   }
 
   Score alpha_of(const Score& alpha) {
     Score inc;
-    return sh_.incumbent_value(inc) ? std::max(alpha, inc) : alpha;
+    return incumbent(inc) ? std::max(alpha, inc) : alpha;
   }
 
   // E(B): the worst case of ending the turn on B.
@@ -527,7 +555,7 @@ class Worker {
     if (end == EnumEnd::Truncated) sh_.chance_exact = false;
     if (cut) ++stats_.chance_cutoffs;
     const Interval r = cut ? Interval{kLow, worst} : Interval{worst, worst};
-    if (o_.use_tt) sh_.leaf.put(key, r);
+    if (o_.use_tt) sh_.leaf.put(key, r, intersect);
     return r;
   }
 
@@ -797,7 +825,7 @@ class Worker {
         if (v.exact() || v.hi <= alpha || v.lo >= beta) {
           ++stats_.tt_hits;
           Score inc;
-          const bool has = sh_.incumbent_value(inc);
+          const bool has = incumbent(inc);
           if (chance_free && v.lo > kLow && (!has || v.lo > inc)) {
             const std::vector<SubAction> line = table_line(b);
             improve(v.lo, line);
@@ -826,7 +854,7 @@ class Worker {
     const Score ub = sh_.bounds.of(b);
     auto finish = [&](Interval r) {
       if (shared) sh_.busy.add(h, -1);
-      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best});
+      if (o_.use_tt && !aborted_) sh_.tt.put(h, TTEntry{r, best_act, has_best}, merge_entries);
       if (chance_free && r.lo > kLow) improve(r.lo, best_pv);
       if (pv) *pv = best_pv;
       return r;
@@ -878,7 +906,7 @@ class Worker {
       } else {
         r = chance_node(c, alpha, beta, &sub, depth);
         Score inc;
-        const bool has = sh_.incumbent_value(inc);
+        const bool has = incumbent(inc);
         if (chance_free && r.lo > kLow && (!has || r.lo > inc)) improve(r.lo, sub);
       }
       path_.pop_back();
@@ -928,6 +956,9 @@ class Worker {
   Symbol move_skill_ = kNoSymbol;
   Symbol default_repair_ = kNoSymbol;
   bool aborted_ = false;
+  uint64_t seen_version_ = ~uint64_t{0};
+  bool has_incumbent_ = false;
+  Score incumbent_ = kLow;
   std::vector<SubAction> path_;
   SolveStats stats_;
 };
