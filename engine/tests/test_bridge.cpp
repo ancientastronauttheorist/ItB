@@ -3,6 +3,8 @@
 // runs it against a strict mock of the game API (see that file).
 #include <doctest/doctest.h>
 
+#include "itb/game_data.hpp"
+
 #include <unistd.h>
 
 #include <cstdlib>
@@ -61,8 +63,8 @@ TEST_CASE("bridge: harness against the mocked game API") {
   set_global(lua.L, "HARNESS_DIR", dir.string());
   // With the game's scripts the harness also runs the final-mission
   // (Env_Volcano, pylon drop) and Env_Lightning enemy phases.
-  const char* game_dir = std::getenv("ITB_GAME_DIR");
-  const bool with_game = game_dir != nullptr && *game_dir != '\0';
+  const std::string game_dir = itb::GameData::default_game_root().string();
+  const bool with_game = !game_dir.empty() && fs::exists(fs::path(game_dir) / "scripts" / "scripts.lua");
   if (with_game) set_global(lua.L, "HARNESS_GAME_DIR", game_dir);
   const int rc = luaL_dofile(lua.L, kHarness.string().c_str());
   INFO(lua.error());

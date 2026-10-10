@@ -11,14 +11,14 @@
 -- the commands, including the SCENARIO coroutine with a board that stays
 -- busy across frames. Raises with every failed check.
 
-local MODLOADER = HARNESS_MODLOADER or arg[1]
-local MOCK_FILE = HARNESS_MOCK or arg[2]
-local DIR = HARNESS_DIR or arg[3]
+local MODLOADER = HARNESS_MODLOADER or (arg and arg[1])
+local MOCK_FILE = HARNESS_MOCK or (arg and arg[2])
+local DIR = HARNESS_DIR or (arg and arg[3])
 -- Optional: the game's script directory (builds/<build>/scripts or the
 -- build root). With it, the final-mission and environment sections run the
 -- game's own env_volcano.lua, mission_final.lua, mission_lightning.lua and
 -- the Mission / Env_Attack methods from missions.lua / environments.lua.
-local GAME_DIR = HARNESS_GAME_DIR or arg[4]
+local GAME_DIR = HARNESS_GAME_DIR or (arg and arg[4])
 if GAME_DIR == "" then GAME_DIR = nil end
 assert(MODLOADER and MOCK_FILE and DIR, "usage: bridge_harness.lua <modloader.lua> <game_mock.lua> <dir>")
 
