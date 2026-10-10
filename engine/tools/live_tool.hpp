@@ -44,7 +44,9 @@ inline constexpr int kLiveFormat = 1;
 
 // The compact board the live driver compares with the game: grid power,
 // every building tile's HP, and every living on-board unit (sorted by uid)
-// with type, tile, HP, team, mech flag and statuses.
+// with type, tile, HP, team, mech flag, statuses and queued shot ("queued":
+// null, or {"weapon": index into the pawn's weapons, "origin": [x,y]|null,
+// "target": [x,y]}).
 nlohmann::json live_board_json(const Board& board);
 
 class LiveSession {

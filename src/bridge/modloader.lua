@@ -3021,6 +3021,14 @@ local function dump_state(out_path, out_tmp)
                         -- valid board tile; it already reflects the current
                         -- position/target and must not be normalized again by
                         -- the Python reader.
+                        -- NOTE (verified live 2026-10-10): Pawn has no
+                        -- GetQueuedShot method ("attempt to call method
+                        -- 'GetQueuedShot' (a nil value)"), so this pcall
+                        -- always fails and the override never applies. No
+                        -- Lua API exposes a pawn's live queued shot: a shot
+                        -- cleared (smoke, freeze, water) or flipped during the
+                        -- turn stays stale here. scripts/live_play.py takes
+                        -- the engine's tracked queued shots instead.
                         if unit.has_queued_attack then
                             local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
                             if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
@@ -3056,6 +3064,8 @@ local function dump_state(out_path, out_tmp)
                         --     HornetBoss and similar shots that don't land
                         --     in piQueuedShot. Try even if (1) succeeded so
                         --     we can log a mismatch for calibration.
+                        --     NOTE: Pawn has no GetQueuedShot (verified live
+                        --     2026-10-10); this always logs pcall_err.
                         local ok_gqs, gqs = pcall(function() return p:GetQueuedShot() end)
                         local gqs_desc = "nil"
                         if ok_gqs and gqs and (type(gqs) == "userdata" or type(gqs) == "table") then
@@ -4542,6 +4552,8 @@ local function execute_weapon_by_slot(pawn, weapon_slot, tx, ty)
     -- Snapshot a live queued enemy now so we can add only the missing flip
     -- after FireWeapon returns.  GetQueuedShot is the same C++ live probe used
     -- by state extraction to override save-stale piQueuedShot values.
+    -- NOTE: Pawn has no GetQueuedShot (verified live 2026-10-10), so the
+    -- probe always fails and this legacy-mode fallback never fires.
     local seismic_flip_before = nil
     if string.find(wname, "^Science_KO_Crack") ~= nil then
         local target = Board:GetPawn(Point(tx, ty))

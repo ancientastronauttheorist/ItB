@@ -215,6 +215,82 @@ TEST_CASE("live: a moved flag in the state keeps the unit from moving again") {
   fs::remove(path);
 }
 
+namespace {
+
+const json* board_unit(const json& board, int uid) {
+  for (const json& u : board["units"]) {
+    if (u["uid"] == uid) return &u;
+  }
+  return nullptr;
+}
+
+}  // namespace
+
+TEST_CASE("live: boards carry each unit's queued shot; smoke clears it (live 2026-10-10 m36 turn 2)") {
+  NEED_SESSION();
+  // Mission_Filler turn 2. DStrikeMech's Defensestrike pushes Firefly2#941
+  // into smoke; JetMech's Aerial Bombs smoke F3 under Beetle2#943; GravMech
+  // then pulls the Beetle out to E3. Both shots are gone for good (Pawn::OnLoop
+  // clears a smoked Vek's queued shot); Scarab2#942's only moves with it.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_filler_t2_solve_input.json";
+  const json plan = json::array({
+      {{"uid", 1}, {"move", {1, 4}}, {"kind", "weapon"}, {"weapon", "Ranged_Defensestrike_A"}, {"target", {4, 4}}},
+      {{"uid", 0}, {"move", {5, 3}}, {"kind", "weapon"}, {"weapon", "Brute_Jetmech_A"}, {"target", {5, 1}}},
+      {{"uid", 2}, {"move", {5, 4}}, {"kind", "weapon"}, {"weapon", "Science_Gravwell"}, {"target", {5, 2}}},
+  });
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", plan}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  REQUIRE(r["refused"] == -1);
+  const json* beetle = board_unit(r["start"], 943);
+  REQUIRE(beetle);
+  CHECK((*beetle)["queued"]["target"] == json::array({4, 2}));
+  CHECK((*beetle)["queued"]["weapon"] == 0);
+  const json* mech = board_unit(r["start"], 0);
+  REQUIRE(mech);
+  CHECK((*mech)["queued"].is_null());
+
+  const json& steps = r["steps"];
+  REQUIRE(steps.size() == 6);
+  // Step 1: the Defensestrike; step 3: the Aerial Bombs; step 5: the Gravwell.
+  CHECK((*board_unit(steps[1]["board"], 941))["queued"].is_null());
+  CHECK_FALSE((*board_unit(steps[1]["board"], 943))["queued"].is_null());
+  CHECK((*board_unit(steps[3]["board"], 943))["queued"].is_null());
+  const json* pulled = board_unit(steps[5]["board"], 943);
+  REQUIRE(pulled);
+  CHECK(((*pulled)["x"] == 5 && (*pulled)["y"] == 3));
+  CHECK((*pulled)["queued"].is_null());
+  const json* scarab = board_unit(steps[5]["board"], 942);
+  REQUIRE(scarab);
+  CHECK((*scarab)["queued"]["target"] == json::array({4, 3}));
+
+  // The bridge's snapshot before End Turn still has the Beetle's shot (read
+  // from the save). As exported, the engine charges the Beetle into the
+  // Earth Mover; with the shot dropped (what scripts/live_play.py now gives
+  // it) the Beetle blocks the E3 spawn and dies, and the Filler_Pawn lives,
+  // as in the game.
+  std::ifstream in(std::string(ITB_FIXTURE_DIR) + "/live_filler_t2_end_turn.json");
+  json wrapped = json::parse(in);
+  const fs::path stale = temp_file("itb_live_test_filler_stale.json", wrapped);
+  const json before = S.handle({{"cmd", "predict"}, {"state", stale.string()}, {"plan", json::array()}});
+  REQUIRE_MESSAGE(before["ok"].get<bool>(), before.dump());
+  CHECK(board_unit(before["after_enemy"], 943) != nullptr);
+  CHECK(board_unit(before["after_enemy"], 938) == nullptr);
+  for (json& u : wrapped["data"]["bridge_state"]["units"]) {
+    if (u["uid"] == 943 || u["uid"] == 941) {
+      u["has_queued_attack"] = false;
+      u.erase("queued_target");
+      u.erase("queued_origin");
+    }
+  }
+  const fs::path fixed = temp_file("itb_live_test_filler_fixed.json", wrapped);
+  const json after = S.handle({{"cmd", "predict"}, {"state", fixed.string()}, {"plan", json::array()}});
+  REQUIRE_MESSAGE(after["ok"].get<bool>(), after.dump());
+  CHECK(board_unit(after["after_enemy"], 943) == nullptr);
+  CHECK(board_unit(after["after_enemy"], 938) != nullptr);
+  fs::remove(stale);
+  fs::remove(fixed);
+}
+
 TEST_CASE("live: bad requests answer ok=false") {
   NEED_SESSION();
   CHECK(S.handle({{"cmd", "ping"}})["ok"] == true);
