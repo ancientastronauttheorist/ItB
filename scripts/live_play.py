@@ -638,6 +638,15 @@ def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = No
     to `notes`."""
     out = json.loads(json.dumps(state))
     patches = {}
+    # The bridge's "web" passes through a legacy guess that clears a web when
+    # no known webbing Vek is alive; its list misses spider eggs (WebbEgg1),
+    # so a pawn the game reports grappled (Pawn:IsGrappled) could come out
+    # unwebbed (live 2026-10-10, Mission_AcidStorm: the move was refused).
+    # The live probe wins; the engine rebuilds the web sources on load.
+    for u in units(out):
+        if u.get("grappled") is True and not u.get("web"):
+            u["web"] = True
+            patches[f"{u['uid']}.web"] = True
     est, grid = out.get("grid_power_estimate"), out.get("grid_power")
     if isinstance(est, int) and isinstance(grid, int) and est < grid:
         out["grid_power"] = est

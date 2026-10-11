@@ -867,6 +867,16 @@ class PatchStateGridTest(unittest.TestCase):
             self.assertNotIn("grid_power", patches)
 
 
+class PatchStateWebTest(unittest.TestCase):
+    def test_a_grappled_pawn_the_bridge_reports_unwebbed_is_webbed(self):
+        state = {"units": [{"uid": 1, "type": "IgniteMech", "team": 1, "web": False, "grappled": True},
+                           {"uid": 2, "type": "TeleMech", "team": 1, "web": False, "grappled": False}]}
+        fixed, patches = lp.patch_state(state, {}, set())
+        self.assertTrue(fixed["units"][0]["web"])
+        self.assertFalse(fixed["units"][1]["web"])
+        self.assertEqual(patches.get("1.web"), True)
+
+
 class DiffBoardsTest(unittest.TestCase):
     """The enemy-phase comparison's handling of AI planning moves."""
 
