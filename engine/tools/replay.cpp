@@ -424,7 +424,16 @@ void sync(Board& b, const State& gt, const GameData& data) {
       else if (k == "acid") p->acid = v;
       else if (k == "frozen") p->frozen = v;
       else if (k == "shield") p->shield = v;
-      else if (k == "web") p->webbed = v;
+      else if (k == "web") {
+        p->webbed = v;
+        // Not webbed in game: its tiles hold no web either (a held tile
+        // re-webs its pawn; like BoardSpace::ClearGrapple(2)).
+        if (!v) {
+          for (Point t : {p->pos, p->extra_tile()}) {
+            if (t.valid()) b.tile(t).web_in = 0;
+          }
+        }
+      }
       else if (k == "boosted") p->boosted = v;
     }
   }

@@ -16,6 +16,7 @@
 #include "itb/engine.hpp"
 #include "itb/game_data.hpp"
 #include "itb/recording.hpp"
+#include "itb/tile_rules.hpp"
 #include "live_tool.hpp"
 
 namespace fs = std::filesystem;
@@ -333,6 +334,78 @@ TEST_CASE("live: the dam's second tile is occupied (live 2026-10-10 m46 turn 1)"
     if (u["uid"] == 2335) hp = u["hp"].get<int>();
   }
   CHECK(hp < 2);
+}
+
+namespace {
+
+bool unit_webbed(const json& board, int uid) {
+  for (const json& u : board["units"]) {
+    if (u["uid"] == uid) return u.value("web", false);
+  }
+  FAIL("unit " << uid << " not on the board");
+  return false;
+}
+
+constexpr uint8_t dir_bit(Dir d) { return static_cast<uint8_t>(1u << static_cast<int>(d)); }
+
+}  // namespace
+
+TEST_CASE("live: a mech webbed by two Scorpions stays webbed when one is swapped away (live 2026-10-10 m10 t2)") {
+  NEED_SESSION();
+  // Mission_Train turn 2: InfernoMech#0 at F3 (5,2) is webbed by
+  // Scorpion1#2391 at G3 (5,1) and Scorpion2#2392 at E3 (5,3), both queued
+  // on F3. The bridge names one source (2391). TeleMech#2 moves to H3 (5,0)
+  // and swaps with the Scorpion at G3: that web breaks, the other holds; the
+  // game kept the mech webbed.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_train_t2_solve_input.json";
+  const GameData data = GameData::load(GameData::default_game_root());
+  std::string error;
+  auto rec = load_recording(start, &data, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  REQUIRE(b.find_pawn(0)->webbed);
+  CHECK(b.tile({5, 2}).web_in == 2);
+  CHECK(b.tile({5, 1}).web_out == dir_bit(Dir::Down));
+  CHECK(b.tile({5, 3}).web_out == dir_bit(Dir::Up));
+  CHECK(web_sources(b, {5, 2}) == (dir_bit(Dir::Up) | dir_bit(Dir::Down)));
+
+  const json plan = json::array(
+      {{{"uid", 2}, {"move", {5, 0}}, {"kind", "weapon"}, {"weapon", "Science_Swap"}, {"target", {5, 1}}}});
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", plan}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  CHECK(r["refused"] == -1);
+  CHECK(unit_webbed(r["after_player"], 0));
+  CHECK_FALSE(unit_webbed(r["after_player"], 2));
+}
+
+TEST_CASE("live: the train is webbed through its second tile (live 2026-10-10 m10 t3)") {
+  NEED_SESSION();
+  // Mission_Train turn 3: Train_Pawn#2390 at F4 (4,2) also stands on F5
+  // (4,3). Scorpion2#2392 at F6 (4,4) is queued on F5 and webs the train
+  // through that tile; the bridge guessed Scorpion1#2391 at F3 (4,1), which
+  // is queued elsewhere. IgniteMech#1 fires Ranged_Ignite at F4, pushing the
+  // Scorpion at F3 away: the game kept the train webbed.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_train_t3_solve_input.json";
+  const GameData data = GameData::load(GameData::default_game_root());
+  std::string error;
+  auto rec = load_recording(start, &data, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  REQUIRE(b.find_pawn(2390)->webbed);
+  CHECK(b.tile({4, 3}).web_in == 1);
+  CHECK(b.tile({4, 4}).web_out == dir_bit(Dir::Up));
+  CHECK(b.tile({4, 1}).web_out == 0);
+  CHECK(b.tile({4, 2}).web_in == 0);
+  // TeleMech#2 at G4 (5,2) is webbed by Scorpion1#2405 at G5 (5,3).
+  CHECK(b.tile({5, 3}).web_out == dir_bit(Dir::Up));
+
+  const json plan = json::array(
+      {{{"uid", 1}, {"move", {2, 2}}, {"kind", "weapon"}, {"weapon", "Ranged_Ignite"}, {"target", {4, 2}}}});
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", plan}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  CHECK(r["refused"] == -1);
+  CHECK(unit_webbed(r["after_player"], 2390));
+  CHECK_FALSE(unit_webbed(r["after_player"], 2));  // pushed off its tile
 }
 
 TEST_CASE("live: bad requests answer ok=false") {

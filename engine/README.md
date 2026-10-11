@@ -271,6 +271,14 @@ Done so far (build order from the decompile):
    - Grid Defense resists are a chance node: the caller resolves each roll, and
      every roll is logged. Pushes, spawns and Lua scripts are recorded for the
      later stages.
+   - Webs are tile state, as in the game (`BoardSpace::SetGrappled` /
+     `ClearGrapple`): the emitting tile keeps the directions it webs
+     (`Tile::web_out`), the held tile counts its webs (`Tile::web_in`), and
+     `Pawn::webbed` is the pawn's flag. A pawn webbed by two Scorpions stays
+     webbed until both let go (smoke, a flip or freezing on the emitter, or
+     the web check: emitter tile without an enemy, held tile without a pawn,
+     Disable_Immunity). A relocated pawn loses the flag, the web stays on the
+     tile, and a pawn standing on a held tile is webbed again once idle.
 - **Stage 5: movement** (`movement.hpp`).
    - Pathing profiles, move budget and pilot move skills.
    - The game's reachability search and its weighted A* walk path (float32,
@@ -851,7 +859,13 @@ board with the game's bindings) and `FIRE`; `SNAPSHOT` and `MOVE_NATIVE`
 (a player-style move) are always available.
 
 `load_recording` reads all of it when present (469/469 old recordings load
-as before). `turn_context(rec, visibility)` builds the TurnContext; the
+as before). The bridge reports whether a pawn is webbed and at most one
+source, a guess (the nearest webber); the loader rebuilds the tile webs from
+what the board shows: every neighbour of a webbed pawn's tiles (a train's
+second tile too) whose Vek has a webbing attack queued on that tile
+(`ScorpionAtk*`, `LeaperAtk*`, `MosquitoAtkB`; the Scorpion Leader's
+`ScorpionAtkB` webs all four), or a spider egg. Only when none does is the
+reported source used. `turn_context(rec, visibility)` builds the TurnContext; the
 spawn types and queue order are hidden information, so only
 `Visibility::Full` (validation) passes them on, never the solver's
 `Visibility::Player`. `itb_tests` compiles the bridge in Lua 5.1 and runs it

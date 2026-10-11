@@ -3,6 +3,7 @@
 #include "itb/weapon_diff.hpp"
 
 #include <algorithm>
+#include <cstdlib>
 #include <map>
 #include <sstream>
 
@@ -281,8 +282,16 @@ Board random_board(const GameData& data, const std::vector<std::string>& weapons
       const Pawn& src = b.pawns()[static_cast<size_t>(pick(static_cast<int>(b.pawns().size())))];
       if (src.uid != p.uid) {
         p.webbed = true;
-        p.web_source = src.uid;
-        p.web_tile = src.pos;
+        // A neighbour's web is tile state too (Tile::web_out / web_in).
+        const Point d = p.pos - src.pos;
+        if (src.pos.valid() && p.pos.valid() && std::abs(d.x) + std::abs(d.y) == 1) {
+          const int dir = d.y < 0 ? 0 : d.x > 0 ? 1 : d.y > 0 ? 2 : 3;
+          Tile& from = b.tile(src.pos);
+          if (!(from.web_out >> dir & 1)) {
+            from.web_out = static_cast<uint8_t>(from.web_out | (1u << dir));
+            ++b.tile(p.pos).web_in;
+          }
+        }
       }
     }
   }

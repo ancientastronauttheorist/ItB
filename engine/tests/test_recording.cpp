@@ -102,7 +102,9 @@ TEST_CASE("bridge quirks are corrected on load") {
   const Pawn& mech = *b.find_pawn(0);
   CHECK(mech.max_hp == 5);                   // base Health was reported as max_hp
   CHECK(mech.movement.pilot_bonus == 0);     // GetMoveSpeed() read 0 while webbed
-  CHECK(mech.web_tile == Point{3, 4});       // the web comes from the source's tile
+  // No queued attack shows the web: the reported source's tile webs it.
+  CHECK(b.tile({3, 4}).web_out == 1u << static_cast<int>(Dir::Up));
+  CHECK(b.tile({3, 3}).web_in == 1);
   CHECK(b.has_passive(kPassiveForceAmp));    // squad passives from the mechs' weapons
   REQUIRE(rec->pilots.size() == 1);
   CHECK(rec->pilots[0].second == "Pilot_Rock");

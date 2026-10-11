@@ -9,8 +9,8 @@ namespace {
 
 // Every Tile (as raw bytes) and Pawn field is hashed below. If one of these
 // fails, a field was added: hash it, then update the size.
-static_assert(sizeof(Tile) == 28, "Tile changed: update hash_board");
-static_assert(sizeof(Pawn) == 132, "Pawn changed: update hash_board");
+static_assert(sizeof(Tile) == 30, "Tile changed: update hash_board");
+static_assert(sizeof(Pawn) == 120, "Pawn changed: update hash_board");
 static_assert(sizeof(MoveState) == 16, "MoveState changed: update hash_board");
 static_assert(sizeof(QueuedShot) == 20, "QueuedShot changed: update hash_board");
 
@@ -90,7 +90,6 @@ void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
   const bool player = p.team == Team::Player;
   h.word(static_cast<uint32_t>(p.uid));
   h.word(pt(p.pos));
-  h.word(pt(p.web_tile));
   h.word(pt(p.queued.origin));
   h.word(pt(p.queued.target));
   h.word(pt(p.movement.prev_pos));
@@ -105,7 +104,6 @@ void hash_pawn(Hasher& h, const Pawn& p, uint32_t tile_rank, HashMode mode) {
   k.put(static_cast<uint16_t>(p.pilot_xp), 16);
   k.put(u8(p.extra_dx), 8);
   k.put(u8(p.extra_dy), 8);
-  k.put(static_cast<uint32_t>(p.web_source), 32);
   k.put(tile_rank, 16);
   k.put(u8(p.hp), 8);
   k.put(u8(p.max_hp), 8);

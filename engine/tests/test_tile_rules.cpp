@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "itb/game_data.hpp"
+#include "itb/movement.hpp"
 #include "itb/tile_rules.hpp"
 
 using namespace itb;
@@ -1370,15 +1371,16 @@ TEST_CASE("pushes: none on buildings, flips release webs") {
 
   World f;
   f.add(vek(1, 3));
-  Pawn webbed = mech(10, 3, kRight);
-  webbed.webbed = true;
-  webbed.web_source = 1;
-  f.add(webbed);
+  f.add(mech(10, 3, kRight));
+  add_web(f.board, kP, Dir::Right);
+  REQUIRE(f.pawn(10).webbed);
   sd.push = Dir::Flip;
   f.hit(sd);
   REQUIRE(f.ctx.pushes.size() == 1);
   CHECK(f.ctx.pushes[0].dir == Dir::Flip);
   CHECK_FALSE(f.pawn(10).webbed);
+  CHECK(f.tile(kP).web_out == 0);
+  CHECK(f.tile(kRight).web_in == 0);
 }
 
 TEST_CASE("a pawn killed by the hit is still pushed") {
@@ -1720,14 +1722,121 @@ TEST_CASE("the hit tile webs the pawn on the grapple point") {
   sd.grapple_source = kRight;
   w.hit(sd);
   CHECK(w.pawn(10).webbed);
-  CHECK(w.pawn(10).web_source == 1);
-  CHECK(w.pawn(10).web_tile == kP);
+  // The web is tile state: kP webs its right neighbour, which holds one web.
+  CHECK(w.tile(kP).web_out == 1u << static_cast<int>(Dir::Right));
+  CHECK(w.tile(kRight).web_in == 1);
+  CHECK(web_sources(w.board, kRight) == 1u << static_cast<int>(Dir::Left));
   CHECK_FALSE(w.pawn(1).webbed);
   // Smoking the webber's tile releases it.
   SpaceDamage smoke = World::sd_at(0);
   smoke.smoke = StatusChange::Apply;
   w.hit(smoke);
   CHECK_FALSE(w.pawn(10).webbed);
+  CHECK(w.tile(kP).web_out == 0);
+  CHECK(w.tile(kRight).web_in == 0);
+}
+
+TEST_CASE("webs: a pawn webbed from two tiles stays webbed until both let go") {
+  // BoardSpace::SetGrappled(5/4): the held tile counts its webs; releasing
+  // one emitter (ClearGrapple(1), or the web check) takes one off, and the
+  // pawn is freed only when none is left.
+  const Point east{5, 3};
+  World w;
+  w.add(vek(1, 3, kP));
+  w.add(vek(2, 3, east));
+  w.add(mech(10, 3, kRight));
+  SpaceDamage a = World::sd_at(0, kP);
+  a.grapple_source = kRight;
+  w.hit(a);
+  SpaceDamage b = World::sd_at(0, east);
+  b.grapple_source = kRight;
+  w.hit(b);
+  REQUIRE(w.pawn(10).webbed);
+  CHECK(w.tile(kRight).web_in == 2);
+  CHECK(web_sources(w.board, kRight) == ((1u << static_cast<int>(Dir::Left)) | (1u << static_cast<int>(Dir::Right))));
+
+  // The first webber dies: its web breaks, the other still holds.
+  w.pawn(1).hp = 0;
+  w.settle();
+  CHECK(w.pawn(10).webbed);
+  CHECK(w.tile(kP).web_out == 0);
+  CHECK(w.tile(kRight).web_in == 1);
+
+  // Smoke on the second webber's tile releases the last web.
+  SpaceDamage smoke = World::sd_at(0, east);
+  smoke.smoke = StatusChange::Apply;
+  w.hit(smoke);
+  CHECK_FALSE(w.pawn(10).webbed);
+  CHECK(w.tile(east).web_out == 0);
+  CHECK(w.tile(kRight).web_in == 0);
+}
+
+TEST_CASE("webs: the emitter tile changing hands breaks only its own web") {
+  // The live case (2026-10-10 Mission_Train t2): one of two Scorpions webbing
+  // a mech is swapped away; the tile it left now holds a mech (not
+  // Pawn::IsEnemy), so that web breaks and the other keeps the mech webbed.
+  const Point east{5, 3};
+  World w;
+  w.add(vek(1, 3, kP));
+  w.add(vek(2, 3, east));
+  w.add(mech(10, 3, kRight));
+  w.add(mech(11, 3, Point{3, 6}));
+  add_web(w.board, kP, Dir::Right);
+  add_web(w.board, east, Dir::Left);
+  REQUIRE(w.tile(kRight).web_in == 2);
+  set_space(w.board, w.pawn(1), Point{3, 7});
+  set_space(w.board, w.pawn(11), kP);
+  w.settle();
+  CHECK(w.pawn(10).webbed);
+  CHECK(w.tile(kP).web_out == 0);
+  CHECK(w.tile(kRight).web_in == 1);
+  CHECK(w.tile(east).web_out == 1u << static_cast<int>(Dir::Left));
+}
+
+TEST_CASE("webs: the web stays with the held tile") {
+  // BoardSpace::OnLoop: while a tile holds a web its first occupant is
+  // webbed once it is not busy, so a pawn that takes the held pawn's place
+  // (here: within the same frame, before the web check) is caught.
+  World w;
+  w.add(vek(1, 3, kP));
+  w.add(mech(10, 3, kRight));
+  w.add(mech(11, 3, Point{6, 6}));
+  add_web(w.board, kP, Dir::Right);
+  REQUIRE(w.pawn(10).webbed);
+  set_space(w.board, w.pawn(10), Point{5, 5});
+  set_space(w.board, w.pawn(11), kRight);
+  CHECK_FALSE(w.pawn(10).webbed);
+  w.settle();
+  CHECK_FALSE(w.pawn(10).webbed);
+  CHECK(w.pawn(11).webbed);
+  CHECK(w.tile(kRight).web_in == 1);
+
+  // Left empty, the held tile breaks the web at the emitter's next check.
+  set_space(w.board, w.pawn(11), Point{6, 6});
+  w.settle();
+  CHECK_FALSE(w.pawn(11).webbed);
+  CHECK(w.tile(kP).web_out == 0);
+  CHECK(w.tile(kRight).web_in == 0);
+}
+
+TEST_CASE("webs: a multi-tile pawn is webbed through its extra tile") {
+  // The live case (2026-10-10 Mission_Train t3): a Scorpion webs the train's
+  // second tile; the train (listed on that tile) is webbed and stays so while
+  // its main tile is hit.
+  World w;
+  Pawn train = mech(10, 1, kP);
+  train.mech = false;
+  train.team = Team::Player;
+  train.pushable = false;
+  train.extra_dx = 0;
+  train.extra_dy = 1;
+  w.add(train);
+  w.add(vek(1, 3, Point{3, 5}));
+  add_web(w.board, Point{3, 5}, Dir::Up);
+  CHECK(w.pawn(10).webbed);
+  CHECK(w.tile(Point{3, 4}).web_in == 1);
+  w.settle();
+  CHECK(w.pawn(10).webbed);
 }
 
 TEST_CASE("a web breaks when its emitter tile loses its Vek") {

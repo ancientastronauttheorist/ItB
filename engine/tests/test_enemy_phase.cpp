@@ -16,6 +16,7 @@
 #include "itb/engine.hpp"
 #include "itb/game_data.hpp"
 #include "itb/recording.hpp"
+#include "itb/tile_rules.hpp"
 
 using namespace itb;
 
@@ -131,13 +132,14 @@ TEST_CASE("V1 webs are released before the Vek attack") {
   Board b;
   const int32_t m = mech(b, {3, 4});
   const int32_t s = place(b, "Scorpion1", {3, 3});
-  P(b, m).webbed = true;
-  P(b, m).web_source = s;
-  P(b, m).web_tile = {3, 3};
+  add_web(b, {3, 3}, Dir::Down);
+  REQUIRE(P(b, m).webbed);
   queue(b, s, {3, 4});
   const PhaseResult r = E.end_turn(b, context());
   CHECK(hp_of(b, m) == 2);
   CHECK_FALSE(P(b, m).webbed);
+  CHECK(b.tile({3, 3}).web_out == 0);
+  CHECK(b.tile({3, 4}).web_in == 0);
   CHECK(r.count(PhaseEventType::WebsCleared) == 1);
   CHECK(r.exact);
 }

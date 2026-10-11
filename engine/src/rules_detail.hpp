@@ -25,18 +25,19 @@ inline bool type_contains(const Pawn& pawn, std::string_view part) {
 // rules read the raw flag instead (Tile::lava), which also survives on ice.
 inline bool is_lava(const Tile& t) { return t.terrain == Terrain::Water && t.lava; }
 
-// Releases the webs held by pawns on p (ClearGrapple on the emitting tile).
+// BoardSpace::ClearGrapple(1) on p (@0091b770): releases every web the tile
+// emits (each held neighbour lets go of one web, SetGrappled(4)).
 void release_webs(Board& board, Point p);
 
 // The tile-state half of settle_tile_frame's early return: with no pawn on
-// the tile (fallen ones included) and no webbed pawn anywhere, a tile in
-// this state is left exactly as it is.
+// the tile (fallen ones included), a tile in this state is left exactly as
+// it is.
 bool inert_tile_state(const Tile& t);
 // settle_tile_frame(board, p) would change nothing at all.
 bool settle_tile_noop(const Board& board, Point p);
 // The tile-state half of settle_tile_noop for an occupied tile: with no
-// webbed pawn anywhere and no occupant (not fallen) that is a mech or on
-// fire, a tile in this state is left exactly as it is.
+// occupant (not fallen) that is a mech or on fire, a tile in this state is
+// left exactly as it is.
 bool quiet_occupied_tile_state(const Tile& t);
 
 }  // namespace itb::detail

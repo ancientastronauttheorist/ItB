@@ -254,14 +254,7 @@ PhaseResult Engine::end_turn(Board& board, const TurnContext& tc) {
   };
 
   // ---- State 1 entry: Board::NextTurn(6) releases every web.
-  int webs = 0;
-  for (Pawn& p : board.pawns()) {
-    if (!p.webbed) continue;
-    p.webbed = false;
-    p.web_source = -1;
-    p.web_tile = kInvalidPoint;
-    ++webs;
-  }
+  const int webs = clear_all_webs(board);
   if (webs > 0) out.events.push_back(PhaseEvent{PhaseEventType::WebsCleared, kInvalidPoint, -1, webs, ""});
   absorb(out, r.settle());
   burrow_away();
