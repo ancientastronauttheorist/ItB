@@ -949,6 +949,14 @@ class DiffBoardsTest(unittest.TestCase):
         self.assertEqual(len(state["units"]), 1)
         self.assertEqual(patches, {})
 
+    def test_an_egg_that_hatched_during_ai_planning_is_a_note(self):
+        egg = {"uid": 97, "type": "SpiderlingEgg1", "x": 5, "y": 2, "hp": 1}
+        diffs, notes = lp.diff_boards(self.board([egg]), self.board([]), {97}, enemy_phase=True)
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("hatched" in n for n in notes))
+        diffs, _ = lp.diff_boards(self.board([egg]), self.board([]), {97}, enemy_phase=False)
+        self.assertEqual(len(diffs), 1)
+
     def test_vek_dead_on_a_tripped_mine_is_a_note(self):
         # Live 2026-10-10 (Mission_Mines): Firefly1 walked onto the F4 mine
         # while the Vek planned their next turn and died there.

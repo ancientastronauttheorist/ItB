@@ -507,6 +507,13 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
             diffs.append(f"{describe_unit(b)}: engine dead, game alive at {visual(b['x'], b['y'])} hp {b['hp']}")
             continue
         if b is None:
+            # Eggs hatch while the AI plans its next move (SpiderlingHatch /
+            # WebbEgg hatch: the egg is removed and a spiderling appears),
+            # which the engine does not model (README "Validating the enemy
+            # phase"): the hatchling shows up as a new unit.
+            if enemy_phase and a.get("type") in ("SpiderlingEgg1", "WebbEgg1"):
+                notes.append(f"{describe_unit(a)} at {visual(a['x'], a['y'])} hatched during AI planning")
+                continue
             if enemy_phase and not a.get("mech") and mines_left > 0:
                 mines_left -= 1
                 notes.append(f"{describe_unit(a)} (engine alive at {visual(a['x'], a['y'])} hp {a['hp']}) died on "
