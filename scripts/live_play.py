@@ -71,6 +71,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -623,6 +624,31 @@ def load_loadout(path: str | None) -> dict:
         return json.load(f)
 
 
+TELEPORT_PAIR_RE = re.compile(r"TELEPORT PAD pair captured: \((\d+),(\d+)\) <-> \((\d+),(\d+)\)")
+
+
+def logged_teleporter_pairs(log_path: Path = Path("/tmp/itb_bridge.log")) -> list:
+    """The pad pairs the bridge captured at the latest Mission_Teleporter
+    StartMission, from its log. The bridge clears its own copy whenever a
+    BaseUpdate runs for another mission object (live 2026-10-10: the region's
+    Mission_Civilians wiped the pairs one second after the capture), so its
+    state can lack "teleporter_pairs" for the whole mission."""
+    try:
+        lines = log_path.read_text(errors="replace").splitlines()
+    except OSError:
+        return []
+    end = max((i for i, ln in enumerate(lines) if "TELEPORT PAD: StartMission complete" in ln), default=None)
+    if end is None:
+        return []
+    pairs = []
+    for ln in reversed(lines[:end]):
+        m = TELEPORT_PAIR_RE.search(ln)
+        if not m:
+            break
+        pairs.append([int(v) for v in m.groups()])
+    return list(reversed(pairs))
+
+
 def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = None,
                 notes: list | None = None, underground: dict | None = None) -> tuple[dict, dict]:
     """The solver's input: the live state, plus --loadout weapons for units
@@ -647,6 +673,11 @@ def patch_state(state: dict, loadout: dict, moved: set, queued: dict | None = No
         if u.get("grappled") is True and not u.get("web"):
             u["web"] = True
             patches[f"{u['uid']}.web"] = True
+    if out.get("mission_id") == "Mission_Teleporter" and not out.get("teleporter_pairs"):
+        pairs = logged_teleporter_pairs()
+        if pairs:
+            out["teleporter_pairs"] = pairs
+            patches["teleporter_pairs"] = pairs
     est, grid = out.get("grid_power_estimate"), out.get("grid_power")
     if isinstance(est, int) and isinstance(grid, int) and est < grid:
         out["grid_power"] = est

@@ -877,6 +877,23 @@ class PatchStateWebTest(unittest.TestCase):
         self.assertEqual(patches.get("1.web"), True)
 
 
+class TeleporterPairsTest(unittest.TestCase):
+    def test_pairs_come_from_the_latest_capture_in_the_bridge_log(self):
+        import tempfile
+        log = (
+            "x | TELEPORT PAD pair captured: (1,1) <-> (6,6)\n"
+            "x | TELEPORT PAD: StartMission complete, 1 pair(s) captured\n"
+            "x | something else\n"
+            "x | TELEPORT PAD pair captured: (5,3) <-> (2,2)\n"
+            "x | TELEPORT PAD pair captured: (2,5) <-> (5,5)\n"
+            "x | TELEPORT PAD: StartMission complete, 2 pair(s) captured\n"
+            "x | TELEPORT PAD: clearing stale pairs for Mission_Civilians\n")
+        with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as f:
+            f.write(log)
+        self.assertEqual(lp.logged_teleporter_pairs(Path(f.name)), [[5, 3, 2, 2], [2, 5, 5, 5]])
+        self.assertEqual(lp.logged_teleporter_pairs(Path(f.name + ".missing")), [])
+
+
 class DiffBoardsTest(unittest.TestCase):
     """The enemy-phase comparison's handling of AI planning moves."""
 
