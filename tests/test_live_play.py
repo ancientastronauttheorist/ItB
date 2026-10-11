@@ -432,7 +432,9 @@ class LivePlayTest(unittest.TestCase):
         self.bridge()
         self.fb.refuse_native = True
         self.assertEqual(self.run_cmd(["turn"]), 1)
-        self.assertEqual(self.acting(), ["MOVE_NATIVE 0 3 4"])
+        # One retry after selecting the mech in the UI (stale Move target
+        # area), then the refusal stands.
+        self.assertEqual(self.acting(), ["MOVE_NATIVE 0 3 4", "MOVE_NATIVE 0 3 4"])
 
     def test_refuses_a_bridge_without_native_execution(self):
         self.bridge()

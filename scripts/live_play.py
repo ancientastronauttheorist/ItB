@@ -887,11 +887,25 @@ def ensure_native(ctx) -> None:
     ctx.native_checked = True
 
 
-def execute_step(bridge: Bridge, step: dict, state: dict, loadout: dict) -> str:
+# Mech portraits in the top-left squad panel (fullscreen 1360x768), by mech
+# order (uid 0, 1, 2).
+PORTRAIT_XY = [(60, 160), (60, 228), (60, 293)]
+
+
+def execute_step(bridge: Bridge, step: dict, state: dict, loadout: dict, click=None) -> str:
     uid = step["uid"]
     if step["sub"] == "move":
         x, y = step["to"]
         ack = bridge.send(f"MOVE_NATIVE {uid} {x} {y}")
+        # The Move skill's target area is recomputed only when its origin
+        # changes (Skill::SetPoints, stage 6 "stale target area"): a mech
+        # freed from a web on its own tile keeps the empty area it had while
+        # webbed, so the native move is refused (live 2026-10-10). Selecting
+        # the mech in the UI recomputes it; then retry once.
+        if ("FireWeapon[0] returned 0" in ack and click is not None and 0 <= uid < len(PORTRAIT_XY)
+                and click(PORTRAIT_XY[uid])):
+            time.sleep(1.0)
+            ack = bridge.send(f"MOVE_NATIVE {uid} {x} {y}")
     elif step["sub"] == "weapon":
         slot = weapon_slot(state, uid, step["weapon"], loadout)
         tx, ty = step["target"]
@@ -1032,7 +1046,7 @@ def play_turn(ctx) -> list:
     while i < len(steps):
         step = steps[i]
         text = step_text(step, names)
-        execute_step(bridge, step, state, ctx.loadout)
+        execute_step(bridge, step, state, ctx.loadout, None if getattr(ctx.args, "no_click", False) else ctx.click)
         if step["sub"] == "move":
             moved.add(step["uid"])
         executed.append((plan_id, step))

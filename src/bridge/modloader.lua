@@ -3186,8 +3186,10 @@ local function dump_state(out_path, out_tmp)
             end
             if best_uid then
                 u.web_source_uid = best_uid
-            else
-                -- No webber alive: stale web. Clear it and restore base move.
+            elseif u.grappled ~= true then
+                -- No webber alive and the game does not report the pawn
+                -- grappled: stale web. Clear it and restore base move. (Spider
+                -- eggs web without a webbing weapon: Pawn:IsGrappled wins.)
                 u.web = false
                 u.move = u.base_move
             end
@@ -6271,7 +6273,10 @@ Mission.BaseUpdate = function(self)
     _orig_BaseUpdate(self)
     -- Cache current mission (self is the active mission inside BaseUpdate)
     _ITB_CURRENT_MISSION = self
-    clear_stale_teleporter_pairs_for(self)
+    -- No stale-pair clearing here: BaseUpdate also runs for other mission
+    -- objects (live 2026-10-10: Mission_Civilians wiped the pairs a second
+    -- after Mission_Teleporter captured them). BaseStart/BaseDeployment of
+    -- the next mission clear them.
     -- Heartbeat: write mtime so Python can detect stuck/dead bridge
     pcall(function()
         local f = io.open(HEARTBEAT_FILE, "w")
@@ -6326,7 +6331,6 @@ end
 Mission.NextTurn = function(self)
     _orig_NextTurn(self)
     _ITB_CURRENT_MISSION = self
-    clear_stale_teleporter_pairs_for(self)
     pcall(function()
         if ITBX.legacy_mode() and Game and Game:GetTeamTurn() == TEAM_PLAYER then
             local mech_ids = extract_table(Board:GetPawns(TEAM_PLAYER))
