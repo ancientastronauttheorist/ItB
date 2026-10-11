@@ -165,8 +165,13 @@ the mechs on them start burning.
 
 ## 3. Spider eggs webbing mechs
 
-Recorded: mechs that moved next to a `WebbEgg1` were webbed; the decompiled
-web check releases webs to empty tiles, so the mechanism is unknown.
+Answered by the live run of 2026-10-10 (Mission_AcidStorm, m26): mechs that
+walked next to an egg were not webbed (`grappled` false), mechs standing
+next to it when it landed were, until the egg left its tile or the enemy
+phase began. The earlier "webbed" reading came from the old bot's board
+reader, which marked every neighbour of an egg webbed; the bridge's `web`
+field is also a guess, `grappled` (`Pawn:IsGrappled`) is the game's flag and
+the loader now prefers it. The scenario below stays as a direct check.
 
 `run web_egg`: an egg at (3,3) with its hatch queued (as the AI does),
 mech 1 placed next to it at (3,4), mech 0 walks (1,3) -> (2,3) with

@@ -114,6 +114,35 @@ TEST_CASE("bridge quirks are corrected on load") {
   CHECK(b.teleporter_occupants == std::vector<int32_t>{-1, -1});
 }
 
+TEST_CASE("the bridge's grappled probe wins over its web guess") {
+  // "grappled" is Pawn:IsGrappled; "web" is a legacy guess that missed spider
+  // eggs (live 2026-10-10 m26). Without "grappled", "web" is read.
+  const auto path = std::filesystem::temp_directory_path() / "itb_recording_grappled.json";
+  {
+    std::ofstream out(path);
+    out << R"({"tiles": [], "units": [
+        {"uid": 0, "type": "PunchMech", "x": 3, "y": 3, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "web": false, "grappled": true},
+        {"uid": 1, "type": "PunchMech", "x": 5, "y": 5, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "web": true, "grappled": false},
+        {"uid": 2, "type": "PunchMech", "x": 0, "y": 0, "hp": 3, "max_hp": 3, "team": 1, "mech": true,
+         "web": true},
+        {"uid": 9, "type": "WebbEgg1", "x": 2, "y": 3, "hp": 1, "max_hp": 1, "team": 6}]})";
+  }
+  std::string error;
+  auto rec = load_recording(path, nullptr, &error);
+  std::filesystem::remove(path);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  CHECK(b.find_pawn(0)->webbed);
+  CHECK_FALSE(b.find_pawn(1)->webbed);
+  CHECK(b.find_pawn(2)->webbed);
+  // The egg next to the webbed mech is its source.
+  CHECK(b.tile({2, 3}).web_out == 1u << static_cast<int>(Dir::Right));
+  CHECK(b.tile({3, 3}).web_in == 1);
+  CHECK(b.tile({5, 5}).web_in == 0);
+}
+
 TEST_CASE("a unit's moved flag is loaded when the bridge reports it") {
   const auto path = std::filesystem::temp_directory_path() / "itb_recording_moved.json";
   {

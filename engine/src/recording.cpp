@@ -175,7 +175,16 @@ Pawn load_unit(const json& u, const GameData* data, std::vector<std::string>& wa
   p.acid = get_or<bool>(u, "acid", false);
   p.shield = get_or<bool>(u, "shield", false);
   p.boosted = get_or<bool>(u, "boosted", false);
-  p.webbed = get_or<bool>(u, "web", false);
+  // Webbed: the bridge's "grappled" is the game's own flag (Pawn:IsGrappled,
+  // @0086e5d0: Pawn+0xFB1 on a living pawn). Its "web" passes through a
+  // legacy guess that clears the flag when no known webbing Vek is alive and
+  // misses spider eggs (live 2026-10-10, Mission_AcidStorm: mechs next to a
+  // WebbEgg1 came out unwebbed), so the probe wins when present.
+  if (auto g = u.find("grappled"); g != u.end() && g->is_boolean()) {
+    p.webbed = g->get<bool>();
+  } else {
+    p.webbed = get_or<bool>(u, "web", false);
+  }
   p.infected = get_or<bool>(u, "infected", false);
   // AE Injured has no Lua getter; live tooling sets it (engine_overrides).
   p.injured = get_or<bool>(u, "injured", false);
@@ -691,7 +700,7 @@ std::optional<Recording> load_recording(const std::filesystem::path& path,
       continue;
     }
     const Pawn& p = b.add_pawn(load_unit(u, data, rec.warnings));
-    if (get_or<bool>(u, "web", false)) web_reported.emplace_back(p.uid, get_or<int>(u, "web_source_uid", -1));
+    if (p.webbed) web_reported.emplace_back(p.uid, get_or<int>(u, "web_source_uid", -1));
     std::string pilot = get_or<std::string>(u, "pilot_id", "");
     if (auto it = u.find("pilot"); it != u.end() && it->is_object()) {
       Recording::PilotInfo info;
