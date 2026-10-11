@@ -99,7 +99,11 @@ void absorb(PhaseResult& out, const ActionResult& diag) {
 // ice absorbs it). Returns what it did ("" = nothing; the game then skips its
 // 1.5 s pause).
 std::string update_dot(Board& b, Pawn& p, int phase, RulesContext& rules) {
-  if (!p.pos.valid() || p.fallen) return "";
+  // UpdateDot skips only pawns with no board pointer (stage 7 §1.4). A
+  // burrower underground (dove, position (-1,-1) until the AI moves it) is
+  // still on the board's list: it ticks too (live 2026-10-10: a Regen psion
+  // healed an underground Burrower2). Tile-based ticks below check the tile.
+  if (p.fallen || (!p.pos.valid() && !(p.burrows && p.alive()))) return "";
   std::string did;
   if (phase == 0 && !p.alive() && is_corpse(b, p) && mutation_affects(b, p, Leader::Necro)) {
     modify_health(b, p, 1, DamageMode::Weapon, rules);
@@ -120,7 +124,7 @@ std::string update_dot(Board& b, Pawn& p, int phase, RulesContext& rules) {
       }
       break;
     case 2: {
-      if (p.team != Team::Enemy || !b.tile(p.pos).smoke || !b.has_passive(kPassiveElectricSmoke)) break;
+      if (p.team != Team::Enemy || !p.pos.valid() || !b.tile(p.pos).smoke || !b.has_passive(kPassiveElectricSmoke)) break;
       const int d = b.has_passive(kPassiveElectricSmokeA) ? 2 : 1;
       if (p.shield || p.frozen || is_turn_shielded(b, p)) {
         damage_pawn(b, p, d, DamageMode::Weapon, rules);

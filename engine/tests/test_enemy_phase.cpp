@@ -295,6 +295,21 @@ TEST_CASE("V10 burning then regenerating under the Blood psion") {
   CHECK(hp_of(b, w) == 2);
 }
 
+TEST_CASE("V10b the Blood psion heals a burrower underground") {
+  // Live 2026-10-10: a Burrower2 that dove (off the board, still on the
+  // board's pawn list) came back up healed.
+  NEED_ENGINE();
+  Board b;
+  place(b, "Jelly_Regen1", {0, 0});
+  const int32_t w = place(b, "Burrower2", {4, 4});
+  hp(b, w, 3);
+  P(b, w).movement.prev_pos = P(b, w).pos;
+  P(b, w).pos = kInvalidPoint;
+  set_psion(b);
+  E.end_turn(b, context());
+  CHECK(hp_of(b, w) == 4);
+}
+
 TEST_CASE("V11 no regeneration once the Blood psion burned") {
   NEED_ENGINE();
   Board b;
