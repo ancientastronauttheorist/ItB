@@ -303,6 +303,28 @@ bool on_extra_tile(const GameData& data, const Pawn& p, Point reported) {
   return false;
 }
 
+// The old bot's board reader (src/model/board.py, sim v76) marked every
+// living neighbour of a WebbEgg1 webbed, so its "actual" web there is its own
+// guess: the game webs only who stood next to the egg as it landed (live
+// 2026-10-10 m26, Pawn:IsGrappled). A guess synced into the engine leaves a
+// flag no tile web holds, which the game (and the guess) later drop.
+std::string web_artefact(const State& gt, const UnitState& u, const Board& b, const Pawn& p, bool actual) {
+  if (actual) {
+    for (const UnitState& o : gt.units) {
+      if (o.alive && o.type == "WebbEgg1" && o.pos.valid() && u.pos.valid() &&
+          std::abs(o.pos.x - u.pos.x) + std::abs(o.pos.y - u.pos.y) == 1) {
+        return "verifier: the old bot guessed webs next to spider eggs";
+      }
+    }
+    return "";
+  }
+  bool held = false;
+  for (Point t : {p.pos, p.extra_tile()}) {
+    if (t.valid() && b.tile(t).web_in > 0) held = true;
+  }
+  return held ? "" : "replay: a synced web flag no tile web holds";
+}
+
 std::vector<Mismatch> compare(const Board& b, const State& gt, const State& pred, const GameData& data) {
   std::vector<Mismatch> out;
   const auto match = match_units(b, gt);
@@ -345,6 +367,7 @@ std::vector<Mismatch> compare(const Board& b, const State& gt, const State& pred
           if (s != pu->status.end()) pv = str(s->second);
         }
         add("unit.status." + k, where, str(e), str(v), pv, u.mech);
+        if (k == "web") out.back().artefact = web_artefact(gt, u, b, *p, v);
       }
     }
   }

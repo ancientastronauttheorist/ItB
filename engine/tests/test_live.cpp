@@ -408,6 +408,93 @@ TEST_CASE("live: the train is webbed through its second tile (live 2026-10-10 m1
   CHECK_FALSE(unit_webbed(r["after_player"], 2));  // pushed off its tile
 }
 
+// Spider eggs (live 2026-10-10 m26, Mission_AcidStorm). SpiderAtk1/2 land a
+// WebbEgg1 and AddGrapple from the egg tile to each neighbour in the same
+// effect; BoardSpace::SetGrappled(d) (@0091b300) only webs a neighbour that
+// is grappleable then, and OnLoop breaks a web whose held tile empties. So an
+// egg webs who stood next to it when it landed, never a newcomer, and the
+// web goes when the egg leaves its tile. The bridge's "web" missed every egg
+// web (a legacy guess); "grappled" (Pawn:IsGrappled) is the game's flag.
+TEST_CASE("live: an egg webs who was next to it on landing, not newcomers (live 2026-10-10 m26 t1)") {
+  NEED_SESSION();
+  // IgniteMech#1 at D5 (3,4) was next to WebbEgg1#2906 when it landed on D6
+  // (2,4): grappled, though the bridge's web says no.
+  const std::string start = std::string(ITB_FIXTURE_DIR) + "/live_acidstorm_egg_t1_solve_input.json";
+  const GameData data = GameData::load(GameData::default_game_root());
+  std::string error;
+  auto rec = load_recording(start, &data, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  const Board& b = rec->board;
+  REQUIRE(b.find_pawn(1)->webbed);
+  CHECK_FALSE(b.find_pawn(0)->webbed);
+  CHECK(b.tile({2, 4}).web_out == dir_bit(Dir::Right));
+  CHECK(b.tile({3, 4}).web_in == 1);
+  CHECK(unit_webbed(S.handle({{"cmd", "board"}, {"state", start}})["board"], 1));
+
+  // InfernoMech#0 walks to E6 (2,3), next to the egg, and punches E5; then
+  // TeleMech#2 walks to C6 (2,5), next to the egg, and swaps with it. In
+  // game neither newcomer was webbed, IgniteMech stayed webbed until the
+  // swap moved the egg off D6, and then nobody was webbed.
+  const json plan = json::array(
+      {{{"uid", 0}, {"move", {2, 3}}, {"kind", "weapon"}, {"weapon", "Prime_Punchmech_B"}, {"target", {3, 3}}},
+       {{"uid", 2}, {"move", {2, 5}}, {"kind", "weapon"}, {"weapon", "Science_Swap"}, {"target", {2, 4}}}});
+  const json r = S.handle({{"cmd", "predict"}, {"state", start}, {"plan", plan}});
+  REQUIRE_MESSAGE(r["ok"].get<bool>(), r.dump());
+  CHECK(r["refused"] == -1);
+  const json& steps = r["steps"];
+  REQUIRE(steps.size() == 4);
+  for (size_t i = 0; i < 3; ++i) {
+    CAPTURE(i);
+    CHECK_FALSE(unit_webbed(steps[i]["board"], 0));
+    CHECK(unit_webbed(steps[i]["board"], 1));
+    CHECK_FALSE(unit_webbed(steps[i]["board"], 2));
+  }
+  for (int uid : {0, 1, 2}) {
+    CAPTURE(uid);
+    CHECK_FALSE(unit_webbed(r["after_player"], uid));
+  }
+}
+
+TEST_CASE("live: a mech next to a freshly laid egg is webbed (live 2026-10-10 m26 t2, t4)") {
+  NEED_SESSION();
+  // Turn 2: WebbEgg1#2947 landed on E7 (1,3) next to InfernoMech#0 at E6
+  // (2,3). IgniteMech#1's Ranged_Ignite on F6 pushes the mech to D6: free.
+  const std::string t2 = std::string(ITB_FIXTURE_DIR) + "/live_acidstorm_egg_t2_step1.json";
+  const json board2 = S.handle({{"cmd", "board"}, {"state", t2}});
+  REQUIRE_MESSAGE(board2["ok"].get<bool>(), board2.dump());
+  CHECK(unit_webbed(board2["board"], 0));
+  const json plan2 = json::array({{{"uid", 1}, {"kind", "weapon"}, {"weapon", "Ranged_Ignite_A"}, {"target", {2, 2}}},
+                                  {{"uid", 0},
+                                   {"move", {4, 5}},
+                                   {"kind", "weapon"},
+                                   {"weapon", "Prime_Flamespreader"},
+                                   {"target", {6, 5}}}});
+  const json r2 = S.handle({{"cmd", "predict"}, {"state", t2}, {"plan", plan2}});
+  REQUIRE_MESSAGE(r2["ok"].get<bool>(), r2.dump());
+  CHECK(r2["refused"] == -1);
+  REQUIRE(r2["steps"].size() == 3);
+  CHECK_FALSE(unit_webbed(r2["steps"][0]["board"], 0));
+  CHECK_FALSE(unit_webbed(r2["after_player"], 0));
+
+  // Turn 4: WebbEgg1#3065 landed on C7 (1,5) next to InfernoMech#0 at C6
+  // (2,5). The mech fires in place, IgniteMech moves and fires: the web
+  // holds all turn (the game's IsGrappled stayed true).
+  const std::string t4 = std::string(ITB_FIXTURE_DIR) + "/live_acidstorm_egg_t4_step1.json";
+  const GameData data = GameData::load(GameData::default_game_root());
+  std::string error;
+  auto rec = load_recording(t4, &data, &error);
+  REQUIRE_MESSAGE(rec.has_value(), error);
+  REQUIRE(rec->board.find_pawn(0)->webbed);
+  CHECK(rec->board.tile({1, 5}).web_out == dir_bit(Dir::Right));
+  const json plan4 = json::array(
+      {{{"uid", 1}, {"move", {0, 5}}, {"kind", "weapon"}, {"weapon", "Ranged_Ignite_A"}, {"target", {4, 5}}}});
+  const json r4 = S.handle({{"cmd", "predict"}, {"state", t4}, {"plan", plan4}});
+  REQUIRE_MESSAGE(r4["ok"].get<bool>(), r4.dump());
+  CHECK(r4["refused"] == -1);
+  for (const json& step : r4["steps"]) CHECK(unit_webbed(step["board"], 0));
+  CHECK(unit_webbed(r4["after_player"], 0));
+}
+
 TEST_CASE("live: bad requests answer ok=false") {
   NEED_SESSION();
   CHECK(S.handle({{"cmd", "ping"}})["ok"] == true);

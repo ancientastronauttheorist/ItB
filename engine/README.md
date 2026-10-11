@@ -279,6 +279,12 @@ Done so far (build order from the decompile):
      the web check: emitter tile without an enemy, held tile without a pawn,
      Disable_Immunity). A relocated pawn loses the flag, the web stays on the
      tile, and a pawn standing on a held tile is webbed again once idle.
+     A spider egg (`SpiderAtk1/2` land a `WebbEgg1`, then `AddGrapple` from
+     its tile to each neighbour) webs only who stands next to it as it lands:
+     `SetGrappled(d)` (@0091b300) skips a neighbour that is not grappleable,
+     so a pawn arriving later is not caught, and the web breaks when the egg
+     leaves its tile. All webs go when the enemy phase starts
+     (`BoardSpace::NextTurn(6)` @0091b950).
 - **Stage 5: movement** (`movement.hpp`).
    - Pathing profiles, move budget and pilot move skills.
    - The game's reachability search and its weighted A* walk path (float32,
@@ -476,14 +482,16 @@ created at planning (Digger walls, spider eggs, blobs, totems, hatching), ACID
 pools picked up by AI moves, Vek stepping on mines, UpdateSpawning additions
 (Holes, Factory, Spider boss, Acid). So are recording artefacts: lava the old
 bridge reported as water, pilot level-ups, and the Storm Generator upgrade
-(the bridge reports `Passive_Electric` without `_A`). Hidden choices and
+(the bridge reports `Passive_Electric` without `_A`), and the old bot's
+webs on every neighbour of a spider egg (its board reader guessed them; the
+game webs only who stood there as the egg landed). Hidden choices and
 Grid Defense rolls are tried as branches; emerged spawn types are taken from
 the next board.
 
-Turns whose player steps all matched the game: 217, of which 148 exact
-(68.2%) and 68 more with only explained differences (99.5%); the one left is
+Turns whose player steps all matched the game: 223, of which 152 exact
+(68.2%) and 70 more with only explained differences (99.6%); the one left is
 a post_enemy-only comparison (building HP total off by 1, grid power
-matching). Turns that needed a mid-turn sync: 14, 64.3%.
+matching). Turns that needed a mid-turn sync: 8, 50.0%.
 
 ### Turn score (stage 8)
 
@@ -860,7 +868,9 @@ board with the game's bindings) and `FIRE`; `SNAPSHOT` and `MOVE_NATIVE`
 
 `load_recording` reads all of it when present (469/469 old recordings load
 as before). The bridge reports whether a pawn is webbed and at most one
-source, a guess (the nearest webber); the loader rebuilds the tile webs from
+source, a guess (the nearest webber). Its `grappled` field is the game's own
+flag (`Pawn:IsGrappled`) and wins over `web`, which passes through an old
+guess that misses spider eggs. The loader rebuilds the tile webs from
 what the board shows: every neighbour of a webbed pawn's tiles (a train's
 second tile too) whose Vek has a webbing attack queued on that tile
 (`ScorpionAtk*`, `LeaperAtk*`, `MosquitoAtkB`; the Scorpion Leader's
@@ -923,9 +933,6 @@ Each has a scenario in `LIVE_TEST_PLAN.md`.
 - **Mechs standing in fire (Mission_BurnbugBoss).** Recorded mechs on a
   burning tile were not set on fire, although `CheckAcidFire` runs every
   frame for idle occupants. Find what prevents it.
-- **Spider eggs webbing newcomers.** Mechs that moved next to a `WebbEgg1`
-  were webbed in game. The decompiled web check releases webs to empty
-  tiles, so how the egg re-webs is not understood yet.
 - **Stage 8 objectives.** The bridge could export Mission.BlockedSpawns,
   PowerStart, the Terraform grass zone and Missile_Unit's shots left; until
   then BONUS_BLOCK, BONUS_GRID after turn 1, Terraform and Missiles are
