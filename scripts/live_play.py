@@ -439,7 +439,7 @@ def _health_psion(u: dict) -> bool:
 def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                 acid_pools: frozenset = frozenset(), resist: dict | None = None,
                 xp_split: bool = False, mines_gone: frozenset = frozenset(),
-                random_thaw: bool = False) -> tuple[list, list]:
+                random_thaw: bool = False, freeze_mines_gone: frozenset = frozenset()) -> tuple[list, list]:
     """Differences between a predicted and a live compact board (itb_live's
     live_board_json). Returns (differences, notes). Units in `known` (the
     turn-start uids) are matched by uid; others by type/tile/HP (the engine
@@ -454,6 +454,10 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
       the game no longer has after it: a Vek that walks onto one while
       planning next turn dies there. A non-mech the engine has alive and the
       game has dead is a note while there are tripped mines to account for it.
+    - `freeze_mines_gone`: like `mines_gone` for Freeze_Mine items: a Vek
+      that steps on one while planning is frozen; a non-mech the engine has
+      unfrozen and the game frozen is a note while tripped freeze mines
+      account for it.
     - `random_thaw` (the prediction thawed frozen enemies at random:
       Mission_Reactivation thaws 2 random frozen Vek each enemy turn, a chance
       node the prediction takes one outcome of): enemies whose frozen flag
@@ -486,6 +490,7 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
     buffed = []
     thaw_swaps = []
     mines_left = len(mines_gone)
+    freeze_left = len(freeze_mines_gone)
     for uid in sorted(known):
         a, b = w.get(uid), g.get(uid)
         if a is None and b is None:
@@ -543,6 +548,11 @@ def diff_boards(want: dict, got: dict, known: set, *, enemy_phase: bool = False,
                         and (b["x"], b["y"]) in acid_pools):
                     notes.append(f"{who} picked up the acid pool at {visual(b['x'], b['y'])} "
                                  "moving during AI planning")
+                    continue
+                if (enemy_phase and f == "frozen" and b.get(f) and not a.get("mech") and freeze_left > 0):
+                    freeze_left -= 1
+                    notes.append(f"{who} froze on a freeze mine moving during AI planning (tripped: "
+                                 f"{', '.join(visual(*xy) for xy in sorted(freeze_mines_gone))})")
                     continue
                 if enemy_phase and random_thaw and f == "frozen" and not a.get("mech") and a.get("team") == 6:
                     thaw_swaps.append((who, bool(a.get(f)), bool(b.get(f))))
@@ -1140,9 +1150,10 @@ def end_turn(ctx) -> list:
     # Centipedes walked onto the pools their own attacks had left).
     pools = frozenset((t["x"], t["y"]) for t in state.get("tiles", []) if t.get("acid")) | \
         frozenset(tuple(xy) for xy in pred["after_enemy"].get("acid_tiles", []))
-    mines = lambda s: {(t["x"], t["y"]) for t in s.get("tiles", []) if t.get("item") == "Item_Mine"}
+    mines = lambda s, item="Item_Mine": {(t["x"], t["y"]) for t in s.get("tiles", []) if t.get("item") == item}
     diffs, notes = diff_boards(pred["after_enemy"], live, known, enemy_phase=True, acid_pools=pools,
                                mines_gone=frozenset(mines(state) - mines(after)),
+                               freeze_mines_gone=frozenset(mines(state, "Freeze_Mine") - mines(after, "Freeze_Mine")),
                                random_thaw=any(e.get("type") == "thawed"
                                                for e in (pred.get("enemy_phase") or {}).get("events", [])),
                                resist=resist_info(pred),

@@ -949,6 +949,15 @@ class DiffBoardsTest(unittest.TestCase):
         self.assertEqual(len(state["units"]), 1)
         self.assertEqual(patches, {})
 
+    def test_vek_frozen_on_a_tripped_freeze_mine_is_a_note(self):
+        want = self.board([dict(self.vek(5, 2), frozen=False)])
+        got = self.board([dict(self.vek(5, 2), frozen=True)])
+        diffs, notes = lp.diff_boards(want, got, {97}, enemy_phase=True, freeze_mines_gone=frozenset({(4, 2)}))
+        self.assertEqual(diffs, [])
+        self.assertTrue(any("freeze mine" in n for n in notes))
+        diffs, _ = lp.diff_boards(want, got, {97}, enemy_phase=True)
+        self.assertEqual(len(diffs), 1)
+
     def test_an_egg_that_hatched_during_ai_planning_is_a_note(self):
         egg = {"uid": 97, "type": "SpiderlingEgg1", "x": 5, "y": 2, "hp": 1}
         diffs, notes = lp.diff_boards(self.board([egg]), self.board([]), {97}, enemy_phase=True)
